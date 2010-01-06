@@ -110,14 +110,14 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
    
  4.接続サンプル
    簡易的な接続、登録、取得サンプルを用意しています。
-   本ファイルと同一ディレクトリにある、SampleCase.classを実行してください(jdk1.6にてコンパイル済み)。
+   本ファイルと同一ディレクトリにある、TestSock.classを実行してください(jdk1.6にてコンパイル済み)。
    引数なしで実行すると使用方法が出力されます。
    例)
      # 以下の例は自動的にインクリメントするKey値でValue文字列を1000回登録している
-     java -cp ./;./classes;./lib/javamail-1.4.1.jar SampleCase 1 127.0.0.1 8888 1000
+     java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 1 127.0.0.1 8888 1000
 
      # 以下の例は自動的にインクリメントするKey値でValue文字列を1000回取得している
-     java -cp ./;./classes;./lib/javamail-1.4.1.jar SampleCase 2 127.0.0.1 8888 1000
+     java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 2 127.0.0.1 8888 1000
 
      # 以下の例は自動的にインクリメントするKey値と適当な4パターンのTag値でValue文字列を100回登録している
      java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 3 127.0.0.1 8888 100
