@@ -1,0 +1,62 @@
+package org.imdst.util;
+
+/**
+ * 定数をまとめる.<br>
+ *
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ */
+public class ImdstDefine {
+
+
+    /* -- KeyMapファイルに関係する定数 ----------                        */
+    // KeyNodeのWorkファイルでのセパレータ
+    //public static final String keyWorkFileSep = "#imdst7386#";
+    public static final String keyWorkFileSep = ",";
+
+    // KeyNodeのWorkファイルの文字コード
+    public static final String keyWorkFileEncoding = "UTF-8";
+
+    // KeyNodeのWorkKeyファイルの終点文字列
+    //public static final String keyWorkFileEndPointStr = "#imdstEndWFP8574";
+    public static final String keyWorkFileEndPointStr = ";";
+
+
+    /* --  クライアントとの転送内容に使用する定数 ----------              */
+    // クライアントとの文字コード
+    public static final String keyHelperClientParamEncoding = "UTF-8";
+
+    // クライアントからのリクエスト文字列のセパレータ
+    public static final String keyHelperClientParamSep = "#imdst3674#";
+
+    // クラインととの連携文字列でのブランクを表す代行文字列
+    public static final String imdstBlankStrData = "(imdst5397)";
+
+    // Tag値の文字列の前方カッコ
+    public static final String imdstTagStartStr = "{imdst_tag#9641";
+
+    // Tag値の文字列の後方カッコ
+    public static final String imdstTagEndStr = "1469#tag_imdst}";
+
+    // Tag値でキーを登録する際にKey値を連結するのでその際のセパレータ文字列
+    //public static final String imdstTagKeyAppendSep = "#imdst8417#";
+    public static final String imdstTagKeyAppendSep = ":";
+
+    /* --  通信時の固定文字列系定数  ----------                           */
+    // クラインが接続を切断する際に通知する文字列
+    public static final String imdstConnectExitRequest = "(&imdst9999&)";
+
+
+    /* --  設定ファイルの固定文字列系定数  ----------                     */
+    public static final String Prop_KeyMapNodesRule = "KeyMapNodesRule";
+    public static final String Prop_KeyMapNodesInfo = "KeyMapNodesInfo";
+    public static final String Prop_DataNodesInfo = "DataNodesInfo";
+    public static final String Prop_DataSubNodesInfo = "DataSubNodesInfo";
+
+    public static final String dataNodeParamKey_1 = "dataNodeNameList";
+    public static final String dataNodeParamKey_2 = "dataNodePortList";
+    public static final String dataNodeParamKey_3 = "dataSubNodeNameList";
+    public static final String dataNodeParamKey_4 = "dataSubNodePortList";
+    public static final String dataNodeParamKey_5 = "keyMapNodeInfo";
+}
