@@ -43,11 +43,28 @@ public class ImdstKeyValueClient {
     // Tagで取得出来るキー値のセパレータ文字列
     private static final String tagKeySep = ImdstDefine.imdstTagKeyAppendSep;
 
+    private static final String byteDataKeysSep = ":#:";
+
+
+    // バイナリデータ分割保存サイズ
+    // デフォルトは100KB
+    private int saveSize = 1024 * 100;
+
+
     /**
      * コンストラクタ
      *
      */
     public ImdstKeyValueClient() {
+    }
+
+    /**
+     * バイナリデータ分割保存サイズを変更<br>
+     *
+     * @param size サイズ
+     */
+    public void changeByteSaveSize(int size) {
+        saveSize = size;
     }
 
     /**
@@ -268,7 +285,10 @@ public class ImdstKeyValueClient {
     /**
      * マスタサーバへデータを送信する(バイナリデータ).<br>
      * Tag有り.<br>
-     * Todo:java.util.zip.Deflaterとか使って圧縮してもいいかも<br>
+     * 処理の流れとしては、まずvalueを一定の容量で区切り、その単位で、<br>
+     * Key値にプレフィックスを付けた値を作成し、かつ、特定のセパレータで連結して、<br>
+     * 渡されたKeyを使用して連結文字を保存する<br>
+     * 
      *
      * @param keyStr
      * @param tagStrs
@@ -277,58 +297,104 @@ public class ImdstKeyValueClient {
      * @throws Exception
      */
     public boolean setByteValue(String keyStr, String[] tagStrs, byte[] values) throws Exception {
+
+        boolean ret = false;
+
+        int bufSize = 0;
+        int nowCounter = 0;
+
+        byte[] workData = null;
+        int counter = 0;
+        int tmpKeyIndex = 0;
+        String tmpKey = null;
+        StringBuffer saveKeys = new StringBuffer();
+        String sep = "";
+
+        String[] tmpKeys = null;
+
+        int keyCount = values.length / this.saveSize;
+        int much = values.length % this.saveSize;
+
+        try {
+
+            if (much > 0) keyCount = keyCount + 1;
+
+            // バイトデータを分割してノードに転送する
+            // 転送サイズは動的に指定可能である
+            for (int i = 0; i < keyCount; i++) {
+
+                if (keyCount == (i + 1)) {
+
+                    bufSize = values.length - nowCounter;
+                } else {
+
+                    bufSize = this.saveSize;
+                }
+
+                // 保存バッファコピー領域作成
+                workData = new byte[bufSize];
+
+                for (int workCounter = 0; workCounter < bufSize; workCounter++) {
+                    workData[workCounter] = values[nowCounter];
+                    nowCounter++;
+                }
+
+                // 分割したデータのキーを作成
+                tmpKey = keyStr.hashCode() + "_" + i;
+
+                // ノードにバイナリデータ保存
+                if(!this.sendByteData(tmpKey, workData)) throw new Exception("Byte Data Save Node Error");
+
+                saveKeys.append(sep);
+                saveKeys.append(tmpKey);
+                sep = this.byteDataKeysSep;
+            }
+
+            ret = this.setValue(keyStr, tagStrs, saveKeys.toString());
+
+        } catch (Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
+
+    /**
+     * マスタサーバへデータを送信する(バイナリデータ).<br>
+     *
+     * @param keyStr
+     * @param values
+     * @return boolean
+     * @throws Exception
+     */
+    private boolean sendByteData(String keyStr, byte[] values) throws Exception {
         boolean ret = false; 
         String serverRetStr = null;
         String[] serverRet = null;
         String value = null;
-        StringBuffer serverRequestBuf = null;
+        StringBuffer serverRequestBuf = new StringBuffer();
 
-        int saveSize = 1024 * 1024;
         String saveStr = null;
 
         try {
 
-            // valuesに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
-            if (values == null ||  values.length == 0) {
-                value = ImdstKeyValueClient.blankStr;
-            } else {
-                // Valueを圧縮し、Base64でエンコード
-                value = new String(BASE64EncoderStream.encode(this.execCompress(values)));
-                //value = new String(BASE64EncoderStream.encode(this.execCompress(BASE64EncoderStream.encode(values))));
-            }
-
-
-            // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
-
+            // valuesがnullであることはない
+            // Valueを圧縮し、Base64でエンコード
+            value = new String(BASE64EncoderStream.encode(this.execCompress(values)));
 
             // 処理番号連結
             serverRequestBuf.append("1");
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
 
-
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
             serverRequestBuf.append(new String(BASE64EncoderStream.encode(keyStr.getBytes())));
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
 
-
-            // Tag連結
-            // Tag指定の有無を調べる
-            if (tagStrs == null || tagStrs.length < 1) {
-
-                // ブランク規定文字列を連結
-                serverRequestBuf.append(ImdstKeyValueClient.blankStr);
-            } else {
-
-                // Tag数分連結
-                serverRequestBuf.append(new String(BASE64EncoderStream.encode(tagStrs[0].getBytes())));
-                for (int i = 1; i < tagStrs.length; i++) {
-                    serverRequestBuf.append(tagKeySep);
-                    serverRequestBuf.append(new String(BASE64EncoderStream.encode(tagStrs[i].getBytes())));
-                }
-            }
+            // Tagは必ず存在しない
+            // ブランク規定文字列を連結
+            serverRequestBuf.append(ImdstKeyValueClient.blankStr);
 
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
@@ -366,6 +432,7 @@ public class ImdstKeyValueClient {
         }
         return ret;
     }
+
 
     /**
      * マスタサーバからKeyでデータを取得する.<br>
@@ -477,6 +544,94 @@ public class ImdstKeyValueClient {
      * @throws Exception
      */
     public Object[] getByteValue(String keyStr) throws Exception {
+        Object[] ret = new Object[2];
+        Object[] byteTmpRet = null;
+
+        String[] workKeyRet = null;
+        String workKeyStr = null;
+        String[] workKeys = null;
+
+        byte[] workValue = null;
+        byte[] tmpValue = new byte[0];
+        byte[] retValue = new byte[0];
+
+        boolean execFlg = true;
+        try {
+            workKeyRet = this.getValue(keyStr);
+            
+            if (workKeyRet[0].equals("true")) {
+
+                workKeyStr = (String)workKeyRet[1];
+
+                workKeyRet = workKeyStr.split(byteDataKeysSep);
+
+                for (int idx = 0; idx < workKeyRet.length; idx++) {
+
+                    byteTmpRet = this.getByteData(workKeyRet[idx]);
+
+                    if (byteTmpRet[0].equals("true")) {
+
+                        workValue = (byte[])byteTmpRet[1];
+
+                        if (execFlg) {
+
+                            tmpValue = new byte[retValue.length + workValue.length];
+
+                            for (int i = 0; i < retValue.length; i++) {
+                                tmpValue[i] = retValue[i];
+                            }
+
+                            for (int i = 0; i < workValue.length; i++) {
+                                tmpValue[retValue.length + i] = workValue[i];
+                            }
+                            execFlg = false;
+                        } else {
+
+                            retValue = new byte[tmpValue.length + workValue.length];
+
+                            for (int i = 0; i < tmpValue.length; i++) {
+                                retValue[i] = tmpValue[i];
+                            }
+
+                            for (int i = 0; i < workValue.length; i++) {
+                                retValue[tmpValue.length + i] = workValue[i];
+                            }
+                            execFlg = true;
+                        }
+                    } else {
+
+                        // エラー発生
+                        ret[0] = byteTmpRet[0];
+                        ret[1] = byteTmpRet[1];
+                        break;
+                    }
+                }
+
+                ret[0] = "true";
+                if (retValue.length >= tmpValue.length) {
+                    ret[1] = retValue;
+                } else{
+                    ret[1] = tmpValue;
+                }
+            } else {
+                ret[0] = workKeyRet[0];
+                ret[1] = workKeyRet[1];
+            }
+        } catch(Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
+
+    /**
+     * マスタサーバからKeyでデータを取得する(バイナリ).<br>
+     *
+     * @param keyStr
+     * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
+     * @throws Exception
+     */
+    private Object[] getByteData(String keyStr) throws Exception {
         Object[] ret = new Object[2];
         byte[] byteRet = null;
         String serverRetStr = null;
