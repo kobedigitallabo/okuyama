@@ -21,13 +21,8 @@ public class DataDispatcher {
     
     private static HashMap keyMapNodeInfo = null;
 
-    private static ArrayList dataNodeNameList = null;
-    private static ArrayList dataNodePortList = null;
+    private static HashMap subKeyMapNodeInfo = null;
 
-    private static ArrayList dataSubNodeNameList = null;
-    private static ArrayList dataSubNodePortList = null;
-
-    private static int nowPoint = 0;
 
     private static Object syncObj = new Object();
 
@@ -37,62 +32,35 @@ public class DataDispatcher {
      * 以下の要素を設定する.<br>
      * KeyMapNodesRule=ルール値(2,9,99,999)<br>
      * KeyMapNodesInfo=Keyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
-     * DataNodesInfo=Dataノードの設定(DataNodeName1:11111, DataNodeName2:22222, DataNodeName3:33333)<br>
-     * DataSubNodesInfo=DataSubノードの設定(DataSubNodeName1:11111, DataSubNodeName2:22222, DataSubNodeName3:33333)<br>
+     * SubKeyMapNodesInfo=スレーブKeyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
+     * SubKeyMapNodesInfoは設定なしも可能。その場合はnullを設定<br>
      * <br>
      * 記述の決まり.<br>
      * <br>
-     * KeyMapNodesRule:2は2台KeyNodeを指定できる<br>
-     *                :9は10台KeyNodeを指定できる<br>
-     *                :99は100台KeyNodeを指定できる<br>
-     *                :999は1000台KeyNodeを指定できる<br>
+     * KeyMapNodesRule:KeyNodeの数を記載<br>
+     *                 ここでの記述は過去の台数の経緯を記載する必要がある<br>
+     *                 たとえは5台でまずKeyNodeを稼動させその後10台に増やした場合の記述は「10,5」となる。その後15台にした場合は<br>
+     *                 「15,10,5」となる<br>
      * <br>
-     * KeyMapNodesInfo:KeyNodeを名前とポート番号で指定する。並び順通りにデータを保持されるので、一度保存しだすと変更は不可となる.<br>
+     * KeyMapNodesInfo:KeyNode(データ保存ノード)をIPアドレス(マシン名)とポート番号を":"で連結した状態で記述<br>
+     * <br>
+     * SubKeyMapNodesInfo:スレーブとなるのKeyNodeをKeyMapNodesInfoと同様の記述方法で記述。KeyMapNodesInfoと同様の数である必要がある。<br>
      *
-     *
-     *
-     *
-     *
-     *
+     * @param ruleStr ルール設定
+     * @param keyMapNodes データノードを指定
+     * @param subKeyMapNodes スレーブデータノードを指定
      */
-    public static void init(String ruleStr, String keyMapNodes, String dataNodes, String subDataNodes) {
+    public static void init(String ruleStr, String keyMapNodes, String subKeyMapNodes) {
+
+        String[]  keyMapNodesInfo = null;
+        String[]  subkeyMapNodesInfo = null;
 
         rule = ruleStr.trim();
         ruleInt = new Integer(rule).intValue();
 
-        dataNodeNameList = new ArrayList();
-        dataNodePortList = new ArrayList();
-        dataSubNodeNameList = new ArrayList();
-        dataSubNodePortList = new ArrayList();
-
-        if (dataNodes != null && !dataNodes.equals("")) {
-
-            String[] dataNodeInfo = dataNodes.split(",");
-            for (int i = 0; i < dataNodeInfo.length; i ++) {
-                String dataNode = dataNodeInfo[i].trim();
-
-                String[] dataNodeDt = dataNode.split(":");
-                dataNodeNameList.add(dataNodeDt[0]);
-                dataNodePortList.add(dataNodeDt[1]);
-            }
-        }
-
-        if (subDataNodes != null && !subDataNodes.equals("")) {
-            String[] dataSubNodeInfo = subDataNodes.split(",");
-
-            for (int i = 0; i < dataSubNodeInfo.length; i ++) {
-                String dataSubNode = dataSubNodeInfo[i].trim();
-
-                String[] dataSubNodeDt = dataSubNode.split(":");
-                dataSubNodeNameList.add(dataSubNodeDt[0]);
-                dataSubNodePortList.add(dataSubNodeDt[1]);
-            }
-        }
-
         keyMapNodeInfo = new HashMap();
 
-        String[]  keyMapNodesInfo = keyMapNodes.split(",");
-        
+        keyMapNodesInfo = keyMapNodes.split(",");
         for (int index = 0; index < keyMapNodesInfo.length; index++) {
             String keyNode = keyMapNodesInfo[index].trim();
             String[] keyNodeDt = keyNode.split(":");
@@ -101,6 +69,18 @@ public class DataDispatcher {
             keyMapNodeInfo.put(index + "_port", keyNodeDt[1]);
         }
 
+        if (subKeyMapNodes != null && !subKeyMapNodes.equals("")) {
+            subKeyMapNodeInfo = new HashMap();
+            subkeyMapNodesInfo = subKeyMapNodes.split(",");
+
+            for (int index = 0; index < subkeyMapNodesInfo.length; index++) {
+                String subKeyNode = subkeyMapNodesInfo[index].trim();
+                String[] subKeyNodeDt = subKeyNode.split(":");
+
+                subKeyMapNodeInfo.put(index + "_node", subKeyNodeDt[0]);
+                subKeyMapNodeInfo.put(index + "_port", subKeyNodeDt[1]);
+            }
+        }
     }
 
     /**
@@ -117,13 +97,14 @@ public class DataDispatcher {
     }
     /**
      * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
-     * 存在するルールは2,10,100,1000 それぞれ2台、10台,100台、1000台である<br>
+     * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが4となる<br>
      *
      * @param key キー値
-     * @return String 対象キーノードの情報(サーバ名、ポート番号)
+     * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
      */
     public static String[] dispatchKeyNode(String key, int useRule) {
-        String[] ret = new String[2];
+        String[] ret = null;
+
     
         int execKeyInt = key.hashCode();
         if (execKeyInt < 0) {
@@ -137,86 +118,23 @@ public class DataDispatcher {
         }
 
         nodeNo = nodeNo - 1;
+
+        // スレーブノードの有無に合わせて配列を初期化
+        if (subKeyMapNodeInfo != null) {
+
+            ret = new String[4];
+            ret[2] = (String)subKeyMapNodeInfo.get(nodeNo + "_node");
+            ret[3] = (String)subKeyMapNodeInfo.get(nodeNo + "_port");
+
+        } else {
+            ret = new String[2];
+        }
+
         ret[0] = (String)keyMapNodeInfo.get(nodeNo + "_node");
         ret[1] = (String)keyMapNodeInfo.get(nodeNo + "_port");
 
-/*        String keyIntStr = ((Integer)new Integer(key.hashCode())).toString();
-        String keyNodeNo = null;
-        String[] ret = new String[2];
 
-        if (rule.equals("2")) {
-            keyNodeNo = keyIntStr.substring(keyIntStr.length() - 1, keyIntStr.length());
-            if (new Integer(keyNodeNo).intValue() < 5) {
-                keyNodeNo = "0";
-            } else {
-                keyNodeNo = "1";
-            }
-        } else if (rule.equals("10")) {
-            keyNodeNo = keyIntStr.substring(keyIntStr.length() - 1, keyIntStr.length());
-        } else if (rule.equals("100")) {
-            keyNodeNo = keyIntStr.substring(keyIntStr.length() - 2, keyIntStr.length());
-        } else if (rule.equals("1000")) {
-            keyNodeNo = keyIntStr.substring(keyIntStr.length() - 3, keyIntStr.length());
-        }
-
-        ret[0] = (String)keyMapNodeInfo.get(keyNodeNo + "_node");
-        ret[1] = (String)keyMapNodeInfo.get(keyNodeNo + "_port");
-*/
         return ret;
     }
 
-/*
-    public static String[] dispatchKeyNode(String key, String useRule) {
-
-        String keyIntStr = ((Integer)new Integer(key.hashCode())).toString();
-        String keyNodeNo = null;
-        String[] ret = new String[2];
-
-        if (useRule.equals("2")) {
-            keyNodeNo = keyIntStr.substring(keyIntStr.length() - 1, keyIntStr.length());
-            if (new Integer(keyNodeNo).intValue() < 5) {
-                keyNodeNo = "0";
-            } else {
-                keyNodeNo = "1";
-            }
-        } else if (useRule.equals("10")) {
-            keyNodeNo = keyIntStr.substring(keyIntStr.length() - 1, keyIntStr.length());
-        } else if (useRule.equals("100")) {
-            keyNodeNo = keyIntStr.substring(keyIntStr.length() - 2, keyIntStr.length());
-        } else if (useRule.equals("1000")) {
-            keyNodeNo = keyIntStr.substring(keyIntStr.length() - 3, keyIntStr.length());
-        }
-
-        ret[0] = (String)keyMapNodeInfo.get(keyNodeNo + "_node");
-        ret[1] = (String)keyMapNodeInfo.get(keyNodeNo + "_port");
-        return ret;
-    }
-*/
-    /**
-     * DataNodeの名前と、ポートの配列を返す.<br>
-     * SubDataNodeが存在する場合は配列の3番目と4番目にはSubDataNodeの名前と、ポートが格納される.<br>
-     *
-     */
-    public static String[] dispatchDataNode() {
-        int point = 0;
-        String[] ret = new String[4];
-
-        synchronized(syncObj) {
-            if (nowPoint < dataNodeNameList.size()) {
-                point = nowPoint;
-                nowPoint++;
-            } else {
-                nowPoint = 0;
-            }
-        }
-
-        ret[0] = (String)dataNodeNameList.get(point);
-        ret[1] = (String)dataNodePortList.get(point);
-
-        if (dataSubNodeNameList.size() > 0) {
-            ret[2] = (String)dataSubNodeNameList.get(point);
-            ret[3] = (String)dataSubNodePortList.get(point);
-        }
-        return ret;
-    }
 }

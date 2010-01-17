@@ -51,8 +51,7 @@ public class ImdstDefine {
     /* --  設定ファイルの固定文字列系定数  ----------                     */
     public static final String Prop_KeyMapNodesRule = "KeyMapNodesRule";
     public static final String Prop_KeyMapNodesInfo = "KeyMapNodesInfo";
-    public static final String Prop_DataNodesInfo = "DataNodesInfo";
-    public static final String Prop_DataSubNodesInfo = "DataSubNodesInfo";
+    public static final String Prop_SubKeyMapNodesInfo = "SubKeyMapNodesInfo";
 
     public static final String dataNodeParamKey_1 = "dataNodeNameList";
     public static final String dataNodeParamKey_2 = "dataNodePortList";

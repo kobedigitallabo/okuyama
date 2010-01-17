@@ -70,6 +70,7 @@ public class KeyMapManager extends Thread {
     // workMapファイルをメモリーモードにするかの指定
     private boolean memoryMode = false;
 
+
     // 初期化メソッド
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean memoryMode, int keySize) throws BatchException {
         logger.debug("init - start");
@@ -203,7 +204,11 @@ public class KeyMapManager extends Thread {
         logger.debug("init - end");
     }
 
-    // 定期的にKeyMapを再保存する
+    /**
+     * 定期的にKeyMapを再保存する.<br>
+     * システム停止要求を監視して停止依頼があった場合は自身を終了する.<br>
+     *
+     */ 
     public void run (){
         while(true) {
 
@@ -215,10 +220,13 @@ public class KeyMapManager extends Thread {
             try {
                 // 1サイクル30秒の停止を規定回数行う(途中で停止要求があった場合は無条件で処理実行)
                 for (int count = 0; count < intervalCount; count++) {
+
+                    // システム停止要求を監視
                     if (StatusUtil.getStatus() != 0) {
                         logger.info ("KeyMapManager - run - システム停止2");
                         break;
                     }
+
                     Thread.sleep(updateInterval);
                 }
 

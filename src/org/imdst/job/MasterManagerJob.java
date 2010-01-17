@@ -53,19 +53,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         Object[] helperParams = null;
         try{
 
-            // DataNodeと、KeyMapNodeの情報を初期化
-
-            // DataNodeは本ノードと、レプリケーションノードの並べでUserParameterで
-            // 設定されている想定
-            // 形式は以下
-            // DataNodeInfo=192.168.1.1:6060,192.168.1.2:6060;192.168.1.3:6080
-            // DataSubNodeInfo=192.168.2.1:6060,192.168.2.2:6060;192.168.2.3:6080
-            //
-            // KeyMapNodeはEvenNodeとOddNodeで個別にUserParameterで
-            // 設定されている想定
-            // 形式は以下
-            // KeyMapNode=192.168.3.1:7000,192.168.4.1:7000
-            // KeyMapNodesRule=2 or 9 or 99 or 999
+            // KeyMapNodeの情報を初期化
             this.parseAllNodesInfo();
 
             // サーバソケットの生成
@@ -111,17 +99,15 @@ public class MasterManagerJob extends AbstractJob implements IJob {
      * 以下の要素を設定する.<br>
      * KeyMapNodesRule=ルール値(2,9,99,999)<br>
      * KeyMapNodesInfo=Keyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
-     * DataNodesInfo=Dataノードの設定(DataNodeName1:11111, DataNodeName2:22222, DataNodeName3:33333)<br>
-     * DataSubNodesInfo=DataSubノードの設定(DataSubNodeName1:11111, DataSubNodeName2:22222, DataSubNodeName3:33333)<br>
+     * SubKeyMapNodesInfo=Keyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
      * <br>
      * 記述の決まり.<br>
      */
     private void parseAllNodesInfo() {
         String keyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesInfo);
-        String nodeStr = super.getPropertiesValue(ImdstDefine.Prop_DataNodesInfo);
-        String subNodeStr = super.getPropertiesValue(ImdstDefine.Prop_DataSubNodesInfo);
-        
+        String subKeyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_SubKeyMapNodesInfo);
         String ruleStrProp = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesRule);
+
         // ノード追加によりルールが変更されている可能性があるのパース
         // ルールは最新ルールが先頭に来るように設定される想定なので、先頭文字列を取得
         String[] ruleStrs = ruleStrProp.split(",") ;
@@ -134,7 +120,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         }
 
         // 初期化
-        DataDispatcher.init(ruleStrs[0], keyMapNodesStr, nodeStr, subNodeStr);
+        DataDispatcher.init(ruleStrs[0], keyMapNodesStr, subKeyMapNodesStr);
 
     }
 
