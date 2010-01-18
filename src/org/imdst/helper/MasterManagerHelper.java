@@ -459,8 +459,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     /**
      * KeyNodeからデータを取得する.<br>
      * 
-     * @param keyNodeName キーノードの名前(IPなど)
-     * @param keyNodePort キーノードのアクセスポート番号
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
      * @param type 処理タイプ(2=Keyでデータを取得, 4=TagでKey値を返す)
      * @param key Key値
      * @return String[] 結果
@@ -577,8 +579,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     /**
      * KeyNodeに対してデータを保存する.<br>
      * 
-     * @param keyNodeName キーノードの名前(IPなど)
-     * @param keyNodePort キーノードのアクセスポート番号
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
      * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加)
      * @param values 送信データ
      * @return String[] 結果
