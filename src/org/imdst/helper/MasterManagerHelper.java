@@ -243,7 +243,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     tagKeyPair[1] = keyStr;
 
                     // KeyNodeに接続して保存 //
-                    keyNodeSaveRet = setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], "3", tagKeyPair);
+                    // スレーブKeyNodeの存在有無で値を変化させる
+                    if (tagKeyNodeInfo.length == 2) {
+                        keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], null, null, "3", tagKeyPair);
+                    } else if (tagKeyNodeInfo.length == 4) {
+                        keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], "3", tagKeyPair);
+                    }
 
                     // 保存結果確認
                     if (keyNodeSaveRet[1].equals("false")) {
@@ -251,21 +256,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         retStrs[0] = "1";
                         retStrs[1] = "false";
                         retStrs[2] = keyNodeSaveRet[2];
-                        throw new BatchException("Tag Data Main Node Save Error");
-                    }
-
-                    // スレーブKeyNodeが存在する場合は接続して保存
-                    if (tagKeyNodeInfo.length == 4) {
-                        keyNodeSaveRet = setKeyNodeValue(tagKeyNodeInfo[2], tagKeyNodeInfo[3], "3", tagKeyPair);
-
-                        // 保存結果確認
-                        if (keyNodeSaveRet[1].equals("false")) {
-                            // 保存失敗
-                            retStrs[0] = "1";
-                            retStrs[1] = "false";
-                            retStrs[2] = keyNodeSaveRet[2];
-                            throw new BatchException("Tag Data Sub Node Save Error");
-                        }
+                        throw new BatchException("Tag Data Save Error");
                     }
                 }
             }
@@ -280,7 +271,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             keyDataNodePair[1] = dataStr;
 
             // 保存実行
-            keyNodeSaveRet = setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], "1", keyDataNodePair);
+            // スレーブKeyNodeが存在する場合で値を変更
+           if (keyNodeInfo.length == 2) {
+
+                keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], null, null, "1", keyDataNodePair);
+            } else if (keyNodeInfo.length == 4) {
+
+                keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], "1", keyDataNodePair);
+            }
 
             // 保存結果確認
             if (keyNodeSaveRet[1].equals("false")) {
@@ -289,25 +287,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[1] = "false";
                 retStrs[2] = keyNodeSaveRet[2];
 
-                throw new BatchException("Key Data Main Node Save Error");
-            }
-
-
-            // スレーブKeyNodeが存在する場合は接続して保存
-            if (keyNodeInfo.length == 4) {
-
-                // 保存実行
-                keyNodeSaveRet = setKeyNodeValue(keyNodeInfo[2], keyNodeInfo[3], "1", keyDataNodePair);
-
-                // 保存結果確認
-                if (keyNodeSaveRet[1].equals("false")) {
-                    // 保存失敗
-                    retStrs[0] = "1";
-                    retStrs[1] = "false";
-                    retStrs[2] = keyNodeSaveRet[2] + " : Sub Node Error";
-
-                    throw new BatchException("Key Data Sub Node Save Error");
-                }
+                throw new BatchException("Key Data Save Error");
             }
 
             retStrs[0] = "1";
@@ -493,59 +473,100 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         String[] retParams = null;
 
+        boolean slaveUse = false;
+        boolean mainRetry = false;
+
+        SocketException se = null;
+        IOException ie = null;
         try {
 
             // KeyNodeとの接続を確立
-            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort);
-            // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
-            // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
-            if (dtMap == null) {
-                if (subKeyNodeName != null) dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort);
+            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, false);
 
-                if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
+            while (true) {
+
+                // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
+                // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
+                if (dtMap == null) {
+                    if (subKeyNodeName != null) dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, false);
+
+                    if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                    slaveUse = true;
+                }
+
+                // writerとreaderを取り出し
+                pw = (PrintWriter)dtMap.get("writer");
+                br = (BufferedReader)dtMap.get("reader");
+
+
+                try {
+                    // 処理種別判別
+                    if (type.equals("2")) {
+
+                        // Key値でValueを取得
+                        StringBuffer buf = new StringBuffer();
+                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
+                        buf.append("2");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(new Integer(key.hashCode()).toString());
+
+                        // 送信
+                        pw.println(buf.toString());
+                        pw.flush();
+
+                        // 返却値取得
+                        String retParam = br.readLine();
+
+                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                    } else if (type.equals("4")) {
+
+                        // Tag値でキー値群を取得
+                        StringBuffer buf = new StringBuffer();
+                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
+                        buf.append("4");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(new Integer(key.hashCode()).toString());
+
+                        // 送信
+                        pw.println(buf.toString());
+                        pw.flush();
+
+                        // 返却値取得
+                        String retParam = br.readLine();
+                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                    }
+                    break;
+                } catch(SocketException tSe) {
+                    // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
+                    se = tSe;
+                } catch(IOException tIe) {
+                    // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
+                    ie = tIe;
+                }
+
+                // 既にスレーブの接続を使用している場合は、もう一度だけメインノードに接続を試みる
+                // それで駄目な場合はエラーとする
+                if (slaveUse) {
+                    if (mainRetry) {
+                        if (se != null) throw se;
+                        if (ie != null) throw ie;
+                        throw new BatchException("Key Node IO Error: detail info for log file");
+                    } else {
+
+                        // メインKeyNodeとの接続を確立
+                        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, true);
+                        if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                        mainRetry = true;
+                    }
+                } else {
+                    if (subKeyNodeName == null) {
+                        if (se != null) throw se;
+                        if (ie != null) throw ie;
+                    } else{
+                        dtMap = null;
+                    }
+                }
             }
-
-            // writerとreaderを取り出し
-            pw = (PrintWriter)dtMap.get("writer");
-            br = (BufferedReader)dtMap.get("reader");
-
-
-            // 処理種別判別
-            if (type.equals("2")) {
-
-                // Key値でValueを取得
-                StringBuffer buf = new StringBuffer();
-                // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
-                buf.append("2");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(new Integer(key.hashCode()).toString());
-
-                // 送信
-                pw.println(buf.toString());
-                pw.flush();
-
-                // 返却値取得
-                String retParam = br.readLine();
-
-                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-            } else if (type.equals("4")) {
-
-                // Tag値でキー値群を取得
-                StringBuffer buf = new StringBuffer();
-                // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
-                buf.append("4");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(new Integer(key.hashCode()).toString());
-
-                // 送信
-                pw.println(buf.toString());
-                pw.flush();
-
-                // 返却値取得
-                String retParam = br.readLine();
-                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-            }
-
         } catch (Exception e) {
             throw new BatchException(e);
         }
@@ -563,63 +584,75 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String type, String[] values) throws BatchException {
+    private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String subKeyNodeName, String subKeyNodePort, String type, String[] values) throws BatchException {
         PrintWriter pw = null;
         BufferedReader br = null;
         HashMap dtMap = null;
 
+        String nodeName = keyNodeName;
+        String nodePort = keyNodePort;
+
         String[] retParams = null;
 
+        int counter = 0;
         try {
+            do {
+                // KeyNodeとの接続を確立
+                dtMap = this.createKeyNodeConnection(nodeName, nodePort, false);
+                if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
 
-            // KeyNodeとの接続を確立
-            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort);
-            if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                // writerとreaderを取り出し
+                pw = (PrintWriter)dtMap.get("writer");
+                br = (BufferedReader)dtMap.get("reader");
 
-            // writerとreaderを取り出し
-            pw = (PrintWriter)dtMap.get("writer");
-            br = (BufferedReader)dtMap.get("reader");
+                // 処理種別判別
+                if (type.equals("1")) {
 
-            // 処理種別判別
-            if (type.equals("1")) {
+                    // Key値でデータノード名を保存
+                    StringBuffer buf = new StringBuffer();
+                    // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+                    buf.append("1");
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(new Integer(values[0].hashCode()).toString());
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(values[1]);
 
-                // Key値でデータノード名を保存
-                StringBuffer buf = new StringBuffer();
-                // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
-                buf.append("1");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(new Integer(values[0].hashCode()).toString());
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(values[1]);
+                    // 送信
+                    pw.println(buf.toString());
+                    pw.flush();
 
-                // 送信
-                pw.println(buf.toString());
-                pw.flush();
+                    // 返却値取得
+                    String retParam = br.readLine();
 
-                // 返却値取得
-                String retParam = br.readLine();
+                    retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                    if (!retParams[0].equals("true")) break:
+                } else if (type.equals("3")) {
 
-                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-            } else if (type.equals("3")) {
+                    // Tag値でキー値を保存
+                    StringBuffer buf = new StringBuffer();
+                    buf.append("3");
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(new Integer(values[0].hashCode()).toString());
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(values[1]);
 
-                // Tag値でキー値を保存
-                StringBuffer buf = new StringBuffer();
-                buf.append("3");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(new Integer(values[0].hashCode()).toString());
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(values[1]);
+                    // 送信
+                    pw.println(buf.toString());
+                    pw.flush();
 
-                // 送信
-                pw.println(buf.toString());
-                pw.flush();
+                    // 返却値取得
+                    String retParam = br.readLine();
 
-                // 返却値取得
-                String retParam = br.readLine();
+                    retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                    if (!retParams[0].equals("true")) break:
+                }
 
-                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-            }
-
+                // スレーブデータノードの名前を代入
+                nodeName = subKeyNodeName;
+                nodePort = subKeyNodePort;
+                counter++;
+            // スレーブデータノードが存在しない場合もしくは、既に2回保存を実施した場合は終了
+            } while(nodeName != null && counter < 2);
         } catch (BatchException be) {
 
             throw be;
@@ -637,27 +670,34 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      *
      * @param keyNodeName
      * @param keyNodePort
+     * @param retryFlg キャッシュを一度破棄して再接続を行う
      * @return HashMap
      * @throws BatchException
      */
-    private HashMap createKeyNodeConnection(String keyNodeName, String keyNodePort) throws BatchException {
+    private HashMap createKeyNodeConnection(String keyNodeName, String keyNodePort, boolean retryFlg) throws BatchException {
         PrintWriter pw = null;
         BufferedReader br = null;
         HashMap dtMap = null;
 
         try {
+
+            // フラグがtrueの場合はキャッシュしている接続を破棄してやり直す
+            if (retryFlg) {
+                if (this.keyNodeConnectMap.containsKey(keyNodeName + ":" + keyNodePort)) this.keyNodeConnectMap.remove(keyNodeName + ":" + keyNodePort);
+            }
+
             // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
             if (this.keyNodeConnectMap.containsKey(keyNodeName + ":" + keyNodePort)) {
 
                 // 接続済み
-                logger.debug("Existing Key Node Connection KeyNodeName = [" + keyNodeName + "] Port = [" + keyNodePort + "]");
+                //logger.debug("Existing Key Node Connection KeyNodeName = [" + keyNodeName + "] Port = [" + keyNodePort + "]");
 
                 dtMap = (HashMap)this.keyNodeConnectMap.get(keyNodeName + ":" + keyNodePort);
             } else {
 
                 // 新規接続
 
-                logger.debug("New Key Node Connection KeyNodeName = [" + keyNodeName + "] Port = [" + keyNodePort + "]");
+                //logger.debug("New Key Node Connection KeyNodeName = [" + keyNodeName + "] Port = [" + keyNodePort + "]");
                 Socket socket = new Socket(keyNodeName, new Integer(keyNodePort).intValue());
 
                 OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
@@ -678,6 +718,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (IOException ie) {
             logger.error(ie);
             dtMap = null;
+            // 一度接続不慮が発生した場合はこのSESSIONでは接続しない設定とする
+            this.keyNodeConnectMap.put(keyNodeName + ":" + keyNodePort, dtMap);
         } catch (Exception e) {
             throw new BatchException(e);
         }
