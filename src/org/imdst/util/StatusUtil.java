@@ -14,7 +14,7 @@ import org.batch.lang.BatchException;
  * @license GPL(Lv3)
  */
 public class StatusUtil {
-    // 0:正常 1:異常 2:終了
+    // 0:正常 1:異常 2:終了 3:一時停止
     private static int status = 0;
 
     public static void setStatus(int status) {

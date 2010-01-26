@@ -23,6 +23,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
     private static Hashtable dataNodeStatusMap = new Hashtable(10);
 
+    private static int execStatus = 0;
+
     protected boolean checkDataNodeStatus(String hostDtName) {
         if (!dataNodeStatusMap.containsKey(hostDtName)) return true;
         if ((Boolean)dataNodeStatusMap.get(hostDtName).equals(new Boolean(true))) return true;
@@ -34,4 +36,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     }
 
 
+    protected void execSt(int execSt) {
+        execStatus = execStatus + execSt;
+    }
 }

@@ -12,7 +12,7 @@ import org.batch.util.LoggerFactory;
 import org.imdst.util.KeyMapManager;
 import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
-
+import org.imdst.util.StatusUtil;
 /**
  * MasterNodeのメイン実行部分<br>
  *
@@ -54,6 +54,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         String[] retParams = null;
         StringBuffer retParamBuf = null;
+
+        int execSt = 1;
 
         try{
 
@@ -102,54 +104,70 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             break;
                         }
 
-                        clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
+                        while(true) {
+                            if (StatusUtil.getStatus() != 3) {
+                                execSt = 1;
+                                super.execSt(execSt);
+                                clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
-                        // 処理番号を取り出し
-                        execPattern = new Integer(clientParameterList[0]);
-                        retParamBuf = new StringBuffer();
+                                // 処理番号を取り出し
+                                execPattern = new Integer(clientParameterList[0]);
+                                retParamBuf = new StringBuffer();
 
-                        if(execPattern.equals(new Integer(1))) {
+                                if(execPattern.equals(new Integer(1))) {
 
-                            // Key値とValueを格納する
-                            retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
-                        } else if(execPattern.equals(new Integer(2))) {
+                                    // Key値とValueを格納する
+                                    retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
+                                    retParamBuf.append(retParams[0]);
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(retParams[1]);
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(retParams[2]);
+                                } else if(execPattern.equals(new Integer(2))) {
 
-                            // Key値でValueを取得する
-                            retParams = this.getKeyValue(clientParameterList[1]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
+                                    // Key値でValueを取得する
+                                    retParams = this.getKeyValue(clientParameterList[1]);
+                                    retParamBuf.append(retParams[0]);
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(retParams[1]);
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(retParams[2]);
 
-                        } else if(execPattern.equals(new Integer(3))) {
+                                } else if(execPattern.equals(new Integer(3))) {
 
-                            // Tag値でキー値群を取得する
-                            retParams = this.getTagKeys(clientParameterList[1]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
-                        } else if(execPattern.equals(new Integer(4))) {
+                                    // Tag値でキー値群を取得する
+                                    retParams = this.getTagKeys(clientParameterList[1]);
+                                    retParamBuf.append(retParams[0]);
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(retParams[1]);
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(retParams[2]);
+                                } else if(execPattern.equals(new Integer(4))) {
 
-                            // Tag値で紐付くキーとValueのセット配列を返す
+                                    // Tag値で紐付くキーとValueのセット配列を返す
 
+                                }
+                                break;
+                            }
+                            Thread.sleep(50); 
                         }
                     }
 
                     // クライアントに結果送信
                     pw.println(retParamBuf.toString());
                     pw.flush();
+                    if (execSt == 1) {
+                        execSt = -1;
+                        super.execSt(execSt);
+                    }
                 } catch (SocketException se) {
 
                     // クライアントとの接続が強制的に切れた場合は切断要求とみなす
                     closeFlg = true;
+                    if (execSt == 1) {
+                        execSt = -1;
+                        super.execSt(execSt);
+                    }
                 }
             }
 
@@ -164,6 +182,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             ret = super.ERROR;
             throw new BatchException(e);
         } finally {
+            if (execSt == 1) {
+                execSt = -1;
+                super.execSt(execSt);
+            }
 
             try {
                 // クライアントとのメインソケットクローズ
