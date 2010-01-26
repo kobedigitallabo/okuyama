@@ -226,6 +226,20 @@ abstract public class AbstractHelper extends Thread {
     }
 
     /**
+     * Helper間で共有する値を削除する.<br>
+     * 
+     * @param key キー値
+     * @return Objet 値
+     */
+    public Object removeHelperShareParam(Object key) {
+        if (helperParamShareMap.containsKey(key)) {
+            return helperParamShareMap.remove(key, val);
+        } 
+        return null;
+    }
+
+
+    /**
      * Helper用のパラメータ設定.<br>
      *
      * @param parameters パラメータ値
