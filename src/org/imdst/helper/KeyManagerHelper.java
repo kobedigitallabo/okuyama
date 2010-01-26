@@ -115,7 +115,7 @@ public class KeyManagerHelper extends AbstractHelper {
             while(!closeFlg) {
                 try {
                     clientParametersStr = br.readLine();
-
+logger.info(clientParametersStr);
                     // クライアントからの要求が接続切要求ではないか確認
                     if (clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
                         // 切断要求
@@ -177,8 +177,16 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                         }
-                    }
+                    } else if(execPattern.equals(new Integer(10))) {
 
+                        // ServerConnect Test Ping
+                        retParamBuf.append("10");
+                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        retParamBuf.append("true");
+                        // エラーの場合は以下でエラーメッセメッセージも連結
+                        //retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        //retParamBuf.append("err msg");
+                    }
 
                     pw.println(retParamBuf.toString());
                     pw.flush();

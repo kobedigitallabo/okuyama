@@ -23,6 +23,9 @@ public class DataDispatcher {
 
     private static HashMap subKeyMapNodeInfo = null;
 
+    private static HashMap allNodeMap = null;
+
+    private static boolean standby = false;
 
     private static Object syncObj = new Object();
 
@@ -55,6 +58,10 @@ public class DataDispatcher {
         String[]  keyMapNodesInfo = null;
         String[]  subkeyMapNodesInfo = null;
 
+        ArrayList keyNodeList = new ArrayList();
+        ArrayList subKeyNodeList = new ArrayList();
+        allNodeMap = new HashMap();
+
         rule = ruleStr.trim();
         ruleInt = new Integer(rule).intValue();
 
@@ -63,12 +70,14 @@ public class DataDispatcher {
         keyMapNodesInfo = keyMapNodes.split(",");
         for (int index = 0; index < keyMapNodesInfo.length; index++) {
             String keyNode = keyMapNodesInfo[index].trim();
+            keyNodeList.add(keyNode);
             String[] keyNodeDt = keyNode.split(":");
 
             keyMapNodeInfo.put(index + "_node", keyNodeDt[0]);
             keyMapNodeInfo.put(index + "_port", keyNodeDt[1]);
         }
 
+        allNodeMap.put("main", keyNodeList);
         if (subKeyMapNodes != null && !subKeyMapNodes.equals("")) {
             subKeyMapNodeInfo = new HashMap();
             subkeyMapNodesInfo = subKeyMapNodes.split(",");
@@ -76,11 +85,13 @@ public class DataDispatcher {
             for (int index = 0; index < subkeyMapNodesInfo.length; index++) {
                 String subKeyNode = subkeyMapNodesInfo[index].trim();
                 String[] subKeyNodeDt = subKeyNode.split(":");
-
+                subKeyNodeList.add(subKeyNode);
                 subKeyMapNodeInfo.put(index + "_node", subKeyNodeDt[0]);
                 subKeyMapNodeInfo.put(index + "_port", subKeyNodeDt[1]);
             }
+            allNodeMap.put("sub", subKeyNodeList);
         }
+        standby = true;
     }
 
     /**
@@ -137,4 +148,19 @@ public class DataDispatcher {
         return ret;
     }
 
+
+    /**
+     * 全てのノードの情報を返す.<br>
+     * その際返却値のMapには"main"と"sub"という文字列Keyで、それぞれArrayListに<br>
+     * 名前とポート番号を":"で連結した状態で格納して返す.<br>
+     * "sub"はスレーブノードが設定しれていない場合はなしとなる<br>
+     *
+     * @return 
+     */
+    public static HashMap getAllDataNodeInfo() {
+        while(!standby) {
+            ;
+        }
+        return allNodeMap;
+    }
 }

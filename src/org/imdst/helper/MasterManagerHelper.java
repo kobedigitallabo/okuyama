@@ -55,7 +55,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] retParams = null;
         StringBuffer retParamBuf = null;
 
-        int execSt = 1;
 
         try{
 
@@ -106,8 +105,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         while(true) {
                             if (StatusUtil.getStatus() != 3) {
-                                execSt = 1;
-                                super.execSt(execSt);
+
+                                super.execStart();
                                 clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
                                 // 処理番号を取り出し
@@ -156,18 +155,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // クライアントに結果送信
                     pw.println(retParamBuf.toString());
                     pw.flush();
-                    if (execSt == 1) {
-                        execSt = -1;
-                        super.execSt(execSt);
-                    }
+
+                    super.execEnd();
+
                 } catch (SocketException se) {
 
                     // クライアントとの接続が強制的に切れた場合は切断要求とみなす
                     closeFlg = true;
-                    if (execSt == 1) {
-                        execSt = -1;
-                        super.execSt(execSt);
-                    }
+                    super.execEnd();
                 }
             }
 
@@ -182,10 +177,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             ret = super.ERROR;
             throw new BatchException(e);
         } finally {
-            if (execSt == 1) {
-                execSt = -1;
-                super.execSt(execSt);
-            }
+            super.execEnd();
 
             try {
                 // クライアントとのメインソケットクローズ

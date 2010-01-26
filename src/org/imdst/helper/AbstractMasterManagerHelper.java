@@ -12,6 +12,7 @@ import org.batch.util.LoggerFactory;
 import org.imdst.util.KeyMapManager;
 import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
+import org.imdst.util.StatusUtil;
 
 /**
  * MasterNodeのメイン実行部分<br>
@@ -23,7 +24,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
     private static Hashtable dataNodeStatusMap = new Hashtable(10);
 
-    private static int execStatus = 0;
+    private int nowSt = 0;
 
     protected boolean checkDataNodeStatus(String hostDtName) {
         if (!dataNodeStatusMap.containsKey(hostDtName)) return true;
@@ -36,7 +37,15 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     }
 
 
-    protected void execSt(int execSt) {
-        execStatus = execStatus + execSt;
+    protected void execStart() {
+        nowSt = 1;
+        StatusUtil.addMgrExec();
+    }
+
+    protected void execEnd() {
+        if(nowSt == 1) {
+            nowSt = 0;
+            StatusUtil.endMgrExec();
+        }
     }
 }
