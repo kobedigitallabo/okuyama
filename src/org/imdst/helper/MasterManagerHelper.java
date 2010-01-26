@@ -273,10 +273,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 保存実行
             // スレーブKeyNodeが存在する場合で値を変更
            if (keyNodeInfo.length == 2) {
-
                 keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], null, null, "1", keyDataNodePair);
             } else if (keyNodeInfo.length == 4) {
-
                 keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], "1", keyDataNodePair);
             }
 
@@ -599,6 +597,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] retParams = null;
 
         int counter = 0;
+
+
         try {
             do {
                 // KeyNodeとの接続を確立
@@ -629,7 +629,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     String retParam = br.readLine();
 
                     retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                    if (!retParams[0].equals("true")) break:
+
+                    if (!retParams[1].equals("true")) break;
                 } else if (type.equals("3")) {
 
                     // Tag値でキー値を保存
@@ -648,7 +649,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     String retParam = br.readLine();
 
                     retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                    if (!retParams[0].equals("true")) break:
+                    if (!retParams[1].equals("true")) break;
                 }
 
                 // スレーブデータノードの名前を代入

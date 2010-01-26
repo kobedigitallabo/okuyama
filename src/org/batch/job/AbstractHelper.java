@@ -233,7 +233,7 @@ abstract public class AbstractHelper extends Thread {
      */
     public Object removeHelperShareParam(Object key) {
         if (helperParamShareMap.containsKey(key)) {
-            return helperParamShareMap.remove(key, val);
+            return helperParamShareMap.remove(key);
         } 
         return null;
     }
