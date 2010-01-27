@@ -93,23 +93,25 @@ public class KeyNodeWatchJob extends AbstractJob implements IJob {
                     String nodeInfo = (String)mainNodeList.get(i);
                     String[] nodeDt = nodeInfo.split(":");
 
-                    logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
+                    logger.debug(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
 
                     if(!this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue())) {
-                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Error");
+                        logger.debug(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Error");
                         checkErrorMap.put(nodeInfo, new Boolean(false));
                     }
+                    logger.debug(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
 
                     // ノードチェック(Sub)
                     if (subNodeList != null && i < subNodeList.size()) {
                         String subNodeInfo = (String)subNodeList.get(i);
                         String[] subNodeDt = subNodeInfo.split(":");
 
-                        logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Start");
+                        logger.debug(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Start");
                         if(!this.execNodePing(subNodeDt[0], new Integer(subNodeDt[1]).intValue())) {
-                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Error");
+                            logger.debug(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Error");
                             checkErrorMap.put(subNodeInfo, new Boolean(false));
                         }
+                        logger.debug(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
                     }
                 }
             }
@@ -147,8 +149,8 @@ public class KeyNodeWatchJob extends AbstractJob implements IJob {
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append("PING_CHECK");
             buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append(new Date().getTime());
-            logger.info(buf.toString());
+            buf.append("Check");
+
             // 送信
             pw.println(buf.toString());
             pw.flush();
@@ -160,16 +162,20 @@ public class KeyNodeWatchJob extends AbstractJob implements IJob {
 
             if (!retParams[1].equals("true")) {
                 ret = false;
-                logger.info(retParams[2]);
             }
+            pw.println(ImdstDefine.imdstConnectExitRequest);
+            pw.flush();
         } catch(Exception e) {
             ret = false;
             logger.info("Node Ping Chekc Error Node Name = [" + nodeName + "] Port [" + port + "]");
             logger.info(e);
         } finally {
             try {
+
                 if (br != null) br.close();
-                if (pw != null) pw.close();
+                if (pw != null) {
+                    pw.close();
+                }
                 if (socket != null) socket.close();
             } catch(Exception e2) {
                 // 無視

@@ -123,6 +123,8 @@ public class DataDispatcher {
             execKeyInt = new Integer(work.substring(1,work.length())).intValue();
         }
 
+
+
         int nodeNo = execKeyInt % new Integer(useRule).intValue();
         if (nodeNo == 0) {
             nodeNo = useRule;

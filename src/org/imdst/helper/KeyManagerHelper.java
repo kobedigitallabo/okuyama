@@ -115,7 +115,7 @@ public class KeyManagerHelper extends AbstractHelper {
             while(!closeFlg) {
                 try {
                     clientParametersStr = br.readLine();
-logger.info(clientParametersStr);
+
                     // クライアントからの要求が接続切要求ではないか確認
                     if (clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
                         // 切断要求
@@ -130,7 +130,6 @@ logger.info(clientParametersStr);
                     execPattern = new Integer(clientParameterList[0]);
                     retParamBuf = new StringBuffer();
                     if(execPattern.equals(new Integer(1))) {
-
                         // Key値とDataNode名を格納する
                         requestHashCode = new Integer(clientParameterList[1]);
                         requestDataNode = clientParameterList[2];
