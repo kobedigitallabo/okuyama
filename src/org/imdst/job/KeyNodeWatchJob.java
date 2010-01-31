@@ -89,6 +89,7 @@ public class KeyNodeWatchJob extends AbstractJob implements IJob {
                         StatusUtil.setStatus(2);
                     }
 
+
                     // ノードチェック(メイン)
                     String nodeInfo = (String)mainNodeList.get(i);
                     String[] nodeDt = nodeInfo.split(":");
