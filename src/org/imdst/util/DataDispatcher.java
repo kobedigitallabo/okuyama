@@ -136,17 +136,31 @@ public class DataDispatcher {
         if (subKeyMapNodeInfo != null) {
 
             ret = new String[4];
-            ret[2] = (String)subKeyMapNodeInfo.get(nodeNo + "_node");
-            ret[3] = (String)subKeyMapNodeInfo.get(nodeNo + "_port");
+            while(true) {
+                if (StatusUtil.getStatus() != 3) {
 
+                    ret[2] = (String)subKeyMapNodeInfo.get(nodeNo + "_node");
+                    ret[3] = (String)subKeyMapNodeInfo.get(nodeNo + "_port");
+                    break;
+                }
+                try {
+                    Thread.sleep(20);
+                } catch (Exception e) {}
+            }
         } else {
             ret = new String[2];
         }
 
-        ret[0] = (String)keyMapNodeInfo.get(nodeNo + "_node");
-        ret[1] = (String)keyMapNodeInfo.get(nodeNo + "_port");
-
-
+        while(true) {
+            if (StatusUtil.getStatus() != 3) {
+                ret[0] = (String)keyMapNodeInfo.get(nodeNo + "_node");
+                ret[1] = (String)keyMapNodeInfo.get(nodeNo + "_port");
+                break;
+            }
+            try {
+                Thread.sleep(20);
+            } catch (Exception e) {}
+        }
         return ret;
     }
 
