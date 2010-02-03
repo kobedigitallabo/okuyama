@@ -280,7 +280,7 @@ abstract public class AbstractJob extends Thread {
         Object[] ret = null;
         Object helperRet = null;
         try {
-        
+            
             for(int i = 0; i < limitTime; i++) {
                 if (getHelperStatus(helperCode).equals(BatchDefine.JOB_STATUS_END)) {
                     helperRet = removeHelperReturnParam(helperCode);

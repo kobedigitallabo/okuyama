@@ -22,20 +22,9 @@ import org.imdst.util.StatusUtil;
  */
 abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
-    private static Hashtable dataNodeStatusMap = new Hashtable(10);
+    protected static Hashtable checkErrorMap = new Hashtable(10);
 
     private int nowSt = 0;
-
-    protected boolean checkDataNodeStatus(String hostDtName) {
-        if (!dataNodeStatusMap.containsKey(hostDtName)) return true;
-        if ((Boolean)dataNodeStatusMap.get(hostDtName).equals(new Boolean(true))) return true;
-        return false;
-    }
-
-    protected void setDataNodeStatus(String hostDtName, boolean status) {
-        dataNodeStatusMap.put(hostDtName, new Boolean(status));
-    }
-
 
     protected void execStart() {
         nowSt = 1;
