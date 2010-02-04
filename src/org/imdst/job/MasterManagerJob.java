@@ -104,6 +104,12 @@ public class MasterManagerJob extends AbstractJob implements IJob {
      * 記述の決まり.<br>
      */
     private void parseAllNodesInfo() {
+        String[] mainKeyNodes = null;
+        String[] subKeyNodes = new String[0];
+        String[] allNodeInfos = null;
+        int allNodeCounter = 0;
+
+
         String keyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesInfo);
         String subKeyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_SubKeyMapNodesInfo);
         String ruleStrProp = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesRule);
@@ -119,9 +125,30 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             }
         }
 
-        // 初期化
+        // DataDispatcher初期化
         DataDispatcher.init(ruleStrs[0], keyMapNodesStr, subKeyMapNodesStr);
 
+        // StatusUtilを初期化
+        mainKeyNodes = keyMapNodesStr.split(",");
+
+        allNodeCounter = mainKeyNodes.length;
+
+        if (subKeyMapNodesStr != null && !subKeyMapNodesStr.equals("")) {
+            subKeyNodes = subKeyMapNodesStr.split(",");
+            allNodeCounter = allNodeCounter + subKeyNodes.length;
+        }
+
+        allNodeInfos = new String[allNodeCounter];
+
+        for (int i = 0; i < mainKeyNodes.length; i++) {
+            allNodeInfos[i] = mainKeyNodes[i];
+        }
+
+        for (int i = 0; i < subKeyNodes.length; i++) {
+            allNodeInfos[i + mainKeyNodes.length] = subKeyNodes[i];
+        }
+
+        StatusUtil.initNodeExecMap(allNodeInfos);
     }
 
 }

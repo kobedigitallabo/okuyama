@@ -103,8 +103,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             break;
                         }
 
-                        // データ処理の開始をマーク
-                        super.execStart();
+
                         clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
                         // 処理番号を取り出し
@@ -149,14 +148,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // クライアントに結果送信
                     pw.println(retParamBuf.toString());
                     pw.flush();
-                    // データ処理のエンドをマーク
-                    super.execEnd();
 
                 } catch (SocketException se) {
 
                     // クライアントとの接続が強制的に切れた場合は切断要求とみなす
                     closeFlg = true;
-                    super.execEnd();
                 }
             }
 
@@ -171,7 +167,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             ret = super.ERROR;
             throw new BatchException(e);
         } finally {
-            super.execEnd();
 
             try {
                 // クライアントとのメインソケットクローズ
@@ -382,6 +377,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getKeyValue - Error", be);
         } catch (Exception e) {
+        e.printStackTrace();
             retStrs[0] = "2";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - getKeyValue - Exception - " + e.toString();
@@ -484,12 +480,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         boolean slaveUse = false;
         boolean mainRetry = false;
 
+        String nowUseNodeInfo = null;
+
         SocketException se = null;
         IOException ie = null;
         try {
 
             // KeyNodeとの接続を確立
             dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, false);
+
 
             while (true) {
 
@@ -525,6 +524,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 返却値取得
                         String retParam = br.readLine();
 
+                        // ノードの使用終了
+                        
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
                     } else if (type.equals("4")) {
 
@@ -577,6 +578,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (Exception e) {
             throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeName + ":" + keyNodePort);
+            if (subKeyNodeName != null)
+            super.execNodeUseEnd(subKeyNodeName + ":" + subKeyNodePort);
         }
         return retParams;
     }
@@ -606,73 +612,120 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         int counter = 0;
 
+        String tmpSaveHost = null;
+        String[] tmpSaveData = null;
 
+        boolean mainNodeSave = false;
+        boolean subNodeSave = false;
         try {
             do {
                 // KeyNodeとの接続を確立
                 dtMap = this.createKeyNodeConnection(nodeName, nodePort, false);
-                if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
 
-                // writerとreaderを取り出し
-                pw = (PrintWriter)dtMap.get("writer");
-                br = (BufferedReader)dtMap.get("reader");
+                // 接続結果と、現在の保存先状況で処理を分岐
+                if (dtMap != null) {
+                    try {
+                        // writerとreaderを取り出し
+                        pw = (PrintWriter)dtMap.get("writer");
+                        br = (BufferedReader)dtMap.get("reader");
 
-                // 処理種別判別
-                if (type.equals("1")) {
+                        // 処理種別判別
+                        if (type.equals("1")) {
 
-                    // Key値でデータノード名を保存
-                    StringBuffer buf = new StringBuffer();
-                    // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
-                    buf.append("1");
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(new Integer(values[0].hashCode()).toString());
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(values[1]);
+                            // Key値でデータノード名を保存
+                            StringBuffer buf = new StringBuffer();
+                            // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+                            buf.append("1");
+                            buf.append(ImdstDefine.keyHelperClientParamSep);
+                            buf.append(new Integer(values[0].hashCode()).toString());
+                            buf.append(ImdstDefine.keyHelperClientParamSep);
+                            buf.append(values[1]);
 
-                    // 送信
-                    pw.println(buf.toString());
-                    pw.flush();
+                            // 送信
+                            pw.println(buf.toString());
+                            pw.flush();
 
-                    // 返却値取得
-                    String retParam = br.readLine();
+                            // 返却値取得
+                            String retParam = br.readLine();
 
-                    retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                            retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
 
-                    if (!retParams[1].equals("true")) break;
-                } else if (type.equals("3")) {
+                            if (retParams[1].equals("true")) {
+                                if (counter == 0) mainNodeSave = true;
+                                if (counter == 1) subNodeSave = true;
+                            }
+                        } else if (type.equals("3")) {
 
-                    // Tag値でキー値を保存
-                    StringBuffer buf = new StringBuffer();
-                    buf.append("3");
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(new Integer(values[0].hashCode()).toString());
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(values[1]);
+                            // Tag値でキー値を保存
+                            StringBuffer buf = new StringBuffer();
+                            buf.append("3");
+                            buf.append(ImdstDefine.keyHelperClientParamSep);
+                            buf.append(new Integer(values[0].hashCode()).toString());
+                            buf.append(ImdstDefine.keyHelperClientParamSep);
+                            buf.append(values[1]);
 
-                    // 送信
-                    pw.println(buf.toString());
-                    pw.flush();
+                            // 送信
+                            pw.println(buf.toString());
+                            pw.flush();
 
-                    // 返却値取得
-                    String retParam = br.readLine();
+                            // 返却値取得
+                            String retParam = br.readLine();
 
-                    retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                    if (!retParams[1].equals("true")) break;
+                            retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                            if (retParams[1].equals("true")) {
+                                if (counter == 0) mainNodeSave = true;
+                                if (counter == 1) subNodeSave = true;
+                            }
+                        }
+                    } catch (SocketException se) {
+                        logger.debug(se);
+                    } catch (IOException ie) {
+                        logger.debug(ie);
+                    }
                 }
 
                 // スレーブデータノードの名前を代入
                 nodeName = subKeyNodeName;
                 nodePort = subKeyNodePort;
+
                 counter++;
-            // スレーブデータノードが存在しない場合もしくは、既に2回保存を実施した場合は終了
+                // スレーブデータノードが存在しない場合もしくは、既に2回保存を実施した場合は終了
             } while(nodeName != null && counter < 2);
+
+            // ノードへの保存状況を確認
+            if (mainNodeSave == false && subNodeSave == false) {
+
+                throw new BatchException("Key Node IO Error: detail info for log file");
+            } else if (mainNodeSave == false && subNodeSave == true) {
+
+                tmpSaveHost = keyNodeName + ":" + keyNodePort;
+                tmpSaveData = new String[3];
+                tmpSaveData[0] = type;
+                tmpSaveData[1] = values[0];
+                tmpSaveData[2] = values[1];
+                super.setTmpSaveData(tmpSaveHost, tmpSaveData);
+            } else if (mainNodeSave == true && subKeyNodeName != null && subNodeSave == false) {
+
+                tmpSaveHost = subKeyNodeName + ":" + subKeyNodePort;
+                tmpSaveData = new String[3];
+                tmpSaveData[0] = type;
+                tmpSaveData[1] = values[0];
+                tmpSaveData[2] = values[1];
+                super.setTmpSaveData(tmpSaveHost, tmpSaveData);
+            }
         } catch (BatchException be) {
 
             throw be;
         } catch (Exception e) {
 
             throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeName + ":" + keyNodePort);
+            if (subKeyNodeName != null)
+            super.execNodeUseEnd(subKeyNodeName + ":" + subKeyNodePort);
         }
+
         return retParams;
     }
 
@@ -694,6 +747,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
+            if (!super.isNodeArrival(keyNodeName + ":" + keyNodePort)) return null;
             // フラグがtrueの場合はキャッシュしている接続を破棄してやり直す
             if (retryFlg) {
                 if (this.keyNodeConnectMap.containsKey(keyNodeName + ":" + keyNodePort)) this.keyNodeConnectMap.remove(keyNodeName + ":" + keyNodePort);
@@ -731,8 +785,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (IOException ie) {
             logger.error(ie);
             dtMap = null;
+
             // 一度接続不慮が発生した場合はこのSESSIONでは接続しない設定とする
-            this.keyNodeConnectMap.put(keyNodeName + ":" + keyNodePort, dtMap);
+            super.setDeadNode(keyNodeName + ":" + keyNodePort);
         } catch (Exception e) {
             throw new BatchException(e);
         }

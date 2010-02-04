@@ -115,7 +115,7 @@ public class DataDispatcher {
      */
     public static String[] dispatchKeyNode(String key, int useRule) {
         String[] ret = null;
-
+        boolean noWaitFlg = false;
     
         int execKeyInt = key.hashCode();
         if (execKeyInt < 0) {
@@ -136,31 +136,39 @@ public class DataDispatcher {
         if (subKeyMapNodeInfo != null) {
 
             ret = new String[4];
-            while(true) {
-                if (StatusUtil.getStatus() != 3) {
 
-                    ret[2] = (String)subKeyMapNodeInfo.get(nodeNo + "_node");
-                    ret[3] = (String)subKeyMapNodeInfo.get(nodeNo + "_port");
-                    break;
-                }
-                try {
-                    Thread.sleep(20);
-                } catch (Exception e) {}
-            }
+            ret[2] = (String)subKeyMapNodeInfo.get(nodeNo + "_node");
+            ret[3] = (String)subKeyMapNodeInfo.get(nodeNo + "_port");
         } else {
             ret = new String[2];
         }
 
+        ret[0] = (String)keyMapNodeInfo.get(nodeNo + "_node");
+        ret[1] = (String)keyMapNodeInfo.get(nodeNo + "_port");
+
+        // どちらか一方でも一時停止の場合は中断
         while(true) {
-            if (StatusUtil.getStatus() != 3) {
-                ret[0] = (String)keyMapNodeInfo.get(nodeNo + "_node");
-                ret[1] = (String)keyMapNodeInfo.get(nodeNo + "_port");
-                break;
+            noWaitFlg = true;
+            // 停止ステータスか確認する
+            if (StatusUtil.isWaitStatus(ret[0] + ":" + ret[1])) noWaitFlg = false;
+
+            if (ret.length > 2) {
+                if(StatusUtil.isWaitStatus(ret[2] + ":" + ret[3])) noWaitFlg = false;
             }
+
+            if  (noWaitFlg) break;
+
             try {
-                Thread.sleep(20);
+                //System.out.println("DataDispatcher - 停止中");
+                Thread.sleep(50);
             } catch (Exception e) {}
         }
+
+        // ノードの使用をマーク
+        for (int i = 0; i < ret.length; i = i + 2) {
+            StatusUtil.addNodeUse(ret[i] + ":" + ret[i+1]);
+        }
+
         return ret;
     }
 

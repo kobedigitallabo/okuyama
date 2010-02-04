@@ -30,12 +30,15 @@ public class TestSock {
                 // マスタサーバに接続
                 imdstKeyValueClient.connect(args[1], port);
 
+                long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     // データ登録
                     if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
                         System.out.println("ImdstKeyValueClient - error");
                     }
                 }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
             } else if (args[0].equals("2")) {
@@ -45,6 +48,7 @@ public class TestSock {
                 imdstKeyValueClient.connect(args[1], port);
                 String[] ret = null;
 
+                long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
                     if (ret[0].equals("true")) {
@@ -56,8 +60,33 @@ public class TestSock {
                         System.out.println(ret[1]);
                     }
                 }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
+            } else if (args[0].equals("2.1")) {
+
+                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                String[] ret = null;
+
+                long start = new Date().getTime();
+                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                    ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
+                    if (ret[0].equals("true")) {
+                        // データ有り
+                    } else if (ret[0].equals("false")) {
+                        System.out.println("データなし");
+                    } else if (ret[0].equals("error")) {
+                        System.out.println(ret[1]);
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                imdstKeyValueClient.close();
+
             } else if (args[0].equals("3")) {
 
                 // ImdstKeyValueClientを使用してデータを保存(Tagあり)
