@@ -47,6 +47,8 @@ public class ImdstDefine {
     // クラインが接続を切断する際に通知する文字列
     public static final String imdstConnectExitRequest = "(&imdst9999&)";
 
+    // 全てのKeyMapObjectファイルをKey=Valueの形式で接続した場合のデータ区切り文字
+    public static final String imdstConnectAllDataSendDataSep = ";";
 
     /* --  設定ファイルの固定文字列系定数  ----------                     */
     public static final String Prop_KeyMapNodesRule = "KeyMapNodesRule";

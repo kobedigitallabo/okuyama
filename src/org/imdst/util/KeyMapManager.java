@@ -187,7 +187,7 @@ public class KeyMapManager extends Thread {
 
                     }
 
-                    this.fos = new FileOutputStream(new File(workKeyFilePath), true);
+                    this.fos = new FileOutputStream(new File(this.workKeyFilePath), true);
                     this.osw = new OutputStreamWriter(fos , workMapFileEnc);
                     this.bw = new BufferedWriter(osw);
                     this.bw.newLine();
@@ -257,7 +257,7 @@ public class KeyMapManager extends Thread {
                             tmpKeyFile.renameTo(new File(this.keyFilePath));
 
                             // WorkKeyMapファイルを消しこみ
-                            File workKeyMapObjFile = new File(workKeyFilePath);
+                            File workKeyMapObjFile = new File(this.workKeyFilePath);
                             if (workKeyMapObjFile.exists()) {
 
                                 this.bw.close();
@@ -267,7 +267,7 @@ public class KeyMapManager extends Thread {
                             }
 
                             // WorkKeyMapファイル用のストリームを作成
-                            this.fos = new FileOutputStream(new File(workKeyFilePath));
+                            this.fos = new FileOutputStream(new File(this.workKeyFilePath));
                             this.osw = new OutputStreamWriter(fos , workMapFileEnc);
                             this.bw = new BufferedWriter(osw);
 
@@ -410,6 +410,112 @@ public class KeyMapManager extends Thread {
         }
         return ret;
     }
+
+
+    // 引数で渡されてストリームに対しkeyMapObjを書き出す
+    public void outputKeyMapObj2Stream(PrintWriter pw) throws BatchException {
+        if (!blocking) {
+            try {
+                synchronized(poolKeyLock) {
+                    logger.info("outputKeyMapObj2Stream - synchronized - start");
+                    synchronized(this.getKeyLock) {
+                        String allDataSep = "";
+                        StringBuffer allDataBuf = new StringBuffer();
+
+                        // keyMapObjの全内容を1行文字列として書き出し
+                        Set entrySet = this.keyMapObj.entrySet();
+                        Iterator entryIte = entrySet.iterator();   
+                        while(entryIte.hasNext()) {
+                            Map.Entry obj = (Map.Entry)entryIte.next();
+
+                            allDataBuf.append(allDataSep);
+                            allDataBuf.append((Integer)obj.getKey());
+                            allDataBuf.append(workFileSeq);
+                            allDataBuf.append(this.keyMapObjGet((Integer)obj.getKey()));
+                            allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                        }   
+
+                        pw.println(allDataBuf.toString());
+                    }
+                    //logger.debug("outputKeyMapObj2Stream - synchronized - end");
+                }
+            } catch (Exception e) {
+                logger.error("outputKeyMapObj2Stream - Error");
+                blocking = true;
+                StatusUtil.setStatus(1);
+                throw new BatchException(e);
+            }
+        }
+    }
+
+    // 引数で渡されてストリームに対しkeyMapObjを書き出す
+    public void inputKeyMapObj2Stream(BufferedReader br) throws BatchException {
+        if (!blocking) {
+            try {
+                synchronized(poolKeyLock) {
+                    logger.info("inputKeyMapObj2Stream - synchronized - start");
+                    synchronized(this.getKeyLock) {
+                        // 事前に不要なファイルを削除
+
+                        // KeyMapファイルを消しこみ
+                        File keyMapObjFile = new File(this.keyFilePath);
+                        if (keyMapObjFile.exists()) {
+                            keyMapObjFile.delete();
+                            keyMapObjFile = null;
+                        }
+
+                        // TmpKeyMapファイルを消しこみ
+                        File keyMapTmpObjFile = new File(this.keyFileTmpPath);
+                        if (keyMapTmpObjFile.exists()) {
+                            keyMapTmpObjFile.delete();
+                            keyMapTmpObjFile = null;
+                        }
+
+                        // WorkKeyMapファイルを消しこみ
+                        File workKeyMapObjFile = new File(this.workKeyFilePath);
+                        if (workKeyMapObjFile.exists()) {
+                            if (this.bw != null) this.bw.close();
+                            if (this.osw != null) this.osw.close();
+                            if (this.fos != null) this.fos.close();
+                            workKeyMapObjFile.delete();
+                        }
+
+                        // WorkKeyMapファイル用のストリームを作成
+                        this.fos = new FileOutputStream(new File(this.workKeyFilePath));
+                        this.osw = new OutputStreamWriter(fos , workMapFileEnc);
+                        this.bw = new BufferedWriter(osw);
+
+                        // ストリームからKeyMapの全内容を読み込み、パース後1件づつ登録
+                        String allDataStr = br.readLine();
+                        String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+
+                        for (int i = 0; i < allDataLines.length; i++) {
+                            if (!allDataLines[i].trim().equals("")) {
+                                String[] oneDatas = allDataLines[i].split(workFileSeq);
+                                this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
+                            }
+                        }
+
+                        // ファイルに書き込み
+                        File keyFile = new File(this.keyFilePath);
+                        FileOutputStream oF = new FileOutputStream(keyFile);
+                        ObjectOutputStream oO = new ObjectOutputStream(oF);
+                        // キャッシュ情報を保持したDataSetをファイル書き込み
+                        oO.writeObject(this.keyMapObj);
+                        oO.close();
+                        oF.close();
+                    }
+                    logger.info("inputKeyMapObj2Stream - synchronized - end");
+                }
+            } catch (Exception e) {
+                logger.error("writeKeyMapObj2Stream - Error");
+                blocking = true;
+                StatusUtil.setStatus(1);
+                throw new BatchException(e);
+            }
+        }
+    }
+
 
 
     // 自身のステータスがエラーでないかを返す

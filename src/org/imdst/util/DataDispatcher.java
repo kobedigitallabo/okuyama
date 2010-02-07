@@ -146,7 +146,8 @@ public class DataDispatcher {
         ret[0] = (String)keyMapNodeInfo.get(nodeNo + "_node");
         ret[1] = (String)keyMapNodeInfo.get(nodeNo + "_port");
 
-        // どちらか一方でも一時停止の場合は中断
+        // 該当ノードが一時使用停止の場合は使用再開されるまで停止(データ復旧時に起こりえる)
+        // どちらか一方でも一時停止の場合はWait
         while(true) {
             noWaitFlg = true;
             // 停止ステータスか確認する
