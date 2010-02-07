@@ -118,7 +118,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             }
                         }
 
-                        logger.info(nodeInfo + " - リカバリ開始");
+                        logger.info(nodeInfo + " - Recover Start");
 
 
                         // 復旧開始
@@ -126,13 +126,13 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                             // リカバー成功
                             // 該当ノードの復帰を登録
-                            logger.info(nodeInfo + " - リカバリ成功");
+                            logger.info(nodeInfo + " - Recover Success");
                             super.setArriveNode(nodeInfo);
                         } else {
-                            logger.info(nodeInfo + " - リカバリ失敗");
+                            logger.info(nodeInfo + " - Recover Miss");
                         }
 
-                        logger.info(nodeInfo + " - リカバリ終了");
+                        logger.info(nodeInfo + " - Recover End");
 
                         // 該当ノードの一時停止を解除
                         super.removeNodeWaitStatus((String)subNodeList.get(i));
@@ -177,20 +177,20 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 Thread.sleep(5);
                             }
 
-                            logger.info(subNodeInfo + " - リカバリ開始");
+                            logger.info(subNodeInfo + " - Recover Start");
 
                             // 復旧開始
                             if(this.nodeDataRecover(subNodeInfo, nodeInfo)) {
 
                                 // リカバー成功
                                 // 該当ノードの復帰を登録
-                                logger.info(subNodeInfo + " - リカバリ成功");
+                                logger.info(subNodeInfo + " - Recover Success");
                                 super.setArriveNode(subNodeInfo);
                             } else {
-                                logger.info(subNodeInfo + " - リカバリ失敗");
+                                logger.info(subNodeInfo + " - Recover Miss");
                             }
 
-                            logger.info(subNodeInfo + " - リカバリ終了");
+                            logger.info(subNodeInfo + " - Recover End");
 
                             // 一時停止を解除
                             super.removeNodeWaitStatus(subNodeInfo);
