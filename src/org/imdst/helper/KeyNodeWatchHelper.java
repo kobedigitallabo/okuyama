@@ -118,19 +118,21 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             }
                         }
 
-                        System.out.println("リカバリ開始");
+                        logger.info(nodeInfo + " - リカバリ開始");
+
 
                         // 復旧開始
-                        if(this.nodeDataRecover(nodeInfo, super.getTmpSaveDataList(nodeInfo))) {
+                        if(this.nodeDataRecover(nodeInfo, (String)subNodeList.get(i))) {
 
                             // リカバー成功
-                            // リカバー対象データを消す
-                            super.removeTmpSaveData(nodeInfo);
                             // 該当ノードの復帰を登録
+                            logger.info(nodeInfo + " - リカバリ成功");
                             super.setArriveNode(nodeInfo);
-
+                        } else {
+                            logger.info(nodeInfo + " - リカバリ失敗");
                         }
-                        System.out.println("リカバリ終了");
+
+                        logger.info(nodeInfo + " - リカバリ終了");
 
                         // 該当ノードの一時停止を解除
                         super.removeNodeWaitStatus((String)subNodeList.get(i));
@@ -175,25 +177,24 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 Thread.sleep(5);
                             }
 
-                            System.out.println("リカバリ開始");
-
+                            logger.info(subNodeInfo + " - リカバリ開始");
 
                             // 復旧開始
-                            /*if(!this.nodeDataRecover(nodeInfo, dataList)) {
-
-                                // リカバー失敗
-                            } else {
+                            if(this.nodeDataRecover(subNodeInfo, nodeInfo)) {
 
                                 // リカバー成功
-                                // リカバー対象データを消す
-                            }*/
+                                // 該当ノードの復帰を登録
+                                logger.info(subNodeInfo + " - リカバリ成功");
+                                super.setArriveNode(subNodeInfo);
+                            } else {
+                                logger.info(subNodeInfo + " - リカバリ失敗");
+                            }
 
-                            System.out.println("リカバリ終了");
-                            // ノードの復帰を登録
-                            super.setArriveNode(subNodeInfo);
+                            logger.info(subNodeInfo + " - リカバリ終了");
+
+                            // 一時停止を解除
                             super.removeNodeWaitStatus(subNodeInfo);
                             super.removeNodeWaitStatus(nodeInfo);
-
                         }
                         logger.debug(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
                     }
@@ -282,31 +283,38 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
 
     /**
-     * ダウン状態から復帰したノードに対して、ダウン時のデータを全て登録する.<br>
+     * ダウン状態から復帰したノードに対して、ペアーのノードのデータをコピーする.<br>
      *
      *
      *
      */
-    private boolean nodeDataRecover(String nodeInfo, ArrayList dataList) throws BatchException {
+    private boolean nodeDataRecover(String nodeInfo, String masterNodeInfo) throws BatchException {
         boolean ret = true;
 
+        String retParam = null;
+        String[] retParams = null;
+
         String[] nodeDt = nodeInfo.split(":");
+        String[] masterNodeDt = masterNodeInfo.split(":");
 
         String nodeName = nodeDt[0];
         int nodePort = new Integer(nodeDt[1]).intValue();
+
+        String masterNodeName = masterNodeDt[0];
+        int masterNodePort = new Integer(masterNodeDt[1]).intValue();
+
         PrintWriter pw = null;
         BufferedReader br = null;
         Socket socket = null;
+        ObjectOutputStream oos = null;
 
-        String[] recoverData = null;
-
-        String[] retParams = null;
-
-        int counter = 0;
+        PrintWriter mpw = null;
+        BufferedReader mbr = null;
+        Socket msocket = null;
+        ObjectInputStream mois = null;
 
         try {
-
-            // KeyNodeとの接続を確立
+            // コピー先KeyNodeとの接続を確立
             socket = new Socket(nodeName, nodePort);
 
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
@@ -315,70 +323,44 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
             br = new BufferedReader(isr);
 
-            for (int i = 0; i < dataList.size(); i++) {
-                recoverData = (String[])dataList.get(i);
+            // コピー元KeyNodeとの接続を確立
+            msocket = new Socket(masterNodeName, masterNodePort);
+            OutputStreamWriter mosw = new OutputStreamWriter(msocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
+            mpw = new PrintWriter(new BufferedWriter(mosw));
 
-                try {
-                    // 処理種別判別
-                    if (recoverData[0].equals("1")) {
+            InputStreamReader misr = new InputStreamReader(msocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
+            mbr = new BufferedReader(misr);
 
-                        // Key値でデータノード名を保存
-                        StringBuffer buf = new StringBuffer();
-                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
-                        buf.append("1");
-                        buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(new Integer(recoverData[1].hashCode()).toString());
-                        buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(recoverData[2]);
 
-                        // 送信
-                        pw.println(buf.toString());
-                        pw.flush();
+            // TODO:一度に全てのデータを1行文字列で読み込むので改良の余地あり
 
-                        // 返却値取得
-                        String retParam = br.readLine();
+            // コピー元からデータ読み込み
+            StringBuffer buf = new StringBuffer();
+            // 処理番号20
+            buf.append("20");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append("true");
+            // 送信
+            mpw.println(buf.toString());
+            mpw.flush();
 
-                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+            // データ取得
+            retParam = mbr.readLine();
 
-                        if (!retParams[1].equals("true")) {
-                            ret = false;
-                            break;
-                        }
-                    } else if (recoverData[0].equals("3")) {
+            // 取得したデータをコピー先に書き出し
+            // 処理番号21
+            buf = new StringBuffer();
+            buf.append("21");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append("true");
+            // 送信
+            pw.println(buf.toString());
+            pw.flush();
 
-                        // Tag値でキー値を保存
-                        StringBuffer buf = new StringBuffer();
-                        buf.append("3");
-                        buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(new Integer(recoverData[1].hashCode()).toString());
-                        buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(recoverData[2]);
+            // 値を書き出し
+            pw.println(retParam);
+            pw.flush();
 
-                        // 送信
-                        pw.println(buf.toString());
-                        pw.flush();
-
-                        // 返却値取得
-                        String retParam = br.readLine();
-
-                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                        if (!retParams[1].equals("true")) {
-                            ret = false;
-                            break;
-                        }
-                    }
-                } catch (SocketException se) {
-
-                    logger.error(se);
-                    ret = false;
-                    break;
-                } catch (IOException ie) {
-
-                    logger.error(ie);
-                    ret = false;
-                    break;
-                }
-            }
         } catch (Exception e) {
 
             logger.error(e);
@@ -386,11 +368,25 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
         } finally {
             try {
 
-                if (br != null) br.close();
+                // コネクション切断
                 if (pw != null) {
+                    pw.println(ImdstDefine.imdstConnectExitRequest);
+                    pw.flush();
                     pw.close();
                 }
+                if (oos != null) oos.close();
                 if (socket != null) socket.close();
+
+
+                // コネクション切断
+                if (mpw != null) {
+                    mpw.println(ImdstDefine.imdstConnectExitRequest);
+                    mpw.flush();
+                    mpw.close();
+                }
+                if (mois != null) mois.close();
+                if (msocket != null) msocket.close();
+
             } catch(Exception e2) {
                 // 無視
                 logger.error(e2);
@@ -398,5 +394,4 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
         }
         return ret;
     }
-
 }

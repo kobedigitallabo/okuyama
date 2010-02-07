@@ -185,10 +185,26 @@ public class KeyManagerHelper extends AbstractHelper {
                         // エラーの場合は以下でエラーメッセメッセージも連結
                         //retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         //retParamBuf.append("err msg");
+                    } else if(execPattern.equals(new Integer(20))) {
+
+                        // KeyMapManager Direct Connection
+                        // KeyMapObjectを読み込んで渡す
+                        this.keyMapManager.outputKeyMapObj2Stream(pw);
+                        pw.flush();
+                        retParamBuf = null;
+                    } else if(execPattern.equals(new Integer(21))) {
+
+                        // KeyMapManager Direct Connection
+                        // KeyMapObjectを読み込んで書き出す
+                        this.keyMapManager.inputKeyMapObj2Stream(br);
+                        retParamBuf = null;
                     }
 
-                    pw.println(retParamBuf.toString());
-                    pw.flush();
+
+                    if (retParamBuf != null) {
+                        pw.println(retParamBuf.toString());
+                        pw.flush();
+                    }
                 } catch (SocketException se) {
                     closeFlg = true;
                 }

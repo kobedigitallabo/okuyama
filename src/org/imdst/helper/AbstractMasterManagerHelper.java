@@ -24,52 +24,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
     protected static Hashtable checkErrorMap = new Hashtable(10);
 
-    protected static Hashtable tmpSavePool = new Hashtable();
-
     private static Object tmpSync = new Object();
 
     private int nowSt = 0;
-
-    protected void setTmpSaveData(String nodeInfo, String[] values) {
-        synchronized (tmpSync) {
-            ArrayList tmpList = null;
-            if (tmpSavePool.containsKey(nodeInfo)) {
-                tmpList = (ArrayList)tmpSavePool.get(nodeInfo);
-            } else {
-                tmpList = new ArrayList();
-            }
-
-            tmpList.add(values);
-            tmpSavePool.put(nodeInfo, tmpList);
-        }
-    }
-
-    /**
-     * 一時保存データを取得する
-     *
-     *
-     * @param nodeInfo 対象のノード情報
-     */
-    protected ArrayList getTmpSaveDataList(String nodeInfo) {
-        ArrayList retList = new ArrayList();
-        if (tmpSavePool.containsKey(nodeInfo)) {
-            retList = (ArrayList)tmpSavePool.get(nodeInfo);
-        }
-        return retList;
-    }
-
-
-    /**
-     * 一時保存データ削除する
-     *
-     *
-     * @param nodeInfo 削除対象のノード情報
-     */
-    protected void removeTmpSaveData(String nodeInfo) {
-        if (tmpSavePool.containsKey(nodeInfo)) {
-            tmpSavePool.remove(nodeInfo);
-        }
-    }
 
 
     /**

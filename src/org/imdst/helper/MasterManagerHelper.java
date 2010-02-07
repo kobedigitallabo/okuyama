@@ -696,22 +696,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             if (mainNodeSave == false && subNodeSave == false) {
 
                 throw new BatchException("Key Node IO Error: detail info for log file");
-            } else if (mainNodeSave == false && subNodeSave == true) {
-
-                tmpSaveHost = keyNodeName + ":" + keyNodePort;
-                tmpSaveData = new String[3];
-                tmpSaveData[0] = type;
-                tmpSaveData[1] = values[0];
-                tmpSaveData[2] = values[1];
-                super.setTmpSaveData(tmpSaveHost, tmpSaveData);
-            } else if (mainNodeSave == true && subKeyNodeName != null && subNodeSave == false) {
-
-                tmpSaveHost = subKeyNodeName + ":" + subKeyNodePort;
-                tmpSaveData = new String[3];
-                tmpSaveData[0] = type;
-                tmpSaveData[1] = values[0];
-                tmpSaveData[2] = values[1];
-                super.setTmpSaveData(tmpSaveHost, tmpSaveData);
             }
         } catch (BatchException be) {
 
