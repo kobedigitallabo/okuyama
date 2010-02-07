@@ -1,5 +1,7 @@
 <?php
-    
+    // PHPテストスクリプト
+    // PHPでのデータ登録
+    // 最終的にクライアントを作成予定
     $host = "127.0.0.1";
     $port = "8888";
     $sock = fsockopen($host, $port);
