@@ -65,22 +65,25 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         Socket socket = null;
 
         try{
-            // サーバソケットの生成
-            this.serverSocket = new ServerSocket(this.portNo);
-            // 共有領域にServerソケットのポインタを格納
-            super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
 
             // Option値を分解
             keyMapFiles = optionParam.split(",");
 
+            // KeyMapManagerの設定値を取得
             memoryModeStr = super.getPropertiesValue(super.getJobName() + ".memoryMode");
             keySizeStr = super.getPropertiesValue(super.getJobName() + ".keySize");
 
+            
             if (memoryModeStr != null && memoryModeStr.equals("true")) memoryMode = true;
             if (keySizeStr != null) keySize = Integer.parseInt(keySizeStr);
 
             this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], memoryMode, keySize);
             this.keyMapManager.start();
+
+            // サーバソケットの生成
+            this.serverSocket = new ServerSocket(this.portNo);
+            // 共有領域にServerソケットのポインタを格納
+            super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
 
             while (true) {
                 if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;
