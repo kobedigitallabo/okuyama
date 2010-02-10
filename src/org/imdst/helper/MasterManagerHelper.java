@@ -22,8 +22,8 @@ import org.imdst.util.StatusUtil;
 public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     private HashMap keyNodeConnectMap = new HashMap();
-    private HashMap dataNodeConnectMap = new HashMap();
 
+    private HashMap keyNodeConnectTimeMap = new HashMap();
     // 過去ルール
     private int[] oldRule = null;
 
@@ -678,8 +678,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             }
                         }
                     } catch (SocketException se) {
+
+                        super.setDeadNode(nodeName + ":" + nodePort);
                         logger.debug(se);
                     } catch (IOException ie) {
+                        super.setDeadNode(nodeName + ":" + nodePort);
                         logger.debug(ie);
                     }
                 }
@@ -738,7 +741,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
             // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
-            if (this.keyNodeConnectMap.containsKey(keyNodeName + ":" + keyNodePort)) {
+            if (this.keyNodeConnectMap.containsKey(keyNodeName + ":" + keyNodePort) && 
+                super.checkConnectionEffective(keyNodeName + ":" + keyNodePort, (Long)this.keyNodeConnectTimeMap.get(keyNodeName + ":" + keyNodePort))) {
 
                 // 接続済み
                 //logger.debug("Existing Key Node Connection KeyNodeName = [" + keyNodeName + "] Port = [" + keyNodePort + "]");
@@ -765,15 +769,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 dtMap.put("writer", pw);
                 dtMap.put("reader", br);
                 this.keyNodeConnectMap.put(keyNodeName + ":" + keyNodePort, dtMap);
+                this.keyNodeConnectTimeMap.put(keyNodeName + ":" + keyNodePort, new Long(new Date().getTime()));
             }
-        } catch (IOException ie) {
-            logger.error(ie);
+        } catch (Exception e) {
+            logger.error(keyNodeName + ":" + keyNodePort + " " + e);
             dtMap = null;
 
             // 一度接続不慮が発生した場合はこのSESSIONでは接続しない設定とする
             super.setDeadNode(keyNodeName + ":" + keyNodePort);
-        } catch (Exception e) {
-            throw new BatchException(e);
         }
 
         return dtMap;

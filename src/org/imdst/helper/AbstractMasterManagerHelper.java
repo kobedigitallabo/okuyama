@@ -22,8 +22,6 @@ import org.imdst.util.StatusUtil;
  */
 abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
-    protected static Hashtable checkErrorMap = new Hashtable(10);
-
     private static Object tmpSync = new Object();
 
     private int nowSt = 0;
@@ -36,19 +34,16 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @param nodeInfo 確認対象のノード情報
      */
     protected boolean isNodeArrival(String nodeInfo) {
-        if (checkErrorMap.containsKey(nodeInfo)) return false;
-        return true;
+        return StatusUtil.isNodeArrival(nodeInfo);
     }
 
     /**
      * ノードの復帰を登録
      *
-     *
      * @param nodeInfo 対象のノード情報
      */
     protected void setArriveNode(String nodeInfo) {
-        checkErrorMap.remove(nodeInfo);
-
+        StatusUtil.setArriveNode(nodeInfo);
     }
 
     /**
@@ -58,9 +53,25 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @param nodeInfo 対象のノード情報
      */
     protected void setDeadNode(String nodeInfo) {
-        checkErrorMap.put(nodeInfo, new Boolean(false));
-
+        StatusUtil.setDeadNode(nodeInfo);
     }
+
+    /**
+     * ノードとの接続プールが有効化確認
+     *
+     *
+     * @param nodeInfo 対象のノード情報
+     */
+    protected boolean checkConnectionEffective(String nodeInfo, Long time) {
+        if (time == null) return true;
+        Long rebootTime = StatusUtil.getNodeRebootTime(nodeInfo);
+
+        if (rebootTime == null) return true;
+        if (rebootTime.longValue() <= time.longValue()) return true;
+        return false;
+    }
+
+
 
     /**
      *ノードの一時停止を要求.<br>

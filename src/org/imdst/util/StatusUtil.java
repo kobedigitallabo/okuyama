@@ -18,39 +18,121 @@ public class StatusUtil {
     // 0:処理をしていない 1以上:処理中
     private static int masterManagerStatus = 0;
 
+    // ノードのWait状態を管理
     private static HashMap nodeStatusMap = new HashMap();
     private static Object nodeSync = new Object();
 
+    // ノードの死活状態を管理
+    private static Hashtable checkErrorMap = new Hashtable();
+
+    // ノードの使用状態を管理(数値でプラス、マイナスが格納)
     private static HashMap nodeExecMap = new HashMap();
 
+    // ノードの最新復活時間を管理
+    private static Hashtable nodeRebootTimeMap = new Hashtable();
+
+    // 全体ステータス
     // 0:正常 1:異常 2:終了 3:一時停止
     private static int status = 0;
 
+
+    /**
+     * ノード使用状態の枠を初期化
+     */
     public static void initNodeExecMap(String[] nodeInfos) {
         for (int i = 0; i < nodeInfos.length; i++) {
             nodeExecMap.put(nodeInfos[i], new Integer(0));
         }
     }
 
+
+    /**
+     * 全体ステータスを設定
+     */
     public static void setStatus(int status) {
         StatusUtil.status = status;
     }
 
+    /**
+     * 全体ステータスを取得
+     */
     public static int getStatus() {
         return StatusUtil.status;
     }
 
+    /**
+     * ノードの生存を確認
+     *
+     *
+     * @param nodeInfo 確認対象のノード情報
+     */
+    public static boolean isNodeArrival(String nodeInfo) {
+        if (checkErrorMap.containsKey(nodeInfo)) return false;
+        return true;
+    }
+
+    /**
+     * ノードの復帰を登録
+     *
+     *
+     * @param nodeInfo 対象のノード情報
+     */
+    public static void setArriveNode(String nodeInfo) {
+        checkErrorMap.remove(nodeInfo);
+        setNodeRebootTime(nodeInfo, new Long(new Date().getTime()));
+    }
+
+    /**
+     * ノードの停止を登録
+     *
+     *
+     * @param nodeInfo 対象のノード情報
+     */
+    public static void setDeadNode(String nodeInfo) {
+        checkErrorMap.put(nodeInfo, new Boolean(false));
+    }
+
+
+    /**
+     * ノードの最新起動時間を設定
+     *
+     * @param nodeInfo 対象のノード情報
+     */
+    public static void setNodeRebootTime(String nodeInfo, Long time) {
+        nodeRebootTimeMap.put(nodeInfo, time);
+    }
+
+    /**
+     * ノードの最新起動時間を取得
+     * 起動時間が記録されていない(一度も再起動が発生していない)場合はnullが応答
+     
+     * @param nodeInfo 対象のノード情報
+     */
+    public static Long getNodeRebootTime(String nodeInfo) {
+        return (Long)nodeRebootTimeMap.get(nodeInfo);
+    }
+
+
+    /**
+     * ノードの使用一時停止状態を問い合わせ
+     */
     public static boolean isWaitStatus(String nodeInfo) {
         if(nodeStatusMap.containsKey(nodeInfo)) return true;
         return false;
     }
 
+    /**
+     * ノードの使用一時停止を設定
+     */
     public static void setWaitStatus(String nodeInfo) {
         synchronized(nodeSync) {
             nodeStatusMap.put(nodeInfo, new Boolean(true));
         }
     }
 
+    /**
+     * ノードの使用一時停止を解除
+     */
     public static void removeWaitStatus(String nodeInfo) {
         synchronized(nodeSync) {
             nodeStatusMap.remove(nodeInfo);

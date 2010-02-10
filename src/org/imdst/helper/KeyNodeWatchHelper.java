@@ -38,7 +38,6 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
         HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
         this.mainNodeList = (ArrayList)allNodeInfo.get("main");
         this.subNodeList = (ArrayList)allNodeInfo.get("sub");
-        this.checkErrorMap = new Hashtable();
     }
 
     // Jobメイン処理定義
@@ -89,7 +88,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                     if(!this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue())) {
                         // ノードダウン
                         logger.debug(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Error");
-                        super.checkErrorMap.put(nodeInfo, new Boolean(false));
+                        super.setDeadNode(nodeInfo);
                     } else if (!super.isNodeArrival(nodeInfo)) {
 
                         // 停止していたノードが復帰した場合
@@ -151,7 +150,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                         if(!this.execNodePing(subNodeDt[0], new Integer(subNodeDt[1]).intValue())) {
                             // ノードダウン
                             logger.debug(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Error");
-                            super.checkErrorMap.put(subNodeInfo, new Boolean(false));
+                            super.setDeadNode(subNodeInfo);
                         } else if (!super.isNodeArrival(subNodeInfo)) {
 
                             // 停止していたノードが復帰した場合
