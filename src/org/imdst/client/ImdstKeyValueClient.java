@@ -56,6 +56,9 @@ public class ImdstKeyValueClient {
      *
      */
     public ImdstKeyValueClient() {
+		// エンコーダ、デコーダの初期化に時間を使うようなので初期化
+		BASE64EncoderStream.encode("".getBytes());
+		BASE64DecoderStream.decode("".getBytes());
     }
 
     /**
@@ -181,7 +184,6 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-long start = new Date().getTime();
 
             if (this.socket == null) throw new Exception("No ServerConnect!!");
 
@@ -196,15 +198,8 @@ long start = new Date().getTime();
                 value = ImdstKeyValueClient.blankStr;
             } else {
                 // ValueをBase64でエンコード
-byte[] tmp = value.getBytes();
-for (int i = 0; i < tmp.length; i++) {
-	System.out.println(tmp[i]);
-}
                 value = new String(BASE64EncoderStream.encode(value.getBytes()));
             }
-
-long end = new Date().getTime();
-System.out.println("" + (end - start) + "");
 
             // 文字列バッファ初期化
             serverRequestBuf = new StringBuffer();
