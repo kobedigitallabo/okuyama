@@ -60,4 +60,15 @@ public class ImdstDefine {
     public static final String dataNodeParamKey_3 = "dataSubNodeNameList";
     public static final String dataNodeParamKey_4 = "dataSubNodePortList";
     public static final String dataNodeParamKey_5 = "keyMapNodeInfo";
+
+
+	/* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */
+    public static final String keyNodeSocketKey = "socket";
+    public static final String keyNodeStreamWriterKey = "stream_writer";
+    public static final String keyNodeStreamReaderKey = "stream_reader";
+    public static final String keyNodeWriterKey = "writer";
+    public static final String keyNodeReaderKey = "reader";
+    public static final String keyNodeConnectionMapKey = "map";
+    public static final String keyNodeConnectionMapTime = "time";
+
 }

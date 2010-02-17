@@ -85,6 +85,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             while(!closeFlg) {
                 try {
 
+
                     // モード別処理
                     if (this.mode == 1) {
                         // Key-Valueモードで使用する
@@ -143,11 +144,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // Tag値で紐付くキーとValueのセット配列を返す
 
                         }
+
                     }
 
                     // クライアントに結果送信
                     pw.println(retParamBuf.toString());
                     pw.flush();
+
 
                 } catch (SocketException se) {
 
@@ -272,6 +275,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             keyDataNodePair = new String[2];
             keyDataNodePair[0] = keyStr;
             keyDataNodePair[1] = dataStr;
+
+
 
             // 保存実行
             // スレーブKeyNodeが存在する場合で値を変更
@@ -622,6 +627,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // KeyNodeとの接続を確立
                 dtMap = this.createKeyNodeConnection(nodeName, nodePort, false);
 
+
                 // 接続結果と、現在の保存先状況で処理を分岐
                 if (dtMap != null) {
                     try {
@@ -640,6 +646,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             buf.append(new Integer(values[0].hashCode()).toString());
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(values[1]);
+
 
                             // 送信
                             pw.println(buf.toString());
@@ -732,51 +739,65 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         BufferedReader br = null;
         HashMap dtMap = null;
 
+		String connectionFullName = keyNodeName + ":" + keyNodePort;
+		Long connectTime = new Long(0);
+
         try {
 
-            if (!super.isNodeArrival(keyNodeName + ":" + keyNodePort)) return null;
+            if (!super.isNodeArrival(connectionFullName)) return null;
             // フラグがtrueの場合はキャッシュしている接続を破棄してやり直す
             if (retryFlg) {
-                if (this.keyNodeConnectMap.containsKey(keyNodeName + ":" + keyNodePort)) this.keyNodeConnectMap.remove(keyNodeName + ":" + keyNodePort);
+                if (this.keyNodeConnectMap.containsKey(connectionFullName)) this.keyNodeConnectMap.remove(connectionFullName);
             }
 
             // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
-            if (this.keyNodeConnectMap.containsKey(keyNodeName + ":" + keyNodePort) && 
-                super.checkConnectionEffective(keyNodeName + ":" + keyNodePort, (Long)this.keyNodeConnectTimeMap.get(keyNodeName + ":" + keyNodePort))) {
+            if (this.keyNodeConnectMap.containsKey(connectionFullName) && 
+                super.checkConnectionEffective(connectionFullName, (Long)this.keyNodeConnectTimeMap.get(connectionFullName))) {
 
-                // 接続済み
-                //logger.debug("Existing Key Node Connection KeyNodeName = [" + keyNodeName + "] Port = [" + keyNodePort + "]");
-
-                dtMap = (HashMap)this.keyNodeConnectMap.get(keyNodeName + ":" + keyNodePort);
+                dtMap = (HashMap)this.keyNodeConnectMap.get(connectionFullName);
             } else {
 
                 // 新規接続
+                // 親クラスから既に接続済みの接続をもらう
+                HashMap connectMap = super.getActiveConnection(connectionFullName);
 
-                //logger.debug("New Key Node Connection KeyNodeName = [" + keyNodeName + "] Port = [" + keyNodePort + "]");
-                Socket socket = new Socket(keyNodeName, new Integer(keyNodePort).intValue());
 
-                OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-                pw = new PrintWriter(new BufferedWriter(osw));
+				// 接続が存在しない場合は自身で接続処理を行う
+                if (connectMap == null) {
 
-                InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-                br = new BufferedReader(isr);
+	                Socket socket = new Socket(keyNodeName, new Integer(keyNodePort).intValue());
 
-                dtMap = new HashMap();
-                dtMap.put("socket", socket);
-                dtMap.put("stream_writer", osw);
-                dtMap.put("stream_reader", isr);
+	                OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
+	                pw = new PrintWriter(new BufferedWriter(osw));
 
-                dtMap.put("writer", pw);
-                dtMap.put("reader", br);
-                this.keyNodeConnectMap.put(keyNodeName + ":" + keyNodePort, dtMap);
-                this.keyNodeConnectTimeMap.put(keyNodeName + ":" + keyNodePort, new Long(new Date().getTime()));
+	                InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
+	                br = new BufferedReader(isr);
+
+	                dtMap = new HashMap();
+
+	                // Socket, Writer, Readerをキャッシュ
+	                dtMap.put(ImdstDefine.keyNodeSocketKey, socket);
+	                dtMap.put(ImdstDefine.keyNodeStreamWriterKey, osw);
+	                dtMap.put(ImdstDefine.keyNodeStreamReaderKey, isr);
+
+	                dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
+	                dtMap.put(ImdstDefine.keyNodeReaderKey, br);
+	                connectTime = new Long(new Date().getTime());
+				} else {
+	                dtMap = (HashMap)connectMap.get(ImdstDefine.keyNodeConnectionMapKey);
+					connectTime = (Long)connectMap.get(ImdstDefine.keyNodeConnectionMapTime);
+				}
+
+                this.keyNodeConnectMap.put(connectionFullName, dtMap);
+                this.keyNodeConnectTimeMap.put(connectionFullName, connectTime);
             }
         } catch (Exception e) {
-            logger.error(keyNodeName + ":" + keyNodePort + " " + e);
+			e.printStackTrace();
+            logger.error(connectionFullName + " " + e);
             dtMap = null;
 
             // 一度接続不慮が発生した場合はこのSESSIONでは接続しない設定とする
-            super.setDeadNode(keyNodeName + ":" + keyNodePort);
+            super.setDeadNode(connectionFullName);
         }
 
         return dtMap;
@@ -800,7 +821,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         connKeyStr = (String)iterator.next();
                         cacheConn = (HashMap)this.keyNodeConnectMap.get(connKeyStr);
 
-                        PrintWriter cachePw = (PrintWriter)cacheConn.get("writer");
+						/*HashMap connMap = new HashMap();
+						connMap.put(ImdstDefine.keyNodeConnectionMapKey, cacheConn);
+						connMap.put(ImdstDefine.keyNodeConnectionMapTime, (Long)this.keyNodeConnectTimeMap.get(connKeyStr));*/
+
+						// キャッシュ層に登録
+						//super.setActiveConnection(connKeyStr, connMap);
+						
+                        PrintWriter cachePw = (PrintWriter)cacheConn.get(ImdstDefine.keyNodeWriterKey);
                         if (cachePw != null) {
                             // 切断要求を送る
                             cachePw.println(ImdstDefine.imdstConnectExitRequest);
@@ -808,22 +836,22 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             cachePw.close();
                         }
 
-                        BufferedReader cacheBr = (BufferedReader)cacheConn.get("reader");
+                        BufferedReader cacheBr = (BufferedReader)cacheConn.get(ImdstDefine.keyNodeReaderKey);
                         if (cacheBr != null) {
                             cacheBr.close();
                         }
 
-                        OutputStreamWriter cacheOsw = (OutputStreamWriter)cacheConn.get("stream_writer");
+                        OutputStreamWriter cacheOsw = (OutputStreamWriter)cacheConn.get(ImdstDefine.keyNodeStreamWriterKey);
                         if (cacheOsw != null) {
                             cacheOsw.close();
                         }
 
-                        InputStreamReader cacheIsr = (InputStreamReader)cacheConn.get("stream_reader");
+                        InputStreamReader cacheIsr = (InputStreamReader)cacheConn.get(ImdstDefine.keyNodeStreamReaderKey);
                         if (cacheIsr != null) {
                             cacheIsr.close();
                         }
 
-                        Socket cacheSoc = (Socket)cacheConn.get("socket");
+                        Socket cacheSoc = (Socket)cacheConn.get(ImdstDefine.keyNodeSocketKey);
                         if (cacheSoc != null) {
                             cacheSoc.close();
                             cacheSoc = null;

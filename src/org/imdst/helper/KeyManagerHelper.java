@@ -111,9 +111,9 @@ public class KeyManagerHelper extends AbstractHelper {
                                                           ImdstDefine.keyHelperClientParamEncoding);
             BufferedReader br = new BufferedReader(isr);
 
-
             while(!closeFlg) {
                 try {
+
                     clientParametersStr = br.readLine();
 
                     // クライアントからの要求が接続切要求ではないか確認
@@ -130,6 +130,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     execPattern = new Integer(clientParameterList[0]);
                     retParamBuf = new StringBuffer();
                     if(execPattern.equals(new Integer(1))) {
+
                         // Key値とDataNode名を格納する
                         requestHashCode = new Integer(clientParameterList[1]);
                         requestDataNode = clientParameterList[2];
@@ -140,6 +141,7 @@ public class KeyManagerHelper extends AbstractHelper {
                         retParamBuf.append(retParams[1]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[2]);
+
                     } else if(execPattern.equals(new Integer(2))) {
 
                         // Key値でDataNode名を返す

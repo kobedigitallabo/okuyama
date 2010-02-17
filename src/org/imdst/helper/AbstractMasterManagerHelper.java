@@ -22,10 +22,13 @@ import org.imdst.util.StatusUtil;
  */
 abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
-    private static Object tmpSync = new Object();
+    private static int connPoolCount = 0;
 
     private int nowSt = 0;
 
+	private static HashMap allConnectionMap = new HashMap();
+
+    private static Object connSync = new Object();
 
     /**
      * ノードの生存を確認
@@ -57,10 +60,11 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     }
 
     /**
-     * ノードとの接続プールが有効化確認
+     * ノードとの接続プールが有効か確認
      *
      *
      * @param nodeInfo 対象のノード情報
+     * @return boolean true:有効 false:無効
      */
     protected boolean checkConnectionEffective(String nodeInfo, Long time) {
         if (time == null) return true;
@@ -115,4 +119,48 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         return StatusUtil.getNodeUseStatus(nodeInfo);
     }
 
+	/**
+	 *
+	 *
+	 */
+	protected void setActiveConnection(String connectionName, HashMap connectionMap) {
+    	synchronized(connSync) {
+			ArrayList connList = null;
+			connList = (ArrayList)allConnectionMap.get(connectionName);
+
+			if (connList == null) connList = new ArrayList();
+
+			connList.add(connectionMap);
+			allConnectionMap.put(connectionName, connList);
+			connPoolCount++;
+		}
+	}
+
+
+	/**
+	 *
+	 *
+	 */
+	protected HashMap getActiveConnection(String connectionName) {
+		HashMap ret = null;
+    	synchronized(connSync) {
+			ArrayList connList = (ArrayList)allConnectionMap.get(connectionName);
+			if (connList != null) {
+				if(connList.size() > 0) {
+					ret = (HashMap)connList.remove(0);
+					connPoolCount--;
+				}
+			}
+		}
+
+		if (ret != null) {
+			if(!this.checkConnectionEffective(connectionName, (Long)ret.get("time"))) ret = null;
+		}
+		return ret;
+		
+	}
+
+	protected int getNowConnectionPoolCount() {
+		return connPoolCount;
+	}
 }
