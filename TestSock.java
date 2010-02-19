@@ -30,6 +30,7 @@ public class TestSock {
                 // マスタサーバに接続
                 imdstKeyValueClient.connect(args[1], port);
 
+Thread.sleep(100);
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     // データ登録
@@ -47,7 +48,7 @@ public class TestSock {
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
                 String[] ret = null;
-
+Thread.sleep(100);
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
