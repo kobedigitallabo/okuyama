@@ -217,24 +217,22 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private String[] setKeyValue(String keyStr, String tagStr, String dataStr) throws BatchException {
         //logger.debug("MasterManagerHelper - setKeyValue - start");
         String[] retStrs = new String[3];
-        keyStr = keyStr.trim();
-
-        // Tagは指定なしの場合はクライアントから規定文字列で送られてくるのでここでTagなしの扱いとする
-        // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
-        tagStr = tagStr.trim();
-        if (tagStr.equals(ImdstDefine.imdstBlankStrData)) {
-            tagStr = "";
-        }
 
         // data部分はブランクの場合はブランク規定文字列で送られてくるのでそのまま保存する
-        dataStr = dataStr.trim();
         String[] tagKeyPair = null;
         String[] keyNodeSaveRet = null;
         String[] keyDataNodePair = null;
 
+        // Tagは指定なしの場合はクライアントから規定文字列で送られてくるのでここでTagなしの扱いとする
+        // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
+        if (tagStr.equals(ImdstDefine.imdstBlankStrData)) {
+            tagStr = null;
+        }
+
         try {
             // Tag値を保存
-            if (!tagStr.equals("")) {
+            if (tagStr != null && !tagStr.equals("")) {
+
                 // Tag指定あり
                 // タグとキーとのセットをタグ分保存する
                 String[] tags = tagStr.split(ImdstDefine.imdstTagKeyAppendSep);
@@ -275,8 +273,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             keyDataNodePair = new String[2];
             keyDataNodePair[0] = keyStr;
             keyDataNodePair[1] = dataStr;
-
-
 
             // 保存実行
             // スレーブKeyNodeが存在する場合で値を変更
@@ -326,7 +322,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private String[] getKeyValue(String keyStr) throws BatchException {
         //logger.debug("MasterManagerHelper - getKeyValue - start");
         String[] retStrs = new String[3];
-        keyStr = keyStr.trim();
 
         String[] keyNodeSaveRet = null;
         String[] keyNodeInfo = null;
@@ -406,7 +401,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private String[] getTagKeys(String tagStr) throws BatchException {
         //logger.debug("MasterManagerHelper - getTagKeys - start");
         String[] retStrs = new String[3];
-        tagStr = tagStr.trim();
 
         String[] keyNodeSaveRet = null;
 
@@ -647,6 +641,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(values[1]);
 
+//long start1 = System.nanoTime();
+
 
                             // 送信
                             pw.println(buf.toString());
@@ -654,6 +650,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // 返却値取得
                             String retParam = br.readLine();
+//long end1 = System.nanoTime();
+//System.out.println("[" + (end1 - start1) + "]");
 
                             retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
 
@@ -765,7 +763,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 				// 接続が存在しない場合は自身で接続処理を行う
                 if (connectMap == null) {
 
-	                Socket socket = new Socket(keyNodeName, new Integer(keyNodePort).intValue());
+	                Socket socket = new Socket(keyNodeName, Integer.parseInt(keyNodePort));
 
 	                OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
 	                pw = new PrintWriter(new BufferedWriter(osw));

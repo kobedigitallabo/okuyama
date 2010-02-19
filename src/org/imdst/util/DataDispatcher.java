@@ -19,9 +19,13 @@ public class DataDispatcher {
 
     private static int ruleInt = 0;
     
-    private static HashMap keyMapNodeInfo = null;
+    private static String[] keyMapNodeInfoName = null;
+    private static String[] keyMapNodeInfoPort = null;
+    private static String[] keyMapNodeInfoFull = null;
 
-    private static HashMap subKeyMapNodeInfo = null;
+    private static String[] subKeyMapNodeInfoName = null;
+    private static String[] subKeyMapNodeInfoPort = null;
+    private static String[] subKeyMapNodeInfoFull = null;
 
     private static HashMap allNodeMap = null;
 
@@ -65,29 +69,40 @@ public class DataDispatcher {
         rule = ruleStr.trim();
         ruleInt = new Integer(rule).intValue();
 
-        keyMapNodeInfo = new HashMap();
 
         keyMapNodesInfo = keyMapNodes.split(",");
+        keyMapNodeInfoName = new String[keyMapNodesInfo.length];
+        keyMapNodeInfoPort = new String[keyMapNodesInfo.length];
+		keyMapNodeInfoFull = new String[keyMapNodesInfo.length];
+
+
         for (int index = 0; index < keyMapNodesInfo.length; index++) {
             String keyNode = keyMapNodesInfo[index].trim();
             keyNodeList.add(keyNode);
+
+			keyMapNodeInfoFull[index] = keyNode;
+
             String[] keyNodeDt = keyNode.split(":");
 
-            keyMapNodeInfo.put(index + "_node", keyNodeDt[0]);
-            keyMapNodeInfo.put(index + "_port", keyNodeDt[1]);
+            keyMapNodeInfoName[index] = keyNodeDt[0];
+            keyMapNodeInfoPort[index] = keyNodeDt[1];
         }
 
         allNodeMap.put("main", keyNodeList);
         if (subKeyMapNodes != null && !subKeyMapNodes.equals("")) {
-            subKeyMapNodeInfo = new HashMap();
             subkeyMapNodesInfo = subKeyMapNodes.split(",");
+            subKeyMapNodeInfoName = new String[subkeyMapNodesInfo.length];
+            subKeyMapNodeInfoPort = new String[subkeyMapNodesInfo.length];
+            subKeyMapNodeInfoFull = new String[subkeyMapNodesInfo.length];
 
             for (int index = 0; index < subkeyMapNodesInfo.length; index++) {
                 String subKeyNode = subkeyMapNodesInfo[index].trim();
                 String[] subKeyNodeDt = subKeyNode.split(":");
                 subKeyNodeList.add(subKeyNode);
-                subKeyMapNodeInfo.put(index + "_node", subKeyNodeDt[0]);
-                subKeyMapNodeInfo.put(index + "_port", subKeyNodeDt[1]);
+
+                subKeyMapNodeInfoFull[index] = subKeyNode;
+                subKeyMapNodeInfoName[index] = subKeyNodeDt[0];
+                subKeyMapNodeInfoPort[index] = subKeyNodeDt[1];
             }
             allNodeMap.put("sub", subKeyNodeList);
         }
@@ -120,12 +135,12 @@ public class DataDispatcher {
         int execKeyInt = key.hashCode();
         if (execKeyInt < 0) {
             String work = new Integer(execKeyInt).toString();
-            execKeyInt = new Integer(work.substring(1,work.length())).intValue();
+            execKeyInt = Integer.parseInt(work.substring(1,work.length()));
         }
 
 
 
-        int nodeNo = execKeyInt % new Integer(useRule).intValue();
+        int nodeNo = execKeyInt % useRule;
         if (nodeNo == 0) {
             nodeNo = useRule;
         }
@@ -133,28 +148,28 @@ public class DataDispatcher {
         nodeNo = nodeNo - 1;
 
         // スレーブノードの有無に合わせて配列を初期化
-        if (subKeyMapNodeInfo != null) {
+        if (subKeyMapNodeInfoName != null) {
 
             ret = new String[4];
 
-            ret[2] = (String)subKeyMapNodeInfo.get(nodeNo + "_node");
-            ret[3] = (String)subKeyMapNodeInfo.get(nodeNo + "_port");
+            ret[2] = subKeyMapNodeInfoName[nodeNo];
+            ret[3] = subKeyMapNodeInfoPort[nodeNo];
         } else {
             ret = new String[2];
         }
 
-        ret[0] = (String)keyMapNodeInfo.get(nodeNo + "_node");
-        ret[1] = (String)keyMapNodeInfo.get(nodeNo + "_port");
+        ret[0] = keyMapNodeInfoName[nodeNo];
+        ret[1] = keyMapNodeInfoPort[nodeNo];
 
         // 該当ノードが一時使用停止の場合は使用再開されるまで停止(データ復旧時に起こりえる)
         // どちらか一方でも一時停止の場合はWait
         while(true) {
             noWaitFlg = true;
             // 停止ステータスか確認する
-            if (StatusUtil.isWaitStatus(ret[0] + ":" + ret[1])) noWaitFlg = false;
+            if (StatusUtil.isWaitStatus(keyMapNodeInfoFull[nodeNo])) noWaitFlg = false;
 
             if (ret.length > 2) {
-                if(StatusUtil.isWaitStatus(ret[2] + ":" + ret[3])) noWaitFlg = false;
+                if(StatusUtil.isWaitStatus(subKeyMapNodeInfoFull[nodeNo])) noWaitFlg = false;
             }
 
             if  (noWaitFlg) break;

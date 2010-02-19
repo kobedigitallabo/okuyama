@@ -182,9 +182,10 @@ public class ImdstKeyValueClient {
         String[] serverRet = null;
 
         StringBuffer serverRequestBuf = null;
-
+long start2 = 0;
+long end2 = 0;
         try {
-
+long start1 = System.nanoTime();
             if (this.socket == null) throw new Exception("No ServerConnect!!");
 
             // エラーチェック
@@ -197,8 +198,11 @@ public class ImdstKeyValueClient {
             if (value == null ||  value.equals("")) {
                 value = ImdstKeyValueClient.blankStr;
             } else {
+
                 // ValueをBase64でエンコード
                 value = new String(BASE64EncoderStream.encode(value.getBytes()));
+
+
             }
 
             // 文字列バッファ初期化
@@ -247,6 +251,8 @@ public class ImdstKeyValueClient {
             serverRetStr = br.readLine();
 
             serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
+long end1 = System.nanoTime();
+System.out.println((end1 - start1));
 
             // 処理の妥当性確認
             if (serverRet.length == 3 && serverRet[0].equals("1")) {
