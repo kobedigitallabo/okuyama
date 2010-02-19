@@ -123,7 +123,7 @@ public class DataDispatcher {
     }
     /**
      * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
-     * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが4となる<br>
+     * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが6となる<br>
      *
      * @param key キー値
      * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
@@ -138,9 +138,8 @@ public class DataDispatcher {
             execKeyInt = Integer.parseInt(work.substring(1,work.length()));
         }
 
-
-
         int nodeNo = execKeyInt % useRule;
+
         if (nodeNo == 0) {
             nodeNo = useRule;
         }
@@ -150,16 +149,19 @@ public class DataDispatcher {
         // スレーブノードの有無に合わせて配列を初期化
         if (subKeyMapNodeInfoName != null) {
 
-            ret = new String[4];
+            ret = new String[6];
 
-            ret[2] = subKeyMapNodeInfoName[nodeNo];
-            ret[3] = subKeyMapNodeInfoPort[nodeNo];
+            ret[3] = subKeyMapNodeInfoName[nodeNo];
+            ret[4] = subKeyMapNodeInfoPort[nodeNo];
+            ret[5] = subKeyMapNodeInfoFull[nodeNo];
         } else {
-            ret = new String[2];
+            ret = new String[3];
         }
 
         ret[0] = keyMapNodeInfoName[nodeNo];
         ret[1] = keyMapNodeInfoPort[nodeNo];
+        ret[2] = keyMapNodeInfoFull[nodeNo];
+
 
         // 該当ノードが一時使用停止の場合は使用再開されるまで停止(データ復旧時に起こりえる)
         // どちらか一方でも一時停止の場合はWait
@@ -168,7 +170,7 @@ public class DataDispatcher {
             // 停止ステータスか確認する
             if (StatusUtil.isWaitStatus(keyMapNodeInfoFull[nodeNo])) noWaitFlg = false;
 
-            if (ret.length > 2) {
+            if (ret.length > 3) {
                 if(StatusUtil.isWaitStatus(subKeyMapNodeInfoFull[nodeNo])) noWaitFlg = false;
             }
 
@@ -181,8 +183,10 @@ public class DataDispatcher {
         }
 
         // ノードの使用をマーク
-        for (int i = 0; i < ret.length; i = i + 2) {
-            StatusUtil.addNodeUse(ret[i] + ":" + ret[i+1]);
+        StatusUtil.addNodeUse(keyMapNodeInfoFull[nodeNo]);
+
+        if (ret.length > 3) {
+            StatusUtil.addNodeUse(subKeyMapNodeInfoFull[nodeNo]);
         }
 
         return ret;

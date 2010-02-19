@@ -182,10 +182,10 @@ public class ImdstKeyValueClient {
         String[] serverRet = null;
 
         StringBuffer serverRequestBuf = null;
-long start2 = 0;
-long end2 = 0;
+//long start2 = 0;
+//long end2 = 0;
         try {
-long start1 = System.nanoTime();
+
             if (this.socket == null) throw new Exception("No ServerConnect!!");
 
             // エラーチェック
@@ -242,17 +242,18 @@ long start1 = System.nanoTime();
 
             // Value連結
             serverRequestBuf.append(value);
-
+//start2 = System.nanoTime();
             // サーバ送信
             pw.println(serverRequestBuf.toString());
             pw.flush();
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-
+//end2 = System.nanoTime();
             serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
-long end1 = System.nanoTime();
-System.out.println((end1 - start1));
+//long end1 = System.nanoTime();
+//System.out.println("[" + (end2 - start2) + "]");
+
 
             // 処理の妥当性確認
             if (serverRet.length == 3 && serverRet[0].equals("1")) {
