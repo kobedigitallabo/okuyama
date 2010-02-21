@@ -83,11 +83,12 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                     String nodeInfo = (String)mainNodeList.get(i);
                     String[] nodeDt = nodeInfo.split(":");
 
-                    logger.debug(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
+                    logger.info("************************************************************");
+                    logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
 
                     if(!this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue())) {
                         // ノードダウン
-                        logger.debug(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Error");
+                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Dead");
                         super.setDeadNode(nodeInfo);
                     } else if (!super.isNodeArrival(nodeInfo)) {
 
@@ -137,19 +138,22 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                         super.removeNodeWaitStatus((String)subNodeList.get(i));
                         super.removeNodeWaitStatus(nodeInfo);
                         
+                    } else {
+                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
                     }
-                    logger.debug(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
+                    logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
 
 
+                    logger.info("------------------------------------------------------------");
                     // ノードチェック(Sub)
                     if (subNodeList != null && i < subNodeList.size()) {
                         String subNodeInfo = (String)subNodeList.get(i);
                         String[] subNodeDt = subNodeInfo.split(":");
 
-                        logger.debug(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Start");
+                        logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Start");
                         if(!this.execNodePing(subNodeDt[0], new Integer(subNodeDt[1]).intValue())) {
                             // ノードダウン
-                            logger.debug(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Error");
+                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Dead");
                             super.setDeadNode(subNodeInfo);
                         } else if (!super.isNodeArrival(subNodeInfo)) {
 
@@ -194,8 +198,11 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             // 一時停止を解除
                             super.removeNodeWaitStatus(subNodeInfo);
                             super.removeNodeWaitStatus(nodeInfo);
+                        } else {
+                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Arrival");
                         }
-                        logger.debug(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
+                        logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
+                        logger.info("************************************************************");
                     }
                 }
             }
