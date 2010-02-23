@@ -24,6 +24,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private HashMap keyNodeConnectMap = new HashMap();
 
     private HashMap keyNodeConnectTimeMap = new HashMap();
+
+	// Subノードが存在する場合のデータ保存処理方式を並列処理にするかを指定
+	// true:並列 false:順次
+    // 並列化すると都度スレッド生成の手間がかかる為、方法を再考する必要がある
+	private boolean multiSend = false;
+
     // 過去ルール
     private int[] oldRule = null;
 
@@ -597,6 +603,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @throws BatchException
      */
     private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values) throws BatchException {
+
+		// 並列処理指定の場合は分岐(試験的に導入(デフォルト無効))
+		if (multiSend) return this.setKeyNodeValueMultiSend(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values);
+
         PrintWriter pw = null;
         BufferedReader br = null;
         HashMap dtMap = null;
@@ -724,6 +734,156 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 	        if (retParam != null) {
 	            retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
 	        }
+        }
+
+        return retParams;
+    }
+
+    /**
+     * KeyNodeに対して並列処理でデータを保存を行うする.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加)
+     * @param values 送信データ
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyNodeValueMultiSend(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values) throws BatchException {
+        PrintWriter pw = null;
+        BufferedReader br = null;
+        HashMap dtMap = null;
+
+        String nodeName = keyNodeName;
+        String nodePort = keyNodePort;
+        String nodeFullName = keyNodeFullName;
+
+        String[] retParams = null;
+
+        int counter = 0;
+
+        String tmpSaveHost = null;
+        String[] tmpSaveData = null;
+		String retParam = null;
+
+		DataNodeSender mainNodeSender = null;
+		DataNodeSender subNodeSender = null;
+
+        boolean mainNodeSave = false;
+        boolean subNodeSave = false;
+
+		String successRet = null;
+		String errorRet = null;
+
+        try {
+            do {
+                // KeyNodeとの接続を確立
+                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+
+
+                // 接続結果と、現在の保存先状況で処理を分岐
+                if (dtMap != null) {
+
+                    // writerとreaderを取り出し
+                    pw = (PrintWriter)dtMap.get("writer");
+                    br = (BufferedReader)dtMap.get("reader");
+
+//long start1 = System.nanoTime();
+                    // 処理種別判別
+                    if (type.equals("1") || type.equals("3")) {
+						// Key値でデータを保存 or TagでKey値を保存
+						if (counter == 0) {
+							// Mainノード
+							mainNodeSender = new DataNodeSender();
+							mainNodeSender.setSendInfo(type,values[0], values[1], pw, br);
+							mainNodeSender.start();
+						} else {
+							// Subノード
+							subNodeSender = new DataNodeSender();
+							subNodeSender.setSendInfo(type,values[0], values[1], pw, br);
+							subNodeSender.start();
+						}
+					}
+//long end1 = System.nanoTime();
+//System.out.println("[" + (end1 - start1) + "]");
+                }
+
+                // スレーブデータノードの名前を代入
+                nodeName = subKeyNodeName;
+                nodePort = subKeyNodePort;
+                nodeFullName = subKeyNodeFullName;
+
+                counter++;
+                // スレーブデータノードが存在しない場合もしくは、既に2回保存を実施した場合は終了
+            } while(nodeName != null && counter < 2);
+
+			// Mainノード保存スレッドを確認
+			if (mainNodeSender != null) {
+				mainNodeSender.join();
+				if (mainNodeSender.isError()) {
+					if (mainNodeSender.getErrorType() == -1) {
+
+						errorRet = mainNodeSender.getRetParam();
+					} else if (mainNodeSender.getErrorType() != -1) {
+
+	                    super.setDeadNode(keyNodeFullName);
+	                    logger.debug(mainNodeSender.getErrorMsg());
+					}
+					mainNodeSave = false;
+				} else {
+
+					successRet = mainNodeSender.getRetParam();
+					mainNodeSave = true;
+				}
+				mainNodeSender = null;
+			}
+
+			// Subノード保存スレッドを確認
+			if (subNodeSender != null) {
+				subNodeSender.join();
+				if (subNodeSender.isError()) {
+					if (subNodeSender.getErrorType() == -1) {
+
+						errorRet = subNodeSender.getRetParam();
+					} else if (subNodeSender.getErrorType() != -1) {
+
+	                    super.setDeadNode(subKeyNodeFullName);
+	                    logger.debug(subNodeSender.getErrorMsg());
+					}
+					subNodeSave = false;
+				} else {
+
+					successRet = subNodeSender.getRetParam();
+					subNodeSave = true;
+				}
+				subNodeSender = null;
+			}
+
+            // ノードへの保存状況を確認
+            if (mainNodeSave == false && subNodeSave == false) {
+		        // 返却地値をパースする
+		        if (errorRet != null) {
+		            retParams = errorRet.split(ImdstDefine.keyHelperClientParamSep);
+		        }
+                throw new BatchException("Key Node IO Error: detail info for log file");
+            } else {
+		        // 返却地値をパースする
+		        if (successRet != null) {
+		            retParams = successRet.split(ImdstDefine.keyHelperClientParamSep);
+		        }
+			}
+        } catch (BatchException be) {
+            throw be;
+        } catch (Exception e) {
+            throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            if (subKeyNodeName != null) 
+	            super.execNodeUseEnd(subKeyNodeFullName);
         }
 
         return retParams;
@@ -870,4 +1030,102 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
     }
 
+	/**
+	 * データをノードへ反映する内部スレッド.<br>
+	 *
+	 */
+	private class DataNodeSender extends Thread {
+
+		private boolean isError = false;
+
+		private String ret = null;
+
+		// 1:SocketException 2:IOException 3:それ以外 -1:論理エラー
+		private int errorType = 0;
+
+		private String errorMsg = null;
+
+
+		private String type = null;
+
+		private String key = null;
+
+		private String value = null;
+
+        private PrintWriter pw = null;
+
+        private BufferedReader br = null;
+
+		public void run() {
+			try {
+				StringBuffer buf = new StringBuffer();
+	            buf.append(type);
+	            buf.append(ImdstDefine.keyHelperClientParamSep);
+	            buf.append(key.hashCode());
+	            buf.append(ImdstDefine.keyHelperClientParamSep);
+	            buf.append(value);
+
+	            // 送信
+	            pw.println(buf.toString());
+	            pw.flush();
+
+	            // 返却値取得
+	            ret = br.readLine();
+
+				if (type.equals("1")) {
+					if (ret.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) != 0) {
+						isError = true;
+						errorType = -1;
+					}
+				}
+
+				if (type.equals("3")) {
+					if (ret.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) != 0) {
+						isError = true;
+						errorType = -1;
+					}
+				}
+
+            } catch (SocketException se) {
+
+				errorType = 1;
+				errorMsg = se.getMessage();
+				isError = true;
+            } catch (IOException ie) {
+
+				errorType = 2;
+				errorMsg = ie.getMessage();
+				isError = true;
+			} catch (Exception e) {
+
+				errorType = 3;
+				errorMsg = e.getMessage();
+				isError = true;
+			}
+		}
+
+		public void setSendInfo(String type, String key, String value, PrintWriter pw, BufferedReader br) {
+			this.type = type;
+			this.key = key;
+			this.value = value;
+			this.pw = pw;
+			this.br = br;
+		}
+
+		public String getRetParam() {
+			return this.ret;
+		}
+
+		public boolean isError() {
+			return this.isError;
+		}
+
+		public int getErrorType() {
+			return this.errorType;
+		}
+
+		public String getErrorMsg() {
+			return this.errorMsg;
+		}
+	}
 }
