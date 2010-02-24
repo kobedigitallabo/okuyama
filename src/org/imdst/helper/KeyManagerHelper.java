@@ -91,7 +91,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
             String clientParametersStr = null;
             String[] clientParameterList = null;
-            Integer execPattern = null;
+
             Integer requestHashCode = null;
             String requestDataNode = null;
             Integer requestTag = null;
@@ -127,9 +127,8 @@ public class KeyManagerHelper extends AbstractHelper {
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
                     // 処理番号を取り出し
-                    execPattern = new Integer(clientParameterList[0]);
                     retParamBuf = new StringBuffer();
-                    if(execPattern.equals(new Integer(1))) {
+                    if(clientParameterList[0].equals("1")) {
 
                         // Key値とDataNode名を格納する
                         requestHashCode = new Integer(clientParameterList[1]);
@@ -142,7 +141,7 @@ public class KeyManagerHelper extends AbstractHelper {
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[2]);
 
-                    } else if(execPattern.equals(new Integer(2))) {
+                    } else if(clientParameterList[0].equals("2")) {
 
                         // Key値でDataNode名を返す
                         requestHashCode = new Integer(clientParameterList[1]);
@@ -155,7 +154,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                         }
-                    } else if(execPattern.equals(new Integer(3))) {
+                    } else if(clientParameterList[0].equals("3")) {
 
                         // Tag値とキー値を格納する
                         requestTag = new Integer(clientParameterList[1]);
@@ -165,7 +164,7 @@ public class KeyManagerHelper extends AbstractHelper {
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[1]);
-                    } else if(execPattern.equals(new Integer(4))) {
+                    } else if(clientParameterList[0].equals("4")) {
 
                         // Tag値でKey値を返す
                         requestHashCode = new Integer(clientParameterList[1]);
@@ -178,7 +177,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                         }
-                    } else if(execPattern.equals(new Integer(10))) {
+                    } else if(clientParameterList[0].equals("10")) {
 
                         // ServerConnect Test Ping
                         retParamBuf.append("10");
@@ -187,14 +186,14 @@ public class KeyManagerHelper extends AbstractHelper {
                         // エラーの場合は以下でエラーメッセメッセージも連結
                         //retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         //retParamBuf.append("err msg");
-                    } else if(execPattern.equals(new Integer(20))) {
+                    } else if(clientParameterList[0].equals("20")) {
 
                         // KeyMapManager Direct Connection
                         // KeyMapObjectを読み込んで渡す
                         this.keyMapManager.outputKeyMapObj2Stream(pw);
                         pw.flush();
                         retParamBuf = null;
-                    } else if(execPattern.equals(new Integer(21))) {
+                    } else if(clientParameterList[0].equals("21")) {
 
                         // KeyMapManager Direct Connection
                         // KeyMapObjectを読み込んで書き出す

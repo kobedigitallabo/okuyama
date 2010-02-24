@@ -300,7 +300,7 @@ public class KeyMapManager extends Thread {
                     if (memoryMode == false) {
 
                         // データ格納場所記述ファイル再保存
-                        this.bw.write(key.toString() + workFileSeq + keyNode + workFileSeq + workFileEndPoint);
+                        this.bw.write(new StringBuffer(key.toString()).append(workFileSeq).append(keyNode).append(workFileSeq).append(workFileEndPoint).toString());
                         this.bw.newLine();
                         this.bw.flush();
                     }
@@ -395,7 +395,8 @@ public class KeyMapManager extends Thread {
      * put<br>
      */
     private void keyMapObjPut(Integer key, String val) {
-        this.keyMapObj.put(key, val.getBytes());
+        //this.keyMapObj.put(key, val.getBytes());
+        this.keyMapObj.put(key, val);
     }
 
     /**
@@ -403,12 +404,16 @@ public class KeyMapManager extends Thread {
      * get<br>
      */
     private String keyMapObjGet(Integer key) {
+    /*
         String ret = null;
         try {
             ret = new String((byte[])this.keyMapObj.get(key), ImdstDefine.keyWorkFileEncoding);
+
         } catch(Exception e) {
         }
         return ret;
+    */
+        return (String)this.keyMapObj.get(key);
     }
 
 
