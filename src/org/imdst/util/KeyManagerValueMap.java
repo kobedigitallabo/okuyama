@@ -46,6 +46,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
             InputStreamReader isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
             BufferedReader br = new BufferedReader(isr);
             int counter = 0;
+            // !!!!!!!!!!!!!!! 現在1ファイルに改行はないのでここがおかしい ////////////////////////////
             while(br.readLine() != null){
                 counter++;
             }
