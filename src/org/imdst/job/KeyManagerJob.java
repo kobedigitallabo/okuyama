@@ -77,7 +77,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             if (memoryModeStr != null && memoryModeStr.equals("true")) memoryMode = true;
             if (keySizeStr != null) keySize = Integer.parseInt(keySizeStr);
 
-            this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], memoryMode, keySize);
+            this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], memoryMode, keySize, true);
             this.keyMapManager.start();
 
             // サーバソケットの生成

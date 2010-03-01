@@ -34,6 +34,8 @@ public class StatusUtil {
     // 全体ステータス
     // 0:正常 1:異常 2:終了 3:一時停止
     private static int status = 0;
+    // 全体メッセージ
+    private static String msg = null;
 
 
     /**
@@ -51,6 +53,14 @@ public class StatusUtil {
      */
     public static void setStatus(int status) {
         StatusUtil.status = status;
+    }
+
+    /**
+     * 全体ステータスを設定
+     */
+    public static void setStatusAndMessage(int status, String msg) {
+        StatusUtil.status = status;
+        StatusUtil.msg = msg;
     }
 
     /**
