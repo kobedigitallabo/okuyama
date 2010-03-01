@@ -59,25 +59,32 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         String keySizeStr = null;
         int keySize = 500000;
 
-        boolean memoryMode = false;
-        String memoryModeStr = null;
+        boolean workFileMemoryMode = false;
+        String workFileMemoryModeStr = null;
+
+        boolean dataMemoryMode = true;
+        String dataMemoryModeStr = null;
 
         Socket socket = null;
 
         try{
 
+
             // Option値を分解
             keyMapFiles = optionParam.split(",");
 
             // KeyMapManagerの設定値を取得
-            memoryModeStr = super.getPropertiesValue(super.getJobName() + ".memoryMode");
+            workFileMemoryModeStr = super.getPropertiesValue(super.getJobName() + ".memoryMode");
+            dataMemoryModeStr = super.getPropertiesValue(super.getJobName() + ".dataMemory");
             keySizeStr = super.getPropertiesValue(super.getJobName() + ".keySize");
 
-            
-            if (memoryModeStr != null && memoryModeStr.equals("true")) memoryMode = true;
+            // workファイルを保持するか判断
+            if (workFileMemoryModeStr != null && workFileMemoryModeStr.equals("true")) workFileMemoryMode = true;
+            // データをメモリに持つか判断
+            if (dataMemoryModeStr != null && dataMemoryModeStr.equals("false")) dataMemoryMode = false;
             if (keySizeStr != null) keySize = Integer.parseInt(keySizeStr);
 
-            this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], memoryMode, keySize, true);
+            this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode);
             this.keyMapManager.start();
 
             // サーバソケットの生成

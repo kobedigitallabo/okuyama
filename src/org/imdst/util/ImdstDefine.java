@@ -68,7 +68,7 @@ public class ImdstDefine {
     public static final String dataNodeParamKey_5 = "keyMapNodeInfo";
 
 
-	/* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */
+    /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */
     public static final String keyNodeSocketKey = "socket";
     public static final String keyNodeStreamWriterKey = "stream_writer";
     public static final String keyNodeStreamReaderKey = "stream_reader";
@@ -77,4 +77,7 @@ public class ImdstDefine {
     public static final String keyNodeConnectionMapKey = "map";
     public static final String keyNodeConnectionMapTime = "time";
 
+
+    /* -- プログラム規定数値 ----------------------------------------      */
+    public static final int saveDataMaxSize = 2000;
 }

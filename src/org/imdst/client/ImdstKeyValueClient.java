@@ -47,18 +47,19 @@ public class ImdstKeyValueClient {
 
 
     // バイナリデータ分割保存サイズ
-    // デフォルトは100KB
-    private int saveSize = 1024 * 100;
+    private int saveSize = ImdstDefine.saveDataMaxSize;
 
+    // 保存できる最大長
+    private int maxValueSize = ImdstDefine.saveDataMaxSize;
 
     /**
      * コンストラクタ
      *
      */
     public ImdstKeyValueClient() {
-		// エンコーダ、デコーダの初期化に時間を使うようなので初期化
-		BASE64EncoderStream.encode("".getBytes());
-		BASE64DecoderStream.decode("".getBytes());
+        // エンコーダ、デコーダの初期化に時間を使うようなので初期化
+        BASE64EncoderStream.encode("".getBytes());
+        BASE64DecoderStream.decode("".getBytes());
     }
 
     /**
@@ -185,6 +186,14 @@ public class ImdstKeyValueClient {
 //long start2 = 0;
 //long end2 = 0;
         try {
+            // Byte Lenghtチェック
+            if (keyStr.getBytes().length > maxValueSize) throw new Exception("Save Key Max Size " + maxValueSize + " Byte");
+            if (tagStrs != null) {
+                for (int i = 0; i < tagStrs.length; i++) {
+                    if (tagStrs[i].getBytes().length > maxValueSize) throw new Exception("Tag Max Size " + maxValueSize + " Byte");
+                }
+            }
+            if (value.getBytes().length > maxValueSize) throw new Exception("Save Value Max Size " + maxValueSize + " Byte");
 
             if (this.socket == null) throw new Exception("No ServerConnect!!");
 
@@ -326,6 +335,14 @@ public class ImdstKeyValueClient {
         int much = values.length % this.saveSize;
 
         try {
+
+            // Byte Lenghtチェック
+            if (keyStr.getBytes().length > maxValueSize) throw new Exception("Save Key Max Size " + maxValueSize + " Byte");
+            if (tagStrs != null) {
+                for (int i = 0; i < tagStrs.length; i++) {
+                    if (tagStrs[i].getBytes().length > maxValueSize) throw new Exception("Tag Max Size " + maxValueSize + " Byte");
+                }
+            }
 
             if (much > 0) keyCount = keyCount + 1;
 
