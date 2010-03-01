@@ -111,7 +111,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
 				this.lineCount++;
 				this.bw.write((String)value);
 				this.bw.newLine();
-
+                super.put(key, new Integer(lineCount));
 			} catch (Exception e) {
 				// 致命的
 				StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - get - Error [" + e.getMessage() + "]");
