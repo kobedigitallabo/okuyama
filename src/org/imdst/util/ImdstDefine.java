@@ -79,5 +79,5 @@ public class ImdstDefine {
 
 
     /* -- プログラム規定数値 ----------------------------------------      */
-    public static final int saveDataMaxSize = 2000;
+    public static final int saveDataMaxSize = 512;
 }

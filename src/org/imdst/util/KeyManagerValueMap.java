@@ -21,8 +21,8 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
     private transient BufferedWriter bw = null;
     private transient RandomAccessFile raf = null;
     private int lineCount = 0;
-    private int oneDataLength = 2760;
-    private int seekOneDataLength = (2760);
+    private int oneDataLength = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
+    private int seekOneDataLength = (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1);
 
 
     public KeyManagerValueMap(int size) {
@@ -36,7 +36,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
     public void initNoMemoryModeSetting(String lineFile) {
         try {
             memoryMode = false;
-        System.out.println("KOKO");
+
             this.fos = new FileOutputStream(new File(lineFile), true);
             this.osw = new OutputStreamWriter(this.fos, ImdstDefine.keyWorkFileEncoding);
             this.bw = new BufferedWriter (osw);
@@ -46,7 +46,8 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
             InputStreamReader isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
             BufferedReader br = new BufferedReader(isr);
             int counter = 0;
-            // !!!!!!!!!!!!!!! 現在1ファイルに改行はないのでここがおかしい ////////////////////////////
+
+            // 現在のファイルの終端
             while(br.readLine() != null){
                 counter++;
             }
@@ -67,24 +68,22 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
             ret = super.get(key);
         } else {
             try {
-            System.out.println("1111111111");
+
                 int i = 0;
                 byte[] buf = new byte[oneDataLength];
 
                 int line = ((Integer)super.get(key)).intValue();
                 
                 // seek計算
-                int seekInt = seekOneDataLength * (line - 1);
+                long seekPoint = seekOneDataLength * (line - 1);
 
-                raf.seek(seekInt);
+                raf.seek(seekPoint);
                 raf.read(buf,0,oneDataLength);
                 for (; i < buf.length; i++) {
                     if (buf[i] == 35) break;
                 }
-            System.out.println("222222222222");
+
                 ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
-                System.out.println(ret);
-            System.out.println("333333333333");
             } catch (Exception e) {
                 e.printStackTrace();
                 // 致命的
@@ -118,6 +117,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
                 // 書き込む行を決定
                 this.lineCount++;
                 this.bw.write(writeStr.toString());
+                this.bw.write("\n");
                 //this.bw.newLine();
                 this.bw.flush();
                 super.put(key, new Integer(lineCount));
