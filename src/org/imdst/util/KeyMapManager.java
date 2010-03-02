@@ -56,7 +56,7 @@ public class KeyMapManager extends Thread {
 
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
     private static int updateInterval = 10000;
-    private static int intervalCount = 72;
+    private static int intervalCount = 300;
 
     // workMapファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
