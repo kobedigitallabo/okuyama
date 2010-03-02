@@ -56,7 +56,7 @@ public class KeyMapManager extends Thread {
 
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
     private static int updateInterval = 10000;
-    private static int intervalCount = 30;
+    private static int intervalCount = 72;
 
     // workMapファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
@@ -73,7 +73,7 @@ public class KeyMapManager extends Thread {
     // Dataのメモリーモードかファイルモードかの指定
     private boolean dataMemory = true;
 
-	private String diskModeRestoreFile = null;
+    private String diskModeRestoreFile = null;
 
     // 初期化メソッド
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory) throws BatchException {
@@ -100,10 +100,10 @@ public class KeyMapManager extends Thread {
             String line = null;
             String[] workSplitStrs = null;
 
-			// Diskモード時のファイルパス作成
-			if (!this.dataMemory) {
-				this.diskModeRestoreFile = keyMapFilePath + ".data";
-			}
+            // Diskモード時のファイルパス作成
+            if (!this.dataMemory) {
+                this.diskModeRestoreFile = keyMapFilePath + ".data";
+            }
 
             synchronized(poolKeyLock) {
                 try {
@@ -123,9 +123,9 @@ public class KeyMapManager extends Thread {
                         keyFileois = new ObjectInputStream(keyFilefis);
                         try {
                             this.keyMapObj = (KeyManagerValueMap)keyFileois.readObject();
-							if (!dataMemory) {
-								this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
-							}
+                            if (!dataMemory) {
+                                this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
+                            }
                             keyFileois.close();
                             keyFilefis.close();
 
@@ -159,9 +159,9 @@ public class KeyMapManager extends Thread {
                         keyFilefis = new FileInputStream(keyFile);
                         keyFileois = new ObjectInputStream(keyFilefis);
                         this.keyMapObj = (KeyManagerValueMap)keyFileois.readObject();
-						if (!dataMemory) {
-							this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
-						}
+                        if (!dataMemory) {
+                            this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
+                        }
 
                         keyFileois.close();
                         keyFilefis.close();
@@ -170,9 +170,9 @@ public class KeyMapManager extends Thread {
                         logger.info("KeyMapFile - No Exists");
                         // 存在しない場合はMapを作成
                         this.keyMapObj = new KeyManagerValueMap(this.mapSize);
-						if (!dataMemory) {
-							this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
-						}
+                        if (!dataMemory) {
+                            this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
+                        }
 
                     }
 
