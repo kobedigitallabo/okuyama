@@ -16,6 +16,7 @@ public class TestSock {
                 System.out.println("{指定したTagで関連するキー値を指定回数取得}                       コマンド引数{args[0]=4, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数, args[4]=指定Tag値 (tag1 or tag2 or tag3 or tag4)}");
                 System.out.println("{指定したファイルをバイナリデータとして指定したキー値で保存する}  コマンド引数{args[0]=5, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=登録回数, args[4]=ファイルパス, args[5]=キー値}");
                 System.out.println("{指定したキー値でバイナリデータを取得してファイル化する}          コマンド引数{args[0]=6, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数, args[4]=作成ファイルパス, args[5]=キー値}");
+                System.out.println("{キー値を自動で繰り返し数分変動させて削除}                        コマンド引数{args[0]=7, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数}");
                 System.exit(0);
             }
             int port = Integer.parseInt(args[2]);
@@ -121,6 +122,18 @@ Thread.sleep(100);
                 }
 
                 imdstKeyValueClient.close();
+			} else if (args[0].equals("3.1")) {
+
+                // ImdstKeyValueClientを使用してデータを保存(Tagあり)
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                String[] setTag = args[4].split(" ");
+
+                int counter = 0;
+				String keyStr = null;
+				imdstKeyValueClient.setValue(args[3], setTag, args[5]);
+
+                imdstKeyValueClient.close();
             } else if (args[0].equals("4")) {
 
                 // ImdstKeyValueClientを使用してデータを取得(Tagでの取得)
@@ -146,6 +159,8 @@ Thread.sleep(100);
                 if (keys != null) {
                     for (int ii = 0; ii < keys.length; ii++) {
                         System.out.println(keys[ii]);
+						String[] ret = imdstKeyValueClient.getValue(keys[ii]);
+						System.out.println(ret[1]);
                     }
                 }
                 long end = new Date().getTime();
@@ -203,7 +218,30 @@ Thread.sleep(100);
                 long end = new Date().getTime();
                 System.out.println((end - start));
                 imdstKeyValueClient.close();
-            }
+            } else if (args[0].equals("7")) {
+
+                // ImdstKeyValueClientを使用してデータを削除
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                String[] ret = null;
+
+                long start = new Date().getTime();
+                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                    ret = imdstKeyValueClient.removeValue("datasavekey_" + new Integer(i).toString());
+                    if (ret[0].equals("true")) {
+                        // データ有り
+                        System.out.println(ret[1]);
+                    } else if (ret[0].equals("false")) {
+                        System.out.println("データなし");
+                    } else if (ret[0].equals("error")) {
+                        System.out.println(ret[1]);
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                imdstKeyValueClient.close();
+			}
 
         } catch (Exception e) {
             e.printStackTrace();

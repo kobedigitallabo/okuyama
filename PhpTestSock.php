@@ -10,6 +10,7 @@
     $key =  base64_encode("datasavekey_php_0");
 
     $request =  "2#imdst3674#" . $key . "\r\n";
+
     if(!$sock){
 
         $data = 'socket errorF' . $host;
