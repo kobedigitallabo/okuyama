@@ -60,7 +60,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                 // 停止ファイル関係チェック
                 if (StatusUtil.getStatus() == 1) {
                     serverRunning = false;
-                    logger.info("ServerManagedJob - 状態異常です");
+                    logger.info("ServerManagedJob - 状態異常です Msg = [" + StatusUtil.getStatusMessage() + "]");
                 }
 
                 if (StatusUtil.getStatus() == 2) {
@@ -76,6 +76,13 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                     logger.info("ServerManagedJob - Server停止ファイルが存在します");
                     StatusUtil.setStatus(2);
                 }
+
+				StringBuffer memBuf = new StringBuffer();
+                memBuf.append("JVM MaxMemory Size =[" + JavaSystemApi.getRuntimeMaxMem("M") + "], ");
+                memBuf.append("JVM TotalMemory Size =[" + JavaSystemApi.getRuntimeTotalMem("M") + "], ");
+                memBuf.append("JVM FreeMemory Size =[" + JavaSystemApi.getRuntimeFreeMem("M") + "], ");
+                memBuf.append("JVM Use Memory Percent=[" + JavaSystemApi.getUseMemoryPercent() + "]");
+				StatusUtil.setNowMemoryStatus(memBuf.toString());
 
                 if (optionParam != null &&  optionParam.equals("true")) {
                     // メモリ関係チェック

@@ -11,6 +11,7 @@ import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
 import org.imdst.util.KeyMapManager;
 import org.imdst.util.ImdstDefine;
+import org.imdst.util.StatusUtil;
 
 /**
  * Key情報を格納するHelper.<br>
@@ -177,6 +178,19 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                         }
+                    } else if(clientParameterList[0].equals("5")) {
+
+                        // Key値を指定する事でデータを削除する
+                        requestHashCode = new Integer(clientParameterList[1]);
+                        // メソッド呼び出し
+                        retParams = this.removeDatanode(requestHashCode);
+                        retParamBuf.append(retParams[0]);
+                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        retParamBuf.append(retParams[1]);
+                        if (retParams.length > 2) {
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+                        }
                     } else if(clientParameterList[0].equals("10")) {
 
                         // ServerConnect Test Ping
@@ -184,8 +198,8 @@ public class KeyManagerHelper extends AbstractHelper {
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append("true");
                         // エラーの場合は以下でエラーメッセメッセージも連結
-                        //retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        //retParamBuf.append("err msg");
+                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        retParamBuf.append(StatusUtil.getNowMemoryStatus());
                     } else if(clientParameterList[0].equals("20")) {
 
                         // KeyMapManager Direct Connection
@@ -337,6 +351,39 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[2] = "NG:KeyManagerHelper - setTagdata - Exception - " + be.toString();
         }
         //logger.debug("KeyManagerHelper - setTagdata - end");
+        return retStrs;
+    }
+
+
+    // KeyでDataNode値を削除する
+    private String[] removeDatanode(Integer key) {
+        //logger.debug("KeyManagerHelper - removeDatanode - start");
+        String[] retStrs = null;
+        try {
+            if(!this.keyMapManager.checkError()) {
+                if (this.keyMapManager.containsKeyPair(key)) {
+
+                    retStrs = new String[3];
+                    retStrs[0] = "5";
+                    retStrs[1] = "true";
+                    retStrs[2] = this.keyMapManager.removeKeyPair(key);
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "5";
+                    retStrs[1] = "false";
+                }
+            } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "2";
+                    retStrs[1] = "false";
+            }
+        } catch (Exception e) {
+            logger.error("KeyManagerHelper - removeDatanode - Error", e);
+            retStrs = new String[2];
+            retStrs[0] = "2";
+            retStrs[1] = "false";
+        }
+        //logger.debug("KeyManagerHelper - removeDatanode - end");
         return retStrs;
     }
 

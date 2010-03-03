@@ -49,6 +49,9 @@ public class ImdstDefine {
     // データノードに対するTagデータ登録時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeTagRegistSuccessStr = "3#imdst3674#true";
 
+    // データノードに対するKeyデータ削除時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeKeyRemoveSuccessStr = "5#imdst3674#true";
+
     /* --  通信時の固定文字列系定数  ----------                           */
     // クラインが接続を切断する際に通知する文字列
     public static final String imdstConnectExitRequest = "(&imdst9999&)";

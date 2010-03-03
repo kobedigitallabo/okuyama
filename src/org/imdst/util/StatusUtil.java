@@ -31,6 +31,10 @@ public class StatusUtil {
     // ノードの最新復活時間を管理
     private static Hashtable nodeRebootTimeMap = new Hashtable();
 
+	private static String nowMemoryStatus = null;
+
+	private static String nowCpuStatus = null;
+
     // 全体ステータス
     // 0:正常 1:異常 2:終了 3:一時停止
     private static int status = 0;
@@ -63,12 +67,21 @@ public class StatusUtil {
         StatusUtil.msg = msg;
     }
 
+
     /**
      * 全体ステータスを取得
      */
     public static int getStatus() {
         return StatusUtil.status;
     }
+
+    /**
+     * 全体ステータスメッセージを取得
+     */
+    public static String getStatusMessage() {
+        return StatusUtil.msg;
+    }
+
 
     /**
      * ノードの生存を確認
@@ -173,5 +186,24 @@ public class StatusUtil {
             return ((Integer)nodeExecMap.get(nodeInfo)).intValue();
         }
     }
+
+
+
+	public static void setNowMemoryStatus(String statusStr) {
+		nowMemoryStatus = statusStr;
+	}
+
+	public static void setNowCpuStatus(String statusStr) {
+		nowCpuStatus = statusStr;
+	}
+
+
+	public static String getNowMemoryStatus() {
+		return nowMemoryStatus;
+	}
+
+	public static String getNowCpuStatus() {
+		return  nowCpuStatus;
+	}
 
 }

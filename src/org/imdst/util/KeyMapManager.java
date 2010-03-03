@@ -188,9 +188,14 @@ public class KeyMapManager extends Thread {
                             if (!line.equals("")) {
                                 workSplitStrs = line.split(workFileSeq);
 
-                                // データは必ず3つに分解できる
-                                if (workSplitStrs.length == 3) {
-                                    keyMapObjPut(new Integer(workSplitStrs[0]), workSplitStrs[1]);
+                                // データは必ず4つに分解できる
+                                if (workSplitStrs.length == 4) {
+									// 登録データ
+									if (workSplitStrs[0].equals("+")) {
+                                    	keyMapObjPut(new Integer(workSplitStrs[1]), workSplitStrs[2]);
+									} else if (workSplitStrs[0].equals("-")) {
+                                    	keyMapObjRemove(new Integer(workSplitStrs[1]));
+									}
                                 } else {
                                     // 不正データ
                                     logger.error("workKeyMapFile - Read - Error " + counter + "Line Data = [" + workSplitStrs + "]");
@@ -214,9 +219,9 @@ public class KeyMapManager extends Thread {
                     this.bw.newLine();
                     this.bw.flush();
                 } catch (Exception e) {
-                    logger.error("init - Error" + e);
+                    logger.error("KeyMapManager - init - Error" + e);
                     blocking = true;
-                    StatusUtil.setStatus(1);
+                    StatusUtil.setStatusAndMessage(1, "KeyMapManager - init - Error [" + e.getMessage() + "]");
                     throw new BatchException(e);
 
                 }
@@ -298,9 +303,9 @@ public class KeyMapManager extends Thread {
                     }
                 }
             } catch (Exception e) {
-                logger.error("run - Error" + e);
+                logger.error("KeyMapManager - run - Error" + e);
                 blocking = true;
-                StatusUtil.setStatus(1);
+                StatusUtil.setStatusAndMessage(1, "KeyMapManager - run - Error [" + e.getMessage() + "]");
                 e.printStackTrace();
             }   
         }
@@ -315,13 +320,14 @@ public class KeyMapManager extends Thread {
                     synchronized(this.getKeyLock) {
                         keyMapObjPut(key, keyNode);
                     }
+
                     // データの書き込みを指示
                     this.writeMapFileFlg = true;
 
                     if (workFileMemory == false) {
 
                         // データ格納場所記述ファイル再保存
-                        this.bw.write(new StringBuffer(key.toString()).append(workFileSeq).append(keyNode).append(workFileSeq).append(workFileEndPoint).toString());
+                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key.toString()).append(workFileSeq).append(keyNode).append(workFileSeq).append(workFileEndPoint).toString());
                         this.bw.newLine();
                         this.bw.flush();
                     }
@@ -330,7 +336,7 @@ public class KeyMapManager extends Thread {
             } catch (Exception e) {
                 logger.error("setKeyPair - Error");
                 blocking = true;
-                StatusUtil.setStatus(1);
+                StatusUtil.setStatusAndMessage(1, "setKeyPair - Error [" + e.getMessage() + "]");
                 throw new BatchException(e);
             }
         }
@@ -342,6 +348,36 @@ public class KeyMapManager extends Thread {
         if (!blocking) {
             synchronized(this.getKeyLock) {
                 ret =  (String)keyMapObjGet(key);
+            }
+        }
+        return ret;
+    }
+
+    // キーを指定することでノードを削除する
+    public String removeKeyPair(Integer key) throws BatchException {
+        String ret = null;
+        if (!blocking) {
+            try {
+	            synchronized(this.getKeyLock) {
+	                ret =  (String)keyMapObjGet(key);
+					keyMapObjRemove(key);
+
+	                // データの書き込みを指示
+	                this.writeMapFileFlg = true;
+
+	                if (workFileMemory == false) {
+
+	                    // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
+	                    this.bw.write(new StringBuffer("-").append(workFileSeq).append(key.toString()).append(workFileSeq).append(" ").append(workFileSeq).append(workFileEndPoint).toString());
+	                    this.bw.newLine();
+	                    this.bw.flush();
+	                }
+	            }
+            } catch (Exception e) {
+                logger.error("removeKeyPair - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "removeKeyPair - Error[" + e.getMessage() + "]");
+                throw new BatchException(e);
             }
         }
         return ret;
@@ -370,7 +406,7 @@ public class KeyMapManager extends Thread {
             } catch (Exception e) {
                 logger.error("setTagPair - Error");
                 blocking = true;
-                StatusUtil.setStatus(1);
+                StatusUtil.setStatusAndMessage(1, "setTagPair - Error [" + e.getMessage() + "]");
                 throw new BatchException(e);
             }
         }
@@ -437,6 +473,15 @@ public class KeyMapManager extends Thread {
         return (String)this.keyMapObj.get(key);
     }
 
+    /**
+     * keyMapObjに対するアクセスメソッド.<br>
+     * put<br>
+     */
+    private void keyMapObjRemove(Integer key) {
+        //this.keyMapObj.put(key, val.getBytes());
+        this.keyMapObj.remove(key);
+    }
+
 
     // 引数で渡されてストリームに対しkeyMapObjを書き出す
     public void outputKeyMapObj2Stream(PrintWriter pw) throws BatchException {
@@ -468,7 +513,7 @@ public class KeyMapManager extends Thread {
             } catch (Exception e) {
                 logger.error("outputKeyMapObj2Stream - Error");
                 blocking = true;
-                StatusUtil.setStatus(1);
+                StatusUtil.setStatusAndMessage(1, "outputKeyMapObj2Stream - Error [" + e.getMessage() + "]");
                 throw new BatchException(e);
             }
         }
@@ -506,6 +551,11 @@ public class KeyMapManager extends Thread {
                             workKeyMapObjFile.delete();
                         }
 
+                        this.keyMapObj = new KeyManagerValueMap(this.mapSize);
+                        if (!dataMemory) {
+                            this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
+                        }
+
                         // WorkKeyMapファイル用のストリームを作成
                         this.fos = new FileOutputStream(new File(this.workKeyFilePath));
                         this.osw = new OutputStreamWriter(fos , workMapFileEnc);
@@ -515,6 +565,7 @@ public class KeyMapManager extends Thread {
                         String allDataStr = br.readLine();
                         String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
 
+						
                         for (int i = 0; i < allDataLines.length; i++) {
                             if (!allDataLines[i].trim().equals("")) {
                                 String[] oneDatas = allDataLines[i].split(workFileSeq);
@@ -536,7 +587,7 @@ public class KeyMapManager extends Thread {
             } catch (Exception e) {
                 logger.error("writeKeyMapObj2Stream - Error");
                 blocking = true;
-                StatusUtil.setStatus(1);
+                StatusUtil.setStatusAndMessage(1, "writeKeyMapObj2Stream - Error [" + e.getMessage() + "]");
                 throw new BatchException(e);
             }
         }

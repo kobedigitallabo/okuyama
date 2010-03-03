@@ -564,6 +564,103 @@ public class ImdstKeyValueClient {
     }
 
     /**
+     * マスタサーバからKeyでデータを削除する.<br><br>
+     *
+     * @param keyStr
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
+     * @throws Exception
+     */
+    public String[] removeValue(String keyStr) throws Exception {
+		return this.removeValue(keyStr, null);
+	}
+    /**
+     * マスタサーバからKeyでデータを削除する.<br>
+     * 取得値のエンコーディング指定あり.<br>
+     * @param keyStr
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
+     * @throws Exception
+     */
+    public String[] removeValue(String keyStr, String encoding) throws Exception {
+        String[] ret = new String[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuffer serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new Exception("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.equals("")) {
+                throw new Exception("The blank is not admitted on a key");
+            }
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuffer();
+
+
+            // 処理番号連結
+            serverRequestBuf.append("5");
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            serverRequestBuf.append(new String(BASE64EncoderStream.encode(keyStr.getBytes())));
+
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("5")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    ret[0] = serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if (serverRet[2].equals(ImdstKeyValueClient.blankStr)) {
+                        ret[1] = "";
+                    } else {
+
+                        // Value文字列をBase64でデコード
+                        if (encoding == null) {
+                            ret[1] = new String(BASE64DecoderStream.decode(serverRet[2].getBytes()));
+                        } else {
+                            ret[1] = new String(BASE64DecoderStream.decode(serverRet[2].getBytes()), encoding);
+                        }
+                    }
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new Exception("Execute Violation of validity");
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
+    /**
      * マスタサーバからKeyでデータを取得する(バイナリ).<br>
      *
      * @param keyStr

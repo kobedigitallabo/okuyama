@@ -28,6 +28,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
     private ArrayList subNodeList = null;
 
+	private String nodeStatusStr = null;
     /**
      * Logger.<br>
      */
@@ -140,6 +141,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                         
                     } else {
                         logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
+						logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
                     }
                     logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
 
@@ -200,6 +202,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             super.removeNodeWaitStatus(nodeInfo);
                         } else {
                             logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Arrival");
+							logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
                         }
                         logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
                         logger.info("************************************************************");
@@ -264,7 +267,10 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             if (!retParams[1].equals("true")) {
                 ret = false;
-            }
+            } else {
+				// 生存の場合ステータス情報文字列を格納
+				this.nodeStatusStr = retParams[2];
+			}
             pw.println(ImdstDefine.imdstConnectExitRequest);
             pw.flush();
         } catch(Exception e) {

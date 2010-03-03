@@ -149,8 +149,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // Tag値で紐付くキーとValueのセット配列を返す
 
-                        }
+                        } else if(execPattern.equals(new Integer(5))) {
 
+                            // キー値でデータを消す
+                            retParams = this.removeKeyValue(clientParameterList[1]);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+                        } else if(execPattern.equals(new Integer(4))) {
+
+						}
                     }
 
                     // クライアントに結果送信
@@ -390,6 +400,78 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return retStrs;
     }
 
+    /**
+     * KeyでValueを削除する.<br>
+     * 処理フロー.<br>
+     * 1.DataDispatcherにKeyを使用してValueの保存先を問い合わせる<br>
+     * 2.KeyNodeに接続してValueを削除する<br>
+     * 3.結果文字列の配列を作成(成功時は処理番号"5"と"true"とValue、失敗時は処理番号"5"と"false")<br>
+     *
+     * @param keyStr key値の文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] removeKeyValue(String keyStr) throws BatchException {
+        //logger.debug("MasterManagerHelper - removeKeyValue - start");
+        String[] retStrs = new String[3];
+
+        String[] keyNodeSaveRet = null;
+        String[] keyNodeInfo = null;
+
+        try {
+
+            // キー値を使用して取得先を決定
+            keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
+
+            // 取得実行
+            if (keyNodeInfo.length == 3) {
+                keyNodeSaveRet = removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr);
+            } else {
+                keyNodeSaveRet = removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr);
+            }
+
+            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
+			// そちらのルールでも削除する
+            if (this.oldRule != null) {
+
+                //System.out.println("過去ルールを探索");
+                for (int i = 0; i < this.oldRule.length; i++) {
+                    // キー値を使用して取得先を決定
+                    keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.oldRule[i]);
+
+                    // 取得実行
+                    if (keyNodeInfo.length == 3) {
+                        removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr);
+                    } else {
+                        removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr);
+                    }
+                }
+            }
+
+            // 取得結果確認
+            if (keyNodeSaveRet[1].equals("false")) {
+
+
+                // 削除失敗(元データなし)
+                retStrs[0] = keyNodeSaveRet[0];
+                retStrs[1] = "false";
+                retStrs[2] = "";
+                
+            } else {
+                retStrs[0] = keyNodeSaveRet[0];
+                retStrs[1] = "true";
+                retStrs[2] = keyNodeSaveRet[2];
+            }
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - removeKeyValue - Error", be);
+        } catch (Exception e) {
+            retStrs[0] = "2";
+            retStrs[1] = "error";
+            retStrs[2] = "NG:MasterManagerHelper - removeKeyValue - Exception - " + e.toString();
+        }
+        //logger.debug("MasterManagerHelper - removeKeyValue - end");
+        return retStrs;
+    }
 
     /**
      * TagでKey値群を取得する.<br>
@@ -717,6 +799,118 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 throw new BatchException("Key Node IO Error: detail info for log file");
             }
+        } catch (BatchException be) {
+
+            throw be;
+        } catch (Exception e) {
+
+            throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            if (subKeyNodeName != null) 
+	            super.execNodeUseEnd(subKeyNodeFullName);
+
+	        // 返却地値をパースする
+	        if (retParam != null) {
+	            retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+	        }
+        }
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeに対してデータを削除する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param keyStr Keyデータ
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] removeKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String key) throws BatchException {
+
+        PrintWriter pw = null;
+        BufferedReader br = null;
+        HashMap dtMap = null;
+
+        String nodeName = keyNodeName;
+        String nodePort = keyNodePort;
+        String nodeFullName = keyNodeFullName;
+
+        String[] retParams = null;
+
+        int counter = 0;
+
+        String tmpSaveHost = null;
+        String[] tmpSaveData = null;
+		String retParam = null;
+
+        boolean mainNodeSave = false;
+        boolean subNodeSave = false;
+        try {
+            do {
+                // KeyNodeとの接続を確立
+                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+
+
+                // 接続結果と、現在の保存先状況で処理を分岐
+                if (dtMap != null) {
+                    try {
+                        // writerとreaderを取り出し
+                        pw = (PrintWriter)dtMap.get("writer");
+                        br = (BufferedReader)dtMap.get("reader");
+
+
+                        // Key値でデータノード名を保存
+                        StringBuffer buf = new StringBuffer();
+                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+                        buf.append("5");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(key.hashCode());
+
+//long start1 = System.nanoTime();
+
+
+                        // 送信
+                        pw.println(buf.toString());
+                        pw.flush();
+
+                        // 返却値取得
+                        retParam = br.readLine();
+//long end1 = System.nanoTime();
+//System.out.println("[" + (end1 - start1) + "]");
+
+
+						// splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                        if (retParam.indexOf(ImdstDefine.keyNodeKeyRemoveSuccessStr) == 0) {
+                            if (counter == 0) mainNodeSave = true;
+                            if (counter == 1) subNodeSave = true;
+                        }
+                    } catch (SocketException se) {
+
+                        super.setDeadNode(nodeName + ":" + nodePort);
+                        logger.debug(se);
+                    } catch (IOException ie) {
+                        super.setDeadNode(nodeName + ":" + nodePort);
+                        logger.debug(ie);
+                    }
+                }
+
+                // スレーブデータノードの名前を代入
+                nodeName = subKeyNodeName;
+                nodePort = subKeyNodePort;
+                nodeFullName = subKeyNodeFullName;
+
+                counter++;
+                // スレーブデータノードが存在しない場合もしくは、既に2回保存を実施した場合は終了
+            } while(nodeName != null && counter < 2);
+
         } catch (BatchException be) {
 
             throw be;
