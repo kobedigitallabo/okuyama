@@ -73,9 +73,8 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
                 byte[] buf = new byte[oneDataLength];
 
                 int line = ((Integer)super.get(key)).intValue();
-                
                 // seek計算
-                long seekPoint = seekOneDataLength * (line - 1);
+                long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
 
                 raf.seek(seekPoint);
                 raf.read(buf,0,oneDataLength);
@@ -97,12 +96,14 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
 
     public Object put(Object key, Object value) {
         Object ret = null;
+
         if (memoryMode) {
             ret = super.put(key, value);
         } else {
+	        StringBuffer writeStr = new StringBuffer();
+	        int valueSize = ((String)value).length();
+
             try {
-                StringBuffer writeStr = new StringBuffer();
-                int valueSize = ((String)value).length();
                 writeStr.append((String)value);
 
                 // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
@@ -122,9 +123,10 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
                 this.bw.flush();
                 super.put(key, new Integer(lineCount));
             } catch (Exception e) {
+				System.out.println(oneDataLength - valueSize);
                 e.printStackTrace();
                 // 致命的
-                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - get - Error [" + e.getMessage() + "]");
+                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - put - Error [" + e.getMessage() + "]");
                 
             }
         }
