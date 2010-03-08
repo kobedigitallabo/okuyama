@@ -190,12 +190,12 @@ public class KeyMapManager extends Thread {
 
                                 // データは必ず4つに分解できる
                                 if (workSplitStrs.length == 4) {
-									// 登録データ
-									if (workSplitStrs[0].equals("+")) {
-                                    	keyMapObjPut(new Integer(workSplitStrs[1]), workSplitStrs[2]);
-									} else if (workSplitStrs[0].equals("-")) {
-                                    	keyMapObjRemove(new Integer(workSplitStrs[1]));
-									}
+                                    // 登録データ
+                                    if (workSplitStrs[0].equals("+")) {
+                                        keyMapObjPut(new Integer(workSplitStrs[1]), workSplitStrs[2]);
+                                    } else if (workSplitStrs[0].equals("-")) {
+                                        keyMapObjRemove(new Integer(workSplitStrs[1]));
+                                    }
                                 } else {
                                     // 不正データ
                                     logger.error("workKeyMapFile - Read - Error " + counter + "Line Data = [" + workSplitStrs + "]");
@@ -358,21 +358,21 @@ public class KeyMapManager extends Thread {
         String ret = null;
         if (!blocking) {
             try {
-	            synchronized(this.getKeyLock) {
-	                ret =  (String)keyMapObjGet(key);
-					keyMapObjRemove(key);
+                synchronized(this.getKeyLock) {
+                    ret =  (String)keyMapObjGet(key);
+                    keyMapObjRemove(key);
 
-	                // データの書き込みを指示
-	                this.writeMapFileFlg = true;
+                    // データの書き込みを指示
+                    this.writeMapFileFlg = true;
 
-	                if (workFileMemory == false) {
+                    if (workFileMemory == false) {
 
-	                    // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
-	                    this.bw.write(new StringBuffer("-").append(workFileSeq).append(key.toString()).append(workFileSeq).append(" ").append(workFileSeq).append(workFileEndPoint).toString());
-	                    this.bw.newLine();
-	                    this.bw.flush();
-	                }
-	            }
+                        // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
+                        this.bw.write(new StringBuffer("-").append(workFileSeq).append(key.toString()).append(workFileSeq).append(" ").append(workFileSeq).append(workFileEndPoint).toString());
+                        this.bw.newLine();
+                        this.bw.flush();
+                    }
+                }
             } catch (Exception e) {
                 logger.error("removeKeyPair - Error");
                 blocking = true;
@@ -389,19 +389,56 @@ public class KeyMapManager extends Thread {
             try {
                 synchronized(this.setTagLock) {
 
-                    String keyStrs = key;
-                    Integer tagCnv = new Integer((tagStartStr + tag + tagEndStr).hashCode());
+                    String keyStrs = null;
+                    int counter = 0;
+                    boolean appendFlg = true;
+                    Integer tagCnv = null;
+                    Integer lastTagCnv = null;
 
-                    if (this.containsKeyPair(tagCnv)) {
-                        keyStrs = this.getKeyPair(tagCnv);
+                    while (true) {
+                        tagCnv = new Integer((tagStartStr + tag + "_" + counter + tagEndStr).hashCode());
 
-                        if (keyStrs.indexOf(key) == -1) {
-
-                            keyStrs = keyStrs + tagKeySep + key;
+                        if (this.containsKeyPair(tagCnv)) {
+                            keyStrs = this.getKeyPair(tagCnv);
+    
+                            if (keyStrs.indexOf(key) != -1) {
+                                // 既に登録済み
+                                appendFlg = false;
+                                break;
+                            }
+                        } else {
+                            break;
                         }
+                        counter++;
                     }
 
-                    this.setKeyPair(tagCnv, keyStrs);
+                    // 登録の必要有無で分岐
+                    if (appendFlg) {
+                    //System.out.println("11111111111");
+                        // 登録
+                        if (keyStrs == null) {
+                    //System.out.println("22222222222");
+                            // 初登録
+                            this.setKeyPair(tagCnv, key);
+                        } else {
+                    //System.out.println("33333333333");
+                            // 既に別のKeyが登録済みなので、そのキーにアペンドしても良いかを確認
+                            if ((keyStrs.getBytes().length + tagKeySep.getBytes().length + key.getBytes().length) >= ImdstDefine.saveDataMaxSize) {
+                    System.out.println("444444444444");
+                                // 既にキー値が最大のサイズに到達しているので別のキーを生み出す
+                                counter++;
+                                tagCnv = new Integer((tagStartStr + tag + "_" + counter + tagEndStr).hashCode());
+                                this.setKeyPair(tagCnv, key);
+                            } else{
+                    System.out.println("55555555555555");
+                                // アペンド
+                                tagCnv = new Integer((tagStartStr + tag + "_" + (counter - 1) + tagEndStr).hashCode());
+                                keyStrs = keyStrs + tagKeySep + key;
+                                this.setKeyPair(tagCnv, keyStrs);
+                            }
+                        }
+                    }
+                    System.out.println(counter);
                 }
             } catch (Exception e) {
                 logger.error("setTagPair - Error");
@@ -414,11 +451,49 @@ public class KeyMapManager extends Thread {
 
     // Tagを指定することでKeyリストを返す
     public String getTagPair(Integer tag) {
-        String keyStrs = null;
-        if (!blocking) {
-            Integer tagCnv = new Integer((tagStartStr + tag + tagEndStr).hashCode());
+        String keyStrs = "";
+        boolean isMatch = false;
+        StringBuffer tmpBuf = new StringBuffer();
+        String tmpStr = null;
+        String tmpSep = "";
 
-            keyStrs =  (String)this.getKeyPair(tagCnv);
+        if (!blocking) {
+            int counter = 0;
+            // Tagのキー値を連結
+            while(true) {
+
+                Integer tagCnv = new Integer((tagStartStr + tag + "_" + counter + tagEndStr).hashCode());
+
+                if (this.containsKeyPair(tagCnv)) {
+                    tmpStr = (String)this.getKeyPair(tagCnv);
+
+                    if (tmpStr != null) {
+    System.out.println("11111111111");
+                        isMatch = true;
+                        tmpBuf.append(tmpSep);
+                        tmpBuf.append(tmpStr);
+                        tmpSep = tagKeySep;
+                    } else {
+    System.out.println("2222222222222");
+                        if (!isMatch) {
+    System.out.println("333333333333");
+                            keyStrs = null;
+                        } else {
+    System.out.println("44444444444");
+                            keyStrs = tmpBuf.toString();
+                        }
+                        break;
+                    }
+                } else {
+                    if (!isMatch) {
+                        keyStrs = null;
+                    } else {
+                        keyStrs = tmpBuf.toString();
+                    }
+                    break;
+                }
+                counter++;
+            }
         }
         return keyStrs;
     }
@@ -439,7 +514,7 @@ public class KeyMapManager extends Thread {
     public boolean containsTagPair(Integer tag) {
         boolean ret = false;
         if (!blocking) {
-            Integer tagCnv = new Integer((tagStartStr + tag + tagEndStr).hashCode());
+            Integer tagCnv = new Integer((tagStartStr + tag + "_0" + tagEndStr).hashCode());
 
             ret =  this.containsKeyPair(tagCnv);
         }
@@ -565,7 +640,7 @@ public class KeyMapManager extends Thread {
                         String allDataStr = br.readLine();
                         String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
 
-						
+                        
                         for (int i = 0; i < allDataLines.length; i++) {
                             if (!allDataLines[i].trim().equals("")) {
                                 String[] oneDatas = allDataLines[i].split(workFileSeq);
