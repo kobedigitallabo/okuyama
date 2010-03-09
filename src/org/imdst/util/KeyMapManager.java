@@ -8,6 +8,8 @@ import org.batch.util.LoggerFactory;
 import org.batch.lang.BatchException;
 import org.imdst.util.StatusUtil;
 
+import com.sun.mail.util.BASE64DecoderStream;   
+
 /**
  * DataNodeが使用するKey-Valueを管理するモジュール.<br>
  * データの定期的なファイルストア、登録ログの出力、同期化を行う.<br>
@@ -385,7 +387,9 @@ public class KeyMapManager extends Thread {
 
     // Tagとキーを指定することでTagとキーをセットする
     public void setTagPair(Integer tag, String key) throws BatchException {
+
         if (!blocking) {
+
             try {
                 synchronized(this.setTagLock) {
 
@@ -394,51 +398,66 @@ public class KeyMapManager extends Thread {
                     boolean appendFlg = true;
                     Integer tagCnv = null;
                     Integer lastTagCnv = null;
+ 					int dataPutCounter = 0;
+					boolean firsrtRegist = true;
 
                     while (true) {
-                        tagCnv = new Integer((tagStartStr + tag + "_" + counter + tagEndStr).hashCode());
+
+                        tagCnv = new Integer((tagStartStr + tag + "_" + new Integer(counter).toString() + tagEndStr).hashCode());
 
                         if (this.containsKeyPair(tagCnv)) {
+							firsrtRegist = false;
                             keyStrs = this.getKeyPair(tagCnv);
-    
                             if (keyStrs.indexOf(key) != -1) {
+
                                 // 既に登録済み
                                 appendFlg = false;
                                 break;
                             }
                         } else {
+
+							// Tag値のデータそのものがないもしくは、登録連番の中にはデータがない
+							if (counter > 0) {
+								dataPutCounter = counter - 1;
+							} else {
+								// 該当領域にデータを登録する
+								dataPutCounter = counter;
+							}
                             break;
                         }
+
                         counter++;
                     }
 
+
                     // 登録の必要有無で分岐
                     if (appendFlg) {
-                    //System.out.println("11111111111");
+
                         // 登録
-                        if (keyStrs == null) {
-                    //System.out.println("22222222222");
+                        if (firsrtRegist) {
+
                             // 初登録
                             this.setKeyPair(tagCnv, key);
                         } else {
-                    //System.out.println("33333333333");
+
                             // 既に別のKeyが登録済みなので、そのキーにアペンドしても良いかを確認
                             if ((keyStrs.getBytes().length + tagKeySep.getBytes().length + key.getBytes().length) >= ImdstDefine.saveDataMaxSize) {
-                    System.out.println("444444444444");
+
                                 // 既にキー値が最大のサイズに到達しているので別のキーを生み出す
                                 counter++;
-                                tagCnv = new Integer((tagStartStr + tag + "_" + counter + tagEndStr).hashCode());
+
+                                tagCnv = new Integer((tagStartStr + tag + "_" + (dataPutCounter + 1) + tagEndStr).hashCode());
                                 this.setKeyPair(tagCnv, key);
                             } else{
-                    System.out.println("55555555555555");
+
                                 // アペンド
-                                tagCnv = new Integer((tagStartStr + tag + "_" + (counter - 1) + tagEndStr).hashCode());
+                                tagCnv = new Integer((tagStartStr + tag + "_" + dataPutCounter + tagEndStr).hashCode());
+
                                 keyStrs = keyStrs + tagKeySep + key;
                                 this.setKeyPair(tagCnv, keyStrs);
                             }
                         }
                     }
-                    System.out.println(counter);
                 }
             } catch (Exception e) {
                 logger.error("setTagPair - Error");
@@ -465,26 +484,28 @@ public class KeyMapManager extends Thread {
                 Integer tagCnv = new Integer((tagStartStr + tag + "_" + counter + tagEndStr).hashCode());
 
                 if (this.containsKeyPair(tagCnv)) {
+
                     tmpStr = (String)this.getKeyPair(tagCnv);
 
                     if (tmpStr != null) {
-    System.out.println("11111111111");
+
                         isMatch = true;
                         tmpBuf.append(tmpSep);
                         tmpBuf.append(tmpStr);
                         tmpSep = tagKeySep;
                     } else {
-    System.out.println("2222222222222");
+
                         if (!isMatch) {
-    System.out.println("333333333333");
+
                             keyStrs = null;
                         } else {
-    System.out.println("44444444444");
+
                             keyStrs = tmpBuf.toString();
                         }
                         break;
                     }
                 } else {
+
                     if (!isMatch) {
                         keyStrs = null;
                     } else {

@@ -146,8 +146,8 @@ Thread.sleep(100);
                     if (ret[0].equals("true")) {
                         // データ有り
                         keys = (String[])ret[1];
-                        /*for (int i = 0; i < keys.length; i++) {
-                            System.out.println(keys[i]);
+                        /*for (int idx = 0; idx < keys.length; idx++) {
+                            System.out.println(keys[idx]);
                         }*/
                     } else if (ret[0].equals("false")) {
                         System.out.println("データなし");
@@ -158,9 +158,9 @@ Thread.sleep(100);
 
                 if (keys != null) {
                     for (int ii = 0; ii < keys.length; ii++) {
-                        System.out.println(keys[ii]);
+                        System.out.println("Key=[" + keys[ii] + "]");
 						String[] ret = imdstKeyValueClient.getValue(keys[ii]);
-						System.out.println(ret[1]);
+						System.out.println("Value=[" + ret[1] + "]");
                     }
                 }
                 long end = new Date().getTime();
@@ -236,6 +236,27 @@ Thread.sleep(100);
                     } else if (ret[0].equals("error")) {
                         System.out.println(ret[1]);
                     }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                imdstKeyValueClient.close();
+			} else if (args[0].equals("8")) {
+                // ImdstKeyValueClientを使用してデータを削除
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                String[] ret = null;
+
+                long start = new Date().getTime();
+
+                ret = imdstKeyValueClient.removeValue(args[3]);
+                if (ret[0].equals("true")) {
+                    // データ有り
+                    System.out.println(ret[1]);
+                } else if (ret[0].equals("false")) {
+                    System.out.println("データなし");
+                } else if (ret[0].equals("error")) {
+                    System.out.println(ret[1]);
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
