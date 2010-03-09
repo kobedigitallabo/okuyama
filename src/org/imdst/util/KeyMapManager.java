@@ -8,8 +8,6 @@ import org.batch.util.LoggerFactory;
 import org.batch.lang.BatchException;
 import org.imdst.util.StatusUtil;
 
-import com.sun.mail.util.BASE64DecoderStream;   
-
 /**
  * DataNodeが使用するKey-Valueを管理するモジュール.<br>
  * データの定期的なファイルストア、登録ログの出力、同期化を行う.<br>
