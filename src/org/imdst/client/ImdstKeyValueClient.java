@@ -334,8 +334,8 @@ public class ImdstKeyValueClient {
         int keyCount = values.length / this.saveSize;
         int much = values.length % this.saveSize;
 
-		String firstKey = null;
-		String endKey = null;
+        String firstKey = null;
+        String endKey = null;
         try {
 
             // Byte Lenghtチェック
@@ -375,16 +375,16 @@ public class ImdstKeyValueClient {
                 if(!this.sendByteData(tmpKey, workData)) throw new Exception("Byte Data Save Node Error");
             }
 
-			firstKey = keyStr.hashCode() + "_" + 0;
-			endKey = tmpKey;
+            firstKey = keyStr.hashCode() + "_" + 0;
+            endKey = tmpKey;
 
-			if (firstKey.equals(endKey)) {
-				saveKeys.append(firstKey);
-			} else {
-				saveKeys.append(firstKey);
-	            saveKeys.append(this.byteDataKeysSep);
-	            saveKeys.append(tmpKey);
-			}
+            if (firstKey.equals(endKey)) {
+                saveKeys.append(firstKey);
+            } else {
+                saveKeys.append(firstKey);
+                saveKeys.append(this.byteDataKeysSep);
+                saveKeys.append(tmpKey);
+            }
             ret = this.setValue(keyStr, tagStrs, saveKeys.toString());
 
         } catch (Exception e) {
@@ -579,8 +579,8 @@ public class ImdstKeyValueClient {
      * @throws Exception
      */
     public String[] removeValue(String keyStr) throws Exception {
-		return this.removeValue(keyStr, null);
-	}
+        return this.removeValue(keyStr, null);
+    }
     /**
      * マスタサーバからKeyでデータを削除する.<br>
      * 取得値のエンコーディング指定あり.<br>
@@ -697,17 +697,17 @@ public class ImdstKeyValueClient {
 
                 workKeyRet = workKeyStr.split(byteDataKeysSep);
 
-				if (workKeyRet.length > 1) {
-					String[] keyWork = workKeyRet[1].split("_");
+                if (workKeyRet.length > 1) {
+                    String[] keyWork = workKeyRet[1].split("_");
 
-					String keyStrPre = keyWork[0];
-					int maxKeyIndexSize = Integer.parseInt(keyWork[1]);
+                    String keyStrPre = keyWork[0];
+                    int maxKeyIndexSize = Integer.parseInt(keyWork[1]);
 
-					workKeyRet = new String[maxKeyIndexSize];
-					for (int i = 0; i < workKeyRet.length; i++) {
-						workKeyRet[i] = keyStrPre + "_" + i;
-					}
-				}
+                    workKeyRet = new String[maxKeyIndexSize];
+                    for (int i = 0; i < workKeyRet.length; i++) {
+                        workKeyRet[i] = keyStrPre + "_" + i;
+                    }
+                }
 
                 for (int idx = 0; idx < workKeyRet.length; idx++) {
 

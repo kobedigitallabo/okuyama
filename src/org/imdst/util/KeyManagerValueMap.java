@@ -23,7 +23,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
     private int lineCount = 0;
     private int oneDataLength = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
     private int seekOneDataLength = (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1);
-
+    private long lastDataChangeTime = 0L;
 
     public KeyManagerValueMap(int size) {
         super(size);
@@ -100,8 +100,8 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
         if (memoryMode) {
             ret = super.put(key, value);
         } else {
-	        StringBuffer writeStr = new StringBuffer();
-	        int valueSize = ((String)value).length();
+            StringBuffer writeStr = new StringBuffer();
+            int valueSize = ((String)value).length();
 
             try {
                 writeStr.append((String)value);
@@ -123,7 +123,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
                 this.bw.flush();
                 super.put(key, new Integer(lineCount));
             } catch (Exception e) {
-				System.out.println(oneDataLength - valueSize);
+                System.out.println(oneDataLength - valueSize);
                 e.printStackTrace();
                 // 致命的
                 StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - put - Error [" + e.getMessage() + "]");
@@ -131,6 +131,22 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
             }
         }
         return ret;
+    }
+
+    /**
+     * データを変更した最終時間を記録する.<br>
+     * @param time 変更時間
+     */
+    public void setKLastDataChangeTime(long time) {
+        this.lastDataChangeTime = time;
+    }
+
+    /**
+     * データを変更した最終時間を取得する.<br>
+     * @return long 変更時間
+     */
+    public long getKLastDataChangeTime() {
+        return this.lastDataChangeTime;
     }
 
 }
