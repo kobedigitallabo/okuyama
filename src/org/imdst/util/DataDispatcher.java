@@ -58,7 +58,7 @@ public class DataDispatcher {
      * @param subKeyMapNodes スレーブデータノードを指定
      */
     public static void init(String ruleStr, String keyMapNodes, String subKeyMapNodes) {
-
+        standby = false;
         String[]  keyMapNodesInfo = null;
         String[]  subkeyMapNodesInfo = null;
 
@@ -73,14 +73,14 @@ public class DataDispatcher {
         keyMapNodesInfo = keyMapNodes.split(",");
         keyMapNodeInfoName = new String[keyMapNodesInfo.length];
         keyMapNodeInfoPort = new String[keyMapNodesInfo.length];
-		keyMapNodeInfoFull = new String[keyMapNodesInfo.length];
+        keyMapNodeInfoFull = new String[keyMapNodesInfo.length];
 
 
         for (int index = 0; index < keyMapNodesInfo.length; index++) {
             String keyNode = keyMapNodesInfo[index].trim();
             keyNodeList.add(keyNode);
 
-			keyMapNodeInfoFull[index] = keyNode;
+            keyMapNodeInfoFull[index] = keyNode;
 
             String[] keyNodeDt = keyNode.split(":");
 

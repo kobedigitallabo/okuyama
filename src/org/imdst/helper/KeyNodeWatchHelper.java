@@ -9,7 +9,6 @@ import org.batch.job.AbstractHelper;
 import org.batch.job.IJob;
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
-import org.imdst.util.KeyMapManager;
 import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
 import org.imdst.util.StatusUtil;
@@ -36,9 +35,6 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
     // 初期化メソッド定義
     public void initHelper(String initValue) {
-        HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
-        this.mainNodeList = (ArrayList)allNodeInfo.get("main");
-        this.subNodeList = (ArrayList)allNodeInfo.get("sub");
     }
 
     // Jobメイン処理定義
@@ -55,9 +51,14 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
         try{
             while (serverRunning) {
+                HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
+                this.mainNodeList = (ArrayList)allNodeInfo.get("main");
+                this.subNodeList = (ArrayList)allNodeInfo.get("sub");
+
                 // ノード数分チェック
                 for (int i = 0; i < mainNodeList.size(); i++) {
                     Thread.sleep(checkCycle);
+
 
                     // 停止ファイル関係チェック
                     if (StatusUtil.getStatus() == 1) {
@@ -330,7 +331,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
         try {
 
-			logger.info("Data Recover Schedule [" + masterNodeInfo + " => " + nodeInfo + "]");
+            logger.info("Data Recover Schedule [" + masterNodeInfo + " => " + nodeInfo + "]");
             // コピー先KeyNodeとの接続を確立
             socket = new Socket(nodeName, nodePort);
 
@@ -350,10 +351,10 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
 
             // TODO:一度に全てのデータを1行文字列で読み込むので改良の余地あり
-			// TODO:ここでそれぞれのノードの最終更新時間を見て新しいほうのデータで上書き
+            // TODO:ここでそれぞれのノードの最終更新時間を見て新しいほうのデータで上書き
             //      するが微妙かも
 
-			// コピー元予定から最終更新時刻取得
+            // コピー元予定から最終更新時刻取得
             StringBuffer buf = new StringBuffer();
             // 処理番号11
             buf.append("11");
@@ -365,12 +366,12 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             // データ取得
             retParam = mbr.readLine();
 
-			String[] updateDate = retParam.split(ImdstDefine.keyHelperClientParamSep);
+            String[] updateDate = retParam.split(ImdstDefine.keyHelperClientParamSep);
 
-			long masterDate = new Long(updateDate[2]).longValue();
+            long masterDate = new Long(updateDate[2]).longValue();
 
 
-			// コピー先予定から最終更新時刻取得
+            // コピー先予定から最終更新時刻取得
             buf = new StringBuffer();
             // 処理番号11
             buf.append("11");
@@ -382,74 +383,74 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             // データ取得
             retParam = br.readLine();
 
-			updateDate = retParam.split(ImdstDefine.keyHelperClientParamSep);
+            updateDate = retParam.split(ImdstDefine.keyHelperClientParamSep);
 
-			long nodeDate = new Long(updateDate[2]).longValue();
+            long nodeDate = new Long(updateDate[2]).longValue();
 
-			// どちらが新しいか比べる
-			if (masterDate >= nodeDate) {
+            // どちらが新しいか比べる
+            if (masterDate >= nodeDate) {
 
-				// 予定どうり
-				logger.info("Data Recover Actually [" + masterNodeInfo + " => " + nodeInfo + "]");
+                // 予定どうり
+                logger.info("Data Recover Actually [" + masterNodeInfo + " => " + nodeInfo + "]");
 
-	            // コピー元からデータ読み込み
-	            buf = new StringBuffer();
-	            // 処理番号20
-	            buf.append("20");
-	            buf.append(ImdstDefine.keyHelperClientParamSep);
-	            buf.append("true");
-	            // 送信
-	            mpw.println(buf.toString());
-	            mpw.flush();
+                // コピー元からデータ読み込み
+                buf = new StringBuffer();
+                // 処理番号20
+                buf.append("20");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append("true");
+                // 送信
+                mpw.println(buf.toString());
+                mpw.flush();
 
-	            // データ取得
-	            retParam = mbr.readLine();
+                // データ取得
+                retParam = mbr.readLine();
 
-	            // 取得したデータをコピー先に書き出し
-	            // 処理番号21
-	            buf = new StringBuffer();
-	            buf.append("21");
-	            buf.append(ImdstDefine.keyHelperClientParamSep);
-	            buf.append("true");
-	            // 送信
-	            pw.println(buf.toString());
-	            pw.flush();
+                // 取得したデータをコピー先に書き出し
+                // 処理番号21
+                buf = new StringBuffer();
+                buf.append("21");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append("true");
+                // 送信
+                pw.println(buf.toString());
+                pw.flush();
 
-	            // 値を書き出し
-	            pw.println(retParam);
-	            pw.flush();
-			} else {
+                // 値を書き出し
+                pw.println(retParam);
+                pw.flush();
+            } else {
 
-				// 当初の予定から逆転
-				logger.info("Data Recover Actually [" + nodeInfo + " => " + masterNodeInfo + "]");
+                // 当初の予定から逆転
+                logger.info("Data Recover Actually [" + nodeInfo + " => " + masterNodeInfo + "]");
 
-	            // コピー元からデータ読み込み
-	            buf = new StringBuffer();
-	            // 処理番号20
-	            buf.append("20");
-	            buf.append(ImdstDefine.keyHelperClientParamSep);
-	            buf.append("true");
-	            // 送信
-	            pw.println(buf.toString());
-	            pw.flush();
+                // コピー元からデータ読み込み
+                buf = new StringBuffer();
+                // 処理番号20
+                buf.append("20");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append("true");
+                // 送信
+                pw.println(buf.toString());
+                pw.flush();
 
-	            // データ取得
-	            retParam = br.readLine();
+                // データ取得
+                retParam = br.readLine();
 
-	            // 取得したデータをコピー先に書き出し
-	            // 処理番号21
-	            buf = new StringBuffer();
-	            buf.append("21");
-	            buf.append(ImdstDefine.keyHelperClientParamSep);
-	            buf.append("true");
-	            // 送信
-	            mpw.println(buf.toString());
-	            mpw.flush();
+                // 取得したデータをコピー先に書き出し
+                // 処理番号21
+                buf = new StringBuffer();
+                buf.append("21");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append("true");
+                // 送信
+                mpw.println(buf.toString());
+                mpw.flush();
 
-	            // 値を書き出し
-	            mpw.println(retParam);
-	            mpw.flush();
-			}
+                // 値を書き出し
+                mpw.println(retParam);
+                mpw.flush();
+            }
         } catch (Exception e) {
 
             logger.error(e);
