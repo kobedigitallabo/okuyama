@@ -188,15 +188,20 @@ public class KeyMapManager extends Thread {
                             if (!line.equals("")) {
                                 workSplitStrs = line.split(workFileSeq);
 
-                                // データは必ず4つに分解できる
-                                if (workSplitStrs.length == 4) {
+                                // データは必ず5つに分解できる
+                                if (workSplitStrs.length == 5) {
                                     // 登録データ
                                     if (workSplitStrs[0].equals("+")) {
-                                        keyMapObjPut(new Integer(workSplitStrs[1]), workSplitStrs[2]);
+
+										// トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
+                                        keyMapObjPutSetTime(new Integer(workSplitStrs[1]), workSplitStrs[2], new Long(workSplitStrs[3]).longValue());
                                     } else if (workSplitStrs[0].equals("-")) {
-                                        keyMapObjRemove(new Integer(workSplitStrs[1]));
+
+										// トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
+                                        keyMapObjRemoveSetTime(new Integer(workSplitStrs[1]), new Long(workSplitStrs[3]).longValue());
                                     }
                                 } else {
+
                                     // 不正データ
                                     logger.error("workKeyMapFile - Read - Error " + counter + "Line Data = [" + workSplitStrs + "]");
                                 }
@@ -327,7 +332,7 @@ public class KeyMapManager extends Thread {
                     if (workFileMemory == false) {
 
                         // データ格納場所記述ファイル再保存
-                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key.toString()).append(workFileSeq).append(keyNode).append(workFileSeq).append(workFileEndPoint).toString());
+                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key.toString()).append(workFileSeq).append(keyNode).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
                         this.bw.newLine();
                         this.bw.flush();
                     }
@@ -368,7 +373,7 @@ public class KeyMapManager extends Thread {
                     if (workFileMemory == false) {
 
                         // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                        this.bw.write(new StringBuffer("-").append(workFileSeq).append(key.toString()).append(workFileSeq).append(" ").append(workFileSeq).append(workFileEndPoint).toString());
+                        this.bw.write(new StringBuffer("-").append(workFileSeq).append(key.toString()).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
                         this.bw.newLine();
                         this.bw.flush();
                     }
@@ -544,7 +549,7 @@ public class KeyMapManager extends Thread {
 
     /**
      * keyMapObjに対するアクセスメソッド.<br>
-     * put<br>
+     *
      */
     private void keyMapObjPut(Integer key, String val) {
         //this.keyMapObj.put(key, val.getBytes());
@@ -555,12 +560,24 @@ public class KeyMapManager extends Thread {
     /**
      * keyMapObjに対するアクセスメソッド.<br>
      * 更新時間を登録しない.<br>
-     * put<br>
+     *
      */
     private void keyMapObjPutNoChange(Integer key, String val) {
         //this.keyMapObj.put(key, val.getBytes());
         this.keyMapObj.put(key, val);
     }
+
+    /**
+     * keyMapObjに対するアクセスメソッド.<br>
+	 * 任意の更新時間をセットする.<br>
+     *
+     */
+    private void keyMapObjPutSetTime(Integer key, String val, long execTime) {
+        //this.keyMapObj.put(key, val.getBytes());
+        this.keyMapObj.put(key, val);
+        this.keyMapObj.setKLastDataChangeTime(execTime);
+    }
+
 
     /**
      * keyMapObjに対するアクセスメソッド.<br>
@@ -581,12 +598,22 @@ public class KeyMapManager extends Thread {
 
     /**
      * keyMapObjに対するアクセスメソッド.<br>
-     * put<br>
+     * 
      */
     private void keyMapObjRemove(Integer key) {
         //this.keyMapObj.put(key, val.getBytes());
         this.keyMapObj.remove(key);
         this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
+    }
+
+    /**
+     * keyMapObjに対するアクセスメソッド.<br>
+     *  任意の更新時間をセットする.<br>
+     */
+    private void keyMapObjRemoveSetTime(Integer key, long execTime) {
+        //this.keyMapObj.put(key, val.getBytes());
+        this.keyMapObj.remove(key);
+        this.keyMapObj.setKLastDataChangeTime(execTime);
     }
 
 
@@ -694,6 +721,7 @@ public class KeyMapManager extends Thread {
                                 this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
                             }
                         }
+
                         // ファイルに書き込み
                         File keyFile = new File(this.keyFilePath);
                         FileOutputStream oF = new FileOutputStream(keyFile);

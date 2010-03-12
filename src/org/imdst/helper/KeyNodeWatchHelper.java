@@ -225,6 +225,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
     public void endHelper() {
     }
 
+
     /**
      * ノードに対して生存確認用のPingを行う
      *
@@ -302,6 +303,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
      * @return boolean 成否
      */
     private boolean nodeDataRecover(String nodeInfo, String masterNodeInfo) throws BatchException {
+
         boolean ret = true;
 
         String retParam = null;
@@ -327,6 +329,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
         ObjectInputStream mois = null;
 
         try {
+
+			logger.info("Data Recover Schedule [" + masterNodeInfo + " => " + nodeInfo + "]");
             // コピー先KeyNodeとの接続を確立
             socket = new Socket(nodeName, nodePort);
 
@@ -346,34 +350,106 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
 
             // TODO:一度に全てのデータを1行文字列で読み込むので改良の余地あり
+			// TODO:ここでそれぞれのノードの最終更新時間を見て新しいほうのデータで上書き
+            //      するが微妙かも
 
-            // コピー元からデータ読み込み
+			// コピー元予定から最終更新時刻取得
             StringBuffer buf = new StringBuffer();
-            // 処理番号20
-            buf.append("20");
+            // 処理番号11
+            buf.append("11");
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append("true");
             // 送信
             mpw.println(buf.toString());
             mpw.flush();
-
             // データ取得
             retParam = mbr.readLine();
 
-            // 取得したデータをコピー先に書き出し
-            // 処理番号21
+			String[] updateDate = retParam.split(ImdstDefine.keyHelperClientParamSep);
+
+			long masterDate = new Long(updateDate[2]).longValue();
+
+
+			// コピー先予定から最終更新時刻取得
             buf = new StringBuffer();
-            buf.append("21");
+            // 処理番号11
+            buf.append("11");
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append("true");
             // 送信
             pw.println(buf.toString());
             pw.flush();
+            // データ取得
+            retParam = br.readLine();
 
-            // 値を書き出し
-            pw.println(retParam);
-            pw.flush();
+			updateDate = retParam.split(ImdstDefine.keyHelperClientParamSep);
 
+			long nodeDate = new Long(updateDate[2]).longValue();
+
+			// どちらが新しいか比べる
+			if (masterDate >= nodeDate) {
+
+				// 予定どうり
+				logger.info("Data Recover Actually [" + masterNodeInfo + " => " + nodeInfo + "]");
+
+	            // コピー元からデータ読み込み
+	            buf = new StringBuffer();
+	            // 処理番号20
+	            buf.append("20");
+	            buf.append(ImdstDefine.keyHelperClientParamSep);
+	            buf.append("true");
+	            // 送信
+	            mpw.println(buf.toString());
+	            mpw.flush();
+
+	            // データ取得
+	            retParam = mbr.readLine();
+
+	            // 取得したデータをコピー先に書き出し
+	            // 処理番号21
+	            buf = new StringBuffer();
+	            buf.append("21");
+	            buf.append(ImdstDefine.keyHelperClientParamSep);
+	            buf.append("true");
+	            // 送信
+	            pw.println(buf.toString());
+	            pw.flush();
+
+	            // 値を書き出し
+	            pw.println(retParam);
+	            pw.flush();
+			} else {
+
+				// 当初の予定から逆転
+				logger.info("Data Recover Actually [" + nodeInfo + " => " + masterNodeInfo + "]");
+
+	            // コピー元からデータ読み込み
+	            buf = new StringBuffer();
+	            // 処理番号20
+	            buf.append("20");
+	            buf.append(ImdstDefine.keyHelperClientParamSep);
+	            buf.append("true");
+	            // 送信
+	            pw.println(buf.toString());
+	            pw.flush();
+
+	            // データ取得
+	            retParam = br.readLine();
+
+	            // 取得したデータをコピー先に書き出し
+	            // 処理番号21
+	            buf = new StringBuffer();
+	            buf.append("21");
+	            buf.append(ImdstDefine.keyHelperClientParamSep);
+	            buf.append("true");
+	            // 送信
+	            mpw.println(buf.toString());
+	            mpw.flush();
+
+	            // 値を書き出し
+	            mpw.println(retParam);
+	            mpw.flush();
+			}
         } catch (Exception e) {
 
             logger.error(e);

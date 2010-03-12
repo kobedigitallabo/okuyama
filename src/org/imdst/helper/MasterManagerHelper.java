@@ -61,7 +61,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] retParams = null;
         StringBuffer retParamBuf = null;
 
-
         try{
 
             Object[] parameters = super.getParameters();
@@ -110,7 +109,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             break;
                         }
 
-
                         clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
                         // 処理番号を取り出し
@@ -158,8 +156,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParamBuf.append(retParams[1]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
-                        } else if(execPattern.equals(new Integer(4))) {
+                        } else if(execPattern.equals(new Integer(30))) {
 
+                            // 各キーノードへデータロック依頼
+                            retParams = this.lockingData(clientParameterList[1]);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
 						}
                     }
 
@@ -472,6 +477,28 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         //logger.debug("MasterManagerHelper - removeKeyValue - end");
         return retStrs;
     }
+
+
+    /**
+     * Key値を指定してデータのロックを取得する.<br>
+     * 処理フロー.<br>
+	 * 1.ロック番号を採番.<br>
+     * 2.DataDispatcherに依頼してKeyの保存先を問い合わせる.<br>
+     * 3.取得した保存先にロックを依頼.<br>
+ 	 * 4.全てのロックが完了した時点で終了.<br>
+     * 5.結果文字列の配列を作成(成功時は処理番号"10"と"true"と"ロック番号"、失敗時は処理番号"10"と"false")<br>
+     *
+     * @param keyStrs key値の連結は配列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] lockingData(String keyStr) throws BatchException {
+        //logger.debug("MasterManagerHelper - lockingData - start");
+        String[] retStrs = new String[3];
+        //logger.debug("MasterManagerHelper - lockingData - end");
+        return retStrs;
+    }
+
 
     /**
      * TagでKey値群を取得する.<br>
