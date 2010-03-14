@@ -27,9 +27,6 @@ public class ServerManagedJob extends AbstractJob implements IJob {
     // 停止ファイルの監視サイクル時間(ミリ秒)
     private int checkCycle = 5000;
 
-    // KeyMapManagerインスタンス
-    private KeyMapManager keyMapManager = null;
-
     /**
      * Logger.<br>
      */

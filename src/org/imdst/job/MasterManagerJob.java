@@ -32,6 +32,10 @@ public class MasterManagerJob extends AbstractJob implements IJob {
     // 過去ルール
     private int[] oldRules = null;
 
+	// ロードバランス設定
+	private boolean loadBalance = false;
+	private boolean blanceMode = false;
+
     /**
      * Logger.<br>
      */
@@ -56,6 +60,9 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             // KeyMapNodeの情報を初期化
             this.parseAllNodesInfo();
 
+			// ロードバランス設定
+			loadBalance = new Boolean((String)super.getPropertiesValue(ImdstDefine.Prop_LoadBalanceMode)).booleanValue();
+
             // サーバソケットの生成
             this.serverSocket = new ServerSocket(this.portNo);
             // 共有領域にServerソケットのポインタを格納
@@ -68,14 +75,22 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 try {
 
                     // クライアントからの接続待ち
-                    logger.debug("MasterManagerJob - ServerSocket - Access Wait");
                     socket = serverSocket.accept();
-                    logger.debug(socket.getInetAddress() + " ACCESS");
-                    helperParams = new Object[2];
+
+					int paramSize = 2;
+					if (loadBalance) paramSize = 3;
+
+                    helperParams = new Object[paramSize];
                     helperParams[0] = socket;
                     helperParams[1] = this.oldRules;
-
+					if (loadBalance) helperParams[2] = new Boolean(blanceMode);
                     super.executeHelper("MasterManagerHelper", helperParams);
+
+					if (blanceMode) {
+						blanceMode = false;
+					} else {
+						blanceMode = true;
+					}
                 } catch (Exception e) {
                     if (StatusUtil.getStatus() == 2) {
                         logger.info("MasterManagerJob - executeJob - ServerEnd");

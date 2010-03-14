@@ -18,14 +18,9 @@ public class DataDispatcher {
     private static String rule = null;
 
     private static int ruleInt = 0;
-    
-    private static String[] keyMapNodeInfoName = null;
-    private static String[] keyMapNodeInfoPort = null;
-    private static String[] keyMapNodeInfoFull = null;
 
-    private static String[] subKeyMapNodeInfoName = null;
-    private static String[] subKeyMapNodeInfoPort = null;
-    private static String[] subKeyMapNodeInfoFull = null;
+	// 全てのノード情報の詳細を格納
+	private static Hashtable keyNodeMap = new Hashtable(6);
 
     private static HashMap allNodeMap = null;
 
@@ -64,48 +59,57 @@ public class DataDispatcher {
 
         ArrayList keyNodeList = new ArrayList();
         ArrayList subKeyNodeList = new ArrayList();
-        allNodeMap = new HashMap();
-
         rule = ruleStr.trim();
         ruleInt = new Integer(rule).intValue();
 
+		synchronized(syncObj) {
+			allNodeMap = new HashMap();
+		}
 
+
+		// 全体格納配列初期化
+		// 配列内容は
+		// [0][*]=メインノードName
+		// [1][*]=メインノードPort
+		// [2][*]=メインノードFull
+		// [3][*]=サブノードName
+		// [4][*]=サブノードPort
+		// [5][*]=サブノードFull
         keyMapNodesInfo = keyMapNodes.split(",");
-        keyMapNodeInfoName = new String[keyMapNodesInfo.length];
-        keyMapNodeInfoPort = new String[keyMapNodesInfo.length];
-        keyMapNodeInfoFull = new String[keyMapNodesInfo.length];
+		String[][] allNodeDetailList = new String[6][keyMapNodesInfo.length];
 
-
+		// MainNode初期化
         for (int index = 0; index < keyMapNodesInfo.length; index++) {
             String keyNode = keyMapNodesInfo[index].trim();
             keyNodeList.add(keyNode);
 
-            keyMapNodeInfoFull[index] = keyNode;
+            allNodeDetailList[2][index] = keyNode;
 
             String[] keyNodeDt = keyNode.split(":");
 
-            keyMapNodeInfoName[index] = keyNodeDt[0];
-            keyMapNodeInfoPort[index] = keyNodeDt[1];
+            allNodeDetailList[0][index] = keyNodeDt[0];
+            allNodeDetailList[1][index] = keyNodeDt[1];
         }
-
         allNodeMap.put("main", keyNodeList);
+
+
+		// SubNode初期化
         if (subKeyMapNodes != null && !subKeyMapNodes.equals("")) {
             subkeyMapNodesInfo = subKeyMapNodes.split(",");
-            subKeyMapNodeInfoName = new String[subkeyMapNodesInfo.length];
-            subKeyMapNodeInfoPort = new String[subkeyMapNodesInfo.length];
-            subKeyMapNodeInfoFull = new String[subkeyMapNodesInfo.length];
 
             for (int index = 0; index < subkeyMapNodesInfo.length; index++) {
                 String subKeyNode = subkeyMapNodesInfo[index].trim();
                 String[] subKeyNodeDt = subKeyNode.split(":");
                 subKeyNodeList.add(subKeyNode);
 
-                subKeyMapNodeInfoFull[index] = subKeyNode;
-                subKeyMapNodeInfoName[index] = subKeyNodeDt[0];
-                subKeyMapNodeInfoPort[index] = subKeyNodeDt[1];
+                allNodeDetailList[5][index] = subKeyNode;
+                allNodeDetailList[3][index] = subKeyNodeDt[0];
+                allNodeDetailList[4][index] = subKeyNodeDt[1];
             }
             allNodeMap.put("sub", subKeyNodeList);
         }
+
+		keyNodeMap.put("list", allNodeDetailList);
         standby = true;
     }
 
@@ -121,18 +125,73 @@ public class DataDispatcher {
         return dispatchKeyNode(key, ruleInt);
 
     }
+
+    /**
+     * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
+     * ルールはKeyNodeの台数を記述する。また、システム稼動後KeyNodeを増やす場合、<br>
+     * 増やしたルールを先頭にして古いルールを後ろにカンマ区切りで連結する<br>
+     * MainNodeとSubNodeの情報を返却値の配列内で逆転させて返すことが可能である.<br>
+     *
+     * @param key キー値
+     * @param reverse 逆転指定
+     * @return String 対象キーノードの情報(サーバ名、ポート番号)
+     */
+    public static String[] dispatchReverseKeyNode(String key, boolean reverse) {
+		return dispatchReverseKeyNode(key, reverse, ruleInt);
+    }
+
+    /**
+     * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
+     * ルールはKeyNodeの台数を記述する。また、システム稼動後KeyNodeを増やす場合、<br>
+     * 増やしたルールを先頭にして古いルールを後ろにカンマ区切りで連結する<br>
+     * MainNodeとSubNodeの情報を返却値の配列内で逆転させて返すことが可能である.<br>
+     *
+     * @param key キー値
+     * @param reverse 逆転指定
+     * @param useRule ルール指定
+     * @return String 対象キーノードの情報(サーバ名、ポート番号)
+     */
+    public static String[] dispatchReverseKeyNode(String key, boolean reverse, int useRule) {
+		String[] ret = null;
+		String[] tmp = dispatchKeyNode(key, useRule);
+
+		if (reverse) {
+			// SubNodeが存在する場合は逆転させる
+			if (tmp.length > 3) {
+				ret = new String[6];
+				ret[3] = tmp[0];
+				ret[4] = tmp[1];
+				ret[5] = tmp[2];
+
+				ret[0] = tmp[3];
+				ret[1] = tmp[4];
+				ret[2] = tmp[5];
+			}
+		} else {
+			ret = tmp;
+		}
+        return ret;
+    }
+
+
     /**
      * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
      * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが6となる<br>
      *
      * @param key キー値
+     * @param useRule ルール値
      * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
      */
     public static String[] dispatchKeyNode(String key, int useRule) {
         String[] ret = null;
         boolean noWaitFlg = false;
-    
+
+		// ノード詳細取り出し
+		String[][] allNodeDetailList = (String[][])keyNodeMap.get("list");
+
+		// Key値からHash値作成
         int execKeyInt = key.hashCode();
+
         if (execKeyInt < 0) {
             String work = new Integer(execKeyInt).toString();
             execKeyInt = Integer.parseInt(work.substring(1,work.length()));
@@ -147,20 +206,20 @@ public class DataDispatcher {
         nodeNo = nodeNo - 1;
 
         // スレーブノードの有無に合わせて配列を初期化
-        if (subKeyMapNodeInfoName != null) {
+        if (allNodeDetailList[3][0] != null) {
 
             ret = new String[6];
 
-            ret[3] = subKeyMapNodeInfoName[nodeNo];
-            ret[4] = subKeyMapNodeInfoPort[nodeNo];
-            ret[5] = subKeyMapNodeInfoFull[nodeNo];
+            ret[3] = allNodeDetailList[3][nodeNo];
+            ret[4] = allNodeDetailList[4][nodeNo];
+            ret[5] = allNodeDetailList[5][nodeNo];
         } else {
             ret = new String[3];
         }
 
-        ret[0] = keyMapNodeInfoName[nodeNo];
-        ret[1] = keyMapNodeInfoPort[nodeNo];
-        ret[2] = keyMapNodeInfoFull[nodeNo];
+        ret[0] = allNodeDetailList[0][nodeNo];
+        ret[1] = allNodeDetailList[1][nodeNo];
+        ret[2] = allNodeDetailList[2][nodeNo];
 
 
         // 該当ノードが一時使用停止の場合は使用再開されるまで停止(データ復旧時に起こりえる)
@@ -168,10 +227,10 @@ public class DataDispatcher {
         while(true) {
             noWaitFlg = true;
             // 停止ステータスか確認する
-            if (StatusUtil.isWaitStatus(keyMapNodeInfoFull[nodeNo])) noWaitFlg = false;
+            if (StatusUtil.isWaitStatus(allNodeDetailList[2][nodeNo])) noWaitFlg = false;
 
             if (ret.length > 3) {
-                if(StatusUtil.isWaitStatus(subKeyMapNodeInfoFull[nodeNo])) noWaitFlg = false;
+                if(StatusUtil.isWaitStatus(allNodeDetailList[5][nodeNo])) noWaitFlg = false;
             }
 
             if  (noWaitFlg) break;
@@ -183,10 +242,10 @@ public class DataDispatcher {
         }
 
         // ノードの使用をマーク
-        StatusUtil.addNodeUse(keyMapNodeInfoFull[nodeNo]);
+        StatusUtil.addNodeUse(allNodeDetailList[2][nodeNo]);
 
         if (ret.length > 3) {
-            StatusUtil.addNodeUse(subKeyMapNodeInfoFull[nodeNo]);
+            StatusUtil.addNodeUse(allNodeDetailList[5][nodeNo]);
         }
 
         return ret;
@@ -205,6 +264,32 @@ public class DataDispatcher {
         while(!standby) {
             ;
         }
-        return allNodeMap;
+
+		HashMap retMap = null;
+		ArrayList mainNodeList = new ArrayList();
+		ArrayList subNodeList = new ArrayList();
+
+		// 内容を複製
+		synchronized(syncObj) {
+
+			retMap = new HashMap(2);
+
+			ArrayList tmpNodeList = (ArrayList)allNodeMap.get("main");
+
+			for (int i = 0; i < tmpNodeList.size(); i++) {
+				mainNodeList.add(tmpNodeList.get(i));
+			}
+			retMap.put("main", mainNodeList);
+
+			if (allNodeMap.containsKey("sub")) {
+				tmpNodeList = (ArrayList)allNodeMap.get("sub");
+
+				for (int i = 0; i < tmpNodeList.size(); i++) {
+					subNodeList.add(tmpNodeList.get(i));
+				}
+				retMap.put("sub", subNodeList);
+			}
+		}
+        return retMap;
     }
 }

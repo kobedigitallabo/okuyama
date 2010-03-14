@@ -36,6 +36,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // 自身のモード(1=Key-Value, 2=DataSystem)
     private int mode = 1;
 
+	private boolean loadBalancing = false;
+	private boolean reverseAccess = false;
+
     /**
      * Logger.<br>
      */
@@ -54,9 +57,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         Socket soc = null;
         boolean closeFlg = false;
-        int keyLength = 128;
-        int tagLength = 256;
-        int oneDataLength = 1024;
 
         String[] retParams = null;
         StringBuffer retParamBuf = null;
@@ -71,8 +71,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // Jobからの引数
             soc = (Socket)parameters[0];
-
+			// 過去ルール
             this.oldRule = (int[])parameters[1];
+
+			// ロードバランシング指定
+			if (parameters.length > 2) {
+				this.loadBalancing = true;
+				reverseAccess = ((Boolean)parameters[2]).booleanValue();
+			}
 
             // クライアントへのアウトプット(結果セット用の文字列用と、バイトデータ転送用)
             OutputStreamWriter osw = new OutputStreamWriter(soc.getOutputStream(),
@@ -349,7 +355,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             // キー値を使用して取得先を決定
-            keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
+			if (loadBalancing) {
+				keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess);
+			} else {
+            	keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
+			}
 
             // 取得実行
             if (keyNodeInfo.length == 3) {
@@ -358,15 +368,20 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
             }
 
-            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるのでそちらのルールでの
-            // データ格納場所も調べる
+            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
+			// でそちらのルールでのデータ格納場所も調べる
             if (keyNodeSaveRet[1].equals("false")) {
                 if (this.oldRule != null) {
 
                     //System.out.println("過去ルールを探索");
                     for (int i = 0; i < this.oldRule.length; i++) {
+
                         // キー値を使用して取得先を決定
-                        keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.oldRule[i]);
+						if (loadBalancing) {
+							keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess, this.oldRule[i]);
+						} else {
+			            	keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.oldRule[i]);
+						}
 
                         // 取得実行
                         if (keyNodeInfo.length == 3) {
@@ -383,13 +398,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 取得結果確認
             if (keyNodeSaveRet[1].equals("false")) {
 
-
                 // 取得失敗(データなし)
                 retStrs[0] = keyNodeSaveRet[0];
                 retStrs[1] = "false";
                 retStrs[2] = "";
                 
             } else {
+
                 retStrs[0] = keyNodeSaveRet[0];
                 retStrs[1] = "true";
                 retStrs[2] = keyNodeSaveRet[2];
@@ -397,6 +412,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getKeyValue - Error", be);
         } catch (Exception e) {
+			e.printStackTrace();
             retStrs[0] = "2";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - getKeyValue - Exception - " + e.toString();
@@ -527,6 +543,32 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
             } else {
                 keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
+            }
+
+            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
+			// そちらのルールでのデータ格納場所も調べる
+            if (keyNodeSaveRet[1].equals("false")) {
+                if (this.oldRule != null) {
+
+                    //System.out.println("過去ルールを探索");
+                    for (int i = 0; i < this.oldRule.length; i++) {
+
+                        // キー値を使用して取得先を決定
+						if (loadBalancing) {
+							keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(tagStr, this.reverseAccess, this.oldRule[i]);
+						} else {
+			            	keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.oldRule[i]);
+						}
+
+                        // 取得実行
+                        if (keyNodeInfo.length == 3) {
+                            keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
+                        } else {
+                            keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
+                        }
+                        if (keyNodeSaveRet[1].equals("true")) break;
+                    }
+                }
             }
 
             // 取得結果確認

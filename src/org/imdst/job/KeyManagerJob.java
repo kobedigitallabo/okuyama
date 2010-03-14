@@ -97,9 +97,8 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                 try {
 
                     // クライアントからの接続待ち
-                    logger.debug("KeyManagerJob - ServerSocket - Access Wait");
                     socket = serverSocket.accept();
-                    logger.debug(socket.getInetAddress() + " ACCESS");
+                    //logger.debug(socket.getInetAddress() + " ACCESS");
                     helperParams = new Object[2];
                     helperParams[0] = this.keyMapManager;
                     helperParams[1] = socket;
