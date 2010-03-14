@@ -19,8 +19,10 @@ public class DataDispatcher {
 
     private static int ruleInt = 0;
 
-	// 全てのノード情報の詳細を格納
-	private static Hashtable keyNodeMap = new Hashtable(6);
+    private static int[] oldRules = null;
+
+    // 全てのノード情報の詳細を格納
+    private static Hashtable keyNodeMap = new Hashtable(6);
 
     private static HashMap allNodeMap = null;
 
@@ -49,10 +51,11 @@ public class DataDispatcher {
      * SubKeyMapNodesInfo:スレーブとなるのKeyNodeをKeyMapNodesInfoと同様の記述方法で記述。KeyMapNodesInfoと同様の数である必要がある。<br>
      *
      * @param ruleStr ルール設定
+     * @param oldRules 過去ルール設定
      * @param keyMapNodes データノードを指定
      * @param subKeyMapNodes スレーブデータノードを指定
      */
-    public static void init(String ruleStr, String keyMapNodes, String subKeyMapNodes) {
+    public static void init(String ruleStr, int[] oldRules, String keyMapNodes, String subKeyMapNodes) {
         standby = false;
         String[]  keyMapNodesInfo = null;
         String[]  subkeyMapNodesInfo = null;
@@ -62,23 +65,23 @@ public class DataDispatcher {
         rule = ruleStr.trim();
         ruleInt = new Integer(rule).intValue();
 
-		synchronized(syncObj) {
-			allNodeMap = new HashMap();
-		}
+        synchronized(syncObj) {
+            allNodeMap = new HashMap();
+        }
 
 
-		// 全体格納配列初期化
-		// 配列内容は
-		// [0][*]=メインノードName
-		// [1][*]=メインノードPort
-		// [2][*]=メインノードFull
-		// [3][*]=サブノードName
-		// [4][*]=サブノードPort
-		// [5][*]=サブノードFull
+        // 全体格納配列初期化
+        // 配列内容は
+        // [0][*]=メインノードName
+        // [1][*]=メインノードPort
+        // [2][*]=メインノードFull
+        // [3][*]=サブノードName
+        // [4][*]=サブノードPort
+        // [5][*]=サブノードFull
         keyMapNodesInfo = keyMapNodes.split(",");
-		String[][] allNodeDetailList = new String[6][keyMapNodesInfo.length];
+        String[][] allNodeDetailList = new String[6][keyMapNodesInfo.length];
 
-		// MainNode初期化
+        // MainNode初期化
         for (int index = 0; index < keyMapNodesInfo.length; index++) {
             String keyNode = keyMapNodesInfo[index].trim();
             keyNodeList.add(keyNode);
@@ -93,7 +96,7 @@ public class DataDispatcher {
         allNodeMap.put("main", keyNodeList);
 
 
-		// SubNode初期化
+        // SubNode初期化
         if (subKeyMapNodes != null && !subKeyMapNodes.equals("")) {
             subkeyMapNodesInfo = subKeyMapNodes.split(",");
 
@@ -109,8 +112,18 @@ public class DataDispatcher {
             allNodeMap.put("sub", subKeyNodeList);
         }
 
-		keyNodeMap.put("list", allNodeDetailList);
+        keyNodeMap.put("list", allNodeDetailList);
+        DataDispatcher.oldRules = oldRules;
         standby = true;
+    }
+
+    /**
+     * 過去ルールを返す.<br>
+     *
+     * @return int[] 過去ルールリスト
+     */
+    public static int[] getOldRules() {
+        return oldRules;
     }
 
     /**
@@ -137,7 +150,7 @@ public class DataDispatcher {
      * @return String 対象キーノードの情報(サーバ名、ポート番号)
      */
     public static String[] dispatchReverseKeyNode(String key, boolean reverse) {
-		return dispatchReverseKeyNode(key, reverse, ruleInt);
+        return dispatchReverseKeyNode(key, reverse, ruleInt);
     }
 
     /**
@@ -152,24 +165,24 @@ public class DataDispatcher {
      * @return String 対象キーノードの情報(サーバ名、ポート番号)
      */
     public static String[] dispatchReverseKeyNode(String key, boolean reverse, int useRule) {
-		String[] ret = null;
-		String[] tmp = dispatchKeyNode(key, useRule);
+        String[] ret = null;
+        String[] tmp = dispatchKeyNode(key, useRule);
 
-		if (reverse) {
-			// SubNodeが存在する場合は逆転させる
-			if (tmp.length > 3) {
-				ret = new String[6];
-				ret[3] = tmp[0];
-				ret[4] = tmp[1];
-				ret[5] = tmp[2];
+        if (reverse) {
+            // SubNodeが存在する場合は逆転させる
+            if (tmp.length > 3) {
+                ret = new String[6];
+                ret[3] = tmp[0];
+                ret[4] = tmp[1];
+                ret[5] = tmp[2];
 
-				ret[0] = tmp[3];
-				ret[1] = tmp[4];
-				ret[2] = tmp[5];
-			}
-		} else {
-			ret = tmp;
-		}
+                ret[0] = tmp[3];
+                ret[1] = tmp[4];
+                ret[2] = tmp[5];
+            }
+        } else {
+            ret = tmp;
+        }
         return ret;
     }
 
@@ -186,10 +199,10 @@ public class DataDispatcher {
         String[] ret = null;
         boolean noWaitFlg = false;
 
-		// ノード詳細取り出し
-		String[][] allNodeDetailList = (String[][])keyNodeMap.get("list");
+        // ノード詳細取り出し
+        String[][] allNodeDetailList = (String[][])keyNodeMap.get("list");
 
-		// Key値からHash値作成
+        // Key値からHash値作成
         int execKeyInt = key.hashCode();
 
         if (execKeyInt < 0) {
@@ -265,31 +278,38 @@ public class DataDispatcher {
             ;
         }
 
-		HashMap retMap = null;
-		ArrayList mainNodeList = new ArrayList();
-		ArrayList subNodeList = new ArrayList();
+        HashMap retMap = null;
+        ArrayList mainNodeList = new ArrayList();
+        ArrayList subNodeList = new ArrayList();
 
-		// 内容を複製
-		synchronized(syncObj) {
+        // 内容を複製して返す
+        synchronized(syncObj) {
 
-			retMap = new HashMap(2);
+            retMap = new HashMap(2);
 
-			ArrayList tmpNodeList = (ArrayList)allNodeMap.get("main");
+            ArrayList tmpNodeList = (ArrayList)allNodeMap.get("main");
 
-			for (int i = 0; i < tmpNodeList.size(); i++) {
-				mainNodeList.add(tmpNodeList.get(i));
-			}
-			retMap.put("main", mainNodeList);
+            for (int i = 0; i < tmpNodeList.size(); i++) {
+                mainNodeList.add(tmpNodeList.get(i));
+            }
+            retMap.put("main", mainNodeList);
 
-			if (allNodeMap.containsKey("sub")) {
-				tmpNodeList = (ArrayList)allNodeMap.get("sub");
+            if (allNodeMap.containsKey("sub")) {
+                tmpNodeList = (ArrayList)allNodeMap.get("sub");
 
-				for (int i = 0; i < tmpNodeList.size(); i++) {
-					subNodeList.add(tmpNodeList.get(i));
-				}
-				retMap.put("sub", subNodeList);
-			}
-		}
+                for (int i = 0; i < tmpNodeList.size(); i++) {
+                    subNodeList.add(tmpNodeList.get(i));
+                }
+                retMap.put("sub", subNodeList);
+            }
+        }
         return retMap;
+    }
+
+    public static boolean isStandby() {
+        while(!standby) {
+            ;
+        }
+        return standby;
     }
 }

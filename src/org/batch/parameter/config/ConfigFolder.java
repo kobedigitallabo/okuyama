@@ -61,5 +61,22 @@ public class ConfigFolder {
         return (String)((JobConfig)table.get("job")).getUserParam(key);
     }
 
+    /**
+     * Job設定に変更があったかをチェックする.<br>
+     * 
+     * @return boolean true=変更あり false=変更なし
+     */
+    public static boolean isJobFileChange() throws BatchException {
+        return ((JobConfig)table.get("job")).isChangePropertiesFile();
+    }
+
+    /**
+     * Job設定の指定のキーの値を再読み込みする.<br>
+     * 
+     * @param keys 指定のキー値
+     */
+    public static void reloadJobFileParameter(String[] keys) throws BatchException {
+        ((JobConfig)table.get("job")).reloadUserParam(keys);
+    }
 
 }

@@ -54,9 +54,11 @@ public class KeyMapManager extends Thread {
     // Mapファイルを書き込む必要有無
     private boolean writeMapFileFlg = false;
 
+    // TODO:Mapファイル本体を保存しないように一時的に変更updateInterval=30秒 => 3600秒
+    // 起動時にトランザクションログから復旧
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
-    private static int updateInterval = 10000;
-    private static int intervalCount = 300;
+    private static int updateInterval = 3600000;
+    private static int intervalCount = 999999999;
 
     // workMapファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
@@ -193,11 +195,11 @@ public class KeyMapManager extends Thread {
                                     // 登録データ
                                     if (workSplitStrs[0].equals("+")) {
 
-										// トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
+                                        // トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
                                         keyMapObjPutSetTime(new Integer(workSplitStrs[1]), workSplitStrs[2], new Long(workSplitStrs[3]).longValue());
                                     } else if (workSplitStrs[0].equals("-")) {
 
-										// トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
+                                        // トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
                                         keyMapObjRemoveSetTime(new Integer(workSplitStrs[1]), new Long(workSplitStrs[3]).longValue());
                                     }
                                 } else {
@@ -569,7 +571,7 @@ public class KeyMapManager extends Thread {
 
     /**
      * keyMapObjに対するアクセスメソッド.<br>
-	 * 任意の更新時間をセットする.<br>
+     * 任意の更新時間をセットする.<br>
      *
      */
     private void keyMapObjPutSetTime(Integer key, String val, long execTime) {

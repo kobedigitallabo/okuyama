@@ -1,5 +1,6 @@
 package org.batch.parameter.config;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -34,6 +35,9 @@ public class JobConfig {
     // ユーザがJob設定ファイルに自由に設定した情報を格納
     private Hashtable userPrivateValuesMap = null;
 
+    private String configFileName = null;
+
+    private long fileModifiedTime = 0L;
     /**
      * 設定ファイル名を渡すことにより、生成.<br>
      * コンストラクタ<br>
@@ -45,6 +49,7 @@ public class JobConfig {
         this.configMap = new LinkedHashMap();
         this.helperMap = new LinkedHashMap();
         this.userPrivateValuesMap = new Hashtable();
+        this.configFileName = fileName;
         this.initConfig(JobConfig.class.getResourceAsStream(fileName));
     }
 
@@ -280,6 +285,7 @@ public class JobConfig {
 
                 }
             }
+
             // システム設定以外の情報（自由な値）を自身に設定
             keys = prop.keySet();
             key = null;
@@ -289,7 +295,7 @@ public class JobConfig {
                     this.userPrivateValuesMap.put(key, prop.get(key));
                 }
             }
-
+            this.fileModifiedTime = new File(JobConfig.class.getResource(this.configFileName).toURI()).lastModified();
         } catch (Exception e) {
             logger.error("initConfig - エラー");
             throw new BatchException(e);
@@ -398,6 +404,56 @@ public class JobConfig {
             ret = (String)this.userPrivateValuesMap.get(key);
         }
         return ret;
+    }
+
+    /**
+     * 設定ファイルに変更があったかをチェックする.<br>
+     * 
+     * @return boolean 
+     */
+    public boolean isChangePropertiesFile() throws BatchException {
+        boolean ret = false;
+        try {
+            File file = new File(JobConfig.class.getResource(this.configFileName).toURI());
+            if(this.fileModifiedTime != file.lastModified()) ret = true;
+        } catch(Exception e) {
+            throw new BatchException(e);
+        }
+        return ret;
+
+    }
+
+    /**
+     * ユーザが自由に設定した設定情報を再読み込みする.<br>
+     * 
+     * @param key 設定ファイルに設定されているユーザパラメータのキー値
+     */
+    public void reloadUserParam(String[] keys) throws BatchException {
+        InputStream is = null;
+
+        try {
+            this.fileModifiedTime = new File(JobConfig.class.getResource(this.configFileName).toURI()).lastModified();
+            is = JobConfig.class.getResourceAsStream(this.configFileName);
+
+            Properties prop = new Properties();
+            prop.load(is);
+
+            for (int i = 0; i < keys.length; i++) {
+                this.userPrivateValuesMap.put(keys[i], prop.get(keys[i]));
+            }
+        } catch (Exception e) {
+            logger.error("reloadUserParam - エラー");
+            throw new BatchException(e);
+        } finally {
+            try {
+                if (is != null) {
+                    is.close();
+                }
+            } catch (IOException ie) {
+                // 無視
+                logger.error("reloadUserParam - ファイルストリームのCLOSEに失敗");
+            }
+        }
     }
 
 }
