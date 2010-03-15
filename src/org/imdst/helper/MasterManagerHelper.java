@@ -96,7 +96,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             while(!closeFlg) {
                 try {
 
-
                     // モード別処理
                     if (this.mode == 1) {
                         // Key-Valueモードで使用する
@@ -166,6 +165,33 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // 各キーノードへデータロック依頼
                             retParams = this.lockingData(clientParameterList[1]);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+						} else if (execPattern.equals(new Integer(90))) {
+
+							// KeyNodeの使用停止をマーク
+							retParams = this.pauseKeyNodeUse(clientParameterList[1]);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+						} else if (execPattern.equals(new Integer(91))) {
+
+							// KeyNodeの使用再開をマーク
+							retParams = this.restartKeyNodeUse(clientParameterList[1]);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+						} else if (execPattern.equals(new Integer(92))) {
+
+							// KeyNodeの使用停止をマーク
+							retParams = this.arriveKeyNode(clientParameterList[1]);
                             retParamBuf.append(retParams[0]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[1]);
@@ -340,7 +366,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * 1.DataDispatcherにKeyを使用してValueの保存先を問い合わせる<br>
      * 2.KeyNodeに接続してValueを取得する<br>
      * 3.結果文字列の配列を作成(成功時は処理番号"2"と"true"とValue、失敗時は処理番号"2"と"false"とValue)<br>
-     *
+	 *
+     * TODD:過去ルールで取得出来た情報はここで反映<br>
+	 *      一時的なものとして後で別サービス化する.<br>
+	 *
      * @param keyStr key値の文字列
      * @return String[] 結果
      * @throws BatchException
@@ -392,6 +421,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 						// 過去ルールからデータを発見
                         if (keyNodeSaveRet[1].equals("true")) {
+
 							// TODO:現在のノードへの反映はいずれ別サービス化する
 							// 過去ルールによって取得出来たデータを現在のルールのノードへ反映
 							try {
@@ -522,6 +552,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private String[] lockingData(String keyStr) throws BatchException {
         //logger.debug("MasterManagerHelper - lockingData - start");
         String[] retStrs = new String[3];
+
         //logger.debug("MasterManagerHelper - lockingData - end");
         return retStrs;
     }
@@ -1013,8 +1044,104 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return retParams;
     }
 
+
     /**
-     * KeyNodeに対して並列処理でデータを保存を行うする.<br>
+     * KeyNodeの一時使用停止をマークする.<br>
+     * 
+     * @param keyNodeFullName データノードのフルネーム(IP,Port)
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] pauseKeyNodeUse(String keyNodeFullName) throws BatchException {
+
+        String[] retParams = new String[3];
+
+        try {
+
+            // ノードの使用中断を要求
+            super.setNodeWaitStatus(keyNodeFullName);
+            while(true) {
+                // 使用停止まで待機
+                if(super.getNodeUseStatus(keyNodeFullName) == 0) break;
+                Thread.sleep(5);
+            }
+
+            // 停止成功
+            retParams[0] = "90";
+            retParams[1] = "true";
+            retParams[2] = "";
+
+        } catch (Exception e) {
+
+            throw new BatchException(e);
+        } 
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeの一時使用停止解除をマークする.<br>
+     * 
+     * @param keyNodeFullName データノードのフルネーム(IP,Port)
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] restartKeyNodeUse(String keyNodeFullName) throws BatchException {
+
+        String[] retParams = new String[3];
+
+        try {
+
+            // ノードの一時使用停止解除を要求
+            super.removeNodeWaitStatus(keyNodeFullName);
+
+            // 再開成功
+            retParams[0] = "91";
+            retParams[1] = "true";
+            retParams[2] = "";
+
+        } catch (Exception e) {
+
+            throw new BatchException(e);
+        } 
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeの復旧をマークする.<br>
+     * 
+     * @param keyNodeFullName データノードのフルネーム(IP,Port)
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] arriveKeyNode(String keyNodeFullName) throws BatchException {
+
+        String[] retParams = new String[3];
+
+        try {
+
+            // ノードの復旧を要求
+            super.setArriveNode(keyNodeFullName);
+
+            // 再開成功
+            retParams[0] = "92";
+            retParams[1] = "true";
+            retParams[2] = "";
+
+        } catch (Exception e) {
+
+            throw new BatchException(e);
+        } 
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeに対して並列処理でデータを保存を行う.<br>
      * 
      * @param keyNodeName マスターデータノードの名前(IPなど)
      * @param keyNodePort マスターデータノードのアクセスポート番号

@@ -64,6 +64,8 @@ public class ImdstDefine {
     public static final String Prop_KeyMapNodesInfo = "KeyMapNodesInfo";
     public static final String Prop_SubKeyMapNodesInfo = "SubKeyMapNodesInfo";
     public static final String Prop_LoadBalanceMode = "LoadBalanceMode";
+	public static final String Prop_MainMasterNodeMode = "MainMasterNodeMode";
+	public static final String Prop_SlaveMasterNodes = "SlaveMasterNodes";
 
 
     public static final String dataNodeParamKey_1 = "dataNodeNameList";

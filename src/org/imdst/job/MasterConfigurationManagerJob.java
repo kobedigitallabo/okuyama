@@ -45,10 +45,12 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
 
         boolean serverRunning = true;
 
-        String reloadKeys[] = new String[3];
+        String reloadKeys[] = new String[5];
         reloadKeys[0] = ImdstDefine.Prop_KeyMapNodesInfo;
         reloadKeys[1] = ImdstDefine.Prop_SubKeyMapNodesInfo;
         reloadKeys[2] = ImdstDefine.Prop_KeyMapNodesRule;
+        reloadKeys[3] = ImdstDefine.Prop_MainMasterNodeMode;
+        reloadKeys[4] = ImdstDefine.Prop_SlaveMasterNodes;
 
         int checkCycle = 5000;
 

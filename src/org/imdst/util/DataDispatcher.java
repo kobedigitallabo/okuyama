@@ -256,7 +256,8 @@ public class DataDispatcher {
             } catch (Exception e) {}
         }
 
-        // ノードの使用をマーク
+		// ノードに対するアクセスを開始をマーク
+		// 終了はMasterManagerHelperで行われる
         StatusUtil.addNodeUse(allNodeDetailList[2][nodeNo]);
 
         if (ret.length > 3) {

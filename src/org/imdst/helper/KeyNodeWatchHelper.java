@@ -80,133 +80,138 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                         StatusUtil.setStatus(2);
                     }
 
-                    // ノードチェック(メイン)
-                    String nodeInfo = (String)mainNodeList.get(i);
-                    String[] nodeDt = nodeInfo.split(":");
+					// MainのMasterNodeの場合のみ実行
+					if (super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode) != null && 
+							super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode).equals("true")) {
 
-                    logger.info("************************************************************");
-                    logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
+	                    // ノードチェック(メイン)
+	                    String nodeInfo = (String)mainNodeList.get(i);
+	                    String[] nodeDt = nodeInfo.split(":");
 
-                    if(!this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue())) {
-                        // ノードダウン
-                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Dead");
-                        super.setDeadNode(nodeInfo);
-                    } else if (!super.isNodeArrival(nodeInfo)) {
+	                    logger.info("************************************************************");
+	                    logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
 
-                        // 停止していたノードが復帰した場合
-                        // 停止中に登録予定であったデータを登録する
+	                    if(!this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue())) {
+	                        // ノードダウン
+	                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Dead");
+	                        super.setDeadNode(nodeInfo);
+	                    } else if (!super.isNodeArrival(nodeInfo)) {
 
-                        logger.info("Node Name [" + nodeInfo +"] Reboot");
-                        logger.info("Node Name [" + nodeInfo +"] Use Wait Start");
+	                        // 停止していたノードが復帰した場合
+	                        // 停止中に登録予定であったデータを登録する
 
-                        // ノードの使用中断を要求
-                        super.setNodeWaitStatus(nodeInfo);
-                        while(true) {
-                            // 使用停止まで待機
-                            if(super.getNodeUseStatus(nodeInfo) == 0) break;
-                            Thread.sleep(5);
-                        }
+	                        logger.info("Node Name [" + nodeInfo +"] Reboot");
+	                        logger.info("Node Name [" + nodeInfo +"] Use Wait Start");
 
-                        // 該当ノードのデータをリカバーする場合は該当ノードと対になるノードの使用停止を要求し、
-                        // 遂になるノードの使用数が0になってからリカバーを開始する。
-                        if (subNodeList != null && i < subNodeList.size()) {
-                            super.setNodeWaitStatus((String)subNodeList.get(i));
-                            logger.info("Node Name [" + (String)subNodeList.get(i) +"] Use Wait Start");
-                            while(true) {
-                                // 使用停止まで待機
-                                if(super.getNodeUseStatus((String)subNodeList.get(i)) == 0) break;
-                                Thread.sleep(10);
-                            }
-                        }
+	                        // ノードの使用中断を要求
+	                        super.setNodeWaitStatus(nodeInfo);
+	                        while(true) {
+	                            // 使用停止まで待機
+	                            if(super.getNodeUseStatus(nodeInfo) == 0) break;
+	                            Thread.sleep(10);
+	                        }
 
-                        logger.info(nodeInfo + " - Recover Start");
+	                        // 該当ノードのデータをリカバーする場合は該当ノードと対になるノードの使用停止を要求し、
+	                        // 遂になるノードの使用数が0になってからリカバーを開始する。
+	                        if (subNodeList != null && i < subNodeList.size()) {
+	                            super.setNodeWaitStatus((String)subNodeList.get(i));
+	                            logger.info("Node Name [" + (String)subNodeList.get(i) +"] Use Wait Start");
+	                            while(true) {
+	                                // 使用停止まで待機
+	                                if(super.getNodeUseStatus((String)subNodeList.get(i)) == 0) break;
+	                                Thread.sleep(10);
+	                            }
+	                        }
 
-
-                        // 復旧開始
-                        if(this.nodeDataRecover(nodeInfo, (String)subNodeList.get(i))) {
-
-                            // リカバー成功
-                            // 該当ノードの復帰を登録
-                            logger.info(nodeInfo + " - Recover Success");
-                            super.setArriveNode(nodeInfo);
-                        } else {
-                            logger.info(nodeInfo + " - Recover Miss");
-                        }
-
-                        logger.info(nodeInfo + " - Recover End");
-
-                        // 該当ノードの一時停止を解除
-                        super.removeNodeWaitStatus((String)subNodeList.get(i));
-                        super.removeNodeWaitStatus(nodeInfo);
-                        
-                    } else {
-                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
-                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
-                    }
-                    logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
+	                        logger.info(nodeInfo + " - Recover Start");
 
 
-                    logger.info("------------------------------------------------------------");
-                    // ノードチェック(Sub)
-                    if (subNodeList != null && i < subNodeList.size()) {
-                        String subNodeInfo = (String)subNodeList.get(i);
-                        String[] subNodeDt = subNodeInfo.split(":");
+	                        // 復旧開始
+	                        if(this.nodeDataRecover(nodeInfo, (String)subNodeList.get(i))) {
 
-                        logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Start");
-                        if(!this.execNodePing(subNodeDt[0], new Integer(subNodeDt[1]).intValue())) {
-                            // ノードダウン
-                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Dead");
-                            super.setDeadNode(subNodeInfo);
-                        } else if (!super.isNodeArrival(subNodeInfo)) {
+	                            // リカバー成功
+	                            // 該当ノードの復帰を登録
+	                            logger.info(nodeInfo + " - Recover Success");
+	                            super.setArriveNode(nodeInfo);
+	                        } else {
+	                            logger.info(nodeInfo + " - Recover Miss");
+	                        }
 
-                            // 停止していたノードが復帰した場合
-                            // 停止中に登録予定であったデータを登録する
-                            logger.info("Node Name [" + subNodeInfo +"] Reboot");
-                            logger.info("Node Name [" + subNodeInfo +"] Use Wait Start");
+	                        logger.info(nodeInfo + " - Recover End");
 
-                            // ノードの使用中断を要求
-                            super.setNodeWaitStatus(subNodeInfo);
-                            while(true) {
-                                // 使用停止まで待機
-                                if(super.getNodeUseStatus(subNodeInfo) == 0) break;
-                                Thread.sleep(10);
-                            }
+	                        // 該当ノードの一時停止を解除
+	                        super.removeNodeWaitStatus((String)subNodeList.get(i));
+	                        super.removeNodeWaitStatus(nodeInfo);
+	                        
+	                    } else {
+	                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
+	                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
+	                    }
+	                    logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
 
-                            // 該当ノードのデータをリカバーする場合は該当ノードと対になるノードの使用停止を要求し、
-                            // 遂になるノードの使用数が0になってからリカバーを開始する。
-                            super.setNodeWaitStatus(nodeInfo);
-                            logger.info("Node Name [" + nodeInfo +"] Use Wait Start");
-                            while(true) {
-                                // 使用停止まで待機
-                                if(super.getNodeUseStatus(nodeInfo) == 0) break;
-                                Thread.sleep(5);
-                            }
 
-                            logger.info(subNodeInfo + " - Recover Start");
+	                    logger.info("------------------------------------------------------------");
+	                    // ノードチェック(Sub)
+	                    if (subNodeList != null && i < subNodeList.size()) {
+	                        String subNodeInfo = (String)subNodeList.get(i);
+	                        String[] subNodeDt = subNodeInfo.split(":");
 
-                            // 復旧開始
-                            if(this.nodeDataRecover(subNodeInfo, nodeInfo)) {
+	                        logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Start");
+	                        if(!this.execNodePing(subNodeDt[0], new Integer(subNodeDt[1]).intValue())) {
+	                            // ノードダウン
+	                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Dead");
+	                            super.setDeadNode(subNodeInfo);
+	                        } else if (!super.isNodeArrival(subNodeInfo)) {
 
-                                // リカバー成功
-                                // 該当ノードの復帰を登録
-                                logger.info(subNodeInfo + " - Recover Success");
-                                super.setArriveNode(subNodeInfo);
-                            } else {
-                                logger.info(subNodeInfo + " - Recover Miss");
-                            }
+	                            // 停止していたノードが復帰した場合
+	                            // 停止中に登録予定であったデータを登録する
+	                            logger.info("Node Name [" + subNodeInfo +"] Reboot");
+	                            logger.info("Node Name [" + subNodeInfo +"] Use Wait Start");
 
-                            logger.info(subNodeInfo + " - Recover End");
+	                            // ノードの使用中断を要求
+	                            super.setNodeWaitStatus(subNodeInfo);
+	                            while(true) {
+	                                // 使用停止まで待機
+	                                if(super.getNodeUseStatus(subNodeInfo) == 0) break;
+	                                Thread.sleep(10);
+	                            }
 
-                            // 一時停止を解除
-                            super.removeNodeWaitStatus(subNodeInfo);
-                            super.removeNodeWaitStatus(nodeInfo);
-                        } else {
-                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Arrival");
-                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
-                        }
-                        logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
-                        logger.info("************************************************************");
-                    }
+	                            // 該当ノードのデータをリカバーする場合は該当ノードと対になるノードの使用停止を要求し、
+	                            // 遂になるノードの使用数が0になってからリカバーを開始する。
+	                            super.setNodeWaitStatus(nodeInfo);
+	                            logger.info("Node Name [" + nodeInfo +"] Use Wait Start");
+	                            while(true) {
+	                                // 使用停止まで待機
+	                                if(super.getNodeUseStatus(nodeInfo) == 0) break;
+	                                Thread.sleep(5);
+	                            }
+
+	                            logger.info(subNodeInfo + " - Recover Start");
+
+	                            // 復旧開始
+	                            if(this.nodeDataRecover(subNodeInfo, nodeInfo)) {
+
+	                                // リカバー成功
+	                                // 該当ノードの復帰を登録
+	                                logger.info(subNodeInfo + " - Recover Success");
+	                                super.setArriveNode(subNodeInfo);
+	                            } else {
+	                                logger.info(subNodeInfo + " - Recover Miss");
+	                            }
+
+	                            logger.info(subNodeInfo + " - Recover End");
+
+	                            // 一時停止を解除
+	                            super.removeNodeWaitStatus(subNodeInfo);
+	                            super.removeNodeWaitStatus(nodeInfo);
+	                        } else {
+	                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Arrival");
+	                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
+	                        }
+	                        logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
+	                        logger.info("************************************************************");
+	                    }
+					}
                 }
             }
         } catch(Exception e) {
