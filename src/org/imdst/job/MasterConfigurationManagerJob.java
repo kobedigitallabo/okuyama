@@ -79,12 +79,12 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                 // 設定ファイルの変更をチェック
                 if (super.isJobFileChange()) {
                     // 変更あり
-                    System.out.println("変更あり");
+                    logger.info("MasterNode Config File Change");
                     super.reloadJobFileParameter(reloadKeys);
                     this.parseAllNodesInfo();
                 } else {
                     // 変更なし
-                    System.out.println("変更なし");
+                    logger.info("MasterNode Config File No Change");
                 }
                 Thread.sleep(checkCycle);
 

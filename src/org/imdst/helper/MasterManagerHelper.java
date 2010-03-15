@@ -389,7 +389,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         } else {
                             keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
                         }
-                        if (keyNodeSaveRet[1].equals("true")) break;
+
+						// 過去ルールからデータを発見
+                        if (keyNodeSaveRet[1].equals("true")) {
+							// TODO:現在のノードへの反映はいずれ別サービス化する
+							// 過去ルールによって取得出来たデータを現在のルールのノードへ反映
+							try {
+								setKeyValue(keyStr, ImdstDefine.imdstBlankStrData, keyNodeSaveRet[2]);
+							} catch (Exception e) {
+								logger.info("Old Rule Data Set Error" + e);
+							}
+							break;
+						}
                     }
                 }
             }
