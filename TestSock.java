@@ -38,7 +38,9 @@ Thread.sleep(100);
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     // ƒf[ƒ^“o˜^
+
                     if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+					//if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
                         System.out.println("ImdstKeyValueClient - error");
                     }
                 }
