@@ -19,6 +19,8 @@ import org.imdst.util.ImdstDefine;
  */
 public class ImdstKeyValueClient {
 
+	// 接続先情報
+	private ArrayList masterNodesList = null;
     // ソケット
     private Socket socket = null;
 
@@ -52,14 +54,17 @@ public class ImdstKeyValueClient {
     // 保存できる最大長
     private int maxValueSize = ImdstDefine.saveDataMaxSize;
 
+	// byteデータ送信時に圧縮を行うかを決定
+	private boolean compressMode = false;
+
     /**
      * コンストラクタ
      *
      */
     public ImdstKeyValueClient() {
         // エンコーダ、デコーダの初期化に時間を使うようなので初期化
-        BASE64EncoderStream.encode("".getBytes());
-        BASE64DecoderStream.decode("".getBytes());
+        this.dataEncoding("".getBytes());
+        this.dataDecoding("".getBytes());
     }
 
     /**
@@ -70,6 +75,83 @@ public class ImdstKeyValueClient {
     public void changeByteSaveSize(int size) {
         saveSize = size;
     }
+
+	/**
+	 * MasterNodeの接続情報を設定する.<br>
+	 * 本メソッドでセットし、autoConnect()メソッドを<br>
+     * 呼び出すと、自動的にその時稼動しているMasterNodeにバランシングして<br>
+	 * 接続される。接続出来ない場合は、別のMasterNodeに再接続される.<br>
+	 *
+     * @param masterNodes 接続情報の配列 "IP:PORT"の形式
+	 */
+	public void setConnectionInfos(String[] masterNodes) {
+		this.masterNodesList = new ArrayList(masterNodes.length);
+		for (int i = 0; i < masterNodes.length; i++) {
+			this.masterNodesList.add(masterNodes[i]);
+		} 
+	}
+
+	/**
+	 * 設定されたMasterNodeの接続情報を元に自動的に接続を行う.<br>
+     * 接続出来ない場合自動的に別ノードへ再接続を行う.<br>
+	 *
+     * @param masterNodes 接続情報の配列 "IP:PORT"の形式
+	 */
+	public void autoConnect() throws Exception {
+		ArrayList tmpMasterNodeList = new ArrayList();
+		tmpMasterNodeList = (ArrayList)this.masterNodesList.clone();
+		Random rnd = new Random();
+
+		while(tmpMasterNodeList.size() > 0) {
+
+	        int ran = rnd.nextInt(tmpMasterNodeList.size());
+	        try {
+				try {
+				    if (this.br != null) this.br.close();
+
+	                if (this.pw != null) this.pw.close();
+
+	                if (this.socket != null) this.socket.close();
+				} catch (Exception e) {}
+
+				String nodeStr = (String)tmpMasterNodeList.remove(ran);
+				String[] nodeInfo = nodeStr.split(":");
+	            this.socket = new Socket(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
+	 
+	            this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstKeyValueClient.connectDefaultEncoding)));
+	            this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstKeyValueClient.connectDefaultEncoding));
+				break;
+	        } catch (Exception e) {
+	            try {
+	                if (this.br != null) {
+	                    this.br.close();
+	                    this.br = null;
+	                }
+
+	                if (this.pw != null) {
+	                    this.pw.close();
+	                    this.pw = null;
+	                }
+
+	                if (this.socket != null) {
+	                    this.socket.close();
+	                    this.socket = null;
+	                }
+	            } catch (Exception e2) {
+	                // 無視
+	                this.socket = null;
+	            }
+				if(tmpMasterNodeList.size() < 1) throw e;
+	        }
+		}
+	}
+
+
+
+//Randomクラスのインスタンス化
+
+
+
 
     /**
      * 接続処理.<br>
@@ -209,7 +291,7 @@ public class ImdstKeyValueClient {
             } else {
 
                 // ValueをBase64でエンコード
-                value = new String(BASE64EncoderStream.encode(value.getBytes()));
+                value = new String(this.dataEncoding(value.getBytes()));
 
 
             }
@@ -225,7 +307,7 @@ public class ImdstKeyValueClient {
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(BASE64EncoderStream.encode(keyStr.getBytes())));
+            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
 
@@ -239,10 +321,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // Tag数分連結
-                serverRequestBuf.append(new String(BASE64EncoderStream.encode(tagStrs[0].getBytes())));
+                serverRequestBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
                 for (int i = 1; i < tagStrs.length; i++) {
                     serverRequestBuf.append(tagKeySep);
-                    serverRequestBuf.append(new String(BASE64EncoderStream.encode(tagStrs[i].getBytes())));
+                    serverRequestBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
                 }
             }
 
@@ -280,6 +362,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity [" + serverRetStr + "]");
             }
+		} catch (ConnectException ce) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.setValue(keyStr, tagStrs, value);
+				} catch (Exception e) {
+					throw ce;
+				}
+			} else {
+				throw ce;
+			}
+		} catch (SocketException se) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.setValue(keyStr, tagStrs, value);
+				} catch (Exception e) {
+					throw se;
+				}
+			} else {
+				throw se;
+			}
         } catch (Exception e) {
             throw e;
         }
@@ -415,7 +519,7 @@ public class ImdstKeyValueClient {
 
             // valuesがnullであることはない
             // Valueを圧縮し、Base64でエンコード
-            value = new String(BASE64EncoderStream.encode(this.execCompress(values)));
+            value = new String(this.dataEncoding(this.execCompress(values)));
 
             // 処理番号連結
             serverRequestBuf.append("1");
@@ -423,7 +527,7 @@ public class ImdstKeyValueClient {
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(BASE64EncoderStream.encode(keyStr.getBytes())));
+            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
 
@@ -462,6 +566,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity [" + serverRetStr + "]");
             }
+		} catch (ConnectException ce) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.sendByteData(keyStr, values);
+				} catch (Exception e) {
+					throw ce;
+				}
+			} else {
+				throw ce;
+			}
+		} catch (SocketException se) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.sendByteData(keyStr, values);
+				} catch (Exception e) {
+					throw se;
+				}
+			} else {
+				throw se;
+			}
         } catch (Exception e) {
             throw e;
         }
@@ -518,7 +644,7 @@ public class ImdstKeyValueClient {
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(BASE64EncoderStream.encode(keyStr.getBytes())));
+            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
 
 
             // サーバ送信
@@ -544,9 +670,9 @@ public class ImdstKeyValueClient {
 
                         // Value文字列をBase64でデコード
                         if (encoding == null) {
-                            ret[1] = new String(BASE64DecoderStream.decode(serverRet[2].getBytes()));
+                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()));
                         } else {
-                            ret[1] = new String(BASE64DecoderStream.decode(serverRet[2].getBytes()), encoding);
+                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()), encoding);
                         }
                     }
                 } else if(serverRet[1].equals("false")) {
@@ -565,6 +691,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity");
             }
+		} catch (ConnectException ce) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.getValue(keyStr, encoding);
+				} catch (Exception e) {
+					throw ce;
+				}
+			} else {
+				throw ce;
+			}
+		} catch (SocketException se) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.getValue(keyStr, encoding);
+				} catch (Exception e) {
+					throw se;
+				}
+			} else {
+				throw se;
+			}
         } catch (Exception e) {
             throw e;
         }
@@ -615,7 +763,7 @@ public class ImdstKeyValueClient {
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(BASE64EncoderStream.encode(keyStr.getBytes())));
+            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
 
 
             // サーバ送信
@@ -641,9 +789,9 @@ public class ImdstKeyValueClient {
 
                         // Value文字列をBase64でデコード
                         if (encoding == null) {
-                            ret[1] = new String(BASE64DecoderStream.decode(serverRet[2].getBytes()));
+                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()));
                         } else {
-                            ret[1] = new String(BASE64DecoderStream.decode(serverRet[2].getBytes()), encoding);
+                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()), encoding);
                         }
                     }
                 } else if(serverRet[1].equals("false")) {
@@ -662,6 +810,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity");
             }
+		} catch (ConnectException ce) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.removeValue(keyStr, encoding);
+				} catch (Exception e) {
+					throw ce;
+				}
+			} else {
+				throw ce;
+			}
+		} catch (SocketException se) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.removeValue(keyStr, encoding);
+				} catch (Exception e) {
+					throw se;
+				}
+			} else {
+				throw se;
+			}
         } catch (Exception e) {
             throw e;
         }
@@ -803,7 +973,7 @@ public class ImdstKeyValueClient {
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(BASE64EncoderStream.encode(keyStr.getBytes())));
+            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
 
 
             // サーバ送信
@@ -829,8 +999,8 @@ public class ImdstKeyValueClient {
                     } else {
 
                         // Value文字列をBase64でデコードし、圧縮解除
-                        ret[1] = this.execDecompres(BASE64DecoderStream.decode(serverRet[2].getBytes()));
-                        //ret[1] = BASE64DecoderStream.decode(this.execDecompres(BASE64DecoderStream.decode(serverRet[2].getBytes())));
+                        ret[1] = this.execDecompres(this.dataDecoding(serverRet[2].getBytes()));
+                        //ret[1] = this.dataDecoding(this.execDecompres(this.dataDecoding(serverRet[2].getBytes())));
                     }
                 } else if(serverRet[1].equals("false")) {
 
@@ -848,6 +1018,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity");
             }
+		} catch (ConnectException ce) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.getByteData(keyStr);
+				} catch (Exception e) {
+					throw ce;
+				}
+			} else {
+				throw ce;
+			}
+		} catch (SocketException se) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.getByteData(keyStr);
+				} catch (Exception e) {
+					throw se;
+				}
+			} else {
+				throw se;
+			}
         } catch (Exception e) {
             throw e;
         }
@@ -889,7 +1081,7 @@ public class ImdstKeyValueClient {
 
 
             // tag連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(BASE64EncoderStream.encode(tagStr.getBytes())));
+            serverRequestBuf.append(new String(this.dataEncoding(tagStr.getBytes())));
 
 
             // サーバ送信
@@ -919,7 +1111,7 @@ public class ImdstKeyValueClient {
                         tags = serverRet[2].split(tagKeySep);
                         String[] decTags = new String[tags.length];
                         for (int i = 0; i < tags.length; i++) {
-                            decTags[i] = new String(BASE64DecoderStream.decode(tags[i].getBytes()));
+                            decTags[i] = new String(this.dataDecoding(tags[i].getBytes()));
                         }
                         ret[1] = decTags;
                     }
@@ -939,15 +1131,47 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity [" + serverRet[0] + "]");
             }
+		} catch (ConnectException ce) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.getTagKeys(tagStr);
+				} catch (Exception e) {
+					throw ce;
+				}
+			} else {
+				throw ce;
+			}
+		} catch (SocketException se) {
+			if (this.masterNodesList != null && masterNodesList.size() > 1) {
+				try {
+					this.autoConnect();
+					ret = this.getTagKeys(tagStr);
+				} catch (Exception e) {
+					throw se;
+				}
+			} else {
+				throw se;
+			}
         } catch (Exception e) {
             throw e;
         }
         return ret;
     }
 
+	// Base64でエンコード
+	private byte[] dataEncoding(byte[] datas) {
+		return BASE64EncoderStream.encode(datas);
+	}
+
+	// Base64でデコード
+	private byte[] dataDecoding(byte[] datas) {
+		return BASE64DecoderStream.decode(datas);
+	}
 
     // 圧縮メソッド
     private byte[] execCompress(byte[] bytes) throws Exception {
+		if (!this.compressMode) return bytes;
         try {
             Deflater compresser = new Deflater(); 
 
@@ -1043,7 +1267,7 @@ public class ImdstKeyValueClient {
 
     // 圧縮解除メソッド
     private byte[] execDecompres(byte[] bytes)  throws Exception {
-
+		if (!this.compressMode) return bytes;
         try {
             // 圧縮解除単位
             int bufSize = 1024 * 1024 * 5;

@@ -417,7 +417,8 @@ public class JobConfig {
             File file = new File(JobConfig.class.getResource(this.configFileName).toURI());
             if(this.fileModifiedTime != file.lastModified()) ret = true;
         } catch(Exception e) {
-            throw new BatchException(e);
+			// エラー
+            logger.error("isChangePropertiesFile - Error" + e);
         }
         return ret;
 

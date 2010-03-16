@@ -11,7 +11,9 @@ public class TestSock {
             if (args == null || args.length ==0) {
 
                 System.out.println("{キー値を自動で繰り返し数分変動させて登録}                        コマンド引数{args[0]=1, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=登録件数}");
+                System.out.println("{キー値を自動で繰り返し数分変動させて登録}                        コマンド引数{args[0]=1.2, args[1]=\"マスタノードサーバIP:マスタノードサーバPort番号,スレーブマスタノードサーバIP:スレーブマスタノードサーバPort番号\", args[2]=登録件数}");
                 System.out.println("{キー値を自動で繰り返し数分変動させて取得}                        コマンド引数{args[0]=2, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数}");
+                System.out.println("{キー値を自動で繰り返し数分変動させて取得}                        コマンド引数{args[0]=2.2, args[1]=\"マスタノードサーバIP:マスタノードサーバPort番号,スレーブマスタノードサーバIP:スレーブマスタノードサーバPort番号\", args[2]=取得回数}");
                 System.out.println("{Tagを4パターンで自動的に変動させてキー値は自動変動で登録}        コマンド引数{args[0]=3, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=登録件数}");
                 System.out.println("{指定したTagで関連するキー値を指定回数取得}                       コマンド引数{args[0]=4, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数, args[4]=指定Tag値 (tag1 or tag2 or tag3 or tag4)}");
                 System.out.println("{指定したファイルをバイナリデータとして指定したキー値で保存する}  コマンド引数{args[0]=5, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=登録回数, args[4]=ファイルパス, args[5]=キー値}");
@@ -35,6 +37,29 @@ public class TestSock {
 Thread.sleep(100);
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                    // データ登録
+                    if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                        System.out.println("ImdstKeyValueClient - error");
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                imdstKeyValueClient.close();
+			} else if (args[0].equals("1.2")) {
+
+                // ImdstKeyValueClientを使用してデータを保存(Tagなし)
+
+                // クライアントインスタンスを作成
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+
+                // マスタサーバに接続
+				String[] infos = args[1].split(",");
+                imdstKeyValueClient.setConnectionInfos(infos);
+                imdstKeyValueClient.autoConnect();
+Thread.sleep(100);
+                long start = new Date().getTime();
+                for (int i = 0; i < Integer.parseInt(args[2]);i++) {
                     // データ登録
                     if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
                         System.out.println("ImdstKeyValueClient - error");
@@ -89,7 +114,32 @@ Thread.sleep(100);
                 System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
+			}else if (args[0].equals("2.2")) {
 
+                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+				String[] infos = args[1].split(",");
+                imdstKeyValueClient.setConnectionInfos(infos);
+                imdstKeyValueClient.autoConnect();
+
+                String[] ret = null;
+Thread.sleep(100);
+                long start = new Date().getTime();
+                for (int i = 0; i < Integer.parseInt(args[2]);i++) {
+                    ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
+                    if (ret[0].equals("true")) {
+                        // データ有り
+                        System.out.println(ret[1]);
+                    } else if (ret[0].equals("false")) {
+                        System.out.println("データなし");
+                    } else if (ret[0].equals("error")) {
+                        System.out.println(ret[1]);
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                imdstKeyValueClient.close();
             } else if (args[0].equals("3")) {
 
                 // ImdstKeyValueClientを使用してデータを保存(Tagあり)
