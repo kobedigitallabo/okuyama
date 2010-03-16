@@ -6,8 +6,8 @@ import java.net.*;
 import java.util.zip.*;
 
 
-import com.sun.mail.util.BASE64DecoderStream;   
-import com.sun.mail.util.BASE64EncoderStream; 
+import com.sun.mail.util.BASE64DecoderStream;
+import com.sun.mail.util.BASE64EncoderStream;
 
 import org.imdst.util.ImdstDefine;
 

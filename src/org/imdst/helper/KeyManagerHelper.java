@@ -3,6 +3,7 @@ package org.imdst.helper;
 import java.io.*;
 import java.util.*;
 import java.net.*;
+import javax.script.*;
 
 import org.batch.lang.BatchException;
 import org.batch.job.AbstractHelper;
@@ -13,6 +14,9 @@ import org.imdst.util.KeyMapManager;
 import org.imdst.util.ImdstDefine;
 import org.imdst.util.StatusUtil;
 
+
+import com.sun.mail.util.BASE64DecoderStream;
+import com.sun.mail.util.BASE64EncoderStream;
 /**
  * Key情報を格納するHelper.<br>
  * 本helperはKeyManagerJobから呼び出されることを想定している.<br>
@@ -191,6 +195,20 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                         }
+					} else if(clientParameterList[0].equals("8")) {
+
+                        // Key値でDataNode名を返す(Script実行バージョン)
+                        requestHashCode = new Integer(clientParameterList[1]);
+                        // メソッド呼び出し
+                        retParams = this.getDatanodeScriptExec(requestHashCode,clientParameterList[2]);
+                        retParamBuf.append(retParams[0]);
+                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        retParamBuf.append(retParams[1]);
+                        if (retParams.length > 2) {
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+                        }
+                    
                     } else if(clientParameterList[0].equals("10")) {
 
                         // ServerConnect Test Ping
@@ -313,6 +331,76 @@ public class KeyManagerHelper extends AbstractHelper {
                     retStrs[0] = "2";
                     retStrs[1] = "true";
                     retStrs[2] = this.keyMapManager.getKeyPair(key);
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "2";
+                    retStrs[1] = "false";
+                }
+            } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "2";
+                    retStrs[1] = "false";
+            }
+        } catch (Exception e) {
+            logger.error("KeyManagerHelper - getDatanode - Error", e);
+            retStrs = new String[2];
+            retStrs[0] = "2";
+            retStrs[1] = "false";
+        }
+        //logger.debug("KeyManagerHelper - getDatanode - end");
+        return retStrs;
+    }
+
+
+    // KeyでDataNode値を取得する
+	// 実行後データが取得出来た場合はデータに対してScriptを実行する
+	// Scriptには必ずdataValueという引数で値を渡す(デコードデータを)
+	// もどり値はScript内にexecRetという0 or 1で表す値とexecStrという返却値が
+	// 定義されているものとする
+	// execRet=1値を返す、execRet=0値を返さない
+    private String[] getDatanodeScriptExec(Integer key, String scriptStr) {
+        //logger.debug("KeyManagerHelper - getDatanode - start");
+        String[] retStrs = null;
+        try {
+            if(!this.keyMapManager.checkError()) {
+                if (this.keyMapManager.containsKeyPair(key)) {
+
+                    retStrs = new String[3];
+                    retStrs[0] = "2";
+                    retStrs[1] = "true";
+					String tmpValue = this.keyMapManager.getKeyPair(key);
+					if (scriptStr != null && !scriptStr.trim().equals("")) {
+
+						// TODO:エンジンの初期化に時間がかかるので他の影響を考えここで初期化
+					    ScriptEngineManager manager = new ScriptEngineManager();
+				        ScriptEngine engine = manager.getEngineByName("JavaScript");
+
+						// 引数設定
+						if (tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
+							engine.put("dataValue", "");
+						} else {
+				        	engine.put("dataValue", new String(BASE64DecoderStream.decode(tmpValue.getBytes()),ImdstDefine.keyWorkFileEncoding));
+				        }
+
+						// 実行
+						engine.eval(scriptStr);
+
+				        String execRet = (String)engine.get("execRet");
+						if (execRet != null && execRet.equals("1")) {
+							// データを返す
+							String execStr = (String)engine.get("execStr");
+							if (execStr != null && !execStr.equals("")) {
+								retStrs[2] = new String(BASE64EncoderStream.encode(execStr.getBytes()),ImdstDefine.keyWorkFileEncoding);
+							} else { 
+								retStrs[2] = ImdstDefine.imdstBlankStrData;
+							}
+						} else {
+							// データを返さない
+							retStrs[1] = "false";
+						}
+					} else {
+                    	retStrs[2] = tmpValue;
+					}
                 } else {
                     retStrs = new String[2];
                     retStrs[0] = "2";
