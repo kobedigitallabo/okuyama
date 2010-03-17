@@ -354,10 +354,16 @@ public class KeyManagerHelper extends AbstractHelper {
 
     // KeyでDataNode値を取得する
 	// 実行後データが取得出来た場合はデータに対してScriptを実行する
-	// Scriptには必ずdataValueという引数で値を渡す(デコードデータを)
-	// もどり値はScript内にexecRetという0 or 1で表す値とexecStrという返却値が
+	// 現在スクリプトはJavaScriptとなる
+	// スクリプトには必ずdataValueという変数が定義されているものとして、該当変数に取得したValue値が格納
+	// されてスクリプトが実行される。
+	// もどり値はScript内にexecRetという0 or 1で表す値とretValueという返却値が
 	// 定義されているものとする
+	// スクリプト実行後、execRetの値で状態を判断し、retValueが返却されるかが決定される。
 	// execRet=1値を返す、execRet=0値を返さない
+	// retValue=Value返却される値となる
+	// 返却値の配列の2番目の値がtrueならスクリプト実行後結果あり、
+    // falseならスクリプト実行後結果なし、errorならスクリプト実行エラー
     private String[] getDatanodeScriptExec(Integer key, String scriptStr) {
         //logger.debug("KeyManagerHelper - getDatanode - start");
         String[] retStrs = null;
@@ -366,10 +372,12 @@ public class KeyManagerHelper extends AbstractHelper {
                 if (this.keyMapManager.containsKeyPair(key)) {
 
                     retStrs = new String[3];
-                    retStrs[0] = "2";
+                    retStrs[0] = "8";
                     retStrs[1] = "true";
 					String tmpValue = this.keyMapManager.getKeyPair(key);
-					if (scriptStr != null && !scriptStr.trim().equals("")) {
+					
+					if (scriptStr != null && !scriptStr.trim().equals("") &&
+						!(new String(BASE64DecoderStream.decode(scriptStr.getBytes())).equals(ImdstDefine.imdstBlankStrData))) {
 
 						// TODO:エンジンの初期化に時間がかかるので他の影響を考えここで初期化
 					    ScriptEngineManager manager = new ScriptEngineManager();
@@ -379,42 +387,47 @@ public class KeyManagerHelper extends AbstractHelper {
 						if (tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
 							engine.put("dataValue", "");
 						} else {
-				        	engine.put("dataValue", new String(BASE64DecoderStream.decode(tmpValue.getBytes()),ImdstDefine.keyWorkFileEncoding));
+				        	engine.put("dataValue", new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.keyWorkFileEncoding));
 				        }
 
-						// 実行
-						engine.eval(scriptStr);
+						// 実行	
+						try {
+							engine.eval(new String(BASE64DecoderStream.decode(scriptStr.getBytes()), ImdstDefine.keyWorkFileEncoding));
 
-				        String execRet = (String)engine.get("execRet");
-						if (execRet != null && execRet.equals("1")) {
-							// データを返す
-							String execStr = (String)engine.get("execStr");
-							if (execStr != null && !execStr.equals("")) {
-								retStrs[2] = new String(BASE64EncoderStream.encode(execStr.getBytes()),ImdstDefine.keyWorkFileEncoding);
-							} else { 
-								retStrs[2] = ImdstDefine.imdstBlankStrData;
+					        String execRet = (String)engine.get("execRet");
+							if (execRet != null && execRet.equals("1")) {
+								// データを返す
+								String retValue = (String)engine.get("retValue");
+								if (retValue != null && !retValue.equals("")) {
+									retStrs[2] = new String(BASE64EncoderStream.encode(retValue.getBytes()),ImdstDefine.keyWorkFileEncoding);
+								} else { 
+									retStrs[2] = ImdstDefine.imdstBlankStrData;
+								}
+							} else {
+								// データを返さない
+								retStrs[1] = "false";
 							}
-						} else {
-							// データを返さない
-							retStrs[1] = "false";
+						} catch (Exception e) {
+							retStrs[1] = "error";
+							retStrs[2] = e.getMessage();
 						}
 					} else {
                     	retStrs[2] = tmpValue;
 					}
                 } else {
                     retStrs = new String[2];
-                    retStrs[0] = "2";
+                    retStrs[0] = "8";
                     retStrs[1] = "false";
                 }
             } else {
                     retStrs = new String[2];
-                    retStrs[0] = "2";
+                    retStrs[0] = "8";
                     retStrs[1] = "false";
             }
         } catch (Exception e) {
             logger.error("KeyManagerHelper - getDatanode - Error", e);
             retStrs = new String[2];
-            retStrs[0] = "2";
+            retStrs[0] = "8";
             retStrs[1] = "false";
         }
         //logger.debug("KeyManagerHelper - getDatanode - end");

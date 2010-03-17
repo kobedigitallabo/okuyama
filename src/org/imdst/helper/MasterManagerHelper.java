@@ -161,6 +161,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParamBuf.append(retParams[1]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
+                        } else if(execPattern.equals(new Integer(8))) {
+
+                            // Key値でValueを取得する(Scriptを実行する)
+                            retParams = this.getKeyValueScript(clientParameterList[1], clientParameterList[2]);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+
                         } else if(execPattern.equals(new Integer(30))) {
 
                             // 各キーノードへデータロック依頼
@@ -462,6 +472,102 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return retStrs;
     }
 
+
+    /**
+     * KeyでValueを取得する.<br>
+	 * Scriptも同時に実行する.<br>
+     * 処理フロー.<br>
+     * 1.DataDispatcherにKeyを使用してValueの保存先を問い合わせる<br>
+     * 2.KeyNodeに接続してValueを取得する<br>
+     * 3.結果文字列の配列を作成(成功時は処理番号"8"と"true"とValue、データが存在しない場合は処理番号"8"と"false"とValue、スクリプトエラー時は処理番号"8"と"error"とエラーメッセージ)<br>
+	 *
+	 *
+     * @param keyStr key値の文字列
+     * @param scriptStr 実行Scriptの文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getKeyValueScript(String keyStr, String scriptStr) throws BatchException {
+        //logger.debug("MasterManagerHelper - getKeyValueScript - start");
+        String[] retStrs = new String[3];
+
+        String[] keyNodeSaveRet = null;
+        String[] keyNodeInfo = null;
+
+        try {
+
+            // キー値を使用して取得先を決定
+			if (loadBalancing) {
+				keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess);
+			} else {
+            	keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
+			}
+
+            // 取得実行
+            if (keyNodeInfo.length == 3) {
+                keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "8", keyStr, scriptStr);
+            } else {
+                keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "8", keyStr, scriptStr);
+            }
+
+            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
+			// でそちらのルールでのデータ格納場所も調べる
+            if (keyNodeSaveRet[1].equals("false")) {
+                if (this.oldRule != null) {
+
+                    //System.out.println("過去ルールを探索");
+                    for (int i = 0; i < this.oldRule.length; i++) {
+
+                        // キー値を使用して取得先を決定
+						if (loadBalancing) {
+							keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess, this.oldRule[i]);
+						} else {
+			            	keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.oldRule[i]);
+						}
+
+                        // 取得実行
+                        if (keyNodeInfo.length == 3) {
+                            keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "8", keyStr, scriptStr);
+                        } else {
+                            keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "8", keyStr, scriptStr);
+                        }
+
+						// 過去ルールからデータを発見
+                        if (keyNodeSaveRet[1].equals("true")) {
+							break;
+						}
+                    }
+                }
+            }
+
+
+            // 取得結果確認
+            if (keyNodeSaveRet[1].equals("false")) {
+
+                // 取得失敗(データなし)
+                retStrs[0] = keyNodeSaveRet[0];
+                retStrs[1] = "false";
+                retStrs[2] = "";
+                
+            } else {
+				// trueもしくはerrorの可能性あり
+                retStrs[0] = keyNodeSaveRet[0];
+                retStrs[1] = keyNodeSaveRet[1];
+                retStrs[2] = keyNodeSaveRet[2];
+            }
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - getKeyValueScript - Error", be);
+        } catch (Exception e) {
+			e.printStackTrace();
+            retStrs[0] = "8";
+            retStrs[1] = "error";
+            retStrs[2] = "NG:MasterManagerHelper - getKeyValueScript - Exception - " + e.toString();
+        }
+        //logger.debug("MasterManagerHelper - getKeyValueScript - end");
+        return retStrs;
+    }
+
+
     /**
      * KeyでValueを削除する.<br>
      * 処理フロー.<br>
@@ -738,6 +844,122 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         String retParam = br.readLine();
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
                     }
+                    break;
+                } catch(SocketException tSe) {
+                    // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
+                    se = tSe;
+                } catch(IOException tIe) {
+                    // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
+                    ie = tIe;
+                }
+
+                // 既にスレーブの接続を使用している場合は、もう一度だけメインノードに接続を試みる
+                // それで駄目な場合はエラーとする
+                if (slaveUse) {
+                    if (mainRetry) {
+                        if (se != null) throw se;
+                        if (ie != null) throw ie;
+                        throw new BatchException("Key Node IO Error: detail info for log file");
+                    } else {
+
+                        // メインKeyNodeとの接続を確立
+                        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
+                        if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                        mainRetry = true;
+                    }
+                } else {
+                    if (subKeyNodeName == null) {
+                        if (se != null) throw se;
+                        if (ie != null) throw ie;
+                    } else{
+                        dtMap = null;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            if (subKeyNodeName != null) 
+	            super.execNodeUseEnd(subKeyNodeFullName);
+        }
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeからデータを取得する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(8=Keyでデータを取得)
+     * @param scriptStr Script文字列
+     * @param key Key値
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getKeyNodeValueScript(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String key, String scriptStr) throws BatchException {
+        PrintWriter pw = null;
+        BufferedReader br = null;
+        HashMap dtMap = null;
+
+        String[] retParams = null;
+
+        boolean slaveUse = false;
+        boolean mainRetry = false;
+
+        String nowUseNodeInfo = null;
+
+        SocketException se = null;
+        IOException ie = null;
+        try {
+
+            // KeyNodeとの接続を確立
+            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+
+            while (true) {
+
+                // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
+                // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
+                if (dtMap == null) {
+                    if (subKeyNodeName != null) dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+
+                    if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                    slaveUse = true;
+                }
+
+                // writerとreaderを取り出し
+                pw = (PrintWriter)dtMap.get("writer");
+                br = (BufferedReader)dtMap.get("reader");
+
+
+                try {
+                    // 処理種別判別
+                    if (type.equals("8")) {
+
+                        // Key値でValueを取得
+                        StringBuffer buf = new StringBuffer();
+                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
+                        buf.append("8");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(key.hashCode());
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(scriptStr);
+
+                        // 送信
+                        pw.println(buf.toString());
+                        pw.flush();
+
+                        // 返却値取得
+                        String retParam = br.readLine();
+
+                        // ノードの使用終了
+                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                    } 
                     break;
                 } catch(SocketException tSe) {
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる

@@ -1,1 +1,1 @@
-java -cp ./classes;./lib/log4j-1.2.14.jar -Xmx256m -Xms128m  -server org.batch.JavaMain /Main.properties /MasterNode2.properties
+java -cp ./classes;./lib/log4j-1.2.14.jar -Xmx256m -Xms128m  -server org.batch.JavaMain /Main.properties /MasterNode2.properties > nul
