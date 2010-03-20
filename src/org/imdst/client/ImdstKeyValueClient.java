@@ -265,8 +265,6 @@ public class ImdstKeyValueClient {
         String[] serverRet = null;
 
         StringBuffer serverRequestBuf = null;
-//long start2 = 0;
-//long end2 = 0;
         try {
             // Byte Lenghtチェック
             if (keyStr.getBytes().length > maxValueSize) throw new Exception("Save Key Max Size " + maxValueSize + " Byte");
@@ -333,17 +331,14 @@ public class ImdstKeyValueClient {
 
             // Value連結
             serverRequestBuf.append(value);
-//start2 = System.nanoTime();
+
             // サーバ送信
             pw.println(serverRequestBuf.toString());
             pw.flush();
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-//end2 = System.nanoTime();
             serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
-//long end1 = System.nanoTime();
-//System.out.println("[" + (end2 - start2) + "]");
 
 
             // 処理の妥当性確認
@@ -868,11 +863,12 @@ public class ImdstKeyValueClient {
     public String[] removeValue(String keyStr) throws Exception {
         return this.removeValue(keyStr, null);
     }
+
     /**
      * マスタサーバからKeyでデータを削除する.<br>
      * 取得値のエンコーディング指定あり.<br>
      * @param keyStr
-     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
+     * @return String[] 削除したデータ 内容) 要素1(データ削除有無):"true" or "false",要素2(削除データ):"データ文字列"
      * @throws Exception
      */
     public String[] removeValue(String keyStr, String encoding) throws Exception {

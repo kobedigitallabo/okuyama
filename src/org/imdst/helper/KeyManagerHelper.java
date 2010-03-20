@@ -122,7 +122,9 @@ public class KeyManagerHelper extends AbstractHelper {
                     clientParametersStr = br.readLine();
 
                     // クライアントからの要求が接続切要求ではないか確認
-                    if (clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
+                    if (clientParametersStr == null || 
+							clientParametersStr.equals("") || 
+								clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
                         // 切断要求
                         logger.debug("Client Connect Exit Request");
                         closeFlg = true;
