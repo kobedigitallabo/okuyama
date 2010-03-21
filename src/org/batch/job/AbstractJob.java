@@ -172,7 +172,9 @@ abstract public class AbstractJob extends Thread {
             }
 
             helper.setParameters(helpreParams);
-            helper.start();
+            // ExecutorService を使用するために変更
+            //helper.start();
+
             HelperPool.returnHelper(helperName,helper);
             ret = helper.hashCode();
         } catch (BatchException be) {

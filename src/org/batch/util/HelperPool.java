@@ -1,5 +1,8 @@
 package org.batch.util;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import java.util.Hashtable;
 import java.util.ArrayList;
 import org.batch.util.ILogger;
@@ -39,6 +42,8 @@ public class  HelperPool extends Thread {
     // スレッド内でのチェックをコントロール
     private boolean poolRunning = true;
 
+    private static ExecutorService ex = Executors.newCachedThreadPool();
+
     public HelperPool() {
         poolRunning = true;
         
@@ -47,68 +52,14 @@ public class  HelperPool extends Thread {
     public void run () {
         logger.debug("HelperPool - run - start");
         try {
-            AbstractHelper helper = null;
-            ArrayList helperList = null;
-            ArrayList removeList = null;
+            // ExecutorService を使用するために変更. 2010/03/22
 
             while(this.poolRunning) {
                 Thread.sleep(helperCheckTime);
-
-                synchronized(poolLock) {
-                    logger.debug("HelperPool - synchronized Check - start");
-                    for(int i = 0; i < helperNameList.size(); i++) {
-                        helperList = (ArrayList)helperMap.get((String)helperNameList.get(i));
-                        removeList = new ArrayList();
-                        for(int t = 0; t < helperList.size(); t++) {
-                            helper = (AbstractHelper)helperList.get(t);
-
-                            if (BatchDefine.JOB_STATUS_END.equals(helper.getStatus()) || 
-                                    BatchDefine.JOB_STATUS_ERR.equals(helper.getStatus())) {
-
-                                // 削除対象に登録
-                                removeList.add(new Integer(t));
-                            }
-                        }
-
-                        logger.debug("HelperPool - synchronized Check - Remove Helper Count" + removeList.size());
-                        // 終了もしくはエラーの削除対象のhelperを終了確認後、endHelperを呼び出し、return値を取得してインスタンスを破棄
-                        for(int t = 0; t < removeList.size(); t++) {
-                            Integer removeIndex = (Integer)removeList.get(removeList.size() - (t + 1));
-
-                            helper = (AbstractHelper)helperList.remove(removeIndex.intValue());
-                            // Helperの終了待機
-                            helper.join(helperThreadJoinTime);
-                            helper.endHelper();
-
-                            // helperの返却値を取得
-                            Object retObj = helper.getReturnParameter();
-                            if (retObj != null) {
-                                helperReturnParamMap.put(new Integer(helper.hashCode()), retObj);
-                            }
-
-                            // Helperの状態を格納
-                            helperStatusMap.put(new Integer(helper.hashCode()), helper.getStatus());
-                            helper = null;
-                        }
-                        helperMap.put((String)helperNameList.get(i), helperList);
-                    }
-                    logger.debug("HelperPool - synchronized Check - End");
-                }
             }
-
             logger.info("HelperPool - 終了処理開始");
             // システムの停止が要求されているのでHelperを強制終了
-            for(int i = 0; i < helperNameList.size(); i++) {
-                helperList = (ArrayList)helperMap.get((String)helperNameList.get(i));
-                removeList = new ArrayList();
-                for(int t = 0; t < helperList.size(); t++) {
-                    helper = (AbstractHelper)helperList.get(t);
-                    // Helperの終了待機
-                    helper.join(helperThreadJoinTime);
-                    helper.endHelper();
-                    helper = null;
-                }
-            }
+            ex.shutdown();
             logger.info("HelperPool - 終了処理終了");
         } catch (Exception e) {
             e.printStackTrace();
@@ -172,7 +123,7 @@ public class  HelperPool extends Thread {
      * @param AbstractHelper ヘルパーインスタンス
      * @throw  BatchException
      */
-    public static void returnHelper(String helperName, AbstractHelper helper) throws BatchException {
+/*    public static void returnHelper(String helperName, AbstractHelper helper) throws BatchException {
         logger.debug("HelperPool - returnHelper - start");
         logger.debug("HelperPool - returnHelper - helperName = [" + helperName + "]");
         ArrayList helperList = null;
@@ -190,6 +141,30 @@ public class  HelperPool extends Thread {
         } catch (BatchException be) {
             logger.error("HelperPool - returnHelper - BatchException");
             throw be;
+        }
+        logger.debug("HelperPool - returnHelper - end");
+    }
+*/
+    /**
+     * Helperインスタンスを返す.<br>
+     * Helperが定義として存在しない場合BatchExceptionがthrowされる.<br>
+     *
+     * @param String helperName
+     * @param AbstractHelper ヘルパーインスタンス
+     * @throw  BatchException
+     */
+    public static void returnHelper(String helperName, AbstractHelper helper) throws BatchException {
+        logger.debug("HelperPool - returnHelper - start");
+        logger.debug("HelperPool - returnHelper - helperName = [" + helperName + "]");
+        ArrayList helperList = null;
+
+        try {
+            // ExecutorService を使用するために変更. 2010/03/22
+            ex.execute(helper);
+
+        } catch (Exception be) {
+            logger.error("HelperPool - returnHelper - BatchException");
+            throw new BatchException(be);
         }
         logger.debug("HelperPool - returnHelper - end");
     }

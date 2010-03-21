@@ -16,7 +16,11 @@ import org.batch.util.LoggerFactory;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-abstract public class AbstractHelper extends Thread {
+// ExecutorService を使用するために変更
+//abstract public class AbstractHelper extends Thread {
+abstract public class AbstractHelper  implements Runnable{
+
+
 
     // Logger
     private ILogger logger = LoggerFactory.createLogger(AbstractHelper.class);
