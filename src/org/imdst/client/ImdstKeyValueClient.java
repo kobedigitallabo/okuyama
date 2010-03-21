@@ -19,8 +19,8 @@ import org.imdst.util.ImdstDefine;
  */
 public class ImdstKeyValueClient {
 
-	// 接続先情報
-	private ArrayList masterNodesList = null;
+    // 接続先情報
+    private ArrayList masterNodesList = null;
     // ソケット
     private Socket socket = null;
 
@@ -54,8 +54,8 @@ public class ImdstKeyValueClient {
     // 保存できる最大長
     private int maxValueSize = ImdstDefine.saveDataMaxSize;
 
-	// byteデータ送信時に圧縮を行うかを決定
-	private boolean compressMode = false;
+    // byteデータ送信時に圧縮を行うかを決定
+    private boolean compressMode = false;
 
     /**
      * コンストラクタ
@@ -76,75 +76,77 @@ public class ImdstKeyValueClient {
         saveSize = size;
     }
 
-	/**
-	 * MasterNodeの接続情報を設定する.<br>
-	 * 本メソッドでセットし、autoConnect()メソッドを<br>
+    /**
+     * MasterNodeの接続情報を設定する.<br>
+     * 本メソッドでセットし、autoConnect()メソッドを<br>
      * 呼び出すと、自動的にその時稼動しているMasterNodeにバランシングして<br>
-	 * 接続される。接続出来ない場合は、別のMasterNodeに再接続される.<br>
-	 *
+     * 接続される。接続出来ない場合は、別のMasterNodeに再接続される.<br>
+     *
      * @param masterNodes 接続情報の配列 "IP:PORT"の形式
-	 */
-	public void setConnectionInfos(String[] masterNodes) {
-		this.masterNodesList = new ArrayList(masterNodes.length);
-		for (int i = 0; i < masterNodes.length; i++) {
-			this.masterNodesList.add(masterNodes[i]);
-		} 
-	}
+     */
+    public void setConnectionInfos(String[] masterNodes) {
+        this.masterNodesList = new ArrayList(masterNodes.length);
+        for (int i = 0; i < masterNodes.length; i++) {
+            this.masterNodesList.add(masterNodes[i]);
+        } 
+    }
 
-	/**
-	 * 設定されたMasterNodeの接続情報を元に自動的に接続を行う.<br>
+    /**
+     * 設定されたMasterNodeの接続情報を元に自動的に接続を行う.<br>
      * 接続出来ない場合自動的に別ノードへ再接続を行う.<br>
-	 *
+     *
      * @param masterNodes 接続情報の配列 "IP:PORT"の形式
-	 */
-	public void autoConnect() throws Exception {
-		ArrayList tmpMasterNodeList = new ArrayList();
-		tmpMasterNodeList = (ArrayList)this.masterNodesList.clone();
-		Random rnd = new Random();
+     */
+    public void autoConnect() throws Exception {
+        ArrayList tmpMasterNodeList = new ArrayList();
+        tmpMasterNodeList = (ArrayList)this.masterNodesList.clone();
+        Random rnd = new Random();
 
-		while(tmpMasterNodeList.size() > 0) {
+        while(tmpMasterNodeList.size() > 0) {
 
-	        int ran = rnd.nextInt(tmpMasterNodeList.size());
-	        try {
-				try {
-				    if (this.br != null) this.br.close();
+            int ran = rnd.nextInt(tmpMasterNodeList.size());
+            try {
+                try {
+                    if (this.br != null) this.br.close();
 
-	                if (this.pw != null) this.pw.close();
+                    if (this.pw != null) this.pw.close();
 
-	                if (this.socket != null) this.socket.close();
-				} catch (Exception e) {}
+                    if (this.socket != null) this.socket.close();
+                } catch (Exception e) {}
 
-				String nodeStr = (String)tmpMasterNodeList.remove(ran);
-				String[] nodeInfo = nodeStr.split(":");
-	            this.socket = new Socket(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
-	 
-	            this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstKeyValueClient.connectDefaultEncoding)));
-	            this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstKeyValueClient.connectDefaultEncoding));
-				break;
-	        } catch (Exception e) {
-	            try {
-	                if (this.br != null) {
-	                    this.br.close();
-	                    this.br = null;
-	                }
+                String nodeStr = (String)tmpMasterNodeList.remove(ran);
+                String[] nodeInfo = nodeStr.split(":");
+//              this.socket = new Socket(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
+                this.socket = new Socket();
+                InetSocketAddress inetAddr = new InetSocketAddress(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
+                this.socket.connect(inetAddr, 5000);
+                this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstKeyValueClient.connectDefaultEncoding)));
+                this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstKeyValueClient.connectDefaultEncoding));
+                break;
+            } catch (Exception e) {
+                try {
+                    if (this.br != null) {
+                        this.br.close();
+                        this.br = null;
+                    }
 
-	                if (this.pw != null) {
-	                    this.pw.close();
-	                    this.pw = null;
-	                }
+                    if (this.pw != null) {
+                        this.pw.close();
+                        this.pw = null;
+                    }
 
-	                if (this.socket != null) {
-	                    this.socket.close();
-	                    this.socket = null;
-	                }
-	            } catch (Exception e2) {
-	                // 無視
-	                this.socket = null;
-	            }
-				if(tmpMasterNodeList.size() < 1) throw e;
-	        }
-		}
-	}
+                    if (this.socket != null) {
+                        this.socket.close();
+                        this.socket = null;
+                    }
+                } catch (Exception e2) {
+                    // 無視
+                    this.socket = null;
+                }
+                if(tmpMasterNodeList.size() < 1) throw e;
+            }
+        }
+    }
 
 
 
@@ -357,28 +359,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity [" + serverRetStr + "]");
             }
-		} catch (ConnectException ce) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.setValue(keyStr, tagStrs, value);
-				} catch (Exception e) {
-					throw ce;
-				}
-			} else {
-				throw ce;
-			}
-		} catch (SocketException se) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.setValue(keyStr, tagStrs, value);
-				} catch (Exception e) {
-					throw se;
-				}
-			} else {
-				throw se;
-			}
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setValue(keyStr, tagStrs, value);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setValue(keyStr, tagStrs, value);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
         } catch (Exception e) {
             throw e;
         }
@@ -561,28 +563,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity [" + serverRetStr + "]");
             }
-		} catch (ConnectException ce) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.sendByteData(keyStr, values);
-				} catch (Exception e) {
-					throw ce;
-				}
-			} else {
-				throw ce;
-			}
-		} catch (SocketException se) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.sendByteData(keyStr, values);
-				} catch (Exception e) {
-					throw se;
-				}
-			} else {
-				throw se;
-			}
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.sendByteData(keyStr, values);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.sendByteData(keyStr, values);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
         } catch (Exception e) {
             throw e;
         }
@@ -686,28 +688,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity");
             }
-		} catch (ConnectException ce) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.getValue(keyStr, encoding);
-				} catch (Exception e) {
-					throw ce;
-				}
-			} else {
-				throw ce;
-			}
-		} catch (SocketException se) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.getValue(keyStr, encoding);
-				} catch (Exception e) {
-					throw se;
-				}
-			} else {
-				throw se;
-			}
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getValue(keyStr, encoding);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getValue(keyStr, encoding);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
         } catch (Exception e) {
             throw e;
         }
@@ -717,27 +719,27 @@ public class ImdstKeyValueClient {
 
     /**
      * マスタサーバからKeyでデータを取得する.<br>
-	 * Scriptを同時に実行する.<br>
+     * Scriptを同時に実行する.<br>
      * 文字列エンコーディング指定あり.<br>
      *
      * @param keyStr キー値
-	 * @param scriptStr スクリプト文
+     * @param scriptStr スクリプト文
      * @return String[] 要素1(データ、エラー有無):"true" or "false" or "error", 要素2(データorエラー内容):"文字列"
      * @throws Exception
      */
     public String[] getValueScript(String keyStr, String scriptStr) throws Exception {
-		return getValueScript(keyStr, scriptStr, null);
-		
-	}
+        return getValueScript(keyStr, scriptStr, null);
+        
+    }
 
 
     /**
      * マスタサーバからKeyでデータを取得する.<br>
-	 * Scriptを同時に実行する.<br>
+     * Scriptを同時に実行する.<br>
      * 文字列エンコーディング指定あり.<br>
      *
      * @param keyStr キー値
-	 * @param scriptStr スクリプト文
+     * @param scriptStr スクリプト文
      * @param encoding
      * @return String[] 要素1(データ、エラー有無):"true" or "false" or "error", 要素2(データorエラー内容):"文字列"
      * @throws Exception
@@ -758,9 +760,9 @@ public class ImdstKeyValueClient {
                 throw new Exception("The blank is not admitted on a key");
             } 
 
-			// Scriptチェック
+            // Scriptチェック
             if (scriptStr == null ||  scriptStr.equals("")) {
-				scriptStr = ImdstKeyValueClient.blankStr;
+                scriptStr = ImdstKeyValueClient.blankStr;
                 throw new Exception("The blank is not admitted on a Script");
             } 
 
@@ -778,7 +780,7 @@ public class ImdstKeyValueClient {
             serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
-	        // Script連結
+            // Script連結
             serverRequestBuf.append(new String(this.dataEncoding(scriptStr.getBytes())));
 
             // サーバ送信
@@ -825,28 +827,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity");
             }
-		} catch (ConnectException ce) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.getValueScript(keyStr, scriptStr, encoding);
-				} catch (Exception e) {
-					throw ce;
-				}
-			} else {
-				throw ce;
-			}
-		} catch (SocketException se) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.getValueScript(keyStr, scriptStr, encoding);
-				} catch (Exception e) {
-					throw se;
-				}
-			} else {
-				throw se;
-			}
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getValueScript(keyStr, scriptStr, encoding);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getValueScript(keyStr, scriptStr, encoding);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
         } catch (Exception e) {
             throw e;
         }
@@ -945,28 +947,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity");
             }
-		} catch (ConnectException ce) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.removeValue(keyStr, encoding);
-				} catch (Exception e) {
-					throw ce;
-				}
-			} else {
-				throw ce;
-			}
-		} catch (SocketException se) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.removeValue(keyStr, encoding);
-				} catch (Exception e) {
-					throw se;
-				}
-			} else {
-				throw se;
-			}
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.removeValue(keyStr, encoding);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.removeValue(keyStr, encoding);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
         } catch (Exception e) {
             throw e;
         }
@@ -1153,28 +1155,28 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity");
             }
-		} catch (ConnectException ce) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.getByteData(keyStr);
-				} catch (Exception e) {
-					throw ce;
-				}
-			} else {
-				throw ce;
-			}
-		} catch (SocketException se) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.getByteData(keyStr);
-				} catch (Exception e) {
-					throw se;
-				}
-			} else {
-				throw se;
-			}
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getByteData(keyStr);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getByteData(keyStr);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
         } catch (Exception e) {
             throw e;
         }
@@ -1266,47 +1268,47 @@ public class ImdstKeyValueClient {
                 // 妥当性違反
                 throw new Exception("Execute Violation of validity [" + serverRet[0] + "]");
             }
-		} catch (ConnectException ce) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.getTagKeys(tagStr);
-				} catch (Exception e) {
-					throw ce;
-				}
-			} else {
-				throw ce;
-			}
-		} catch (SocketException se) {
-			if (this.masterNodesList != null && masterNodesList.size() > 1) {
-				try {
-					this.autoConnect();
-					ret = this.getTagKeys(tagStr);
-				} catch (Exception e) {
-					throw se;
-				}
-			} else {
-				throw se;
-			}
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getTagKeys(tagStr);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getTagKeys(tagStr);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
         } catch (Exception e) {
             throw e;
         }
         return ret;
     }
 
-	// Base64でエンコード
-	private byte[] dataEncoding(byte[] datas) {
-		return BASE64EncoderStream.encode(datas);
-	}
+    // Base64でエンコード
+    private byte[] dataEncoding(byte[] datas) {
+        return BASE64EncoderStream.encode(datas);
+    }
 
-	// Base64でデコード
-	private byte[] dataDecoding(byte[] datas) {
-		return BASE64DecoderStream.decode(datas);
-	}
+    // Base64でデコード
+    private byte[] dataDecoding(byte[] datas) {
+        return BASE64DecoderStream.decode(datas);
+    }
 
     // 圧縮メソッド
     private byte[] execCompress(byte[] bytes) throws Exception {
-		if (!this.compressMode) return bytes;
+        if (!this.compressMode) return bytes;
         try {
             Deflater compresser = new Deflater(); 
 
@@ -1402,7 +1404,7 @@ public class ImdstKeyValueClient {
 
     // 圧縮解除メソッド
     private byte[] execDecompres(byte[] bytes)  throws Exception {
-		if (!this.compressMode) return bytes;
+        if (!this.compressMode) return bytes;
         try {
             // 圧縮解除単位
             int bufSize = 1024 * 1024 * 5;
