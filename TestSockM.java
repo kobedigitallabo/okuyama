@@ -7,6 +7,7 @@ import org.batch.lang.BatchException;
 
 public class TestSockM extends Thread{
     private static String[] args = null;
+    private int threadNo = 0;
     private long time = 0;
     public static void main(String[] args) {
         try {
@@ -15,8 +16,9 @@ public class TestSockM extends Thread{
             ArrayList list = new ArrayList();
             int threadCount = Integer.parseInt(args[3]);
             for (int i= 0; i < threadCount; i++) {
-           
+
                 TestSockM m = new TestSockM();
+                m.threadNo = i;
                 m.start();
                 list.add(m);
             }
@@ -51,8 +53,8 @@ public class TestSockM extends Thread{
 
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[2]);i++) {
-                    if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                        System.out.println("ImdstKeyValueClient - error");
+                    if (!imdstKeyValueClient.setValue("datasavekey_" + threadNo + "_" + new Integer(i).toString(), "savedatavaluestr_" + threadNo + "_" + new Integer(i).toString())) {
+                        System.out.println("ImdstKeyValueClient - errorerrorerrorerrorerrorerrorerrorerrorerrorerrorerrorerrorerrorerror");
                     }
                 }
                 long end = new Date().getTime();
@@ -71,13 +73,13 @@ public class TestSockM extends Thread{
                 String[] ret = null;
 
                 for (int i = 0; i < Integer.parseInt(args[2]);i++) {
-                    ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
+                    ret = imdstKeyValueClient.getValue("datasavekey_" + threadNo + "_" + new Integer(i).toString());
                     if (ret[0].equals("true")) {
                         // データ有り
                     } else if (ret[0].equals("false")) {
-                        System.out.println("データなし");
+                        System.out.println("データなしデータなしデータなしデータなしデータなしデータなしデータなし");
                     } else if (ret[0].equals("error")) {
-                        System.out.println(ret[1]);
+                        System.out.println("エラーエラーエラーエラーエラーエラーエラーエラーエラーエラーエラーエラー" + ret[1]);
                     }
                 }
                 long end = new Date().getTime();
@@ -96,14 +98,14 @@ public class TestSockM extends Thread{
                 String[] ret = null;
 
                 for (int i = 0; i < Integer.parseInt(args[2]);i++) {
-                    ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
+                    ret = imdstKeyValueClient.getValue("datasavekey_" + threadNo + "_" + new Integer(i).toString());
                     if (ret[0].equals("true")) {
                         // データ有り
                         System.out.println(ret[1]);
                     } else if (ret[0].equals("false")) {
-                        System.out.println("データなし");
+                        System.out.println("データなしデータなしデータなしデータなしデータなしデータなしデータなし");
                     } else if (ret[0].equals("error")) {
-                        System.out.println(ret[1]);
+                        System.out.println("エラーエラーエラーエラーエラーエラーエラーエラーエラーエラーエラーエラー" + ret[1]);
                     }
                 }
                 long end = new Date().getTime();
