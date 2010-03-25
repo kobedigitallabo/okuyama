@@ -57,8 +57,8 @@ public class KeyMapManager extends Thread {
     // TODO:Mapファイル本体を保存しないように一時的に変更updateInterval=30秒
     // 起動時にトランザクションログから復旧
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
-    private static int updateInterval = 3000;
-    private static int intervalCount = 1;
+    private static int updateInterval = 30000;
+    private static int intervalCount = 10;
 
     // workMapファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
@@ -77,9 +77,13 @@ public class KeyMapManager extends Thread {
 
     private String diskModeRestoreFile = null;
 
-	private long lastAccess = 0L;
+    private long lastAccess = 0L;
 
-	private boolean vacuumExec = false;
+    private boolean vacuumExec = true;
+
+    // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う
+    private int vacuumStartLimit = 100000;
+
 
     // 初期化メソッド
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory) throws BatchException {
@@ -128,7 +132,7 @@ public class KeyMapManager extends Thread {
                         keyFilefis = new FileInputStream(tmpKeyFile);
                         keyFileois = new ObjectInputStream(keyFilefis);
                         try {
-							if (this.keyMapObj != null) this.keyMapObj.close();
+                            if (this.keyMapObj != null) this.keyMapObj.close();
                             this.keyMapObj = (KeyManagerValueMap)keyFileois.readObject();
                             if (!dataMemory) {
                                 this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
@@ -152,7 +156,7 @@ public class KeyMapManager extends Thread {
                             keyFileois = null;
                             keyFilefis = null;
 
-							if (this.keyMapObj != null) this.keyMapObj.close();
+                            if (this.keyMapObj != null) this.keyMapObj.close();
                             this.keyMapObj = null;
                             // tmpKeyMapファイルを消しこみ
                             tmpKeyFile.delete();
@@ -167,7 +171,7 @@ public class KeyMapManager extends Thread {
                         keyFilefis = new FileInputStream(keyFile);
                         keyFileois = new ObjectInputStream(keyFilefis);
 
-						if (this.keyMapObj != null) this.keyMapObj.close();
+                        if (this.keyMapObj != null) this.keyMapObj.close();
                         this.keyMapObj = (KeyManagerValueMap)keyFileois.readObject();
                         if (!dataMemory) {
                             this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
@@ -180,7 +184,7 @@ public class KeyMapManager extends Thread {
                         logger.info("KeyMapFile - No Exists");
                         // 存在しない場合はMapを作成
 
-						if (this.keyMapObj != null) this.keyMapObj.close();
+                        if (this.keyMapObj != null) this.keyMapObj.close();
                         this.keyMapObj = new KeyManagerValueMap(this.mapSize);
                         if (!dataMemory) {
                             this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
@@ -274,19 +278,26 @@ public class KeyMapManager extends Thread {
                     Thread.sleep(updateInterval);
                 }
 
-				if (!dataMemory && vacuumExec == true) {
-					if ((System.currentTimeMillis() - this.lastAccess) > 10) {
-						//System.out.println("vacuu - start");
-		                synchronized(poolKeyLock) {
-		                    synchronized(this.getKeyLock) {
-								this.keyMapObj.vacuumData();
-                                this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
-							}
-						}
-						//System.out.println("vacuu - end");
-					}
-				}
-				/*
+
+                if (!dataMemory && vacuumExec == true) {
+
+                    if ((this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartLimit) {
+                        // 30秒間アクセスがない
+                        if ((System.currentTimeMillis() - this.lastAccess) > 30000) {
+                            logger.info("vacuu - start");
+                            //System.out.println("vacuu - start");
+                            synchronized(poolKeyLock) {
+                                synchronized(this.getKeyLock) {
+                                    this.keyMapObj.vacuumData();
+                                    this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
+                                }
+                            }
+                            //System.out.println("vacuu - end");
+                            logger.info("vacuu - end");
+                        }
+                    }
+                }
+                /*
                 if (!blocking) {
                     if (this.writeMapFileFlg) {
                         synchronized(poolKeyLock) {
@@ -583,7 +594,7 @@ public class KeyMapManager extends Thread {
     private void keyMapObjPut(Integer key, String val) {
         this.keyMapObj.put(key, val);
         this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
-		this.lastAccess = System.currentTimeMillis();
+        this.lastAccess = System.currentTimeMillis();
     }
 
     /**
@@ -593,7 +604,7 @@ public class KeyMapManager extends Thread {
      */
     private void keyMapObjPutNoChange(Integer key, String val) {
         this.keyMapObj.put(key, val);
-		this.lastAccess = System.currentTimeMillis();
+        this.lastAccess = System.currentTimeMillis();
     }
 
     /**
@@ -604,7 +615,7 @@ public class KeyMapManager extends Thread {
     private void keyMapObjPutSetTime(Integer key, String val, long execTime) {
         this.keyMapObj.put(key, val);
         this.keyMapObj.setKLastDataChangeTime(execTime);
-		this.lastAccess = System.currentTimeMillis();
+        this.lastAccess = System.currentTimeMillis();
     }
 
 
@@ -613,7 +624,7 @@ public class KeyMapManager extends Thread {
      * get<br>
      */
     private String keyMapObjGet(Integer key) {
-		this.lastAccess = System.currentTimeMillis();
+        this.lastAccess = System.currentTimeMillis();
         return (String)this.keyMapObj.get(key);
 
     }
@@ -625,7 +636,7 @@ public class KeyMapManager extends Thread {
     private void keyMapObjRemove(Integer key) {
         this.keyMapObj.remove(key);
         this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
-		this.lastAccess = System.currentTimeMillis();
+        this.lastAccess = System.currentTimeMillis();
     }
 
     /**
@@ -635,7 +646,7 @@ public class KeyMapManager extends Thread {
     private void keyMapObjRemoveSetTime(Integer key, long execTime) {
         this.keyMapObj.remove(key);
         this.keyMapObj.setKLastDataChangeTime(execTime);
-		this.lastAccess = System.currentTimeMillis();
+        this.lastAccess = System.currentTimeMillis();
     }
 
 
@@ -709,7 +720,15 @@ public class KeyMapManager extends Thread {
                             workKeyMapObjFile.delete();
                         }
 
-						if(this.keyMapObj != null) this.keyMapObj.close();
+                        // Disk時はデータファイルを削除
+                        if(this.keyMapObj != null) this.keyMapObj.close();
+                        if (!this.dataMemory) {
+                            File  dataFile = new File(this.diskModeRestoreFile);
+                            if(dataFile.exists()) {
+                                dataFile.delete();
+                            }
+                        }
+
                         this.keyMapObj = new KeyManagerValueMap(this.mapSize);
                         if (!dataMemory) {
                             this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
