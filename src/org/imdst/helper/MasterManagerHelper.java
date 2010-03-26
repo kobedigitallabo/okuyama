@@ -153,17 +153,18 @@ System.out.println("2[" + clientParametersStr + "]");
 
 							}else {}
 						}
-System.out.println("333333333333333333");
 						// パラメータ分解
                         clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
-System.out.println("4444444444444444444");
                         // 処理番号を取り出し
                         execPattern = new Integer(clientParameterList[0]);
                         retParamBuf = new StringBuffer();
-System.out.println("55555555555555555555");
+
+
                         if(execPattern.equals(new Integer(1))) {
-System.out.println("666666666666666666666");
+
                             // Key値とValueを格納する
+System.out.println(clientParameterList.length);
+							if (clientParameterList.length > 4) clientParameterList[3] = clientParameterList[3] + ImdstDefine.keyHelperClientParamSep + clientParameterList[4];
                             retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
 System.out.println(retParams);
 
@@ -1077,7 +1078,7 @@ System.out.println(retParamBuf.toString());
                             buf.append(values[0].hashCode());
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(values[1]);
-
+System.out.println("koko[" + values[1] + "]");
 //long start1 = System.nanoTime();
 
 
@@ -1634,9 +1635,7 @@ System.out.println(retParamBuf.toString());
 				methodBuf.append(ImdstDefine.keyHelperClientParamSep);
 String a = br.readLine();
 System.out.println(a);
-				methodBuf.append(new String(BASE64EncoderStream.encode(a.getBytes())));
-				methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-				methodBuf.append(executeMethods[2]);
+				methodBuf.append(new String(BASE64EncoderStream.encode(a.getBytes())) + ImdstDefine.keyHelperClientParamSep + executeMethods[2]);
 				retStr = methodBuf.toString();
 			} else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodGet)) {
 

@@ -140,7 +140,9 @@ public class KeyManagerHelper extends AbstractHelper {
                         // Key値とDataNode名を格納する
                         requestHashCode = new Integer(clientParameterList[1]);
                         requestDataNode = clientParameterList[2];
+						if (clientParameterList.length > 3) requestDataNode = requestDataNode + ImdstDefine.keyHelperClientParamSep + clientParameterList[3];
                         // メソッド呼び出し
+
                         retParams = this.setDatanode(requestHashCode, requestDataNode);
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
