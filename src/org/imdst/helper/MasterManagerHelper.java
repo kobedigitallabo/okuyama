@@ -28,10 +28,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     private HashMap keyNodeConnectTimeMap = new HashMap();
 
-	// Subノードが存在する場合のデータ保存処理方式を並列処理にするかを指定
-	// true:並列 false:順次
+    // Subノードが存在する場合のデータ保存処理方式を並列処理にするかを指定
+    // true:並列 false:順次
     // 並列化すると都度スレッド生成の手間がかかる為、方法を再考する必要がある
-	private boolean multiSend = false;
+    private boolean multiSend = false;
 
     // 過去ルール
     private int[] oldRule = null;
@@ -43,8 +43,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // 自身のモード(1=Key-Value, 2=DataSystem)
     private int mode = 1;
 
-	private boolean loadBalancing = false;
-	private boolean reverseAccess = false;
+    private boolean loadBalancing = false;
+    private boolean reverseAccess = false;
 
     /**
      * Logger.<br>
@@ -78,20 +78,20 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // Jobからの引数
             soc = (Socket)parameters[0];
-			// 過去ルール
+            // 過去ルール
             this.oldRule = (int[])parameters[1];
-			// プロトコルモード
+            // プロトコルモード
             this.protocolMode = (String)parameters[2];
 
-			if (!this.protocolMode.equals("okuyama")) {
-				this.protocolIsOkuyama = false;
-			}
+            if (!this.protocolMode.equals("okuyama")) {
+                this.protocolIsOkuyama = false;
+            }
 
-			// ロードバランシング指定
-			if (parameters.length > 3) {
-				this.loadBalancing = true;
-				reverseAccess = ((Boolean)parameters[3]).booleanValue();
-			}
+            // ロードバランシング指定
+            if (parameters.length > 3) {
+                this.loadBalancing = true;
+                reverseAccess = ((Boolean)parameters[3]).booleanValue();
+            }
 
             // クライアントへのアウトプット(結果セット用の文字列用と、バイトデータ転送用)
             OutputStreamWriter osw = new OutputStreamWriter(soc.getOutputStream(),
@@ -108,121 +108,119 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 接続終了までループ
             while(!closeFlg) {
                 try {
+                    String keyParam = null;
+                    String tagParam = null;
+                    String dataParam = null;
 
-                    // モード別処理
-                    if (this.mode == 1) {
-                        // Key-Valueモードで使用する
-                        String keyParam = null;
-                        String tagParam = null;
-                        String dataParam = null;
+                    // クライアントからの要求を取得
+                    if (this.protocolIsOkuyama) {
+                        // okuyamaモード
+                        clientParametersStr = br.readLine();
+                        // クライアントからの要求が接続切要求ではないか確認
+                        if (clientParametersStr == null ||
+                                clientParametersStr.equals("") ||
+                                    clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
+                            // 切断要求
+                            //logger.debug("Client Connect Exit Request");
+                            closeFlg = true;
+                            break;
+                        }
 
-                        // クライアントからの要求を取得
-						if (this.protocolIsOkuyama) {
-							// okuyamaモード
-                        	clientParametersStr = br.readLine();
-	                        // クライアントからの要求が接続切要求ではないか確認
-	                        if (clientParametersStr == null ||
-									clientParametersStr.equals("") ||
-										clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
-	                            // 切断要求
-	                            //logger.debug("Client Connect Exit Request");
-	                            closeFlg = true;
-	                            break;
-	                        }
-
-						} else {
-							// 別モード
-							if (protocolMode.equals("memcache")) {
-System.out.println("memcache - 1");
-
-								// memcache時に使用するのは取り合えずは命令部分と、データ部分のみ
-								StringBuffer methodBuf = new StringBuffer();
-
-								String executeMethodStr = br.readLine();
-System.out.println("[" + executeMethodStr + "]");
-								if (executeMethodStr == null ||
-									executeMethodStr.trim().equals("quit")) {
-									closeFlg = true;
-	                            	break;
-								}
-System.out.println("1");
-								clientParametersStr = this.memcacheMethodCnv(executeMethodStr, br, pw);
-System.out.println("2[" + clientParametersStr + "]");
-
-								if (clientParametersStr == null) continue;
-
-							}else {}
-						}
-						// パラメータ分解
-                        clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
-                        // 処理番号を取り出し
-                        execPattern = new Integer(clientParameterList[0]);
-                        retParamBuf = new StringBuffer();
+                    } else {
+                        // 別モード
+                        if (protocolMode.equals("memcache")) {
 
 
-                        if(execPattern.equals(new Integer(1))) {
+                            // memcache時に使用するのは取り合えずは命令部分と、データ部分のみ
+                            StringBuffer methodBuf = new StringBuffer();
 
-                            // Key値とValueを格納する
-System.out.println(clientParameterList.length);
-							if (clientParameterList.length > 4) clientParameterList[3] = clientParameterList[3] + ImdstDefine.keyHelperClientParamSep + clientParameterList[4];
-                            retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
-System.out.println(retParams);
+                            String executeMethodStr = br.readLine();
 
-System.out.println(retParamBuf.toString());
-                        } else if(execPattern.equals(new Integer(2))) {
+                            if (executeMethodStr == null ||
+                                executeMethodStr.trim().equals("quit")) {
+                                closeFlg = true;
+                                break;
+                            }
 
-                            // Key値でValueを取得する
-                            retParams = this.getKeyValue(clientParameterList[1]);
+                            // memcacheクライアントの内容からリクエストを作り上げる
+                            clientParametersStr = this.memcacheMethodCnv(executeMethodStr, br, pw);
 
-                        } else if(execPattern.equals(new Integer(3))) {
+                            if (clientParametersStr == null) continue;
 
-                            // Tag値でキー値群を取得する
-                            retParams = this.getTagKeys(clientParameterList[1]);
-                        } else if(execPattern.equals(new Integer(4))) {
-
-                            // Tag値で紐付くキーとValueのセット配列を返す
-
-                        } else if(execPattern.equals(new Integer(5))) {
-
-                            // キー値でデータを消す
-                            retParams = this.removeKeyValue(clientParameterList[1]);
-                        } else if(execPattern.equals(new Integer(8))) {
-
-                            // Key値でValueを取得する(Scriptを実行する)
-                            retParams = this.getKeyValueScript(clientParameterList[1], clientParameterList[2]);
-
-                        } else if(execPattern.equals(new Integer(30))) {
-
-                            // 各キーノードへデータロック依頼
-                            retParams = this.lockingData(clientParameterList[1]);
-						} else if (execPattern.equals(new Integer(90))) {
-
-							// KeyNodeの使用停止をマーク
-							retParams = this.pauseKeyNodeUse(clientParameterList[1]);
-						} else if (execPattern.equals(new Integer(91))) {
-
-							// KeyNodeの使用再開をマーク
-							retParams = this.restartKeyNodeUse(clientParameterList[1]);
-						} else if (execPattern.equals(new Integer(92))) {
-
-							// KeyNodeの使用停止をマーク
-							retParams = this.arriveKeyNode(clientParameterList[1]);
-						}
+                        }else {}
                     }
 
-					// 返却値を加工
-					if (this.protocolIsOkuyama) {
+                    // パラメータ分解
+                    clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
+                    // 処理番号を取り出し
+                    execPattern = new Integer(clientParameterList[0]);
+                    retParamBuf = new StringBuffer();
+
+                    // 処理を分岐
+                    if(execPattern.equals(new Integer(1))) {
+
+                        // Key値とValueを格納する
+                        if (clientParameterList.length > 4) clientParameterList[3] = clientParameterList[3] + ImdstDefine.keyHelperClientParamSep + clientParameterList[4];
+                        retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
+
+                    } else if(execPattern.equals(new Integer(2))) {
+
+                        // Key値でValueを取得する
+                        retParams = this.getKeyValue(clientParameterList[1]);
+
+                    } else if(execPattern.equals(new Integer(3))) {
+
+                        // Tag値でキー値群を取得する
+                        retParams = this.getTagKeys(clientParameterList[1]);
+                    } else if(execPattern.equals(new Integer(4))) {
+
+                        // Tag値で紐付くキーとValueのセット配列を返す
+
+                    } else if(execPattern.equals(new Integer(5))) {
+
+                        // キー値でデータを消す
+                        retParams = this.removeKeyValue(clientParameterList[1]);
+                    } else if(execPattern.equals(new Integer(8))) {
+
+                        // Key値でValueを取得する(Scriptを実行する)
+                        retParams = this.getKeyValueScript(clientParameterList[1], clientParameterList[2]);
+
+                    } else if(execPattern.equals(new Integer(30))) {
+
+                        // 各キーノードへデータロック依頼
+                        retParams = this.lockingData(clientParameterList[1]);
+                    } else if (execPattern.equals(new Integer(90))) {
+
+                        // KeyNodeの使用停止をマーク
+                        retParams = this.pauseKeyNodeUse(clientParameterList[1]);
+                    } else if (execPattern.equals(new Integer(91))) {
+
+                        // KeyNodeの使用再開をマーク
+                        retParams = this.restartKeyNodeUse(clientParameterList[1]);
+                    } else if (execPattern.equals(new Integer(92))) {
+
+                        // KeyNodeの使用停止をマーク
+                        retParams = this.arriveKeyNode(clientParameterList[1]);
+                    }
+
+
+                    // モードにあわせて返却値を加工
+                    if (this.protocolIsOkuyama) {
+
+                        // okuyama
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[1]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[2]);
-					} else {
-						// 別モード
-						if (protocolMode.equals("memcache")) {
-							retParamBuf.append(this.memcacheReturnCnv(retParams));
-						}
-					}
+                    } else {
+
+                        // 別モード
+                        if (protocolMode.equals("memcache")) {
+                            // memcache
+                            retParamBuf.append(this.memcacheReturnCnv(retParams));
+                        }
+                    }
 
                     // クライアントに結果送信
                     pw.println(retParamBuf.toString());
@@ -390,10 +388,10 @@ System.out.println(retParamBuf.toString());
      * 1.DataDispatcherにKeyを使用してValueの保存先を問い合わせる<br>
      * 2.KeyNodeに接続してValueを取得する<br>
      * 3.結果文字列の配列を作成(成功時は処理番号"2"と"true"とValue、失敗時は処理番号"2"と"false"とValue)<br>
-	 *
+     *
      * TODD:過去ルールで取得出来た情報はここで反映<br>
-	 *      一時的なものとして後で別サービス化する.<br>
-	 *
+     *      一時的なものとして後で別サービス化する.<br>
+     *
      * @param keyStr key値の文字列
      * @return String[] 結果
      * @throws BatchException
@@ -408,11 +406,11 @@ System.out.println(retParamBuf.toString());
         try {
 
             // キー値を使用して取得先を決定
-			if (loadBalancing) {
-				keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess);
-			} else {
-            	keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
-			}
+            if (loadBalancing) {
+                keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess);
+            } else {
+                keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
+            }
 
             // 取得実行
             if (keyNodeInfo.length == 3) {
@@ -422,7 +420,7 @@ System.out.println(retParamBuf.toString());
             }
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
-			// でそちらのルールでのデータ格納場所も調べる
+            // でそちらのルールでのデータ格納場所も調べる
             if (keyNodeSaveRet[1].equals("false")) {
                 if (this.oldRule != null) {
 
@@ -430,11 +428,11 @@ System.out.println(retParamBuf.toString());
                     for (int i = 0; i < this.oldRule.length; i++) {
 
                         // キー値を使用して取得先を決定
-						if (loadBalancing) {
-							keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess, this.oldRule[i]);
-						} else {
-			            	keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.oldRule[i]);
-						}
+                        if (loadBalancing) {
+                            keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess, this.oldRule[i]);
+                        } else {
+                            keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.oldRule[i]);
+                        }
 
                         // 取得実行
                         if (keyNodeInfo.length == 3) {
@@ -443,18 +441,18 @@ System.out.println(retParamBuf.toString());
                             keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
                         }
 
-						// 過去ルールからデータを発見
+                        // 過去ルールからデータを発見
                         if (keyNodeSaveRet[1].equals("true")) {
 
-							// TODO:現在のノードへの反映はいずれ別サービス化する
-							// 過去ルールによって取得出来たデータを現在のルールのノードへ反映
-							try {
-								setKeyValue(keyStr, ImdstDefine.imdstBlankStrData, keyNodeSaveRet[2]);
-							} catch (Exception e) {
-								logger.info("Old Rule Data Set Error" + e);
-							}
-							break;
-						}
+                            // TODO:現在のノードへの反映はいずれ別サービス化する
+                            // 過去ルールによって取得出来たデータを現在のルールのノードへ反映
+                            try {
+                                setKeyValue(keyStr, ImdstDefine.imdstBlankStrData, keyNodeSaveRet[2]);
+                            } catch (Exception e) {
+                                logger.info("Old Rule Data Set Error" + e);
+                            }
+                            break;
+                        }
                     }
                 }
             }
@@ -477,7 +475,7 @@ System.out.println(retParamBuf.toString());
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getKeyValue - Error", be);
         } catch (Exception e) {
-			e.printStackTrace();
+            e.printStackTrace();
             retStrs[0] = "2";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - getKeyValue - Exception - " + e.toString();
@@ -489,13 +487,13 @@ System.out.println(retParamBuf.toString());
 
     /**
      * KeyでValueを取得する.<br>
-	 * Scriptも同時に実行する.<br>
+     * Scriptも同時に実行する.<br>
      * 処理フロー.<br>
      * 1.DataDispatcherにKeyを使用してValueの保存先を問い合わせる<br>
      * 2.KeyNodeに接続してValueを取得する<br>
      * 3.結果文字列の配列を作成(成功時は処理番号"8"と"true"とValue、データが存在しない場合は処理番号"8"と"false"とValue、スクリプトエラー時は処理番号"8"と"error"とエラーメッセージ)<br>
-	 *
-	 *
+     *
+     *
      * @param keyStr key値の文字列
      * @param scriptStr 実行Scriptの文字列
      * @return String[] 結果
@@ -511,11 +509,11 @@ System.out.println(retParamBuf.toString());
         try {
 
             // キー値を使用して取得先を決定
-			if (loadBalancing) {
-				keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess);
-			} else {
-            	keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
-			}
+            if (loadBalancing) {
+                keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess);
+            } else {
+                keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
+            }
 
             // 取得実行
             if (keyNodeInfo.length == 3) {
@@ -525,7 +523,7 @@ System.out.println(retParamBuf.toString());
             }
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
-			// でそちらのルールでのデータ格納場所も調べる
+            // でそちらのルールでのデータ格納場所も調べる
             if (keyNodeSaveRet[1].equals("false")) {
                 if (this.oldRule != null) {
 
@@ -533,11 +531,11 @@ System.out.println(retParamBuf.toString());
                     for (int i = 0; i < this.oldRule.length; i++) {
 
                         // キー値を使用して取得先を決定
-						if (loadBalancing) {
-							keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess, this.oldRule[i]);
-						} else {
-			            	keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.oldRule[i]);
-						}
+                        if (loadBalancing) {
+                            keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess, this.oldRule[i]);
+                        } else {
+                            keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.oldRule[i]);
+                        }
 
                         // 取得実行
                         if (keyNodeInfo.length == 3) {
@@ -546,10 +544,10 @@ System.out.println(retParamBuf.toString());
                             keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "8", keyStr, scriptStr);
                         }
 
-						// 過去ルールからデータを発見
+                        // 過去ルールからデータを発見
                         if (keyNodeSaveRet[1].equals("true")) {
-							break;
-						}
+                            break;
+                        }
                     }
                 }
             }
@@ -564,7 +562,7 @@ System.out.println(retParamBuf.toString());
                 retStrs[2] = "";
                 
             } else {
-				// trueもしくはerrorの可能性あり
+                // trueもしくはerrorの可能性あり
                 retStrs[0] = keyNodeSaveRet[0];
                 retStrs[1] = keyNodeSaveRet[1];
                 retStrs[2] = keyNodeSaveRet[2];
@@ -572,7 +570,7 @@ System.out.println(retParamBuf.toString());
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getKeyValueScript - Error", be);
         } catch (Exception e) {
-			e.printStackTrace();
+            e.printStackTrace();
             retStrs[0] = "8";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - getKeyValueScript - Exception - " + e.toString();
@@ -613,7 +611,7 @@ System.out.println(retParamBuf.toString());
             }
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
-			// そちらのルールでも削除する
+            // そちらのルールでも削除する
             if (this.oldRule != null) {
 
                 //System.out.println("過去ルールを探索");
@@ -659,10 +657,10 @@ System.out.println(retParamBuf.toString());
     /**
      * Key値を指定してデータのロックを取得する.<br>
      * 処理フロー.<br>
-	 * 1.ロック番号を採番.<br>
+     * 1.ロック番号を採番.<br>
      * 2.DataDispatcherに依頼してKeyの保存先を問い合わせる.<br>
      * 3.取得した保存先にロックを依頼.<br>
- 	 * 4.全てのロックが完了した時点で終了.<br>
+     * 4.全てのロックが完了した時点で終了.<br>
      * 5.結果文字列の配列を作成(成功時は処理番号"10"と"true"と"ロック番号"、失敗時は処理番号"10"と"false")<br>
      *
      * @param keyStrs key値の連結は配列
@@ -708,7 +706,7 @@ System.out.println(retParamBuf.toString());
             }
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
-			// そちらのルールでのデータ格納場所も調べる
+            // そちらのルールでのデータ格納場所も調べる
             if (keyNodeSaveRet[1].equals("false")) {
                 if (this.oldRule != null) {
 
@@ -716,11 +714,11 @@ System.out.println(retParamBuf.toString());
                     for (int i = 0; i < this.oldRule.length; i++) {
 
                         // キー値を使用して取得先を決定
-						if (loadBalancing) {
-							keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(tagStr, this.reverseAccess, this.oldRule[i]);
-						} else {
-			            	keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.oldRule[i]);
-						}
+                        if (loadBalancing) {
+                            keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(tagStr, this.reverseAccess, this.oldRule[i]);
+                        } else {
+                            keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.oldRule[i]);
+                        }
 
                         // 取得実行
                         if (keyNodeInfo.length == 3) {
@@ -838,7 +836,7 @@ System.out.println(retParamBuf.toString());
 
                         // 返却値取得
                         String retParam = br.readLine();
-
+System.out.println("retParam[" + retParam + "]");
                         // ノードの使用終了
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
                     } else if (type.equals("4")) {
@@ -897,7 +895,7 @@ System.out.println(retParamBuf.toString());
             super.execNodeUseEnd(keyNodeFullName);
 
             if (subKeyNodeName != null) 
-	            super.execNodeUseEnd(subKeyNodeFullName);
+                super.execNodeUseEnd(subKeyNodeFullName);
         }
         return retParams;
     }
@@ -1013,7 +1011,7 @@ System.out.println(retParamBuf.toString());
             super.execNodeUseEnd(keyNodeFullName);
 
             if (subKeyNodeName != null) 
-	            super.execNodeUseEnd(subKeyNodeFullName);
+                super.execNodeUseEnd(subKeyNodeFullName);
         }
         return retParams;
     }
@@ -1033,8 +1031,8 @@ System.out.println(retParamBuf.toString());
      */
     private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values) throws BatchException {
 
-		// 並列処理指定の場合は分岐(試験的に導入(デフォルト無効))
-		if (multiSend) return this.setKeyNodeValueMultiSend(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values);
+        // 並列処理指定の場合は分岐(試験的に導入(デフォルト無効))
+        if (multiSend) return this.setKeyNodeValueMultiSend(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values);
 
         PrintWriter pw = null;
         BufferedReader br = null;
@@ -1050,7 +1048,7 @@ System.out.println(retParamBuf.toString());
 
         String tmpSaveHost = null;
         String[] tmpSaveData = null;
-		String retParam = null;
+        String retParam = null;
 
         boolean mainNodeSave = false;
         boolean subNodeSave = false;
@@ -1092,7 +1090,7 @@ System.out.println("koko[" + values[1] + "]");
 //System.out.println("[" + (end1 - start1) + "]");
 
 
-							// splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                             //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
                             if (retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
                                 if (counter == 0) mainNodeSave = true;
@@ -1115,7 +1113,7 @@ System.out.println("koko[" + values[1] + "]");
                             // 返却値取得
                             retParam = br.readLine();
 
-							// splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                             //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
                             if (retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
                                 if (counter == 0) mainNodeSave = true;
@@ -1157,12 +1155,12 @@ System.out.println("koko[" + values[1] + "]");
             super.execNodeUseEnd(keyNodeFullName);
 
             if (subKeyNodeName != null) 
-	            super.execNodeUseEnd(subKeyNodeFullName);
+                super.execNodeUseEnd(subKeyNodeFullName);
 
-	        // 返却地値をパースする
-	        if (retParam != null) {
-	            retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-	        }
+            // 返却地値をパースする
+            if (retParam != null) {
+                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+            }
         }
 
         return retParams;
@@ -1196,7 +1194,7 @@ System.out.println("koko[" + values[1] + "]");
 
         String tmpSaveHost = null;
         String[] tmpSaveData = null;
-		String retParam = null;
+        String retParam = null;
 
         boolean mainNodeSave = false;
         boolean subNodeSave = false;
@@ -1234,7 +1232,7 @@ System.out.println("koko[" + values[1] + "]");
 //System.out.println("[" + (end1 - start1) + "]");
 
 
-						// splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                        // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                         if (retParam.indexOf(ImdstDefine.keyNodeKeyRemoveSuccessStr) == 0) {
                             if (counter == 0) mainNodeSave = true;
                             if (counter == 1) subNodeSave = true;
@@ -1269,12 +1267,12 @@ System.out.println("koko[" + values[1] + "]");
             super.execNodeUseEnd(keyNodeFullName);
 
             if (subKeyNodeName != null) 
-	            super.execNodeUseEnd(subKeyNodeFullName);
+                super.execNodeUseEnd(subKeyNodeFullName);
 
-	        // 返却地値をパースする
-	        if (retParam != null) {
-	            retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-	        }
+            // 返却地値をパースする
+            if (retParam != null) {
+                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+            }
         }
 
         return retParams;
@@ -1403,16 +1401,16 @@ System.out.println("koko[" + values[1] + "]");
 
         String tmpSaveHost = null;
         String[] tmpSaveData = null;
-		String retParam = null;
+        String retParam = null;
 
-		DataNodeSender mainNodeSender = null;
-		DataNodeSender subNodeSender = null;
+        DataNodeSender mainNodeSender = null;
+        DataNodeSender subNodeSender = null;
 
         boolean mainNodeSave = false;
         boolean subNodeSave = false;
 
-		String successRet = null;
-		String errorRet = null;
+        String successRet = null;
+        String errorRet = null;
 
         try {
             do {
@@ -1430,19 +1428,19 @@ System.out.println("koko[" + values[1] + "]");
 //long start1 = System.nanoTime();
                     // 処理種別判別
                     if (type.equals("1") || type.equals("3")) {
-						// Key値でデータを保存 or TagでKey値を保存
-						if (counter == 0) {
-							// Mainノード
-							mainNodeSender = new DataNodeSender();
-							mainNodeSender.setSendInfo(type,values[0], values[1], pw, br);
-							mainNodeSender.start();
-						} else {
-							// Subノード
-							subNodeSender = new DataNodeSender();
-							subNodeSender.setSendInfo(type,values[0], values[1], pw, br);
-							subNodeSender.start();
-						}
-					}
+                        // Key値でデータを保存 or TagでKey値を保存
+                        if (counter == 0) {
+                            // Mainノード
+                            mainNodeSender = new DataNodeSender();
+                            mainNodeSender.setSendInfo(type,values[0], values[1], pw, br);
+                            mainNodeSender.start();
+                        } else {
+                            // Subノード
+                            subNodeSender = new DataNodeSender();
+                            subNodeSender.setSendInfo(type,values[0], values[1], pw, br);
+                            subNodeSender.start();
+                        }
+                    }
 //long end1 = System.nanoTime();
 //System.out.println("[" + (end1 - start1) + "]");
                 }
@@ -1456,61 +1454,61 @@ System.out.println("koko[" + values[1] + "]");
                 // スレーブデータノードが存在しない場合もしくは、既に2回保存を実施した場合は終了
             } while(nodeName != null && counter < 2);
 
-			// Mainノード保存スレッドを確認
-			if (mainNodeSender != null) {
-				mainNodeSender.join();
-				if (mainNodeSender.isError()) {
-					if (mainNodeSender.getErrorType() == -1) {
+            // Mainノード保存スレッドを確認
+            if (mainNodeSender != null) {
+                mainNodeSender.join();
+                if (mainNodeSender.isError()) {
+                    if (mainNodeSender.getErrorType() == -1) {
 
-						errorRet = mainNodeSender.getRetParam();
-					} else if (mainNodeSender.getErrorType() != -1) {
+                        errorRet = mainNodeSender.getRetParam();
+                    } else if (mainNodeSender.getErrorType() != -1) {
 
-	                    super.setDeadNode(keyNodeFullName);
-	                    logger.debug(mainNodeSender.getErrorMsg());
-					}
-					mainNodeSave = false;
-				} else {
+                        super.setDeadNode(keyNodeFullName);
+                        logger.debug(mainNodeSender.getErrorMsg());
+                    }
+                    mainNodeSave = false;
+                } else {
 
-					successRet = mainNodeSender.getRetParam();
-					mainNodeSave = true;
-				}
-				mainNodeSender = null;
-			}
+                    successRet = mainNodeSender.getRetParam();
+                    mainNodeSave = true;
+                }
+                mainNodeSender = null;
+            }
 
-			// Subノード保存スレッドを確認
-			if (subNodeSender != null) {
-				subNodeSender.join();
-				if (subNodeSender.isError()) {
-					if (subNodeSender.getErrorType() == -1) {
+            // Subノード保存スレッドを確認
+            if (subNodeSender != null) {
+                subNodeSender.join();
+                if (subNodeSender.isError()) {
+                    if (subNodeSender.getErrorType() == -1) {
 
-						errorRet = subNodeSender.getRetParam();
-					} else if (subNodeSender.getErrorType() != -1) {
+                        errorRet = subNodeSender.getRetParam();
+                    } else if (subNodeSender.getErrorType() != -1) {
 
-	                    super.setDeadNode(subKeyNodeFullName);
-	                    logger.debug(subNodeSender.getErrorMsg());
-					}
-					subNodeSave = false;
-				} else {
+                        super.setDeadNode(subKeyNodeFullName);
+                        logger.debug(subNodeSender.getErrorMsg());
+                    }
+                    subNodeSave = false;
+                } else {
 
-					successRet = subNodeSender.getRetParam();
-					subNodeSave = true;
-				}
-				subNodeSender = null;
-			}
+                    successRet = subNodeSender.getRetParam();
+                    subNodeSave = true;
+                }
+                subNodeSender = null;
+            }
 
             // ノードへの保存状況を確認
             if (mainNodeSave == false && subNodeSave == false) {
-		        // 返却地値をパースする
-		        if (errorRet != null) {
-		            retParams = errorRet.split(ImdstDefine.keyHelperClientParamSep);
-		        }
+                // 返却地値をパースする
+                if (errorRet != null) {
+                    retParams = errorRet.split(ImdstDefine.keyHelperClientParamSep);
+                }
                 throw new BatchException("Key Node IO Error: detail info for log file");
             } else {
-		        // 返却地値をパースする
-		        if (successRet != null) {
-		            retParams = successRet.split(ImdstDefine.keyHelperClientParamSep);
-		        }
-			}
+                // 返却地値をパースする
+                if (successRet != null) {
+                    retParams = successRet.split(ImdstDefine.keyHelperClientParamSep);
+                }
+            }
         } catch (BatchException be) {
             throw be;
         } catch (Exception e) {
@@ -1520,7 +1518,7 @@ System.out.println("koko[" + values[1] + "]");
             super.execNodeUseEnd(keyNodeFullName);
 
             if (subKeyNodeName != null) 
-	            super.execNodeUseEnd(subKeyNodeFullName);
+                super.execNodeUseEnd(subKeyNodeFullName);
         }
 
         return retParams;
@@ -1542,8 +1540,8 @@ System.out.println("koko[" + values[1] + "]");
         BufferedReader br = null;
         HashMap dtMap = null;
 
-		String connectionFullName = keyNodeFullName;
-		Long connectTime = new Long(0);
+        String connectionFullName = keyNodeFullName;
+        Long connectTime = new Long(0);
 
         try {
 
@@ -1565,31 +1563,31 @@ System.out.println("koko[" + values[1] + "]");
                 HashMap connectMap = super.getActiveConnection(connectionFullName);
 
 
-				// 接続が存在しない場合は自身で接続処理を行う
+                // 接続が存在しない場合は自身で接続処理を行う
                 if (connectMap == null) {
 
-	                Socket socket = new Socket(keyNodeName, Integer.parseInt(keyNodePort));
+                    Socket socket = new Socket(keyNodeName, Integer.parseInt(keyNodePort));
 
-	                OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-	                pw = new PrintWriter(new BufferedWriter(osw));
+                    OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
+                    pw = new PrintWriter(new BufferedWriter(osw));
 
-	                InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-	                br = new BufferedReader(isr);
+                    InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
+                    br = new BufferedReader(isr);
 
-	                dtMap = new HashMap();
+                    dtMap = new HashMap();
 
-	                // Socket, Writer, Readerをキャッシュ
-	                dtMap.put(ImdstDefine.keyNodeSocketKey, socket);
-	                dtMap.put(ImdstDefine.keyNodeStreamWriterKey, osw);
-	                dtMap.put(ImdstDefine.keyNodeStreamReaderKey, isr);
+                    // Socket, Writer, Readerをキャッシュ
+                    dtMap.put(ImdstDefine.keyNodeSocketKey, socket);
+                    dtMap.put(ImdstDefine.keyNodeStreamWriterKey, osw);
+                    dtMap.put(ImdstDefine.keyNodeStreamReaderKey, isr);
 
-	                dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
-	                dtMap.put(ImdstDefine.keyNodeReaderKey, br);
-	                connectTime = new Long(new Date().getTime());
-				} else {
-	                dtMap = (HashMap)connectMap.get(ImdstDefine.keyNodeConnectionMapKey);
-					connectTime = (Long)connectMap.get(ImdstDefine.keyNodeConnectionMapTime);
-				}
+                    dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
+                    dtMap.put(ImdstDefine.keyNodeReaderKey, br);
+                    connectTime = new Long(new Date().getTime());
+                } else {
+                    dtMap = (HashMap)connectMap.get(ImdstDefine.keyNodeConnectionMapKey);
+                    connectTime = (Long)connectMap.get(ImdstDefine.keyNodeConnectionMapTime);
+                }
 
                 this.keyNodeConnectMap.put(connectionFullName, dtMap);
                 this.keyNodeConnectTimeMap.put(connectionFullName, connectTime);
@@ -1607,65 +1605,69 @@ System.out.println("koko[" + values[1] + "]");
 
 
 
-	private String memcacheMethodCnv(String executeMethodStr, BufferedReader br, PrintWriter pw) throws Exception{
-		String retStr = null;
-		try {
-			String[] executeMethods = executeMethodStr.split(ImdstDefine.memcacheExecuteMethodSep);
-			StringBuffer methodBuf = new StringBuffer();
+    private String memcacheMethodCnv(String executeMethodStr, BufferedReader br, PrintWriter pw) throws Exception{
+        String retStr = null;
+        try {
+            String[] executeMethods = executeMethodStr.split(ImdstDefine.memcacheExecuteMethodSep);
+            StringBuffer methodBuf = new StringBuffer();
 
-			// memcacheの処理方法で分岐
-			if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodSet)) {
-				// Set
-				// 分解すると コマンド,key,特有32bit値,有効期限,格納バイト数
+            // memcacheの処理方法で分岐
+            if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodSet)) {
+                // Set
+                // 分解すると コマンド,key,特有32bit値,有効期限,格納バイト数
 
-				// サイズチェック
-				if (Integer.parseInt(executeMethods[4]) > ImdstDefine.saveDataMaxSize) {
-					br.readLine();
-					pw.println("SERVER_ERROR <Regis Max Byte Over>");
-					pw.flush();
-					return retStr;
-				}
+                // サイズチェック
+                if (Integer.parseInt(executeMethods[4]) > ImdstDefine.saveDataMaxSize) {
+                    br.readLine();
+                    pw.println("SERVER_ERROR <Regis Max Byte Over>");
+                    pw.flush();
+                    return retStr;
+                }
 
-				// TODO:連結してまた分解って。。。後で考えます
-				methodBuf.append("1");
-				methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-				methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
-				methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-				methodBuf.append(ImdstDefine.imdstBlankStrData);
-				methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-String a = br.readLine();
-System.out.println(a);
-				methodBuf.append(new String(BASE64EncoderStream.encode(a.getBytes())) + ImdstDefine.keyHelperClientParamSep + executeMethods[2]);
-				retStr = methodBuf.toString();
-			} else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodGet)) {
+                // TODO:連結してまた分解って。。。後で考えます
+                methodBuf.append("1");
+                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
+                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
+                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
+                methodBuf.append(ImdstDefine.imdstBlankStrData);
+                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
+
+                String workStr = br.readLine();
+                byte[] workBytes = workStr.getBytes();
+                byte[] cnvBytes = new byte[workBytes.length - 1];
+                System.arraycopy(workBytes, 1, cnvBytes, 0, (workBytes.length - 1));
+
+                methodBuf.append(new String(BASE64EncoderStream.encode(cnvBytes)) + ImdstDefine.keyHelperClientParamSep + executeMethods[2]);
+                retStr = methodBuf.toString();
+            } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodGet)) {
 
 
-				// Get
-				
-			}
-		} catch(Exception e) {
-			throw e;
-		}
-		return retStr;
-	}
+                // Get
+                
+            }
+        } catch(Exception e) {
+            throw e;
+        }
+        return retStr;
+    }
 
-	/**
-	 * memcache用に返却文字を加工する
-	 */
-	private String memcacheReturnCnv(String[] okuyamaRetParams) throws Exception{
-		String retStr = null;
-		if (okuyamaRetParams[0].equals("1")) {
-			// Set
-			if (okuyamaRetParams[1].equals("true")) {
-				retStr = ImdstDefine.memcacheMethodReturnSuccessSet;
-			} else if (okuyamaRetParams[1].equals("false") || okuyamaRetParams[1].equals("null")) {
-				retStr = ImdstDefine.memcacheMethodRetrunServerError + okuyamaRetParams[2];
-			}
-		} else if (okuyamaRetParams[0].equals("2")) {
-			// Get
-		}
-		return retStr;
-	}
+    /**
+     * memcache用に返却文字を加工する
+     */
+    private String memcacheReturnCnv(String[] okuyamaRetParams) throws Exception{
+        String retStr = null;
+        if (okuyamaRetParams[0].equals("1")) {
+            // Set
+            if (okuyamaRetParams[1].equals("true")) {
+                retStr = ImdstDefine.memcacheMethodReturnSuccessSet;
+            } else if (okuyamaRetParams[1].equals("false") || okuyamaRetParams[1].equals("null")) {
+                retStr = ImdstDefine.memcacheMethodRetrunServerError + okuyamaRetParams[2];
+            }
+        } else if (okuyamaRetParams[0].equals("2")) {
+            // Get
+        }
+        return retStr;
+    }
 
     /**
      * 全てのKeyNodeとの接続を切断する.<br>
@@ -1684,13 +1686,13 @@ System.out.println(a);
                         connKeyStr = (String)iterator.next();
                         cacheConn = (HashMap)this.keyNodeConnectMap.get(connKeyStr);
 
-						/*HashMap connMap = new HashMap();
-						connMap.put(ImdstDefine.keyNodeConnectionMapKey, cacheConn);
-						connMap.put(ImdstDefine.keyNodeConnectionMapTime, (Long)this.keyNodeConnectTimeMap.get(connKeyStr));*/
+                        /*HashMap connMap = new HashMap();
+                        connMap.put(ImdstDefine.keyNodeConnectionMapKey, cacheConn);
+                        connMap.put(ImdstDefine.keyNodeConnectionMapTime, (Long)this.keyNodeConnectTimeMap.get(connKeyStr));*/
 
-						// キャッシュ層に登録
-						//super.setActiveConnection(connKeyStr, connMap);
-						
+                        // キャッシュ層に登録
+                        //super.setActiveConnection(connKeyStr, connMap);
+                        
                         PrintWriter cachePw = (PrintWriter)cacheConn.get(ImdstDefine.keyNodeWriterKey);
                         if (cachePw != null) {
                             // 切断要求を送る
@@ -1728,102 +1730,102 @@ System.out.println(a);
         }
     }
 
-	/**
-	 * データをノードへ反映する内部スレッド.<br>
-	 *
-	 */
-	private class DataNodeSender extends Thread {
+    /**
+     * データをノードへ反映する内部スレッド.<br>
+     *
+     */
+    private class DataNodeSender extends Thread {
 
-		private boolean isError = false;
+        private boolean isError = false;
 
-		private String ret = null;
+        private String ret = null;
 
-		// 1:SocketException 2:IOException 3:それ以外 -1:論理エラー
-		private int errorType = 0;
+        // 1:SocketException 2:IOException 3:それ以外 -1:論理エラー
+        private int errorType = 0;
 
-		private String errorMsg = null;
+        private String errorMsg = null;
 
 
-		private String type = null;
+        private String type = null;
 
-		private String key = null;
+        private String key = null;
 
-		private String value = null;
+        private String value = null;
 
         private PrintWriter pw = null;
 
         private BufferedReader br = null;
 
-		public void run() {
-			try {
-				StringBuffer buf = new StringBuffer();
-	            buf.append(type);
-	            buf.append(ImdstDefine.keyHelperClientParamSep);
-	            buf.append(key.hashCode());
-	            buf.append(ImdstDefine.keyHelperClientParamSep);
-	            buf.append(value);
+        public void run() {
+            try {
+                StringBuffer buf = new StringBuffer();
+                buf.append(type);
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append(key.hashCode());
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append(value);
 
-	            // 送信
-	            pw.println(buf.toString());
-	            pw.flush();
+                // 送信
+                pw.println(buf.toString());
+                pw.flush();
 
-	            // 返却値取得
-	            ret = br.readLine();
+                // 返却値取得
+                ret = br.readLine();
 
-				if (type.equals("1")) {
-					if (ret.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) != 0) {
-						isError = true;
-						errorType = -1;
-					}
-				}
+                if (type.equals("1")) {
+                    if (ret.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) != 0) {
+                        isError = true;
+                        errorType = -1;
+                    }
+                }
 
-				if (type.equals("3")) {
-					if (ret.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) != 0) {
-						isError = true;
-						errorType = -1;
-					}
-				}
+                if (type.equals("3")) {
+                    if (ret.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) != 0) {
+                        isError = true;
+                        errorType = -1;
+                    }
+                }
 
             } catch (SocketException se) {
 
-				errorType = 1;
-				errorMsg = se.getMessage();
-				isError = true;
+                errorType = 1;
+                errorMsg = se.getMessage();
+                isError = true;
             } catch (IOException ie) {
 
-				errorType = 2;
-				errorMsg = ie.getMessage();
-				isError = true;
-			} catch (Exception e) {
+                errorType = 2;
+                errorMsg = ie.getMessage();
+                isError = true;
+            } catch (Exception e) {
 
-				errorType = 3;
-				errorMsg = e.getMessage();
-				isError = true;
-			}
-		}
+                errorType = 3;
+                errorMsg = e.getMessage();
+                isError = true;
+            }
+        }
 
-		public void setSendInfo(String type, String key, String value, PrintWriter pw, BufferedReader br) {
-			this.type = type;
-			this.key = key;
-			this.value = value;
-			this.pw = pw;
-			this.br = br;
-		}
+        public void setSendInfo(String type, String key, String value, PrintWriter pw, BufferedReader br) {
+            this.type = type;
+            this.key = key;
+            this.value = value;
+            this.pw = pw;
+            this.br = br;
+        }
 
-		public String getRetParam() {
-			return this.ret;
-		}
+        public String getRetParam() {
+            return this.ret;
+        }
 
-		public boolean isError() {
-			return this.isError;
-		}
+        public boolean isError() {
+            return this.isError;
+        }
 
-		public int getErrorType() {
-			return this.errorType;
-		}
+        public int getErrorType() {
+            return this.errorType;
+        }
 
-		public String getErrorMsg() {
-			return this.errorMsg;
-		}
-	}
+        public String getErrorMsg() {
+            return this.errorMsg;
+        }
+    }
 }

@@ -83,7 +83,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
                 raf.seek(seekPoint);
                 raf.read(buf,0,oneDataLength);
                 for (; i < buf.length; i++) {
-                    if (buf[i] == 35) break;
+                    if (buf[i] == 38) break;
                 }
 
                 ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
@@ -111,11 +111,11 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
                 writeStr.append((String)value);
 
                 // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
-                // 足りない文字列は固定の"#"で補う(35)
+                // 足りない文字列は固定の"&"で補う(38)
                 byte[] appendDatas = new byte[oneDataLength - valueSize];
 
                 for (int i = 0; i < appendDatas.length; i++) {
-                    appendDatas[i] = 35;
+                    appendDatas[i] = 38;
                 }
 
                 writeStr.append(new String(appendDatas));
