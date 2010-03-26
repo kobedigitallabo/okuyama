@@ -60,29 +60,37 @@ public class KeyMapManager extends Thread {
     private static int updateInterval = 30000;
     private static int intervalCount = 10;
 
-    // workMapファイルのデータセパレータ文字列
+    // workMap(トランザクションログ)ファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
 
-    // workMapファイルの文字コード
+    // workMap(トランザクションログ)ファイルの文字コード
     private static String workMapFileEnc = ImdstDefine.keyWorkFileEncoding;
 
-    // workMapファイルのデータセパレータ文字列
+    // workMap(トランザクションログ)ファイルのデータセパレータ文字列
     private static String workFileEndPoint = ImdstDefine.keyWorkFileEndPointStr;
 
-    // workMapファイルをメモリーモードにするかの指定
+    // workMap(トランザクションログ)ファイルをメモリーモードにするかの指定
     private boolean workFileMemory = false;
 
-    // Dataのメモリーモードかファイルモードかの指定
+    // データのメモリーモードかファイルモードかの指定
     private boolean dataMemory = true;
 
+	// Diskモード(ファイルモード)で稼動している場合のデータファイル名
     private String diskModeRestoreFile = null;
 
+	// データへの最終アクセス時間
     private long lastAccess = 0L;
 
+	// データファイルのバキューム実行指定
     private boolean vacuumExec = true;
 
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う
+	// 行数と1行のデータサイズをかけると不要なデータサイズとなる
+	// vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
     private int vacuumStartLimit = 100000;
+
+	// Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
+	private int vacuumExecAfterAccessTime = 30000;
 
 
     // 初期化メソッド
@@ -124,7 +132,7 @@ public class KeyMapManager extends Thread {
 
                     // Mapファイルを読み込む必要の有無
                     boolean mapFileRead = true;
-                    
+
                     // tmpMapファイルがある場合はMapファイルへの変更中に前回エラーの可能性があるので読み込む
                     if (tmpKeyFile.exists()) {
                         logger.info("tmpKeyMapFile - Read - start");
@@ -278,25 +286,33 @@ public class KeyMapManager extends Thread {
                     Thread.sleep(updateInterval);
                 }
 
-
+				logger.info("VacuumCheck - Start");
+				//  Vacuum実行の確認
+				// データがメモリーではなくかつ、vacuum実行指定がtrueの場合
                 if (!dataMemory && vacuumExec == true) {
-
+					logger.info("vacuumCheck - Start - 1");
                     if ((this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartLimit) {
-                        // 30秒間アクセスがない
-                        if ((System.currentTimeMillis() - this.lastAccess) > 30000) {
-                            logger.info("vacuu - start");
-                            //System.out.println("vacuu - start");
+						logger.info("VacuumCheck - Start - 2");
+
+                        // 規定時間アクセスがない
+                        if ((System.currentTimeMillis() - this.lastAccess) > this.vacuumExecAfterAccessTime) {
+                            logger.info("Vacuum - Start");
+							long vacuumStart = System.currentTimeMillis();
+
                             synchronized(poolKeyLock) {
                                 synchronized(this.getKeyLock) {
                                     this.keyMapObj.vacuumData();
                                     this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
                                 }
                             }
-                            //System.out.println("vacuu - end");
-                            logger.info("vacuu - end");
+
+							long vacuumEnd = System.currentTimeMillis();
+                            logger.info("Vacuum - End - VacuumTime [" + (vacuumEnd - vacuumStart) +"] Milli Second");
                         }
                     }
                 }
+				logger.info("VacuumCheck - End");
+
                 /*
                 if (!blocking) {
                     if (this.writeMapFileFlg) {

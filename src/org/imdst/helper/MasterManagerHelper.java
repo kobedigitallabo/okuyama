@@ -4,6 +4,9 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
+import com.sun.mail.util.BASE64DecoderStream;
+import com.sun.mail.util.BASE64EncoderStream;
+
 import org.batch.lang.BatchException;
 import org.batch.job.AbstractHelper;
 import org.batch.job.IJob;
@@ -32,6 +35,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     // 過去ルール
     private int[] oldRule = null;
+
+    // プロトコルモード
+    private boolean protocolIsOkuyama = true;
+    private String protocolMode = null;
 
     // 自身のモード(1=Key-Value, 2=DataSystem)
     private int mode = 1;
@@ -73,11 +80,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             soc = (Socket)parameters[0];
 			// 過去ルール
             this.oldRule = (int[])parameters[1];
+			// プロトコルモード
+            this.protocolMode = (String)parameters[2];
+
+			if (!this.protocolMode.equals("okuyama")) {
+				this.protocolIsOkuyama = false;
+			}
 
 			// ロードバランシング指定
-			if (parameters.length > 2) {
+			if (parameters.length > 3) {
 				this.loadBalancing = true;
-				reverseAccess = ((Boolean)parameters[2]).booleanValue();
+				reverseAccess = ((Boolean)parameters[3]).booleanValue();
 			}
 
             // クライアントへのアウトプット(結果セット用の文字列用と、バイトデータ転送用)
@@ -104,52 +117,66 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         String dataParam = null;
 
                         // クライアントからの要求を取得
-                        clientParametersStr = br.readLine();
+						if (this.protocolIsOkuyama) {
+							// okuyamaモード
+                        	clientParametersStr = br.readLine();
+	                        // クライアントからの要求が接続切要求ではないか確認
+	                        if (clientParametersStr == null ||
+									clientParametersStr.equals("") ||
+										clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
+	                            // 切断要求
+	                            //logger.debug("Client Connect Exit Request");
+	                            closeFlg = true;
+	                            break;
+	                        }
 
-                        // クライアントからの要求が接続切要求ではないか確認
-                        if (clientParametersStr == null ||
-								clientParametersStr.equals("") ||
-									clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
-                            // 切断要求
-                            logger.debug("Client Connect Exit Request");
-                            closeFlg = true;
-                            break;
-                        }
+						} else {
+							// 別モード
+							if (protocolMode.equals("memcache")) {
+System.out.println("memcache - 1");
 
+								// memcache時に使用するのは取り合えずは命令部分と、データ部分のみ
+								StringBuffer methodBuf = new StringBuffer();
+
+								String executeMethodStr = br.readLine();
+System.out.println("[" + executeMethodStr + "]");
+								if (executeMethodStr == null ||
+									executeMethodStr.trim().equals("quit")) {
+									closeFlg = true;
+	                            	break;
+								}
+System.out.println("1");
+								clientParametersStr = this.memcacheMethodCnv(executeMethodStr, br, pw);
+System.out.println("2[" + clientParametersStr + "]");
+
+								if (clientParametersStr == null) continue;
+
+							}else {}
+						}
+System.out.println("333333333333333333");
+						// パラメータ分解
                         clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
-
+System.out.println("4444444444444444444");
                         // 処理番号を取り出し
                         execPattern = new Integer(clientParameterList[0]);
                         retParamBuf = new StringBuffer();
-
+System.out.println("55555555555555555555");
                         if(execPattern.equals(new Integer(1))) {
-
+System.out.println("666666666666666666666");
                             // Key値とValueを格納する
                             retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
+System.out.println(retParams);
+
+System.out.println(retParamBuf.toString());
                         } else if(execPattern.equals(new Integer(2))) {
 
                             // Key値でValueを取得する
                             retParams = this.getKeyValue(clientParameterList[1]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
 
                         } else if(execPattern.equals(new Integer(3))) {
 
                             // Tag値でキー値群を取得する
                             retParams = this.getTagKeys(clientParameterList[1]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
                         } else if(execPattern.equals(new Integer(4))) {
 
                             // Tag値で紐付くキーとValueのセット配列を返す
@@ -158,59 +185,43 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // キー値でデータを消す
                             retParams = this.removeKeyValue(clientParameterList[1]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
                         } else if(execPattern.equals(new Integer(8))) {
 
                             // Key値でValueを取得する(Scriptを実行する)
                             retParams = this.getKeyValueScript(clientParameterList[1], clientParameterList[2]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
 
                         } else if(execPattern.equals(new Integer(30))) {
 
                             // 各キーノードへデータロック依頼
                             retParams = this.lockingData(clientParameterList[1]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
 						} else if (execPattern.equals(new Integer(90))) {
 
 							// KeyNodeの使用停止をマーク
 							retParams = this.pauseKeyNodeUse(clientParameterList[1]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
 						} else if (execPattern.equals(new Integer(91))) {
 
 							// KeyNodeの使用再開をマーク
 							retParams = this.restartKeyNodeUse(clientParameterList[1]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
 						} else if (execPattern.equals(new Integer(92))) {
 
 							// KeyNodeの使用停止をマーク
 							retParams = this.arriveKeyNode(clientParameterList[1]);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
 						}
                     }
+
+					// 返却値を加工
+					if (this.protocolIsOkuyama) {
+                        retParamBuf.append(retParams[0]);
+                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        retParamBuf.append(retParams[1]);
+                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        retParamBuf.append(retParams[2]);
+					} else {
+						// 別モード
+						if (protocolMode.equals("memcache")) {
+							retParamBuf.append(this.memcacheReturnCnv(retParams));
+						}
+					}
 
                     // クライアントに結果送信
                     pw.println(retParamBuf.toString());
@@ -1593,6 +1604,69 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return dtMap;
     }
 
+
+
+	private String memcacheMethodCnv(String executeMethodStr, BufferedReader br, PrintWriter pw) throws Exception{
+		String retStr = null;
+		try {
+			String[] executeMethods = executeMethodStr.split(ImdstDefine.memcacheExecuteMethodSep);
+			StringBuffer methodBuf = new StringBuffer();
+
+			// memcacheの処理方法で分岐
+			if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodSet)) {
+				// Set
+				// 分解すると コマンド,key,特有32bit値,有効期限,格納バイト数
+
+				// サイズチェック
+				if (Integer.parseInt(executeMethods[4]) > ImdstDefine.saveDataMaxSize) {
+					br.readLine();
+					pw.println("SERVER_ERROR <Regis Max Byte Over>");
+					pw.flush();
+					return retStr;
+				}
+
+				// TODO:連結してまた分解って。。。後で考えます
+				methodBuf.append("1");
+				methodBuf.append(ImdstDefine.keyHelperClientParamSep);
+				methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
+				methodBuf.append(ImdstDefine.keyHelperClientParamSep);
+				methodBuf.append(ImdstDefine.imdstBlankStrData);
+				methodBuf.append(ImdstDefine.keyHelperClientParamSep);
+String a = br.readLine();
+System.out.println(a);
+				methodBuf.append(new String(BASE64EncoderStream.encode(a.getBytes())));
+				methodBuf.append(ImdstDefine.keyHelperClientParamSep);
+				methodBuf.append(executeMethods[2]);
+				retStr = methodBuf.toString();
+			} else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodGet)) {
+
+
+				// Get
+				
+			}
+		} catch(Exception e) {
+			throw e;
+		}
+		return retStr;
+	}
+
+	/**
+	 * memcache用に返却文字を加工する
+	 */
+	private String memcacheReturnCnv(String[] okuyamaRetParams) throws Exception{
+		String retStr = null;
+		if (okuyamaRetParams[0].equals("1")) {
+			// Set
+			if (okuyamaRetParams[1].equals("true")) {
+				retStr = ImdstDefine.memcacheMethodReturnSuccessSet;
+			} else if (okuyamaRetParams[1].equals("false") || okuyamaRetParams[1].equals("null")) {
+				retStr = ImdstDefine.memcacheMethodRetrunServerError + okuyamaRetParams[2];
+			}
+		} else if (okuyamaRetParams[0].equals("2")) {
+			// Get
+		}
+		return retStr;
+	}
 
     /**
      * 全てのKeyNodeとの接続を切断する.<br>

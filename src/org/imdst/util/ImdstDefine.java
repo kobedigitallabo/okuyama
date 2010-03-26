@@ -52,6 +52,23 @@ public class ImdstDefine {
     // データノードに対するKeyデータ削除時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeKeyRemoveSuccessStr = "5#imdst3674#true";
 
+    // memcacheモード時の命令コマンドの区切り文字
+    public static final String memcacheExecuteMethodSep = " ";
+    // memcacheモード時の命令コマンドのset命令文字
+    public static final String memcacheExecuteMethodSet = "set";
+    // memcacheモード時の命令コマンドのget命令文字
+    public static final String memcacheExecuteMethodGet = "get";
+
+    // memcacheのSet時の32bit値をValue値に連結する場合のセパレータ
+    public static final String memcacheUnique32BitSep = ":";
+
+    // memcacheモード時の命令コマンドのset命令の成功結果文字
+    public static final String memcacheMethodReturnSuccessSet = "STORED";
+
+    // memcacheモード時の命令コマンドのset命令の成功結果文字
+    public static final String memcacheMethodRetrunServerError = "SERVER_ERROR";
+
+
     /* --  通信時の固定文字列系定数  ----------                           */
     // クラインが接続を切断する際に通知する文字列
     public static final String imdstConnectExitRequest = "(&imdst9999&)";

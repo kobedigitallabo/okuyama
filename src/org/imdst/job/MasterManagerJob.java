@@ -33,6 +33,9 @@ public class MasterManagerJob extends AbstractJob implements IJob {
     private boolean loadBalance = false;
     private boolean blanceMode = false;
 
+	// 起動モード(okuyama=okuyamaオリジナル, memcache=memcache)
+	private String mode = "okuyama";
+
     /**
      * Logger.<br>
      */
@@ -52,7 +55,11 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         logger.debug("MasterManagerJob - executeJob - start");
         String ret = SUCCESS;
         Object[] helperParams = null;
+
         try{
+
+			// モードを決定
+			if (optionParam != null && !optionParam.trim().equals("")) this.mode = optionParam;
 
             // ロードバランス設定
             loadBalance = new Boolean((String)super.getPropertiesValue(ImdstDefine.Prop_LoadBalanceMode)).booleanValue();
@@ -74,13 +81,14 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                         // クライアントからの接続待ち
                         socket = serverSocket.accept();
 
-                        int paramSize = 2;
-                        if (loadBalance) paramSize = 3;
+                        int paramSize = 3;
+                        if (loadBalance) paramSize = 4;
 
                         helperParams = new Object[paramSize];
                         helperParams[0] = socket;
                         helperParams[1] = DataDispatcher.getOldRules();
-                        if (loadBalance) helperParams[2] = new Boolean(blanceMode);
+                        helperParams[2] = this.mode;
+                        if (loadBalance) helperParams[3] = new Boolean(blanceMode);
                         super.executeHelper("MasterManagerHelper", helperParams);
 
                         if (blanceMode) {
