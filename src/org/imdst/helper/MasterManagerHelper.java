@@ -4,9 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
-import com.sun.mail.util.BASE64DecoderStream;
-import com.sun.mail.util.BASE64EncoderStream;
-
 import org.batch.lang.BatchException;
 import org.batch.job.AbstractHelper;
 import org.batch.job.IJob;
@@ -16,6 +13,9 @@ import org.imdst.util.KeyMapManager;
 import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
 import org.imdst.util.StatusUtil;
+import org.imdst.util.protocol.*;
+
+
 /**
  * MasterNodeのメイン実行部分<br>
  *
@@ -37,14 +37,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private int[] oldRule = null;
 
     // プロトコルモード
-    private boolean protocolIsOkuyama = true;
     private String protocolMode = null;
+    private IProtocolTaker porotocolTaker = null;
 
     // 自身のモード(1=Key-Value, 2=DataSystem)
     private int mode = 1;
 
     private boolean loadBalancing = false;
     private boolean reverseAccess = false;
+
+
 
     /**
      * Logger.<br>
@@ -66,26 +68,30 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         boolean closeFlg = false;
 
         String[] retParams = null;
-        StringBuffer retParamBuf = null;
+        String retParamStr = null;
+
+        Object[] parameters = super.getParameters();
+
+        String clientParametersStr = null;
+        String[] clientParameterList = null;
+        Integer execPattern = null;
+
+        String keyParam = null;
+        String tagParam = null;
+        String dataParam = null;
 
         try{
 
-            Object[] parameters = super.getParameters();
-
-            String clientParametersStr = null;
-            String[] clientParameterList = null;
-            Integer execPattern = null;
-
             // Jobからの引数
             soc = (Socket)parameters[0];
+
             // 過去ルール
             this.oldRule = (int[])parameters[1];
-            // プロトコルモード
-            this.protocolMode = (String)parameters[2];
 
-            if (!this.protocolMode.equals("okuyama")) {
-                this.protocolIsOkuyama = false;
-            }
+            // プロトコルモードを取得
+            // プロトコルに合わせてTakerを初期化
+            this.protocolMode = (String)parameters[2];
+            this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode);
 
             // ロードバランシング指定
             if (parameters.length > 3) {
@@ -99,7 +105,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             BufferedOutputStream bos = new BufferedOutputStream(soc.getOutputStream());
             PrintWriter pw = new PrintWriter(new BufferedWriter(osw));
 
-
             // クライアントからのインプット
             InputStreamReader isr = new InputStreamReader(soc.getInputStream(),
                                                             ImdstDefine.keyHelperClientParamEncoding);
@@ -108,59 +113,45 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 接続終了までループ
             while(!closeFlg) {
                 try {
-                    String keyParam = null;
-                    String tagParam = null;
-                    String dataParam = null;
+                    keyParam = null;
+                    tagParam = null;
+                    dataParam = null;
+                    // 結果格納用String
+                    retParamStr = "";
+
 
                     // クライアントからの要求を取得
-                    if (this.protocolIsOkuyama) {
-                        // okuyamaモード
-                        clientParametersStr = br.readLine();
+                    // Takerで会話開始
+                    clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
+                    if (this.porotocolTaker.nextExecution() != 1) {
+
+                        // 処理をやり直し
+                        if (this.porotocolTaker.nextExecution() == 2) continue;
+
                         // クライアントからの要求が接続切要求ではないか確認
-                        if (clientParametersStr == null ||
-                                clientParametersStr.equals("") ||
-                                    clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
-                            // 切断要求
-                            //logger.debug("Client Connect Exit Request");
+                        if (this.porotocolTaker.nextExecution() == 3) {
                             closeFlg = true;
                             break;
                         }
-
-                    } else {
-                        // 別モード
-                        if (protocolMode.equals("memcache")) {
-
-
-                            // memcache時に使用するのは取り合えずは命令部分と、データ部分のみ
-                            StringBuffer methodBuf = new StringBuffer();
-
-                            String executeMethodStr = br.readLine();
-
-                            if (executeMethodStr == null ||
-                                executeMethodStr.trim().equals("quit")) {
-                                closeFlg = true;
-                                break;
-                            }
-
-                            // memcacheクライアントの内容からリクエストを作り上げる
-                            clientParametersStr = this.memcacheMethodCnv(executeMethodStr, br, pw);
-
-                            if (clientParametersStr == null) continue;
-
-                        }else {}
                     }
 
                     // パラメータ分解
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
+
                     // 処理番号を取り出し
                     execPattern = new Integer(clientParameterList[0]);
-                    retParamBuf = new StringBuffer();
 
                     // 処理を分岐
                     if(execPattern.equals(new Integer(1))) {
 
                         // Key値とValueを格納する
-                        if (clientParameterList.length > 4) clientParameterList[3] = clientParameterList[3] + ImdstDefine.keyHelperClientParamSep + clientParameterList[4];
+                        if (clientParameterList.length > 4) {
+                            clientParameterList[3] = 
+                                clientParameterList[3] + 
+                                    ImdstDefine.keyHelperClientParamSep + 
+                                        clientParameterList[4];
+                        }
+
                         retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
 
                     } else if(execPattern.equals(new Integer(2))) {
@@ -204,26 +195,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
 
-                    // モードにあわせて返却値を加工
-                    if (this.protocolIsOkuyama) {
-
-                        // okuyama
-                        retParamBuf.append(retParams[0]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[1]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[2]);
-                    } else {
-
-                        // 別モード
-                        if (protocolMode.equals("memcache")) {
-                            // memcache
-                            retParamBuf.append(this.memcacheReturnCnv(retParams));
-                        }
-                    }
+                    // Takerで返却値を作成
+                    retParamStr = this.porotocolTaker.takeResponseLine(retParams);
 
                     // クライアントに結果送信
-                    pw.println(retParamBuf.toString());
+                    pw.println(retParamStr);
                     pw.flush();
 
                 } catch (SocketException se) {
@@ -836,9 +812,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // 返却値取得
                         String retParam = br.readLine();
-System.out.println("retParam[" + retParam + "]");
-                        // ノードの使用終了
-                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+
+                        // 返却値を分解
+                        // 処理番号, true or false, valueの想定
+                        // value値にセパレータが入っていても無視する
+                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     } else if (type.equals("4")) {
 
                         // Tag値でキー値群を取得
@@ -854,7 +832,11 @@ System.out.println("retParam[" + retParam + "]");
 
                         // 返却値取得
                         String retParam = br.readLine();
-                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+
+                        // 返却値を分解
+                        // 処理番号, true or false, valueの想定
+                        // value値にセパレータが入っていても無視する
+                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     }
                     break;
                 } catch(SocketException tSe) {
@@ -969,8 +951,10 @@ System.out.println("retParam[" + retParam + "]");
                         // 返却値取得
                         String retParam = br.readLine();
 
-                        // ノードの使用終了
-                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                        // 返却値を分解
+                        // 処理番号, true or false, valueの想定
+                        // value値にセパレータが入っていても無視する
+                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     } 
                     break;
                 } catch(SocketException tSe) {
@@ -1076,9 +1060,8 @@ System.out.println("retParam[" + retParam + "]");
                             buf.append(values[0].hashCode());
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(values[1]);
-System.out.println("koko[" + values[1] + "]");
-//long start1 = System.nanoTime();
 
+//long start1 = System.nanoTime();
 
                             // 送信
                             pw.println(buf.toString());
@@ -1603,71 +1586,6 @@ System.out.println("koko[" + values[1] + "]");
         return dtMap;
     }
 
-
-
-    private String memcacheMethodCnv(String executeMethodStr, BufferedReader br, PrintWriter pw) throws Exception{
-        String retStr = null;
-        try {
-            String[] executeMethods = executeMethodStr.split(ImdstDefine.memcacheExecuteMethodSep);
-            StringBuffer methodBuf = new StringBuffer();
-
-            // memcacheの処理方法で分岐
-            if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodSet)) {
-                // Set
-                // 分解すると コマンド,key,特有32bit値,有効期限,格納バイト数
-
-                // サイズチェック
-                if (Integer.parseInt(executeMethods[4]) > ImdstDefine.saveDataMaxSize) {
-                    br.readLine();
-                    pw.println("SERVER_ERROR <Regis Max Byte Over>");
-                    pw.flush();
-                    return retStr;
-                }
-
-                // TODO:連結してまた分解って。。。後で考えます
-                methodBuf.append("1");
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(ImdstDefine.imdstBlankStrData);
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-
-                String workStr = br.readLine();
-                byte[] workBytes = workStr.getBytes();
-                byte[] cnvBytes = new byte[workBytes.length - 1];
-                System.arraycopy(workBytes, 1, cnvBytes, 0, (workBytes.length - 1));
-
-                methodBuf.append(new String(BASE64EncoderStream.encode(cnvBytes)) + ImdstDefine.keyHelperClientParamSep + executeMethods[2]);
-                retStr = methodBuf.toString();
-            } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodGet)) {
-
-
-                // Get
-                
-            }
-        } catch(Exception e) {
-            throw e;
-        }
-        return retStr;
-    }
-
-    /**
-     * memcache用に返却文字を加工する
-     */
-    private String memcacheReturnCnv(String[] okuyamaRetParams) throws Exception{
-        String retStr = null;
-        if (okuyamaRetParams[0].equals("1")) {
-            // Set
-            if (okuyamaRetParams[1].equals("true")) {
-                retStr = ImdstDefine.memcacheMethodReturnSuccessSet;
-            } else if (okuyamaRetParams[1].equals("false") || okuyamaRetParams[1].equals("null")) {
-                retStr = ImdstDefine.memcacheMethodRetrunServerError + okuyamaRetParams[2];
-            }
-        } else if (okuyamaRetParams[0].equals("2")) {
-            // Get
-        }
-        return retStr;
-    }
 
     /**
      * 全てのKeyNodeとの接続を切断する.<br>

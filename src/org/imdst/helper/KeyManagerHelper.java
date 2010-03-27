@@ -123,8 +123,8 @@ public class KeyManagerHelper extends AbstractHelper {
 
                     // クライアントからの要求が接続切要求ではないか確認
                     if (clientParametersStr == null || 
-							clientParametersStr.equals("") || 
-								clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
+                            clientParametersStr.equals("") || 
+                                clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
                         // 切断要求
                         logger.debug("Client Connect Exit Request");
                         closeFlg = true;
@@ -135,14 +135,21 @@ public class KeyManagerHelper extends AbstractHelper {
 
                     // 処理番号を取り出し
                     retParamBuf = new StringBuffer();
+
                     if(clientParameterList[0].equals("1")) {
 
                         // Key値とDataNode名を格納する
                         requestHashCode = new Integer(clientParameterList[1]);
                         requestDataNode = clientParameterList[2];
-						if (clientParameterList.length > 3) requestDataNode = requestDataNode + ImdstDefine.keyHelperClientParamSep + clientParameterList[3];
-                        // メソッド呼び出し
 
+                        // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
+                        if (clientParameterList.length > 3) {
+                            requestDataNode = requestDataNode + 
+                                ImdstDefine.keyHelperClientParamSep + 
+                                    clientParameterList[3];
+                        }
+
+                        // メソッド呼び出し
                         retParams = this.setDatanode(requestHashCode, requestDataNode);
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
@@ -199,7 +206,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                         }
-					} else if(clientParameterList[0].equals("8")) {
+                    } else if(clientParameterList[0].equals("8")) {
 
                         // Key値でDataNode名を返す(Script実行バージョン)
                         requestHashCode = new Integer(clientParameterList[1]);
@@ -357,16 +364,16 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
     // KeyでDataNode値を取得する
-	// 実行後データが取得出来た場合はデータに対してScriptを実行する
-	// 現在スクリプトはJavaScriptとなる
-	// スクリプトには必ずdataValueという変数が定義されているものとして、該当変数に取得したValue値が格納
-	// されてスクリプトが実行される。
-	// もどり値はScript内にexecRetという0 or 1で表す値とretValueという返却値が
-	// 定義されているものとする
-	// スクリプト実行後、execRetの値で状態を判断し、retValueが返却されるかが決定される。
-	// execRet=1値を返す、execRet=0値を返さない
-	// retValue=Value返却される値となる
-	// 返却値の配列の2番目の値がtrueならスクリプト実行後結果あり、
+    // 実行後データが取得出来た場合はデータに対してScriptを実行する
+    // 現在スクリプトはJavaScriptとなる
+    // スクリプトには必ずdataValueという変数が定義されているものとして、該当変数に取得したValue値が格納
+    // されてスクリプトが実行される。
+    // もどり値はScript内にexecRetという0 or 1で表す値とretValueという返却値が
+    // 定義されているものとする
+    // スクリプト実行後、execRetの値で状態を判断し、retValueが返却されるかが決定される。
+    // execRet=1値を返す、execRet=0値を返さない
+    // retValue=Value返却される値となる
+    // 返却値の配列の2番目の値がtrueならスクリプト実行後結果あり、
     // falseならスクリプト実行後結果なし、errorならスクリプト実行エラー
     private String[] getDatanodeScriptExec(Integer key, String scriptStr) {
         //logger.debug("KeyManagerHelper - getDatanode - start");
@@ -378,46 +385,46 @@ public class KeyManagerHelper extends AbstractHelper {
                     retStrs = new String[3];
                     retStrs[0] = "8";
                     retStrs[1] = "true";
-					String tmpValue = this.keyMapManager.getKeyPair(key);
-					
-					if (scriptStr != null && !scriptStr.trim().equals("") &&
-						!(new String(BASE64DecoderStream.decode(scriptStr.getBytes())).equals(ImdstDefine.imdstBlankStrData))) {
+                    String tmpValue = this.keyMapManager.getKeyPair(key);
+                    
+                    if (scriptStr != null && !scriptStr.trim().equals("") &&
+                        !(new String(BASE64DecoderStream.decode(scriptStr.getBytes())).equals(ImdstDefine.imdstBlankStrData))) {
 
-						// TODO:エンジンの初期化に時間がかかるので他の影響を考えここで初期化
-					    ScriptEngineManager manager = new ScriptEngineManager();
-				        ScriptEngine engine = manager.getEngineByName("JavaScript");
+                        // TODO:エンジンの初期化に時間がかかるので他の影響を考えここで初期化
+                        ScriptEngineManager manager = new ScriptEngineManager();
+                        ScriptEngine engine = manager.getEngineByName("JavaScript");
 
-						// 引数設定
-						if (tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
-							engine.put("dataValue", "");
-						} else {
-				        	engine.put("dataValue", new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.keyWorkFileEncoding));
-				        }
+                        // 引数設定
+                        if (tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
+                            engine.put("dataValue", "");
+                        } else {
+                            engine.put("dataValue", new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.keyWorkFileEncoding));
+                        }
 
-						// 実行	
-						try {
-							engine.eval(new String(BASE64DecoderStream.decode(scriptStr.getBytes()), ImdstDefine.keyWorkFileEncoding));
+                        // 実行 
+                        try {
+                            engine.eval(new String(BASE64DecoderStream.decode(scriptStr.getBytes()), ImdstDefine.keyWorkFileEncoding));
 
-					        String execRet = (String)engine.get("execRet");
-							if (execRet != null && execRet.equals("1")) {
-								// データを返す
-								String retValue = (String)engine.get("retValue");
-								if (retValue != null && !retValue.equals("")) {
-									retStrs[2] = new String(BASE64EncoderStream.encode(retValue.getBytes()),ImdstDefine.keyWorkFileEncoding);
-								} else { 
-									retStrs[2] = ImdstDefine.imdstBlankStrData;
-								}
-							} else {
-								// データを返さない
-								retStrs[1] = "false";
-							}
-						} catch (Exception e) {
-							retStrs[1] = "error";
-							retStrs[2] = e.getMessage();
-						}
-					} else {
-                    	retStrs[2] = tmpValue;
-					}
+                            String execRet = (String)engine.get("execRet");
+                            if (execRet != null && execRet.equals("1")) {
+                                // データを返す
+                                String retValue = (String)engine.get("retValue");
+                                if (retValue != null && !retValue.equals("")) {
+                                    retStrs[2] = new String(BASE64EncoderStream.encode(retValue.getBytes()),ImdstDefine.keyWorkFileEncoding);
+                                } else { 
+                                    retStrs[2] = ImdstDefine.imdstBlankStrData;
+                                }
+                            } else {
+                                // データを返さない
+                                retStrs[1] = "false";
+                            }
+                        } catch (Exception e) {
+                            retStrs[1] = "error";
+                            retStrs[2] = e.getMessage();
+                        }
+                    } else {
+                        retStrs[2] = tmpValue;
+                    }
                 } else {
                     retStrs = new String[2];
                     retStrs[0] = "8";

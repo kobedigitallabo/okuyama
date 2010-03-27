@@ -28,7 +28,7 @@ public class TestSock {
 
             if (args[0].equals("1")) {
 
-            	int port = Integer.parseInt(args[2]);
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを保存(Tagなし)
 
                 // クライアントインスタンスを作成
@@ -43,7 +43,7 @@ public class TestSock {
                     // データ登録
 
                     if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-					//if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                    //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
                         System.out.println("ImdstKeyValueClient - error");
                     }
                 }
@@ -52,20 +52,20 @@ public class TestSock {
 
                 imdstKeyValueClient.close();
             } if (args[0].equals("1.1")) {
-				
-            	int port = Integer.parseInt(args[2]);
+                
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを保存(Tagなし)
 
                 // クライアントインスタンスを作成
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-				
+                
                 // マスタサーバに接続
                 imdstKeyValueClient.connect(args[1], port);
 
 
                 long start = new Date().getTime();
                 if (!imdstKeyValueClient.setValue(args[3], args[4])) {
-				//if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
                     System.out.println("ImdstKeyValueClient - error");
                 }
                 long end = new Date().getTime();
@@ -73,13 +73,13 @@ public class TestSock {
 
                 imdstKeyValueClient.close();
 
-			} else if (args[0].equals("1.2")) {
-				// AutoConnectionモード
+            } else if (args[0].equals("1.2")) {
+                // AutoConnectionモード
                 // クライアントインスタンスを作成
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
 
                 // マスタサーバに接続
-				String[] infos = args[1].split(",");
+                String[] infos = args[1].split(",");
                 imdstKeyValueClient.setConnectionInfos(infos);
                 imdstKeyValueClient.autoConnect();
 
@@ -95,8 +95,8 @@ public class TestSock {
 
                 imdstKeyValueClient.close();
             } else if (args[0].equals("2")) {
-				
-            	int port = Integer.parseInt(args[2]);
+                
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
@@ -119,8 +119,8 @@ public class TestSock {
 
                 imdstKeyValueClient.close();
             } else if (args[0].equals("2.1")) {
-				
-            	int port = Integer.parseInt(args[2]);
+                
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
@@ -130,7 +130,7 @@ public class TestSock {
                 ret = imdstKeyValueClient.getValue(args[3]);
                 if (ret[0].equals("true")) {
                     // データ有り
-					System.out.println(ret[1]);
+                    System.out.println(ret[1]);
                 } else if (ret[0].equals("false")) {
                     System.out.println("データなし");
                 } else if (ret[0].equals("error")) {
@@ -142,7 +142,7 @@ public class TestSock {
                 imdstKeyValueClient.close();
             } else if (args[0].equals("2.11")) {
 
-            	int port = Integer.parseInt(args[2]);
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
@@ -163,11 +163,11 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
-			}else if (args[0].equals("2.2")) {
-				// AutoConnectionモード
+            }else if (args[0].equals("2.2")) {
+                // AutoConnectionモード
                 // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-				String[] infos = args[1].split(",");
+                String[] infos = args[1].split(",");
                 imdstKeyValueClient.setConnectionInfos(infos);
                 imdstKeyValueClient.autoConnect();
 
@@ -189,9 +189,9 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
-			} else if (args[0].equals("2.3")) {
-				
-            	int port = Integer.parseInt(args[2]);
+            } else if (args[0].equals("2.3")) {
+                
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
@@ -213,7 +213,7 @@ public class TestSock {
                 imdstKeyValueClient.close();
             } else if (args[0].equals("3")) {
 
-            	int port = Integer.parseInt(args[2]);
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを保存(Tagあり)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
@@ -246,7 +246,7 @@ public class TestSock {
 
                 imdstKeyValueClient.close();
             } else if (args[0].equals("3.1")) {
-				int port = Integer.parseInt(args[2]);
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを保存(Tagあり)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
@@ -258,7 +258,7 @@ public class TestSock {
 
                 imdstKeyValueClient.close();
             } else if (args[0].equals("4")) {
-				int port = Integer.parseInt(args[2]);
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを取得(Tagでの取得)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
@@ -291,7 +291,7 @@ public class TestSock {
                 imdstKeyValueClient.close();
 
             } else if (args[0].equals("5")) {
-				int port = Integer.parseInt(args[2]);
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientでファイルをキー値で保存する
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
@@ -315,7 +315,7 @@ public class TestSock {
                 imdstKeyValueClient.close();
 
             } else if (args[0].equals("6")) {
-				int port = Integer.parseInt(args[2]);
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを取得(Keyのみ)(バイナリ)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
@@ -342,7 +342,7 @@ public class TestSock {
                 System.out.println((end - start));
                 imdstKeyValueClient.close();
             } else if (args[0].equals("7")) {
-				int port = Integer.parseInt(args[2]);
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを削除
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
@@ -365,7 +365,7 @@ public class TestSock {
 
                 imdstKeyValueClient.close();
             } else if (args[0].equals("8")) {
-				int port = Integer.parseInt(args[2]);
+                int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを削除
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
