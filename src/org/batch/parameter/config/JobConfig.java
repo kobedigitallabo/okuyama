@@ -417,7 +417,7 @@ public class JobConfig {
             File file = new File(JobConfig.class.getResource(this.configFileName).toURI());
             if(this.fileModifiedTime != file.lastModified()) ret = true;
         } catch(Exception e) {
-			// エラー
+            // エラー
             logger.error("isChangePropertiesFile - Error" + e);
         }
         return ret;
@@ -440,7 +440,10 @@ public class JobConfig {
             prop.load(is);
 
             for (int i = 0; i < keys.length; i++) {
-                this.userPrivateValuesMap.put(keys[i], prop.get(keys[i]));
+                String value = (String)prop.get(keys[i]);
+                if (value != null) {
+                    this.userPrivateValuesMap.put(keys[i], value);
+                }
             }
         } catch (Exception e) {
             logger.error("reloadUserParam - エラー");
