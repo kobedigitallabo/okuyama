@@ -179,7 +179,10 @@ public class DataDispatcher {
                 ret[0] = tmp[3];
                 ret[1] = tmp[4];
                 ret[2] = tmp[5];
+            } else {
+                ret = tmp;
             }
+            
         } else {
             ret = tmp;
         }
@@ -191,8 +194,8 @@ public class DataDispatcher {
      * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
      * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが6となる<br>
      * ノード振り分けアルゴリズムは除算のあまりより決定.<br>
-	 * hash値 % ノード台数 = 振り分け先.<br>
-	 *
+     * hash値 % ノード台数 = 振り分け先.<br>
+     *
      * @param key キー値
      * @param useRule ルール値
      * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
@@ -256,8 +259,8 @@ public class DataDispatcher {
             } catch (Exception e) {}
         }
 
-		// ノードに対するアクセスを開始をマーク
-		// 終了はMasterManagerHelperで行われる
+        // ノードに対するアクセスを開始をマーク
+        // 終了はMasterManagerHelperで行われる
         StatusUtil.addNodeUse(allNodeDetailList[2][nodeNo]);
 
         if (ret.length > 3) {
@@ -279,9 +282,9 @@ public class DataDispatcher {
     public static HashMap getAllDataNodeInfo() {
         while(!standby) {
             try {
-				Thread.sleep(50);
-			} catch (Exception e) {
-			}
+                Thread.sleep(50);
+            } catch (Exception e) {
+            }
         }
 
         HashMap retMap = null;
@@ -315,9 +318,9 @@ public class DataDispatcher {
     public static boolean isStandby() {
         while(!standby) {
             try {
-				Thread.sleep(50);
-			} catch (Exception e) {
-			}
+                Thread.sleep(50);
+            } catch (Exception e) {
+            }
         }
         return standby;
     }
