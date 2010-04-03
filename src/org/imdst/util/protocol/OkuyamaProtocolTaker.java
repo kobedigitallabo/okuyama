@@ -15,6 +15,41 @@ public class OkuyamaProtocolTaker implements IProtocolTaker {
 
     private int nextExec = 0;
 
+    public String[] takeRequestLine(InputStream is, PrintWriter pw) throws Exception {
+        String retStrs[] = new String[4];
+
+        byte[] data = new byte[1];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int counter = 0;
+        while (is.read(data, 0, 1) != -1) {
+
+            if (data[0] == 44) {
+
+                retStrs[counter] = baos.toString().trim();
+                baos = new ByteArrayOutputStream();
+                counter++;
+            } else if (data[0] == 10) {
+
+                retStrs[counter] = baos.toString().trim();
+                break;
+            } else if (data[0] != 13) {
+                baos.write(data, 0, 1);
+            }
+        }
+
+        //retStr = br.readLine();
+
+        // 切断指定確認
+        if (retStrs[0] == null ||
+                retStrs[0].equals("") ||
+                    retStrs[0].equals(ImdstDefine.imdstConnectExitRequest)) {
+            // 接続を切断
+            this.nextExec = 3;
+        }
+
+        return retStrs;
+    }
+
     public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception {
         String retStr = null;
         retStr = br.readLine();
