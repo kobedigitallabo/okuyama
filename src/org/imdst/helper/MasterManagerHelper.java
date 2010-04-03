@@ -123,6 +123,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // クライアントからの要求を取得
                     // Takerで会話開始
                     clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
+//long start1 = System.nanoTime();
                     if (this.porotocolTaker.nextExecution() != 1) {
 
                         // 処理をやり直し
@@ -134,9 +135,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             break;
                         }
                     }
-
                     // パラメータ分解
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
+
+//long end1 = System.nanoTime();
+//System.out.println((end1 - start1));
 
                     // 処理番号を取り出し
                     execPattern = new Integer(clientParameterList[0]);
