@@ -9,6 +9,13 @@ import org.batch.lang.BatchException;
 import org.imdst.util.StatusUtil;
 
 /**
+ * KeyとValueを管理する独自Mapクラス.<br>
+ * メモリモードとファイルモードで動きが異なる.<br>
+ * メモリモード:KeyとValueを親クラスであるHashMapで管理する.<br>
+ * ファイルモード:Keyは親クラスのHashMapに、Valueはファイルに記録する<br>
+ *                KeyとValueが格納させている行数を記録している.<br>
+ *                行数から、ファイル内からValueを取り出す.<br>
+ *
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
@@ -26,9 +33,9 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
     private int seekOneDataLength = (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1);
     private long lastDataChangeTime = 0L;
     private int nowKeySize = 0;
-    private HashMap lockMap = new HashMap();
+    private Hashtable lockMap = new Hashtable(1024);
 
-
+	// コンストラクタ
     public KeyManagerValueMap(int size) {
         super(size);
     }
@@ -142,7 +149,8 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
     }
 
     /**
-     * 引数のKey値のLockに使用したTransactionCodeを取得する<br>
+     * 引数のKey値のLockに使用したTransactionCodeを取得する.<br>
+     *
      * @param key ロック対象のKey値
      * @return Long TransactionCode
      */
@@ -152,6 +160,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
 
     /**
      * 引数のKey値のLockが存在するかを返す<br>
+     *
      * @param key ロック対象のKey値
      * @return boolean true:ロックあり false:ロックなし
      */
@@ -161,26 +170,37 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
 
     /**
      * 引数のKey値のLockを行う<br>
+     *
      * @param key ロック対象のKey値
      * @param transactionCode ロック時に使用するTransactionCode
-     * @return Long TransactionCode
+     * @return Long TransactionCode Lock失敗時はnull
      */
     public Long locking(Object key, Long transactionCode) {
-        lockMap.put(key, transactionCode);
+		synchronized(lockMap) {
+			if (lockMap.containsKey(key)) return null;
+        	lockMap.put(key, transactionCode);
+		}
         return transactionCode;
     }
 
     /**
      * 引数のKey値のLockを解除する<br>
+     *
      * @param key ロック対象のKey値
      * @return Long TransactionCode
      */
-    public Long removeLock(Object key) {
-        return (Long)lockMap.remove(key);
+    public Long removeLock(Object key, Long transactionCode) {
+		Long ret = null;
+		synchronized(lockMap) {
+			if (lockMap.containsKey(key)) return null;
+			if (!((Long)lockMap.get(key)).equals(transactionCode)) return null;
+	        ret = (Long)lockMap.remove(key);
+		}
+		return ret;
     }
 
     /**
-     * データファイルの不要領域を掃除して新たなファイルを作りなおす
+     * データファイルの不要領域を掃除して新たなファイルを作りなおす.<br>
      *
      */
     public boolean vacuumData() {

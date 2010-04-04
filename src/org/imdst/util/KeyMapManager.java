@@ -371,11 +371,17 @@ public class KeyMapManager extends Thread {
         }
     }
 
-    // キーを指定することでノードをセットする
+    /**
+	 * キーを指定することでノードをセットする.<br>
+     *
+     * @param key キー値
+     * @param keyNode Value値
+     * @param transactionCode 
+     */
     public void setKeyPair(Integer key, String keyNode, Long transactionCode) throws BatchException {
         if (!blocking) {
             try {
-                while(lockMap.containsKey(key) == true && !(lockMap.get(key).equals(transactionCode))) {}
+                while(this.keyMapObj.containsLockKey(key) == true && !(this.keyMapObj.getLock(key).equals(transactionCode))) {}
                 synchronized(poolKeyLock) {
 
                     //logger.debug("setKeyPair - synchronized - start");
@@ -605,6 +611,38 @@ public class KeyMapManager extends Thread {
         }
         return ret;
     }
+
+	/**
+	 * Lockの取得を行う.<br>
+ 	 * 
+ 	 * @param key Key値
+ 	 * @param transactionCode 取得時に使用するTransactionCode
+	 * @return Long 成功時はtransactionCode、失敗時はnull
+	 */
+	public Long locking (Object key, Long transactionCode) {
+		return this.keyMapObj.locking(key, transactionCode);
+	}
+
+	/**
+	 * Lockの開放を行う.<br>
+ 	 * 
+ 	 * @param key Key値
+ 	 * @param transactionCode 取得時に使用するTransactionCode
+	 * @return Long 成功時はtransactionCode、失敗時はnull
+	 */
+	public Long removeLock (Object key, Long transactionCode) {
+		return this.keyMapObj.removeLock(key, transactionCode);
+	}
+
+	/**
+	 * Lockの状況を確認する.<br>
+ 	 * 
+ 	 * @param key Key値
+	 * @return boolean true:ロックされている false:ロックされていない
+	 */
+	public boolean isLock (Object key) {
+		return this.keyMapObj.containsLockKey(key);
+	}
 
 
     /**
