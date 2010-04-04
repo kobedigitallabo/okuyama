@@ -372,13 +372,13 @@ public class KeyMapManager extends Thread {
     }
 
     /**
-	 * キーを指定することでノードをセットする.<br>
+     * キーを指定することでノードをセットする.<br>
      *
      * @param key キー値
      * @param keyNode Value値
      * @param transactionCode 
      */
-    public void setKeyPair(Integer key, String keyNode, Long transactionCode) throws BatchException {
+    public void setKeyPair(Integer key, String keyNode, String transactionCode) throws BatchException {
         if (!blocking) {
             try {
                 while(this.keyMapObj.containsLockKey(key) == true && !(this.keyMapObj.getLock(key).equals(transactionCode))) {}
@@ -423,7 +423,7 @@ public class KeyMapManager extends Thread {
     }
 
     // キーを指定することでノードを削除する
-    public String removeKeyPair(Integer key, Long transactionCode) throws BatchException {
+    public String removeKeyPair(Integer key, String transactionCode) throws BatchException {
         String ret = null;
         if (!blocking) {
             try {
@@ -454,7 +454,7 @@ public class KeyMapManager extends Thread {
     }
 
     // Tagとキーを指定することでTagとキーをセットする
-    public void setTagPair(Integer tag, String key, Long transactionCode) throws BatchException {
+    public void setTagPair(Integer tag, String key, String transactionCode) throws BatchException {
 
         if (!blocking) {
 
@@ -612,37 +612,37 @@ public class KeyMapManager extends Thread {
         return ret;
     }
 
-	/**
-	 * Lockの取得を行う.<br>
- 	 * 
- 	 * @param key Key値
- 	 * @param transactionCode 取得時に使用するTransactionCode
-	 * @return Long 成功時はtransactionCode、失敗時はnull
-	 */
-	public Long locking (Object key, Long transactionCode) {
-		return this.keyMapObj.locking(key, transactionCode);
-	}
+    /**
+     * Lockの取得を行う.<br>
+     * 
+     * @param key Key値
+     * @param transactionCode 取得時に使用するTransactionCode
+     * @return String 成功時はtransactionCode、失敗時はnull
+     */
+    public String locking (Object key, String transactionCode) {
+        return this.keyMapObj.locking(key, transactionCode);
+    }
 
-	/**
-	 * Lockの開放を行う.<br>
- 	 * 
- 	 * @param key Key値
- 	 * @param transactionCode 取得時に使用するTransactionCode
-	 * @return Long 成功時はtransactionCode、失敗時はnull
-	 */
-	public Long removeLock (Object key, Long transactionCode) {
-		return this.keyMapObj.removeLock(key, transactionCode);
-	}
+    /**
+     * Lockの開放を行う.<br>
+     * 
+     * @param key Key値
+     * @param transactionCode 取得時に使用するTransactionCode
+     * @return String 成功時はtransactionCode、失敗時はnull
+     */
+    public String removeLock (Object key, String transactionCode) {
+        return this.keyMapObj.removeLock(key, transactionCode);
+    }
 
-	/**
-	 * Lockの状況を確認する.<br>
- 	 * 
- 	 * @param key Key値
-	 * @return boolean true:ロックされている false:ロックされていない
-	 */
-	public boolean isLock (Object key) {
-		return this.keyMapObj.containsLockKey(key);
-	}
+    /**
+     * Lockの状況を確認する.<br>
+     * 
+     * @param key Key値
+     * @return boolean true:ロックされている false:ロックされていない
+     */
+    public boolean isLock (Object key) {
+        return this.keyMapObj.containsLockKey(key);
+    }
 
 
     /**

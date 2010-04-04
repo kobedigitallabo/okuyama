@@ -35,7 +35,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
     private int nowKeySize = 0;
     private Hashtable lockMap = new Hashtable(1024);
 
-	// コンストラクタ
+    // コンストラクタ
     public KeyManagerValueMap(int size) {
         super(size);
     }
@@ -173,30 +173,31 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
      *
      * @param key ロック対象のKey値
      * @param transactionCode ロック時に使用するTransactionCode
-     * @return Long TransactionCode Lock失敗時はnull
+     * @return String TransactionCode Lock失敗時はnull
      */
-    public Long locking(Object key, Long transactionCode) {
-		synchronized(lockMap) {
-			if (lockMap.containsKey(key)) return null;
-        	lockMap.put(key, transactionCode);
-		}
+    public String locking(Object key, String transactionCode) {
+        synchronized(lockMap) {
+            if (lockMap.containsKey(key)) return null;
+            lockMap.put(key, transactionCode);
+        }
         return transactionCode;
     }
 
     /**
      * 引数のKey値のLockを解除する<br>
+     * Lockがない場合は成功扱い
      *
      * @param key ロック対象のKey値
-     * @return Long TransactionCode
+     * @return String TransactionCode
      */
-    public Long removeLock(Object key, Long transactionCode) {
-		Long ret = null;
-		synchronized(lockMap) {
-			if (lockMap.containsKey(key)) return null;
-			if (!((Long)lockMap.get(key)).equals(transactionCode)) return null;
-	        ret = (Long)lockMap.remove(key);
-		}
-		return ret;
+    public String removeLock(Object key, String transactionCode) {
+        String ret = null;
+        synchronized(lockMap) {
+            if (!lockMap.containsKey(key)) return transactionCode;
+            if (!(lockMap.get(key)).equals(transactionCode)) return null;
+            ret = (String)lockMap.remove(key);
+        }
+        return ret;
     }
 
     /**

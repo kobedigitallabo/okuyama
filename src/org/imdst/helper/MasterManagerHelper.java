@@ -178,7 +178,23 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } else if(clientParameterList[0].equals("30")) {
 
                         // 各キーノードへデータロック依頼
-                        retParams = this.lockingData(clientParameterList[1]);
+                        retParams = this.lockingData(clientParameterList[1], clientParameterList[2]);
+                    } else if(clientParameterList[0].equals("31")) {
+
+                        // 各キーノードへデータロック解除依頼
+                        retParams = this.releaseLockingData(clientParameterList[1], clientParameterList[2]);
+                    } else if(clientParameterList[0].equals("37")) {
+
+                        // Transactionの開始を行う
+                        retParams = this.startTransaction();
+                    } else if(clientParameterList[0].equals("38")) {
+
+                        // TransactionのCommitを行う
+                        //retParams = this.commitTransaction(clientParameterList[1]);
+                    } else if(clientParameterList[0].equals("39")) {
+
+                        // TransactionのRollbackを行う
+                        //retParams = this.rollbackTransaction(clientParameterList[1]);
                     } else if (clientParameterList[0].equals("90")) {
 
                         // KeyNodeの使用停止をマーク
@@ -631,21 +647,152 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     /**
      * Key値を指定してデータのロックを取得する.<br>
      * 処理フロー.<br>
-     * 1.ロック番号を採番.<br>
+     * 1.DataDispatcherに依頼してKeyの保存先を問い合わせる.<br>
+     * 2.取得した保存先にロックを依頼.<br>
+     * 3.全てのロックが完了した時点で終了.<br>
+     * 4.結果文字列の配列を作成(成功時は処理番号"30"と"true"と"ロック番号"、失敗時は処理番号"30"と"false")<br>
+     *
+     * @param keyStrs key値
+     * @param transactionCode ロック時のTransactionCode
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] lockingData(String keyStr, String transactionCode) throws BatchException {
+        //logger.debug("MasterManagerHelper - lockingData - start");
+
+        String[] retStrs = new String[3];
+
+        String[] keyNodeLockRet = null;
+        String[] keyNodeInfo = null;
+
+        try {
+
+            // キー値を使用して取得先を決定
+            keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
+
+            // 取得実行
+            if (keyNodeInfo.length == 3) {
+                keyNodeLockRet = lockKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, transactionCode);
+            } else {
+                keyNodeLockRet = lockKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, transactionCode);
+            }
+
+
+            // 取得結果確認
+            if (keyNodeLockRet[1].equals("false")) {
+
+                // Lock失敗
+                retStrs[0] = keyNodeLockRet[0];
+                retStrs[1] = "false";
+                retStrs[2] = "";
+                
+            } else {
+
+                // Lock成功
+                retStrs[0] = keyNodeLockRet[0];
+                retStrs[1] = "true";
+                retStrs[2] = keyNodeLockRet[2];
+            }
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - lockingData - Error", be);
+        } catch (Exception e) {
+            retStrs[0] = "2";
+            retStrs[1] = "error";
+            retStrs[2] = "NG:MasterManagerHelper - lockingData - Exception - " + e.toString();
+        }
+        //logger.debug("MasterManagerHelper - lockingData - end");;
+        return retStrs;
+    }
+
+
+    /**
+     * Key値を指定してデータのロックを解除する.<br>
+     * 処理フロー.<br>
      * 2.DataDispatcherに依頼してKeyの保存先を問い合わせる.<br>
      * 3.取得した保存先にロックを依頼.<br>
      * 4.全てのロックが完了した時点で終了.<br>
      * 5.結果文字列の配列を作成(成功時は処理番号"30"と"true"と"ロック番号"、失敗時は処理番号"30"と"false")<br>
      *
-     * @param keyStrs key値
+     * @param keyStr key値の文字列
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] lockingData(String keyStr) throws BatchException {
-        //logger.debug("MasterManagerHelper - lockingData - start");
+    private String[] releaseLockingData(String keyStr, String transactionCode) throws BatchException {
+        //logger.debug("MasterManagerHelper - releaseLockingData - start");
         String[] retStrs = new String[3];
 
-        //logger.debug("MasterManagerHelper - lockingData - end");
+        String[] keyNodeReleaseRet = null;
+        String[] keyNodeInfo = null;
+
+        try {
+
+            // キー値を使用してリリース先を決定
+            keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
+
+            // リリース先実行
+            if (keyNodeInfo.length == 3) {
+                keyNodeReleaseRet = releaseLockKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, transactionCode);
+            } else {
+                keyNodeReleaseRet = releaseLockKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, transactionCode);
+            }
+
+            // 過去に別ルールを設定している場合は過去ルール側でLockが行われている可能性があるので
+            // そちらのルールでもリリースする
+            if (this.oldRule != null) {
+
+                //System.out.println("過去ルールを探索");
+                for (int i = 0; i < this.oldRule.length; i++) {
+                    // キー値を使用してリリース先を決定
+                    keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.oldRule[i]);
+
+                    // リリース先実行
+                    if (keyNodeInfo.length == 3) {
+                        releaseLockKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, transactionCode);
+                    } else {
+                        releaseLockKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, transactionCode);
+                    }
+                }
+            }
+
+            // リリース結果確認
+            if (keyNodeReleaseRet[1].equals("false")) {
+
+                // リリース失敗
+                retStrs[0] = "31";
+                retStrs[1] = "false";
+                retStrs[2] = "";
+            } else {
+
+                // リリース成功
+                retStrs[0] = "31";
+                retStrs[1] = "true";
+                retStrs[2] = keyNodeReleaseRet[2];
+            }
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - releaseLockingData - Error", be);
+        } catch (Exception e) {
+            retStrs[0] = "31";
+            retStrs[1] = "error";
+            retStrs[2] = "NG:MasterManagerHelper - releaseLockingData - Exception - " + e.toString();
+        }
+        //logger.debug("MasterManagerHelper - releaseLockingData - end");
+        return retStrs;
+    }
+
+
+    /**
+     * Transactionを開始する.<br>
+     *
+     * @return String[] 結果 配列の3つめがTransactionCode
+     * @throws BatchException
+     */
+    private String[] startTransaction() throws BatchException {
+        //logger.debug("MasterManagerHelper - removeKeyValue - start");
+        String[] retStrs = new String[3];
+        retStrs[0] = "37";
+        retStrs[1] = "true";
+        retStrs[2] = ((Long)System.nanoTime()).toString() + new Integer(this.hashCode()).toString();
+        //logger.debug("MasterManagerHelper - removeKeyValue - end");
         return retStrs;
     }
 
@@ -1034,10 +1181,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         boolean mainNodeSave = false;
         boolean subNodeSave = false;
-        boolean connectErrorMainNode = false;
-        boolean connectErrorSubNode = false;
-        
+
         try {
+
             do {
                 // KeyNodeとの接続を確立
                 dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
@@ -1107,41 +1253,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 if (counter == 0) mainNodeSave = true;
                                 if (counter == 1) subNodeSave = true;
                             }
-                        } else if (type.equals("30")) {
-
-                            // Key値でLockを取得
-                            StringBuffer buf = new StringBuffer();
-                            buf.append("30");
-                            buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(values[0].hashCode());               // Key値
-                            buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(transactionCode);                    // Transaction値
-
-                            // 送信
-                            pw.println(buf.toString());
-                            pw.flush();
-
-                            // 返却値取得
-                            retParam = br.readLine();
-
-                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-                            if (retParam.indexOf(ImdstDefine.keyNodeLockingSuccessStr) == 0) {
-                                if (counter == 0) mainNodeSave = true;
-                                if (counter == 1) subNodeSave = true;
-                            }
                         }
 
                     } catch (SocketException se) {
 
                         super.setDeadNode(nodeName + ":" + nodePort);
-                        if (counter == 0) connectErrorMainNode = true;
-                        if (counter == 1) connectErrorSubNode = true;
-
                         logger.debug(se);
                     } catch (IOException ie) {
                         super.setDeadNode(nodeName + ":" + nodePort);
-                        if (counter == 0) connectErrorMainNode = true;
-                        if (counter == 1) connectErrorSubNode = true;
                         logger.debug(ie);
                     }
                 }
@@ -1181,6 +1300,355 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         return retParams;
     }
+
+
+    /**
+     * KeyNodeに対してデータLockを依頼する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param key 対象Key
+     * @param transactionCode TransactionCode
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] lockKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String key, String transactionCode) throws BatchException {
+
+        PrintWriter pw = null;
+        BufferedReader br = null;
+        HashMap dtMap = null;
+
+        String nodeName = keyNodeName;
+        String nodePort = keyNodePort;
+        String nodeFullName = keyNodeFullName;
+
+        String[] retParams = null;
+
+        int counter = 0;
+
+        String tmpSaveHost = null;
+        String[] tmpSaveData = null;
+        String retParam = null;
+
+        boolean mainNodeSave = false;
+        boolean subNodeSave = false;
+        boolean connectErrorMainNode = false;
+        boolean connectErrorSubNode = false;
+
+        boolean hasSlaveNode = false;
+
+        try {
+            if (subKeyNodeName != null) hasSlaveNode = true;
+
+            do {
+                // KeyNodeとの接続を確立
+                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+
+
+                // 接続結果と、現在の保存先状況で処理を分岐
+                if (dtMap != null) {
+                    try {
+                        // writerとreaderを取り出し
+                        pw = (PrintWriter)dtMap.get("writer");
+                        br = (BufferedReader)dtMap.get("reader");
+
+                        // 処理種別判別
+
+
+                        // Key値でLockを取得
+                        StringBuffer buf = new StringBuffer();
+                        buf.append("30");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(key.hashCode());               // Key値
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(transactionCode);                    // Transaction値
+
+                        // 送信
+                        pw.println(buf.toString());
+                        pw.flush();
+
+                        // 返却値取得
+                        retParam = br.readLine();
+
+                        // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                        if (retParam.indexOf(ImdstDefine.keyNodeLockingSuccessStr) == 0) {
+                            if (counter == 0) mainNodeSave = true;
+                            if (counter == 1) subNodeSave = true;
+                        }
+                    } catch (SocketException se) {
+
+                        super.setDeadNode(nodeName + ":" + nodePort);
+                        if (counter == 0) connectErrorMainNode = true;
+                        if (counter == 1) connectErrorSubNode = true;
+
+                        logger.debug(se);
+                    } catch (IOException ie) {
+                        super.setDeadNode(nodeName + ":" + nodePort);
+                        if (counter == 0) connectErrorMainNode = true;
+                        if (counter == 1) connectErrorSubNode = true;
+                        logger.debug(ie);
+                    }
+                }
+
+                // スレーブデータノードの名前を代入
+                nodeName = subKeyNodeName;
+                nodePort = subKeyNodePort;
+                nodeFullName = subKeyNodeFullName;
+
+                counter++;
+                // スレーブデータノードが存在しない場合もしくは、既に2回保存を実施した場合は終了
+            } while(nodeName != null && counter < 2);
+
+
+            // ノードへの保存状況を確認
+            // Lockの成功を判定
+            if (!hasSlaveNode) {
+
+                // Mainノードのみ
+                if (mainNodeSave == true) {
+                    // 成功
+                    retParams = new String[3];
+                    retParams[0] = "30";
+                    retParams[1] = "true";
+                    retParams[2] = transactionCode;
+                } else {
+                    // 失敗
+                    retParams = new String[2];
+                    retParams[0] = "30";
+                    retParams[1] = "false";
+                }
+            } else {
+
+                // Slaveノードあり
+                if (mainNodeSave == true && subNodeSave == true) {
+
+                    // 両方成功
+                    retParams = new String[3];
+                    retParams[0] = "30";
+                    retParams[1] = "true";
+                    retParams[2] = transactionCode;
+                } else if (mainNodeSave == false && subNodeSave == false) {
+
+                    // 両方失敗
+                    retParams = new String[2];
+                    retParams[0] = "30";
+                    retParams[1] = "false";
+                } else if (mainNodeSave == true && subNodeSave == false && connectErrorSubNode == true) {
+
+                    // Mainノード成功、Slaveノード失敗(通信で失敗)
+                    //成功扱い
+                    retParams = new String[3];
+                    retParams[0] = "30";
+                    retParams[1] = "true";
+                    retParams[2] = transactionCode;
+                } else if (subNodeSave == true && mainNodeSave == false && connectErrorMainNode == true) {
+
+                    // Slaveノード成功、Mainノード失敗(通信で失敗)
+                    //成功扱い
+                    retParams = new String[3];
+                    retParams[0] = "30";
+                    retParams[1] = "true";
+                    retParams[2] = transactionCode;
+                } else if (mainNodeSave == true && subNodeSave == false && connectErrorSubNode == false) {
+
+                    // Mainノード成功、Slaveノード論理的に失敗
+                    // 失敗になり、MainノードのLockを解除する
+                    try {
+                        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+
+                        StringBuffer buf = new StringBuffer();
+                        buf.append("31");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(key.hashCode());               // Key値
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(transactionCode);                    // Transaction値
+
+                        // 送信
+                        pw.println(buf.toString());
+                        pw.flush();
+
+                        // 返却値取得
+                        retParam = br.readLine();
+                    } catch (SocketException se) {
+                        // ここでの通信失敗はLockの時間切れを待つのみしかない
+                        super.setDeadNode(keyNodeName + ":" + keyNodePort);
+                        logger.debug(se);
+                    } catch (IOException ie) {
+                        // ここでの通信失敗はLockの時間切れを待つのみしかない
+                        super.setDeadNode(keyNodeName + ":" + keyNodePort);
+                        logger.debug(ie);
+                    }
+
+                    retParams = new String[2];
+                    retParams[0] = "30";
+                    retParams[1] = "false";
+                } else if (subNodeSave == true && mainNodeSave == false && connectErrorMainNode == false) {
+                    // Slaveノード成功、Mainノード論理的に失敗
+                    // 失敗になり、SlaveノードのLockを解除する
+                    try {
+                        dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+
+                        StringBuffer buf = new StringBuffer();
+                        buf.append("31");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(key.hashCode());               // Key値
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(transactionCode);                    // Transaction値
+
+                        // 送信
+                        pw.println(buf.toString());
+                        pw.flush();
+
+                        // 返却値取得
+                        retParam = br.readLine();
+                    } catch (SocketException se) {
+                        // ここでの通信失敗はLockの時間切れを待つのみしかない
+                        super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
+                        logger.debug(se);
+                    } catch (IOException ie) {
+                        // ここでの通信失敗はLockの時間切れを待つのみしかない
+                        super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
+                        logger.debug(ie);
+                    }
+                    retParams = new String[2];
+                    retParams[0] = "30";
+                    retParams[1] = "false";
+                }
+            }
+        } catch (BatchException be) {
+
+            throw be;
+        } catch (Exception e) {
+
+            throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            if (subKeyNodeName != null) 
+                super.execNodeUseEnd(subKeyNodeFullName);
+        }
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeに対してデータLockを解除依頼する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param key 対象Key
+     * @param transactionCode TransactionCode
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] releaseLockKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String key, String transactionCode) throws BatchException {
+
+        PrintWriter pw = null;
+        BufferedReader br = null;
+        HashMap dtMap = null;
+
+        String nodeName = keyNodeName;
+        String nodePort = keyNodePort;
+        String nodeFullName = keyNodeFullName;
+
+        String[] retParams = null;
+
+        int counter = 0;
+
+        String tmpSaveHost = null;
+        String[] tmpSaveData = null;
+        String retParam = null;
+
+        boolean mainNodeSave = false;
+        boolean subNodeSave = false;
+        boolean connectErrorMainNode = false;
+        boolean connectErrorSubNode = false;
+
+        boolean hasSlaveNode = false;
+
+        try {
+            if (subKeyNodeName != null) hasSlaveNode = true;
+
+            do {
+                // KeyNodeとの接続を確立
+                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+
+
+                // 接続結果と、現在の保存先状況で処理を分岐
+                if (dtMap != null) {
+                    try {
+                        // writerとreaderを取り出し
+                        pw = (PrintWriter)dtMap.get("writer");
+                        br = (BufferedReader)dtMap.get("reader");
+
+                        // Key値でLockを取得
+                        StringBuffer buf = new StringBuffer();
+                        buf.append("31");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(key.hashCode());               // Key値
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(transactionCode);                    // Transaction値
+
+                        // 送信
+                        pw.println(buf.toString());
+                        pw.flush();
+
+                        // 返却値取得
+                        retParam = br.readLine();
+
+                        // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                        if (retParam.indexOf(ImdstDefine.keyNodeReleaseSuccessStr) == 0) {
+                            if (counter == 0) mainNodeSave = true;
+                            if (counter == 1) subNodeSave = true;
+                        }
+
+                    } catch (SocketException se) {
+
+                        super.setDeadNode(nodeName + ":" + nodePort);
+                        logger.debug(se);
+                    } catch (IOException ie) {
+                        super.setDeadNode(nodeName + ":" + nodePort);
+                        logger.debug(ie);
+                    }
+                }
+
+                // スレーブデータノードの名前を代入
+                nodeName = subKeyNodeName;
+                nodePort = subKeyNodePort;
+                nodeFullName = subKeyNodeFullName;
+
+                counter++;
+                // スレーブデータノードが存在しない場合もしくは、既に2回保存を実施した場合は終了
+            } while(nodeName != null && counter < 2);
+        } catch (BatchException be) {
+
+            throw be;
+        } catch (Exception e) {
+
+            throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            if (subKeyNodeName != null) 
+                super.execNodeUseEnd(subKeyNodeFullName);
+
+            // 返却地値をパースする
+            if (retParam != null) {
+                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+            }
+
+        }
+
+        return retParams;
+    }
+
 
 
     /**
