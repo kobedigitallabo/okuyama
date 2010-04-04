@@ -510,7 +510,6 @@ public class ImdstKeyValueClient {
         String sep = "";
 
         String[] tmpKeys = null;
-
         int keyCount = values.length / this.saveSize;
         int much = values.length % this.saveSize;
 
@@ -544,6 +543,7 @@ public class ImdstKeyValueClient {
                 workData = new byte[bufSize];
 
                 for (int workCounter = 0; workCounter < bufSize; workCounter++) {
+
                     workData[workCounter] = values[nowCounter];
                     nowCounter++;
                 }
@@ -565,6 +565,7 @@ public class ImdstKeyValueClient {
                 saveKeys.append(this.byteDataKeysSep);
                 saveKeys.append(tmpKey);
             }
+
             ret = this.setValue(keyStr, tagStrs, saveKeys.toString());
 
         } catch (Exception e) {
@@ -1095,7 +1096,8 @@ public class ImdstKeyValueClient {
                     String[] keyWork = workKeyRet[1].split("_");
 
                     String keyStrPre = keyWork[0];
-                    int maxKeyIndexSize = Integer.parseInt(keyWork[1]);
+                    //右辺のIndex数値+1が配列サイズ
+                    int maxKeyIndexSize = Integer.parseInt(keyWork[1] + 1);
 
                     workKeyRet = new String[maxKeyIndexSize];
                     for (int i = 0; i < workKeyRet.length; i++) {

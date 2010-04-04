@@ -39,10 +39,10 @@ class OkuyamaClient {
     private $byteDataKeysSep = ":#:";
 
     // バイナリデータ分割保存サイズ
-    private $saveSize = 512;
+    private $saveSize = 8192;
 
     // 保存できる最大長
-    private $maxValueSize = 512;
+    private $maxValueSize = 8192;
 
     // MasterServerへの接続時のタイムアウト時間
     private $connectTimeOut = 3;

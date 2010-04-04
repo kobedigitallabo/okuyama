@@ -89,7 +89,7 @@ public class KeyMapManager extends Thread {
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
-    private int vacuumStartLimit = 100000;
+    private int vacuumStartLimit = 20000;
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     private int vacuumExecAfterAccessTime = 30000;
