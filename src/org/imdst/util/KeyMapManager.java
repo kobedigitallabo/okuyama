@@ -25,6 +25,8 @@ public class KeyMapManager extends Thread {
     private KeyManagerValueMap keyMapObj = null;
     private int mapSize = 0;
 
+    private HashMap lockMap = new HashMap(10000);
+
     private static final String tagStartStr = ImdstDefine.imdstTagStartStr;
     private static final String tagEndStr = ImdstDefine.imdstTagEndStr;
     private static final String tagKeySep = ImdstDefine.imdstTagKeyAppendSep;
@@ -75,22 +77,22 @@ public class KeyMapManager extends Thread {
     // データのメモリーモードかファイルモードかの指定
     private boolean dataMemory = true;
 
-	// Diskモード(ファイルモード)で稼動している場合のデータファイル名
+    // Diskモード(ファイルモード)で稼動している場合のデータファイル名
     private String diskModeRestoreFile = null;
 
-	// データへの最終アクセス時間
+    // データへの最終アクセス時間
     private long lastAccess = 0L;
 
-	// データファイルのバキューム実行指定
+    // データファイルのバキューム実行指定
     private boolean vacuumExec = true;
 
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う
-	// 行数と1行のデータサイズをかけると不要なデータサイズとなる
-	// vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
+    // 行数と1行のデータサイズをかけると不要なデータサイズとなる
+    // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
     private int vacuumStartLimit = 100000;
 
-	// Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
-	private int vacuumExecAfterAccessTime = 30000;
+    // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
+    private int vacuumExecAfterAccessTime = 30000;
 
 
     // 初期化メソッド
@@ -286,18 +288,18 @@ public class KeyMapManager extends Thread {
                     Thread.sleep(updateInterval);
                 }
 
-				logger.info("VacuumCheck - Start");
-				//  Vacuum実行の確認
-				// データがメモリーではなくかつ、vacuum実行指定がtrueの場合
+                logger.info("VacuumCheck - Start");
+                //  Vacuum実行の確認
+                // データがメモリーではなくかつ、vacuum実行指定がtrueの場合
                 if (!dataMemory && vacuumExec == true) {
-					logger.info("vacuumCheck - Start - 1");
+                    logger.info("vacuumCheck - Start - 1");
                     if ((this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartLimit) {
-						logger.info("VacuumCheck - Start - 2");
+                        logger.info("VacuumCheck - Start - 2");
 
                         // 規定時間アクセスがない
                         if ((System.currentTimeMillis() - this.lastAccess) > this.vacuumExecAfterAccessTime) {
                             logger.info("Vacuum - Start");
-							long vacuumStart = System.currentTimeMillis();
+                            long vacuumStart = System.currentTimeMillis();
 
                             synchronized(poolKeyLock) {
                                 synchronized(this.getKeyLock) {
@@ -306,12 +308,12 @@ public class KeyMapManager extends Thread {
                                 }
                             }
 
-							long vacuumEnd = System.currentTimeMillis();
+                            long vacuumEnd = System.currentTimeMillis();
                             logger.info("Vacuum - End - VacuumTime [" + (vacuumEnd - vacuumStart) +"] Milli Second");
                         }
                     }
                 }
-				logger.info("VacuumCheck - End");
+                logger.info("VacuumCheck - End");
 
                 /*
                 if (!blocking) {
@@ -370,14 +372,15 @@ public class KeyMapManager extends Thread {
     }
 
     // キーを指定することでノードをセットする
-    public void setKeyPair(Integer key, String keyNode) throws BatchException {
+    public void setKeyPair(Integer key, String keyNode, Long transactionCode) throws BatchException {
         if (!blocking) {
             try {
-
+                while(lockMap.containsKey(key) == true && !(lockMap.get(key).equals(transactionCode))) {}
                 synchronized(poolKeyLock) {
 
                     //logger.debug("setKeyPair - synchronized - start");
                     synchronized(this.getKeyLock) {
+
                         keyMapObjPut(key, keyNode);
                     }
 
@@ -414,10 +417,11 @@ public class KeyMapManager extends Thread {
     }
 
     // キーを指定することでノードを削除する
-    public String removeKeyPair(Integer key) throws BatchException {
+    public String removeKeyPair(Integer key, Long transactionCode) throws BatchException {
         String ret = null;
         if (!blocking) {
             try {
+                while(this.keyMapObj.containsLockKey(key) == true && !(this.keyMapObj.getLock(key).equals(transactionCode))) {}
                 synchronized(this.getKeyLock) {
                     ret =  (String)keyMapObjGet(key);
                     keyMapObjRemove(key);
@@ -444,7 +448,7 @@ public class KeyMapManager extends Thread {
     }
 
     // Tagとキーを指定することでTagとキーをセットする
-    public void setTagPair(Integer tag, String key) throws BatchException {
+    public void setTagPair(Integer tag, String key, Long transactionCode) throws BatchException {
 
         if (!blocking) {
 
@@ -496,7 +500,7 @@ public class KeyMapManager extends Thread {
                         if (firsrtRegist) {
 
                             // 初登録
-                            this.setKeyPair(tagCnv, key);
+                            this.setKeyPair(tagCnv, key, transactionCode);
                         } else {
 
                             // 既に別のKeyが登録済みなので、そのキーにアペンドしても良いかを確認
@@ -506,14 +510,14 @@ public class KeyMapManager extends Thread {
                                 counter++;
 
                                 tagCnv = new Integer((tagStartStr + tag + "_" + (dataPutCounter + 1) + tagEndStr).hashCode());
-                                this.setKeyPair(tagCnv, key);
+                                this.setKeyPair(tagCnv, key, transactionCode);
                             } else{
 
                                 // アペンド
                                 tagCnv = new Integer((tagStartStr + tag + "_" + dataPutCounter + tagEndStr).hashCode());
 
                                 keyStrs = keyStrs + tagKeySep + key;
-                                this.setKeyPair(tagCnv, keyStrs);
+                                this.setKeyPair(tagCnv, keyStrs, transactionCode);
                             }
                         }
                     }

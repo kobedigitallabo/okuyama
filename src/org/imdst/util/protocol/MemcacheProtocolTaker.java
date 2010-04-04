@@ -114,7 +114,8 @@ public class MemcacheProtocolTaker implements IProtocolTaker {
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
                 methodBuf.append(ImdstDefine.imdstBlankStrData);
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-
+                methodBuf.append("0");                                  // TransactionCode(0固定)
+                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
                 String workStr = br.readLine();
 
                 // 改行文字が含まれているため切除する

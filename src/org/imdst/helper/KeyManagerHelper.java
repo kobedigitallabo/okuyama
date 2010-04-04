@@ -99,6 +99,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
             Integer requestHashCode = null;
             String requestDataNode = null;
+            Long transactionCode = null;
             Integer requestTag = null;
             String requestKey = null;
 
@@ -140,17 +141,18 @@ public class KeyManagerHelper extends AbstractHelper {
 
                         // Key値とDataNode名を格納する
                         requestHashCode = new Integer(clientParameterList[1]);
-                        requestDataNode = clientParameterList[2];
+                        transactionCode = new Long(clientParameterList[2]);
+                        requestDataNode = clientParameterList[3];
 
                         // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
-                        if (clientParameterList.length > 3) {
+                        if (clientParameterList.length > 4) {
                             requestDataNode = requestDataNode + 
                                 ImdstDefine.keyHelperClientParamSep + 
-                                    clientParameterList[3];
+                                    clientParameterList[4];
                         }
 
                         // メソッド呼び出し
-                        retParams = this.setDatanode(requestHashCode, requestDataNode);
+                        retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[1]);
@@ -174,9 +176,11 @@ public class KeyManagerHelper extends AbstractHelper {
 
                         // Tag値とキー値を格納する
                         requestTag = new Integer(clientParameterList[1]);
-                        requestKey = clientParameterList[2];
+                        transactionCode = new Long(clientParameterList[2]);         // TransactionCode
+                        requestKey = clientParameterList[3];
+
                         // メソッド呼び出し
-                        retParams = this.setTagdata(requestTag, requestKey);
+                        retParams = this.setTagdata(requestTag, requestKey, transactionCode);
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[1]);
@@ -197,8 +201,10 @@ public class KeyManagerHelper extends AbstractHelper {
 
                         // Key値を指定する事でデータを削除する
                         requestHashCode = new Integer(clientParameterList[1]);
+                        transactionCode = new Long(clientParameterList[2]);
+
                         // メソッド呼び出し
-                        retParams = this.removeDatanode(requestHashCode);
+                        retParams = this.removeDatanode(requestHashCode, transactionCode);
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[1]);
@@ -305,12 +311,12 @@ public class KeyManagerHelper extends AbstractHelper {
     }
 
     // KeyとDataNode値を格納する
-    private String[] setDatanode(Integer key, String dataNodeStr) {
+    private String[] setDatanode(Integer key, String dataNodeStr, Long transactionCode) {
         //logger.debug("KeyManagerHelper - setDatanode - start");
         String[] retStrs = new String[3];
         try {
             if(!this.keyMapManager.checkError()) {
-                this.keyMapManager.setKeyPair(key, dataNodeStr);
+                this.keyMapManager.setKeyPair(key, dataNodeStr, transactionCode);
                 retStrs[0] = "1";
                 retStrs[1] = "true";
                 retStrs[2] = "OK";
@@ -447,15 +453,13 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
     // KeyとDataNode値を格納する
-    private String[] setTagdata(Integer tag, String key) {
+    private String[] setTagdata(Integer tag, String key, Long transactionCode) {
         //logger.debug("KeyManagerHelper - setTagdata - start");
         String[] retStrs = new String[3];
         try {
             if(!this.keyMapManager.checkError()) {
-                //long start = new Date().getTime();
-                this.keyMapManager.setTagPair(tag, key);
-                //long end = new Date().getTime();
-                //System.out.println((end - start));
+
+                this.keyMapManager.setTagPair(tag, key, transactionCode);
 
                 retStrs[0] = "3";
                 retStrs[1] = "true";
@@ -477,7 +481,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
     // KeyでDataNode値を削除する
-    private String[] removeDatanode(Integer key) {
+    private String[] removeDatanode(Integer key, Long transactionCode) {
         //logger.debug("KeyManagerHelper - removeDatanode - start");
         String[] retStrs = null;
         try {
@@ -487,7 +491,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     retStrs = new String[3];
                     retStrs[0] = "5";
                     retStrs[1] = "true";
-                    retStrs[2] = this.keyMapManager.removeKeyPair(key);
+                    retStrs[2] = this.keyMapManager.removeKeyPair(key, transactionCode);
                 } else {
                     retStrs = new String[2];
                     retStrs[0] = "5";

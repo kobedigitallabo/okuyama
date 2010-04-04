@@ -30,6 +30,8 @@ public class ImdstKeyValueClient {
     // サーバからの受信用
     private BufferedReader br = null;
 
+    private String transactionCode = "0";
+
     // データセパレータ文字列
     private static final String sepStr = ImdstDefine.keyHelperClientParamSep;
 
@@ -331,6 +333,12 @@ public class ImdstKeyValueClient {
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
 
+            // TransactionCode連結
+            serverRequestBuf.append(this.transactionCode);
+
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
             // Value連結
             serverRequestBuf.append(value);
 
@@ -531,6 +539,12 @@ public class ImdstKeyValueClient {
             // Tagは必ず存在しない
             // ブランク規定文字列を連結
             serverRequestBuf.append(ImdstKeyValueClient.blankStr);
+
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
+            // TransactionCode連結
+            serverRequestBuf.append(this.transactionCode);
 
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
@@ -897,10 +911,12 @@ public class ImdstKeyValueClient {
             serverRequestBuf.append("5");
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
-
-
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
             serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            // TransactionCode連結
+            serverRequestBuf.append(this.transactionCode);
 
 
             // サーバ送信

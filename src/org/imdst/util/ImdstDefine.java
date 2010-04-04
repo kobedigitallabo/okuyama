@@ -28,10 +28,10 @@ public class ImdstDefine {
     public static final String keyHelperClientParamEncoding = "UTF-8";
 
     // クライアントからのリクエスト文字列のセパレータ
-    public static final String keyHelperClientParamSep = "#imdst3674#";
+    public static final String keyHelperClientParamSep = ",";
 
     // クラインととの連携文字列でのブランクを表す代行文字列
-    public static final String imdstBlankStrData = "(imdst5397)";
+    public static final String imdstBlankStrData = "(B)";
 
     // Tag値の文字列の前方カッコ
     public static final String imdstTagStartStr = "{imdst_tag#9641";
@@ -44,13 +44,19 @@ public class ImdstDefine {
     public static final String imdstTagKeyAppendSep = ":";
 
     // データノードに対するKeyデータ登録時に成功した場合の返却文字列の先頭部分
-    public static final String keyNodeKeyRegistSuccessStr = "1#imdst3674#true";
+    public static final String keyNodeKeyRegistSuccessStr = "1,true";
 
     // データノードに対するTagデータ登録時に成功した場合の返却文字列の先頭部分
-    public static final String keyNodeTagRegistSuccessStr = "3#imdst3674#true";
+    public static final String keyNodeTagRegistSuccessStr = "3,true";
 
     // データノードに対するKeyデータ削除時に成功した場合の返却文字列の先頭部分
-    public static final String keyNodeKeyRemoveSuccessStr = "5#imdst3674#true";
+    public static final String keyNodeKeyRemoveSuccessStr = "5,true";
+
+    // データノードに対するLock取得に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeLockingSuccessStr = "30,true";
+
+    // データノードに対するLock開放に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeReleaseSuccessStr = "31,true";
 
     // memcacheモード時の命令コマンドの区切り文字
     public static final String memcacheExecuteMethodSep = " ";
@@ -81,8 +87,8 @@ public class ImdstDefine {
     public static final String Prop_KeyMapNodesInfo = "KeyMapNodesInfo";
     public static final String Prop_SubKeyMapNodesInfo = "SubKeyMapNodesInfo";
     public static final String Prop_LoadBalanceMode = "LoadBalanceMode";
-	public static final String Prop_MainMasterNodeMode = "MainMasterNodeMode";
-	public static final String Prop_SlaveMasterNodes = "SlaveMasterNodes";
+    public static final String Prop_MainMasterNodeMode = "MainMasterNodeMode";
+    public static final String Prop_SlaveMasterNodes = "SlaveMasterNodes";
 
 
     public static final String dataNodeParamKey_1 = "dataNodeNameList";

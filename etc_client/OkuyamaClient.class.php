@@ -18,6 +18,9 @@ class OkuyamaClient {
     // ソケット
     private $socket = null;
 
+    // TransactionCode
+    private $transactionCode = "0";
+
     // データセパレータ文字列
     private $sepStr = ",";
 
@@ -249,6 +252,13 @@ class OkuyamaClient {
                     $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($tagStrs[$i]);
                 }
             }
+
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // TransactionCode連結
+            $serverRequestBuf = $serverRequestBuf . $this->transactionCode;
 
             // セパレータ連結
             $serverRequestBuf = $serverRequestBuf . $this->sepStr;

@@ -26,6 +26,8 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
     private int seekOneDataLength = (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1);
     private long lastDataChangeTime = 0L;
     private int nowKeySize = 0;
+    private HashMap lockMap = new HashMap();
+
 
     public KeyManagerValueMap(int size) {
         super(size);
@@ -65,6 +67,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
             StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - init - Error [" + e.getMessage() + "]");
         }
     }
+
 
     public Object get(Object key) {
         Object ret = null;
@@ -136,6 +139,44 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
             }
         }
         return ret;
+    }
+
+    /**
+     * 引数のKey値のLockに使用したTransactionCodeを取得する<br>
+     * @param key ロック対象のKey値
+     * @return Long TransactionCode
+     */
+    public Long getLock(Object key) {
+        return (Long)lockMap.get(key.toString());
+    }
+
+    /**
+     * 引数のKey値のLockが存在するかを返す<br>
+     * @param key ロック対象のKey値
+     * @return boolean true:ロックあり false:ロックなし
+     */
+    public boolean containsLockKey(Object key) {
+        return lockMap.containsKey(key);
+    }
+
+    /**
+     * 引数のKey値のLockを行う<br>
+     * @param key ロック対象のKey値
+     * @param transactionCode ロック時に使用するTransactionCode
+     * @return Long TransactionCode
+     */
+    public Long locking(Object key, Long transactionCode) {
+        lockMap.put(key, transactionCode);
+        return transactionCode;
+    }
+
+    /**
+     * 引数のKey値のLockを解除する<br>
+     * @param key ロック対象のKey値
+     * @return Long TransactionCode
+     */
+    public Long removeLock(Object key) {
+        return (Long)lockMap.remove(key);
     }
 
     /**
