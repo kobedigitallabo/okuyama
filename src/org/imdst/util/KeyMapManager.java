@@ -92,8 +92,8 @@ public class KeyMapManager extends Thread {
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     private int vacuumExecAfterAccessTime = 30000;
 
-	// Lockデータの自動開放時間(Lockを開始してこの時間が経過すると自動的に開放される)(ミリ秒)
-	private long autoLockingReleaseTime = ImdstDefine.lockReleaseTime;
+    // Lockデータの自動開放時間(Lockを開始してこの時間が経過すると自動的に開放される)(ミリ秒)
+    private long autoLockingReleaseTime = ImdstDefine.lockReleaseTime;
 
 
 
@@ -286,7 +286,7 @@ public class KeyMapManager extends Thread {
                         logger.info ("KeyMapManager - run - System Shutdown 2");
                         break;
                     }
-					this.keyMapObj.autoLockRelease(autoLockingReleaseTime);
+                    this.keyMapObj.autoLockRelease(autoLockingReleaseTime);
                     Thread.sleep(updateInterval);
                 }
 
@@ -383,7 +383,6 @@ public class KeyMapManager extends Thread {
     public void setKeyPair(Integer key, String keyNode, String transactionCode) throws BatchException {
         if (!blocking) {
             try {
-                while(this.keyMapObj.containsLockKey(key) == true && !(this.keyMapObj.getLock(key).equals(transactionCode))) {Thread.sleep(10);}
                 synchronized(poolKeyLock) {
 
                     //logger.debug("setKeyPair - synchronized - start");
@@ -405,7 +404,7 @@ public class KeyMapManager extends Thread {
                     //logger.debug("setKeyPair - synchronized - end");
                 }
             } catch (Exception e) {
-				e.printStackTrace();
+                e.printStackTrace();
                 logger.error("setKeyPair - Error");
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "setKeyPair - Error [" + e.getMessage() + "]");
@@ -430,7 +429,6 @@ public class KeyMapManager extends Thread {
         String ret = null;
         if (!blocking) {
             try {
-                while(this.keyMapObj.containsLockKey(key) == true && !(this.keyMapObj.getLock(key).equals(transactionCode))) {Thread.sleep(10);}
                 synchronized(this.getKeyLock) {
                     ret =  (String)keyMapObjGet(key);
                     keyMapObjRemove(key);
@@ -625,6 +623,7 @@ public class KeyMapManager extends Thread {
     public String locking (Object key, String transactionCode) {
         return this.keyMapObj.locking(key, transactionCode);
     }
+
 
     /**
      * Lockの開放を行う.<br>
@@ -846,10 +845,10 @@ public class KeyMapManager extends Thread {
     }
 
 
-	/**
-	 * 現在稼動中のLock数を返す
-	 * @param int Lock数
-	 */
+    /**
+     * 現在稼動中のLock数を返す
+     * @param int Lock数
+     */
     public int getLockingCount() {
         return this.keyMapObj.getLockingCount();
     }

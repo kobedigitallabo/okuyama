@@ -44,9 +44,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private int mode = 1;
 
     private boolean loadBalancing = false;
+
     private boolean reverseAccess = false;
 
-
+    // Transactionモードで起動するかを指定
+    private boolean transactionMode = false;
 
     /**
      * Logger.<br>
@@ -93,10 +95,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode);
 
             // ロードバランシング指定
-            if (parameters.length > 3) {
+            if (parameters[3] != null) {
                 this.loadBalancing = true;
                 reverseAccess = ((Boolean)parameters[3]).booleanValue();
             }
+
+            // トランザクション設定
+            this.transactionMode = ((Boolean)parameters[4]).booleanValue();
+
 
             // クライアントへのアウトプット(結果セット用の文字列用と、バイトデータ転送用)
             OutputStreamWriter osw = new OutputStreamWriter(soc.getOutputStream(),
@@ -1343,6 +1349,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             if (subKeyNodeName != null) hasSlaveNode = true;
 
             do {
+
                 // KeyNodeとの接続を確立
                 dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
 
@@ -1373,23 +1380,23 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         if (retParam.indexOf(ImdstDefine.keyNodeLockingSuccessStr) == 0) {
 
                             if (counter == 0) {
-								mainNodeSave = true;
-								connectErrorMainNode = false;
-							}
+                                mainNodeSave = true;
+                                connectErrorMainNode = false;
+                            }
 
                             if (counter == 1) {
-								subNodeSave = true;
-								connectErrorSubNode = false;
-							}
+                                subNodeSave = true;
+                                connectErrorSubNode = false;
+                            }
                         }
                     } catch (SocketException se) {
 
-						// Nodeの通信失敗を記録
+                        // Nodeの通信失敗を記録
                         super.setDeadNode(nodeName + ":" + nodePort);
                         logger.debug(se);
                     } catch (IOException ie) {
 
-						// Nodeの通信失敗を記録
+                        // Nodeの通信失敗を記録
                         super.setDeadNode(nodeName + ":" + nodePort);
                         logger.debug(ie);
                     }
@@ -2059,7 +2066,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 if (connectMap == null) {
 
                     Socket socket = new Socket(keyNodeName, Integer.parseInt(keyNodePort));
-					socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+                    socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
                     OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
                     pw = new PrintWriter(new BufferedWriter(osw));

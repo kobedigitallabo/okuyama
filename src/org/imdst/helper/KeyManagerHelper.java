@@ -99,9 +99,11 @@ public class KeyManagerHelper extends AbstractHelper {
 
             Integer requestHashCode = null;
             String requestDataNode = null;
-            String transactionCode = null;
+
             Integer requestTag = null;
             String requestKey = null;
+
+            String transactionCode = null;
 
             // Jobからの引数
             this.keyMapManager = (KeyMapManager)parameters[0];
@@ -257,38 +259,6 @@ public class KeyManagerHelper extends AbstractHelper {
                         // KeyMapObjectを読み込んで書き出す
                         this.keyMapManager.inputKeyMapObj2Stream(br);
                         retParamBuf = null;
-                    } else if(clientParameterList[0].equals("30")) {
-
-                        // Key値とTransactionCodeを使用してLockを取得する
-                        requestHashCode = new Integer(clientParameterList[1]);
-                        transactionCode = clientParameterList[2];
-
-                        // メソッド呼び出し
-                        retParams = this.lockDatanode(requestHashCode, transactionCode);
-                        retParamBuf.append(retParams[0]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[1]);
-                        if (retParams.length > 2) {
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
-                        }
-
-                    } else if(clientParameterList[0].equals("31")) {
-
-                        // Key値とTransactionCodeを使用してLockの開放を行う
-                        requestHashCode = new Integer(clientParameterList[1]);
-                        transactionCode = clientParameterList[2];
-
-                        // メソッド呼び出し
-                        retParams = this.releaseLockDatanode(requestHashCode, transactionCode);
-                        retParamBuf.append(retParams[0]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[1]);
-                        if (retParams.length > 2) {
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
-                        }
-
                     }
 
                     if (retParamBuf != null) {
@@ -540,83 +510,6 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[1] = "false";
         }
         //logger.debug("KeyManagerHelper - removeDatanode - end");
-        return retStrs;
-    }
-
-
-    // KeyとTransactionCodeでLockを実施する
-    private String[] lockDatanode(Integer key, String transactionCode) {
-        //logger.debug("KeyManagerHelper - lockDatanode - start");
-        String[] retStrs = null;
-        try {
-            if(!this.keyMapManager.checkError()) {
-                if (!this.keyMapManager.isLock(key)) {
-                    if (this.keyMapManager.locking(key, transactionCode) != null) {
-                        retStrs = new String[3];
-                        retStrs[0] = "30";
-                        retStrs[1] = "true";
-                        retStrs[2] = transactionCode;
-                    } else {
-                        retStrs = new String[2];
-                        retStrs[0] = "30";
-                        retStrs[1] = "false";
-                    }
-                } else {
-                    retStrs = new String[2];
-                    retStrs[0] = "30";
-                    retStrs[1] = "false";
-                }
-            } else {
-                    retStrs = new String[2];
-                    retStrs[0] = "30";
-                    retStrs[1] = "false";
-            }
-        } catch (Exception e) {
-            logger.error("KeyManagerHelper - lockDatanode - Error", e);
-            retStrs = new String[2];
-            retStrs[0] = "30";
-            retStrs[1] = "false";
-        }
-        //logger.debug("KeyManagerHelper - lockDatanode - end");
-        return retStrs;
-    }
-
-
-    // KeyとTransactionCodeでLockの開放を行う
-    private String[] releaseLockDatanode(Integer key, String transactionCode) {
-        //logger.debug("KeyManagerHelper - releaseLockDatanode - start");
-        String[] retStrs = null;
-        try {
-            if(!this.keyMapManager.checkError()) {
-                if (this.keyMapManager.isLock(key)) {
-                    if (this.keyMapManager.removeLock(key, transactionCode) != null) {
-                        retStrs = new String[3];
-                        retStrs[0] = "31";
-                        retStrs[1] = "true";
-                        retStrs[2] = transactionCode;
-                    } else {
-                        retStrs = new String[2];
-                        retStrs[0] = "31";
-                        retStrs[1] = "false";
-                    }
-                } else {
-                    retStrs = new String[3];
-                    retStrs[0] = "31";
-                    retStrs[1] = "true";
-                    retStrs[2] = transactionCode;
-                }
-            } else {
-                    retStrs = new String[2];
-                    retStrs[0] = "31";
-                    retStrs[1] = "false";
-            }
-        } catch (Exception e) {
-            logger.error("KeyManagerHelper - releaseLockDatanode - Error", e);
-            retStrs = new String[2];
-            retStrs[0] = "31";
-            retStrs[1] = "false";
-        }
-        //logger.debug("KeyManagerHelper - releaseLockDatanode - end");
         return retStrs;
     }
 
