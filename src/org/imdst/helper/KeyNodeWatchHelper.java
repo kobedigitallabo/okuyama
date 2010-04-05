@@ -254,6 +254,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             // 接続
             socket = new Socket(nodeName, port);
 
+			// Timeout設定
+			socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             pw = new PrintWriter(new BufferedWriter(osw));
 
@@ -345,6 +347,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             logger.info("Data Recover Schedule [" + masterNodeInfo + " => " + nodeInfo + "]");
             // コピー先KeyNodeとの接続を確立
             socket = new Socket(nodeName, nodePort);
+			socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             pw = new PrintWriter(new BufferedWriter(osw));
@@ -354,6 +357,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             // コピー元KeyNodeとの接続を確立
             msocket = new Socket(masterNodeName, masterNodePort);
+			msocket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+
             OutputStreamWriter mosw = new OutputStreamWriter(msocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             mpw = new PrintWriter(new BufferedWriter(mosw));
 

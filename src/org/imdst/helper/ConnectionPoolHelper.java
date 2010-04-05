@@ -141,6 +141,7 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
         try {
 
             Socket socket = new Socket(nodeInfos[0], new Integer(nodeInfos[1]).intValue());
+			socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             PrintWriter pw = new PrintWriter(new BufferedWriter(osw));

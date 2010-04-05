@@ -81,7 +81,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 						// Slaveノード名とポートに分解
 						String[] slaveNodeDt = slaveList[i].split(":");
 				        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
-	 
+						socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+
 			            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
 																										ImdstDefine.keyHelperClientParamEncoding)));
 			            br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
@@ -202,7 +203,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 						// Slaveノード名とポートに分解
 						String[] slaveNodeDt = slaveList[i].split(":");
 				        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
-	 
+						socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+
 			            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
 																										ImdstDefine.keyHelperClientParamEncoding)));
 			            br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
@@ -305,7 +307,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 						// Slaveノード名とポートに分解
 						String[] slaveNodeDt = slaveList[i].split(":");
 				        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
-	 
+						socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+
 			            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
 																										ImdstDefine.keyHelperClientParamEncoding)));
 			            br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 

@@ -25,8 +25,6 @@ public class KeyMapManager extends Thread {
     private KeyManagerValueMap keyMapObj = null;
     private int mapSize = 0;
 
-    private HashMap lockMap = new HashMap(10000);
-
     private static final String tagStartStr = ImdstDefine.imdstTagStartStr;
     private static final String tagEndStr = ImdstDefine.imdstTagEndStr;
     private static final String tagKeySep = ImdstDefine.imdstTagKeyAppendSep;
@@ -59,7 +57,7 @@ public class KeyMapManager extends Thread {
     // TODO:Mapファイル本体を保存しないように一時的に変更updateInterval=30秒
     // 起動時にトランザクションログから復旧
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
-    private static int updateInterval = 30000;
+    private static int updateInterval = 3000;
     private static int intervalCount = 10;
 
     // workMap(トランザクションログ)ファイルのデータセパレータ文字列
@@ -93,6 +91,10 @@ public class KeyMapManager extends Thread {
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     private int vacuumExecAfterAccessTime = 30000;
+
+	// Lockデータの自動開放時間(Lockを開始してこの時間が経過すると自動的に開放される)(ミリ秒)
+	private long autoLockingReleaseTime = ImdstDefine.lockReleaseTime;
+
 
 
     // 初期化メソッド
@@ -271,7 +273,7 @@ public class KeyMapManager extends Thread {
         while(true) {
 
             if (StatusUtil.getStatus() != 0) {
-                logger.info ("KeyMapManager - run - システム停止1");
+                logger.info ("KeyMapManager - run - System Shutdown 1");
                 break;
             }
 
@@ -281,10 +283,10 @@ public class KeyMapManager extends Thread {
 
                     // システム停止要求を監視
                     if (StatusUtil.getStatus() != 0) {
-                        logger.info ("KeyMapManager - run - システム停止2");
+                        logger.info ("KeyMapManager - run - System Shutdown 2");
                         break;
                     }
-
+					this.keyMapObj.autoLockRelease(autoLockingReleaseTime);
                     Thread.sleep(updateInterval);
                 }
 
@@ -381,7 +383,7 @@ public class KeyMapManager extends Thread {
     public void setKeyPair(Integer key, String keyNode, String transactionCode) throws BatchException {
         if (!blocking) {
             try {
-                while(this.keyMapObj.containsLockKey(key) == true && !(this.keyMapObj.getLock(key).equals(transactionCode))) {}
+                while(this.keyMapObj.containsLockKey(key) == true && !(this.keyMapObj.getLock(key).equals(transactionCode))) {Thread.sleep(10);}
                 synchronized(poolKeyLock) {
 
                     //logger.debug("setKeyPair - synchronized - start");
@@ -403,6 +405,7 @@ public class KeyMapManager extends Thread {
                     //logger.debug("setKeyPair - synchronized - end");
                 }
             } catch (Exception e) {
+				e.printStackTrace();
                 logger.error("setKeyPair - Error");
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "setKeyPair - Error [" + e.getMessage() + "]");
@@ -427,7 +430,7 @@ public class KeyMapManager extends Thread {
         String ret = null;
         if (!blocking) {
             try {
-                while(this.keyMapObj.containsLockKey(key) == true && !(this.keyMapObj.getLock(key).equals(transactionCode))) {}
+                while(this.keyMapObj.containsLockKey(key) == true && !(this.keyMapObj.getLock(key).equals(transactionCode))) {Thread.sleep(10);}
                 synchronized(this.getKeyLock) {
                     ret =  (String)keyMapObjGet(key);
                     keyMapObjRemove(key);
@@ -840,6 +843,15 @@ public class KeyMapManager extends Thread {
                 throw new BatchException(e);
             }
         }
+    }
+
+
+	/**
+	 * 現在稼動中のLock数を返す
+	 * @param int Lock数
+	 */
+    public int getLockingCount() {
+        return this.keyMapObj.getLockingCount();
     }
 
     // データの最終更新時間を返す

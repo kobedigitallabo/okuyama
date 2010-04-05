@@ -34,6 +34,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
     private long lastDataChangeTime = 0L;
     private int nowKeySize = 0;
     private Hashtable lockMap = new Hashtable(1024);
+	private String lockKeyTimeSep = "_";
 
     // コンストラクタ
     public KeyManagerValueMap(int size) {
@@ -154,8 +155,16 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
      * @param key ロック対象のKey値
      * @return Long TransactionCode
      */
-    public Long getLock(Object key) {
-        return (Long)lockMap.get(key.toString());
+    public String getLock(Object key) {
+		String ret = "0";
+		synchronized(lockMap) {
+			if(lockMap.containsKey(key)) {
+				String transactionLine = (String)lockMap.get(key);
+				String[] codeList = transactionLine.split(this.lockKeyTimeSep);
+	        	ret = codeList[0];
+			}
+		}
+		return ret;
     }
 
     /**
@@ -178,7 +187,7 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
     public String locking(Object key, String transactionCode) {
         synchronized(lockMap) {
             if (lockMap.containsKey(key)) return null;
-            lockMap.put(key, transactionCode);
+            lockMap.put(key, transactionCode + this.lockKeyTimeSep + new Long(System.currentTimeMillis()).toString());
         }
         return transactionCode;
     }
@@ -194,11 +203,42 @@ public class KeyManagerValueMap extends HashMap implements Cloneable, Serializab
         String ret = null;
         synchronized(lockMap) {
             if (!lockMap.containsKey(key)) return transactionCode;
-            if (!(lockMap.get(key)).equals(transactionCode)) return null;
-            ret = (String)lockMap.remove(key);
+            if (!(((String[])((String)lockMap.get(key)).split(this.lockKeyTimeSep))[0]).equals(transactionCode)) return null;
+            ret = ((String[])((String)lockMap.remove(key)).split(this.lockKeyTimeSep))[0];
         }
         return ret;
     }
+
+
+	/**
+	 * Lockの自動開放メソッド.<br>
+ 	 * 引数の時間だけ経過しているLockは強制的に開放される<br>
+	 *
+	 * @param time 経過ミリ秒
+	 */
+	public void autoLockRelease(long time) {
+        synchronized(lockMap) {
+			Object key = null;
+			long nowTime = System.currentTimeMillis();
+
+			Set set = this.lockMap.keySet();
+			Iterator iterator = set.iterator();
+
+			while(iterator.hasNext()){
+			    key = iterator.next();
+			    String transactionLine = (String)this.lockMap.get(key);
+				String[] codeList = transactionLine.split(this.lockKeyTimeSep);
+				if((nowTime - Long.parseLong(codeList[1])) > time) this.lockMap.remove(key);
+			}
+		}
+	}
+
+	/**
+	 * 現在のLock数を返す
+	 */
+	public int getLockingCount() {
+		return this.lockMap.size();
+	}
 
     /**
      * データファイルの不要領域を掃除して新たなファイルを作りなおす.<br>

@@ -711,7 +711,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * 2.DataDispatcherに依頼してKeyの保存先を問い合わせる.<br>
      * 3.取得した保存先にロックを依頼.<br>
      * 4.全てのロックが完了した時点で終了.<br>
-     * 5.結果文字列の配列を作成(成功時は処理番号"30"と"true"と"ロック番号"、失敗時は処理番号"30"と"false")<br>
+     * 5.結果文字列の配列を作成(成功時は処理番号"31"と"true"と"ロック番号"、失敗時は処理番号"31"と"false")<br>
      *
      * @param keyStr key値の文字列
      * @return String[] 結果
@@ -1334,8 +1334,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         boolean mainNodeSave = false;
         boolean subNodeSave = false;
-        boolean connectErrorMainNode = false;
-        boolean connectErrorSubNode = false;
+        boolean connectErrorMainNode = true;
+        boolean connectErrorSubNode = true;
 
         boolean hasSlaveNode = false;
 
@@ -1354,9 +1354,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         pw = (PrintWriter)dtMap.get("writer");
                         br = (BufferedReader)dtMap.get("reader");
 
-                        // 処理種別判別
-
-
                         // Key値でLockを取得
                         StringBuffer buf = new StringBuffer();
                         buf.append("30");
@@ -1374,20 +1371,26 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                         if (retParam.indexOf(ImdstDefine.keyNodeLockingSuccessStr) == 0) {
-                            if (counter == 0) mainNodeSave = true;
-                            if (counter == 1) subNodeSave = true;
+
+                            if (counter == 0) {
+								mainNodeSave = true;
+								connectErrorMainNode = false;
+							}
+
+                            if (counter == 1) {
+								subNodeSave = true;
+								connectErrorSubNode = false;
+							}
                         }
                     } catch (SocketException se) {
 
+						// Nodeの通信失敗を記録
                         super.setDeadNode(nodeName + ":" + nodePort);
-                        if (counter == 0) connectErrorMainNode = true;
-                        if (counter == 1) connectErrorSubNode = true;
-
                         logger.debug(se);
                     } catch (IOException ie) {
+
+						// Nodeの通信失敗を記録
                         super.setDeadNode(nodeName + ":" + nodePort);
-                        if (counter == 0) connectErrorMainNode = true;
-                        if (counter == 1) connectErrorSubNode = true;
                         logger.debug(ie);
                     }
                 }
@@ -1408,12 +1411,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 // Mainノードのみ
                 if (mainNodeSave == true) {
+
                     // 成功
                     retParams = new String[3];
                     retParams[0] = "30";
                     retParams[1] = "true";
                     retParams[2] = transactionCode;
                 } else {
+
                     // 失敗
                     retParams = new String[2];
                     retParams[0] = "30";
@@ -1485,6 +1490,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     retParams[0] = "30";
                     retParams[1] = "false";
                 } else if (subNodeSave == true && mainNodeSave == false && connectErrorMainNode == false) {
+
                     // Slaveノード成功、Mainノード論理的に失敗
                     // 失敗になり、SlaveノードのLockを解除する
                     try {
@@ -2053,6 +2059,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 if (connectMap == null) {
 
                     Socket socket = new Socket(keyNodeName, Integer.parseInt(keyNodePort));
+					socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
                     OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
                     pw = new PrintWriter(new BufferedWriter(osw));

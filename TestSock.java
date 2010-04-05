@@ -23,6 +23,7 @@ public class TestSock {
                 System.out.println("{指定したキー値でバイナリデータを取得してファイル化する}          コマンド引数{args[0]=6, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数, args[4]=作成ファイルパス, args[5]=キー値}");
                 System.out.println("{キー値を自動で繰り返し数分変動させて削除}                        コマンド引数{args[0]=7, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=削除回数}");
                 System.out.println("{キー値を指定してデータを削除}                                    コマンド引数{args[0]=8, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=削除したいKey値}");
+                System.out.println("{トランザクションを開始する}                                      コマンド引数{args[0]=9, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号}");
                 System.exit(0);
             }
 
@@ -382,6 +383,39 @@ public class TestSock {
                 } else if (ret[0].equals("error")) {
                     System.out.println(ret[1]);
                 }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                imdstKeyValueClient.close();
+            } else if (args[0].equals("9")) {
+                int port = Integer.parseInt(args[2]);
+                // Transactionを開始してデータをLock後、データを更新、取得し、Lockを解除
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                String[] ret = null;
+
+                long start = new Date().getTime();
+
+                imdstKeyValueClient.startTransaction();
+				imdstKeyValueClient.lockData("datasavekey_3");
+                if (!imdstKeyValueClient.setValue("datasavekey_3", "locktestdata")) {
+                    System.out.println("ImdstKeyValueClient - Lock Update Error");
+                }
+
+                ret = imdstKeyValueClient.getValue("datasavekey_3");
+                if (ret[0].equals("true")) {
+                    // データ有り
+                    System.out.println(ret[1]);
+                } else if (ret[0].equals("false")) {
+                    System.out.println("データなし");
+                } else if (ret[0].equals("error")) {
+                    System.out.println(ret[1]);
+                }
+
+
+				Thread.sleep(10000);
+				imdstKeyValueClient.releaseLockData("datasavekey_3");
+
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
