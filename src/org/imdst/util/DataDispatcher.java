@@ -26,6 +26,8 @@ public class DataDispatcher {
 
     private static HashMap allNodeMap = null;
 
+    private static ArrayList transactionManagerList = null;
+
     private static boolean standby = false;
 
     private static Object syncObj = new Object();
@@ -54,11 +56,13 @@ public class DataDispatcher {
      * @param oldRules 過去ルール設定
      * @param keyMapNodes データノードを指定
      * @param subKeyMapNodes スレーブデータノードを指定
+	 * @param transactionManagerStr トランザクションマネージャの指定
      */
-    public static void init(String ruleStr, int[] oldRules, String keyMapNodes, String subKeyMapNodes) {
+    public static void init(String ruleStr, int[] oldRules, String keyMapNodes, String subKeyMapNodes, String transactionManagerStr) {
         standby = false;
-        String[]  keyMapNodesInfo = null;
-        String[]  subkeyMapNodesInfo = null;
+        String[] keyMapNodesInfo = null;
+        String[] subkeyMapNodesInfo = null;
+		String[] transactionManagerInfo = null;
 
         ArrayList keyNodeList = new ArrayList();
         ArrayList subKeyNodeList = new ArrayList();
@@ -67,6 +71,11 @@ public class DataDispatcher {
 
         synchronized(syncObj) {
             allNodeMap = new HashMap();
+			// TransactionManager設定初期化
+			if (transactionManagerStr != null) {
+				transactionManagerList = new ArrayList();
+				transactionManagerList.add(transactionManagerStr);
+			}
         }
 
 
@@ -314,6 +323,27 @@ public class DataDispatcher {
         }
         return retMap;
     }
+
+	/**
+	 *
+	 */
+    public static ArrayList getTransactionManagerInfo() {
+        while(!standby) {
+            try {
+                Thread.sleep(50);
+            } catch (Exception e) {
+            }
+        }
+
+		ArrayList retList = null;
+
+        // 内容を複製して返す
+        synchronized(syncObj) {
+			if (transactionManagerList != null) 
+				retList = (ArrayList)transactionManagerList.clone();
+		}
+		return retList;
+	}
 
     public static boolean isStandby() {
         while(!standby) {

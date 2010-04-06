@@ -92,10 +92,19 @@ public class KeyMapManager extends Thread {
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     private int vacuumExecAfterAccessTime = 30000;
 
-    // Lockデータの自動開放時間(Lockを開始してこの時間が経過すると自動的に開放される)(ミリ秒)
-    private long autoLockingReleaseTime = ImdstDefine.lockReleaseTime;
+	// データを管理するか、Transaction情報を管理するかを決定
+	private boolean dataManege = true;
+
+	// Lockの開始時間の連結文字列
+    private String lockKeyTimeSep = "_";
 
 
+    // 初期化メソッド
+	// Transactionを管理する場合に呼び出す
+    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, boolean dataManage) throws BatchException {
+		this(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory);
+		this.dataManege = dataManage;
+	}
 
     // 初期化メソッド
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory) throws BatchException {
@@ -286,7 +295,10 @@ public class KeyMapManager extends Thread {
                         logger.info ("KeyMapManager - run - System Shutdown 2");
                         break;
                     }
-                    this.keyMapObj.autoLockRelease(autoLockingReleaseTime);
+
+					if (!this.dataManege) {
+	                    this.autoLockRelease(System.currentTimeMillis());
+					}
                     Thread.sleep(updateInterval);
                 }
 
@@ -618,10 +630,44 @@ public class KeyMapManager extends Thread {
      * 
      * @param key Key値
      * @param transactionCode 取得時に使用するTransactionCode
+     * @param lockingTime Lock継続時間
      * @return String 成功時はtransactionCode、失敗時はnull
      */
-    public String locking (Object key, String transactionCode) {
-        return this.keyMapObj.locking(key, transactionCode);
+    public String locking (Integer key, String transactionCode, int lockingTime) throws BatchException {
+        if (!blocking) {
+            try {
+		        synchronized(this.poolKeyLock) {
+		            if (this.containsKeyPair(key)) return null;
+					String saveTransactionStr =  null;
+
+					if (lockingTime == 0) {
+						saveTransactionStr = transactionCode + this.lockKeyTimeSep + new Long(Long.MAX_VALUE).toString();
+					} else {
+						saveTransactionStr = transactionCode + this.lockKeyTimeSep + new Long(System.currentTimeMillis() + (lockingTime * 1000)).toString();
+					}
+
+			        keyMapObjPut(key, saveTransactionStr);
+
+		            this.writeMapFileFlg = true;
+
+		            if (workFileMemory == false) {
+
+					    // データ格納場所記述ファイル再保存
+					    this.bw.write(new StringBuffer("+").append(workFileSeq).append(key.toString()).append(workFileSeq).append(saveTransactionStr).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
+					    this.bw.newLine();
+					    this.bw.flush();
+		            }
+		        }
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("locking - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "locking - Error [" + e.getMessage() + "]");
+
+                throw new BatchException(e);
+            }
+        }
+        return transactionCode;
     }
 
 
@@ -632,9 +678,38 @@ public class KeyMapManager extends Thread {
      * @param transactionCode 取得時に使用するTransactionCode
      * @return String 成功時はtransactionCode、失敗時はnull
      */
-    public String removeLock (Object key, String transactionCode) {
-        return this.keyMapObj.removeLock(key, transactionCode);
+    public String removeLock (Integer key, String transactionCode) throws BatchException {
+
+        String ret = null;
+        if (!blocking) {
+            try {
+                synchronized(this.poolKeyLock) {
+		            if (!this.containsKeyPair(key)) return transactionCode;
+		            if (!(((String[])((String)this.keyMapObjGet(key)).split(this.lockKeyTimeSep))[0]).equals(transactionCode)) return null;
+					ret = ((String[])((String)this.keyMapObjGet(key)).split(this.lockKeyTimeSep))[0];
+
+                    // データの書き込みを指示
+                    this.writeMapFileFlg = true;
+
+                    if (workFileMemory == false) {
+
+                        // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
+                        this.bw.write(new StringBuffer("-").append(workFileSeq).append(key.toString()).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
+                        this.bw.newLine();
+                        this.bw.flush();
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("removeLock - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "removeLock - Error[" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+
+        return ret;
     }
+
 
     /**
      * Lockの状況を確認する.<br>
@@ -642,8 +717,31 @@ public class KeyMapManager extends Thread {
      * @param key Key値
      * @return boolean true:ロックされている false:ロックされていない
      */
-    public boolean isLock (Object key) {
-        return this.keyMapObj.containsLockKey(key);
+    public boolean isLock (Integer key) {
+        return this.containsKeyPair(key);
+    }
+
+
+    /**
+     * Lockの自動開放メソッド.<br>
+     * 引数の時間だけ経過しているLockは強制的に開放される<br>
+     *
+     * @param time 現在ミリ秒
+     */
+    public void autoLockRelease(long time) {
+        synchronized(poolKeyLock) {
+            Object key = null;
+
+            Set set = this.keyMapObj.keySet();
+            Iterator iterator = set.iterator();
+
+            while(iterator.hasNext()){
+                key = iterator.next();
+                String transactionLine = (String)this.keyMapObj.get(key);
+                String[] codeList = transactionLine.split(this.lockKeyTimeSep);
+                if(Long.parseLong(codeList[1]) > time) this.keyMapObj.remove(key);
+            }
+        }
     }
 
 
@@ -844,14 +942,6 @@ public class KeyMapManager extends Thread {
         }
     }
 
-
-    /**
-     * 現在稼動中のLock数を返す
-     * @param int Lock数
-     */
-    public int getLockingCount() {
-        return this.keyMapObj.getLockingCount();
-    }
 
     // データの最終更新時間を返す
     public long getLastDataChangeTime() {

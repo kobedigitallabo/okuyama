@@ -121,6 +121,8 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
         String keyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesInfo);
         String subKeyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_SubKeyMapNodesInfo);
         String ruleStrProp = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesRule);
+		String transactionManagerStr = super.getPropertiesValue(ImdstDefine.Prop_TransactionManagerInfo);
+        
 
         // ノード追加によりルールが変更されている可能性があるのパース
         // ルールは最新ルールが先頭に来るように設定される想定なので、先頭文字列を取得
@@ -135,7 +137,7 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
         }
 
         // DataDispatcher初期化
-        DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr);
+        DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
 
         // StatusUtilを初期化
         mainKeyNodes = keyMapNodesStr.split(",");

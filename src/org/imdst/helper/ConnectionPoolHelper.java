@@ -56,7 +56,8 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
                 HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
                 ArrayList mainNodeList = (ArrayList)allNodeInfo.get("main");
                 ArrayList subNodeList = (ArrayList)allNodeInfo.get("sub");
-                
+				ArrayList transactionManagerList = DataDispatcher.getTransactionManagerInfo();
+
                 if (mainNodeList != null) {
                     for (int i = 0; i < mainNodeList.size(); i++) {
                         this.nodeList.add(mainNodeList.get(i));
@@ -66,6 +67,12 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
                 if (subNodeList != null) {
                     for (int i = 0; i < subNodeList.size(); i++) {
                         this.nodeList.add(subNodeList.get(i));
+                    }
+                }
+
+                if (transactionManagerList != null) {
+                    for (int i = 0; i < transactionManagerList.size(); i++) {
+                        this.nodeList.add(transactionManagerList.get(i));
                     }
                 }
 

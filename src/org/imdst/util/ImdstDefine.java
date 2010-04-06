@@ -88,6 +88,7 @@ public class ImdstDefine {
     public static final String Prop_SubKeyMapNodesInfo = "SubKeyMapNodesInfo";
     public static final String Prop_LoadBalanceMode = "LoadBalanceMode";
     public static final String Prop_TransactionMode = "TransactionMode";
+	public static final String Prop_TransactionManagerInfo = "TransactionManagerInfo";
     public static final String Prop_MainMasterNodeMode = "MainMasterNodeMode";
     public static final String Prop_SlaveMasterNodes = "SlaveMasterNodes";
 
@@ -116,10 +117,5 @@ public class ImdstDefine {
 
     // Node間のコネクションタイムアウト時間(ミリ秒)
     public static final int nodeConnectionTimeout = 60000;
-
-    // Lockデータの自動開放時間
-    // (!!注意!!:この時間を経過したLockはたとえ正しいLockでも応答なしとして強制的に開放される)
-    // 単位はミリ秒
-    public static final long lockReleaseTime = 60000;
 
 }

@@ -57,6 +57,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         logger.debug("MasterManagerJob - executeJob - start");
         String ret = SUCCESS;
         Object[] helperParams = null;
+		String[] transactionManagerInfos = null;
 
         try{
 
@@ -73,6 +74,11 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             String transactionModeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_TransactionMode);
             if (transactionModeStr != null) {
                 transactionMode = new Boolean(transactionModeStr).booleanValue();
+				if (transactionMode) {
+					String transactionMgrStr = null;
+					transactionMgrStr = (String)super.getPropertiesValue(ImdstDefine.Prop_TransactionManagerInfo);
+					transactionManagerInfos = transactionMgrStr.split(":");
+				}
             }
 
 
@@ -93,7 +99,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                         // クライアントからの接続待ち
                         socket = serverSocket.accept();
 
-                        int paramSize = 5;
+                        int paramSize = 6;
 
                         helperParams = new Object[paramSize];
                         helperParams[0] = socket;
@@ -101,6 +107,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                         helperParams[2] = this.mode;
                         if (loadBalance) helperParams[3] = new Boolean(blanceMode);
                         helperParams[4] = this.transactionMode;
+						helperParams[5] = transactionManagerInfos;
                         super.executeHelper("MasterManagerHelper", helperParams);
 
                         if (blanceMode) {

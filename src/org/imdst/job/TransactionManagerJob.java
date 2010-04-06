@@ -84,7 +84,7 @@ public class TransactionManagerJob extends AbstractJob implements IJob {
             if (dataMemoryModeStr != null && dataMemoryModeStr.equals("false")) dataMemoryMode = false;
             if (keySizeStr != null) keySize = Integer.parseInt(keySizeStr);
 
-            this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode);
+            this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode, false);
             this.keyMapManager.start();
 
             // サーバソケットの生成

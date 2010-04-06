@@ -318,10 +318,12 @@ public class ImdstKeyValueClient {
      * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
 	 * 
      * @param keyStr
+     * @param lockingTime Lockを取得後、維持する時間(この時間を経過すると自動的にLockが解除される)(単位は秒)(0は無制限)
+     * @param waitLockTime Lockを取得する場合に既に取得中の場合この時間はLock取得をリトライする(単位は秒)(0は1度取得を試みる)
      * @return String[] 要素1(Lock成否):"true" or "false",要素2(TransactionCode):"TransactionCode"
      * @throws Exception
      */
-    public String[] lockData(String keyStr) throws Exception {
+    public String[] lockData(String keyStr, int lockingTime, int waitLockTime) throws Exception {
         String[] ret = new String[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -351,11 +353,20 @@ public class ImdstKeyValueClient {
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
             serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
-
 			// TransactionCode連結
             serverRequestBuf.append(this.transactionCode);
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+			// lockingTime連結
+            serverRequestBuf.append(new Integer(lockingTime).toString());
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+			// waitLockTime連結
+            serverRequestBuf.append(new Integer(waitLockTime).toString());
+
 
             // サーバ送信
             pw.println(serverRequestBuf.toString());
@@ -375,7 +386,7 @@ public class ImdstKeyValueClient {
 					ret[1] = serverRet[2];
                 } else if(serverRet[1].equals("false")) {
 
-                    // データなし
+                    // Lock失敗
                     ret[0] = serverRet[1];
                     ret[1] = null;
                 } else if(serverRet[1].equals("error")) {
@@ -393,7 +404,7 @@ public class ImdstKeyValueClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.lockData(keyStr);
+                    ret = this.lockData(keyStr, lockingTime, waitLockTime);
                 } catch (Exception e) {
                     throw ce;
                 }
@@ -404,7 +415,7 @@ public class ImdstKeyValueClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.lockData(keyStr);
+                    ret = this.lockData(keyStr, lockingTime, waitLockTime);
                 } catch (Exception e) {
                     throw se;
                 }
