@@ -58,6 +58,9 @@ public class ImdstDefine {
     // データノードに対するLock開放に成功した場合の返却文字列の先頭部分
     public static final String keyNodeReleaseSuccessStr = "31,true";
 
+    // データノードに対するLock取得状況の確認の成否の返却文字列の先頭部分
+    public static final String hasKeyNodeLockSuccessStr = "32,true";
+
     // memcacheモード時の命令コマンドの区切り文字
     public static final String memcacheExecuteMethodSep = " ";
     // memcacheモード時の命令コマンドのset命令文字
@@ -88,7 +91,7 @@ public class ImdstDefine {
     public static final String Prop_SubKeyMapNodesInfo = "SubKeyMapNodesInfo";
     public static final String Prop_LoadBalanceMode = "LoadBalanceMode";
     public static final String Prop_TransactionMode = "TransactionMode";
-	public static final String Prop_TransactionManagerInfo = "TransactionManagerInfo";
+    public static final String Prop_TransactionManagerInfo = "TransactionManagerInfo";
     public static final String Prop_MainMasterNodeMode = "MainMasterNodeMode";
     public static final String Prop_SlaveMasterNodes = "SlaveMasterNodes";
 

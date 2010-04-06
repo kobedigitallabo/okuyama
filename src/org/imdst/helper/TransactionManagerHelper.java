@@ -139,10 +139,14 @@ public class TransactionManagerHelper extends AbstractHelper {
                         requestHashCode = new Integer(clientParameterList[1]);
 
                         // メソッド呼び出し
-                        retParams = this.isLockDatanode(requestHashCode);
+                        retParams = this.hasLockDatanode(requestHashCode);
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[1]);
+                        if (retParams.length > 2) {
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+                        }
                     }
 
 
@@ -198,16 +202,16 @@ public class TransactionManagerHelper extends AbstractHelper {
 
 
     /**
-	 * KeyとTransactionCodeでLockを実施する.<br>
+     * KeyとTransactionCodeでLockを実施する.<br>
      * ロック取得までの繰り返し時間を設定でき、この時間を超えた場合は<br>
-	 * ロック取得失敗.<br>
-	 * 
-	 * @param key Lock対象キー
-	 * @param transactionCode Lock時に使用するTransactionCode
-	 * @param lockingTime Lock継続時間(秒)(ここでの設定時間が経過するとLockは自動的に解除される。0を設定するとremoveを呼び出すまで解除されない)
-	 * @param lockWaitingTime Lock取得待ち時間(秒)
-	 * @return String[] 要素1:処理コード,要素2:Lock成否("true" or "false"), 要素3:成功の場合はtransactionCode
-	 */
+     * ロック取得失敗.<br>
+     * 
+     * @param key Lock対象キー
+     * @param transactionCode Lock時に使用するTransactionCode
+     * @param lockingTime Lock継続時間(秒)(ここでの設定時間が経過するとLockは自動的に解除される。0を設定するとremoveを呼び出すまで解除されない)
+     * @param lockWaitingTime Lock取得待ち時間(秒)
+     * @return String[] 要素1:処理コード,要素2:Lock成否("true" or "false"), 要素3:成功の場合はtransactionCode
+     */
     private String[] lockDatanode(Integer key, String transactionCode, int lockingTime, int lockWaitingTime) {
         //logger.debug("TransactionManagerHelper - lockDatanode - start");
         String[] retStrs = null;
@@ -257,14 +261,14 @@ public class TransactionManagerHelper extends AbstractHelper {
     }
 
 
-	/**
-	 * KeyとTransactionCodeでLock開放を実施する.<br>
-	 * Lock時に使用したTransactionCodeと一致しなければ開放されない.<br>
-	 *
-	 * @param key Lock対象キー
-	 * @param transactionCode Lock時に使用するTransactionCode
-	 * @return String[] 要素1:処理コード,要素2:Lock開放成否("true" or "false"), 要素3:成功の場合はtransactionCode
-	 */
+    /**
+     * KeyとTransactionCodeでLock開放を実施する.<br>
+     * Lock時に使用したTransactionCodeと一致しなければ開放されない.<br>
+     *
+     * @param key Lock対象キー
+     * @param transactionCode Lock時に使用するTransactionCode
+     * @return String[] 要素1:処理コード,要素2:Lock開放成否("true" or "false"), 要素3:成功の場合はtransactionCode
+     */
     private String[] releaseLockDatanode(Integer key, String transactionCode) {
         //logger.debug("TransactionManagerHelper - releaseLockDatanode - start");
         String[] retStrs = null;
@@ -302,22 +306,24 @@ public class TransactionManagerHelper extends AbstractHelper {
         return retStrs;
     }
 
-	/**
-	 * KeyのLock状況を返す.<br>
-	 *
-	 * @param key Lock対象キー
-	 * @return String[] 要素1:処理コード,要素2:Lock状況("true" or "false")
-	 */
-    private String[] isLockDatanode(Integer key) {
+    /**
+     * KeyのLock状況を返す.<br>
+     *
+     * @param key Lock対象キー
+     * @return String[] 要素1:処理コード,要素2:Lock状況("true" or "false"),要素3:Lock中の場合はTransactionCode
+     */
+    private String[] hasLockDatanode(Integer key) {
         //logger.debug("TransactionManagerHelper - isLockDatanode - start");
         String[] retStrs = null;
         try {
             if(!this.keyMapManager.checkError()) {
-                if (this.keyMapManager.isLock(key)) {
+                String transactionCode = this.keyMapManager.getLockedTransactionCode(key);
+                if (transactionCode != null) {
 
-                    retStrs = new String[2];
+                    retStrs = new String[3];
                     retStrs[0] = "32";
                     retStrs[1] = "true";
+                    retStrs[2] = transactionCode;
                 } else {
                     retStrs = new String[2];
                     retStrs[0] = "32";

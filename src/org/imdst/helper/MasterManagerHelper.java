@@ -50,7 +50,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // Transactionモードで起動するかを指定
     private boolean transactionMode = false;
 
-	private String[] transactionManagerInfo = null;
+    private String[] transactionManagerInfo = null;
 
     /**
      * Logger.<br>
@@ -104,9 +104,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // トランザクション設定
             this.transactionMode = ((Boolean)parameters[4]).booleanValue();
-			if (this.transactionMode) {
-				transactionManagerInfo = (String[])parameters[5];
-			}
+            if (this.transactionMode) {
+                transactionManagerInfo = (String[])parameters[5];
+            }
 
             // クライアントへのアウトプット(結果セット用の文字列用と、バイトデータ転送用)
             OutputStreamWriter osw = new OutputStreamWriter(soc.getOutputStream(),
@@ -676,15 +676,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-			if (!transactionMode) {
-	            retStrs = new String[2];
-	            retStrs[0] = "30";
-	            retStrs[1] = "false";
-				return retStrs;
-			}
+            if (!transactionMode) {
+                retStrs = new String[2];
+                retStrs[0] = "30";
+                retStrs[1] = "false";
+                return retStrs;
+            }
 
-			// TransactionManagerに処理を依頼
-    		keyNodeLockRet = lockKeyNodeValue(transactionManagerInfo[0], transactionManagerInfo[1], keyStr, transactionCode, lockingTime, lockingWaitTime);
+            // TransactionManagerに処理を依頼
+            keyNodeLockRet = lockKeyNodeValue(transactionManagerInfo[0], transactionManagerInfo[1], keyStr, transactionCode, lockingTime, lockingWaitTime);
 
 
             // 取得結果確認
@@ -734,15 +734,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-			if (!transactionMode) {
-	            retStrs = new String[2];
-	            retStrs[0] = "31";
-	            retStrs[1] = "false";
-				return retStrs;
-			}
+            if (!transactionMode) {
+                retStrs = new String[2];
+                retStrs[0] = "31";
+                retStrs[1] = "false";
+                return retStrs;
+            }
 
-			// TransactionManagerに処理を依頼
-    		keyNodeReleaseRet = releaseLockKeyNodeValue(transactionManagerInfo[0], transactionManagerInfo[1], keyStr, transactionCode);
+            // TransactionManagerに処理を依頼
+            keyNodeReleaseRet = releaseLockKeyNodeValue(transactionManagerInfo[0], transactionManagerInfo[1], keyStr, transactionCode);
 
 
             // リリース結果確認
@@ -780,12 +780,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private String[] startTransaction() throws BatchException {
         //logger.debug("MasterManagerHelper - removeKeyValue - start");
         String[] retStrs = new String[3];
-		if (!transactionMode) {
+        if (!transactionMode) {
             retStrs = new String[2];
             retStrs[0] = "37";
             retStrs[1] = "false";
-			return retStrs;
-		}
+            return retStrs;
+        }
 
         retStrs[0] = "37";
         retStrs[1] = "true";
@@ -1182,6 +1182,29 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
+            // TransactionModeの状態に合わせてLock状態を確かめる
+            if (transactionMode) {
+System.out.println("aaaaaa");
+                while (true) {
+System.out.println("bbbbbbb");
+                    // TransactionMode時
+
+                    // TransactionManagerに処理を依頼
+                    String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], values[0]);
+
+                    // 取得結果確認
+                    if (keyNodeLockRet[1].equals("true")) {
+System.out.println("333333333333");
+                        if (keyNodeLockRet[2].equals(transactionCode)) break;
+System.out.println("44444444");
+System.out.println(keyNodeLockRet[2]);
+                    } else {
+System.out.println("5555555555555");
+                        break;
+                    }
+                }
+            }
+
             do {
                 // KeyNodeとの接続を確立
                 dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
@@ -1301,212 +1324,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
     /**
-     * KeyNodeに対してデータLockを依頼する.<br>
-     * 
-     * 
-     * @param transactionManagerName TransactonManagerの名前(IPなど)
-     * @param transactionManagerPort TransactonManagerのアクセスポート番号
-     * @param key 対象Key
-     * @param transactionCode TransactionCode
-	 * @param lockingTime Lock維持時間(この時間を過ぎると自動的に解除される。0は無限)(秒)
-	 * @param lockingWaitTime Lock取得までの待ち時間(Lockを取得するのに待つ時間。0は無限)(秒)
-     * @return String[] 結果
-     * @throws BatchException
-     */
-    private String[] lockKeyNodeValue(String transactionManagerName, String transactionManagerPort, String key, String transactionCode, String lockingTime, String lockingWaitTime) throws BatchException {
-
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
-
-        String retParam = null;
-        String[] retParams = null;
-
-        try {
-			if (!transactionMode) {
-	            retParams = new String[2];
-	            retParams[0] = "30";
-	            retParams[1] = "false";
-			}
-
-
-            // KeyNodeとの接続を確立
-            dtMap = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
-
-
-            // 接続結果と、現在の保存先状況で処理を分岐
-            if (dtMap != null) {
-                try {
-                    // writerとreaderを取り出し
-                    pw = (PrintWriter)dtMap.get("writer");
-                    br = (BufferedReader)dtMap.get("reader");
-
-                    // Key値でLockを取得
-                    StringBuffer buf = new StringBuffer();
-                    buf.append("30");
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(key.hashCode());               // Key値
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(transactionCode);                    // Transaction値
-					buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(lockingTime);                    	// lockingTime値
-					buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(lockingWaitTime);                    // lockingWaitTime値
-
-                    // 送信
-                    pw.println(buf.toString());
-                    pw.flush();
-
-                    // 返却値取得
-                    retParam = br.readLine();
-                } catch (SocketException se) {
-
-                    logger.error("TransactionManager - Error " + se);
-                } catch (IOException ie) {
-
-                    // Nodeの通信失敗を記録
-                    logger.error("TransactionManager - Error " + ie);
-                }
-            }
-
-            // Lockの成功を判定
-            if (retParam != null) {
-
-                // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合はLock成功
-                if (retParam.indexOf(ImdstDefine.keyNodeLockingSuccessStr) == 0) {
-
-					// 成功
-                    retParams = new String[3];
-                    retParams[0] = "30";
-                    retParams[1] = "true";
-                    retParams[2] = transactionCode;
-                } else {
-
-					// 失敗
-                    retParams = new String[2];
-                    retParams[0] = "30";
-                    retParams[1] = "false";
-				}
-            } else {
-
-				// 失敗
-                retParams = new String[2];
-                retParams[0] = "30";
-                retParams[1] = "false";
-			}
-        } catch (BatchException be) {
-
-            throw be;
-        } catch (Exception e) {
-
-            throw new BatchException(e);
-        } 
-
-        return retParams;
-    }
-
-
-    /**
-     * KeyNodeに対してデータLockを解除依頼する.<br>
-     * 
-     * @param transactionManagerName TransactonManagerの名前(IPなど)
-     * @param transactionManagerPort TransactonManagerのアクセスポート番号
-     * @param key 対象Key
-     * @param transactionCode TransactionCode
-     * @return String[] 結果
-     * @throws BatchException
-     */
-    private String[] releaseLockKeyNodeValue(String transactionManagerName, String transactionManagerPort, String key, String transactionCode) throws BatchException {
-
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
-
-        String retParam = null;
-        String[] retParams = null;
-
-        try {
-			if (!transactionMode) {
-	            retParams = new String[2];
-	            retParams[0] = "31";
-	            retParams[1] = "false";
-			}
-
-
-            // KeyNodeとの接続を確立
-            dtMap = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
-
-
-            // 接続結果と、現在の保存先状況で処理を分岐
-            if (dtMap != null) {
-                try {
-                    // writerとreaderを取り出し
-                    pw = (PrintWriter)dtMap.get("writer");
-                    br = (BufferedReader)dtMap.get("reader");
-
-                    // Key値でLockを取得
-                    StringBuffer buf = new StringBuffer();
-                    buf.append("31");
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(key.hashCode());               // Key値
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(transactionCode);              // Transaction値
-
-                    // 送信
-                    pw.println(buf.toString());
-                    pw.flush();
-
-                    // 返却値取得
-                    retParam = br.readLine();
-                } catch (SocketException se) {
-
-                    logger.error("TransactionManager - Error " + se);
-                } catch (IOException ie) {
-
-                    // Nodeの通信失敗を記録
-                    logger.error("TransactionManager - Error " + ie);
-                }
-            }
-
-            // Lock解除の成功を判定
-            if (retParam != null) {
-
-                // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合はLock成功
-                if (retParam.indexOf(ImdstDefine.keyNodeReleaseSuccessStr) == 0) {
-
-					// 成功
-                    retParams = new String[3];
-                    retParams[0] = "31";
-                    retParams[1] = "true";
-                    retParams[2] = transactionCode;
-                } else {
-
-					// 失敗
-                    retParams = new String[2];
-                    retParams[0] = "31";
-                    retParams[1] = "false";
-				}
-            } else {
-
-				// 失敗
-                retParams = new String[2];
-                retParams[0] = "31";
-                retParams[1] = "false";
-			}
-        } catch (BatchException be) {
-
-            throw be;
-        } catch (Exception e) {
-
-            throw new BatchException(e);
-        } 
-
-        return retParams;
-    }
-
-
-
-    /**
      * KeyNodeに対してデータを削除する.<br>
      * 
      * @param keyNodeName マスターデータノードの名前(IPなど)
@@ -1538,6 +1355,23 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         boolean mainNodeSave = false;
         boolean subNodeSave = false;
         try {
+            // TransactionModeの状態に合わせてLock状態を確かめる
+            if (transactionMode) {
+                while (true) {
+                    // TransactionMode時
+
+                    // TransactionManagerに処理を依頼
+                    String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], key);
+
+                    // 取得結果確認
+                    if (keyNodeLockRet[1].equals("true")) {
+                        if (keyNodeLockRet[2].equals(transactionCode)) break;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
             do {
                 // KeyNodeとの接続を確立
                 dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
@@ -1615,6 +1449,305 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
             }
         }
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeに対してデータLockを依頼する.<br>
+     * 
+     * 
+     * @param transactionManagerName TransactonManagerの名前(IPなど)
+     * @param transactionManagerPort TransactonManagerのアクセスポート番号
+     * @param key 対象Key
+     * @param transactionCode TransactionCode
+     * @param lockingTime Lock維持時間(この時間を過ぎると自動的に解除される。0は無限)(秒)
+     * @param lockingWaitTime Lock取得までの待ち時間(Lockを取得するのに待つ時間。0は無限)(秒)
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] lockKeyNodeValue(String transactionManagerName, String transactionManagerPort, String key, String transactionCode, String lockingTime, String lockingWaitTime) throws BatchException {
+
+        PrintWriter pw = null;
+        BufferedReader br = null;
+        HashMap dtMap = null;
+
+        String retParam = null;
+        String[] retParams = null;
+
+        try {
+            if (!transactionMode) {
+                retParams = new String[2];
+                retParams[0] = "30";
+                retParams[1] = "false";
+            }
+
+
+            // KeyNodeとの接続を確立
+            dtMap = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
+
+
+            // 接続結果と、現在の保存先状況で処理を分岐
+            if (dtMap != null) {
+                try {
+                    // writerとreaderを取り出し
+                    pw = (PrintWriter)dtMap.get("writer");
+                    br = (BufferedReader)dtMap.get("reader");
+
+                    // Key値でLockを取得
+                    StringBuffer buf = new StringBuffer();
+                    buf.append("30");
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(key.hashCode());               // Key値
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(transactionCode);                    // Transaction値
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(lockingTime);                        // lockingTime値
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(lockingWaitTime);                    // lockingWaitTime値
+
+                    // 送信
+                    pw.println(buf.toString());
+                    pw.flush();
+
+                    // 返却値取得
+                    retParam = br.readLine();
+                } catch (SocketException se) {
+
+                    logger.error("TransactionManager - Error " + se);
+                } catch (IOException ie) {
+
+                    // Nodeの通信失敗を記録
+                    logger.error("TransactionManager - Error " + ie);
+                }
+            }
+
+            // Lockの成功を判定
+            if (retParam != null) {
+
+                // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合はLock成功
+                if (retParam.indexOf(ImdstDefine.keyNodeLockingSuccessStr) == 0) {
+
+                    // 成功
+                    retParams = new String[3];
+                    retParams[0] = "30";
+                    retParams[1] = "true";
+                    retParams[2] = transactionCode;
+                } else {
+
+                    // 失敗
+                    retParams = new String[2];
+                    retParams[0] = "30";
+                    retParams[1] = "false";
+                }
+            } else {
+
+                // 失敗
+                retParams = new String[2];
+                retParams[0] = "30";
+                retParams[1] = "false";
+            }
+        } catch (BatchException be) {
+
+            throw be;
+        } catch (Exception e) {
+
+            throw new BatchException(e);
+        } 
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeに対してデータLockを解除依頼する.<br>
+     * 
+     * @param transactionManagerName TransactonManagerの名前(IPなど)
+     * @param transactionManagerPort TransactonManagerのアクセスポート番号
+     * @param key 対象Key
+     * @param transactionCode TransactionCode
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] releaseLockKeyNodeValue(String transactionManagerName, String transactionManagerPort, String key, String transactionCode) throws BatchException {
+
+        PrintWriter pw = null;
+        BufferedReader br = null;
+        HashMap dtMap = null;
+
+        String retParam = null;
+        String[] retParams = null;
+
+        try {
+            if (!transactionMode) {
+                retParams = new String[2];
+                retParams[0] = "31";
+                retParams[1] = "false";
+            }
+
+
+            // KeyNodeとの接続を確立
+            dtMap = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
+
+
+            // 接続結果と、現在の保存先状況で処理を分岐
+            if (dtMap != null) {
+                try {
+                    // writerとreaderを取り出し
+                    pw = (PrintWriter)dtMap.get("writer");
+                    br = (BufferedReader)dtMap.get("reader");
+
+                    // Key値でLockを取得
+                    StringBuffer buf = new StringBuffer();
+                    buf.append("31");
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(key.hashCode());               // Key値
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(transactionCode);              // Transaction値
+
+                    // 送信
+                    pw.println(buf.toString());
+                    pw.flush();
+
+                    // 返却値取得
+                    retParam = br.readLine();
+                } catch (SocketException se) {
+
+                    logger.error("TransactionManager - Error " + se);
+                } catch (IOException ie) {
+
+                    // Nodeの通信失敗を記録
+                    logger.error("TransactionManager - Error " + ie);
+                }
+            }
+
+            // Lock解除の成功を判定
+            if (retParam != null) {
+
+                // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合はLock成功
+                if (retParam.indexOf(ImdstDefine.keyNodeReleaseSuccessStr) == 0) {
+
+                    // 成功
+                    retParams = new String[3];
+                    retParams[0] = "31";
+                    retParams[1] = "true";
+                    retParams[2] = transactionCode;
+                } else {
+
+                    // 失敗
+                    retParams = new String[2];
+                    retParams[0] = "31";
+                    retParams[1] = "false";
+                }
+            } else {
+
+                // 失敗
+                retParams = new String[2];
+                retParams[0] = "31";
+                retParams[1] = "false";
+            }
+        } catch (BatchException be) {
+
+            throw be;
+        } catch (Exception e) {
+
+            throw new BatchException(e);
+        } 
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeに対してデータLockを依頼する.<br>
+     * 
+     * 
+     * @param transactionManagerName TransactonManagerの名前(IPなど)
+     * @param transactionManagerPort TransactonManagerのアクセスポート番号
+     * @param key 対象Key
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] hasLockKeyNode(String transactionManagerName, String transactionManagerPort, String key) throws BatchException {
+
+        PrintWriter pw = null;
+        BufferedReader br = null;
+        HashMap dtMap = null;
+
+        String retParam = null;
+        String[] retParams = null;
+
+        try {
+            if (!transactionMode) {
+                retParams = new String[2];
+                retParams[0] = "32";
+                retParams[1] = "false";
+            }
+
+
+            // KeyNodeとの接続を確立
+            dtMap = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
+
+
+            // 接続結果と、現在の保存先状況で処理を分岐
+            if (dtMap != null) {
+                try {
+                    // writerとreaderを取り出し
+                    pw = (PrintWriter)dtMap.get("writer");
+                    br = (BufferedReader)dtMap.get("reader");
+
+                    // Key値でLockを取得
+                    StringBuffer buf = new StringBuffer();
+                    buf.append("32");
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(key.hashCode());               // Key値
+
+                    // 送信
+                    pw.println(buf.toString());
+                    pw.flush();
+
+                    // 返却値取得
+                    retParam = br.readLine();
+                } catch (SocketException se) {
+
+                    logger.error("TransactionManager - Error " + se);
+                } catch (IOException ie) {
+
+                    // Nodeの通信失敗を記録
+                    logger.error("TransactionManager - Error " + ie);
+                }
+            }
+
+            // Lockの成功を判定
+            if (retParam != null) {
+
+                // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合はLock成功
+                if (retParam.indexOf(ImdstDefine.hasKeyNodeLockSuccessStr) == 0) {
+
+                    // 成功
+                    retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                } else {
+
+                    // 失敗
+                    retParams = new String[2];
+                    retParams[0] = "32";
+                    retParams[1] = "false";
+                }
+            } else {
+
+                // 失敗
+                retParams = new String[2];
+                retParams[0] = "32";
+                retParams[1] = "false";
+            }
+        } catch (BatchException be) {
+
+            throw be;
+        } catch (Exception e) {
+
+            throw new BatchException(e);
+        } 
 
         return retParams;
     }
@@ -1754,6 +1887,23 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String errorRet = null;
 
         try {
+            // TransactionModeの状態に合わせてLock状態を確かめる
+            if (transactionMode) {
+                while (true) {
+                    // TransactionMode時
+
+                    // TransactionManagerに処理を依頼
+                    String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], values[0]);
+
+                    // 取得結果確認
+                    if (keyNodeLockRet[1].equals("true")) {
+                        if (keyNodeLockRet[2].equals(transactionCode)) break;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
             do {
                 // KeyNodeとの接続を確立
                 dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
@@ -1946,10 +2096,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
-	/**
-	 *
-	 *
-	 */
+    /**
+     *
+     *
+     */
     private HashMap createTransactionManagerConnection(String keyNodeName, String keyNodePort, String keyNodeFullName) throws BatchException {
         PrintWriter pw = null;
         BufferedReader br = null;
@@ -2008,7 +2158,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
 
         return dtMap;
-	}
+    }
 
 
     /**
