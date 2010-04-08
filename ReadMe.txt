@@ -9,7 +9,7 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 機能追加]
-[[リリース Ver 0.5.3 - (2010/04/08)]]
+[[リリース Ver 0.6.0 - (2010/04/08)]]
   ■分散ロック機能を追加
     +任意のデータをロックする機能を追加。
     +分散ロック機能はマスターノード用設定ファイルである、MasterNode.propertiesの9行目の"TransactionMode=true"で
@@ -17,7 +17,7 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
      また、72行目の"TransactionManagerInfo=127.0.0.1:6655"でTransactionManagerノードを指定する必要がある
      そして、TransactionManagerノードが起動している必要があるため、同梱のexecTransactionNode.batで起動する。
      分散ロック機能を使用する場合は、全てのマスターノードが"TransactionMode=true"で起動している必要がある。
-     同梱の設定ファイルは全ての分散ロック機能で起動する。
+     同梱の設定ファイルは全て分散ロック機能で起動する設定となる。
      ※execMasterNode2.batは分散ロック機能あり、memcacheプロトコルモードで起動する。
      また、従来の分散ロック機能なしで起動する場合は、"TransactionMode=false"としてexecMasterNode.batを実行する。
 
