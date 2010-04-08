@@ -64,11 +64,13 @@ public class MemcacheProtocolTaker implements IProtocolTaker {
      *
      */
     public String takeResponseLine(String[] retParams) throws Exception {
-        String retStr = null;
+        String retStr = "";
 
-        retStr = this.memcacheReturnCnv(retParams);
-        this.nextExec = 1;
+		if (retParams != null && retParams.length > 1) {
 
+	        retStr = this.memcacheReturnCnv(retParams);
+	        this.nextExec = 1;
+		}
         return retStr;
     }
 

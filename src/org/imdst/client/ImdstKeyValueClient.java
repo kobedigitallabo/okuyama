@@ -241,12 +241,17 @@ public class ImdstKeyValueClient {
         }
     }
 
+
     /**
      * Transactionを開始する.<br>
+	 * データロック、ロックリリースを使用する場合は、<br>
+     * 事前に呼び出す必要がある<br>
      *
+     * @return boolean true:開始成功 false:開始失敗
      * @throws Exception
      */
-    public void startTransaction() throws Exception {
+    public boolean startTransaction() throws Exception {
+		boolean ret = false;
         String serverRetStr = null;
         String[] serverRet = null;
 
@@ -277,8 +282,12 @@ public class ImdstKeyValueClient {
 
             // 処理の妥当性確認
             if (serverRet[0].equals("37")) {
-                if (serverRet[1].equals("true")) 
+                if (serverRet[1].equals("true")) {
                     this.transactionCode = serverRet[2];
+					ret = true;
+				} else {
+					ret = false;
+				}
             } else {
 
                 // 妥当性違反
@@ -289,7 +298,7 @@ public class ImdstKeyValueClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    this.startTransaction();
+                    ret = this.startTransaction();
                 } catch (Exception e) {
                     throw ce;
                 }
@@ -300,7 +309,7 @@ public class ImdstKeyValueClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    this.startTransaction();
+                    ret = this.startTransaction();
                 } catch (Exception e) {
                     throw se;
                 }
@@ -310,6 +319,20 @@ public class ImdstKeyValueClient {
         } catch (Exception e) {
             throw e;
         }
+		return ret;
+    }
+
+
+    /**
+     * Transactionを終了する.<br>
+	 * データロック、ロックリリースを使用を完了後に、<br>
+     * 呼び出すことで、現在使用中のTransactionを終了できる<br>
+     *
+     * 
+     * @throws Exception
+     */
+    public void endTransaction() {
+	    this.transactionCode = "0";
     }
 
 
@@ -320,11 +343,11 @@ public class ImdstKeyValueClient {
      * @param keyStr
      * @param lockingTime Lockを取得後、維持する時間(この時間を経過すると自動的にLockが解除される)(単位は秒)(0は無制限)
      * @param waitLockTime Lockを取得する場合に既に取得中の場合この時間はLock取得をリトライする(単位は秒)(0は1度取得を試みる)
-     * @return String[] 要素1(Lock成否):"true" or "false",要素2(TransactionCode):"TransactionCode"
+     * @return String[] 要素1(Lock成否):"true" or "false"
      * @throws Exception
      */
     public String[] lockData(String keyStr, int lockingTime, int waitLockTime) throws Exception {
-        String[] ret = new String[2]; 
+        String[] ret = new String[1]; 
         String serverRetStr = null;
         String[] serverRet = null;
 
@@ -383,17 +406,17 @@ public class ImdstKeyValueClient {
 
                     // Lock成功
                     ret[0] = serverRet[1];
-					ret[1] = serverRet[2];
+					//ret[1] = serverRet[2];
                 } else if(serverRet[1].equals("false")) {
 
                     // Lock失敗
                     ret[0] = serverRet[1];
-                    ret[1] = null;
+                    //ret[1] = null;
                 } else if(serverRet[1].equals("error")) {
 
                     // エラー発生
                     ret[0] = serverRet[1];
-                    ret[1] = serverRet[2];
+                    //ret[1] = serverRet[2];
                 }
             } else {
 
@@ -434,11 +457,11 @@ public class ImdstKeyValueClient {
      * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
 	 *
      * @param keyStr
-     * @return String[] 要素1(Lock解除成否):"true" or "false",要素2(TransactionCode):"TransactionCode"
+     * @return String[] 要素1(Lock解除成否):"true" or "false"
      * @throws Exception
      */
     public String[] releaseLockData(String keyStr) throws Exception {
-        String[] ret = new String[2]; 
+        String[] ret = new String[1]; 
         String serverRetStr = null;
         String[] serverRet = null;
 
@@ -488,17 +511,17 @@ public class ImdstKeyValueClient {
 
                     // Lock成功
                     ret[0] = serverRet[1];
-					ret[1] = serverRet[2];
+					//ret[1] = serverRet[2];
                 } else if(serverRet[1].equals("false")) {
 
                     // データなし
                     ret[0] = serverRet[1];
-                    ret[1] = null;
+                    //ret[1] = null;
                 } else if(serverRet[1].equals("error")) {
 
                     // エラー発生
                     ret[0] = serverRet[1];
-                    ret[1] = serverRet[2];
+                    //ret[1] = serverRet[2];
                 }
             } else {
 

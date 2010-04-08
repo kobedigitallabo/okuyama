@@ -178,6 +178,267 @@ class OkuyamaClient {
 
 
     /**
+     * Transactionを開始する.<br>
+	 * データロック、ロックリリースを使用する場合は、<br>
+     * 事前に呼び出す必要がある<br>
+     *
+     * @throws Exception
+     */
+    public function startTransaction()  {
+        $ret = false;
+
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+
+        try {
+            // エラーチェック
+            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = $serverRequestBuf . "37";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if ($serverRet[0] === "37") {
+                if ($serverRet[1] === "true") {
+	                // TransactionCode取得
+					$ret = true;
+	                $this->transactionCode = $serverRet[2];
+				} else {
+
+					$ret = false;
+				}
+            } else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->startTransaction();
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new Exception("Execute Violation of validity");
+                }
+            }
+
+        } catch (Exception $e) {
+            throw $e;
+        }
+		return $ret;
+    }
+
+
+    /**
+     * Transactionを開始する.<br>
+	 * データロック、ロックリリースを使用する場合は、<br>
+     * 事前に呼び出す必要がある<br>
+     *
+     * @throws Exception
+     */
+    public function endTransaction()  {
+		$this->transactionCode = "0";
+	}
+
+
+    /**
+     * データのLockを依頼する.<br>
+     * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
+	 * 
+     * @param keyStr
+     * @param lockingTime Lockを取得後、維持する時間(この時間を経過すると自動的にLockが解除される)(単位は秒)(0は無制限)
+     * @param waitLockTime Lockを取得する場合に既に取得中の場合この時間はLock取得をリトライする(単位は秒)(0は1度取得を試みる)
+     * @return String[] 要素1(Lock成否):"true" or "false"
+     * @throws Exception
+	 */
+    public function lockData($keyStr, $lockingTime, $waitLockTime = 0) {
+        $ret = array(); 
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+        try {
+
+			if ($this->transactionCode === "" || $this->transactionCode === "0") throw new Exception("No Start Transaction!!");
+
+            // Byte Lenghtチェック
+            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
+
+            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new Exception("The blank is not admitted on a key");
+            }
+
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = "30";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf. $this->dataEncoding($keyStr);
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // TransactionCode連結
+            $serverRequestBuf = $serverRequestBuf. $this->transactionCode;
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // lockingTime連結
+            $serverRequestBuf = $serverRequestBuf. $lockingTime;
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // waitLockTime連結
+            $serverRequestBuf = $serverRequestBuf. $waitLockTime;
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+	
+            // 処理の妥当性確認
+            if ($serverRet[0] === "30") {
+                if ($serverRet[1] === "true") {
+
+                    // 処理成功
+                    $ret[0] = "true";
+                } else if ($serverRet[1] === "false") {
+
+                    // 処理失敗
+                    $ret[0] = "false";
+                } else if ($serverRet[1] === "error") {
+
+                    // 処理失敗
+                    $ret[0] = "false";
+                }
+            }  else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->lockData($keyStr, $lockingTime, $waitLockTime = 0);
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new Exception("Execute Violation of validity");
+                }
+            }
+        } catch (Exception $e) {
+            throw $e;
+        }
+        return $ret;
+    }
+
+
+    /**
+     * データのLock解除を依頼する.<br>
+     * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
+	 *
+     * @param keyStr
+     * @return String[] 要素1(Lock解除成否):"true" or "false"
+     * @throws Exception
+	 */
+    public function releaseLockData($keyStr) {
+        $ret = array(); 
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+        try {
+
+			if ($this->transactionCode === "" || $this->transactionCode === "0") throw new Exception("No Start Transaction!!");
+
+            // Byte Lenghtチェック
+            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
+
+            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new Exception("The blank is not admitted on a key");
+            }
+
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = "31";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf. $this->dataEncoding($keyStr);
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // TransactionCode連結
+            $serverRequestBuf = $serverRequestBuf. $this->transactionCode;
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if ($serverRet[0] === "31") {
+                if ($serverRet[1] === "true") {
+
+                    // 処理成功
+                    $ret[0] = "true";
+                } else if ($serverRet[1] === "false") {
+
+                    // 処理失敗
+                    $ret[0] = "false";
+                } else if ($serverRet[1] === "error") {
+
+                    // 処理失敗
+                    $ret[0] = "false";
+                }
+            }  else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->releaseLockData($keyStr);
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new Exception("Execute Violation of validity");
+                }
+            }
+        } catch (Exception $e) {
+            throw $e;
+        }
+        return $ret;
+    }
+
+
+    /**
      * マスタサーバへデータを送信する.<br>
      * Tag有り.<br>
      *
@@ -195,13 +456,13 @@ class OkuyamaClient {
         $serverRequestBuf = null;
         try {
             // Byte Lenghtチェック
-            if ($this->chechStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
             if ($tagStrs != null) {
                 for ($i = 0; $i < count($tagStrs); $i++) {
-                    if ($this->chechStrByteLength($tagStrs[$i]) > $this->maxValueSize) throw new Exception("Tag Max Size " . $this->maxValueSize . " Byte");
+                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxValueSize) throw new Exception("Tag Max Size " . $this->maxValueSize . " Byte");
                 }
             }
-            if ($this->chechStrByteLength($value) > $this->maxValueSize) throw new Exception("Save Value Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new Exception("Save Value Max Size " . $this->maxValueSize . " Byte");
 
             if ($this->socket == null) throw new Exception("No ServerConnect!!");
 
@@ -270,6 +531,7 @@ class OkuyamaClient {
             @fputs($this->socket, $serverRequestBuf . "\n");
 
             $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
             $serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
 
@@ -300,6 +562,7 @@ class OkuyamaClient {
         }
         return $ret;
     }
+
 
     /**
      * マスタサーバからKeyでデータを取得する.<br>
@@ -341,6 +604,7 @@ class OkuyamaClient {
             @fputs($this->socket, $serverRequestBuf . "\n");
 
             $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
             $serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
 
@@ -441,6 +705,7 @@ class OkuyamaClient {
             @fputs($this->socket, $serverRequestBuf . "\n");
 
             $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
             $serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
 
@@ -530,6 +795,7 @@ class OkuyamaClient {
             @fputs($this->socket, $serverRequestBuf . "\n");
 
             $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
             $serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
 
@@ -617,14 +883,18 @@ class OkuyamaClient {
             $serverRequestBuf = $serverRequestBuf . "5";
             // セパレータ連結
             $serverRequestBuf = $serverRequestBuf . $this->sepStr;
-
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
             $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($keyStr);
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+            // TransactionCode連結
+            $serverRequestBuf = $serverRequestBuf . $this->transactionCode;
 
             // サーバ送信
             @fputs($this->socket, $serverRequestBuf . "\n");
 
             $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
             $serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
 
@@ -673,7 +943,7 @@ class OkuyamaClient {
     }
 
     // 文字列の長さを返す
-    private function chechStrByteLength($targetStr) {
+    private function checkStrByteLength($targetStr) {
         $ret = 0;
         //$strWidth = mb_strlen($targetStr);
         $ret = $strWidth = mb_strlen($targetStr);

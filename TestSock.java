@@ -424,10 +424,11 @@ public class TestSock {
 
                 imdstKeyValueClient.startTransaction();
 				imdstKeyValueClient.lockData("datasavekey_3", 20, 5);
+				imdstKeyValueClient.lockData("datasavekey_2", 5, 5);
                 if (!imdstKeyValueClient.setValue("datasavekey_3", "locktestdata")) {
-                    System.out.println("ImdstKeyValueClient - Lock Update Error");
+                	
+				    System.out.println("ImdstKeyValueClient - Lock Update Error");
                 }
-
                 ret = imdstKeyValueClient.getValue("datasavekey_3");
                 if (ret[0].equals("true")) {
                     // データ有り
@@ -439,14 +440,85 @@ public class TestSock {
                 }
 
 
-				Thread.sleep(10000);
-				imdstKeyValueClient.releaseLockData("datasavekey_3");
+				//Thread.sleep(10000);
+				//imdstKeyValueClient.releaseLockData("datasavekey_3");
 
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
-            }
+            } else if (args[0].equals("10")) {
+                int port = Integer.parseInt(args[2]);
+                // Transactionを開始してデータをLock後、データを更新、取得し、Lockを解除
+
+				// 引数はLock対象のKey値, Lock維持時間(秒)(0は無制限), Lockが既に取得されている場合の取得リトライし続ける時間(秒)(0は1回取得を試みる)
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                String[] ret = null;
+
+				// Lock準備
+                if(!imdstKeyValueClient.startTransaction()) {
+					throw new Exception("Transactionの開始に失敗");
+				}
+
+                long start = new Date().getTime();
+
+				// Lock実行
+				ret = imdstKeyValueClient.lockData(args[3], Integer.parseInt(args[4]), Integer.parseInt(args[5]));
+                if (ret[0].equals("true")) {
+                    System.out.println("Lock成功");
+                } else if (ret[0].equals("false")) {
+                    System.out.println("Lock失敗");
+                } 
+
+
+				// 以下のコメントアウトをはずして、コンパイルし、
+                // 別のクライアントから更新を実行すると、更新できないのが、わかる
+ 				Thread.sleep(5000);
+
+				// 自身でロックしているので更新可能
+                if (!imdstKeyValueClient.setValue(args[3], "LockDataValue")) {
+					System.out.println("登録失敗");
+				}
+
+                ret = imdstKeyValueClient.getValue(args[3]);
+                if (ret[0].equals("true")) {
+                    // データ有り
+                    System.out.println("Lock中に登録したデータ[" + ret[1] + "]");
+                } else if (ret[0].equals("false")) {
+                    System.out.println("データなし");
+                } else if (ret[0].equals("error")) {
+                    System.out.println(ret[1]);
+                }
+
+				// 自身でロックしているので削除可能
+                ret = imdstKeyValueClient.removeValue(args[3]);
+
+                if (ret[0].equals("true")) {
+                    // データ有り
+                    System.out.println("Lock中に削除したデータ[" + ret[1] + "]");
+                } else if (ret[0].equals("false")) {
+                    System.out.println("データなし");
+                } else if (ret[0].equals("error")) {
+                    System.out.println(ret[1]);
+                }
+
+				// Lock開放
+				ret = imdstKeyValueClient.releaseLockData(args[3]);
+                if (ret[0].equals("true")) {
+                    System.out.println("Lock開放成功");
+                } else if (ret[0].equals("false")) {
+                    System.out.println("Lock開放失敗");
+                } 
+
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+				// トランザクション開放
+				imdstKeyValueClient.endTransaction();
+                imdstKeyValueClient.close();
+            } 
+
 
         } catch (Exception e) {
             e.printStackTrace();

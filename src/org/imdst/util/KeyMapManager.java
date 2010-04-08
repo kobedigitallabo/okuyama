@@ -109,7 +109,6 @@ public class KeyMapManager extends Thread {
     // 初期化メソッド
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory) throws BatchException {
         logger.debug("init - start");
-
         if (!initFlg) {
             initFlg = true;
             this.workFileMemory = workFileMemory;
@@ -377,6 +376,7 @@ public class KeyMapManager extends Thread {
                     }
                 }*/
             } catch (Exception e) {
+				e.printStackTrace();
                 logger.error("KeyMapManager - run - Error" + e);
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "KeyMapManager - run - Error [" + e.getMessage() + "]");
@@ -636,20 +636,17 @@ public class KeyMapManager extends Thread {
     public String locking (Integer key, String transactionCode, int lockingTime) throws BatchException {
         if (!blocking) {
             try {
+                String saveTransactionStr =  null;
                 synchronized(this.poolKeyLock) {
-                    if (this.containsKeyPair(key)) return null;
-                    String saveTransactionStr =  null;
-
-                    if (lockingTime == 0) {
-                        saveTransactionStr = transactionCode + this.lockKeyTimeSep + new Long(Long.MAX_VALUE).toString();
-                    } else {
-System.out.println(System.currentTimeMillis());
-System.out.println(System.currentTimeMillis() + (lockingTime * 1000));
-                        saveTransactionStr = transactionCode + this.lockKeyTimeSep + new Long(System.currentTimeMillis() + (lockingTime * 1000)).toString();
-                    }
-
-                    keyMapObjPut(key, saveTransactionStr);
-
+		            synchronized(this.getKeyLock) {
+	                    if (this.containsKeyPair(key)) return null;
+	                    if (lockingTime == 0) {
+	                        saveTransactionStr = transactionCode + this.lockKeyTimeSep + new Long(Long.MAX_VALUE).toString();
+	                    } else {
+	                        saveTransactionStr = transactionCode + this.lockKeyTimeSep + new Long(System.currentTimeMillis() + (lockingTime * 1000)).toString();
+	                    }
+	                    keyMapObjPut(key, saveTransactionStr);
+					}
                     this.writeMapFileFlg = true;
 
                     if (workFileMemory == false) {
@@ -686,10 +683,14 @@ System.out.println(System.currentTimeMillis() + (lockingTime * 1000));
         if (!blocking) {
             try {
                 synchronized(this.poolKeyLock) {
-                    if (!this.containsKeyPair(key)) return transactionCode;
-                    if (!(((String[])((String)this.keyMapObjGet(key)).split(this.lockKeyTimeSep))[0]).equals(transactionCode)) return null;
-                    ret = ((String[])((String)this.keyMapObjGet(key)).split(this.lockKeyTimeSep))[0];
+		            synchronized(this.getKeyLock) {
+	                    if (!this.containsKeyPair(key)) return transactionCode;
+	                    if (!(((String[])((String)this.keyMapObjGet(key)).split(this.lockKeyTimeSep))[0]).equals(transactionCode)) return null;
+	                    ret = ((String[])((String)this.keyMapObj.remove(key)).split(this.lockKeyTimeSep))[0];
+				        this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
+					}
 
+			        this.lastAccess = System.currentTimeMillis();
                     // データの書き込みを指示
                     this.writeMapFileFlg = true;
 
@@ -731,7 +732,7 @@ System.out.println(System.currentTimeMillis() + (lockingTime * 1000));
      * @return String TransactionCode
      */
     public String getLockedTransactionCode (Integer key) {
-        synchronized(this.poolKeyLock) {
+        synchronized(this.getKeyLock) {
             if (!this.containsKeyPair(key)) return null;
             return ((String[])((String)this.keyMapObjGet(key)).split(this.lockKeyTimeSep))[0];
         }
@@ -744,19 +745,46 @@ System.out.println(System.currentTimeMillis() + (lockingTime * 1000));
      *
      * @param time 現在ミリ秒
      */
-    public void autoLockRelease(long time) {
+    public void autoLockRelease(long time) throws BatchException {
         synchronized(poolKeyLock) {
-            Object key = null;
+	        synchronized(this.getKeyLock) {
+				try {
+		            Object key = null;
 
-            Set set = this.keyMapObj.keySet();
-            Iterator iterator = set.iterator();
+		            Set set = this.keyMapObj.keySet();
+		            Iterator iterator = set.iterator();
 
-            while(iterator.hasNext()){
-                key = iterator.next();
-                String transactionLine = (String)this.keyMapObj.get(key);
-                String[] codeList = transactionLine.split(this.lockKeyTimeSep);
-                if(Long.parseLong(codeList[1]) < time) this.keyMapObj.remove(key);
-            }
+					Integer[] keyList = new Integer[this.keyMapObj.size()];
+					for (int idx = 0; idx < keyList.length; idx++) {
+						keyList[idx] = (Integer)iterator.next();
+					}
+
+					for (int idx = 0; idx < keyList.length; idx++) {
+		                String transactionLine = (String)this.keyMapObj.get(keyList[idx]);
+		                String[] codeList = transactionLine.split(this.lockKeyTimeSep);
+		                if(Long.parseLong(codeList[1]) < time) {
+
+							this.keyMapObj.remove(keyList[idx]);
+		                    // データの書き込みを指示
+		                    this.writeMapFileFlg = true;
+
+		                    if (workFileMemory == false) {
+
+		                        // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
+		                        this.bw.write(new StringBuffer("-").append(workFileSeq).append(keyList[idx].toString()).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
+		                        this.bw.newLine();
+		                        this.bw.flush();
+		                    }
+						}
+					}
+				} catch(Exception e) {
+	                logger.error("autoLockRelease - Error");
+	                blocking = true;
+	                StatusUtil.setStatusAndMessage(1, "autoLockRelease - Error[" + e.getMessage() + "]");
+	                throw new BatchException(e);
+	            }
+
+			}
         }
     }
 

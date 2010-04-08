@@ -781,9 +781,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         //logger.debug("MasterManagerHelper - removeKeyValue - start");
         String[] retStrs = new String[3];
         if (!transactionMode) {
-            retStrs = new String[2];
             retStrs[0] = "37";
             retStrs[1] = "false";
+            retStrs[2] = "No Transaction Mode";
             return retStrs;
         }
 
@@ -1184,22 +1184,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // TransactionModeの状態に合わせてLock状態を確かめる
             if (transactionMode) {
-System.out.println("aaaaaa");
                 while (true) {
-System.out.println("bbbbbbb");
-                    // TransactionMode時
 
+                    // TransactionMode時
                     // TransactionManagerに処理を依頼
                     String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], values[0]);
 
                     // 取得結果確認
                     if (keyNodeLockRet[1].equals("true")) {
-System.out.println("333333333333");
+
                         if (keyNodeLockRet[2].equals(transactionCode)) break;
-System.out.println("44444444");
-System.out.println(keyNodeLockRet[2]);
                     } else {
-System.out.println("5555555555555");
                         break;
                     }
                 }

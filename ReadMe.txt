@@ -9,6 +9,163 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 機能追加]
+[[リリース Ver 0.5.3 - (2010/04/08)]]
+  ■分散ロック機能を追加
+    +任意のデータをロックする機能を追加。
+    +分散ロック機能はマスターノード用設定ファイルである、MasterNode.propertiesの9行目の"TransactionMode=true"で
+     ロック機能が使用可能となる。
+     また、72行目の"TransactionManagerInfo=127.0.0.1:6655"でTransactionManagerノードを指定する必要がある
+     そして、TransactionManagerノードが起動している必要があるため、同梱のexecTransactionNode.batで起動する。
+     分散ロック機能を使用する場合は、全てのマスターノードが"TransactionMode=true"で起動している必要がある。
+     同梱の設定ファイルは全ての分散ロック機能で起動する。
+     ※execMasterNode2.batは分散ロック機能あり、memcacheプロトコルモードで起動する。
+     また、従来の分散ロック機能なしで起動する場合は、"TransactionMode=false"としてexecMasterNode.batを実行する。
+
+    +仕組みとしては、Clientからロック取得依頼を行った場合、TransactionManagerノードに指定したKey値で
+     ロック情報を作り上げる。この際、すでに別Clientから同一のKey値でロックが取得されている場合は、
+     指定した時間の間、ロックが解除されるのを待ち、取得を試みる。
+     ロックされた値に対して、set,remove系のアクセスを行った場合は、TransactionManagerノードに対して該当の
+     Key値が、リクエストを発行したClient以外からロックされているかを問い合わせて、別クライアントがロック
+     している場合は、ロックが解除されるのを待ち続ける。
+     同クライアントがロックしているもしくは、ロックがない場合は、そのまま処理を続行する。
+     ロックのリリースも同じ動きである。
+     なお、分散ロック機能を有効にした場合は、無効時と比べ1回通信が多く発生するため、処理速度は落ちる。
+     また、TransactionManagerノードがSPOFとなるが、機能していない場合は無視して稼動するが、
+     処理速度は極端に劣化する。
+     今後、SPOFとならないように改善予定である。
+
+    +以下は説明となる
+     *ロックを実施したデータの挙動は以下となる。
+      ・ロック可能なKey値(データ)は現在登録済みであっても、登録されていなくても可能である。
+      ・1クライアントから同時に複数のデータをロック可能である
+      ・ロックしたデータはロックを実施したクライアントからのみロック解除可能である。
+      ・ロック中のデータはロックを実施したクライアントからのみ登録可能である。
+      ・ロック中のデータはロックを実施したクライアントからのみ変更可能である。
+      ・ロック中のデータはロックを実施したクライアントからのみ削除可能である。
+      ・ロック中のデータは全クライアントから参照可能である。
+ 
+     *ロック機能使用開始メソッドは以下である。
+      ・クライアントのメソッド名:startTransaction
+      ・引数なし
+      ・戻り値:boolean true:スタート成功 false:スタート失敗
+        ※ロック機能有りでマスターノードを起動していない場合は、スタートに失敗する。
+          
+     *ロックメソッドへの引数と戻り値は以下である。
+      ・クライアントのメソッド名:lockData
+      ・引数1:ロック対象Key値
+        引数2:ロック継続時間
+              (ロック解除を行わない場合でも、ここでの設定時間が経過すると自動的に解除される。
+               単位は秒。
+               0を設定するとロックを実施したクライアントが解除するまで永久にロックされる。
+               ※0指定は推奨しない)
+        引数3:ロック取得待ち時間
+              (既に別クライアントがロック中のデータへロックを実施した場合に、設定時間の間ロック取得をリトライする。
+               単位は秒。
+               0を設定すると1回ロックを試みる)
+ 
+      ・戻り値:String配列
+               String配列[0]:Lock成否 "true"=Lock成功 or "false"=Lock失敗
+ 
+ 	 *ロック開放への引数と戻り値は以下である。
+      ・クライアントのメソッド名:releaseLockData
+      ・引数1:ロック対象Key値
+ 
+      ・戻り値:String配列
+               String配列[0]:開放成否 "true"=開放成功 or "false"=開放失敗
+
+     *ロック機構使用終了メソッドは以下である。
+      ・クライアントのメソッド名:endTransaction
+      ・引数なし
+      ・戻り値なし
+
+    +Java版、PHP版のクライアントからは、ロック、リリース両方が可能
+     Memchacheクライアントはロック、リリース機能は利用できないが、Lock中のデータにsetを実行した場合は"待ち状態"に入る。
+
+   │※ImdstKeyValueClientを使用した実装例)─────────────────────────────────┐
+   │                                                                                                        │
+   │ // クライアントインスタンス作成                                                                        │
+   │ ImdstKeyValueClient client = new ImdstKeyValueClient();                                                │
+   │ // 接続                                                                                                │
+   │ imdstKeyValueClient.connect("127.0.0.1", 8888);                                                        │
+   │ // Transactionを開始してデータをLock後、データを更新、取得し、Lockを解除                               │
+   │                                                                                                        │
+   │ // 引数はLock対象のKey値, Lock維持時間(秒)(0は無制限), Lockが既に取得されている場合の                  │
+   │ // 取得リトライし続ける時間(秒)(0は1回取得を試みる)                                                    │
+   │ ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();                                   │
+   │ imdstKeyValueClient.connect(args[1], port);                                                            │
+   │ String[] ret = null;                                                                                   │
+   │                                                                                                        │
+   │ // Lock準備                                                                                            │
+   │ if(!imdstKeyValueClient.startTransaction()) throw new Exception("Transaction Start Error!!");          │
+   │                                                                                                        │
+   │ long start = new Date().getTime();                                                                     │
+   │                                                                                                        │
+   │ // Lock実行                                                                                            │
+   │ // "DataKey"というKey値で10秒間維持するロックを作成。もし既にロックされている場合は、5秒間ロック取得を │
+   │ // 繰り返す                                                                                            │
+   │ ret = imdstKeyValueClient.lockData("DataKey", 10, 5);                                                  │
+   │ if (ret[0].equals("true")) {                                                                           │
+   │     System.out.println("Lock成功");                                                                    │
+   │ } else if (ret[0].equals("false")) {                                                                   │
+   │     System.out.println("Lock失敗");                                                                    │
+   │ }                                                                                                      │
+   │                                                                                                        │
+   │                                                                                                        │
+   │ // 以下のコメントアウトをはずして、コンパイルし、                                                      │
+   │ // 別のクライアントから更新を実行すると、更新できないのがわかる                                        │
+   │ //Thread.sleep(5000);                                                                                  │
+   │                                                                                                        │
+   │ // 自身でロックしているので更新可能                                                                    │
+   │ if (!imdstKeyValueClient.setValue(args[3], "LockDataValue")) {                                         │
+   │ 	System.out.println("登録失敗");                                                                      │
+   │ }                                                                                                      │
+   │                                                                                                        │
+   │ // 取得                                                                                                │
+   │ ret = imdstKeyValueClient.getValue(args[3]);                                                           │
+   │ if (ret[0].equals("true")) {                                                                           │
+   │     // データ有り                                                                                      │
+   │     System.out.println("Lock中に登録したデータ[" + ret[1] + "]");                                      │
+   │ } else if (ret[0].equals("false")) {                                                                   │
+   │     System.out.println("データなし");                                                                  │
+   │ } else if (ret[0].equals("error")) {                                                                   │
+   │     System.out.println(ret[1]);                                                                        │
+   │ }                                                                                                      │
+   │                                                                                                        │
+   │ // 自身でロックしているので削除可能                                                                    │
+   │ ret = imdstKeyValueClient.removeValue(args[3]);                                                        │
+   │                                                                                                        │
+   │ if (ret[0].equals("true")) {                                                                           │
+   │     // データ有り                                                                                      │
+   │     System.out.println("Lock中に削除したデータ[" + ret[1] + "]");                                      │
+   │ } else if (ret[0].equals("false")) {                                                                   │
+   │     System.out.println("データなし");                                                                  │
+   │ } else if (ret[0].equals("error")) {                                                                   │
+   │     System.out.println(ret[1]);                                                                        │
+   │ }                                                                                                      │
+   │                                                                                                        │
+   │ // Lock開放                                                                                            │
+   │ ret = imdstKeyValueClient.releaseLockData(args[3]);                                                    │
+   │ if (ret[0].equals("true")) {                                                                           │
+   │     System.out.println("Lock開放成功");                                                                │
+   │ } else if (ret[0].equals("false")) {                                                                   │
+   │     System.out.println("Lock開放失敗");                                                                │
+   │ }                                                                                                      │
+   │                                                                                                        │
+   │ long end = new Date().getTime();                                                                       │
+   │ System.out.println((end - start) + "milli second");                                                    │
+   │                                                                                                        │
+   │ // トランザクション開放                                                                                │
+   │ imdstKeyValueClient.endTransaction();                                                                  │
+   │ // 接続切断                                                                                            │
+   │ imdstKeyValueClient.close();                                                                           │
+   └────────────────────────────────────────────────────┘
+
+  ■いくつかのバグを修正
+
+  ※今後は、分散トランザクションを実現するように実装を進める。
+========================================================================================================
+========================================================================================================
+[New - 機能追加]
 [[リリース Ver 0.5.2 - (2010/03/28)]]
   ■Memcacheプロトコルに一部対応
     KVSの標準プロトコルになりつつある、memcacheのプロトコルに対応するモードを追加

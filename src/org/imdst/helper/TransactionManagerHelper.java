@@ -119,7 +119,6 @@ public class TransactionManagerHelper extends AbstractHelper {
                         }
 
                     } else if(clientParameterList[0].equals("31")) {
-
                         // Key値とTransactionCodeを使用してLockの開放を行う
                         requestHashCode = new Integer(clientParameterList[1]);
                         transactionCode = clientParameterList[2];
@@ -215,7 +214,7 @@ public class TransactionManagerHelper extends AbstractHelper {
     private String[] lockDatanode(Integer key, String transactionCode, int lockingTime, int lockWaitingTime) {
         //logger.debug("TransactionManagerHelper - lockDatanode - start");
         String[] retStrs = null;
-        long counter = 1;
+        long counter = 0;
         String retTranCd = null;
         int miniCounter = 0;
 
@@ -224,16 +223,19 @@ public class TransactionManagerHelper extends AbstractHelper {
                 while (true) {
                     miniCounter = 0;
                     while(10 > miniCounter) {
+
                         retTranCd = this.keyMapManager.locking(key, transactionCode, lockingTime);
                         if (retTranCd != null) break;
+	                    if (counter == lockWaitingTime) break;
                         miniCounter++;
                         Thread.sleep(100);
                     }
 
+					if (counter == lockWaitingTime) break;
                     if (retTranCd != null) break;
-                    if (counter == lockWaitingTime) break;
                     counter++;
                 }
+
 
                 if (retTranCd != null) {
                     retStrs = new String[3];
@@ -275,23 +277,28 @@ public class TransactionManagerHelper extends AbstractHelper {
         try {
             if(!this.keyMapManager.checkError()) {
                 if (this.keyMapManager.isLock(key)) {
+
                     if (this.keyMapManager.removeLock(key, transactionCode) != null) {
+
                         retStrs = new String[3];
                         retStrs[0] = "31";
                         retStrs[1] = "true";
                         retStrs[2] = transactionCode;
                     } else {
+
                         retStrs = new String[2];
                         retStrs[0] = "31";
                         retStrs[1] = "false";
                     }
                 } else {
+
                     retStrs = new String[3];
                     retStrs[0] = "31";
                     retStrs[1] = "true";
                     retStrs[2] = transactionCode;
                 }
             } else {
+
                     retStrs = new String[2];
                     retStrs[0] = "31";
                     retStrs[1] = "false";

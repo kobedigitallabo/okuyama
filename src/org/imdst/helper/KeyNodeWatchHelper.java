@@ -277,12 +277,12 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             // 返却値取得
             String retParam = br.readLine();
+
             retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
 
             if (!retParams[1].equals("true")) {
                 ret = false;
             } else {
-                // 生存の場合ステータス情報文字列を格納
                 this.nodeStatusStr = retParams[2];
             }
             pw.println(ImdstDefine.imdstConnectExitRequest);

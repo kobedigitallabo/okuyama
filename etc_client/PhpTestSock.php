@@ -162,6 +162,62 @@
 				print_r($ret[1]);
 				print_r("\r\n");
 			}
+		} else if ($argv[1] === "9") {
+			if(!$client->startTransaction()) {
+
+				print_r("Transaction Start Error !!");
+				exit;
+			}
+			// 引数のKey値のデータを削除
+
+			$ret = $client->lockData($argv[4], $argv[5], $argv[6]);
+			if ($ret[0] === "true") {
+				// Lock成功
+				print_r("Lock成功");
+				print_r("\r\n");
+			} else if ($ret[0] === "false") {
+				// Key値でデータなし
+				print_r("Lock失敗");
+				print_r("\r\n");
+			} else if ($ret[0] === "error") {
+				// 削除処理でエラー
+				print_r("Lock Error");
+				print_r("\r\n");
+			}
+
+			// 自身でロックしているので更新可能
+			if(!$client->setValue($argv[4], "LockDataPhp")) {
+				print_r("Registration failure");
+			}
+
+			$ret = $client->getValue($argv[4]);
+			if ($ret[0] === "true") {
+				print_r($ret[1]);
+				print_r("\r\n");
+			} else {
+				print_r("There is no data");
+				print_r("\r\n");
+			}
+
+			// 自身でロックしているので削除可能
+			$ret = $client->removeValue($argv[4]);
+			if ($ret[0] === "true") {
+				// 削除成功
+				print_r("削除 [" . $ret[1] . "]");
+				print_r("\r\n");
+			} else if ($ret[0] === "false") {
+				// Key値でデータなし
+				print_r("There is no data");
+				print_r("\r\n");
+			} else if ($ret[0] === "error") {
+				// 削除処理でエラー
+				print_r($ret[1]);
+				print_r("\r\n");
+			}
+
+			$ret = $client->releaseLockData($argv[4]);
+			var_dump($ret);
+
 		}
 
 
