@@ -712,6 +712,170 @@ public class ImdstKeyValueClient {
         return ret;
     }
 
+    /**
+     * マスタサーバへ新規データを送信する.<br>
+     * Tagなし.<br>
+     * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
+	 * その場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+	 *
+     * @param keyStr
+     * @param value
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws Exception
+     */
+    public String[] setNewValue(String keyStr, String value) throws Exception {
+        return this.setNewValue(keyStr, null, value);
+    }
+
+
+    /**
+     * マスタサーバへ新規データを送信する.<br>
+     * Tag有り.<br>
+     * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
+	 * その場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+ 	 * 
+     * @param keyStr
+     * @param tagStrs
+     * @param value
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws Exception
+     */
+    public String[] setNewValue(String keyStr, String[] tagStrs, String value) throws Exception {
+        String[] ret = null; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuffer serverRequestBuf = null;
+        try {
+            // Byte Lenghtチェック
+            if (keyStr.getBytes().length > maxValueSize) throw new Exception("Save Key Max Size " + maxValueSize + " Byte");
+            if (tagStrs != null) {
+                for (int i = 0; i < tagStrs.length; i++) {
+                    if (tagStrs[i].getBytes().length > maxValueSize) throw new Exception("Tag Max Size " + maxValueSize + " Byte");
+                }
+            }
+            if (value.getBytes().length > maxValueSize) throw new Exception("Save Value Max Size " + maxValueSize + " Byte");
+
+            if (this.socket == null) throw new Exception("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.equals("")) {
+                throw new Exception("The blank is not admitted on a key");
+            }
+
+            // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
+            if (value == null ||  value.equals("")) {
+                value = ImdstKeyValueClient.blankStr;
+            } else {
+
+                // ValueをBase64でエンコード
+                value = new String(this.dataEncoding(value.getBytes()));
+
+
+            }
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuffer();
+
+
+            // 処理番号連結
+            serverRequestBuf.append("6");
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
+
+            // Tag連結
+            // Tag指定の有無を調べる
+            if (tagStrs == null || tagStrs.length < 1) {
+
+                // ブランク規定文字列を連結
+                serverRequestBuf.append(ImdstKeyValueClient.blankStr);
+            } else {
+
+                // Tag数分連結
+                serverRequestBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
+                for (int i = 1; i < tagStrs.length; i++) {
+                    serverRequestBuf.append(tagKeySep);
+                    serverRequestBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
+                }
+            }
+
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
+            // TransactionCode連結
+            serverRequestBuf.append(this.transactionCode);
+
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
+            // Value連結
+            serverRequestBuf.append(value);
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet != null && serverRet[0].equals("6")) {
+                if (serverRet[1].equals("true")) {
+
+                    // 処理成功
+                    ret = new String[1];
+					ret[0] = "true";
+                } else{
+
+                    // 処理失敗(メッセージ格納)
+                    ret = new String[2];
+					ret[0] = "false";
+					ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new Exception("Execute Violation of validity [" + serverRetStr + "]");
+            }
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setNewValue(keyStr, tagStrs, value);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setNewValue(keyStr, tagStrs, value);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
 
     /**
      * マスタサーバへデータを送信する(バイナリデータ).<br>

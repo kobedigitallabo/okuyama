@@ -180,6 +180,19 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // キー値でデータを消す
                         retParams = this.removeKeyValue(clientParameterList[1], clientParameterList[2]);
+                    } else if(clientParameterList[0].equals("6")) {
+
+                        // Key値とValueを格納する
+						// 既に登録されている場合は失敗する
+                        if (clientParameterList.length > 5) {
+                            clientParameterList[4] = 
+                                clientParameterList[4] + 
+                                    ImdstDefine.keyHelperClientParamSep + 
+                                        clientParameterList[5];
+                        }
+
+                        retParams = this.setKeyValueOnlyOnce(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
+
                     } else if(clientParameterList[0].equals("8")) {
 
                         // Key値でValueを取得する(Scriptを実行する)
@@ -378,6 +391,117 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             retStrs[2] = "NG:MasterManagerHelper - setKeyValue - Exception - " + e.toString();
         }
         //logger.debug("MasterManagerHelper - setKeyValue - end");
+        return retStrs;
+    }
+
+
+    /**
+     * Key-Valueを保存する.<br>
+	 * 既に登録済みの場合は失敗する.<br>
+     * 処理フロー.<br>
+     * 1.DataDispatcherに依頼してTagの保存先を問い合わせる。Tag情報を全保存する<br>
+     * 2.DataDispatcherに依頼してKeyの保存先を問い合わせる。Tag情報を保存する<br>
+     * 3.結果文字列の配列を作成(成功時は処理番号"1"と"true"、失敗時は処理番号"1"と"false")<br>
+     *
+     * @param keyStr key値の文字列
+     * @param tagStr tag値の文字列
+     * @param isr クライアントからのインプット
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyValueOnlyOnce(String keyStr, String tagStr, String transactionCode, String dataStr) throws BatchException {
+        //logger.debug("MasterManagerHelper - setKeyValueOnlyOnce - start");
+        String[] retStrs = new String[3];
+
+        // data部分はブランクの場合はブランク規定文字列で送られてくるのでそのまま保存する
+        String[] tagKeyPair = null;
+        String[] keyNodeSaveRet = null;
+        String[] keyDataNodePair = null;
+
+        // Tagは指定なしの場合はクライアントから規定文字列で送られてくるのでここでTagなしの扱いとする
+        // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
+        if (tagStr.equals(ImdstDefine.imdstBlankStrData)) {
+            tagStr = null;
+        }
+
+        try {
+            // キー値とデータを保存
+            // 保存先問い合わせ
+            String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
+
+            // KeyNodeに接続して保存 //
+            keyDataNodePair = new String[2];
+            keyDataNodePair[0] = keyStr;
+            keyDataNodePair[1] = dataStr;
+
+            // 保存実行
+            // スレーブKeyNodeが存在する場合で値を変更
+           if (keyNodeInfo.length == 3) {
+                keyNodeSaveRet = this.setKeyNodeValueOnlyOnce(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "1", keyDataNodePair, transactionCode);
+            } else if (keyNodeInfo.length == 6) {
+                keyNodeSaveRet = this.setKeyNodeValueOnlyOnce(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "1", keyDataNodePair, transactionCode);
+            }
+
+            // 保存結果確認
+            if (keyNodeSaveRet[1].equals("false")) {
+                // 保存失敗
+                retStrs[0] = "6";
+                retStrs[1] = "false";
+                retStrs[2] = keyNodeSaveRet[2];
+
+                throw new BatchException("Key Data Save Error");
+            }
+
+
+            // Tag値を保存
+            if (tagStr != null && !tagStr.equals("")) {
+
+                // Tag指定あり
+                // タグとキーとのセットをタグ分保存する
+                String[] tags = tagStr.split(ImdstDefine.imdstTagKeyAppendSep);
+
+                for (int i = 0; i < tags.length; i++) {
+
+                    // Tag値保存先を問い合わせ
+                    String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i]);
+                    tagKeyPair = new String[2];
+
+                    tagKeyPair[0] = tags[i];
+                    tagKeyPair[1] = keyStr;
+
+                    // KeyNodeに接続して保存 //
+                    // スレーブKeyNodeの存在有無で値を変化させる
+                    if (tagKeyNodeInfo.length == 3) {
+                        keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], null, null, null, "3", tagKeyPair, transactionCode);
+                    } else if (tagKeyNodeInfo.length == 6) {
+                        keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], "3", tagKeyPair, transactionCode);
+                    }
+
+                    // 保存結果確認
+                    if (keyNodeSaveRet[1].equals("false")) {
+                        // 保存失敗
+                        retStrs[0] = "6";
+                        retStrs[1] = "false";
+                        retStrs[2] = keyNodeSaveRet[2];
+                        throw new BatchException("Tag Data Save Error");
+                    }
+                }
+            }
+
+
+            retStrs[0] = "6";
+            retStrs[1] = "true";
+            retStrs[2] = "OK";
+
+        } catch (BatchException be) {
+            logger.debug("MasterManagerHelper - setKeyValueOnlyOnce - Error", be);
+        } catch (Exception e) {
+			e.printStackTrace();
+            retStrs[0] = "6";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:MasterManagerHelper - setKeyValueOnlyOnce - Exception - " + e.toString();
+        }
+        //logger.debug("MasterManagerHelper - setKeyValueOnlyOnce - end");
         return retStrs;
     }
 
@@ -1319,6 +1443,240 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
     /**
+     * KeyNodeに対してデータを保存する.<br>
+	 * 既に登録されている場合は失敗する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加, 30=ロックを取得, 31=ロックを解除)
+     * @param values 送信データ
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyNodeValueOnlyOnce(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
+
+        PrintWriter pw = null;
+        BufferedReader br = null;
+        HashMap dtMap = null;
+
+        String nodeName = keyNodeName;
+        String nodePort = keyNodePort;
+        String nodeFullName = keyNodeFullName;
+
+		String[] retParams = null;
+        String[] mainRetParams = null;
+        String[] subRetParams = null;
+
+        int counter = 0;
+
+        String tmpSaveHost = null;
+        String[] tmpSaveData = null;
+        String retParam = null;
+
+        boolean mainNodeSave = false;
+        boolean mainNodeNetworkError = false;
+        boolean subNodeSave = false;
+        boolean subNodeNetworkError = false;
+
+        try {
+
+            // TransactionModeの状態に合わせてLock状態を確かめる
+            if (transactionMode) {
+                while (true) {
+
+                    // TransactionMode時
+                    // TransactionManagerに処理を依頼
+                    String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], values[0]);
+
+                    // 取得結果確認
+                    if (keyNodeLockRet[1].equals("true")) {
+
+                        if (keyNodeLockRet[2].equals(transactionCode)) break;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+			// まずメインデータノードへデータ登録
+
+	        // KeyNodeとの接続を確立
+	        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+
+            if (dtMap != null) {
+                try {
+                    // writerとreaderを取り出し
+                    pw = (PrintWriter)dtMap.get("writer");
+                    br = (BufferedReader)dtMap.get("reader");
+
+                    // Key値でデータノード名を保存
+                    StringBuffer buf = new StringBuffer();
+                    // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+                    buf.append("6");
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(values[0].hashCode());               // Key値
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(transactionCode);                    // Transaction値
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(values[1]);                          // Value値
+
+                    // 送信
+                    pw.println(buf.toString());
+                    pw.flush();
+
+                    // 返却値取得
+                    retParam = br.readLine();
+
+                    // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                    //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                    if (retParam.indexOf(ImdstDefine.keyNodeKeyNewRegistSuccessStr) == 0) {
+
+                        mainNodeSave = true;
+						mainRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                    } else {
+
+						mainNodeSave = false;
+						mainRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+					}
+                } catch (SocketException se) {
+					mainNodeNetworkError = true;
+                    super.setDeadNode(keyNodeName + ":" + keyNodePort);
+                    logger.debug(se);
+                } catch (IOException ie) {
+					mainNodeNetworkError = true;
+                    super.setDeadNode(keyNodeName + ":" + keyNodePort);
+                    logger.debug(ie);
+                }
+			} else {
+				mainNodeNetworkError = true;
+			}
+
+
+			if (subKeyNodeName != null) {
+				// Subノードで実施
+				if (mainNodeSave == true || (mainNodeSave == false && mainNodeNetworkError == true)) {
+					// Mainノードが処理成功もしくは、ネットワークエラーの場合はSubノードを処理を行う。
+			        // KeyNodeとの接続を確立
+			        dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+
+		            if (dtMap != null) {
+		                try {
+		                    // writerとreaderを取り出し
+		                    pw = (PrintWriter)dtMap.get("writer");
+		                    br = (BufferedReader)dtMap.get("reader");
+
+		                    // Key値でデータノード名を保存
+		                    StringBuffer buf = new StringBuffer();
+		                    // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+							if (!mainNodeSave) {
+			                    buf.append("6");
+							} else {
+								buf.append("1");
+							}
+		                    buf.append(ImdstDefine.keyHelperClientParamSep);
+		                    buf.append(values[0].hashCode());               // Key値
+		                    buf.append(ImdstDefine.keyHelperClientParamSep);
+		                    buf.append(transactionCode);                    // Transaction値
+		                    buf.append(ImdstDefine.keyHelperClientParamSep);
+		                    buf.append(values[1]);                          // Value値
+
+		                    // 送信
+		                    pw.println(buf.toString());
+		                    pw.flush();
+
+		                    // 返却値取得
+		                    retParam = br.readLine();
+
+
+		                    // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+		                    //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+		                    if (retParam.indexOf(ImdstDefine.keyNodeKeyNewRegistSuccessStr) == 0) {
+
+		                        subNodeSave = true;
+								subRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+		                    } else {
+
+								subNodeSave = false;
+								subRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+							}
+		                } catch (SocketException se) {
+							subNodeNetworkError = true;
+		                    super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
+		                    logger.debug(se);
+		                } catch (IOException ie) {
+							subNodeNetworkError = true;
+		                    super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
+		                    logger.debug(ie);
+		                }
+					} else {
+						subNodeNetworkError = true;
+					}
+				}
+			}
+
+			// Main、Sub両方ともネットワークでのエラーがであるか確認
+			if (mainNodeNetworkError == true && subNodeNetworkError == true) {
+				// ネットワークエラー
+				throw new BatchException("Key Node IO Error: detail info for log file");
+			}
+
+            // ノードへの保存状況を確認
+            if (mainNodeSave == false) {
+
+				// MainNode保存失敗
+				if (mainNodeNetworkError == false) {
+
+					// 既に書き込み済みでの失敗 
+					retParams = mainRetParams;
+				}
+			} else {
+
+				// MainNode保存成功
+				retParams = mainRetParams;
+			}
+
+	
+			if (subKeyNodeName != null) {
+				// スレーブノードが存在する場合のみ
+				// MainNodeが既にデータ有りで失敗せずに、成功もしていない
+				if (retParams == null) {
+
+		            if (subNodeSave == false) {
+
+						// SubNode保存失敗
+						if (subNodeNetworkError == false) {
+
+							// 既に書き込み済みでの失敗 
+							retParams = subRetParams;
+						}
+					} else {
+
+						// SubNode保存成功
+						retParams = subRetParams;
+					}
+				}
+			}
+        } catch (BatchException be) {
+
+            throw be;
+        } catch (Exception e) {
+
+            throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            if (subKeyNodeName != null) 
+                super.execNodeUseEnd(subKeyNodeFullName);
+        }
+
+        return retParams;
+    }
+
+
+    /**
      * KeyNodeに対してデータを削除する.<br>
      * 
      * @param keyNodeName マスターデータノードの名前(IPなど)
@@ -2040,10 +2398,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
             if (this.keyNodeConnectMap.containsKey(connectionFullName) && 
                 super.checkConnectionEffective(connectionFullName, (Long)this.keyNodeConnectTimeMap.get(connectionFullName))) {
-
                 dtMap = (HashMap)this.keyNodeConnectMap.get(connectionFullName);
             } else {
-
                 // 新規接続
                 // 親クラスから既に接続済みの接続をもらう
                 HashMap connectMap = super.getActiveConnection(connectionFullName);
@@ -2072,6 +2428,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     dtMap.put(ImdstDefine.keyNodeReaderKey, br);
                     connectTime = new Long(new Date().getTime());
                 } else {
+
                     dtMap = (HashMap)connectMap.get(ImdstDefine.keyNodeConnectionMapKey);
                     connectTime = (Long)connectMap.get(ImdstDefine.keyNodeConnectionMapTime);
                 }

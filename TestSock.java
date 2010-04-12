@@ -25,6 +25,8 @@ public class TestSock {
                 System.out.println("{キー値を自動で繰り返し数分変動させて削除}                        コマンド引数{args[0]=7, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=削除回数}");
                 System.out.println("{キー値を指定してデータを削除}                                    コマンド引数{args[0]=8, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=削除したいKey値}");
                 System.out.println("{トランザクションを開始する}                                      コマンド引数{args[0]=9, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号}");
+                System.out.println("{Transactionを開始してデータをLock後、データを更新、取得し、Lockを解除}  コマンド引数{args[0]=10, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号. args[3]=Key値, args[4]=Lock取得維持時間, args[5]=Lock取得待ち時間}");
+                System.out.println("{一度登録した値はエラーとなる}                                    コマンド引数{args[0]=11, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号. args[3]=Key値, args[4]=Value値}");
                 System.exit(0);
             }
 
@@ -516,6 +518,58 @@ public class TestSock {
 
 				// トランザクション開放
 				imdstKeyValueClient.endTransaction();
+                imdstKeyValueClient.close();
+            } else if (args[0].equals("11")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // ImdstKeyValueClientを使用してデータを保存一度登録した値はエラー
+
+                // クライアントインスタンスを作成
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                
+                // マスタサーバに接続
+                imdstKeyValueClient.connect(args[1], port);
+
+
+                long start = new Date().getTime();
+                String[] retParam = imdstKeyValueClient.setNewValue(args[3], args[4]);
+				if(retParam[0].equals("false")) {
+                
+                    System.out.println(retParam[1]);
+                } else {
+
+					System.out.println("処理成功");
+				}
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                imdstKeyValueClient.close();
+			} else if (args[0].equals("12")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // ImdstKeyValueClientを使用してデータを保存一度登録した値はエラー
+				// Tag有り
+
+                // クライアントインスタンスを作成
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                
+                // マスタサーバに接続
+                imdstKeyValueClient.connect(args[1], port);
+
+
+                long start = new Date().getTime();
+				String[] tags = args[4].split(",");
+                String[] retParam = imdstKeyValueClient.setNewValue(args[3], tags, args[5]);
+				if(retParam[0].equals("false")) {
+                
+                    System.out.println(retParam[1]);
+                } else {
+
+					System.out.println("処理成功");
+				}
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
                 imdstKeyValueClient.close();
             } 
 

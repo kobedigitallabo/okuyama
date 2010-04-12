@@ -385,6 +385,7 @@ public class KeyMapManager extends Thread {
         }
     }
 
+
     /**
      * キーを指定することでノードをセットする.<br>
      *
@@ -399,7 +400,6 @@ public class KeyMapManager extends Thread {
 
                     //logger.debug("setKeyPair - synchronized - start");
                     synchronized(this.getKeyLock) {
-
                         keyMapObjPut(key, keyNode);
                     }
 
@@ -424,6 +424,52 @@ public class KeyMapManager extends Thread {
             }
         }
     }
+
+
+    /**
+     * キーを指定することでノードをセットする.<br>
+	 * 既に登録されている場合は、失敗する。
+     *
+     * @param key キー値
+     * @param keyNode Value値
+     * @param transactionCode 
+     */
+    public boolean setKeyPairOnlyOnce(Integer key, String keyNode, String transactionCode) throws BatchException {
+		boolean ret = false;
+        if (!blocking) {
+            try {
+                synchronized(poolKeyLock) {
+
+                    //logger.debug("setKeyPairOnlyOnce - synchronized - start");
+                    synchronized(this.getKeyLock) {
+						if(this.containsKeyPair(key)) return ret;
+                        keyMapObjPut(key, keyNode);
+						ret = true;
+                    }
+
+                    // データの書き込みを指示
+                    this.writeMapFileFlg = true;
+
+                    if (workFileMemory == false) {
+
+                        // データ格納場所記述ファイル再保存
+                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key.toString()).append(workFileSeq).append(keyNode).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
+                        this.bw.newLine();
+                        this.bw.flush();
+                    }
+                    //logger.debug("setKeyPairOnlyOnce - synchronized - end");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("setKeyPairOnlyOnce - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "setKeyPairOnlyOnce - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+		return ret;
+    }
+
 
     // キーを指定することでノードを返す
     public String getKeyPair(Integer key) {

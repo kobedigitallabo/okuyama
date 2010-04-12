@@ -17,6 +17,7 @@ import org.imdst.util.StatusUtil;
 
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
+
 /**
  * Key情報を格納するHelper.<br>
  * 本helperはKeyManagerJobから呼び出されることを想定している.<br>
@@ -214,6 +215,28 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                         }
+					} else if(clientParameterList[0].equals("6")) {
+
+                        // Key値とDataNode名を格納する
+						// 既に登録されている場合は失敗する
+                        requestHashCode = new Integer(clientParameterList[1]);
+                        transactionCode = clientParameterList[2];
+                        requestDataNode = clientParameterList[3];
+
+                        // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
+                        if (clientParameterList.length > 4) {
+                            requestDataNode = requestDataNode + 
+                                ImdstDefine.keyHelperClientParamSep + 
+                                    clientParameterList[4];
+                        }
+
+                        // メソッド呼び出し
+                        retParams = this.setDatanodeOnlyOnce(requestHashCode, requestDataNode, transactionCode);
+                        retParamBuf.append(retParams[0]);
+                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        retParamBuf.append(retParams[1]);
+                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        retParamBuf.append(retParams[2]);
                     } else if(clientParameterList[0].equals("8")) {
 
                         // Key値でDataNode名を返す(Script実行バージョン)
@@ -259,7 +282,7 @@ public class KeyManagerHelper extends AbstractHelper {
                         // KeyMapObjectを読み込んで書き出す
                         this.keyMapManager.inputKeyMapObj2Stream(br);
                         retParamBuf = null;
-                    }
+                    } 
 
                     if (retParamBuf != null) {
                         pw.println(retParamBuf.toString());
@@ -333,6 +356,38 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[2] = "NG:KeyManagerHelper - setDatanode - Exception - " + be.toString();
         }
         //logger.debug("KeyManagerHelper - setDatanode - end");
+        return retStrs;
+    }
+
+
+    // KeyとDataNode値を格納する
+	// 既にデータが登録されている場合は失敗する。
+    private String[] setDatanodeOnlyOnce(Integer key, String dataNodeStr, String transactionCode) {
+        //logger.debug("KeyManagerHelper - setDatanodeOnlyOnce - start");
+        String[] retStrs = new String[3];
+        try {
+            if(!this.keyMapManager.checkError()) {
+                if(this.keyMapManager.setKeyPairOnlyOnce(key, dataNodeStr, transactionCode)) {
+	                retStrs[0] = "6";
+	                retStrs[1] = "true";
+	                retStrs[2] = "OK";
+				} else {
+	                retStrs[0] = "6";
+	                retStrs[1] = "false";
+	                retStrs[2] = "NG:Data has already been registered";
+            	}
+            } else {
+                retStrs[0] = "6";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:KeyMapManager - setDatanodeOnlyOnce - CheckError - NG";
+            }
+        } catch (BatchException be) {
+            logger.debug("KeyManagerHelper - setDatanodeOnlyOnce - Error", be);
+            retStrs[0] = "6";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - setDatanodeOnlyOnce - Exception - " + be.toString();
+        }
+        //logger.debug("KeyManagerHelper - insertDatanode - end");
         return retStrs;
     }
 

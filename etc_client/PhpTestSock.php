@@ -179,7 +179,7 @@
 				// Key値でデータなし
 				print_r("Lock失敗");
 				print_r("\r\n");
-			} else if ($ret[0] === "error") {
+				} else if ($ret[0] === "error") {
 				// 削除処理でエラー
 				print_r("Lock Error");
 				print_r("\r\n");

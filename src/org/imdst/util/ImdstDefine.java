@@ -49,6 +49,9 @@ public class ImdstDefine {
     // データノードに対するTagデータ登録時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeTagRegistSuccessStr = "3,true";
 
+    // データノードに対するKeyデータ新規登録時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeKeyNewRegistSuccessStr = "6,true";
+
     // データノードに対するKeyデータ削除時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeKeyRemoveSuccessStr = "5,true";
 
