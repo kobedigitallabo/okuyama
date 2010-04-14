@@ -816,7 +816,7 @@ class OkuyamaClient {
                         $cnvTags = null;
 
                         $serverRet[2] = str_replace("\n", "", $serverRet[2]);
-                        $tags = explode($this->tagKeySep, $serverRetStr);
+                        $tags = explode($this->tagKeySep, $serverRet[2]);
 
                         $decTags = array();
                         for ($i = 0; $i < count($tags); $i++) {
