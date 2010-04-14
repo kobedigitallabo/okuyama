@@ -228,9 +228,23 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         retParams = this.restartKeyNodeUse(clientParameterList[1]);
                     } else if (clientParameterList[0].equals("92")) {
 
-                        // KeyNodeの使用停止をマーク
+                        // KeyNodeの復旧をマーク
                         retParams = this.arriveKeyNode(clientParameterList[1]);
-                    }
+                    } else if (clientParameterList[0].equals("93")) {
+
+                        // 渡されたKeyNodeの使用停止をマーク
+						String[] nodes = clientParameterList[1].split("_");
+						for (int i = 0; i < nodes.length; i++) {
+	                        retParams = this.pauseKeyNodeUse(nodes[i]);
+						}
+					} else if (clientParameterList[0].equals("94")) {
+
+                        // 渡されたKeyNodeの使用再開をマーク
+						String[] nodes = clientParameterList[1].split("_");
+						for (int i = 0; i < nodes.length; i++) {
+	                        retParams = this.restartKeyNodeUse(nodes[i]);
+						}
+					}
 
                     // Takerで返却値を作成
                     retParamStr = this.porotocolTaker.takeResponseLine(retParams);
@@ -571,7 +585,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // TODO:現在のノードへの反映はいずれ別サービス化する
                             // 過去ルールによって取得出来たデータを現在のルールのノードへ反映
                             try {
-                                setKeyValue(keyStr, ImdstDefine.imdstBlankStrData, "0", keyNodeSaveRet[2]);
+								// 現在ルールのノードにデータ反映
+                                setKeyValueOnlyOnce(keyStr, ImdstDefine.imdstBlankStrData, "0", keyNodeSaveRet[2]);
+
+								// 過去ルールの場所のデータを削除
+								if (keyNodeInfo.length == 3) {
+									removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, "0");
+								} else {
+									removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, "0");
+								}
                             } catch (Exception e) {
                                 logger.info("Old Rule Data Set Error" + e);
                             }
