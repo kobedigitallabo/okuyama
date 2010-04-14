@@ -84,14 +84,19 @@ public class KeyManagerHelper extends AbstractHelper {
 
     // Jobメイン処理定義
     public String executeHelper(String optionParam) throws BatchException {
-        logger.debug("KeyManagerHelper - executeHelper - start");
+        //logger.debug("KeyManagerHelper - executeHelper - start");
 
         String ret = null;
         boolean closeFlg = false;
 
+		OutputStreamWriter osw = null;
+		PrintWriter pw = null;
+		InputStreamReader isr = null;
+		BufferedReader br = null;
+        String[] retParams = null;
+        StringBuffer retParamBuf = null;
+
         try{
-            String[] retParams = null;
-            StringBuffer retParamBuf = null;
 
             Object[] parameters = super.getParameters();
 
@@ -111,14 +116,14 @@ public class KeyManagerHelper extends AbstractHelper {
             this.soc = (Socket)parameters[1];
 
             // クライアントへのアウトプット
-            OutputStreamWriter osw = new OutputStreamWriter(this.soc.getOutputStream() , 
+            osw = new OutputStreamWriter(this.soc.getOutputStream() , 
                                                             ImdstDefine.keyHelperClientParamEncoding);
-            PrintWriter pw = new PrintWriter(new BufferedWriter(osw));
+            pw = new PrintWriter(new BufferedWriter(osw));
 
             // クライアントからのインプット
-            InputStreamReader isr = new InputStreamReader(this.soc.getInputStream(),
+            isr = new InputStreamReader(this.soc.getInputStream(),
                                                           ImdstDefine.keyHelperClientParamEncoding);
-            BufferedReader br = new BufferedReader(isr);
+            br = new BufferedReader(isr);
 
             while(!closeFlg) {
                 try {
@@ -130,7 +135,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             clientParametersStr.equals("") || 
                                 clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
                         // 切断要求
-                        logger.debug("Client Connect Exit Request");
+                        //logger.debug("Client Connect Exit Request");
                         closeFlg = true;
                         break;
                     }
@@ -292,8 +297,9 @@ public class KeyManagerHelper extends AbstractHelper {
                     closeFlg = true;
                 }
             }
-            pw.close();
-            br.close();
+
+	        retParams = null;
+	        retParamBuf = null;
             ret = super.SUCCESS;
         } catch(Exception e) {
 
@@ -303,6 +309,27 @@ public class KeyManagerHelper extends AbstractHelper {
         } finally {
 
             try {
+
+				if (pw != null) {
+					pw.close();
+					pw = null;
+				}
+
+				if (osw != null) {
+					osw.close();
+					osw = null;
+				}
+
+				if (br != null) {
+					br.close();
+					br = null;
+				}
+
+				if (isr != null) {
+					isr.close();
+					isr = null;
+				}
+
                 if (this.soc != null) {
                     this.soc.close();
                     this.soc = null;
@@ -314,7 +341,7 @@ public class KeyManagerHelper extends AbstractHelper {
             }
         }
 
-        logger.debug("KeyManagerHelper - executeHelper - end");
+        //logger.debug("KeyManagerHelper - executeHelper - end");
         return ret;
     }
 
@@ -322,7 +349,7 @@ public class KeyManagerHelper extends AbstractHelper {
      * 初期化メソッド定義
      */
     public void endHelper() {
-        logger.debug("KeyManagerHelper - endHelper - start");
+        //logger.debug("KeyManagerHelper - endHelper - start");
         try {
             if (this.soc != null) {
                 this.soc.close();
@@ -331,7 +358,7 @@ public class KeyManagerHelper extends AbstractHelper {
         } catch(Exception e2) {
             logger.error("KeyManagerHelper - executeHelper - Error2", e2);
         }
-        logger.debug("KeyManagerHelper - endHelper - end");
+        //logger.debug("KeyManagerHelper - endHelper - end");
     }
 
     // KeyとDataNode値を格納する
