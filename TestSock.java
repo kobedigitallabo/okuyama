@@ -253,18 +253,20 @@ public class TestSock {
                 String[] setTag = null;
                 int counter = 0;
 
+                long start = new Date().getTime();
+
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     if (counter == 0) {
                         setTag = tag1;
                         counter++;
                     } else if (counter == 1) {
-                        setTag = tag2;
+                        setTag = tag1;
                         counter++;
                     } else if (counter == 2) {
-                        setTag = tag3;
+                        setTag = tag1;
                         counter++;
                     } else if (counter == 3) {
-                        setTag = tag4;
+                        setTag = tag1;
                         counter = 0;
                     }
 
@@ -272,6 +274,8 @@ public class TestSock {
                         System.out.println("ImdstKeyValueClient - error");
                     }
                 }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
             } else if (args[0].equals("3.1")) {

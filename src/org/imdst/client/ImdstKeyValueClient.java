@@ -69,6 +69,16 @@ public class ImdstKeyValueClient {
         this.dataDecoding("".getBytes());
     }
 
+	/**
+	 * 保存するデータの最大長を変更する.<br>
+	 *
+	 * @param size 保存サイズ(バイト長)
+	 */
+	public void setSaveMaxDataSize(int size) {
+		this.saveSize = size;
+		this.maxValueSize = size;
+	}
+
     /**
      * バイナリデータ分割保存サイズを変更<br>
      *
@@ -554,6 +564,23 @@ public class ImdstKeyValueClient {
             throw e;
         }
         return ret;
+    }
+
+
+    // トランザクションを開始している場合、自身のトランザクションを一意に表す
+    // コードを返す.
+    // このコードをsetNowTransactionCodeに渡すと、別クライアントのTransactionを引き継げる
+    // !! 他クライアントの処理を横取ることが出来るため、使用を推奨しない !! 
+    public String getNowTransactionCode() {
+		return this.transactionCode;
+    }
+
+
+    // 他のクライアントが実施しているトランザクションコードを設定することで、
+    // トランザクション処理を引き継ぐことが出来る。
+    // !!! 他クライアントの処理を横取ることが出来るため、使用を推奨しない !!!
+    public void setNowTransactionCode(String transactionCode) {
+		this.transactionCode = transactionCode;
     }
 
 

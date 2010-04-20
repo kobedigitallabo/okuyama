@@ -39,17 +39,18 @@ class OkuyamaClient {
     private $byteDataKeysSep = ":#:";
 
     // バイナリデータ分割保存サイズ
-    private $saveSize = 8192;
+    private $saveSize = 2560;
 
     // 保存できる最大長
-    private $maxValueSize = 8192;
+    private $maxValueSize = 2560;
 
     // MasterServerへの接続時のタイムアウト時間
-    private $connectTimeOut = 3;
+    private $connectTimeOut = 10;
 
     private $errorno;
 
     private $errormsg;
+
     /**
      * MasterNodeの接続情報を設定する.<br>
      * 本メソッドでセットし、autoConnect()メソッドを<br>
@@ -179,7 +180,7 @@ class OkuyamaClient {
 
     /**
      * Transactionを開始する.<br>
-	 * データロック、ロックリリースを使用する場合は、<br>
+     * データロック、ロックリリースを使用する場合は、<br>
      * 事前に呼び出す必要がある<br>
      *
      * @throws Exception
@@ -208,7 +209,8 @@ class OkuyamaClient {
             @fputs($this->socket, $serverRequestBuf . "\n");
 
             $serverRetStr = @fgets($this->socket);
-            $serverRetStr = str_replace("\r\n", "", $serverRetStr);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+			$serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
 
             // 処理の妥当性確認
@@ -249,6 +251,17 @@ class OkuyamaClient {
      */
     public function endTransaction()  {
 		$this->transactionCode = "0";
+	}
+
+
+	/**
+	 * 保存するデータの最大長を変更する.<br>
+	 *
+	 * @param size 保存サイズ(バイト長)
+	 */
+	public function setSaveMaxDataSize($size) {
+		$this->saveSize = $size;
+		$this->maxValueSize = $size;
 	}
 
 
@@ -928,6 +941,139 @@ class OkuyamaClient {
                 if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                     if($this->autoConnect()) {
                         $ret = $this->getValue($keyStr, $encoding);
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new Exception("Execute Violation of validity");
+                }
+            }
+
+        } catch (Exception $e) {
+            throw $e;
+        }
+        return $ret;
+    }
+    
+    /**
+     * マスタサーバからKeyでデータを取得する(バイナリ).<br>
+     *
+     * @param keyStr
+     * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
+     * @throws Exception
+     */
+    public function getByteValue($keyStr) {
+        try {
+            $workKeyRet = $this->getValue($keyStr);
+            if ($workKeyRet[0] === "true") {
+                $workKeyRet = explode($this->byteDataKeysSep, $workKeyRet[1]);
+                
+                if (count($workKeyRet) > 1) {
+                    $keyWork = explode("_", $workKeyRet[1]);
+                    
+                    $keyStrPre = $keyWork[0];
+                    //右辺のIndex数値+1が配列サイズ
+                    $maxKeyIndexSize = (int)($keyWork[1] + 1);
+
+                    $workKeyRet = "";
+                    for($i=0; $i<$maxKeyIndexSize; $i++) {
+                        $workKeyRet[$i] = $keyStrPre."_".$i;
+                    }
+                    
+                    $ret = array();
+                    $ret[0] = "true";
+                    $ret[1] = "";
+                    foreach($workKeyRet as $val) {
+                        $rettmp = $this->getByteData($val);
+                        if ($rettmp[0] ===  "true") {
+                            $ret[1] .= $rettmp[1];
+                        } else {
+                            //エラー処理
+                            $ret[0] = "false";
+                            break;
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception $e) {
+            throw $e;
+        }
+        return $ret;
+    }
+    
+    /**
+     * マスタサーバからKeyでデータを取得する(バイナリ).<br>
+     *
+     * @param  $keyStr
+     * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
+     * @throws Exception
+     */
+    private function getByteData($keyStr) {
+        $ret = array(); 
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+
+        try {
+            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new Exception("The blank is not admitted on a key");
+            }
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = $serverRequestBuf . "2";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($keyStr);
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if ($serverRet[0] === "2") {
+                if ($serverRet[1] === "true") {
+
+                    // データ有り
+                    $ret[0] =$serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if ($serverRet[2] === $this->blankStr) {
+                        $ret[1] = "";
+                    } else {
+
+                        // Value文字列をBase64でデコード
+                        $ret[1] = $this->dataDecoding($serverRet[2]);
+                    }
+                } else if($serverRet[1] === "false") {
+
+                    // データなし
+                    $ret[0] = $serverRet[1];
+                    $ret[1] = null;
+                } else if($serverRet[1] === "error") {
+
+                    // エラー発生
+                    $ret[0] = $serverRet[1];
+                    $ret[1] = $serverRet[2];
+                }
+            } else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->getByteData($keyStr);
                     }
                 } else {
                 
