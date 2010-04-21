@@ -260,13 +260,13 @@ public class TestSock {
                         setTag = tag1;
                         counter++;
                     } else if (counter == 1) {
-                        setTag = tag1;
+                        setTag = tag2;
                         counter++;
                     } else if (counter == 2) {
-                        setTag = tag1;
+                        setTag = tag3;
                         counter++;
                     } else if (counter == 3) {
-                        setTag = tag1;
+                        setTag = tag4;
                         counter = 0;
                     }
 
@@ -287,7 +287,11 @@ public class TestSock {
 
                 int counter = 0;
                 String keyStr = null;
+
+                long start = new Date().getTime();
                 imdstKeyValueClient.setValue(args[3], setTag, args[5]);
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
             } else if (args[0].equals("4")) {
@@ -338,6 +342,7 @@ public class TestSock {
                     fileByte = new byte[new Long(file.length()).intValue()];
                     FileInputStream fis = new FileInputStream(file);
                     fis.read(fileByte, 0, fileByte.length);
+					//imdstKeyValueClient.setCompressMode(true);
                     if (!imdstKeyValueClient.setByteValue(args[5], fileByte)) {
                         System.out.println("ImdstKeyValueClient - error");
                     }
@@ -356,6 +361,7 @@ public class TestSock {
                 long start = new Date().getTime();
                 
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+					//imdstKeyValueClient.setCompressMode(true);
                     ret = imdstKeyValueClient.getByteValue(args[5]);
                     if (ret[0].equals("true")) {
                         // データ有り

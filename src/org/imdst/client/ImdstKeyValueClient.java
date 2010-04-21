@@ -79,6 +79,7 @@ public class ImdstKeyValueClient {
 		this.maxValueSize = size;
 	}
 
+
     /**
      * バイナリデータ分割保存サイズを変更<br>
      *
@@ -87,6 +88,17 @@ public class ImdstKeyValueClient {
     public void changeByteSaveSize(int size) {
         saveSize = size;
     }
+
+
+    /**
+     * データ保存時の圧縮指定.<br>
+     *
+     * @param flg true:圧縮 false:非圧縮
+     */
+    public void setCompressMode(boolean flg) {
+        this.compressMode = flg;
+    }
+
 
     /**
      * MasterNodeの接続情報を設定する.<br>
@@ -134,6 +146,7 @@ public class ImdstKeyValueClient {
                 this.socket.connect(inetAddr, 5000);
                 this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstKeyValueClient.connectDefaultEncoding)));
                 this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstKeyValueClient.connectDefaultEncoding));
+				this.initClient();
                 break;
             } catch (Exception e) {
                 try {
@@ -159,11 +172,6 @@ public class ImdstKeyValueClient {
             }
         }
     }
-
-
-
-//Randomクラスのインスタンス化
-
 
 
 
@@ -194,6 +202,7 @@ public class ImdstKeyValueClient {
  
             this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encoding)));
             this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), encoding));
+			this.initClient();
 
         } catch (Exception e) {
             try {
@@ -249,6 +258,88 @@ public class ImdstKeyValueClient {
         } catch (Exception e) {
             throw e;
         }
+    }
+
+
+    /**
+     * Clientを初期化する.<br>
+	 * 今のところは最大保存サイズの初期化のみ<br>
+     *
+     * @return boolean true:開始成功 false:開始失敗
+     * @throws Exception
+     */
+    public boolean initClient() throws Exception {
+		boolean ret = false;
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuffer serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new Exception("No ServerConnect!!");
+
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuffer();
+
+
+            // 処理番号連結
+            serverRequestBuf.append("0");
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("0")) {
+                if (serverRet[1].equals("true")) {
+
+                    this.saveSize = new Integer(transactionCode = serverRet[2]).intValue();
+                    this.maxValueSize = this.saveSize;
+					ret = true;
+				} else {
+					ret = false;
+				}
+            } else {
+
+                // 妥当性違反
+                throw new Exception("Execute Violation of validity");
+            }
+
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.initClient();
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.initClient();
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+		return ret;
     }
 
 
@@ -1842,7 +1933,7 @@ public class ImdstKeyValueClient {
             compresser.finish();
 
             // 圧縮単位
-            int bufSize = 1024 * 1024 * 5;
+            int bufSize = 2048;
 
             byte[] output = new byte[bufSize]; 
             byte[] workByte1 = new byte[0];
@@ -1933,7 +2024,7 @@ public class ImdstKeyValueClient {
         if (!this.compressMode) return bytes;
         try {
             // 圧縮解除単位
-            int bufSize = 1024 * 1024 * 5;
+            int bufSize = 2048;
 
             Inflater decompresser = new Inflater(); 
             decompresser.setInput(bytes, 0, bytes.length); 

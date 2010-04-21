@@ -124,7 +124,7 @@ class OkuyamaClient {
                     // 接続出来ていないが、まだ候補が残っているため、再接続ループにもどる
                 } else {
                     // 接続成功
-                    $ret = true;
+					$ret = $this->initClient();
                     break;
                 }
             } catch (Exception $e) {}
@@ -149,7 +149,9 @@ class OkuyamaClient {
             $this->socket = fsockopen($server, $port, $this->errorno, $this->errormsg, $this->connectTimeOut);
             if (!$this->socket) {
                 $ret = false;
-            }
+            } else {
+				$ret = $this->initClient();
+			}
         } catch (Exception $e) {
             if ($this->socket != null) @fclose($this->socket);
             $ret = false;
@@ -175,6 +177,71 @@ class OkuyamaClient {
         } catch (Exception $e) {
             throw $e;
         }
+    }
+
+
+    /**
+     * Clientを初期化する.<br>
+	 * 今のところは最大保存サイズの初期化のみ<br>
+     *
+     * @return boolean true:開始成功 false:開始失敗
+     * @throws Exception
+     */
+    public function initClient()  {
+        $ret = false;
+
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+
+        try {
+            // エラーチェック
+            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = $serverRequestBuf . "0";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+			$serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if ($serverRet[0] === "0") {
+                if ($serverRet[1] === "true") {
+	                // 最大データサイズ取得
+					$ret = true;
+	                $this->saveSize = $serverRet[2];
+					$this->maxValueSize = $this->saveSize;
+				} else {
+
+					$ret = false;
+				}
+            } else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->initClient();
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new Exception("Execute Violation of validity");
+                }
+            }
+
+        } catch (Exception $e) {
+            throw $e;
+        }
+		return $ret;
     }
 
 
@@ -465,7 +532,6 @@ class OkuyamaClient {
         $ret = false; 
         $serverRetStr = null;
         $serverRet = null;
-
         $serverRequestBuf = null;
         try {
             // Byte Lenghtチェック

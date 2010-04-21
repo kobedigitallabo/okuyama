@@ -150,8 +150,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 //long end1 = System.nanoTime();
 //System.out.println((end1 - start1));
 
+
                     // 処理番号で処理を分岐
-                    if(clientParameterList[0].equals("1")) {
+                    if(clientParameterList[0].equals("0")) {
+
+                        // Client初期化情報
+                        retParams = this.initClient();
+
+                    } else if(clientParameterList[0].equals("1")) {
 
                         // Key値とValueを格納する
                         if (clientParameterList.length > 5) {
@@ -299,6 +305,24 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      */
     public void endHelper() {
         this.closeAllKeyNodeConnect();
+    }
+
+
+    /**
+     * Client初期化情報を返す.<br>
+     *
+     * @return String[] 結果 配列の3つ目以降が初期化情報
+     * @throws BatchException
+     */
+    private String[] initClient() throws BatchException {
+        //logger.debug("MasterManagerHelper - initClient - start");
+        String[] retStrs = new String[3];
+
+        retStrs[0] = "0";
+        retStrs[1] = "true";
+        retStrs[2] = new Integer(ImdstDefine.saveDataMaxSize).toString();
+        //logger.debug("MasterManagerHelper - initClient - end");
+        return retStrs;
     }
 
 
