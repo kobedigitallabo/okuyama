@@ -16,8 +16,8 @@ public class TestSock {
                 System.out.println("{キー値を自動で繰り返し数分変動させて取得}                        コマンド引数{args[0]=2, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数}");
                 System.out.println("{キー値を自動で繰り返し数分変動させて取得}                        コマンド引数{args[0]=2.1, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得したいKey値}");
                 System.out.println("{キー値を自動で繰り返し数分変動させて取得}                        コマンド引数{args[0]=2.2, args[1]=\"マスタノードサーバIP:マスタノードサーバPort番号,スレーブマスタノードサーバIP:スレーブマスタノードサーバPort番号\", args[2]=取得回数}");
-				System.out.println("{キー値を自動で繰り返し数分変動させて取得}                        コマンド引数{args[0]=2.22, args[1]=\"マスタノードサーバIP:マスタノードサーバPort番号,スレーブマスタノードサーバIP:スレーブマスタノードサーバPort番号\", args[2]=Key値}");
-				System.out.println("{キー値を指定してスクリプト実行し取得}                            コマンド引数{args[0]=2.3, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得Key値, args[4]=実行スクリプトコード}");
+                System.out.println("{キー値を自動で繰り返し数分変動させて取得}                        コマンド引数{args[0]=2.22, args[1]=\"マスタノードサーバIP:マスタノードサーバPort番号,スレーブマスタノードサーバIP:スレーブマスタノードサーバPort番号\", args[2]=Key値}");
+                System.out.println("{キー値を指定してスクリプト実行し取得}                            コマンド引数{args[0]=2.3, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得Key値, args[4]=実行スクリプトコード}");
                 System.out.println("{Tagを4パターンで自動的に変動させてキー値は自動変動で登録}        コマンド引数{args[0]=3, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=登録件数}");
                 System.out.println("{指定したTagで関連するキー値を指定回数取得}                       コマンド引数{args[0]=4, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数, args[4]=指定Tag値 (tag1 or tag2 or tag3 or tag4)}");
                 System.out.println("{指定したファイルをバイナリデータとして指定したキー値で保存する}  コマンド引数{args[0]=5, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=登録回数, args[4]=ファイルパス, args[5]=キー値}");
@@ -204,7 +204,7 @@ public class TestSock {
                 String[] ret = null;
 
                 long start = new Date().getTime();
-				ret = imdstKeyValueClient.getValue(args[2]);
+                ret = imdstKeyValueClient.getValue(args[2]);
                 if (ret[0].equals("true")) {
                     // データ有り
                     System.out.println(ret[1]);
@@ -342,7 +342,7 @@ public class TestSock {
                     fileByte = new byte[new Long(file.length()).intValue()];
                     FileInputStream fis = new FileInputStream(file);
                     fis.read(fileByte, 0, fileByte.length);
-					//imdstKeyValueClient.setCompressMode(true);
+                    //imdstKeyValueClient.setCompressMode(true);
                     if (!imdstKeyValueClient.setByteValue(args[5], fileByte)) {
                         System.out.println("ImdstKeyValueClient - error");
                     }
@@ -361,8 +361,36 @@ public class TestSock {
                 long start = new Date().getTime();
                 
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-					//imdstKeyValueClient.setCompressMode(true);
+                    //imdstKeyValueClient.setCompressMode(true);
                     ret = imdstKeyValueClient.getByteValue(args[5]);
+                    if (ret[0].equals("true")) {
+                        // データ有り
+                        byte[] fileByte = null;
+                        File file = new File(args[4]);
+                        FileOutputStream fos = new FileOutputStream(file);
+                        fileByte = (byte[])ret[1];
+                        fos.write(fileByte, 0, fileByte.length);
+                        fos.close();
+                    } else if (ret[0].equals("false")) {
+                        System.out.println("データなし");
+                    } else if (ret[0].equals("error")) {
+                        System.out.println(ret[1]);
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start));
+                imdstKeyValueClient.close();
+            } else if (args[0].equals("6.1")) {
+                int port = Integer.parseInt(args[2]);
+                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)(バイナリ)
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                Object[] ret = null;
+                long start = new Date().getTime();
+                
+                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                    //imdstKeyValueClient.setCompressMode(true);
+                    ret = imdstKeyValueClient.getByteValueVer2(args[5]);
                     if (ret[0].equals("true")) {
                         // データ有り
                         byte[] fileByte = null;
@@ -435,11 +463,11 @@ public class TestSock {
                 long start = new Date().getTime();
 
                 imdstKeyValueClient.startTransaction();
-				imdstKeyValueClient.lockData("datasavekey_3", 20, 5);
-				imdstKeyValueClient.lockData("datasavekey_2", 5, 5);
+                imdstKeyValueClient.lockData("datasavekey_3", 20, 5);
+                imdstKeyValueClient.lockData("datasavekey_2", 5, 5);
                 if (!imdstKeyValueClient.setValue("datasavekey_3", "locktestdata")) {
-                	
-				    System.out.println("ImdstKeyValueClient - Lock Update Error");
+                    
+                    System.out.println("ImdstKeyValueClient - Lock Update Error");
                 }
                 ret = imdstKeyValueClient.getValue("datasavekey_3");
                 if (ret[0].equals("true")) {
@@ -452,8 +480,8 @@ public class TestSock {
                 }
 
 
-				//Thread.sleep(10000);
-				//imdstKeyValueClient.releaseLockData("datasavekey_3");
+                //Thread.sleep(10000);
+                //imdstKeyValueClient.releaseLockData("datasavekey_3");
 
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
@@ -463,20 +491,20 @@ public class TestSock {
                 int port = Integer.parseInt(args[2]);
                 // Transactionを開始してデータをLock後、データを更新、取得し、Lockを解除
 
-				// 引数はLock対象のKey値, Lock維持時間(秒)(0は無制限), Lockが既に取得されている場合の取得リトライし続ける時間(秒)(0は1回取得を試みる)
+                // 引数はLock対象のKey値, Lock維持時間(秒)(0は無制限), Lockが既に取得されている場合の取得リトライし続ける時間(秒)(0は1回取得を試みる)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
                 String[] ret = null;
 
-				// Lock準備
+                // Lock準備
                 if(!imdstKeyValueClient.startTransaction()) {
-					throw new Exception("Transactionの開始に失敗");
-				}
+                    throw new Exception("Transactionの開始に失敗");
+                }
 
                 long start = new Date().getTime();
 
-				// Lock実行
-				ret = imdstKeyValueClient.lockData(args[3], Integer.parseInt(args[4]), Integer.parseInt(args[5]));
+                // Lock実行
+                ret = imdstKeyValueClient.lockData(args[3], Integer.parseInt(args[4]), Integer.parseInt(args[5]));
                 if (ret[0].equals("true")) {
                     System.out.println("Lock成功");
                 } else if (ret[0].equals("false")) {
@@ -484,14 +512,14 @@ public class TestSock {
                 } 
 
 
-				// 以下のコメントアウトをはずして、コンパイルし、
+                // 以下のコメントアウトをはずして、コンパイルし、
                 // 別のクライアントから更新を実行すると、更新できないのが、わかる
- 				Thread.sleep(5000);
+                Thread.sleep(5000);
 
-				// 自身でロックしているので更新可能
+                // 自身でロックしているので更新可能
                 if (!imdstKeyValueClient.setValue(args[3], "LockDataValue")) {
-					System.out.println("登録失敗");
-				}
+                    System.out.println("登録失敗");
+                }
 
                 ret = imdstKeyValueClient.getValue(args[3]);
                 if (ret[0].equals("true")) {
@@ -503,7 +531,7 @@ public class TestSock {
                     System.out.println(ret[1]);
                 }
 
-				// 自身でロックしているので削除可能
+                // 自身でロックしているので削除可能
                 ret = imdstKeyValueClient.removeValue(args[3]);
 
                 if (ret[0].equals("true")) {
@@ -515,8 +543,8 @@ public class TestSock {
                     System.out.println(ret[1]);
                 }
 
-				// Lock開放
-				ret = imdstKeyValueClient.releaseLockData(args[3]);
+                // Lock開放
+                ret = imdstKeyValueClient.releaseLockData(args[3]);
                 if (ret[0].equals("true")) {
                     System.out.println("Lock開放成功");
                 } else if (ret[0].equals("false")) {
@@ -526,8 +554,8 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-				// トランザクション開放
-				imdstKeyValueClient.endTransaction();
+                // トランザクション開放
+                imdstKeyValueClient.endTransaction();
                 imdstKeyValueClient.close();
             } else if (args[0].equals("11")) {
                 
@@ -543,22 +571,22 @@ public class TestSock {
 
                 long start = new Date().getTime();
                 String[] retParam = imdstKeyValueClient.setNewValue(args[3], args[4]);
-				if(retParam[0].equals("false")) {
+                if(retParam[0].equals("false")) {
                 
                     System.out.println(retParam[1]);
                 } else {
 
-					System.out.println("処理成功");
-				}
+                    System.out.println("処理成功");
+                }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
-			} else if (args[0].equals("12")) {
+            } else if (args[0].equals("12")) {
                 
                 int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを保存一度登録した値はエラー
-				// Tag有り
+                // Tag有り
 
                 // クライアントインスタンスを作成
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
@@ -568,15 +596,15 @@ public class TestSock {
 
 
                 long start = new Date().getTime();
-				String[] tags = args[4].split(",");
+                String[] tags = args[4].split(",");
                 String[] retParam = imdstKeyValueClient.setNewValue(args[3], tags, args[5]);
-				if(retParam[0].equals("false")) {
+                if(retParam[0].equals("false")) {
                 
                     System.out.println(retParam[1]);
                 } else {
 
-					System.out.println("処理成功");
-				}
+                    System.out.println("処理成功");
+                }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 

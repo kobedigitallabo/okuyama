@@ -69,15 +69,15 @@ public class ImdstKeyValueClient {
         this.dataDecoding("".getBytes());
     }
 
-	/**
-	 * 保存するデータの最大長を変更する.<br>
-	 *
-	 * @param size 保存サイズ(バイト長)
-	 */
-	public void setSaveMaxDataSize(int size) {
-		this.saveSize = size;
-		this.maxValueSize = size;
-	}
+    /**
+     * 保存するデータの最大長を変更する.<br>
+     *
+     * @param size 保存サイズ(バイト長)
+     */
+    public void setSaveMaxDataSize(int size) {
+        this.saveSize = size;
+        this.maxValueSize = size;
+    }
 
 
     /**
@@ -146,7 +146,7 @@ public class ImdstKeyValueClient {
                 this.socket.connect(inetAddr, 5000);
                 this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstKeyValueClient.connectDefaultEncoding)));
                 this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstKeyValueClient.connectDefaultEncoding));
-				this.initClient();
+                this.initClient();
                 break;
             } catch (Exception e) {
                 try {
@@ -202,7 +202,7 @@ public class ImdstKeyValueClient {
  
             this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encoding)));
             this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), encoding));
-			this.initClient();
+            this.initClient();
 
         } catch (Exception e) {
             try {
@@ -236,7 +236,7 @@ public class ImdstKeyValueClient {
      */
     public void close() throws Exception {
         try {
-			this.transactionCode = "0";
+            this.transactionCode = "0";
             if (this.pw != null) {
                 // 接続切断を通知
                 this.pw.println(connectExitStr);
@@ -263,13 +263,13 @@ public class ImdstKeyValueClient {
 
     /**
      * Clientを初期化する.<br>
-	 * 今のところは最大保存サイズの初期化のみ<br>
+     * 今のところは最大保存サイズの初期化のみ<br>
      *
      * @return boolean true:開始成功 false:開始失敗
      * @throws Exception
      */
     public boolean initClient() throws Exception {
-		boolean ret = false;
+        boolean ret = false;
         String serverRetStr = null;
         String[] serverRet = null;
 
@@ -304,10 +304,10 @@ public class ImdstKeyValueClient {
 
                     this.saveSize = new Integer(transactionCode = serverRet[2]).intValue();
                     this.maxValueSize = this.saveSize;
-					ret = true;
-				} else {
-					ret = false;
-				}
+                    ret = true;
+                } else {
+                    ret = false;
+                }
             } else {
 
                 // 妥当性違反
@@ -339,20 +339,20 @@ public class ImdstKeyValueClient {
         } catch (Exception e) {
             throw e;
         }
-		return ret;
+        return ret;
     }
 
 
     /**
      * Transactionを開始する.<br>
-	 * データロック、ロックリリースを使用する場合は、<br>
+     * データロック、ロックリリースを使用する場合は、<br>
      * 事前に呼び出す必要がある<br>
      *
      * @return boolean true:開始成功 false:開始失敗
      * @throws Exception
      */
     public boolean startTransaction() throws Exception {
-		boolean ret = false;
+        boolean ret = false;
         String serverRetStr = null;
         String[] serverRet = null;
 
@@ -385,10 +385,10 @@ public class ImdstKeyValueClient {
             if (serverRet[0].equals("37")) {
                 if (serverRet[1].equals("true")) {
                     this.transactionCode = serverRet[2];
-					ret = true;
-				} else {
-					ret = false;
-				}
+                    ret = true;
+                } else {
+                    ret = false;
+                }
             } else {
 
                 // 妥当性違反
@@ -420,27 +420,27 @@ public class ImdstKeyValueClient {
         } catch (Exception e) {
             throw e;
         }
-		return ret;
+        return ret;
     }
 
 
     /**
      * Transactionを終了する.<br>
-	 * データロック、ロックリリースを使用を完了後に、<br>
+     * データロック、ロックリリースを使用を完了後に、<br>
      * 呼び出すことで、現在使用中のTransactionを終了できる<br>
      *
      * 
      * @throws Exception
      */
     public void endTransaction() {
-	    this.transactionCode = "0";
+        this.transactionCode = "0";
     }
 
 
     /**
      * データのLockを依頼する.<br>
      * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
-	 * 
+     * 
      * @param keyStr
      * @param lockingTime Lockを取得後、維持する時間(この時間を経過すると自動的にLockが解除される)(単位は秒)(0は無制限)
      * @param waitLockTime Lockを取得する場合に既に取得中の場合この時間はLock取得をリトライする(単位は秒)(0は1度取得を試みる)
@@ -458,7 +458,7 @@ public class ImdstKeyValueClient {
             if (this.socket == null) throw new Exception("No ServerConnect!!");
 
             if (this.transactionCode == null || this.transactionCode.equals("") || this.transactionCode.equals("0")) 
-				throw new Exception("No Start Transaction!!");
+                throw new Exception("No Start Transaction!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
@@ -480,15 +480,15 @@ public class ImdstKeyValueClient {
 
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
-			// TransactionCode連結
+            // TransactionCode連結
             serverRequestBuf.append(this.transactionCode);
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
-			// lockingTime連結
+            // lockingTime連結
             serverRequestBuf.append(new Integer(lockingTime).toString());
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
-			// waitLockTime連結
+            // waitLockTime連結
             serverRequestBuf.append(new Integer(waitLockTime).toString());
 
 
@@ -507,7 +507,7 @@ public class ImdstKeyValueClient {
 
                     // Lock成功
                     ret[0] = serverRet[1];
-					//ret[1] = serverRet[2];
+                    //ret[1] = serverRet[2];
                 } else if(serverRet[1].equals("false")) {
 
                     // Lock失敗
@@ -556,7 +556,7 @@ public class ImdstKeyValueClient {
     /**
      * データのLock解除を依頼する.<br>
      * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
-	 *
+     *
      * @param keyStr
      * @return String[] 要素1(Lock解除成否):"true" or "false"
      * @throws Exception
@@ -572,7 +572,7 @@ public class ImdstKeyValueClient {
             if (this.socket == null) throw new Exception("No ServerConnect!!");
 
             if (this.transactionCode == null || this.transactionCode.equals("") || this.transactionCode.equals("0")) 
-				throw new Exception("No Start Transaction!!");
+                throw new Exception("No Start Transaction!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
@@ -594,7 +594,7 @@ public class ImdstKeyValueClient {
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
 
-			// TransactionCode連結
+            // TransactionCode連結
             serverRequestBuf.append(this.transactionCode);
 
             // サーバ送信
@@ -612,7 +612,7 @@ public class ImdstKeyValueClient {
 
                     // Lock成功
                     ret[0] = serverRet[1];
-					//ret[1] = serverRet[2];
+                    //ret[1] = serverRet[2];
                 } else if(serverRet[1].equals("false")) {
 
                     // データなし
@@ -663,7 +663,7 @@ public class ImdstKeyValueClient {
     // このコードをsetNowTransactionCodeに渡すと、別クライアントのTransactionを引き継げる
     // !! 他クライアントの処理を横取ることが出来るため、使用を推奨しない !! 
     public String getNowTransactionCode() {
-		return this.transactionCode;
+        return this.transactionCode;
     }
 
 
@@ -671,7 +671,7 @@ public class ImdstKeyValueClient {
     // トランザクション処理を引き継ぐことが出来る。
     // !!! 他クライアントの処理を横取ることが出来るため、使用を推奨しない !!!
     public void setNowTransactionCode(String transactionCode) {
-		this.transactionCode = transactionCode;
+        this.transactionCode = transactionCode;
     }
 
 
@@ -834,9 +834,9 @@ public class ImdstKeyValueClient {
      * マスタサーバへ新規データを送信する.<br>
      * Tagなし.<br>
      * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
-	 * その場合は、falseが返る<br>
+     * その場合は、falseが返る<br>
      * 成功の場合は配列の長さは1である。失敗時は2である<br>
-	 *
+     *
      * @param keyStr
      * @param value
      * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
@@ -851,9 +851,9 @@ public class ImdstKeyValueClient {
      * マスタサーバへ新規データを送信する.<br>
      * Tag有り.<br>
      * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
-	 * その場合は、falseが返る<br>
+     * その場合は、falseが返る<br>
      * 成功の場合は配列の長さは1である。失敗時は2である<br>
- 	 * 
+     * 
      * @param keyStr
      * @param tagStrs
      * @param value
@@ -953,13 +953,13 @@ public class ImdstKeyValueClient {
 
                     // 処理成功
                     ret = new String[1];
-					ret[0] = "true";
+                    ret[0] = "true";
                 } else{
 
                     // 処理失敗(メッセージ格納)
                     ret = new String[2];
-					ret[0] = "false";
-					ret[1] = serverRet[2];
+                    ret[0] = "false";
+                    ret[1] = serverRet[2];
                 }
             } else {
 
@@ -1591,6 +1591,7 @@ public class ImdstKeyValueClient {
         return ret;
     }
 
+
     /**
      * マスタサーバからKeyでデータを取得する(バイナリ).<br>
      *
@@ -1681,6 +1682,101 @@ public class ImdstKeyValueClient {
                 } else{
                     ret[1] = tmpValue;
                 }
+            } else {
+                ret[0] = workKeyRet[0];
+                ret[1] = workKeyRet[1];
+            }
+        } catch(Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
+
+    /**
+     * マスタサーバからKeyでデータを取得する(バイナリ).<br>
+     *
+     * @param keyStr
+     * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
+     * @throws Exception
+     */
+    public Object[] getByteValueVer2(String keyStr) throws Exception {
+        ArrayList byteDataList = new ArrayList();
+        Object[] ret = new Object[2];
+        Object[] byteTmpRet = null;
+
+        String[] workKeyRet = null;
+        String workKeyStr = null;
+        String[] workKeys = null;
+
+        byte[] workValue = null;
+        byte[] tmpValue = new byte[0];
+        byte[] retValue = new byte[0];
+
+        boolean execFlg = true;
+        try {
+            workKeyRet = this.getValue(keyStr);
+            
+            if (workKeyRet[0].equals("true")) {
+
+                workKeyStr = (String)workKeyRet[1];
+
+                workKeyRet = workKeyStr.split(byteDataKeysSep);
+
+                if (workKeyRet.length > 1) {
+                    String[] keyWork = workKeyRet[1].split("_");
+
+                    String keyStrPre = keyWork[0];
+                    //右辺のIndex数値+1が配列サイズ
+                    int maxKeyIndexSize = Integer.parseInt(keyWork[1] + 1);
+
+                    workKeyRet = new String[maxKeyIndexSize];
+                    for (int i = 0; i < workKeyRet.length; i++) {
+                        workKeyRet[i] = keyStrPre + "_" + i;
+                    }
+                }
+
+                for (int idx = 0; idx < workKeyRet.length; idx++) {
+
+
+                    byteTmpRet = this.getByteData(workKeyRet[idx]);
+
+                    if (byteTmpRet[0].equals("true")) {
+
+                        workValue = (byte[])byteTmpRet[1];
+
+                        if (execFlg) {
+                            for (int i = 0; i < workValue.length; i++) {
+                                byteDataList.add(workValue[i]);
+                            }
+                            execFlg = false;
+                        } else {
+
+                            for (int i = 0; i < workValue.length; i++) {
+                                byteDataList.add(workValue[i]);
+                            }
+                            execFlg = true;
+                        }
+                    } else {
+
+                        // エラー発生
+                        ret[0] = byteTmpRet[0];
+                        ret[1] = byteTmpRet[1];
+                        break;
+                    }
+
+                }
+
+                ret[0] = "true";
+                byte[] retBytes = new byte[byteDataList.size()];
+                int size = byteDataList.size();
+                int idx = 1;
+                for (; idx < size; idx++) {
+                    retBytes[size - idx] = ((Byte)byteDataList.remove((size - idx))).byteValue();
+                }
+                retBytes[0] = ((Byte)byteDataList.remove((0))).byteValue();
+
+                ret[1] = retBytes;
             } else {
                 ret[0] = workKeyRet[0];
                 ret[1] = workKeyRet[1];
