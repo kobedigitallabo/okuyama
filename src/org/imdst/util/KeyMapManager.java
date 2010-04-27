@@ -29,6 +29,8 @@ public class KeyMapManager extends Thread {
     private static final String tagEndStr = ImdstDefine.imdstTagEndStr;
     private static final String tagKeySep = ImdstDefine.imdstTagKeyAppendSep;
 
+    private int putValueMaxSize = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
+
 
     // Key系の書き込み、取得
     private Object poolKeyLock = new Object();
@@ -837,32 +839,38 @@ public class KeyMapManager extends Thread {
 
     /**
      * keyMapObjに対するアクセスメソッド.<br>
-     *
+     * TODO:登録のValueのサイズが最大サイズを超えている場合は無条件で登録しない.<br>
      */
     private void keyMapObjPut(Integer key, String val) {
-        this.keyMapObj.put(key, val);
-        this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
+		if (val.length() < putValueMaxSize) {
+	        this.keyMapObj.put(key, val);
+	        this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
+		}
         this.lastAccess = System.currentTimeMillis();
     }
 
     /**
      * keyMapObjに対するアクセスメソッド.<br>
      * 更新時間を登録しない.<br>
-     *
+     * TODO:登録のValueのサイズが最大サイズを超えている場合は無条件で登録しない.<br>
      */
     private void keyMapObjPutNoChange(Integer key, String val) {
-        this.keyMapObj.put(key, val);
+		if (val.length() < putValueMaxSize) {
+	        this.keyMapObj.put(key, val);
+		}
         this.lastAccess = System.currentTimeMillis();
     }
 
     /**
      * keyMapObjに対するアクセスメソッド.<br>
      * 任意の更新時間をセットする.<br>
-     *
+     * TODO:登録のValueのサイズが最大サイズを超えている場合は無条件で登録しない.<br>
      */
     private void keyMapObjPutSetTime(Integer key, String val, long execTime) {
-        this.keyMapObj.put(key, val);
-        this.keyMapObj.setKLastDataChangeTime(execTime);
+		if (val.length() < putValueMaxSize) {
+	        this.keyMapObj.put(key, val);
+	        this.keyMapObj.setKLastDataChangeTime(execTime);
+		}
         this.lastAccess = System.currentTimeMillis();
     }
 

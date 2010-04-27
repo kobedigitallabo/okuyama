@@ -73,6 +73,9 @@ public class KeyManagerHelper extends AbstractHelper {
 
     private Socket soc = null;
 
+	// 保存可能なデータの最大サイズ
+    private static int setDatanodeMaxSize = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
+
     /**
      * Logger.<br>
      */
@@ -366,16 +369,22 @@ public class KeyManagerHelper extends AbstractHelper {
         //logger.debug("KeyManagerHelper - setDatanode - start");
         String[] retStrs = new String[3];
         try {
-            if(!this.keyMapManager.checkError()) {
-                this.keyMapManager.setKeyPair(key, dataNodeStr, transactionCode);
-                retStrs[0] = "1";
-                retStrs[1] = "true";
-                retStrs[2] = "OK";
-            } else {
-                retStrs[0] = "1";
-                retStrs[1] = "false";
-                retStrs[2] = "NG:KeyMapManager - setDatanode - CheckError - NG";
-            }
+			if (dataNodeStr.length() < setDatanodeMaxSize) {
+	            if(!this.keyMapManager.checkError()) {
+	                this.keyMapManager.setKeyPair(key, dataNodeStr, transactionCode);
+	                retStrs[0] = "1";
+	                retStrs[1] = "true";
+	                retStrs[2] = "OK";
+	            } else {
+	                retStrs[0] = "1";
+	                retStrs[1] = "false";
+	                retStrs[2] = "NG:KeyMapManager - setDatanode - CheckError - NG";
+	            }
+			} else {
+	            retStrs[0] = "1";
+	            retStrs[1] = "false";
+	            retStrs[2] = "NG:Max Data Size Over";
+			}
         } catch (BatchException be) {
             logger.debug("KeyManagerHelper - setDatanode - Error", be);
             retStrs[0] = "1";
@@ -393,21 +402,27 @@ public class KeyManagerHelper extends AbstractHelper {
         //logger.debug("KeyManagerHelper - setDatanodeOnlyOnce - start");
         String[] retStrs = new String[3];
         try {
-            if(!this.keyMapManager.checkError()) {
-                if(this.keyMapManager.setKeyPairOnlyOnce(key, dataNodeStr, transactionCode)) {
-	                retStrs[0] = "6";
-	                retStrs[1] = "true";
-	                retStrs[2] = "OK";
-				} else {
+			if (dataNodeStr.length() < setDatanodeMaxSize) {
+	            if(!this.keyMapManager.checkError()) {
+	                if(this.keyMapManager.setKeyPairOnlyOnce(key, dataNodeStr, transactionCode)) {
+		                retStrs[0] = "6";
+		                retStrs[1] = "true";
+		                retStrs[2] = "OK";
+					} else {
+		                retStrs[0] = "6";
+		                retStrs[1] = "false";
+		                retStrs[2] = "NG:Data has already been registered";
+	            	}
+	            } else {
 	                retStrs[0] = "6";
 	                retStrs[1] = "false";
-	                retStrs[2] = "NG:Data has already been registered";
-            	}
-            } else {
+	                retStrs[2] = "NG:KeyMapManager - setDatanodeOnlyOnce - CheckError - NG";
+	            }
+			} else {
                 retStrs[0] = "6";
                 retStrs[1] = "false";
-                retStrs[2] = "NG:KeyMapManager - setDatanodeOnlyOnce - CheckError - NG";
-            }
+                retStrs[2] = "NG:Max Data Size Over";
+			}
         } catch (BatchException be) {
             logger.debug("KeyManagerHelper - setDatanodeOnlyOnce - Error", be);
             retStrs[0] = "6";

@@ -53,6 +53,7 @@ public class ImdstKeyValueClient {
     // バイナリデータ分割保存サイズ
     private int saveSize = ImdstDefine.saveDataMaxSize;
 
+
     // 保存できる最大長
     private int maxValueSize = ImdstDefine.saveDataMaxSize;
 
@@ -302,7 +303,7 @@ public class ImdstKeyValueClient {
             if (serverRet[0].equals("0")) {
                 if (serverRet[1].equals("true")) {
 
-                    this.saveSize = new Integer(transactionCode = serverRet[2]).intValue();
+                    this.saveSize = new Integer(serverRet[2]).intValue();
                     this.maxValueSize = this.saveSize;
                     ret = true;
                 } else {
@@ -795,7 +796,7 @@ public class ImdstKeyValueClient {
                 } else{
 
                     // 処理失敗(メッセージ格納)
-                    throw new Exception(serverRet[1]);
+                    throw new Exception(serverRet[2]);
                 }
             } else {
 
@@ -1170,7 +1171,7 @@ public class ImdstKeyValueClient {
                 } else{
 
                     // 処理失敗(メッセージ格納)
-                    throw new Exception(serverRet[1]);
+                    throw new Exception(serverRet[2]);
                 }
             } else {
 

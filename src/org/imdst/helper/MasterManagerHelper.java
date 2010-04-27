@@ -414,13 +414,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[1] = "false";
                 retStrs[2] = keyNodeSaveRet[2];
 
+            } else if(keyNodeSaveRet[1].equals("true")) {
+
+	            retStrs[0] = "1";
+	            retStrs[1] = "true";
+	            retStrs[2] = "OK";
+			} else {
                 throw new BatchException("Key Data Save Error");
-            }
-
-            retStrs[0] = "1";
-            retStrs[1] = "true";
-            retStrs[2] = "OK";
-
+			}
         } catch (BatchException be) {
             logger.debug("MasterManagerHelper - setData - Error", be);
         } catch (Exception e) {
@@ -487,8 +488,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[1] = "false";
                 retStrs[2] = keyNodeSaveRet[2];
 
-                throw new BatchException("Key Data Save Error");
-            }
+                return retStrs;
+			}
 
 
             // Tag値を保存
@@ -1462,8 +1463,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // ノードへの保存状況を確認
             if (mainNodeSave == false && subNodeSave == false) {
-
-                throw new BatchException("Key Node IO Error: detail info for log file");
+				if (retParam == null) {
+	                throw new BatchException("Key Node IO Error: detail info for log file");
+				}
             }
         } catch (BatchException be) {
 

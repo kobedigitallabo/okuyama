@@ -623,7 +623,7 @@ class OkuyamaClient {
                 } else{
 
                     // 処理失敗(メッセージ格納)
-                    throw new Exception($serverRet[1]);
+                    throw new Exception($serverRet[2]);
                 }
             }  else {
                 if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
