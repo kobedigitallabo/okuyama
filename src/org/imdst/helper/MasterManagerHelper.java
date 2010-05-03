@@ -16,6 +16,8 @@ import org.imdst.util.StatusUtil;
 import org.imdst.util.protocol.*;
 
 
+//import com.sun.mail.util.BASE64DecoderStream;
+
 /**
  * MasterNodeのメイン実行部分<br>
  *
@@ -144,6 +146,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             break;
                         }
                     }
+
+System.out.println(clientParametersStr);
                     // パラメータ分解
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
@@ -158,6 +162,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         retParams = this.initClient();
 
                     } else if(clientParameterList[0].equals("1")) {
+						//System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
 
                         // Key値とValueを格納する
                         if (clientParameterList.length > 5) {
@@ -170,6 +175,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
 
                     } else if(clientParameterList[0].equals("2")) {
+						//System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
 
                         // Key値でValueを取得する
                         retParams = this.getKeyValue(clientParameterList[1]);

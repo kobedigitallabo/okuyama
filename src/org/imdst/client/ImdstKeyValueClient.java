@@ -1627,7 +1627,7 @@ public class ImdstKeyValueClient {
 
                     String keyStrPre = keyWork[0];
                     //右辺のIndex数値+1が配列サイズ
-                    int maxKeyIndexSize = Integer.parseInt(keyWork[1] + 1);
+                    int maxKeyIndexSize = Integer.parseInt(keyWork[1]) + 1;
 
                     workKeyRet = new String[maxKeyIndexSize];
                     for (int i = 0; i < workKeyRet.length; i++) {
@@ -1702,7 +1702,7 @@ public class ImdstKeyValueClient {
      * @throws Exception
      */
     public Object[] getByteValueVer2(String keyStr) throws Exception {
-        ArrayList byteDataList = new ArrayList();
+        ArrayList byteDataList = null;
         Object[] ret = new Object[2];
         Object[] byteTmpRet = null;
 
@@ -1729,7 +1729,7 @@ public class ImdstKeyValueClient {
 
                     String keyStrPre = keyWork[0];
                     //右辺のIndex数値+1が配列サイズ
-                    int maxKeyIndexSize = Integer.parseInt(keyWork[1] + 1);
+                    int maxKeyIndexSize = Integer.parseInt(keyWork[1]) + 1;
 
                     workKeyRet = new String[maxKeyIndexSize];
                     for (int i = 0; i < workKeyRet.length; i++) {
@@ -1737,6 +1737,7 @@ public class ImdstKeyValueClient {
                     }
                 }
 
+				byteDataList = new ArrayList(workKeyRet.length * new Double(maxValueSize * 1.38).intValue());
                 for (int idx = 0; idx < workKeyRet.length; idx++) {
 
 
