@@ -98,6 +98,51 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
+            } if (args[0].equals("1.3")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // ImdstKeyValueClientを使用してデータを保存(Tagなし)
+
+                // クライアントインスタンスを作成
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+
+                // マスタサーバに接続
+                imdstKeyValueClient.connect(args[1], port);
+
+                StringBuffer bufs = new StringBuffer();
+
+                int idx = 0;
+
+                for (int i = 0; i < Integer.parseInt(args[4]); i++) {
+                    if (idx == 0) {
+                        bufs.append("a");
+                        idx++;
+                    } else if (idx == 1) {
+                        bufs.append("b");
+                        idx++;
+                    } else if (idx == 2) {
+                        bufs.append("c");
+                        idx++;
+                    } else if (idx == 3) {
+                        bufs.append("d");
+                        idx++;
+                    } else if (idx == 4) {
+                        bufs.append("e");
+                        idx = 0;
+                    }
+                }
+
+                    
+                long start = new Date().getTime();
+
+                if (!imdstKeyValueClient.setValue(args[3], bufs.toString())) {
+                //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                    System.out.println("ImdstKeyValueClient - error");
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                imdstKeyValueClient.close();
             } else if (args[0].equals("2")) {
                 
                 int port = Integer.parseInt(args[2]);

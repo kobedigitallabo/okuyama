@@ -134,7 +134,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // クライアントからの要求を取得
                     // Takerで会話開始
                     clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
-//long start1 = System.nanoTime();
+
                     if (this.porotocolTaker.nextExecution() != 1) {
 
                         // 処理をやり直し
@@ -147,13 +147,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         }
                     }
 
-System.out.println(clientParametersStr);
                     // パラメータ分解
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
-
-//long end1 = System.nanoTime();
-//System.out.println((end1 - start1));
-
 
                     // 処理番号で処理を分岐
                     if(clientParameterList[0].equals("0")) {
@@ -162,7 +157,7 @@ System.out.println(clientParametersStr);
                         retParams = this.initClient();
 
                     } else if(clientParameterList[0].equals("1")) {
-						//System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
+                        //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
 
                         // Key値とValueを格納する
                         if (clientParameterList.length > 5) {
@@ -175,7 +170,7 @@ System.out.println(clientParametersStr);
                         retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
 
                     } else if(clientParameterList[0].equals("2")) {
-						//System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
+                        //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
 
                         // Key値でValueを取得する
                         retParams = this.getKeyValue(clientParameterList[1]);
@@ -195,7 +190,7 @@ System.out.println(clientParametersStr);
                     } else if(clientParameterList[0].equals("6")) {
 
                         // Key値とValueを格納する
-						// 既に登録されている場合は失敗する
+                        // 既に登録されている場合は失敗する
                         if (clientParameterList.length > 5) {
                             clientParameterList[4] = 
                                 clientParameterList[4] + 
@@ -245,18 +240,18 @@ System.out.println(clientParametersStr);
                     } else if (clientParameterList[0].equals("93")) {
 
                         // 渡されたKeyNodeの使用停止をマーク
-						String[] nodes = clientParameterList[1].split("_");
-						for (int i = 0; i < nodes.length; i++) {
-	                        retParams = this.pauseKeyNodeUse(nodes[i]);
-						}
-					} else if (clientParameterList[0].equals("94")) {
+                        String[] nodes = clientParameterList[1].split("_");
+                        for (int i = 0; i < nodes.length; i++) {
+                            retParams = this.pauseKeyNodeUse(nodes[i]);
+                        }
+                    } else if (clientParameterList[0].equals("94")) {
 
                         // 渡されたKeyNodeの使用再開をマーク
-						String[] nodes = clientParameterList[1].split("_");
-						for (int i = 0; i < nodes.length; i++) {
-	                        retParams = this.restartKeyNodeUse(nodes[i]);
-						}
-					}
+                        String[] nodes = clientParameterList[1].split("_");
+                        for (int i = 0; i < nodes.length; i++) {
+                            retParams = this.restartKeyNodeUse(nodes[i]);
+                        }
+                    }
 
                     // Takerで返却値を作成
                     retParamStr = this.porotocolTaker.takeResponseLine(retParams);
@@ -422,12 +417,12 @@ System.out.println(clientParametersStr);
 
             } else if(keyNodeSaveRet[1].equals("true")) {
 
-	            retStrs[0] = "1";
-	            retStrs[1] = "true";
-	            retStrs[2] = "OK";
-			} else {
+                retStrs[0] = "1";
+                retStrs[1] = "true";
+                retStrs[2] = "OK";
+            } else {
                 throw new BatchException("Key Data Save Error");
-			}
+            }
         } catch (BatchException be) {
             logger.debug("MasterManagerHelper - setData - Error", be);
         } catch (Exception e) {
@@ -442,7 +437,7 @@ System.out.println(clientParametersStr);
 
     /**
      * Key-Valueを保存する.<br>
-	 * 既に登録済みの場合は失敗する.<br>
+     * 既に登録済みの場合は失敗する.<br>
      * 処理フロー.<br>
      * 1.DataDispatcherに依頼してTagの保存先を問い合わせる。Tag情報を全保存する<br>
      * 2.DataDispatcherに依頼してKeyの保存先を問い合わせる。Tag情報を保存する<br>
@@ -495,7 +490,7 @@ System.out.println(clientParametersStr);
                 retStrs[2] = keyNodeSaveRet[2];
 
                 return retStrs;
-			}
+            }
 
 
             // Tag値を保存
@@ -541,7 +536,7 @@ System.out.println(clientParametersStr);
         } catch (BatchException be) {
             logger.debug("MasterManagerHelper - setKeyValueOnlyOnce - Error", be);
         } catch (Exception e) {
-			e.printStackTrace();
+            e.printStackTrace();
             retStrs[0] = "6";
             retStrs[1] = "false";
             retStrs[2] = "NG:MasterManagerHelper - setKeyValueOnlyOnce - Exception - " + e.toString();
@@ -616,15 +611,15 @@ System.out.println(clientParametersStr);
                             // TODO:現在のノードへの反映はいずれ別サービス化する
                             // 過去ルールによって取得出来たデータを現在のルールのノードへ反映
                             try {
-								// 現在ルールのノードにデータ反映
+                                // 現在ルールのノードにデータ反映
                                 setKeyValueOnlyOnce(keyStr, ImdstDefine.imdstBlankStrData, "0", keyNodeSaveRet[2]);
 
-								// 過去ルールの場所のデータを削除
-								if (keyNodeInfo.length == 3) {
-									removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, "0");
-								} else {
-									removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, "0");
-								}
+                                // 過去ルールの場所のデータを削除
+                                if (keyNodeInfo.length == 3) {
+                                    removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, "0");
+                                } else {
+                                    removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, "0");
+                                }
                             } catch (Exception e) {
                                 logger.info("Old Rule Data Set Error" + e);
                             }
@@ -1469,9 +1464,9 @@ System.out.println(clientParametersStr);
 
             // ノードへの保存状況を確認
             if (mainNodeSave == false && subNodeSave == false) {
-				if (retParam == null) {
-	                throw new BatchException("Key Node IO Error: detail info for log file");
-				}
+                if (retParam == null) {
+                    throw new BatchException("Key Node IO Error: detail info for log file");
+                }
             }
         } catch (BatchException be) {
 
@@ -1498,7 +1493,7 @@ System.out.println(clientParametersStr);
 
     /**
      * KeyNodeに対してデータを保存する.<br>
-	 * 既に登録されている場合は失敗する.<br>
+     * 既に登録されている場合は失敗する.<br>
      * 
      * @param keyNodeName マスターデータノードの名前(IPなど)
      * @param keyNodePort マスターデータノードのアクセスポート番号
@@ -1519,7 +1514,7 @@ System.out.println(clientParametersStr);
         String nodePort = keyNodePort;
         String nodeFullName = keyNodeFullName;
 
-		String[] retParams = null;
+        String[] retParams = null;
         String[] mainRetParams = null;
         String[] subRetParams = null;
 
@@ -1554,10 +1549,10 @@ System.out.println(clientParametersStr);
                 }
             }
 
-			// まずメインデータノードへデータ登録
+            // まずメインデータノードへデータ登録
 
-	        // KeyNodeとの接続を確立
-	        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+            // KeyNodeとの接続を確立
+            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
 
             if (dtMap != null) {
                 try {
@@ -1588,130 +1583,130 @@ System.out.println(clientParametersStr);
                     if (retParam.indexOf(ImdstDefine.keyNodeKeyNewRegistSuccessStr) == 0) {
 
                         mainNodeSave = true;
-						mainRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                        mainRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
                     } else {
 
-						mainNodeSave = false;
-						mainRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-					}
+                        mainNodeSave = false;
+                        mainRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                    }
                 } catch (SocketException se) {
-					mainNodeNetworkError = true;
+                    mainNodeNetworkError = true;
                     super.setDeadNode(keyNodeName + ":" + keyNodePort);
                     logger.debug(se);
                 } catch (IOException ie) {
-					mainNodeNetworkError = true;
+                    mainNodeNetworkError = true;
                     super.setDeadNode(keyNodeName + ":" + keyNodePort);
                     logger.debug(ie);
                 }
-			} else {
-				mainNodeNetworkError = true;
-			}
+            } else {
+                mainNodeNetworkError = true;
+            }
 
 
-			if (subKeyNodeName != null) {
-				// Subノードで実施
-				if (mainNodeSave == true || (mainNodeSave == false && mainNodeNetworkError == true)) {
-					// Mainノードが処理成功もしくは、ネットワークエラーの場合はSubノードを処理を行う。
-			        // KeyNodeとの接続を確立
-			        dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+            if (subKeyNodeName != null) {
+                // Subノードで実施
+                if (mainNodeSave == true || (mainNodeSave == false && mainNodeNetworkError == true)) {
+                    // Mainノードが処理成功もしくは、ネットワークエラーの場合はSubノードを処理を行う。
+                    // KeyNodeとの接続を確立
+                    dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
 
-		            if (dtMap != null) {
-		                try {
-		                    // writerとreaderを取り出し
-		                    pw = (PrintWriter)dtMap.get("writer");
-		                    br = (BufferedReader)dtMap.get("reader");
+                    if (dtMap != null) {
+                        try {
+                            // writerとreaderを取り出し
+                            pw = (PrintWriter)dtMap.get("writer");
+                            br = (BufferedReader)dtMap.get("reader");
 
-		                    // Key値でデータノード名を保存
-		                    StringBuffer buf = new StringBuffer();
-		                    // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
-							if (!mainNodeSave) {
-			                    buf.append("6");
-							} else {
-								buf.append("1");
-							}
-		                    buf.append(ImdstDefine.keyHelperClientParamSep);
-		                    buf.append(values[0].hashCode());               // Key値
-		                    buf.append(ImdstDefine.keyHelperClientParamSep);
-		                    buf.append(transactionCode);                    // Transaction値
-		                    buf.append(ImdstDefine.keyHelperClientParamSep);
-		                    buf.append(values[1]);                          // Value値
+                            // Key値でデータノード名を保存
+                            StringBuffer buf = new StringBuffer();
+                            // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+                            if (!mainNodeSave) {
+                                buf.append("6");
+                            } else {
+                                buf.append("1");
+                            }
+                            buf.append(ImdstDefine.keyHelperClientParamSep);
+                            buf.append(values[0].hashCode());               // Key値
+                            buf.append(ImdstDefine.keyHelperClientParamSep);
+                            buf.append(transactionCode);                    // Transaction値
+                            buf.append(ImdstDefine.keyHelperClientParamSep);
+                            buf.append(values[1]);                          // Value値
 
-		                    // 送信
-		                    pw.println(buf.toString());
-		                    pw.flush();
+                            // 送信
+                            pw.println(buf.toString());
+                            pw.flush();
 
-		                    // 返却値取得
-		                    retParam = br.readLine();
+                            // 返却値取得
+                            retParam = br.readLine();
 
 
-		                    // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-		                    //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-		                    if (retParam.indexOf(ImdstDefine.keyNodeKeyNewRegistSuccessStr) == 0) {
+                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                            //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                            if (retParam.indexOf(ImdstDefine.keyNodeKeyNewRegistSuccessStr) == 0) {
 
-		                        subNodeSave = true;
-								subRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-		                    } else {
+                                subNodeSave = true;
+                                subRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                            } else {
 
-								subNodeSave = false;
-								subRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-							}
-		                } catch (SocketException se) {
-							subNodeNetworkError = true;
-		                    super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
-		                    logger.debug(se);
-		                } catch (IOException ie) {
-							subNodeNetworkError = true;
-		                    super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
-		                    logger.debug(ie);
-		                }
-					} else {
-						subNodeNetworkError = true;
-					}
-				}
-			}
+                                subNodeSave = false;
+                                subRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                            }
+                        } catch (SocketException se) {
+                            subNodeNetworkError = true;
+                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
+                            logger.debug(se);
+                        } catch (IOException ie) {
+                            subNodeNetworkError = true;
+                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
+                            logger.debug(ie);
+                        }
+                    } else {
+                        subNodeNetworkError = true;
+                    }
+                }
+            }
 
-			// Main、Sub両方ともネットワークでのエラーがであるか確認
-			if (mainNodeNetworkError == true && subNodeNetworkError == true) {
-				// ネットワークエラー
-				throw new BatchException("Key Node IO Error: detail info for log file");
-			}
+            // Main、Sub両方ともネットワークでのエラーがであるか確認
+            if (mainNodeNetworkError == true && subNodeNetworkError == true) {
+                // ネットワークエラー
+                throw new BatchException("Key Node IO Error: detail info for log file");
+            }
 
             // ノードへの保存状況を確認
             if (mainNodeSave == false) {
 
-				// MainNode保存失敗
-				if (mainNodeNetworkError == false) {
+                // MainNode保存失敗
+                if (mainNodeNetworkError == false) {
 
-					// 既に書き込み済みでの失敗 
-					retParams = mainRetParams;
-				}
-			} else {
+                    // 既に書き込み済みでの失敗 
+                    retParams = mainRetParams;
+                }
+            } else {
 
-				// MainNode保存成功
-				retParams = mainRetParams;
-			}
+                // MainNode保存成功
+                retParams = mainRetParams;
+            }
 
-	
-			if (subKeyNodeName != null) {
-				// スレーブノードが存在する場合のみ
-				// MainNodeが既にデータ有りで失敗せずに、成功もしていない
-				if (retParams == null) {
+    
+            if (subKeyNodeName != null) {
+                // スレーブノードが存在する場合のみ
+                // MainNodeが既にデータ有りで失敗せずに、成功もしていない
+                if (retParams == null) {
 
-		            if (subNodeSave == false) {
+                    if (subNodeSave == false) {
 
-						// SubNode保存失敗
-						if (subNodeNetworkError == false) {
+                        // SubNode保存失敗
+                        if (subNodeNetworkError == false) {
 
-							// 既に書き込み済みでの失敗 
-							retParams = subRetParams;
-						}
-					} else {
+                            // 既に書き込み済みでの失敗 
+                            retParams = subRetParams;
+                        }
+                    } else {
 
-						// SubNode保存成功
-						retParams = subRetParams;
-					}
-				}
-			}
+                        // SubNode保存成功
+                        retParams = subRetParams;
+                    }
+                }
+            }
         } catch (BatchException be) {
 
             throw be;
