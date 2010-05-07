@@ -322,6 +322,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
         String retParam = null;
         String[] retParams = null;
+		String lineCount = null;
 
         String[] nodeDt = nodeInfo.split(":");
         String[] masterNodeDt = masterNodeInfo.split(":");
@@ -347,7 +348,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             logger.info("Data Recover Schedule [" + masterNodeInfo + " => " + nodeInfo + "]");
             // コピー先KeyNodeとの接続を確立
             socket = new Socket(nodeName, nodePort);
-			socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+			socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             pw = new PrintWriter(new BufferedWriter(osw));
@@ -357,7 +358,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             // コピー元KeyNodeとの接続を確立
             msocket = new Socket(masterNodeName, masterNodePort);
-			msocket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+			msocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             OutputStreamWriter mosw = new OutputStreamWriter(msocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             mpw = new PrintWriter(new BufferedWriter(mosw));
@@ -419,22 +420,26 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 mpw.println(buf.toString());
                 mpw.flush();
 
-                // データ取得
-                retParam = mbr.readLine();
+				// データ行数取得
+                lineCount = mbr.readLine();
+
 
                 // 取得したデータをコピー先に書き出し
                 // 処理番号21
                 buf = new StringBuffer();
                 buf.append("21");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append("true");
+                buf.append(lineCount);
                 // 送信
                 pw.println(buf.toString());
                 pw.flush();
 
-                // 値を書き出し
-                pw.println(retParam);
-                pw.flush();
+				for (int i = 0; i < Integer.parseInt(lineCount); i++) {
+	                // 値を書き出し
+					retParam = mbr.readLine();
+	                pw.println(retParam);
+	                pw.flush();
+				}
             } else {
 
                 // 当初の予定から逆転
@@ -450,22 +455,28 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 pw.println(buf.toString());
                 pw.flush();
 
-                // データ取得
-                retParam = br.readLine();
+				// データ行数取得
+                lineCount = br.readLine();
+
 
                 // 取得したデータをコピー先に書き出し
                 // 処理番号21
                 buf = new StringBuffer();
                 buf.append("21");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append("true");
+                buf.append(lineCount);
                 // 送信
                 mpw.println(buf.toString());
                 mpw.flush();
 
-                // 値を書き出し
-                mpw.println(retParam);
-                mpw.flush();
+				for (int i = 0; i < Integer.parseInt(lineCount); i++) {
+
+	                // データ取得
+	                retParam = br.readLine();
+	                // 値を書き出し
+	                mpw.println(retParam);
+	                mpw.flush();
+				}
             }
         } catch (Exception e) {
 

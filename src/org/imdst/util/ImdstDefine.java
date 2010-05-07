@@ -126,4 +126,7 @@ public class ImdstDefine {
     // Node間のコネクションタイムアウト時間(ミリ秒)
     public static final int nodeConnectionTimeout = 60000;
 
+   // Recoverのコネクションタイムアウト時間(ミリ秒)
+    public static final int recoverConnectionTimeout = 60000 * 60;
+
 }

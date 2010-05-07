@@ -222,7 +222,12 @@ public class KeyMapManager extends Thread {
                         isr = new InputStreamReader(workKeyFilefis , workMapFileEnc);
                         br = new BufferedReader(isr);
                         int counter = 1;
+
                         while((line=br.readLine())!=null){
+                            if ((counter % 2000) == 0) {
+								logger.info("workKeyMapFile - Read - Count =[" + counter + "]");
+                            }
+
                             if (!line.equals("")) {
                                 workSplitStrs = line.split(workFileSeq);
 
@@ -918,7 +923,25 @@ public class KeyMapManager extends Thread {
 
                         // keyMapObjの全内容を1行文字列として書き出し
                         Set entrySet = this.keyMapObj.entrySet();
-                        Iterator entryIte = entrySet.iterator();   
+
+						int printLineCount = 0;
+						// 一度に送信するデータ量を算出。空きメモリの50%を使用する
+                        int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.5) / ImdstDefine.saveDataMaxSize).intValue();
+
+						if (entrySet.size() > 0) {
+							printLineCount = new Double(entrySet.size() / maxLineCount).intValue();
+							if (entrySet.size() % maxLineCount > 0) {
+								printLineCount = printLineCount + 1;
+							}
+						}
+
+						// 送信データ行数を送信
+						pw.println(printLineCount);
+						pw.flush();
+
+                        Iterator entryIte = entrySet.iterator(); 
+
+						int counter = 0;
                         while(entryIte.hasNext()) {
                             Map.Entry obj = (Map.Entry)entryIte.next();
 
@@ -927,7 +950,13 @@ public class KeyMapManager extends Thread {
                             allDataBuf.append(workFileSeq);
                             allDataBuf.append(this.keyMapObjGet((Integer)obj.getKey()));
                             allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
-                        }   
+                            counter++;
+							if (counter > (maxLineCount - 1)) {
+		                        pw.println(allDataBuf.toString());
+								allDataBuf = new StringBuffer();
+                                counter = 0;
+							}
+                        }
 
                         pw.println(allDataBuf.toString());
                     }
@@ -943,7 +972,7 @@ public class KeyMapManager extends Thread {
     }
 
     // 引数で渡されてストリームからの値でデータを作成する
-    public void inputKeyMapObj2Stream(BufferedReader br) throws BatchException {
+    public void inputKeyMapObj2Stream(BufferedReader br, int dataLineCount) throws BatchException {
         if (!blocking) {
             try {
                 int i = 0;
@@ -995,31 +1024,54 @@ public class KeyMapManager extends Thread {
                         this.osw = new OutputStreamWriter(fos , workMapFileEnc);
                         this.bw = new BufferedWriter(osw);
 
-                        // ストリームからKeyMapの全内容を読み込み、パース後1件づつ登録
-                        String allDataStr = br.readLine();
-                        String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+						int counter = 1;
 
+						for (int idx = 0; idx < dataLineCount; idx++) {
+							if (counter < dataLineCount) {
 
-                        if (allDataLines.length == 1) {
-                            if (!allDataLines[0].trim().equals("")) {
-                                oneDatas = allDataLines[0].split(workFileSeq);
-                                this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
-                            }
-                        } else if (allDataLines.length > 1) {
+								// 最終更新日付変えずに全てのデータを登録する
+		                        // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
+		                        String allDataStr = br.readLine();
 
-                            for (i = 0; i < (allDataLines.length - 1); i++) {
-                                if (!allDataLines[i].trim().equals("")) {
-                                    oneDatas = allDataLines[i].split(workFileSeq);
-                                    this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1]);
-                                }
-                            }
+		                        String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
 
-                            if (!allDataLines[allDataLines.length - 1].trim().equals("")) {
-                                oneDatas = allDataLines[allDataLines.length - 1].split(workFileSeq);
-                                this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
-                            }
-                        }
+	                            for (i = 0; i < allDataLines.length; i++) {
+	                                if (!allDataLines[i].trim().equals("")) {
+	                                    oneDatas = allDataLines[i].split(workFileSeq);
+	                                    this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1]);
+	                                }
+	                            }
+	                            counter++;
+							} else {
 
+								// 最終行もしくは、1行で全てのデータが収まった場合の処理
+								// 最終的に最終更新日付を変える必要があるのでその処理が含まれる
+		                        String allDataStr = br.readLine();
+
+		                        String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+
+		                        if (allDataLines.length == 1) {
+		                            if (!allDataLines[0].trim().equals("")) {
+		                                oneDatas = allDataLines[0].split(workFileSeq);
+		                                this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
+		                            }
+		                        } else if (allDataLines.length > 1) {
+
+		                            for (i = 0; i < (allDataLines.length - 1); i++) {
+		                                if (!allDataLines[i].trim().equals("")) {
+		                                    oneDatas = allDataLines[i].split(workFileSeq);
+		                                    this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1]);
+		                                }
+		                            }
+
+		                            if (!allDataLines[allDataLines.length - 1].trim().equals("")) {
+		                                oneDatas = allDataLines[allDataLines.length - 1].split(workFileSeq);
+		                                this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
+		                            }
+		                        }
+
+							}
+						}
                         // ファイルに書き込み
                         File keyFile = new File(this.keyFilePath);
                         FileOutputStream oF = new FileOutputStream(keyFile);

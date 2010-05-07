@@ -288,7 +288,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                         // KeyMapManager Direct Connection
                         // KeyMapObjectを読み込んで書き出す
-                        this.keyMapManager.inputKeyMapObj2Stream(br);
+                        this.keyMapManager.inputKeyMapObj2Stream(br, Integer.parseInt(clientParameterList[1]));
                         retParamBuf = null;
                     } 
 
