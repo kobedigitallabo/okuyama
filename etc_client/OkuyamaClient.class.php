@@ -124,7 +124,7 @@ class OkuyamaClient {
                     // 接続出来ていないが、まだ候補が残っているため、再接続ループにもどる
                 } else {
                     // 接続成功
-					$ret = $this->initClient();
+                    $ret = $this->initClient();
                     break;
                 }
             } catch (Exception $e) {}
@@ -150,8 +150,8 @@ class OkuyamaClient {
             if (!$this->socket) {
                 $ret = false;
             } else {
-				$ret = $this->initClient();
-			}
+                $ret = $this->initClient();
+            }
         } catch (Exception $e) {
             if ($this->socket != null) @fclose($this->socket);
             $ret = false;
@@ -182,7 +182,7 @@ class OkuyamaClient {
 
     /**
      * Clientを初期化する.<br>
-	 * 今のところは最大保存サイズの初期化のみ<br>
+   * 今のところは最大保存サイズの初期化のみ<br>
      *
      * @return boolean true:開始成功 false:開始失敗
      * @throws Exception
@@ -212,20 +212,20 @@ class OkuyamaClient {
 
             $serverRetStr = @fgets($this->socket);
             $serverRetStr = str_replace("\r", "", $serverRetStr);
-			$serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
 
             // 処理の妥当性確認
             if ($serverRet[0] === "0") {
                 if ($serverRet[1] === "true") {
-	                // 最大データサイズ取得
-					$ret = true;
-	                $this->saveSize = $serverRet[2];
-					$this->maxValueSize = $this->saveSize;
-				} else {
+                    // 最大データサイズ取得
+                    $ret = true;
+                    $this->saveSize = $serverRet[2];
+                    $this->maxValueSize = $this->saveSize;
+                } else {
 
-					$ret = false;
-				}
+                    $ret = false;
+                }
             } else {
                 if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                     if($this->autoConnect()) {
@@ -241,7 +241,7 @@ class OkuyamaClient {
         } catch (Exception $e) {
             throw $e;
         }
-		return $ret;
+    return $ret;
     }
 
 
@@ -277,19 +277,19 @@ class OkuyamaClient {
 
             $serverRetStr = @fgets($this->socket);
             $serverRetStr = str_replace("\r", "", $serverRetStr);
-			$serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
 
             // 処理の妥当性確認
             if ($serverRet[0] === "37") {
                 if ($serverRet[1] === "true") {
-	                // TransactionCode取得
-					$ret = true;
-	                $this->transactionCode = $serverRet[2];
-				} else {
+                  // TransactionCode取得
+          $ret = true;
+                  $this->transactionCode = $serverRet[2];
+        } else {
 
-					$ret = false;
-				}
+          $ret = false;
+        }
             } else {
                 if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                     if($this->autoConnect()) {
@@ -305,43 +305,43 @@ class OkuyamaClient {
         } catch (Exception $e) {
             throw $e;
         }
-		return $ret;
+        return $ret;
     }
 
 
     /**
      * Transactionを開始する.<br>
-	 * データロック、ロックリリースを使用する場合は、<br>
+   * データロック、ロックリリースを使用する場合は、<br>
      * 事前に呼び出す必要がある<br>
      *
      * @throws Exception
      */
     public function endTransaction()  {
-		$this->transactionCode = "0";
-	}
+       $this->transactionCode = "0";
+    }
 
 
-	/**
-	 * 保存するデータの最大長を変更する.<br>
-	 *
-	 * @param size 保存サイズ(バイト長)
-	 */
-	public function setSaveMaxDataSize($size) {
-		$this->saveSize = $size;
-		$this->maxValueSize = $size;
-	}
+  /**
+   * 保存するデータの最大長を変更する.<br>
+   *
+   * @param size 保存サイズ(バイト長)
+   */
+  public function setSaveMaxDataSize($size) {
+    $this->saveSize = $size;
+    $this->maxValueSize = $size;
+  }
 
 
     /**
      * データのLockを依頼する.<br>
      * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
-	 * 
+   * 
      * @param keyStr
      * @param lockingTime Lockを取得後、維持する時間(この時間を経過すると自動的にLockが解除される)(単位は秒)(0は無制限)
      * @param waitLockTime Lockを取得する場合に既に取得中の場合この時間はLock取得をリトライする(単位は秒)(0は1度取得を試みる)
      * @return String[] 要素1(Lock成否):"true" or "false"
      * @throws Exception
-	 */
+   */
     public function lockData($keyStr, $lockingTime, $waitLockTime = 0) {
         $ret = array(); 
         $serverRetStr = null;
@@ -350,7 +350,7 @@ class OkuyamaClient {
         $serverRequestBuf = null;
         try {
 
-			if ($this->transactionCode === "" || $this->transactionCode === "0") throw new Exception("No Start Transaction!!");
+            if ($this->transactionCode === "" || $this->transactionCode === "0") throw new Exception("No Start Transaction!!");
 
             // Byte Lenghtチェック
             if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
@@ -397,7 +397,7 @@ class OkuyamaClient {
             $serverRetStr = str_replace("\r", "", $serverRetStr);
             $serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
-	
+  
             // 処理の妥当性確認
             if ($serverRet[0] === "30") {
                 if ($serverRet[1] === "true") {
@@ -434,11 +434,11 @@ class OkuyamaClient {
     /**
      * データのLock解除を依頼する.<br>
      * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
-	 *
+   *
      * @param keyStr
      * @return String[] 要素1(Lock解除成否):"true" or "false"
      * @throws Exception
-	 */
+   */
     public function releaseLockData($keyStr) {
         $ret = array(); 
         $serverRetStr = null;
@@ -447,7 +447,7 @@ class OkuyamaClient {
         $serverRequestBuf = null;
         try {
 
-			if ($this->transactionCode === "" || $this->transactionCode === "0") throw new Exception("No Start Transaction!!");
+            if ($this->transactionCode === "" || $this->transactionCode === "0") throw new Exception("No Start Transaction!!");
 
             // Byte Lenghtチェック
             if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
