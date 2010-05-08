@@ -52,6 +52,9 @@ public class ImdstDefine {
     // データノードに対するKeyデータ新規登録時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeKeyNewRegistSuccessStr = "6,true";
 
+    // データノードに対するKeyデータ新規登録時に既に値が登録されていた場合のエラーメッセージ
+    public static final String keyNodeKeyNewRegistErrMsg = "NG:Data has already been registered";
+
     // データノードに対するKeyデータ削除時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeKeyRemoveSuccessStr = "5,true";
 
@@ -66,8 +69,18 @@ public class ImdstDefine {
 
     // memcacheモード時の命令コマンドの区切り文字
     public static final String memcacheExecuteMethodSep = " ";
+
     // memcacheモード時の命令コマンドのset命令文字
     public static final String memcacheExecuteMethodSet = "set";
+
+    // memcacheモード時の命令コマンドのadd命令文字
+    public static final String memcacheExecuteMethodAdd = "add";
+    // memcacheモード時の命令コマンドのappend命令文字
+    public static final String memcacheExecuteMethodAppend = "append";
+
+    // memcacheモード時の命令コマンドのdelete命令文字
+    public static final String memcacheExecuteMethodDelete = "delete";
+
     // memcacheモード時の命令コマンドのget命令文字
     public static final String memcacheExecuteMethodGet = "get";
 
@@ -79,6 +92,18 @@ public class ImdstDefine {
 
     // memcacheモード時の命令コマンドのset命令の成功結果文字
     public static final String memcacheMethodRetrunServerError = "SERVER_ERROR";
+
+    // memcacheモード時の命令コマンドのadd命令の登録エラー結果文字
+    public static final String memcacheMethodReturnErrorAdd = "NOT_STORED";
+
+    // memcacheモード時の命令コマンドのdelete命令の削除成功結果文字
+    public static final String memcacheMethodReturnSuccessDelete = "DELETED";
+
+    // memcacheモード時の命令コマンドのdelete命令の削除失敗(存在しない)結果文字
+    public static final String memcacheMethodReturnErrorDelete = "NOT_FOUND";
+
+    // memcacheモード時の命令コマンドの共通エラー文字列
+    public static final String memcacheMethodReturnErrorComn = "ERROR";
 
 
     /* --  通信時の固定文字列系定数  ----------                           */
