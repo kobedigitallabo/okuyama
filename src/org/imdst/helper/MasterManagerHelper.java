@@ -1352,6 +1352,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         boolean mainNodeSave = false;
         boolean subNodeSave = false;
 
+        StringBuffer buf = new StringBuffer();
+        String sendData = null;
+        boolean subNodeConnect = false;
+
         try {
 
             // TransactionModeの状態に合わせてLock状態を確かめる
@@ -1372,10 +1376,33 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
             }
 
-            do {
-                // KeyNodeとの接続を確立
-                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
 
+            // 送信パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+            if (type.equals("1")) {
+
+                // Key値でValueを保存
+                buf.append("1");
+            } else if (type.equals("3")) {
+
+                // Tag値でキー値を保存
+                buf.append("3");
+            } else {
+                throw new BatchException("setKeyNodeValue No Type Method [" + type + "]");
+            }
+
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append(values[0].hashCode());               // Key値
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append(transactionCode);                    // Transaction値
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append(values[1]);                          // Value値
+            sendData = buf.toString();
+
+            // KeyNodeとの接続を確立
+            dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+
+            // DataNodeに送信
+            do {
 
                 // 接続結果と、現在の保存先状況で処理を分岐
                 if (dtMap != null) {
@@ -1384,32 +1411,27 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         pw = (PrintWriter)dtMap.get("writer");
                         br = (BufferedReader)dtMap.get("reader");
 
-                        // 処理種別判別
-                        if (type.equals("1")) {
-
-                            // Key値でデータノード名を保存
-                            StringBuffer buf = new StringBuffer();
-                            // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
-                            buf.append("1");
-                            buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(values[0].hashCode());               // Key値
-                            buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(transactionCode);                    // Transaction値
-                            buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(values[1]);                          // Value値
-
 //long start1 = System.nanoTime();
+                        // 送信
+                        pw.println(buf.toString());
+                        pw.flush();
 
-                            // 送信
-                            pw.println(buf.toString());
-                            pw.flush();
+                        // SlaveNodeに保存する必要がある場合はDataNodeからの処理返却待ちの間に接続を済ませておく
+                        if (counter == 0 && subKeyNodeName != null) {
+                            dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                            subNodeConnect = true;
+                        }
 
-                            // 返却値取得
-                            retParam = br.readLine();
+                        // 返却値取得
+                        retParam = br.readLine();
 //long end1 = System.nanoTime();
 //System.out.println("[" + (end1 - start1) + "]");
 
 
+                        // 処理種別判別
+                        if (type.equals("1")) {
+
+                            // Key値でValueを保存
                             // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                             //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
                             if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
@@ -1417,27 +1439,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 if (counter == 1) subNodeSave = true;
                             } else {
                                 // 論理的に登録失敗
-		                        super.setDeadNode(nodeName + ":" + nodePort);
-		                        logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
+                                super.setDeadNode(nodeName + ":" + nodePort);
+                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
                             }
                         } else if (type.equals("3")) {
 
                             // Tag値でキー値を保存
-                            StringBuffer buf = new StringBuffer();
-                            buf.append("3");
-                            buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(values[0].hashCode());
-                            buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(transactionCode);                    // Transaction値
-                            buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(values[1]);
-
-                            // 送信
-                            pw.println(buf.toString());
-                            pw.flush();
-
-                            // 返却値取得
-                            retParam = br.readLine();
 
                             // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                             //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
@@ -1446,9 +1453,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 if (counter == 1) subNodeSave = true;
                             } else {
                                 // 論理的に登録失敗
-		                        super.setDeadNode(nodeName + ":" + nodePort);
-		                        logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
-							}
+                                super.setDeadNode(nodeName + ":" + nodePort);
+                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
+                            }
                         }
 
                     } catch (SocketException se) {
@@ -1456,9 +1463,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         super.setDeadNode(nodeName + ":" + nodePort);
                         logger.debug(se);
                     } catch (IOException ie) {
+
                         super.setDeadNode(nodeName + ":" + nodePort);
                         logger.debug(ie);
                     }
+                } 
+
+                // SubNodeの指定は存在するが接続前に処理を抜けた場合はここで接続
+                // 原因はMainNodeの接続に失敗したか、接続後Exceptionが発生した場合
+                if (subNodeConnect == false && subKeyNodeName != null) {
+                    dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
                 }
 
                 // スレーブデータノードの名前を代入
@@ -1824,8 +1838,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             if (counter == 1) subNodeSave = true;
                         } else if (retParam == null || retParam.indexOf(ImdstDefine.keyNodeKeyRemoveNotFoundStr) != 0){
                             // 論理的に削除失敗
-	                        super.setDeadNode(nodeName + ":" + nodePort);
-	                        logger.error("removeKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
+                            super.setDeadNode(nodeName + ":" + nodePort);
+                            logger.error("removeKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
 
                         }
                     } catch (SocketException se) {
