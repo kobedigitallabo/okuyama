@@ -1412,9 +1412,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                             //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                            if (retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
+                            if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
                                 if (counter == 0) mainNodeSave = true;
                                 if (counter == 1) subNodeSave = true;
+                            } else {
+                                // 論理的に登録失敗
+		                        super.setDeadNode(nodeName + ":" + nodePort);
+		                        logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
                             }
                         } else if (type.equals("3")) {
 
@@ -1437,10 +1441,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                             //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                            if (retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
+                            if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
                                 if (counter == 0) mainNodeSave = true;
                                 if (counter == 1) subNodeSave = true;
-                            }
+                            } else {
+                                // 論理的に登録失敗
+		                        super.setDeadNode(nodeName + ":" + nodePort);
+		                        logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
+							}
                         }
 
                     } catch (SocketException se) {
@@ -1468,6 +1476,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     throw new BatchException("Key Node IO Error: detail info for log file");
                 }
             }
+
         } catch (BatchException be) {
 
             throw be;
@@ -1810,9 +1819,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
                         // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-                        if (retParam.indexOf(ImdstDefine.keyNodeKeyRemoveSuccessStr) == 0) {
+                        if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRemoveSuccessStr) == 0) {
                             if (counter == 0) mainNodeSave = true;
                             if (counter == 1) subNodeSave = true;
+                        } else if (retParam == null || retParam.indexOf(ImdstDefine.keyNodeKeyRemoveNotFoundStr) != 0){
+                            // 論理的に削除失敗
+	                        super.setDeadNode(nodeName + ":" + nodePort);
+	                        logger.error("removeKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
+
                         }
                     } catch (SocketException se) {
 

@@ -22,7 +22,7 @@ public class JavaSystemApi {
 
     // gcを実行するかの閾値「全割り当てメモリ量中の何パーセント使用しているか」
     // この値を超えると、gcを発行する
-    private static final int useMemSizeLimit = 95;
+    private static final int useMemSizeLimit = 90;
 
 
     /**
