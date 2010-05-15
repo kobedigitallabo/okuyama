@@ -1050,7 +1050,11 @@ public class KeyMapManager extends Thread {
                                 for (i = 0; i < allDataLines.length; i++) {
                                     if (!allDataLines[i].trim().equals("")) {
                                         oneDatas = allDataLines[i].split(workFileSeq);
-                                        this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1]);
+                                        if (oneDatas.length == 2) {
+                                            this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1]);
+                                        } else if (oneDatas.length == 3) {
+                                            this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1] + workFileSeq + oneDatas[2]);
+                                        }
                                     }
                                 }
                                 counter++;
@@ -1065,20 +1069,34 @@ public class KeyMapManager extends Thread {
                                 if (allDataLines.length == 1) {
                                     if (!allDataLines[0].trim().equals("")) {
                                         oneDatas = allDataLines[0].split(workFileSeq);
-                                        this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
+                                        if (oneDatas.length == 2) {
+                                            this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
+                                        } else if (oneDatas.length == 3) {
+                                            this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1] + workFileSeq + oneDatas[2]);
+                                        }
+
                                     }
                                 } else if (allDataLines.length > 1) {
 
                                     for (i = 0; i < (allDataLines.length - 1); i++) {
                                         if (!allDataLines[i].trim().equals("")) {
                                             oneDatas = allDataLines[i].split(workFileSeq);
-                                            this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1]);
+
+                                            if (oneDatas.length == 2) {
+                                                this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1]);
+                                            } else if (oneDatas.length == 3) {
+                                                this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1] + workFileSeq + oneDatas[2]);
+                                            }
                                         }
                                     }
 
                                     if (!allDataLines[allDataLines.length - 1].trim().equals("")) {
                                         oneDatas = allDataLines[allDataLines.length - 1].split(workFileSeq);
-                                        this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
+                                        if (oneDatas.length == 2) {
+                                            this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
+                                        } else if (oneDatas.length == 3) {
+                                            this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1] + workFileSeq + oneDatas[2]);
+                                        }
                                     }
                                 }
 
