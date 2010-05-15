@@ -1127,7 +1127,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // 返却値取得
                         String retParam = br.readLine();
-
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
                         // value値にセパレータが入っていても無視する

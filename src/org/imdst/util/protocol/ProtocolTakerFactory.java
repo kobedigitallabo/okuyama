@@ -35,6 +35,9 @@ public class ProtocolTakerFactory {
         } else if (protocol.equals("memcache")) {
             // memcache
             taker = new MemcacheProtocolTaker(); 
+        } else if (protocol.equals("memcache_datanode")) {
+            // memcache
+            taker = new MemcacheProtocolTaker4Data(); 
         } else {
             throw new Exception("Protocol Error [" + protocol + "]");
         }

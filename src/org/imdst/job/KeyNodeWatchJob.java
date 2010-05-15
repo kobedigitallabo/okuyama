@@ -43,16 +43,16 @@ public class KeyNodeWatchJob extends AbstractJob implements IJob {
     public String executeJob(String optionParam) throws BatchException {
         logger.debug("KeyNodeWatchJob - executeJob - start");
         String ret = SUCCESS;
-		
+        
         try{
-			// 起動してから一定時間停止する
-			// DataNodeを同時立ち上げた場合の対応
-			// デフォルトは30秒
-			if (optionParam != null && !optionParam.trim().equals("")) { 
-				Thread.sleep(Integer.parseInt(optionParam));
-			} else {
-				Thread.sleep(30000);
-			}
+            // 起動してから一定時間停止する
+            // DataNodeを同時立ち上げた場合の対応
+            // デフォルトは10秒
+            if (optionParam != null && !optionParam.trim().equals("")) { 
+                Thread.sleep(Integer.parseInt(optionParam));
+            } else {
+                Thread.sleep(10000);
+            }
             int helperCode = super.executeHelper("KeyNodeWatchHelper", null);
 
             Object[] helperRet = null;

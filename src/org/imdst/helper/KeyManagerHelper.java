@@ -13,6 +13,7 @@ import org.batch.util.LoggerFactory;
 import org.imdst.util.KeyMapManager;
 import org.imdst.util.ImdstDefine;
 import org.imdst.util.StatusUtil;
+import org.imdst.util.protocol.*;
 
 
 import com.sun.mail.util.BASE64DecoderStream;
@@ -73,6 +74,11 @@ public class KeyManagerHelper extends AbstractHelper {
 
     private Socket soc = null;
 
+    // プロトコルモード
+    private String protocolMode = null;
+    private IProtocolTaker porotocolTaker = null;
+
+
     // 保存可能なデータの最大サイズ
     private static int setDatanodeMaxSize = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
 
@@ -83,6 +89,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
     // 初期化メソッド定義
     public void initHelper(String initValue) {
+        this.protocolMode = initValue;
     }
 
     // Jobメイン処理定義
@@ -98,6 +105,7 @@ public class KeyManagerHelper extends AbstractHelper {
         BufferedReader br = null;
         String[] retParams = null;
         StringBuffer retParamBuf = null;
+        
 
         try{
 
@@ -118,6 +126,11 @@ public class KeyManagerHelper extends AbstractHelper {
             this.keyMapManager = (KeyMapManager)parameters[0];
             this.soc = (Socket)parameters[1];
 
+            // プロトコル決定
+            if (this.protocolMode != null && !this.protocolMode.trim().equals("") && !this.protocolMode.equals("okuyama")) {
+                this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode + "_datanode");
+            }
+
             // クライアントへのアウトプット
             osw = new OutputStreamWriter(this.soc.getOutputStream() , 
                                                             ImdstDefine.keyHelperClientParamEncoding);
@@ -128,10 +141,32 @@ public class KeyManagerHelper extends AbstractHelper {
                                                           ImdstDefine.keyHelperClientParamEncoding);
             br = new BufferedReader(isr);
 
+
             while(!closeFlg) {
                 try {
 
-                    clientParametersStr = br.readLine();
+                    // プロトコルに合わせて処理を分岐
+                    if (this.porotocolTaker != null) {
+
+                        // Takerで会話開始
+                        clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
+
+                        if (this.porotocolTaker.nextExecution() != 1) {
+
+                            // 処理をやり直し
+                            if (this.porotocolTaker.nextExecution() == 2) continue;
+
+                            // クライアントからの要求が接続切要求ではないか確認
+                            if (this.porotocolTaker.nextExecution() == 3) {
+
+                                clientParametersStr = ImdstDefine.imdstConnectExitRequest;
+                            }
+                        }
+                    } else {
+                        // okuyamaプロトコル
+                        clientParametersStr = br.readLine();
+                    }
+
 
                     // クライアントからの要求が接続切要求ではないか確認
                     if (clientParametersStr == null || 
@@ -293,8 +328,17 @@ public class KeyManagerHelper extends AbstractHelper {
                     } 
 
                     if (retParamBuf != null) {
-                        pw.println(retParamBuf.toString());
-                        pw.flush();
+                        // プロトコルに合わせて処理を分岐
+                        if (this.porotocolTaker != null) {
+
+                            // Takerで会話開始
+                            pw.println(this.porotocolTaker.takeResponseLine(retParamBuf.toString().split(ImdstDefine.keyHelperClientParamSep)));
+                            pw.flush();
+
+                        } else {
+                            pw.println(retParamBuf.toString());
+                            pw.flush();
+                        }
                     }
                 } catch (SocketException se) {
                     closeFlg = true;
