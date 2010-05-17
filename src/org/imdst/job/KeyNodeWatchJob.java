@@ -47,11 +47,11 @@ public class KeyNodeWatchJob extends AbstractJob implements IJob {
         try{
             // 起動してから一定時間停止する
             // DataNodeを同時立ち上げた場合の対応
-            // デフォルトは10秒
+            // デフォルトは20秒
             if (optionParam != null && !optionParam.trim().equals("")) { 
                 Thread.sleep(Integer.parseInt(optionParam));
             } else {
-                Thread.sleep(10000);
+                Thread.sleep(20000);
             }
             int helperCode = super.executeHelper("KeyNodeWatchHelper", null);
 
