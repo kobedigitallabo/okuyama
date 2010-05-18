@@ -4,6 +4,8 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
+import org.apache.commons.lang.builder.*;
+
 import org.batch.lang.BatchException;
 import org.batch.job.AbstractHelper;
 import org.batch.job.IJob;
@@ -1119,7 +1121,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
                         buf.append("2");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(key.hashCode());
+                        buf.append(this.hashCodeCnv(key));
 
                         // 送信
                         pw.println(buf.toString());
@@ -1138,7 +1140,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
                         buf.append("4");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(key.hashCode());
+                        buf.append(this.hashCodeCnv(key));
 
                         // 送信
                         pw.println(buf.toString());
@@ -1254,7 +1256,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
                         buf.append("8");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(key.hashCode());
+                        buf.append(this.hashCodeCnv(key));
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(scriptStr);
 
@@ -1390,7 +1392,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
             buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append(values[0].hashCode());               // Key値
+            buf.append(this.hashCodeCnv(values[0]));               // Key値
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append(transactionCode);                    // Transaction値
             buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -1587,7 +1589,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
                     buf.append("6");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(values[0].hashCode());               // Key値
+                    buf.append(this.hashCodeCnv(values[0]));               // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(transactionCode);                    // Transaction値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -1647,7 +1649,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 buf.append("1");
                             }
                             buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(values[0].hashCode());               // Key値
+                            buf.append(this.hashCodeCnv(values[0]));               // Key値
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(transactionCode);                    // Transaction値
                             buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -1814,7 +1816,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
                         buf.append("5");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(key.hashCode());
+                        buf.append(this.hashCodeCnv(key));
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(transactionCode);
 
@@ -1928,7 +1930,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     StringBuffer buf = new StringBuffer();
                     buf.append("30");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(key.hashCode());               // Key値
+                    buf.append(this.hashCodeCnv(key));               // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(transactionCode);                    // Transaction値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -2031,7 +2033,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     StringBuffer buf = new StringBuffer();
                     buf.append("31");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(key.hashCode());               // Key値
+                    buf.append(this.hashCodeCnv(key));               // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(transactionCode);              // Transaction値
 
@@ -2130,7 +2132,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     StringBuffer buf = new StringBuffer();
                     buf.append("32");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(key.hashCode());               // Key値
+                    buf.append(this.hashCodeCnv(key));               // Key値
 
                     // 送信
                     pw.println(buf.toString());
@@ -2650,6 +2652,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
     }
 
+
+	// HashCodeを生成
+	// 既存のhashCode関数を呼び出しているだけ、
+	// HashCodeBuilderを使用することも可能
+	private int hashCodeCnv(String str) {
+		//return new HashCodeBuilder(9,17).append(str).toHashCode();
+		return str.hashCode();
+	}
+
+
     /**
      * データをノードへ反映する内部スレッド.<br>
      *
@@ -2683,7 +2695,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 StringBuffer buf = new StringBuffer();
                 buf.append(type);
                 buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(key.hashCode());
+                buf.append(hashCodeCnv(key));
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(transactionCode);
                 buf.append(ImdstDefine.keyHelperClientParamSep);
