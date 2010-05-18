@@ -2653,13 +2653,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
-	// HashCodeを生成
-	// 既存のhashCode関数を呼び出しているだけ、
-	// HashCodeBuilderを使用することも可能
-	private int hashCodeCnv(String str) {
-		//return new HashCodeBuilder(9,17).append(str).toHashCode();
-		return str.hashCode();
-	}
+    // HashCodeを生成
+    // 既存のhashCode関数を呼び出しているだけ、
+    // HashCodeBuilderを使用することも可能
+    private int hashCodeCnv(String str) {
+        return new HashCodeBuilder(17,37).append(str).toHashCode();
+        //return str.hashCode();
+    }
 
 
     /**
