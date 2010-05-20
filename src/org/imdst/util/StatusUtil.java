@@ -2,6 +2,8 @@ package org.imdst.util;
 
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
@@ -23,13 +25,13 @@ public class StatusUtil {
     private static Object nodeSync = new Object();
 
     // ノードの死活状態を管理
-    private static Hashtable checkErrorMap = new Hashtable();
+    private static ConcurrentHashMap checkErrorMap = new ConcurrentHashMap(50, 40, 50);
 
     // ノードの使用状態を管理(数値でプラス、マイナスが格納)
     private static HashMap nodeExecMap = new HashMap();
 
     // ノードの最新復活時間を管理
-    private static Hashtable nodeRebootTimeMap = new Hashtable();
+    private static ConcurrentHashMap nodeRebootTimeMap = new ConcurrentHashMap(50, 40, 50);
 
     private static String nowMemoryStatus = null;
 

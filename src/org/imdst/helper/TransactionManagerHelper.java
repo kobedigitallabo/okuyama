@@ -61,7 +61,7 @@ public class TransactionManagerHelper extends AbstractHelper {
             String clientParametersStr = null;
             String[] clientParameterList = null;
 
-            Integer requestHashCode = null;
+            String requestKeyCode = null;
             String transactionCode = null;
             int lockWaitingTime = 0;
             int lockingTime = 0;
@@ -103,13 +103,13 @@ public class TransactionManagerHelper extends AbstractHelper {
                     if(clientParameterList[0].equals("30")) {
 
                         // Key値とTransactionCodeを使用してLockを取得する
-                        requestHashCode = new Integer(clientParameterList[1]);
+                        requestKeyCode = clientParameterList[1];
                         transactionCode = clientParameterList[2];
                         lockingTime = Integer.parseInt(clientParameterList[3]);
                         lockWaitingTime = Integer.parseInt(clientParameterList[4]);
 
                         // メソッド呼び出し
-                        retParams = this.lockDatanode(requestHashCode, transactionCode, lockingTime, lockWaitingTime);
+                        retParams = this.lockDatanode(requestKeyCode, transactionCode, lockingTime, lockWaitingTime);
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[1]);
@@ -120,11 +120,11 @@ public class TransactionManagerHelper extends AbstractHelper {
 
                     } else if(clientParameterList[0].equals("31")) {
                         // Key値とTransactionCodeを使用してLockの開放を行う
-                        requestHashCode = new Integer(clientParameterList[1]);
+                        requestKeyCode = clientParameterList[1];
                         transactionCode = clientParameterList[2];
 
                         // メソッド呼び出し
-                        retParams = this.releaseLockDatanode(requestHashCode, transactionCode);
+                        retParams = this.releaseLockDatanode(requestKeyCode, transactionCode);
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[1]);
@@ -135,10 +135,10 @@ public class TransactionManagerHelper extends AbstractHelper {
                     } else if(clientParameterList[0].equals("32")) {
 
                         // KeyでLockが行われているか確認する
-                        requestHashCode = new Integer(clientParameterList[1]);
+                        requestKeyCode = clientParameterList[1];
 
                         // メソッド呼び出し
-                        retParams = this.hasLockDatanode(requestHashCode);
+                        retParams = this.hasLockDatanode(requestKeyCode);
                         retParamBuf.append(retParams[0]);
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(retParams[1]);
@@ -211,7 +211,7 @@ public class TransactionManagerHelper extends AbstractHelper {
      * @param lockWaitingTime Lock取得待ち時間(秒)
      * @return String[] 要素1:処理コード,要素2:Lock成否("true" or "false"), 要素3:成功の場合はtransactionCode
      */
-    private String[] lockDatanode(Integer key, String transactionCode, int lockingTime, int lockWaitingTime) {
+    private String[] lockDatanode(String key, String transactionCode, int lockingTime, int lockWaitingTime) {
         //logger.debug("TransactionManagerHelper - lockDatanode - start");
         String[] retStrs = null;
         long counter = 0;
@@ -226,12 +226,12 @@ public class TransactionManagerHelper extends AbstractHelper {
 
                         retTranCd = this.keyMapManager.locking(key, transactionCode, lockingTime);
                         if (retTranCd != null) break;
-	                    if (counter == lockWaitingTime) break;
+                        if (counter == lockWaitingTime) break;
                         miniCounter++;
                         Thread.sleep(100);
                     }
 
-					if (counter == lockWaitingTime) break;
+                    if (counter == lockWaitingTime) break;
                     if (retTranCd != null) break;
                     counter++;
                 }
@@ -271,7 +271,7 @@ public class TransactionManagerHelper extends AbstractHelper {
      * @param transactionCode Lock時に使用するTransactionCode
      * @return String[] 要素1:処理コード,要素2:Lock開放成否("true" or "false"), 要素3:成功の場合はtransactionCode
      */
-    private String[] releaseLockDatanode(Integer key, String transactionCode) {
+    private String[] releaseLockDatanode(String key, String transactionCode) {
         //logger.debug("TransactionManagerHelper - releaseLockDatanode - start");
         String[] retStrs = null;
         try {
@@ -319,7 +319,7 @@ public class TransactionManagerHelper extends AbstractHelper {
      * @param key Lock対象キー
      * @return String[] 要素1:処理コード,要素2:Lock状況("true" or "false"),要素3:Lock中の場合はTransactionCode
      */
-    private String[] hasLockDatanode(Integer key) {
+    private String[] hasLockDatanode(String key) {
         //logger.debug("TransactionManagerHelper - isLockDatanode - start");
         String[] retStrs = null;
         try {

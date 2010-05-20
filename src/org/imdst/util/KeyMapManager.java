@@ -242,22 +242,22 @@ public class KeyMapManager extends Thread {
                                     if (workSplitStrs[0].equals("+")) {
 
                                         // トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
-                                        keyMapObjPutSetTime(new Integer(workSplitStrs[1]), workSplitStrs[2], new Long(workSplitStrs[3]).longValue());
+                                        keyMapObjPutSetTime(workSplitStrs[1], workSplitStrs[2], new Long(workSplitStrs[3]).longValue());
                                     } else if (workSplitStrs[0].equals("-")) {
 
                                         // トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
-                                        keyMapObjRemoveSetTime(new Integer(workSplitStrs[1]), new Long(workSplitStrs[3]).longValue());
+                                        keyMapObjRemoveSetTime(workSplitStrs[1], new Long(workSplitStrs[3]).longValue());
                                     }
                                 } else if (workSplitStrs.length == 6) {
                                     // 登録データ
                                     if (workSplitStrs[0].equals("+")) {
 
                                         // トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
-                                        keyMapObjPutSetTime(new Integer(workSplitStrs[1]), workSplitStrs[2] + workFileSeq + workSplitStrs[3], new Long(workSplitStrs[4]).longValue());
+                                        keyMapObjPutSetTime(workSplitStrs[1], workSplitStrs[2] + workFileSeq + workSplitStrs[3], new Long(workSplitStrs[4]).longValue());
                                     } else if (workSplitStrs[0].equals("-")) {
 
                                         // トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
-                                        keyMapObjRemoveSetTime(new Integer(workSplitStrs[1]), new Long(workSplitStrs[3]).longValue());
+                                        keyMapObjRemoveSetTime(workSplitStrs[1], new Long(workSplitStrs[3]).longValue());
                                     }
                                 } else {
 
@@ -366,7 +366,7 @@ public class KeyMapManager extends Thread {
      * @param keyNode Value値
      * @param transactionCode 
      */
-    public void setKeyPair(Integer key, String keyNode, String transactionCode) throws BatchException {
+    public void setKeyPair(String key, String keyNode, String transactionCode) throws BatchException {
         if (!blocking) {
             try {
                 //logger.debug("setKeyPair - synchronized - start");
@@ -378,7 +378,7 @@ public class KeyMapManager extends Thread {
                 if (workFileMemory == false) {
                     synchronized(setKeyLock) {
                         // データ格納場所記述ファイル再保存
-                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key.toString()).append(workFileSeq).append(keyNode).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
+                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
                         this.bw.newLine();
                         this.bw.flush();
                     }
@@ -403,7 +403,7 @@ public class KeyMapManager extends Thread {
      * @param keyNode Value値
      * @param transactionCode 
      */
-    public boolean setKeyPairOnlyOnce(Integer key, String keyNode, String transactionCode) throws BatchException {
+    public boolean setKeyPairOnlyOnce(String key, String keyNode, String transactionCode) throws BatchException {
         boolean ret = false;
         if (!blocking) {
             try {
@@ -420,7 +420,7 @@ public class KeyMapManager extends Thread {
                     if (workFileMemory == false) {
 
                         // データ格納場所記述ファイル再保存
-                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key.toString()).append(workFileSeq).append(keyNode).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
+                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
                         this.bw.newLine();
                         this.bw.flush();
                     }
@@ -439,7 +439,7 @@ public class KeyMapManager extends Thread {
 
 
     // キーを指定することでノードを返す
-    public String getKeyPair(Integer key) {
+    public String getKeyPair(String key) {
         String ret = null;
         if (!blocking) {
             ret =  (String)keyMapObjGet(key);
@@ -448,13 +448,18 @@ public class KeyMapManager extends Thread {
     }
 
     // キーを指定することでノードを削除する
-    public String removeKeyPair(Integer key, String transactionCode) throws BatchException {
+    public String removeKeyPair(String key, String transactionCode) throws BatchException {
         String ret = null;
         if (!blocking) {
             try {
-                    ret =  (String)keyMapObjGet(key);
                     synchronized(this.rmKeyLock) {
-                        keyMapObjRemove(key);
+                        ret =  (String)keyMapObjGet(key);
+
+                        if (ret != null) {
+                            keyMapObjRemove(key);
+                        } else {
+                            return null;
+                        }
                     }
 
                     // データの書き込みを指示
@@ -463,14 +468,14 @@ public class KeyMapManager extends Thread {
                     if (workFileMemory == false) {
                         synchronized(this.setKeyLock) {
                             // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                            this.bw.write(new StringBuffer("-").append(workFileSeq).append(key.toString()).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
+                            this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
                             this.bw.newLine();
                             this.bw.flush();
                         }
                     }
 
             } catch (Exception e) {
-                logger.error("removeKeyPair - Error");
+                logger.error("System.out.println(removeKeyPair - Error");
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "removeKeyPair - Error[" + e.getMessage() + "]");
                 throw new BatchException(e);
@@ -480,7 +485,7 @@ public class KeyMapManager extends Thread {
     }
 
     // Tagとキーを指定することでTagとキーをセットする
-    public void setTagPair(Integer tag, String key, String transactionCode) throws BatchException {
+    public void setTagPair(String tag, String key, String transactionCode) throws BatchException {
 
         if (!blocking) {
 
@@ -490,14 +495,14 @@ public class KeyMapManager extends Thread {
                     String keyStrs = null;
                     int counter = 0;
                     boolean appendFlg = true;
-                    Integer tagCnv = null;
-                    Integer lastTagCnv = null;
+                    String tagCnv = null;
+                    String lastTagCnv = null;
                     int dataPutCounter = 0;
                     boolean firsrtRegist = true;
 
                     while (true) {
 
-                        tagCnv = new Integer((tagStartStr + tag + "_" + new Integer(counter).toString() + tagEndStr).hashCode());
+                        tagCnv = tagStartStr + tag + "_" + new Integer(counter).toString() + tagEndStr;
 
                         if (this.containsKeyPair(tagCnv)) {
                             firsrtRegist = false;
@@ -541,12 +546,12 @@ public class KeyMapManager extends Thread {
                                 // 既にキー値が最大のサイズに到達しているので別のキーを生み出す
                                 counter++;
 
-                                tagCnv = new Integer((tagStartStr + tag + "_" + (dataPutCounter + 1) + tagEndStr).hashCode());
+                                tagCnv = tagStartStr + tag + "_" + (dataPutCounter + 1) + tagEndStr;
                                 this.setKeyPair(tagCnv, key, transactionCode);
                             } else{
 
                                 // アペンド
-                                tagCnv = new Integer((tagStartStr + tag + "_" + dataPutCounter + tagEndStr).hashCode());
+                                tagCnv = tagStartStr + tag + "_" + dataPutCounter + tagEndStr;
 
                                 keyStrs = keyStrs + tagKeySep + key;
                                 this.setKeyPair(tagCnv, keyStrs, transactionCode);
@@ -565,7 +570,7 @@ public class KeyMapManager extends Thread {
 
 
     // Tagを指定することでKeyリストを返す
-    public String getTagPair(Integer tag) {
+    public String getTagPair(String tag) {
         String keyStrs = "";
         boolean isMatch = false;
         StringBuffer tmpBuf = new StringBuffer();
@@ -578,7 +583,7 @@ public class KeyMapManager extends Thread {
             // Tagのキー値を連結
             while(true) {
 
-                Integer tagCnv = new Integer((tagStartStr + tag + "_" + counter + tagEndStr).hashCode());
+                String tagCnv = tagStartStr + tag + "_" + counter + tagEndStr;
 
                 if (this.containsKeyPair(tagCnv)) {
 
@@ -618,7 +623,7 @@ public class KeyMapManager extends Thread {
 
 
     // キーを指定することでキーが存在するかを返す
-    public boolean containsKeyPair(Integer key) {
+    public boolean containsKeyPair(String key) {
         boolean ret = false;
         if (!blocking) {
             ret =  this.keyMapObj.containsKey(key);
@@ -627,10 +632,10 @@ public class KeyMapManager extends Thread {
     }
 
     // キーを指定することでキーが存在するかを返す
-    public boolean containsTagPair(Integer tag) {
+    public boolean containsTagPair(String tag) {
         boolean ret = false;
         if (!blocking) {
-            Integer tagCnv = new Integer((tagStartStr + tag + "_0" + tagEndStr).hashCode());
+            String tagCnv = tagStartStr + tag + "_0" + tagEndStr;
 
             ret =  this.containsKeyPair(tagCnv);
         }
@@ -645,7 +650,7 @@ public class KeyMapManager extends Thread {
      * @param lockingTime Lock継続時間
      * @return String 成功時はtransactionCode、失敗時はnull
      */
-    public String locking (Integer key, String transactionCode, int lockingTime) throws BatchException {
+    public String locking (String key, String transactionCode, int lockingTime) throws BatchException {
         if (!blocking) {
             try {
                 String saveTransactionStr =  null;
@@ -664,7 +669,7 @@ public class KeyMapManager extends Thread {
                     if (workFileMemory == false) {
                         synchronized(this.setKeyLock) {
                             // データ格納場所記述ファイル再保存
-                            this.bw.write(new StringBuffer("+").append(workFileSeq).append(key.toString()).append(workFileSeq).append(saveTransactionStr).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
+                            this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(saveTransactionStr).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
                             this.bw.newLine();
                             this.bw.flush();
                         }
@@ -690,7 +695,7 @@ public class KeyMapManager extends Thread {
      * @param transactionCode 取得時に使用するTransactionCode
      * @return String 成功時はtransactionCode、失敗時はnull
      */
-    public String removeLock (Integer key, String transactionCode) throws BatchException {
+    public String removeLock (String key, String transactionCode) throws BatchException {
 
         String ret = null;
         if (!blocking) {
@@ -709,7 +714,7 @@ public class KeyMapManager extends Thread {
                     if (workFileMemory == false) {
                         synchronized(this.setKeyLock) {
                             // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                            this.bw.write(new StringBuffer("-").append(workFileSeq).append(key.toString()).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
+                            this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
                             this.bw.newLine();
                             this.bw.flush();
                         }
@@ -733,7 +738,7 @@ public class KeyMapManager extends Thread {
      * @param key Key値
      * @return boolean true:ロックされている false:ロックされていない
      */
-    public boolean isLock (Integer key) {
+    public boolean isLock (String key) {
         return this.containsKeyPair(key);
     }
 
@@ -744,7 +749,7 @@ public class KeyMapManager extends Thread {
      * @param key Key値
      * @return String TransactionCode
      */
-    public String getLockedTransactionCode (Integer key) {
+    public String getLockedTransactionCode (String key) {
         synchronized(this.lockKeyLock) {
             if (!this.containsKeyPair(key)) return null;
             return ((String[])((String)this.keyMapObjGet(key)).split(this.lockKeyTimeSep))[0];
@@ -767,9 +772,9 @@ public class KeyMapManager extends Thread {
                     Set set = this.keyMapObj.keySet();
                     Iterator iterator = set.iterator();
 
-                    Integer[] keyList = new Integer[this.keyMapObj.size()];
+                    String[] keyList = new String[this.keyMapObj.size()];
                     for (int idx = 0; idx < keyList.length; idx++) {
-                        keyList[idx] = (Integer)iterator.next();
+                        keyList[idx] = (String)iterator.next();
                     }
 
                     for (int idx = 0; idx < keyList.length; idx++) {
@@ -784,7 +789,7 @@ public class KeyMapManager extends Thread {
                             if (workFileMemory == false) {
 
                                 // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                                this.bw.write(new StringBuffer("-").append(workFileSeq).append(keyList[idx].toString()).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
+                                this.bw.write(new StringBuffer("-").append(workFileSeq).append(keyList[idx]).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
                                 this.bw.newLine();
                                 this.bw.flush();
                             }
@@ -806,7 +811,7 @@ public class KeyMapManager extends Thread {
      * keyMapObjに対するアクセスメソッド.<br>
      * TODO:登録のValueのサイズが最大サイズを超えている場合は無条件で登録しない.<br>
      */
-    private void keyMapObjPut(Integer key, String val) {
+    private void keyMapObjPut(String key, String val) {
         if (val.length() < putValueMaxSize) {
             this.keyMapObj.put(key, val);
             this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
@@ -819,7 +824,7 @@ public class KeyMapManager extends Thread {
      * 更新時間を登録しない.<br>
      * TODO:登録のValueのサイズが最大サイズを超えている場合は無条件で登録しない.<br>
      */
-    private void keyMapObjPutNoChange(Integer key, String val) {
+    private void keyMapObjPutNoChange(String key, String val) {
         if (val.length() < putValueMaxSize) {
             this.keyMapObj.put(key, val);
         }
@@ -831,7 +836,7 @@ public class KeyMapManager extends Thread {
      * 任意の更新時間をセットする.<br>
      * TODO:登録のValueのサイズが最大サイズを超えている場合は無条件で登録しない.<br>
      */
-    private void keyMapObjPutSetTime(Integer key, String val, long execTime) {
+    private void keyMapObjPutSetTime(String key, String val, long execTime) {
         if (val.length() < putValueMaxSize) {
             this.keyMapObj.put(key, val);
             this.keyMapObj.setKLastDataChangeTime(execTime);
@@ -844,7 +849,7 @@ public class KeyMapManager extends Thread {
      * keyMapObjに対するアクセスメソッド.<br>
      * get<br>
      */
-    private String keyMapObjGet(Integer key) {
+    private String keyMapObjGet(String key) {
         this.lastAccess = System.currentTimeMillis();
         return (String)this.keyMapObj.get(key);
 
@@ -854,7 +859,7 @@ public class KeyMapManager extends Thread {
      * keyMapObjに対するアクセスメソッド.<br>
      * 
      */
-    private void keyMapObjRemove(Integer key) {
+    private void keyMapObjRemove(String key) {
         this.keyMapObj.remove(key);
         this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
         this.lastAccess = System.currentTimeMillis();
@@ -864,7 +869,7 @@ public class KeyMapManager extends Thread {
      * keyMapObjに対するアクセスメソッド.<br>
      *  任意の更新時間をセットする.<br>
      */
-    private void keyMapObjRemoveSetTime(Integer key, long execTime) {
+    private void keyMapObjRemoveSetTime(String key, long execTime) {
         this.keyMapObj.remove(key);
         this.keyMapObj.setKLastDataChangeTime(execTime);
         this.lastAccess = System.currentTimeMillis();
@@ -905,9 +910,9 @@ public class KeyMapManager extends Thread {
                         Map.Entry obj = (Map.Entry)entryIte.next();
 
                         allDataBuf.append(allDataSep);
-                        allDataBuf.append((Integer)obj.getKey());
+                        allDataBuf.append((String)obj.getKey());
                         allDataBuf.append(workFileSeq);
-                        allDataBuf.append(this.keyMapObjGet((Integer)obj.getKey()));
+                        allDataBuf.append(this.keyMapObjGet((String)obj.getKey()));
                         allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
                         counter++;
                         if (counter > (maxLineCount - 1)) {
@@ -996,9 +1001,9 @@ public class KeyMapManager extends Thread {
                                 if (!allDataLines[i].trim().equals("")) {
                                     oneDatas = allDataLines[i].split(workFileSeq);
                                     if (oneDatas.length == 2) {
-                                        this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1]);
+                                        this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1]);
                                     } else if (oneDatas.length == 3) {
-                                        this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1] + workFileSeq + oneDatas[2]);
+                                        this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1] + workFileSeq + oneDatas[2]);
                                     }
                                 }
                             }
@@ -1015,9 +1020,9 @@ public class KeyMapManager extends Thread {
                                 if (!allDataLines[0].trim().equals("")) {
                                     oneDatas = allDataLines[0].split(workFileSeq);
                                     if (oneDatas.length == 2) {
-                                        this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
+                                        this.keyMapObjPut(oneDatas[0], oneDatas[1]);
                                     } else if (oneDatas.length == 3) {
-                                        this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1] + workFileSeq + oneDatas[2]);
+                                        this.keyMapObjPut(oneDatas[0], oneDatas[1] + workFileSeq + oneDatas[2]);
                                     }
 
                                 }
@@ -1028,9 +1033,9 @@ public class KeyMapManager extends Thread {
                                         oneDatas = allDataLines[i].split(workFileSeq);
 
                                         if (oneDatas.length == 2) {
-                                            this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1]);
+                                            this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1]);
                                         } else if (oneDatas.length == 3) {
-                                            this.keyMapObjPutNoChange(new Integer(oneDatas[0]), oneDatas[1] + workFileSeq + oneDatas[2]);
+                                            this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1] + workFileSeq + oneDatas[2]);
                                         }
                                     }
                                 }
@@ -1038,9 +1043,9 @@ public class KeyMapManager extends Thread {
                                 if (!allDataLines[allDataLines.length - 1].trim().equals("")) {
                                     oneDatas = allDataLines[allDataLines.length - 1].split(workFileSeq);
                                     if (oneDatas.length == 2) {
-                                        this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1]);
+                                        this.keyMapObjPut(oneDatas[0], oneDatas[1]);
                                     } else if (oneDatas.length == 3) {
-                                        this.keyMapObjPut(new Integer(oneDatas[0]), oneDatas[1] + workFileSeq + oneDatas[2]);
+                                        this.keyMapObjPut(oneDatas[0], oneDatas[1] + workFileSeq + oneDatas[2]);
                                     }
                                 }
                             }

@@ -83,10 +83,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String clientParametersStr = null;
         String[] clientParameterList = null;
 
-        String keyParam = null;
-        String tagParam = null;
-        String dataParam = null;
-
         try{
 
             // Jobからの引数
@@ -126,9 +122,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 接続終了までループ
             while(!closeFlg) {
                 try {
-                    keyParam = null;
-                    tagParam = null;
-                    dataParam = null;
+
                     // 結果格納用String
                     retParamStr = "";
 
@@ -358,6 +352,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
 
         try {
+
+            // Key値チェック
+            if (!this.checkKeyLength(keyStr))  {
+                // 保存失敗
+                retStrs[0] = "1";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
             // Tag値を保存
             if (tagStr != null && !tagStr.equals("")) {
 
@@ -366,7 +370,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 String[] tags = tagStr.split(ImdstDefine.imdstTagKeyAppendSep);
 
                 for (int i = 0; i < tags.length; i++) {
+                    if (!this.checkKeyLength(tags[i]))  {
+                        // 保存失敗
+                        retStrs[0] = "1";
+                        retStrs[1] = "false";
+                        throw new BatchException("Tag Data Length Error");
 
+                    }
                     // Tag値保存先を問い合わせ
                     String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i]);
                     tagKeyPair = new String[2];
@@ -467,6 +477,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
 
         try {
+            // Key値チェック
+            if (!this.checkKeyLength(keyStr))  {
+                // 保存失敗
+                retStrs[0] = "6";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
             // キー値とデータを保存
             // 保存先問い合わせ
             String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
@@ -503,6 +522,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 String[] tags = tagStr.split(ImdstDefine.imdstTagKeyAppendSep);
 
                 for (int i = 0; i < tags.length; i++) {
+                    if (!this.checkKeyLength(tags[i]))  {
+                        // 保存失敗
+                        retStrs[0] = "6";
+                        retStrs[1] = "false";
+                        throw new BatchException("Tag Length Error");
+                    }
 
                     // Tag値保存先を問い合わせ
                     String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i]);
@@ -570,6 +595,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] keyNodeInfo = null;
 
         try {
+            if (!this.checkKeyLength(keyStr))  {
+                // 保存失敗
+                retStrs[0] = "2";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
 
             // キー値を使用して取得先を決定
             if (loadBalancing) {
@@ -681,6 +713,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] keyNodeInfo = null;
 
         try {
+            if (!this.checkKeyLength(keyStr))  {
+                // 保存失敗
+                retStrs[0] = "8";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
 
             // キー値を使用して取得先を決定
             if (loadBalancing) {
@@ -773,6 +812,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] keyNodeInfo = null;
 
         try {
+            // Key値チェック
+            if (!this.checkKeyLength(keyStr))  {
+                retStrs[0] = "5";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
 
             // キー値を使用して取得先を決定
             keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr);
@@ -819,7 +865,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - removeKeyValue - Error", be);
         } catch (Exception e) {
-            retStrs[0] = "2";
+            retStrs[0] = "5";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - removeKeyValue - Exception - " + e.toString();
         }
@@ -857,6 +903,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 return retStrs;
             }
 
+            // Key値チェック
+            if (!this.checkKeyLength(keyStr))  {
+                retStrs[0] = "30";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
             // TransactionManagerに処理を依頼
             keyNodeLockRet = lockKeyNodeValue(transactionManagerInfo[0], transactionManagerInfo[1], keyStr, transactionCode, lockingTime, lockingWaitTime);
 
@@ -879,7 +933,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - lockingData - Error", be);
         } catch (Exception e) {
-            retStrs[0] = "2";
+            retStrs[0] = "30";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - lockingData - Exception - " + e.toString();
         }
@@ -912,6 +966,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs = new String[2];
                 retStrs[0] = "31";
                 retStrs[1] = "false";
+                return retStrs;
+            }
+
+            // Key値チェック
+            if (!this.checkKeyLength(keyStr))  {
+                retStrs[0] = "31";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
                 return retStrs;
             }
 
@@ -988,8 +1050,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
+            // Key値チェック
+            if (!this.checkKeyLength(tagStr))  {
+                retStrs[0] = "4";
+                retStrs[1] = "false";
+                retStrs[2] = "Tag Length Error";
+                return retStrs;
+            }
+
             // キー値を使用して取得先を決定
             String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr);
+
 
             // 取得実行
             if (keyNodeInfo.length == 3) {
@@ -1121,7 +1192,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
                         buf.append("2");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(this.hashCodeCnv(key));
+                        buf.append(this.stringCnv(key));
 
                         // 送信
                         pw.println(buf.toString());
@@ -1140,7 +1211,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
                         buf.append("4");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(this.hashCodeCnv(key));
+                        buf.append(this.stringCnv(key));
 
                         // 送信
                         pw.println(buf.toString());
@@ -1256,7 +1327,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
                         buf.append("8");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(this.hashCodeCnv(key));
+                        buf.append(this.stringCnv(key));
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(scriptStr);
 
@@ -1392,7 +1463,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
             buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append(this.hashCodeCnv(values[0]));               // Key値
+            buf.append(this.stringCnv(values[0]));               // Key値
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append(transactionCode);                    // Transaction値
             buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -1589,7 +1660,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
                     buf.append("6");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(this.hashCodeCnv(values[0]));               // Key値
+                    buf.append(this.stringCnv(values[0]));               // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(transactionCode);                    // Transaction値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -1649,7 +1720,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 buf.append("1");
                             }
                             buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(this.hashCodeCnv(values[0]));               // Key値
+                            buf.append(this.stringCnv(values[0]));               // Key値
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(transactionCode);                    // Transaction値
                             buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -1816,7 +1887,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
                         buf.append("5");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(this.hashCodeCnv(key));
+                        buf.append(this.stringCnv(key));
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(transactionCode);
 
@@ -1930,7 +2001,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     StringBuffer buf = new StringBuffer();
                     buf.append("30");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(this.hashCodeCnv(key));               // Key値
+                    buf.append(this.stringCnv(key));               // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(transactionCode);                    // Transaction値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -2033,7 +2104,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     StringBuffer buf = new StringBuffer();
                     buf.append("31");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(this.hashCodeCnv(key));               // Key値
+                    buf.append(this.stringCnv(key));               // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(transactionCode);              // Transaction値
 
@@ -2132,7 +2203,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     StringBuffer buf = new StringBuffer();
                     buf.append("32");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(this.hashCodeCnv(key));               // Key値
+                    buf.append(this.stringCnv(key));               // Key値
 
                     // 送信
                     pw.println(buf.toString());
@@ -2653,14 +2724,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
-    // HashCodeを生成
-    // 既存のhashCode関数を呼び出しているだけ、
-    // HashCodeBuilderを使用することも可能
-    private int hashCodeCnv(String str) {
-        return new HashCodeBuilder(17,37).append(str).toHashCode();
+    private String stringCnv(String str) {
+        return str;
         //return str.hashCode();
     }
 
+    private boolean checkKeyLength(String key) {
+        if (key == null) return false;
+        if (key.length() >= ImdstDefine.saveKeyMaxSize) return false;
+        return true;
+    }
 
     /**
      * データをノードへ反映する内部スレッド.<br>
@@ -2695,7 +2768,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 StringBuffer buf = new StringBuffer();
                 buf.append(type);
                 buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(hashCodeCnv(key));
+                buf.append(stringCnv(key));
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(transactionCode);
                 buf.append(ImdstDefine.keyHelperClientParamSep);

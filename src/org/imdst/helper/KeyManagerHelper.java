@@ -114,10 +114,10 @@ public class KeyManagerHelper extends AbstractHelper {
             String clientParametersStr = null;
             String[] clientParameterList = null;
 
-            Integer requestHashCode = null;
+            String requestHashCode = null;
             String requestDataNode = null;
 
-            Integer requestTag = null;
+            String requestTag = null;
             String requestKey = null;
 
             String transactionCode = null;
@@ -186,7 +186,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     if(clientParameterList[0].equals("1")) {
 
                         // Key値とDataNode名を格納する
-                        requestHashCode = new Integer(clientParameterList[1]);
+                        requestHashCode = clientParameterList[1];
                         transactionCode = clientParameterList[2];
                         requestDataNode = clientParameterList[3];
 
@@ -208,7 +208,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     } else if(clientParameterList[0].equals("2")) {
 
                         // Key値でDataNode名を返す
-                        requestHashCode = new Integer(clientParameterList[1]);
+                        requestHashCode = clientParameterList[1];
                         // メソッド呼び出し
                         retParams = this.getDatanode(requestHashCode);
                         retParamBuf.append(retParams[0]);
@@ -221,7 +221,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     } else if(clientParameterList[0].equals("3")) {
 
                         // Tag値とキー値を格納する
-                        requestTag = new Integer(clientParameterList[1]);
+                        requestTag = clientParameterList[1];
                         transactionCode = clientParameterList[2];         // TransactionCode
                         requestKey = clientParameterList[3];
 
@@ -233,7 +233,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     } else if(clientParameterList[0].equals("4")) {
 
                         // Tag値でKey値を返す
-                        requestHashCode = new Integer(clientParameterList[1]);
+                        requestHashCode = clientParameterList[1];
                         // メソッド呼び出し
                         retParams = this.getTagdata(requestHashCode);
                         retParamBuf.append(retParams[0]);
@@ -246,7 +246,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     } else if(clientParameterList[0].equals("5")) {
 
                         // Key値を指定する事でデータを削除する
-                        requestHashCode = new Integer(clientParameterList[1]);
+                        requestHashCode = clientParameterList[1];
                         transactionCode = clientParameterList[2];
 
                         // メソッド呼び出し
@@ -262,7 +262,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                         // Key値とDataNode名を格納する
                         // 既に登録されている場合は失敗する
-                        requestHashCode = new Integer(clientParameterList[1]);
+                        requestHashCode = clientParameterList[1];
                         transactionCode = clientParameterList[2];
                         requestDataNode = clientParameterList[3];
 
@@ -283,7 +283,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     } else if(clientParameterList[0].equals("8")) {
 
                         // Key値でDataNode名を返す(Script実行バージョン)
-                        requestHashCode = new Integer(clientParameterList[1]);
+                        requestHashCode = clientParameterList[1];
                         // メソッド呼び出し
                         retParams = this.getDatanodeScriptExec(requestHashCode,clientParameterList[2]);
                         retParamBuf.append(retParams[0]);
@@ -409,7 +409,7 @@ public class KeyManagerHelper extends AbstractHelper {
     }
 
     // KeyとDataNode値を格納する
-    private String[] setDatanode(Integer key, String dataNodeStr, String transactionCode) {
+    private String[] setDatanode(String key, String dataNodeStr, String transactionCode) {
         //logger.debug("KeyManagerHelper - setDatanode - start");
         String[] retStrs = new String[3];
         try {
@@ -442,7 +442,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
     // KeyとDataNode値を格納する
     // 既にデータが登録されている場合は失敗する。
-    private String[] setDatanodeOnlyOnce(Integer key, String dataNodeStr, String transactionCode) {
+    private String[] setDatanodeOnlyOnce(String key, String dataNodeStr, String transactionCode) {
         //logger.debug("KeyManagerHelper - setDatanodeOnlyOnce - start");
         String[] retStrs = new String[3];
         try {
@@ -479,17 +479,23 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
     // KeyでDataNode値を取得する
-    private String[] getDatanode(Integer key) {
+    private String[] getDatanode(String key) {
         //logger.debug("KeyManagerHelper - getDatanode - start");
         String[] retStrs = null;
         try {
             if(!this.keyMapManager.checkError()) {
                 if (this.keyMapManager.containsKeyPair(key)) {
-
-                    retStrs = new String[3];
-                    retStrs[0] = "2";
-                    retStrs[1] = "true";
-                    retStrs[2] = this.keyMapManager.getKeyPair(key);
+                    String ret = this.keyMapManager.getKeyPair(key);
+                    if (ret != null) {
+                        retStrs = new String[3];
+                        retStrs[0] = "2";
+                        retStrs[1] = "true";
+                        retStrs[2] = ret;
+                    } else {
+                        retStrs = new String[2];
+                        retStrs[0] = "2";
+                        retStrs[1] = "false";
+                    }
                 } else {
                     retStrs = new String[2];
                     retStrs[0] = "2";
@@ -523,7 +529,7 @@ public class KeyManagerHelper extends AbstractHelper {
     // retValue=Value返却される値となる
     // 返却値の配列の2番目の値がtrueならスクリプト実行後結果あり、
     // falseならスクリプト実行後結果なし、errorならスクリプト実行エラー
-    private String[] getDatanodeScriptExec(Integer key, String scriptStr) {
+    private String[] getDatanodeScriptExec(String key, String scriptStr) {
         //logger.debug("KeyManagerHelper - getDatanode - start");
         String[] retStrs = null;
         try {
@@ -543,7 +549,9 @@ public class KeyManagerHelper extends AbstractHelper {
                         ScriptEngine engine = manager.getEngineByName("JavaScript");
 
                         // 引数設定
-                        if (tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
+                        if (tmpValue == null) {
+                            engine.put("dataValue", "");
+                        } else if (tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
                             engine.put("dataValue", "");
                         } else {
                             engine.put("dataValue", new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.keyWorkFileEncoding));
@@ -595,7 +603,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
     // KeyとDataNode値を格納する
-    private String[] setTagdata(Integer tag, String key, String transactionCode) {
+    private String[] setTagdata(String tag, String key, String transactionCode) {
         //logger.debug("KeyManagerHelper - setTagdata - start");
         String[] retStrs = new String[3];
         try {
@@ -623,17 +631,23 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
     // KeyでDataNode値を削除する
-    private String[] removeDatanode(Integer key, String transactionCode) {
+    private String[] removeDatanode(String key, String transactionCode) {
         //logger.debug("KeyManagerHelper - removeDatanode - start");
         String[] retStrs = null;
         try {
             if(!this.keyMapManager.checkError()) {
                 if (this.keyMapManager.containsKeyPair(key)) {
-
-                    retStrs = new String[3];
-                    retStrs[0] = "5";
-                    retStrs[1] = "true";
-                    retStrs[2] = this.keyMapManager.removeKeyPair(key, transactionCode);
+                    String ret = this.keyMapManager.removeKeyPair(key, transactionCode);
+                    if (ret != null) {
+                        retStrs = new String[3];
+                        retStrs[0] = "5";
+                        retStrs[1] = "true";
+                        retStrs[2] = ret;
+                    } else {
+                        retStrs = new String[2];
+                        retStrs[0] = "5";
+                        retStrs[1] = "false";
+                    }
                 } else {
                     retStrs = new String[2];
                     retStrs[0] = "5";
@@ -656,7 +670,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
     // TagでKey値を取得する
-    private String[] getTagdata(Integer tag) {
+    private String[] getTagdata(String tag) {
         //logger.debug("KeyManagerHelper - getTagdata - start");
         String[] retStrs = null;
         try {

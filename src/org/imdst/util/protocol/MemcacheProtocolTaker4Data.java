@@ -119,7 +119,7 @@ public class MemcacheProtocolTaker4Data implements IProtocolTaker {
                 // TODO:連結してまた分解って。。。後で考えます
                 methodBuf.append("1");
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())).hashCode());
+                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
                 methodBuf.append("0");                                  // TransactionCode(0固定)
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
@@ -169,7 +169,7 @@ public class MemcacheProtocolTaker4Data implements IProtocolTaker {
                 // TODO:連結してまた分解って。。。後で考えます
                 methodBuf.append("6");
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())).hashCode());
+                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
                 methodBuf.append("0");                                  // TransactionCode(0固定)
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
@@ -199,7 +199,7 @@ public class MemcacheProtocolTaker4Data implements IProtocolTaker {
                 // TODO:連結してまた分解って。。。後で考えます
                 methodBuf.append("2");
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())).hashCode());
+                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
                 retStr = methodBuf.toString();
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodDelete)) {
 
@@ -215,7 +215,7 @@ public class MemcacheProtocolTaker4Data implements IProtocolTaker {
                 // TODO:連結してまた分解って。。。後で考えます
                 methodBuf.append("5");
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())).hashCode());
+                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
                 methodBuf.append("0"); // TransactionCode("0"固定)
                 retStr = methodBuf.toString();

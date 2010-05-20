@@ -37,11 +37,11 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
     private long lastDataChangeTime = 0L;
     private int nowKeySize = 0;
 
-	private transient boolean readObjectFlg = false;
+    private transient boolean readObjectFlg = false;
 
     // コンストラクタ
     public KeyManagerValueMap(int size) {
-        super(size, 10);
+        super(size, new Double(size * 0.9).intValue(), 50);
     }
 
     /**
@@ -50,7 +50,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
      */
     public void initNoMemoryModeSetting(String lineFile) {
         try {
-			sync = new Object();
+            sync = new Object();
             readObjectFlg  = true;
             memoryMode = false;
 
@@ -92,15 +92,22 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                 int i = 0;
                 byte[] buf = new byte[oneDataLength];
 
-                int line = ((Integer)super.get(key)).intValue();
+                Integer lineInteger = (Integer)super.get(key);
+                int line = 0;
+                if (lineInteger != null) {
+                    line = lineInteger.intValue();
+                } else {
+                    return null;
+                }
+                
 
-				synchronized (sync) {
-	                // seek計算
-	                long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
+                // seek計算
+                long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
 
-	                raf.seek(seekPoint);
-	                raf.read(buf,0,oneDataLength);
-				}
+                synchronized (sync) {
+                    raf.seek(seekPoint);
+                    raf.read(buf,0,oneDataLength);
+                }
 
                 for (; i < buf.length; i++) {
                     if (buf[i] == 38) break;
@@ -127,31 +134,33 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
             int valueSize = (value.toString()).length();
 
             try {
-				if (readObjectFlg == true) {
-	                writeStr.append((String)value);
+                if (readObjectFlg == true) {
+                    writeStr.append((String)value);
 
-	                // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
-	                // 足りない文字列は固定の"&"で補う(38)
-	                byte[] appendDatas = new byte[oneDataLength - valueSize];
+                    // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
+                    // 足りない文字列は固定の"&"で補う(38)
+                    byte[] appendDatas = new byte[oneDataLength - valueSize];
 
-	                for (int i = 0; i < appendDatas.length; i++) {
-	                    appendDatas[i] = 38;
-	                }
+                    for (int i = 0; i < appendDatas.length; i++) {
+                        appendDatas[i] = 38;
+                    }
 
-	                writeStr.append(new String(appendDatas));
-	                // 書き込む行を決定
-					synchronized (sync) {
-		                this.lineCount++;
-		                this.bw.write(writeStr.toString());
-		                this.bw.write("\n");
-		                //this.bw.newLine();
-		                this.bw.flush();
-					}
-	                super.put(key, new Integer(lineCount));
-	                this.nowKeySize = super.size();
-				} else {
-	                super.put(key, value);
-				}
+                    writeStr.append(new String(appendDatas));
+                    String write = writeStr.toString();
+
+                    // 書き込む行を決定
+                    synchronized (sync) {
+                        this.lineCount++;
+                        this.bw.write(write);
+                        this.bw.write("\n");
+                        //this.bw.newLine();
+                        this.bw.flush();
+                    }
+                    super.put(key, new Integer(lineCount));
+                    this.nowKeySize = super.size();
+                } else {
+                    super.put(key, value);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 // 致命的
@@ -174,92 +183,92 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
         BufferedWriter tmpBw = null;
         RandomAccessFile raf = null;
 
-		synchronized (sync) {
-	        try {
-				
-	            tmpFos = new FileOutputStream(new File(this.lineFile + ".tmp"), true);
-	            tmpOsw = new OutputStreamWriter(tmpFos, ImdstDefine.keyWorkFileEncoding);
-	            tmpBw = new BufferedWriter(tmpOsw);
-	            raf = new RandomAccessFile(new File(this.lineFile) , "r");
+        synchronized (sync) {
+            try {
+                
+                tmpFos = new FileOutputStream(new File(this.lineFile + ".tmp"), true);
+                tmpOsw = new OutputStreamWriter(tmpFos, ImdstDefine.keyWorkFileEncoding);
+                tmpBw = new BufferedWriter(tmpOsw);
+                raf = new RandomAccessFile(new File(this.lineFile) , "r");
 
 
-	            String dataStr = null;
-	            Set entrySet = super.entrySet();
-	            Iterator entryIte = entrySet.iterator();   
-	            Integer key = null;
-	            int putCounter = 0;
+                String dataStr = null;
+                Set entrySet = super.entrySet();
+                Iterator entryIte = entrySet.iterator();
+                String key = null;
+                int putCounter = 0;
 
-	            while(entryIte.hasNext()) {
-	                Map.Entry obj = (Map.Entry)entryIte.next();
-	                key = (Integer)obj.getKey();
+                while(entryIte.hasNext()) {
+                    Map.Entry obj = (Map.Entry)entryIte.next();
+                    key = (String)obj.getKey();
 
-	                int i = 0;
-	                byte[] buf = new byte[oneDataLength];
+                    int i = 0;
+                    byte[] buf = new byte[oneDataLength];
 
-	                int line = ((Integer)super.get(key)).intValue();
+                    int line = ((Integer)super.get(key)).intValue();
 
-	                // seek計算
-	                long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
+                    // seek計算
+                    long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
 
-	                raf.seek(seekPoint);
-	                raf.read(buf, 0, oneDataLength);
+                    raf.seek(seekPoint);
+                    raf.read(buf, 0, oneDataLength);
 
-	                dataStr = new String(buf, ImdstDefine.keyWorkFileEncoding);
-	                tmpBw.write(dataStr);
-	                tmpBw.write("\n");
-	                putCounter++;
-	                super.put(key, new Integer(putCounter));
+                    dataStr = new String(buf, ImdstDefine.keyWorkFileEncoding);
+                    tmpBw.write(dataStr);
+                    tmpBw.write("\n");
+                    putCounter++;
+                    super.put(key, new Integer(putCounter));
 
-	            }
-	            this.nowKeySize = super.size();
+                }
+                this.nowKeySize = super.size();
 
-	        } catch (Exception e) {
-	            //e.printStackTrace();
-	            // 致命的
-	            StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e.getMessage() + "]");
-	        } finally {
-	            try {
-	                // 正常終了の場合のみ、ファイルを変更
-	                if (StatusUtil.getStatus() == 0)  {
-	                    raf.close();
-	                    // ファイルflush
-	                    tmpBw.flush();
+            } catch (Exception e) {
+                //e.printStackTrace();
+                // 致命的
+                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e.getMessage() + "]");
+            } finally {
+                try {
+                    // 正常終了の場合のみ、ファイルを変更
+                    if (StatusUtil.getStatus() == 0)  {
+                        raf.close();
+                        // ファイルflush
+                        tmpBw.flush();
 
-	                    tmpBw.close();
-	                    tmpOsw.close();
-	                    tmpFos.close();
+                        tmpBw.close();
+                        tmpOsw.close();
+                        tmpFos.close();
 
-	                    if(this.raf != null) this.raf.close();
-	                    if(this.bw != null) this.bw.close();
-	                    if(this.osw != null) this.osw.close();
-	                    if(this.fos != null) this.fos.close();
+                        if(this.raf != null) this.raf.close();
+                        if(this.bw != null) this.bw.close();
+                        if(this.osw != null) this.osw.close();
+                        if(this.fos != null) this.fos.close();
 
-	                    File dataFile = new File(this.lineFile);
-	                    if (dataFile.exists()) {
-	                        dataFile.delete();
-	                    }
-	                    dataFile = null;
-	                    // 一時KeyMapファイルをKeyMapファイル名に変更
-	                    File tmpFile = new File(this.lineFile + ".tmp");
-	                    tmpFile.renameTo(new File(this.lineFile));
-	                    this.initNoMemoryModeSetting(this.lineFile);
-	                    ret = true;
+                        File dataFile = new File(this.lineFile);
+                        if (dataFile.exists()) {
+                            dataFile.delete();
+                        }
+                        dataFile = null;
+                        // 一時KeyMapファイルをKeyMapファイル名に変更
+                        File tmpFile = new File(this.lineFile + ".tmp");
+                        tmpFile.renameTo(new File(this.lineFile));
+                        this.initNoMemoryModeSetting(this.lineFile);
+                        ret = true;
 
-	                }
-	            } catch(Exception e2) {
-	                e2.printStackTrace();
-	                try {
-	                    File tmpFile = new File(this.lineFile + ".tmp");
-	                    if (tmpFile.exists()) {
-	                        tmpFile.delete();
-	                    }
-	                } catch(Exception e3) {
-	                    // 致命的
-	                    StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e2.getMessage() + e3.getMessage() + "]");
-	                }
-	            }
-	        }
-		}
+                    }
+                } catch(Exception e2) {
+                    e2.printStackTrace();
+                    try {
+                        File tmpFile = new File(this.lineFile + ".tmp");
+                        if (tmpFile.exists()) {
+                            tmpFile.delete();
+                        }
+                    } catch(Exception e3) {
+                        // 致命的
+                        StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e2.getMessage() + e3.getMessage() + "]");
+                    }
+                }
+            }
+        }
         return ret;
     }
 
