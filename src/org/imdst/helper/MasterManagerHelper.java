@@ -436,8 +436,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 throw new BatchException("Key Data Save Error");
             }
         } catch (BatchException be) {
-            logger.debug("MasterManagerHelper - setData - Error", be);
+            logger.info("MasterManagerHelper - setKeyValue - Error", be);
         } catch (Exception e) {
+            logger.info("MasterManagerHelper - setKeyValue - Error", e);
             retStrs[0] = "1";
             retStrs[1] = "false";
             retStrs[2] = "NG:MasterManagerHelper - setKeyValue - Exception - " + e.toString();
@@ -561,9 +562,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             retStrs[2] = "OK";
 
         } catch (BatchException be) {
-            logger.debug("MasterManagerHelper - setKeyValueOnlyOnce - Error", be);
+            logger.info("MasterManagerHelper - setKeyValueOnlyOnce - Error", be);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.info("MasterManagerHelper - setKeyValueOnlyOnce - Error", e);
             retStrs[0] = "6";
             retStrs[1] = "false";
             retStrs[2] = "NG:MasterManagerHelper - setKeyValueOnlyOnce - Exception - " + e.toString();
@@ -1538,7 +1539,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         super.setDeadNode(nodeName + ":" + nodePort);
                         logger.debug(ie);
-                    }
+                    } catch (Exception superE) {
+                        super.setDeadNode(nodeName + ":" + nodePort);
+                        logger.debug(superE);
+					}
+
                 } 
 
                 // SubNodeの指定は存在するが接続前に処理を抜けた場合はここで接続
@@ -1692,7 +1697,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     mainNodeNetworkError = true;
                     super.setDeadNode(keyNodeName + ":" + keyNodePort);
                     logger.debug(ie);
-                }
+                } catch (Exception superE) {
+                    super.setDeadNode(keyNodeName + ":" + keyNodePort);
+                    logger.debug(superE);
+				}
+
             } else {
                 mainNodeNetworkError = true;
             }
@@ -1753,7 +1762,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             subNodeNetworkError = true;
                             super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
                             logger.debug(ie);
-                        }
+		                } catch (Exception superE) {
+		                    super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
+		                    logger.debug(superE);
+						}
+
                     } else {
                         subNodeNetworkError = true;
                     }
@@ -1921,7 +1934,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } catch (IOException ie) {
                         super.setDeadNode(nodeName + ":" + nodePort);
                         logger.debug(ie);
-                    }
+	                } catch (Exception superE) {
+	                    super.setDeadNode(nodeName + ":" + nodePort);
+	                    logger.debug(superE);
+					}
                 }
 
                 // スレーブデータノードの名前を代入
