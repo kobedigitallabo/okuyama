@@ -19,14 +19,14 @@ public class BatchDefine {
     public static final String JOB_END_WAIT_WORKER_RUN = "wait_worker_run";
     public static final String JOB_END_WAIT_WORKER_ERR = "wait_worker_err";
     public static final String JOB_END_WAIT_WORKER_END = "wait_worker_end";
-    public static final long JOB_END_WAIT_WORKER_TIMER = 5000;
+    public static final long JOB_END_WAIT_WORKER_TIMER = 50000;
 
     // HelperPoolWorkerのステータス文字列とHelperチェック間隔時間(ms)
     public static final String HELPER_POOL_WORKER_WAIT = "helper_pool_worker_wait";
     public static final String HELPER_POOL_WORKER_RUN = "helper_pool_worker_run";
     public static final String HELPER_POOL_WORKER_ERR = "helper_pool_worker_err";
     public static final String HELPER_POOL_WORKER_END = "helper_pool_worker_end";
-    public static final long HELPER_POOL_WORKER_TIMER = 5000;
+    public static final long HELPER_POOL_WORKER_TIMER = 50000;
 
 
     // ジョブ設定ファイルのキー文字列

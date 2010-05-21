@@ -1542,7 +1542,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } catch (Exception superE) {
                         super.setDeadNode(nodeName + ":" + nodePort);
                         logger.debug(superE);
-					}
+                    }
 
                 } 
 
@@ -1700,7 +1700,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 } catch (Exception superE) {
                     super.setDeadNode(keyNodeName + ":" + keyNodePort);
                     logger.debug(superE);
-				}
+                }
 
             } else {
                 mainNodeNetworkError = true;
@@ -1762,10 +1762,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             subNodeNetworkError = true;
                             super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
                             logger.debug(ie);
-		                } catch (Exception superE) {
-		                    super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
-		                    logger.debug(superE);
-						}
+                        } catch (Exception superE) {
+                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
+                            logger.debug(superE);
+                        }
 
                     } else {
                         subNodeNetworkError = true;
@@ -1934,10 +1934,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } catch (IOException ie) {
                         super.setDeadNode(nodeName + ":" + nodePort);
                         logger.debug(ie);
-	                } catch (Exception superE) {
-	                    super.setDeadNode(nodeName + ":" + nodePort);
-	                    logger.debug(superE);
-					}
+                    } catch (Exception superE) {
+                        super.setDeadNode(nodeName + ":" + nodePort);
+                        logger.debug(superE);
+                    }
                 }
 
                 // スレーブデータノードの名前を代入
@@ -2591,7 +2591,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
                     dtMap.put(ImdstDefine.keyNodeReaderKey, br);
-                    connectTime = new Long(new Date().getTime());
+                    connectTime = new Long(System.currentTimeMillis());
                 } else {
 
                     dtMap = (HashMap)connectMap.get(ImdstDefine.keyNodeConnectionMapKey);
@@ -2660,7 +2660,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
                     dtMap.put(ImdstDefine.keyNodeReaderKey, br);
-                    connectTime = new Long(new Date().getTime());
+                    connectTime = new Long(System.currentTimeMillis());
                 } else {
                     dtMap = (HashMap)connectMap.get(ImdstDefine.keyNodeConnectionMapKey);
                     connectTime = (Long)connectMap.get(ImdstDefine.keyNodeConnectionMapTime);

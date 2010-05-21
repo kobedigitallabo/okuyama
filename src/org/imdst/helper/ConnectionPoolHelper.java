@@ -56,7 +56,7 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
                 HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
                 ArrayList mainNodeList = (ArrayList)allNodeInfo.get("main");
                 ArrayList subNodeList = (ArrayList)allNodeInfo.get("sub");
-				ArrayList transactionManagerList = DataDispatcher.getTransactionManagerInfo();
+                ArrayList transactionManagerList = DataDispatcher.getTransactionManagerInfo();
 
                 if (mainNodeList != null) {
                     for (int i = 0; i < mainNodeList.size(); i++) {
@@ -148,7 +148,7 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
         try {
 
             Socket socket = new Socket(nodeInfos[0], new Integer(nodeInfos[1]).intValue());
-			socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+            socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             PrintWriter pw = new PrintWriter(new BufferedWriter(osw));
@@ -165,7 +165,7 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
 
             dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
             dtMap.put(ImdstDefine.keyNodeReaderKey, br);
-            connectTime = new Long(new Date().getTime());
+            connectTime = new Long(System.currentTimeMillis());
             ret = new HashMap(2);
 
             ret.put(ImdstDefine.keyNodeConnectionMapKey, dtMap);

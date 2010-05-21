@@ -108,7 +108,7 @@ public class StatusUtil {
      */
     public static void setArriveNode(String nodeInfo) {
         checkErrorMap.remove(nodeInfo);
-        setNodeRebootTime(nodeInfo, new Long(new Date().getTime()));
+        setNodeRebootTime(nodeInfo, new Long(System.currentTimeMillis()));
     }
 
     /**

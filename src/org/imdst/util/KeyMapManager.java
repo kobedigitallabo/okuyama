@@ -376,12 +376,10 @@ public class KeyMapManager extends Thread {
                 this.writeMapFileFlg = true;
 
                 if (workFileMemory == false) {
-                    synchronized(setKeyLock) {
-                        // データ格納場所記述ファイル再保存
-                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
-                        this.bw.newLine();
-                        this.bw.flush();
-                    }
+
+                    // データ格納場所記述ファイル再保存
+                    this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                    this.bw.flush();
                 }
                 //logger.debug("setKeyPair - synchronized - end");
             } catch (Exception e) {
@@ -413,19 +411,17 @@ public class KeyMapManager extends Thread {
                     if(this.containsKeyPair(key)) return ret;
                     keyMapObjPut(key, keyNode);
                     ret = true;
-
-                    // データの書き込みを指示
-                    this.writeMapFileFlg = true;
-
-                    if (workFileMemory == false) {
-
-                        // データ格納場所記述ファイル再保存
-                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
-                        this.bw.newLine();
-                        this.bw.flush();
-                    }
-                    //logger.debug("setKeyPairOnlyOnce - synchronized - end");
                 }
+                // データの書き込みを指示
+                this.writeMapFileFlg = true;
+
+                if (workFileMemory == false) {
+
+                    // データ格納場所記述ファイル再保存
+                    this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                    this.bw.flush();
+                }
+                //logger.debug("setKeyPairOnlyOnce - synchronized - end");
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("setKeyPairOnlyOnce - Error");
@@ -466,12 +462,10 @@ public class KeyMapManager extends Thread {
                     this.writeMapFileFlg = true;
 
                     if (workFileMemory == false) {
-                        synchronized(this.setKeyLock) {
-                            // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                            this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
-                            this.bw.newLine();
-                            this.bw.flush();
-                        }
+
+                        // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
+                        this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        this.bw.flush();
                     }
 
             } catch (Exception e) {
@@ -663,17 +657,14 @@ public class KeyMapManager extends Thread {
                         saveTransactionStr = transactionCode + this.lockKeyTimeSep + new Long(System.currentTimeMillis() + (lockingTime * 1000)).toString();
                     }
                     keyMapObjPut(key, saveTransactionStr);
+                }
+                this.writeMapFileFlg = true;
 
-                    this.writeMapFileFlg = true;
+                if (workFileMemory == false) {
 
-                    if (workFileMemory == false) {
-                        synchronized(this.setKeyLock) {
-                            // データ格納場所記述ファイル再保存
-                            this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(saveTransactionStr).append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
-                            this.bw.newLine();
-                            this.bw.flush();
-                        }
-                    }
+                    // データ格納場所記述ファイル再保存
+                    this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(saveTransactionStr).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                    this.bw.flush();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -704,22 +695,20 @@ public class KeyMapManager extends Thread {
                     if (!this.containsKeyPair(key)) return transactionCode;
                     if (!(((String[])((String)this.keyMapObjGet(key)).split(this.lockKeyTimeSep))[0]).equals(transactionCode)) return null;
                     ret = ((String[])((String)this.keyMapObj.remove(key)).split(this.lockKeyTimeSep))[0];
-                    this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
-
+                    this.keyMapObj.setKLastDataChangeTime(System.currentTimeMillis());
 
                     this.lastAccess = System.currentTimeMillis();
-                    // データの書き込みを指示
-                    this.writeMapFileFlg = true;
-
-                    if (workFileMemory == false) {
-                        synchronized(this.setKeyLock) {
-                            // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                            this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
-                            this.bw.newLine();
-                            this.bw.flush();
-                        }
-                    }
                 }
+
+                // データの書き込みを指示
+                this.writeMapFileFlg = true;
+
+                if (workFileMemory == false) {
+                    // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
+                    this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                    this.bw.flush();
+                }
+
             } catch (Exception e) {
                 logger.error("removeLock - Error");
                 blocking = true;
@@ -789,8 +778,7 @@ public class KeyMapManager extends Thread {
                             if (workFileMemory == false) {
 
                                 // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                                this.bw.write(new StringBuffer("-").append(workFileSeq).append(keyList[idx]).append(workFileSeq).append(" ").append(workFileSeq).append(new Date().getTime()).append(workFileSeq).append(workFileEndPoint).toString());
-                                this.bw.newLine();
+                                this.bw.write(new StringBuffer("-").append(workFileSeq).append(keyList[idx]).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
                                 this.bw.flush();
                             }
                         }
@@ -814,7 +802,7 @@ public class KeyMapManager extends Thread {
     private void keyMapObjPut(String key, String val) {
         if (val.length() < putValueMaxSize) {
             this.keyMapObj.put(key, val);
-            this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
+            this.keyMapObj.setKLastDataChangeTime(System.currentTimeMillis());
         }
         this.lastAccess = System.currentTimeMillis();
     }
@@ -861,7 +849,7 @@ public class KeyMapManager extends Thread {
      */
     private void keyMapObjRemove(String key) {
         this.keyMapObj.remove(key);
-        this.keyMapObj.setKLastDataChangeTime(new Date().getTime());
+        this.keyMapObj.setKLastDataChangeTime(System.currentTimeMillis());
         this.lastAccess = System.currentTimeMillis();
     }
 
@@ -941,7 +929,7 @@ public class KeyMapManager extends Thread {
                 int i = 0;
                 String[] oneDatas = null;
                 logger.info("inputKeyMapObj2Stream - synchronized - start");
-                synchronized(this.getKeyLock) {
+                synchronized(this.poolKeyLock) {
                     // 事前に不要なファイルを削除
 
                     // KeyMapファイルを消しこみ
