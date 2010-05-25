@@ -30,6 +30,9 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
     private transient BufferedWriter bw = null;
     private transient RandomAccessFile raf = null;
     private transient Object sync = new Object();
+    private transient boolean vacuumeExecFlg = false;
+    private transient ArrayList vacuumDiffDataList = null;
+
     private String lineFile = null;
     private int lineCount = 0;
     private int oneDataLength = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
@@ -172,6 +175,10 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
     }
 
 
+    public void remove(Object key) {
+        super.remove(key);
+    }
+
     /**
      * データファイルの不要領域を掃除して新たなファイルを作りなおす.<br>
      *
@@ -182,52 +189,47 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
         OutputStreamWriter tmpOsw = null;
         BufferedWriter tmpBw = null;
         RandomAccessFile raf = null;
+        ConcurrentHashMap vacuumWorkMap = null;
 
         synchronized (sync) {
+            vacuumeExecFlg = true;
+            vacuumDiffDataList = new ArrayList(1000);
+        }
+
+        vacuumWorkMap = new ConcurrentHashMap(super.size());
+        try {
+            
+            tmpFos = new FileOutputStream(new File(this.lineFile + ".tmp"), true);
+            tmpOsw = new OutputStreamWriter(tmpFos, ImdstDefine.keyWorkFileEncoding);
+            tmpBw = new BufferedWriter(tmpOsw);
+            raf = new RandomAccessFile(new File(this.lineFile) , "r");
+
+
+            String dataStr = null;
+            Set entrySet = super.entrySet();
+            Iterator entryIte = entrySet.iterator();
+            String key = null;
+            int putCounter = 0;
+
+            while(entryIte.hasNext()) {
+                Map.Entry obj = (Map.Entry)entryIte.next();
+                key = (String)obj.getKey();
+
+                dataStr = get(key);
+                tmpBw.write(dataStr);
+                tmpBw.write("\n");
+                putCounter++;
+                vacuumWorkMap.put(key, new Integer(putCounter));
+
+            }
+        } catch (Exception e) {
+            //e.printStackTrace();
+            // 致命的
+            StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e.getMessage() + "]");
+        } finally {
             try {
-                
-                tmpFos = new FileOutputStream(new File(this.lineFile + ".tmp"), true);
-                tmpOsw = new OutputStreamWriter(tmpFos, ImdstDefine.keyWorkFileEncoding);
-                tmpBw = new BufferedWriter(tmpOsw);
-                raf = new RandomAccessFile(new File(this.lineFile) , "r");
+                synchronized (sync) {
 
-
-                String dataStr = null;
-                Set entrySet = super.entrySet();
-                Iterator entryIte = entrySet.iterator();
-                String key = null;
-                int putCounter = 0;
-
-                while(entryIte.hasNext()) {
-                    Map.Entry obj = (Map.Entry)entryIte.next();
-                    key = (String)obj.getKey();
-
-                    int i = 0;
-                    byte[] buf = new byte[oneDataLength];
-
-                    int line = ((Integer)super.get(key)).intValue();
-
-                    // seek計算
-                    long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
-
-                    raf.seek(seekPoint);
-                    raf.read(buf, 0, oneDataLength);
-
-                    dataStr = new String(buf, ImdstDefine.keyWorkFileEncoding);
-                    tmpBw.write(dataStr);
-                    tmpBw.write("\n");
-                    putCounter++;
-                    super.put(key, new Integer(putCounter));
-
-                }
-                this.nowKeySize = super.size();
-
-            } catch (Exception e) {
-                //e.printStackTrace();
-                // 致命的
-                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e.getMessage() + "]");
-            } finally {
-                try {
                     // 正常終了の場合のみ、ファイルを変更
                     if (StatusUtil.getStatus() == 0)  {
                         raf.close();
@@ -255,17 +257,18 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                         ret = true;
 
                     }
-                } catch(Exception e2) {
-                    e2.printStackTrace();
-                    try {
-                        File tmpFile = new File(this.lineFile + ".tmp");
-                        if (tmpFile.exists()) {
-                            tmpFile.delete();
-                        }
-                    } catch(Exception e3) {
-                        // 致命的
-                        StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e2.getMessage() + e3.getMessage() + "]");
+                    this.nowKeySize = vacuumWorkMap.size();
+                }
+            } catch(Exception e2) {
+                e2.printStackTrace();
+                try {
+                    File tmpFile = new File(this.lineFile + ".tmp");
+                    if (tmpFile.exists()) {
+                        tmpFile.delete();
                     }
+                } catch(Exception e3) {
+                    // 致命的
+                    StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e2.getMessage() + e3.getMessage() + "]");
                 }
             }
         }
