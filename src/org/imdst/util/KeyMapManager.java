@@ -304,7 +304,7 @@ public class KeyMapManager extends Thread {
         while(true) {
 
             if (StatusUtil.getStatus() != 0) {
-                logger.info ("KeyMapManager - run - System Shutdown 1");
+                logger.info ("KeyMapManager - run - System Shutdown [1] Msg=[" + StatusUtil.getStatusMessage() + "]");
                 break;
             }
 

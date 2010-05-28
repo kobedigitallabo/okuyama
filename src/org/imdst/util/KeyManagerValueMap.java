@@ -53,7 +53,9 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
      */
     public void initNoMemoryModeSetting(String lineFile) {
         try {
-            sync = new Object();
+			if (sync == null) {
+            	sync = new Object();
+			}
             readObjectFlg  = true;
             memoryMode = false;
 
@@ -85,6 +87,52 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
     }
 
 
+    public Object getNoCnv(Object key) {
+        Object ret = null;
+        if (memoryMode) {
+            ret = super.get(key);
+        } else {
+            try {
+
+                int i = 0;
+                byte[] buf = new byte[oneDataLength];
+
+                Integer lineInteger = (Integer)super.get(key);
+                int line = 0;
+                if (lineInteger != null) {
+                    line = lineInteger.intValue();
+                } else {
+                    return null;
+                }
+                
+
+                // seek計算
+                long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
+
+                synchronized (sync) {
+					// Vacuume中の場合はデータの格納先が変更されている可能性があるので、
+					// ここでチェック
+					if (vacuumeExecFlg) {
+						if(!lineInteger.equals((Integer)super.get(key))) {
+							// 再起呼び出し
+							return get(key);
+						}
+					}
+                    raf.seek(seekPoint);
+                    raf.read(buf,0,oneDataLength);
+                }
+
+                ret = new String(buf, ImdstDefine.keyWorkFileEncoding);
+            } catch (Exception e) {
+                e.printStackTrace();
+                // 致命的
+                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - get - Error [" + e.getMessage() + "]");
+                
+            }
+        }
+        return ret;
+    }
+
     public Object get(Object key) {
         Object ret = null;
         if (memoryMode) {
@@ -108,6 +156,14 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                 long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
 
                 synchronized (sync) {
+					// Vacuume中の場合はデータの格納先が変更されている可能性があるので、
+					// ここでチェック
+					if (vacuumeExecFlg) {
+						if(!lineInteger.equals((Integer)super.get(key))) {
+							// 再起呼び出し
+							return get(key);
+						}
+					}
                     raf.seek(seekPoint);
                     raf.read(buf,0,oneDataLength);
                 }
@@ -137,6 +193,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
             int valueSize = (value.toString()).length();
 
             try {
+
                 if (readObjectFlg == true) {
                     writeStr.append((String)value);
 
@@ -153,14 +210,21 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
 
                     // 書き込む行を決定
                     synchronized (sync) {
+
+						if (vacuumeExecFlg) {
+							// Vacuum差分にデータを登録
+							Object[] diffObj = {"1", key, value};
+							vacuumDiffDataList.add(diffObj);
+						}
+
                         this.lineCount++;
                         this.bw.write(write);
                         this.bw.write("\n");
                         //this.bw.newLine();
                         this.bw.flush();
-                    }
-                    super.put(key, new Integer(lineCount));
-                    this.nowKeySize = super.size();
+                    	super.put(key, new Integer(lineCount));
+                    	this.nowKeySize = super.size();
+					}
                 } else {
                     super.put(key, value);
                 }
@@ -175,8 +239,15 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
     }
 
 
-    public void remove(Object key) {
-        super.remove(key);
+    public Object remove(Object key) {
+
+		if (vacuumeExecFlg) {
+    		synchronized (sync) {
+				Object diffObj[] = {"2", key};
+				vacuumDiffDataList.add(diffObj);
+			}
+		}
+        return super.remove(key);
     }
 
     /**
@@ -190,6 +261,12 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
         BufferedWriter tmpBw = null;
         RandomAccessFile raf = null;
         ConcurrentHashMap vacuumWorkMap = null;
+        String dataStr = null;
+        Set entrySet = null;
+        Iterator entryIte = null;
+        String key = null;
+        int putCounter = 0;
+
 
         synchronized (sync) {
             vacuumeExecFlg = true;
@@ -197,6 +274,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
         }
 
         vacuumWorkMap = new ConcurrentHashMap(super.size());
+
         try {
             
             tmpFos = new FileOutputStream(new File(this.lineFile + ".tmp"), true);
@@ -204,26 +282,21 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
             tmpBw = new BufferedWriter(tmpOsw);
             raf = new RandomAccessFile(new File(this.lineFile) , "r");
 
-
-            String dataStr = null;
-            Set entrySet = super.entrySet();
-            Iterator entryIte = entrySet.iterator();
-            String key = null;
-            int putCounter = 0;
+			entrySet = super.entrySet();
+        	entryIte = entrySet.iterator();
 
             while(entryIte.hasNext()) {
                 Map.Entry obj = (Map.Entry)entryIte.next();
                 key = (String)obj.getKey();
-
-                dataStr = get(key);
-                tmpBw.write(dataStr);
-                tmpBw.write("\n");
-                putCounter++;
-                vacuumWorkMap.put(key, new Integer(putCounter));
-
+				if (key != null && (dataStr = (String)getNoCnv(key)) != null) {
+	                tmpBw.write(dataStr);
+	                tmpBw.write("\n");
+	                putCounter++;
+	                vacuumWorkMap.put(key, new Integer(putCounter));
+				}
             }
         } catch (Exception e) {
-            //e.printStackTrace();
+            e.printStackTrace();
             // 致命的
             StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e.getMessage() + "]");
         } finally {
@@ -253,11 +326,51 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                         // 一時KeyMapファイルをKeyMapファイル名に変更
                         File tmpFile = new File(this.lineFile + ".tmp");
                         tmpFile.renameTo(new File(this.lineFile));
-                        this.initNoMemoryModeSetting(this.lineFile);
-                        ret = true;
 
+						// 一旦初期化
+						super.clear();
+
+						// workMapからデータコピー
+			            Integer workMapData = null;
+			            Set workEntrySet = vacuumWorkMap.entrySet();
+			            Iterator workEntryIte = workEntrySet.iterator();
+			            String workKey = null;
+
+			            while(workEntryIte.hasNext()) {
+			                Map.Entry obj = (Map.Entry)workEntryIte.next();
+			                workKey = (String)obj.getKey();
+							if (workKey != null) {
+				                workMapData = (Integer)vacuumWorkMap.get(workKey);
+				                super.put(workKey, workMapData);
+							}
+			            }
+
+						// サイズ格納
+					    this.nowKeySize = super.size();
+						// ファイルポインタ初期化
+                        this.initNoMemoryModeSetting(this.lineFile);
+						// Vacuum終了をマーク
+						vacuumeExecFlg = false;
+						// Vacuum中の差分を埋める
+						if (vacuumDiffDataList.size() > 0) {
+							
+							Object[] diffObj = null;
+							for (int i = 0; i < vacuumDiffDataList.size(); i++) {
+								// 差分リストからデータを作成
+								diffObj = (Object[])vacuumDiffDataList.get(i);
+								if (diffObj[0].equals("1")) {
+									// put
+									put(diffObj[1], diffObj[2]);
+								} else if (diffObj[0].equals("2")) {
+									// remove
+									remove(diffObj[1]);
+								}
+							}
+						}
+						vacuumDiffDataList = null;
+						vacuumWorkMap = null;
+						ret = true;
                     }
-                    this.nowKeySize = vacuumWorkMap.size();
                 }
             } catch(Exception e2) {
                 e2.printStackTrace();
@@ -267,8 +380,9 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                         tmpFile.delete();
                     }
                 } catch(Exception e3) {
+		            e3.printStackTrace();
                     // 致命的
-                    StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e2.getMessage() + e3.getMessage() + "]");
+                    StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e3.getMessage() + e3.getMessage() + "]");
                 }
             }
         }
