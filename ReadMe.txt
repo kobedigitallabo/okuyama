@@ -1,12 +1,33 @@
 ====== オンメモリ型分散Key-Valueストア 「okuyama」=====================================================
-Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
+Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ダウンロード頂きありがとうございます。
 
 ※起動方法は本テキストの「■機能説明とサンプルの実行方法」をご覧ください。
   同時に「okuyama構成図.gif」もご参照ください。
   blog:http://d.hatena.ne.jp/okuyamaoo/
 
+
 ・改修履歴
+========================================================================================================
+[New - 機能改善]
+[[リリース Ver 0.6.5 - (2010/05/30)]]
+  ■Vacuum処理中の取得、登録、削除の処理を継続できる用に改修
+    従来Vacuum中は取得、登録、削除処理は処理がブロックされるようになっていた(処理は待ち状態になる)が
+    このブロック時間を大幅に削減するように改修。
+    従来ならVacuumが始まると終始ブロックされていたが、処理を継続出来るように(待ちが発生しない)なり
+    okuyamaの総使用時間に対する、スループットが向上される。
+    ※VacuumはDataNode.propertiesの"KeyManagerJob1.dataMemory=true"の用にvalueをファイルに保存している
+      場合のみ有効となる。
+
+  ■各propertiesファイルにコメントを追加
+    MasterNode.properties、DataNode.properties、TransactionNode.propertiesにコメントを大幅に追記
+    ※今までコメントが少なくて申し訳ありませんでした。
+
+  ■ReadMe.txt、ReadMe-UTF.txtの[■機能説明とサンプルの実行方法]、[サンプルの実行方法]部分を追記
+    TransactionNodeの使用方法、Memcached互換での起動方法、クライアントの使用可能メソッド部分を修正
+    分散Lock、setNewValue(memcacheのadd相当)の使用サンプルを追記
+
+========================================================================================================
 ========================================================================================================
 [New - 機能改善]
 [[リリース Ver 0.6.4 - (2010/05/21)]]
@@ -139,7 +160,7 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
      そして、TransactionManagerノードが起動している必要があるため、同梱のexecTransactionNode.batで起動する。
      分散ロック機能を使用する場合は、全てのマスターノードが"TransactionMode=true"で起動している必要がある。
      同梱の設定ファイルは全て分散ロック機能で起動する設定となる。
-     ※execMasterNode2.batは分散ロック機能あり、memcacheプロトコルモードで起動する。
+     ※execMasterNodeMemcached.batは分散ロック機能あり、memcacheプロトコルモードで起動する。
      また、従来の分散ロック機能なしで起動する場合は、"TransactionMode=false"としてexecMasterNode.batを実行する。
 
     +仕組みとしては、Clientからロック取得依頼を行った場合、TransactionManagerノードに指定したKey値で
@@ -293,7 +314,7 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
     MasterNode.propertiesの14行目"MasterManagerJob.Option="を"MasterManagerJob.Option=memcache"とすると
     memcacheプロトコルでアクセス可能である。
     MasterNode2.propertiesがmemcache用の設定ファイルになっている。
-    execMasterNode2.batを実行するとmemcacheプロトコルで立ち上がる。
+    execMasterNodeMemcached.batを実行するとmemcacheプロトコルで立ち上がる。
     対応メソッドはsetとgetである。またset,getのflagは0のみ対応している。
     今後対応範囲を増やす予定。
 
@@ -552,7 +573,7 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
  ソースエンコーディング:UTF-8
  動作検証OS:WinsowsXp SP3、CentOS 5.3(final)
  必要ライブラリ:log4j-1.2.14.jar、javamail-1.4.1.jar(JavaMail Ver1.4.1)
- Version:0.5.1(2010/01/07)
+ Version:0.6.5(2010/05/30)
 
 
 ■機能説明とサンプルの実行方法
@@ -580,9 +601,9 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
   Key値のファイルへの反映は定期的であるため、その間で保存前にダウンしたもしくは破損している場合は、
   トランザクションログから復旧されます。
 
-  ※1.登録データは各データノード上で1つの同期化されたjava.util.HashMapに格納されます。
+  ※1.登録データは各データノード上で1つのConcurrentHashMapに格納されます。
       データの登録、取り出しは全てここから行われます。
-  ※2.ファイルシステムに保存されるデータは、定期的に保存されるjava.util.HashMapを
+  ※2.ファイルシステムに保存されるデータは、定期的に保存されるConcurrentHashMapを
       シリアライズ化したデータと、データ登録時のログ情報となります。
       シリアライズデータの登録はデータ登録、取得処理とは非同期にて実行されます。
   ※3.Value値は固定長でLF改行の1ファイルに書き込まれます。
@@ -590,11 +611,12 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
       Key値はこのValue値の最新の位置を持っています。
   ※4.DataNode.propertiesの"KeyManagerJob1.dataMemory"の値で変更可能
       trueでメモリ保持、falseでファイル保存
-      どちらの場合もトランザクションログは保存されるので、不慮のダウンによるデータの復元には影響はない。
+      どちらの場合もトランザクションログは保存されるので、不慮のダウンによるデータの復元には影響はありません。
+      ※KeyManagerJob1.memoryMode=trueの場合は復元されません
 
 
 5.分散型
-  「okuyama」はマスタノード、データノード、クライアントの3つで構成されます。
+  「okuyama」はマスタノード、データノード、トランザクションノード、クライアントの4つで構成されます。
   それぞれの役目は以下です。
   マスタノード:・設定されたアルゴリズム(※1)に従って、クライアントからのデータ操作依頼を適切な
                  データノードに依頼します。
@@ -609,12 +631,19 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
                ・常にDataNodeの生死を監視し、ダウンからの復旧時にデータを稼動ノードから自動リカバーさせます。
                  リカバー中はデータの不整合が発生しないように同期化を実現します。
                  ※1.管理するデータノードの数に依存する簡単なアルゴリズムです。
+               ・設定ファイルはsrc\MasterNode.properties
 
 
   データノード:・複数台での構成が可能
                ・キーとデータの組み合わせでデータを保存します。
                  データの登録、抽出、削除インターフェースを持ちます。
                ・自身では他ノードへのデータの振り分けなどは行ないません。
+               ・設定ファイルはsrc\DataNode.properties
+
+  トランザクションノード:・分散Lock(TransactionMode)を使用する場合にLockを保持、管理します。
+                           TransactionModeを使用していて、このノードがダウンすると極端にスループットがダウンします。
+                           今後改修予定。
+                         ・設定ファイルはsrc\TransactionNode.properties
 
   クライアント:・マスタノードへの通信を行う実際のプログラムインターフェースです。
 	           ・マスターノードの情報を複数セットすることで自動分散や、マスターノードダウン時の
@@ -627,22 +656,27 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
                  PHPはetc_client\OkuyamaClient.class.php
 
                インターフェースとしては、
-               1.setValue(Key値, Value値)               :[Key(文字列)とValue(文字列)の組み合わせでのデータ登録]
-               2.setValue(Key値, Tag値配列 Value値)     :[Key(文字列)とTag(文字列(配列))とValue(文字列)の組み合わせでのデータ登録]
-               3.getValue(Key値)                        :[Key(文字列)でのValue(文字列)取得]
-               4.getTagKeys(Tag値)                      :[Tag(文字列)でのKey値群(Key値の配列)取得]
-               5.setByteValue(Key値, byte値)            :[Key(文字列)とbyte配列の組み合わせでのデータ登録](PHPは未実装)
-               6.setByteValue(Key値, Tag値配列 byte値)  :[Key(文字列)とTag(文字列(配列))とbyte配列の組み合わせでのデータ登録](PHPは未実装)
-               7.removeValue(Key値)                     :[Key(文字列)でデータを削除]
-               8.getValueScript(Key値,JavaScriptコード) :[Key(文字列)とJavaScriptコードを渡し、取得されたvalue値にJavaScriptを実行し値を返す]
-
+               1.setValue(Key値, Value値)                 :[Key(文字列)とValue(文字列)の組み合わせでのデータ登録]
+               2.setValue(Key値, Tag値配列 Value値)       :[Key(文字列)とTag(文字列(配列))とValue(文字列)の組み合わせでのデータ登録]
+               3.getValue(Key値)                          :[Key(文字列)でのValue(文字列)取得]
+               4.getTagKeys(Tag値)                        :[Tag(文字列)でのKey値群(Key値の配列)取得]
+               5.setByteValue(Key値, byte値)              :[Key(文字列)とbyte配列の組み合わせでのデータ登録](PHPは未実装)
+               6.setByteValue(Key値, Tag値配列 byte値)    :[Key(文字列)とTag(文字列(配列))とbyte配列の組み合わせでのデータ登録](PHPは未実装)
+               7.getByteValue(Key値)                      :[Key(文字列)とValue値をByte配列で取得する.setByteValueで登録した値のみ取得できる]
+               8.removeValue(Key値)                       :[Key(文字列)でデータを削除]
+               9.getValueScript(Key値,JavaScriptコード)   :[Key(文字列)とJavaScriptコードを渡し、取得されたvalue値にJavaScriptを実行し値を返す]
+              10.startTransaction()                       :[Transactionモード時のみ。Transactionを開始する(分散Lockが使用可能になる)]
+              11.lockData(Key値,Lock時間,Lock取得待ち時間):[Transactionモード時のみ。Key値でLockを行う。Lock時間で指定した時間維持される(0は無制限)、別のクライアントがLockしている場合はLock取得待ち時間の間リトライする]
+              12.releaseLockData(Key値)                   :[Transactionモード時のみ。自身の取得したLockを開放する]
+              13.setNewValue(Key値, Value値)              :[未登録のKey値の場合のみ登録できる]
+              14.setNewValue(Key値, Tag値配列 Value値)    :[未登録のKey値の場合のみ登録できる]
 
   それぞれのノード間の通信はTCP/IPでの通信となります。
   また、クライアントとマスタノード間の通信は試験的にBase64にてエンコーディングした文字列を使用しています。
 
 
 
-[サンプル稼動方法]
+[起動方法]
  ※Windows環境
 
    前提条件:1.構成
@@ -677,8 +711,10 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
    簡易的なMasterNode起動用バッチファイルを用意しています。
    本ファイルと同一ディレクトリにある、execMasterNode.batを実行してください。
    設定ファイルはclasses\MasterNode.propertiesを参照しています。
-   停止方法はCtrl+Cもしくは本ファイルと同一ディレクトリにServerStopというファイルを作成する
-   ※ServerStopファイルが存在するとサーバはMasterNodeは起動しません。
+   停止方法はCtrl+Cをプロンプトで実行
+   ※ServerStopファイルが存在するとサーバは起動しません。
+   ※execMasterNode2.batはスレーブMasterNodeを起動します。
+   ※execMasterNodeMemcached.batはスレーブMasterNodeをmemcache互換プロトコルで起動します。
    前提:1.java.exeにPATHが通っている
         2.メモリ上限を128MBとしています
 
@@ -687,23 +723,33 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
    本ファイルと同一ディレクトリにある、execDataNode.batを実行してください。
    2つのデータノードが同時に起動します。
    設定ファイルはclasses\DataNode.propertiesを参照しています。
-   停止方法はCtrl+Cもしくは本ファイルと同一ディレクトリにServerStopというファイルを作成する
-   ※ServerStopファイルが存在するとサーバはDataNodeは起動しません。
+   停止方法はCtrl+Cをプロンプトで実行
+   ※ServerStopファイルが存在するとサーバは起動しません。
    前提:1.java.exeにPATHが通っている
         2.メモリ上限を256MBとしています
 
  3.SlaveDataNode起動
    簡易的なスレーブ用DataNode起動用バッチファイルを用意しています。
-   本ファイルと同一ディレクトリにある、eexecSlaveDataNode.batを実行してください。
+   本ファイルと同一ディレクトリにある、execSlaveDataNode.batを実行してください。
    2つのデータノードが同時に起動します。
    設定ファイルはclasses\SlaveDataNode.propertiesを参照しています。
-   停止方法はCtrl+Cもしくは本ファイルと同一ディレクトリにServerStopというファイルを作成する
+   停止方法はCtrl+Cをプロンプトで実行
    ※ServerStopファイルが存在するとサーバはDataNodeは起動しません。
+   前提:1.java.exeにPATHが通っている
+        2.メモリ上限を256MBとしています
+
+ 4.TransactionNode起動
+   簡易的な分散Lock用TransactionNode起動用バッチファイルを用意しています。
+   本ファイルと同一ディレクトリにある、execTransactionNode.batを実行してください。
+   設定ファイルはclasses\TransactionNode.propertiesを参照しています。
+   停止方法はCtrl+Cをプロンプトで実行
+   ※ServerStopファイルが存在するとサーバは起動しません。
    前提:1.java.exeにPATHが通っている
         2.メモリ上限を256MBとしています
 
  ※execMasterNode2.batを実行すると、スレーブMasterNodeが起動します。
    ポート番号は8889を使用します。
+   execMasterNodeMemcached.batはポート11211でプロトコルはmemcacheになります。
    設定ファイルはclasses\MasterNode2.propertiesを参照しています。
 
    ・起動サンプルでの構成図
@@ -730,7 +776,7 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
       │└─────┘│ │└─────┘│
       └───────┘ └───────┘
 
- 4.接続サンプル
+ 4.サンプルの実行方法
    簡易的な接続、登録、取得、削除サンプルを用意しています。
    本ファイルと同一ディレクトリにある、TestSock.classを実行してください(jdk1.6にてコンパイル済み)。
    引数なしで実行すると使用方法が出力されます。
@@ -769,6 +815,14 @@ Javaで実装された、オンメモリ型分散Key-Valueストア「okuyama」を
 
      # 以下の例はKey値「key_a」のデータを削除して、Valueを取得している
      java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 8 127.0.0.1 8888 key_a
+
+     # 以下の例はTransactionを開始してデータをLock後、データを更新、取得し、Lockを解除
+     java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 10 127.0.0.1 8888 key_a 5 10
+
+     # 以下の例は1度だけデータを登録する場合に使用する呼び出し
+     # "key_abc"というKeyは1度しか登録しないようにしたい場合
+     # 2度実行すると2回目はエラーとなる。(memcacheのaddに相当する)
+     java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 11 127.0.0.1 8888 key_abc value_abc
 
      PHPに関しては、etc_client\PhpAutoTest.batを参照してください。
 
