@@ -147,14 +147,15 @@ public class ImdstDefine {
     /* -- プログラム規定数値 ----------------------------------------      */
     // 保存出来る、Key、Tag、Valueの最大長
     // Valueの最大長
-    // データ保存の場合は以下の数値がお勧め
     public static final int saveDataMaxSize = 2560;
-    // ファイル保存の場合は以下の数値がお勧め(512KB)
+
+    // 大きいデータ保存する場合は以下の数値の用に最も保存する回数の多いサイズに合わせると
+    // レスポンスが向上す。下記の場合は512KB
     //public static final int saveDataMaxSize =524288;
 
     // Key,Tagの最大長
     public static final int saveKeyMaxSize = 2048;
-    
+
     // Node間のコネクションタイムアウト時間(ミリ秒)
     public static final int nodeConnectionTimeout = 60000;
 

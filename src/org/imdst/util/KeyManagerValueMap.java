@@ -30,7 +30,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
     private transient BufferedWriter bw = null;
     private transient RandomAccessFile raf = null;
     private transient Object sync = new Object();
-    private transient boolean vacuumeExecFlg = false;
+    private transient boolean vacuumExecFlg = false;
     private transient ArrayList vacuumDiffDataList = null;
 
     private String lineFile = null;
@@ -110,9 +110,9 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                 long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
 
                 synchronized (sync) {
-					// Vacuume中の場合はデータの格納先が変更されている可能性があるので、
+					// Vacuum中の場合はデータの格納先が変更されている可能性があるので、
 					// ここでチェック
-					if (vacuumeExecFlg) {
+					if (vacuumExecFlg) {
 						if(!lineInteger.equals((Integer)super.get(key))) {
 							// 再起呼び出し
 							return get(key);
@@ -133,6 +133,13 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
         return ret;
     }
 
+	/**
+	 * getをオーバーライド.<br>
+ 	 * MemoryモードとFileモードで取得方法が異なる.<br>
+	 *
+	 * @param key 登録kye値(全てStringとなる)
+	 * @return Object 返却値(全てStringとなる)
+	 */
     public Object get(Object key) {
         Object ret = null;
         if (memoryMode) {
@@ -140,39 +147,40 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
         } else {
             try {
 
-                int i = 0;
-                byte[] buf = new byte[oneDataLength];
+				// Vacuum中はsyncを呼び出す
+				if (vacuumExecFlg) {
+					ret = syncGet(key);
+				} else {
+	                int i = 0;
+	                int line = 0;
+					Integer lineInteger = null;
+	                byte[] buf = new byte[oneDataLength];
+					long seekPoint = 0L;
 
-                Integer lineInteger = (Integer)super.get(key);
-                int line = 0;
-                if (lineInteger != null) {
-                    line = lineInteger.intValue();
-                } else {
-                    return null;
-                }
-                
 
-                // seek計算
-                long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
+					lineInteger = (Integer)super.get(key);
 
-                synchronized (sync) {
-					// Vacuume中の場合はデータの格納先が変更されている可能性があるので、
-					// ここでチェック
-					if (vacuumeExecFlg) {
-						if(!lineInteger.equals((Integer)super.get(key))) {
-							// 再起呼び出し
-							return get(key);
-						}
-					}
-                    raf.seek(seekPoint);
-                    raf.read(buf,0,oneDataLength);
-                }
+	                if (lineInteger != null) {
+	                    line = lineInteger.intValue();
+	                } else {
+	                    return null;
+	                }
+	                
 
-                for (; i < buf.length; i++) {
-                    if (buf[i] == 38) break;
-                }
+	                // seek計算
+	                seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
 
-                ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
+	                synchronized (sync) {
+	                    raf.seek(seekPoint);
+	                    raf.read(buf,0,oneDataLength);
+	                }
+
+	                for (; i < buf.length; i++) {
+	                    if (buf[i] == 38) break;
+	                }
+
+	                ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
+				}
             } catch (Exception e) {
                 e.printStackTrace();
                 // 致命的
@@ -184,6 +192,60 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
     }
 
 
+	// Vacuum中に使用するsynchronizedしながらGetする
+	private Object syncGet(Object key) {
+
+		Object ret = null;
+
+		try{
+            int i = 0;
+            int line = 0;
+			Integer lineInteger = null;
+            byte[] buf = new byte[oneDataLength];
+			long seekPoint = 0L;
+
+            synchronized (sync) {
+
+				// Vacuum中はMap内の行数指定と実際のデータファイルでの位置が異なる場合があるため、
+	            // Vacuum中で且つ、Mapを更新中の場合はここsynchronizedする。
+				lineInteger = (Integer)super.get(key);
+
+	            if (lineInteger != null) {
+	                line = lineInteger.intValue();
+	            } else {
+	                return null;
+	            }
+
+	            // seek計算
+	            seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
+
+                raf.seek(seekPoint);
+                raf.read(buf,0,oneDataLength);
+
+	            for (; i < buf.length; i++) {
+	                if (buf[i] == 38) break;
+	            }
+
+	            ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
+			}
+        } catch (Exception e) {
+            e.printStackTrace();
+            // 致命的
+            StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - syncGet - Error [" + e.getMessage() + "]");
+            
+        }
+		return ret;
+	}
+
+
+	/**
+	 * putをオーバーライド.<br>
+ 	 * MemoryモードとFileモードで保存方法が異なる.<br>
+	 *
+	 * @param key 登録kye値(全てStringとなる)
+	 * @param value 登録value値(全てStringとなる)
+	 * @return Object 返却値(Fileモード時は返却値は常にnull)
+	 */
     public Object put(Object key, Object value) {
         Object ret = null;
         if (memoryMode) {
@@ -211,7 +273,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                     // 書き込む行を決定
                     synchronized (sync) {
 
-						if (vacuumeExecFlg) {
+						if (vacuumExecFlg) {
 							// Vacuum差分にデータを登録
 							Object[] diffObj = {"1", key, value};
 							vacuumDiffDataList.add(diffObj);
@@ -239,9 +301,16 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
     }
 
 
+	/**
+	 * removeをオーバーライド.<br>
+ 	 * MemoryモードとFileモード両方で同じ動きをする.<br>
+	 *
+	 * @param key 削除kye値(全てStringとなる)
+	 * @return Object 返却値
+	 */
     public Object remove(Object key) {
 
-		if (vacuumeExecFlg) {
+		if (vacuumExecFlg) {
     		synchronized (sync) {
 				Object diffObj[] = {"2", key};
 				vacuumDiffDataList.add(diffObj);
@@ -250,9 +319,32 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
         return super.remove(key);
     }
 
+	/**
+	 * containsKeyをオーバーライド.<br>
+ 	 * MemoryモードとFileモード両方で同じ動きをする.<br>
+	 *
+	 * @param key 登録kye値(全てStringとなる)
+	 * @return boolean 返却値
+	 */
+    public boolean containsKey(Object key) {
+		if (vacuumExecFlg) {
+    		synchronized (sync) {
+				return super.containsKey(key);
+			}
+		}
+        return super.containsKey(key);
+    }
+
     /**
      * データファイルの不要領域を掃除して新たなファイルを作りなおす.<br>
-     *
+	 * 方法はMapを一時Mapをつくり出して、現在のsuperクラスのMapから全てのKeyを取り出し、<br>
+     * そのキー値を使用してvalueを自身から取得し、新しいDataファイルに書き出すと同時に、<br>
+     * 一時MapにKeyと書き込んだファイル内の行数をputする.<br>
+     * 全てのKeyの取得が終わったタイミングで新しいファイルには、フラグメントはないので、<br>
+     * 次に、同期を実施し同期中に、superのMapをクリアし、一時Mapの内容をsuperのMapにputする.<br>
+     * これでsuperのMapはフラグメントの存在しない新しいファイルの行数を保持できているので、
+     * あとは元のデータファイルを削除し、新しく作成したフラグメントのないファイルをデータファイル名に
+     * リネームすれば、Vacuum完了.<br>
      */
     public boolean vacuumData() {
         boolean ret = false;
@@ -269,14 +361,13 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
 
 
         synchronized (sync) {
-            vacuumeExecFlg = true;
             vacuumDiffDataList = new ArrayList(1000);
+            vacuumExecFlg = true;
         }
 
         vacuumWorkMap = new ConcurrentHashMap(super.size());
 
         try {
-            
             tmpFos = new FileOutputStream(new File(this.lineFile + ".tmp"), true);
             tmpOsw = new OutputStreamWriter(tmpFos, ImdstDefine.keyWorkFileEncoding);
             tmpBw = new BufferedWriter(tmpOsw);
@@ -301,17 +392,19 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
             StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e.getMessage() + "]");
         } finally {
             try {
-                synchronized (sync) {
+                // 正常終了の場合のみ、ファイルを変更
+                if (StatusUtil.getStatus() == 0)  {
 
-                    // 正常終了の場合のみ、ファイルを変更
-                    if (StatusUtil.getStatus() == 0)  {
+                    // 新ファイルflush
+                    tmpBw.flush();
+					//
+                    tmpBw.close();
+                    tmpOsw.close();
+                    tmpFos.close();
+
+	                synchronized (sync) {
+
                         raf.close();
-                        // ファイルflush
-                        tmpBw.flush();
-
-                        tmpBw.close();
-                        tmpOsw.close();
-                        tmpFos.close();
 
                         if(this.raf != null) this.raf.close();
                         if(this.bw != null) this.bw.close();
@@ -327,7 +420,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                         File tmpFile = new File(this.lineFile + ".tmp");
                         tmpFile.renameTo(new File(this.lineFile));
 
-						// 一旦初期化
+						// superのMapを初期化
 						super.clear();
 
 						// workMapからデータコピー
@@ -349,13 +442,15 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
 					    this.nowKeySize = super.size();
 						// ファイルポインタ初期化
                         this.initNoMemoryModeSetting(this.lineFile);
-						// Vacuum終了をマーク
-						vacuumeExecFlg = false;
-						// Vacuum中の差分を埋める
-						if (vacuumDiffDataList.size() > 0) {
+
+
+						// Vacuum中でかつ、synchronized前に登録、削除されたデータを追加登録
+						int vacuumDiffDataSize = vacuumDiffDataList.size();
+
+						if (vacuumDiffDataSize > 0) {
 							
 							Object[] diffObj = null;
-							for (int i = 0; i < vacuumDiffDataList.size(); i++) {
+							for (int i = 0; i < vacuumDiffDataSize; i++) {
 								// 差分リストからデータを作成
 								diffObj = (Object[])vacuumDiffDataList.get(i);
 								if (diffObj[0].equals("1")) {
@@ -369,6 +464,8 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
 						}
 						vacuumDiffDataList = null;
 						vacuumWorkMap = null;
+						// Vacuum終了をマーク
+						vacuumExecFlg = false;
 						ret = true;
                     }
                 }
