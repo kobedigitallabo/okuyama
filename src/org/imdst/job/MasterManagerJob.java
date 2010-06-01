@@ -70,6 +70,15 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 loadBalance = new Boolean(loadBalanceStr).booleanValue();
             }
 
+			// MainMasterNodeの設定
+            if (super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode) != null && 
+                    super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode).equals("true")) {
+				StatusUtil.setMainMasterNode(true);
+			} else {
+				StatusUtil.setMainMasterNode(false);
+			}
+
+
             // Transaction設定
             String transactionModeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_TransactionMode);
             if (transactionModeStr != null) {

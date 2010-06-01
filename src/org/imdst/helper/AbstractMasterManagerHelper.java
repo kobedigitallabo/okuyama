@@ -47,7 +47,10 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @param nodeInfo 対象のノード情報
      */
     protected void setDeadNode(String nodeInfo) {
-        StatusUtil.setDeadNode(nodeInfo);
+		// MainMasterNodeの場合のみ設定される
+		if (StatusUtil.isMainMasterNode()) {
+	        StatusUtil.setDeadNode(nodeInfo);
+		}
     }
 
     /**
@@ -60,8 +63,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
 		// MainのMasterNodeの場合のみ実行
 		// SlaveのMasterNodeにもノードの復帰登録を依頼
-		if (super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode) != null && 
-				super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode).equals("true")) {
+		if (StatusUtil.isMainMasterNode()) {
 
 			// 対象のSlaveMasterNode全てに依頼
 			String slaves = super.getPropertiesValue(ImdstDefine.Prop_SlaveMasterNodes);
@@ -182,8 +184,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
 		// MainのMasterNodeの場合のみ実行
 		// SlaveのMasterNodeにもノードの一時停止を依頼
-		if (super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode) != null && 
-				super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode).equals("true")) {
+		if (StatusUtil.isMainMasterNode()) {
 
 			// 対象のSlaveMasterNode全てに依頼
 			String slaves = super.getPropertiesValue(ImdstDefine.Prop_SlaveMasterNodes);
@@ -286,8 +287,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
 		// MainのMasterNodeの場合のみ実行
 		// SlaveのMasterNodeにもノードの一時停止解除を依頼
-		if (super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode) != null && 
-				super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode).equals("true")) {
+		if (StatusUtil.isMainMasterNode()) {
 
 			// 対象のSlaveMasterNode全てに依頼
 			String slaves = super.getPropertiesValue(ImdstDefine.Prop_SlaveMasterNodes);

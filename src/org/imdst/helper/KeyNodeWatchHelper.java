@@ -81,8 +81,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                     }
 
                     // MainのMasterNodeの場合のみ実行
-                    if (super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode) != null && 
-                            super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode).equals("true")) {
+                    if (StatusUtil.isMainMasterNode()) {
 
                         // ノードチェック(メイン)
                         String nodeInfo = (String)mainNodeList.get(i);

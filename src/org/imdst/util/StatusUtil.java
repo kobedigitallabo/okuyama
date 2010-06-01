@@ -43,6 +43,8 @@ public class StatusUtil {
     // 全体メッセージ
     private static String msg = null;
 
+	// MainMasterNodeである場合はtrueとなる
+	private static boolean mainMasterNode = false;
 
     /**
      * ノード使用状態の枠を初期化
@@ -203,7 +205,6 @@ public class StatusUtil {
         nowCpuStatus = statusStr;
     }
 
-
     public static String getNowMemoryStatus() {
         return nowMemoryStatus;
     }
@@ -211,5 +212,16 @@ public class StatusUtil {
     public static String getNowCpuStatus() {
         return  nowCpuStatus;
     }
+
+	// MainMasterNodeかを設定
+    public static void setMainMasterNode(boolean flg) {
+        mainMasterNode = flg;
+    }
+
+	// MainMasterNodeかを判定する
+    public static boolean isMainMasterNode() {
+        return mainMasterNode;
+    }
+
 
 }
