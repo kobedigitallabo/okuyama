@@ -310,6 +310,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
     /**
      * ダウン状態から復帰したノードに対して、ペアーのノードのデータをコピーする.<br>
      * コピー元のデータをコピー先へ.<br>
+	 * 本メソッドを呼び出す前に必ず両ノードの使用を一時中断していること
      *
      * @param コピー先ノード(予定)
      * @param コピー元ノード(予定)
@@ -366,7 +367,6 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             mbr = new BufferedReader(misr);
 
 
-            // TODO:一度に全てのデータを1行文字列で読み込むので改良の余地あり
             // TODO:ここでそれぞれのノードの最終更新時間を見て新しいほうのデータで上書き
             //      するが微妙かも
 
@@ -420,9 +420,10 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 mpw.flush();
 
 				// データ行数取得
+				// 1行にメモリに乗るのに十分余裕のあるサイズが送られてくる
                 lineCount = mbr.readLine();
 
-
+				
                 // 取得したデータをコピー先に書き出し
                 // 処理番号21
                 buf = new StringBuffer();
@@ -455,6 +456,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 pw.flush();
 
 				// データ行数取得
+				// 1行にメモリに乗るのに十分余裕のあるサイズが送られてくる
                 lineCount = br.readLine();
 
 
