@@ -409,6 +409,18 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 // 予定どうり
                 logger.info("Data Recover Actually [" + masterNodeInfo + " => " + nodeInfo + "]");
 
+				// もともと生存していたノードを差分モードOnにする
+                buf = new StringBuffer();
+                // 処理番号22
+                buf.append("22").append(ImdstDefine.keyHelperClientParamSep).append("true");
+                // 送信
+                mpw.println(buf.toString());
+                mpw.flush();
+
+				// コピー元の一時停止を解除
+				super.removeNodeWaitStatus(masterNodeInfo);
+
+
                 // コピー元からデータ読み込み
                 buf = new StringBuffer();
                 // 処理番号20
@@ -423,7 +435,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 				// 1行にメモリに乗るのに十分余裕のあるサイズが送られてくる
                 lineCount = mbr.readLine();
 
-				
+
                 // 取得したデータをコピー先に書き出し
                 // 処理番号21
                 buf = new StringBuffer();
@@ -440,10 +452,59 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 	                pw.println(retParam);
 	                pw.flush();
 				}
+
+
+				// コピー元を一時停止にする
+                super.setNodeWaitStatus(masterNodeInfo);
+                while(true) {
+                    // 使用停止まで待機
+                    if(super.getNodeUseStatus(masterNodeInfo) == 0) break;
+                    Thread.sleep(10);
+                }
+
+				// 停止完了後差分データを取得
+                buf = new StringBuffer();
+                // 処理番号24
+                buf.append("24");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append("true");
+                // 送信
+                mpw.println(buf.toString());
+                mpw.flush();
+
+				// 差分データを送る
+                buf = new StringBuffer();
+                buf.append("25");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+				buf.append(mbr.readLine());
+                pw.println(buf.toString());
+                pw.flush();
+
+				// もともと生存していたノードを差分モードOffにする
+                buf = new StringBuffer();
+                // 処理番号23
+                buf.append("23").append(ImdstDefine.keyHelperClientParamSep).append("true");
+                // 送信
+                mpw.println(buf.toString());
+                mpw.flush();
+
             } else {
 
                 // 当初の予定から逆転
                 logger.info("Data Recover Actually [" + nodeInfo + " => " + masterNodeInfo + "]");
+
+				// 最終更新日付が新しいノードを差分モードOnにする
+                buf = new StringBuffer();
+                // 処理番号22
+                buf.append("22").append(ImdstDefine.keyHelperClientParamSep).append("true");
+                // 送信
+                pw.println(buf.toString());
+
+                pw.flush();
+
+				// コピー元の一時停止を解除
+				super.removeNodeWaitStatus(nodeInfo);
+
 
                 // コピー元からデータ読み込み
                 buf = new StringBuffer();
@@ -453,6 +514,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 buf.append("true");
                 // 送信
                 pw.println(buf.toString());
+
                 pw.flush();
 
 				// データ行数取得
@@ -466,6 +528,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 buf.append("21");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(lineCount);
+
                 // 送信
                 mpw.println(buf.toString());
                 mpw.flush();
@@ -474,10 +537,54 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
 	                // データ取得
 	                retParam = br.readLine();
+
 	                // 値を書き出し
 	                mpw.println(retParam);
+
 	                mpw.flush();
 				}
+
+
+				// コピー元を一時停止にする
+                super.setNodeWaitStatus(nodeInfo);
+
+                while(true) {
+
+                    // 使用停止まで待機
+                    if(super.getNodeUseStatus(nodeInfo) == 0) break;
+                    Thread.sleep(10);
+                }
+
+
+				// 停止完了後差分データを取得
+                buf = new StringBuffer();
+                // 処理番号24
+                buf.append("24");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append("true");
+                // 送信
+                pw.println(buf.toString());
+
+                pw.flush();
+
+				// 差分データを送る
+                buf = new StringBuffer();
+                buf.append("25");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+				buf.append(br.readLine());
+                mpw.println(buf.toString());
+
+                mpw.flush();
+
+				// もともと生存していたノードを差分モードOffにする
+                buf = new StringBuffer();
+                // 処理番号23
+                buf.append("23").append(ImdstDefine.keyHelperClientParamSep).append("true");
+                // 送信
+                pw.println(buf.toString());
+
+                pw.flush();
+
             }
         } catch (Exception e) {
 

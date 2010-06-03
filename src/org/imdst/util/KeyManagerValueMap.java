@@ -268,6 +268,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                     }
 
                     writeStr.append(new String(appendDatas));
+                    writeStr.append("\n");
                     String write = writeStr.toString();
 
                     // 書き込む行を決定
@@ -281,7 +282,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
 
                         this.lineCount++;
                         this.bw.write(write);
-                        this.bw.write("\n");
+                        //this.bw.write("\n");
                         //this.bw.newLine();
                         this.bw.flush();
                     	super.put(key, new Integer(lineCount));

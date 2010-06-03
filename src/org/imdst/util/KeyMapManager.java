@@ -2,6 +2,7 @@ package org.imdst.util;
 
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.*;
 
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
@@ -103,6 +104,11 @@ public class KeyMapManager extends Thread {
 
     // Lockの開始時間の連結文字列
     private String lockKeyTimeSep = "_";
+
+	// ノード復旧中のデータを一時的に蓄積する設定
+	private boolean diffDataPoolingFlg = false;
+	private CopyOnWriteArrayList diffDataPoolingList = null;
+
 
 
     // 初期化メソッド
@@ -381,6 +387,11 @@ public class KeyMapManager extends Thread {
                     this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
                     this.bw.flush();
                 }
+
+				if (this.diffDataPoolingFlg) {
+					this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
+				}
+
                 //logger.debug("setKeyPair - synchronized - end");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -412,6 +423,7 @@ public class KeyMapManager extends Thread {
                     keyMapObjPut(key, keyNode);
                     ret = true;
                 }
+
                 // データの書き込みを指示
                 this.writeMapFileFlg = true;
 
@@ -421,6 +433,11 @@ public class KeyMapManager extends Thread {
                     this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
                     this.bw.flush();
                 }
+
+				if (this.diffDataPoolingFlg) {
+					this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
+				}
+
                 //logger.debug("setKeyPairOnlyOnce - synchronized - end");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -467,6 +484,10 @@ public class KeyMapManager extends Thread {
                         this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
                         this.bw.flush();
                     }
+
+					if (this.diffDataPoolingFlg) {
+						this.diffDataPoolingList.add("-" + workFileSeq + key);
+					}
 
             } catch (Exception e) {
                 logger.error("System.out.println(removeKeyPair - Error");
@@ -666,6 +687,11 @@ public class KeyMapManager extends Thread {
                     this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(saveTransactionStr).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
                     this.bw.flush();
                 }
+
+				if (this.diffDataPoolingFlg) {
+					this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  saveTransactionStr);
+				}
+
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("locking - Error");
@@ -708,6 +734,10 @@ public class KeyMapManager extends Thread {
                     this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
                     this.bw.flush();
                 }
+
+				if (this.diffDataPoolingFlg) {
+					this.diffDataPoolingList.add("-" + workFileSeq + key);
+				}
 
             } catch (Exception e) {
                 logger.error("removeLock - Error");
@@ -781,6 +811,10 @@ public class KeyMapManager extends Thread {
                                 this.bw.write(new StringBuffer("-").append(workFileSeq).append(keyList[idx]).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
                                 this.bw.flush();
                             }
+
+							if (this.diffDataPoolingFlg) {
+								this.diffDataPoolingList.add("-" + workFileSeq + keyList[idx]);
+							}
                         }
                     }
                 } catch(Exception e) {
@@ -855,6 +889,16 @@ public class KeyMapManager extends Thread {
 
     /**
      * keyMapObjに対するアクセスメソッド.<br>
+     * 更新時間をセットしない
+     */
+    private void keyMapObjRemoveNoChange(String key) {
+        this.keyMapObj.remove(key);
+        this.lastAccess = System.currentTimeMillis();
+    }
+
+
+    /**
+     * keyMapObjに対するアクセスメソッド.<br>
      *  任意の更新時間をセットする.<br>
      */
     private void keyMapObjRemoveSetTime(String key, long execTime) {
@@ -863,6 +907,11 @@ public class KeyMapManager extends Thread {
         this.lastAccess = System.currentTimeMillis();
     }
 
+
+	public void diffDataMode(boolean flg) {
+		if (flg) this.diffDataPoolingList = new CopyOnWriteArrayList();
+		this.diffDataPoolingFlg = flg;
+	}
 
     // 引数で渡されてストリームに対しkeyMapObjを書き出す
     public void outputKeyMapObj2Stream(PrintWriter pw) throws BatchException {
@@ -917,6 +966,40 @@ public class KeyMapManager extends Thread {
                 logger.error("outputKeyMapObj2Stream - Error");
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "outputKeyMapObj2Stream - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+    }
+
+
+    // 引数で渡されてストリームに対し復旧中の差分データを書き出す
+	// 
+    public void outputDiffKeyMapObj2Stream(PrintWriter pw) throws BatchException {
+        if (!blocking) {
+            try {
+                synchronized(poolKeyLock) {
+                    logger.info("outputDiffKeyMapObj2Stream - synchronized - start");
+                    String allDataSep = "";
+                    StringBuffer allDataBuf = new StringBuffer();
+
+                    // 差分データの全内容を1行文字列として書き出し
+
+                    for (int i = 0; i < this.diffDataPoolingList.size(); i++) {
+
+                        allDataBuf.append(allDataSep);
+                        allDataBuf.append(this.diffDataPoolingList.get(i));
+                        allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                    }
+
+                    pw.println(allDataBuf.toString());
+					this.diffDataPoolingList = null;
+					allDataBuf = null;
+                }
+                //logger.debug("outputDiffKeyMapObj2Stream - synchronized - end");
+            } catch (Exception e) {
+                logger.error("outputDiffKeyMapObj2Stream - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "outputDiffKeyMapObj2Stream - Error [" + e.getMessage() + "]");
                 throw new BatchException(e);
             }
         }
@@ -1040,6 +1123,76 @@ public class KeyMapManager extends Thread {
 
                         }
                     }
+                    // ファイルに書き込み
+                    File keyFile = new File(this.keyFilePath);
+                    FileOutputStream oF = new FileOutputStream(keyFile);
+                    ObjectOutputStream oO = new ObjectOutputStream(oF);
+                    // キャッシュ情報を保持したDataSetをファイル書き込み
+                    oO.writeObject(this.keyMapObj);
+                    oO.close();
+                    oF.close();
+                }
+                logger.info("inputKeyMapObj2Stream - synchronized - end");
+            } catch (Exception e) {
+                logger.error("writeKeyMapObj2Stream - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "writeKeyMapObj2Stream - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+    }
+
+
+    // 引数で渡されてストリームからの値でデータを作成する
+	// 差分データの登録なので、データファイルの消しこみなどはせずに、追加で登録、削除していく
+    public void inputDiffKeyMapObj2Stream(BufferedReader br) throws BatchException {
+        if (!blocking) {
+            try {
+                int i = 0;
+                String[] oneDatas = null;
+                logger.info("inputDiffKeyMapObj2Stream - synchronized - start");
+                synchronized(this.poolKeyLock) {
+
+
+                    // 最終更新日付変えずに全てのデータを登録する
+                    // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
+                    String allDataStr = br.readLine();
+
+                    String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+
+                    for (i = 0; i < allDataLines.length; i++) {
+                        if (!allDataLines[i].trim().equals("")) {
+                            oneDatas = allDataLines[i].split(workFileSeq);
+
+							// 最後のデータのみ更新日を変更
+							if (allDataLines.length == (i + 1)) {
+
+								if (oneDatas[0].equals("+")) {
+
+		                            if (oneDatas.length == 3) {
+		                                this.keyMapObjPut(oneDatas[1], oneDatas[2]);
+		                            } else if (oneDatas.length == 4) {
+		                                this.keyMapObjPut(oneDatas[1], oneDatas[2] + workFileSeq + oneDatas[3]);
+		                            }
+								} else if (oneDatas[0].equals("-")) {
+
+									this.keyMapObjRemove(oneDatas[1]);
+								}
+							} else {
+								if (oneDatas[0].equals("+")) {
+
+		                            if (oneDatas.length == 3) {
+		                                this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2]);
+		                            } else if (oneDatas.length == 4) {
+		                                this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2] + workFileSeq + oneDatas[3]);
+		                            }
+								} else if (oneDatas[0].equals("-")) {
+									this.keyMapObjRemoveNoChange(oneDatas[1]);
+								}
+							}
+                        }
+                    }
+
                     // ファイルに書き込み
                     File keyFile = new File(this.keyFilePath);
                     FileOutputStream oF = new FileOutputStream(keyFile);

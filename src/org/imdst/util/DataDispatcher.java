@@ -252,12 +252,12 @@ public class DataDispatcher {
         // 該当ノードが一時使用停止の場合は使用再開されるまで停止(データ復旧時に起こりえる)
         // どちらか一方でも一時停止の場合はWait
         while(true) {
-            noWaitFlg = true;
+            noWaitFlg = false;
             // 停止ステータスか確認する
-            if (StatusUtil.isWaitStatus(allNodeDetailList[2][nodeNo])) noWaitFlg = false;
+            if (!StatusUtil.isWaitStatus(allNodeDetailList[2][nodeNo])) noWaitFlg = true;
 
             if (ret.length > 3) {
-                if(StatusUtil.isWaitStatus(allNodeDetailList[5][nodeNo])) noWaitFlg = false;
+                if(!StatusUtil.isWaitStatus(allNodeDetailList[5][nodeNo])) noWaitFlg = true;
             }
 
             if  (noWaitFlg) break;

@@ -325,7 +325,32 @@ public class KeyManagerHelper extends AbstractHelper {
                         // KeyMapObjectを読み込んで書き出す
                         this.keyMapManager.inputKeyMapObj2Stream(br, Integer.parseInt(clientParameterList[1]));
                         retParamBuf = null;
-                    } 
+                    } else if(clientParameterList[0].equals("22")) {
+
+                        // KeyManagerの差分取得モードをONにする
+						// !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                        this.keyMapManager.diffDataMode(true);
+                        retParamBuf = null;
+                    } else if(clientParameterList[0].equals("23")) {
+
+                        // KeyManagerの差分取得モードをOFFにする
+						// !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                        this.keyMapManager.diffDataMode(false);
+                        retParamBuf = null;
+                    } else if(clientParameterList[0].equals("24")) {
+
+                        // KeyManagerの差分データを読み込んで渡す
+						// !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                        this.keyMapManager.outputDiffKeyMapObj2Stream(pw);
+                        pw.flush();
+                        retParamBuf = null;
+                    } else if(clientParameterList[0].equals("25")) {
+
+                        // KeyMapManagerに差分データを登録する
+						// !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                        this.keyMapManager.inputDiffKeyMapObj2Stream(br);
+                        retParamBuf = null;
+					}
 
                     if (retParamBuf != null) {
                         // プロトコルに合わせて処理を分岐
