@@ -105,9 +105,9 @@ public class KeyMapManager extends Thread {
     // Lockの開始時間の連結文字列
     private String lockKeyTimeSep = "_";
 
-	// ノード復旧中のデータを一時的に蓄積する設定
-	private boolean diffDataPoolingFlg = false;
-	private CopyOnWriteArrayList diffDataPoolingList = null;
+    // ノード復旧中のデータを一時的に蓄積する設定
+    private boolean diffDataPoolingFlg = false;
+    private CopyOnWriteArrayList diffDataPoolingList = null;
 
 
 
@@ -388,9 +388,9 @@ public class KeyMapManager extends Thread {
                     this.bw.flush();
                 }
 
-				if (this.diffDataPoolingFlg) {
-					this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
-				}
+                if (this.diffDataPoolingFlg) {
+                    this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
+                }
 
                 //logger.debug("setKeyPair - synchronized - end");
             } catch (Exception e) {
@@ -434,9 +434,9 @@ public class KeyMapManager extends Thread {
                     this.bw.flush();
                 }
 
-				if (this.diffDataPoolingFlg) {
-					this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
-				}
+                if (this.diffDataPoolingFlg) {
+                    this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
+                }
 
                 //logger.debug("setKeyPairOnlyOnce - synchronized - end");
             } catch (Exception e) {
@@ -485,9 +485,9 @@ public class KeyMapManager extends Thread {
                         this.bw.flush();
                     }
 
-					if (this.diffDataPoolingFlg) {
-						this.diffDataPoolingList.add("-" + workFileSeq + key);
-					}
+                    if (this.diffDataPoolingFlg) {
+                        this.diffDataPoolingList.add("-" + workFileSeq + key);
+                    }
 
             } catch (Exception e) {
                 logger.error("System.out.println(removeKeyPair - Error");
@@ -688,9 +688,9 @@ public class KeyMapManager extends Thread {
                     this.bw.flush();
                 }
 
-				if (this.diffDataPoolingFlg) {
-					this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  saveTransactionStr);
-				}
+                if (this.diffDataPoolingFlg) {
+                    this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  saveTransactionStr);
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -735,9 +735,9 @@ public class KeyMapManager extends Thread {
                     this.bw.flush();
                 }
 
-				if (this.diffDataPoolingFlg) {
-					this.diffDataPoolingList.add("-" + workFileSeq + key);
-				}
+                if (this.diffDataPoolingFlg) {
+                    this.diffDataPoolingList.add("-" + workFileSeq + key);
+                }
 
             } catch (Exception e) {
                 logger.error("removeLock - Error");
@@ -812,9 +812,9 @@ public class KeyMapManager extends Thread {
                                 this.bw.flush();
                             }
 
-							if (this.diffDataPoolingFlg) {
-								this.diffDataPoolingList.add("-" + workFileSeq + keyList[idx]);
-							}
+                            if (this.diffDataPoolingFlg) {
+                                this.diffDataPoolingList.add("-" + workFileSeq + keyList[idx]);
+                            }
                         }
                     }
                 } catch(Exception e) {
@@ -908,10 +908,10 @@ public class KeyMapManager extends Thread {
     }
 
 
-	public void diffDataMode(boolean flg) {
-		if (flg) this.diffDataPoolingList = new CopyOnWriteArrayList();
-		this.diffDataPoolingFlg = flg;
-	}
+    public void diffDataMode(boolean flg) {
+        if (flg) this.diffDataPoolingList = new CopyOnWriteArrayList();
+        this.diffDataPoolingFlg = flg;
+    }
 
     // 引数で渡されてストリームに対しkeyMapObjを書き出す
     public void outputKeyMapObj2Stream(PrintWriter pw) throws BatchException {
@@ -973,7 +973,7 @@ public class KeyMapManager extends Thread {
 
 
     // 引数で渡されてストリームに対し復旧中の差分データを書き出す
-	// 
+    // 
     public void outputDiffKeyMapObj2Stream(PrintWriter pw) throws BatchException {
         if (!blocking) {
             try {
@@ -992,8 +992,8 @@ public class KeyMapManager extends Thread {
                     }
 
                     pw.println(allDataBuf.toString());
-					this.diffDataPoolingList = null;
-					allDataBuf = null;
+                    this.diffDataPoolingList = null;
+                    allDataBuf = null;
                 }
                 //logger.debug("outputDiffKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
@@ -1039,13 +1039,12 @@ public class KeyMapManager extends Thread {
                     }
 
                     // Disk時はデータファイルを削除
-                    if(this.keyMapObj != null) this.keyMapObj.close();
-                    if (!this.dataMemory) {
-                        File  dataFile = new File(this.diskModeRestoreFile);
-                        if(dataFile.exists()) {
-                            dataFile.delete();
-                        }
+                    if (this.dataMemory) {
+                        if(this.keyMapObj != null) this.keyMapObj.close();
+                    } else {
+                        this.keyMapObj.deleteMapDataFile();
                     }
+
 
                     this.keyMapObj = new KeyManagerValueMap(this.mapSize);
                     if (!dataMemory) {
@@ -1144,7 +1143,7 @@ public class KeyMapManager extends Thread {
 
 
     // 引数で渡されてストリームからの値でデータを作成する
-	// 差分データの登録なので、データファイルの消しこみなどはせずに、追加で登録、削除していく
+    // 差分データの登録なので、データファイルの消しこみなどはせずに、追加で登録、削除していく
     public void inputDiffKeyMapObj2Stream(BufferedReader br) throws BatchException {
         if (!blocking) {
             try {
@@ -1164,32 +1163,32 @@ public class KeyMapManager extends Thread {
                         if (!allDataLines[i].trim().equals("")) {
                             oneDatas = allDataLines[i].split(workFileSeq);
 
-							// 最後のデータのみ更新日を変更
-							if (allDataLines.length == (i + 1)) {
+                            // 最後のデータのみ更新日を変更
+                            if (allDataLines.length == (i + 1)) {
 
-								if (oneDatas[0].equals("+")) {
+                                if (oneDatas[0].equals("+")) {
 
-		                            if (oneDatas.length == 3) {
-		                                this.keyMapObjPut(oneDatas[1], oneDatas[2]);
-		                            } else if (oneDatas.length == 4) {
-		                                this.keyMapObjPut(oneDatas[1], oneDatas[2] + workFileSeq + oneDatas[3]);
-		                            }
-								} else if (oneDatas[0].equals("-")) {
+                                    if (oneDatas.length == 3) {
+                                        this.keyMapObjPut(oneDatas[1], oneDatas[2]);
+                                    } else if (oneDatas.length == 4) {
+                                        this.keyMapObjPut(oneDatas[1], oneDatas[2] + workFileSeq + oneDatas[3]);
+                                    }
+                                } else if (oneDatas[0].equals("-")) {
 
-									this.keyMapObjRemove(oneDatas[1]);
-								}
-							} else {
-								if (oneDatas[0].equals("+")) {
+                                    this.keyMapObjRemove(oneDatas[1]);
+                                }
+                            } else {
+                                if (oneDatas[0].equals("+")) {
 
-		                            if (oneDatas.length == 3) {
-		                                this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2]);
-		                            } else if (oneDatas.length == 4) {
-		                                this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2] + workFileSeq + oneDatas[3]);
-		                            }
-								} else if (oneDatas[0].equals("-")) {
-									this.keyMapObjRemoveNoChange(oneDatas[1]);
-								}
-							}
+                                    if (oneDatas.length == 3) {
+                                        this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2]);
+                                    } else if (oneDatas.length == 4) {
+                                        this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2] + workFileSeq + oneDatas[3]);
+                                    }
+                                } else if (oneDatas[0].equals("-")) {
+                                    this.keyMapObjRemoveNoChange(oneDatas[1]);
+                                }
+                            }
                         }
                     }
 

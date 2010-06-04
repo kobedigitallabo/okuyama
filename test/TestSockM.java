@@ -24,7 +24,7 @@ public class TestSockM {
     public void exec (String[] args) {
         try {
             long total = 0;
-            Object[] list = new Object[Integer.parseInt(args[2])];
+            Object  [] list = new Object[Integer.parseInt(args[2])];
             int threadCount = Integer.parseInt(args[2]);
             MTest m = null;
             for (int i= 0; i < threadCount; i++) {

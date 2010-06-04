@@ -75,14 +75,10 @@ public class MTest extends Thread {
 
                 String key = "datasavekey_" + threadNo + "_";
                 String value= "savedatavaluestr_" + threadNo + "_";
-                while(!this.endFlg){
-                    while (startFlg == true) {
-                        imdstKeyValueClient.setValue(key + this.execCounter, value + this.execCounter);
-                        this.execCounter++;
-                    }
+                while(true){
+                    imdstKeyValueClient.setValue(key + this.execCounter, value + this.execCounter);
+                    this.execCounter++;
                 }
-
-                imdstKeyValueClient.close();
 
             }
 
