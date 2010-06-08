@@ -1122,14 +1122,6 @@ public class KeyMapManager extends Thread {
 
                         }
                     }
-                    // ファイルに書き込み
-                    File keyFile = new File(this.keyFilePath);
-                    FileOutputStream oF = new FileOutputStream(keyFile);
-                    ObjectOutputStream oO = new ObjectOutputStream(oF);
-                    // キャッシュ情報を保持したDataSetをファイル書き込み
-                    oO.writeObject(this.keyMapObj);
-                    oO.close();
-                    oF.close();
                 }
                 logger.info("inputKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
@@ -1192,14 +1184,37 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-                    // ファイルに書き込み
-                    File keyFile = new File(this.keyFilePath);
-                    FileOutputStream oF = new FileOutputStream(keyFile);
-                    ObjectOutputStream oO = new ObjectOutputStream(oF);
-                    // キャッシュ情報を保持したDataSetをファイル書き込み
-                    oO.writeObject(this.keyMapObj);
-                    oO.close();
-                    oF.close();
+
+                    // 全てのデータをトランザクションログモードがONの場合のみ書き出し
+                    // ファイルストリームは既にinputKeyMapObj2Streamメソッド内で作成されている想定
+                    if (this.workFileMemory == false) {
+
+                        // keyMapObjの全内容を1行文字列として書き出し
+                        Set entrySet = this.keyMapObj.entrySet();
+                        Iterator entryIte = entrySet.iterator(); 
+
+                        long writeCurrentTime = this.lastAccess;
+                        String writeKey = null;
+
+                        while(entryIte.hasNext()) {
+
+                            Map.Entry obj = (Map.Entry)entryIte.next();
+                            writeKey = (String)obj.getKey();
+
+                            this.bw.write(new StringBuffer("+").
+                                          append(workFileSeq).
+                                          append(writeKey).
+                                          append(workFileSeq).
+                                          append(this.keyMapObjGet(writeKey)).
+                                          append(workFileSeq).
+                                          append(writeCurrentTime).
+                                          append(workFileSeq).
+                                          append(workFileEndPoint).
+                                          append("\n").
+                                          toString());
+                        }
+                        this.bw.flush();
+                    }
                 }
                 logger.info("inputKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
