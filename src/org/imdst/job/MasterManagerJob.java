@@ -57,7 +57,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         logger.debug("MasterManagerJob - executeJob - start");
         String ret = SUCCESS;
         Object[] helperParams = null;
-		String[] transactionManagerInfos = null;
+        String[] transactionManagerInfos = null;
 
         try{
 
@@ -70,25 +70,25 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 loadBalance = new Boolean(loadBalanceStr).booleanValue();
             }
 
-			// MainMasterNodeの設定
-            if (super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode) != null && 
+            // MainMasterNodeの設定
+            /*if (super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode) != null && 
                     super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode).equals("true")) {
-				StatusUtil.setMainMasterNode(true);
-			} else {
-				StatusUtil.setMainMasterNode(false);
-			}
+                StatusUtil.setMainMasterNode(true);
+            } else {
+                StatusUtil.setMainMasterNode(false);
+            }*/
 
 
             // Transaction設定
-            String transactionModeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_TransactionMode);
+            /*String transactionModeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_TransactionMode);
             if (transactionModeStr != null) {
                 transactionMode = new Boolean(transactionModeStr).booleanValue();
-				if (transactionMode) {
-					String transactionMgrStr = null;
-					transactionMgrStr = (String)super.getPropertiesValue(ImdstDefine.Prop_TransactionManagerInfo);
-					transactionManagerInfos = transactionMgrStr.split(":");
-				}
-            }
+                if (transactionMode) {
+                    String transactionMgrStr = null;
+                    transactionMgrStr = (String)super.getPropertiesValue(ImdstDefine.Prop_TransactionManagerInfo);
+                    transactionManagerInfos = transactionMgrStr.split(":");
+                }
+            }*/
 
 
             // サーバソケットの生成
@@ -98,8 +98,8 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
             Socket socket = null;
 
-            // KeyMapNode情報を初期化完了を確認
-            if(DataDispatcher.isStandby()) {
+            // KeyMapNode情報の初期化完了を確認
+            if(DataDispatcher.isStandby() && StatusUtil.isStandby()) {
 
                 while (true) {
                     if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;
@@ -115,8 +115,8 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                         helperParams[1] = DataDispatcher.getOldRules();
                         helperParams[2] = this.mode;
                         if (loadBalance) helperParams[3] = new Boolean(blanceMode);
-                        helperParams[4] = this.transactionMode;
-						helperParams[5] = transactionManagerInfos;
+                        helperParams[4] = StatusUtil.isTransactionMode();
+                        helperParams[5] = StatusUtil.getTransactionNode();
                         super.executeHelper("MasterManagerHelper", helperParams);
 
                         if (blanceMode) {

@@ -43,8 +43,20 @@ public class StatusUtil {
     // 全体メッセージ
     private static String msg = null;
 
-	// MainMasterNodeである場合はtrueとなる
-	private static boolean mainMasterNode = false;
+    // MainMasterNodeである場合はtrueとなる
+    private static Boolean mainMasterNode = null;
+
+    // SlaveMainMasterNodeの情報
+    private static String slaveMainMasterNodeInfo = null;
+
+
+    // Transactionの使用有無
+    private static Boolean transactionMode = null;
+
+    // TransactionNodeの情報
+    private static String[] transactionInfo = null;
+
+
 
     /**
      * ノード使用状態の枠を初期化
@@ -213,14 +225,74 @@ public class StatusUtil {
         return  nowCpuStatus;
     }
 
-	// MainMasterNodeかを設定
+    // MainMasterNodeかを設定
     public static void setMainMasterNode(boolean flg) {
-        mainMasterNode = flg;
+        mainMasterNode = new Boolean(flg);
     }
 
-	// MainMasterNodeかを判定する
+    // MainMasterNodeかを判定する
     public static boolean isMainMasterNode() {
-        return mainMasterNode;
+        while (mainMasterNode == null) {
+            try {
+                Thread.sleep(10);
+            } catch(Exception e) {}
+        }
+        return mainMasterNode.booleanValue();
+    }
+
+    // SlaveMainMasterNodeの情報をセットする
+    public static void setSlaveMasterNodes(String infos) {
+        slaveMainMasterNodeInfo = infos;
+    }
+
+    // SlaveMainMasterNodeの情報を返す
+    public static String getSlaveMasterNodes() {
+        while (mainMasterNode == null) {
+            try {
+                Thread.sleep(10);
+            } catch(Exception e) {}
+        }
+        return slaveMainMasterNodeInfo;
+    }
+
+
+    // Transaction設定が有効か設定
+    public static void setTransactionMode(boolean flg) {
+        transactionMode = new Boolean(flg);
+    }
+
+    // Transaction設定が有効か判定する
+    public static boolean isTransactionMode() {
+        while (transactionMode == null) {
+            try {
+                Thread.sleep(10);
+            } catch(Exception e) {}
+        }
+        return transactionMode.booleanValue();
+    }
+
+    // TransactionNodeの情報をセットする
+    public static void setTransactionNode(String[] info) {
+        transactionInfo = info;
+    }
+
+    // TransactionNodの情報を返す
+    public static String[] getTransactionNode() {
+        while (transactionMode == null) {
+            try {
+                Thread.sleep(10);
+            } catch(Exception e) {}
+        }
+        return transactionInfo;
+    }
+
+    public static boolean isStandby() {
+        while(mainMasterNode == null || transactionMode == null) {
+            try {
+                Thread.sleep(50);
+            } catch(Exception e) {}
+        }
+        return true;
     }
 
 

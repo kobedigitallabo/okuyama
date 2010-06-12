@@ -26,7 +26,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
     private int nowSt = 0;
 
-	private static HashMap allConnectionMap = new HashMap();
+    private static HashMap allConnectionMap = new HashMap();
 
     private static Object connSync = new Object();
 
@@ -47,10 +47,10 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @param nodeInfo 対象のノード情報
      */
     protected void setDeadNode(String nodeInfo) {
-		// MainMasterNodeの場合のみ設定される
-		if (StatusUtil.isMainMasterNode()) {
-	        StatusUtil.setDeadNode(nodeInfo);
-		}
+        // MainMasterNodeの場合のみ設定される
+        if (StatusUtil.isMainMasterNode()) {
+            StatusUtil.setDeadNode(nodeInfo);
+        }
     }
 
     /**
@@ -61,98 +61,98 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     protected void setArriveNode(String nodeInfo) {
         StatusUtil.setArriveNode(nodeInfo);
 
-		// MainのMasterNodeの場合のみ実行
-		// SlaveのMasterNodeにもノードの復帰登録を依頼
-		if (StatusUtil.isMainMasterNode()) {
+        // MainのMasterNodeの場合のみ実行
+        // SlaveのMasterNodeにもノードの復帰登録を依頼
+        if (StatusUtil.isMainMasterNode()) {
 
-			// 対象のSlaveMasterNode全てに依頼
-			String slaves = super.getPropertiesValue(ImdstDefine.Prop_SlaveMasterNodes);
+            // 対象のSlaveMasterNode全てに依頼
+            String slaves = StatusUtil.getSlaveMasterNodes();
 
-			if (slaves != null && !slaves.trim().equals("")) {
-				String[] slaveList = slaves.split(",");
+            if (slaves != null && !slaves.trim().equals("")) {
+                String[] slaveList = slaves.split(",");
 
-				// 1ノードづつ実行
-				for (int i = 0; i < slaveList.length; i++) {
+                // 1ノードづつ実行
+                for (int i = 0; i < slaveList.length; i++) {
 
-					Socket socket = null;
-					PrintWriter pw = null;
-					BufferedReader br = null;
+                    Socket socket = null;
+                    PrintWriter pw = null;
+                    BufferedReader br = null;
 
-					try {
+                    try {
 
-						// Slaveノード名とポートに分解
-						String[] slaveNodeDt = slaveList[i].split(":");
-				        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
-						socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+                        // Slaveノード名とポートに分解
+                        String[] slaveNodeDt = slaveList[i].split(":");
+                        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                        socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
-			            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
-																										ImdstDefine.keyHelperClientParamEncoding)));
-			            br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
-																						ImdstDefine.keyHelperClientParamEncoding));
+                        pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
+                                                                                                        ImdstDefine.keyHelperClientParamEncoding)));
+                        br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
+                                                                                        ImdstDefine.keyHelperClientParamEncoding));
 
-			            // 文字列バッファ初期化
-			            StringBuffer serverRequestBuf = new StringBuffer();
+                        // 文字列バッファ初期化
+                        StringBuffer serverRequestBuf = new StringBuffer();
 
-			            // 処理番号連結
-			            serverRequestBuf.append("92");
-			            // セパレータ連結
-			            serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        // 処理番号連結
+                        serverRequestBuf.append("92");
+                        // セパレータ連結
+                        serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
 
-			            // 停止ノード名連結
-			            serverRequestBuf.append(nodeInfo);
+                        // 停止ノード名連結
+                        serverRequestBuf.append(nodeInfo);
 
-			            // サーバ送信
-			            pw.println(serverRequestBuf.toString());
-			            pw.flush();
+                        // サーバ送信
+                        pw.println(serverRequestBuf.toString());
+                        pw.flush();
 
-			            // サーバから結果受け取り
-			            String serverRetStr = br.readLine();
+                        // サーバから結果受け取り
+                        String serverRetStr = br.readLine();
 
-			            String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
+                        String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
 
-			            // 処理の妥当性確認
-			            if (serverRet[0].equals("92")) {
-			                if (!serverRet[1].equals("true")) {
-								// TODO:復帰登録失敗
-								// 異常事態だが、稼動していないことも考えられるので、
-								// 無視する
-								//System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
-							} 
-						}
-					} catch(Exception e) {
+                        // 処理の妥当性確認
+                        if (serverRet[0].equals("92")) {
+                            if (!serverRet[1].equals("true")) {
+                                // TODO:復帰登録失敗
+                                // 異常事態だが、稼動していないことも考えられるので、
+                                // 無視する
+                                //System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
+                            } 
+                        }
+                    } catch(Exception e) {
 
-						// TODO:復帰登録失敗
-						// 異常事態だが、稼動していないことも考えられるので、
-						// 無視する
-						//System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
-						//e.printStackTrace();
-					} finally {
-						try {
-				            if (pw != null) {
-				                // 接続切断を通知
-				                pw.println(ImdstDefine.imdstConnectExitRequest);
-				                pw.flush();
+                        // TODO:復帰登録失敗
+                        // 異常事態だが、稼動していないことも考えられるので、
+                        // 無視する
+                        //System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
+                        //e.printStackTrace();
+                    } finally {
+                        try {
+                            if (pw != null) {
+                                // 接続切断を通知
+                                pw.println(ImdstDefine.imdstConnectExitRequest);
+                                pw.flush();
 
-				                pw.close();
-				                pw = null;
-				            }
+                                pw.close();
+                                pw = null;
+                            }
 
-				            if (br != null) {
-				                br.close();
-				                br = null;
-				            }
+                            if (br != null) {
+                                br.close();
+                                br = null;
+                            }
 
-				            if (socket != null) {
-				                socket.close();
-				                socket = null;
-				            }
-						} catch(Exception e2) {
-							// 無視
-						}
-					}
-				}
-			}
-		}
+                            if (socket != null) {
+                                socket.close();
+                                socket = null;
+                            }
+                        } catch(Exception e2) {
+                            // 無視
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
@@ -182,98 +182,98 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     protected void setNodeWaitStatus(String nodeInfo) {
         StatusUtil.setWaitStatus(nodeInfo);
 
-		// MainのMasterNodeの場合のみ実行
-		// SlaveのMasterNodeにもノードの一時停止を依頼
-		if (StatusUtil.isMainMasterNode()) {
+        // MainのMasterNodeの場合のみ実行
+        // SlaveのMasterNodeにもノードの一時停止を依頼
+        if (StatusUtil.isMainMasterNode()) {
 
-			// 対象のSlaveMasterNode全てに依頼
-			String slaves = super.getPropertiesValue(ImdstDefine.Prop_SlaveMasterNodes);
+            // 対象のSlaveMasterNode全てに依頼
+            String slaves = StatusUtil.getSlaveMasterNodes();
 
-			if (slaves != null && !slaves.trim().equals("")) {
-				String[] slaveList = slaves.split(",");
+            if (slaves != null && !slaves.trim().equals("")) {
+                String[] slaveList = slaves.split(",");
 
-				// 1ノードづつ実行
-				for (int i = 0; i < slaveList.length; i++) {
+                // 1ノードづつ実行
+                for (int i = 0; i < slaveList.length; i++) {
 
-					Socket socket = null;
-					PrintWriter pw = null;
-					BufferedReader br = null;
+                    Socket socket = null;
+                    PrintWriter pw = null;
+                    BufferedReader br = null;
 
-					try {
+                    try {
 
-						// Slaveノード名とポートに分解
-						String[] slaveNodeDt = slaveList[i].split(":");
-				        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
-						socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+                        // Slaveノード名とポートに分解
+                        String[] slaveNodeDt = slaveList[i].split(":");
+                        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                        socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
-			            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
-																										ImdstDefine.keyHelperClientParamEncoding)));
-			            br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
-																						ImdstDefine.keyHelperClientParamEncoding));
+                        pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
+                                                                                                        ImdstDefine.keyHelperClientParamEncoding)));
+                        br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
+                                                                                        ImdstDefine.keyHelperClientParamEncoding));
 
-			            // 文字列バッファ初期化
-			            StringBuffer serverRequestBuf = new StringBuffer();
+                        // 文字列バッファ初期化
+                        StringBuffer serverRequestBuf = new StringBuffer();
 
-			            // 処理番号連結
-			            serverRequestBuf.append("90");
-			            // セパレータ連結
-			            serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        // 処理番号連結
+                        serverRequestBuf.append("90");
+                        // セパレータ連結
+                        serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
 
-			            // 停止ノード名連結
-			            serverRequestBuf.append(nodeInfo);
+                        // 停止ノード名連結
+                        serverRequestBuf.append(nodeInfo);
 
-			            // サーバ送信
-			            pw.println(serverRequestBuf.toString());
-			            pw.flush();
+                        // サーバ送信
+                        pw.println(serverRequestBuf.toString());
+                        pw.flush();
 
-			            // サーバから結果受け取り
-			            String serverRetStr = br.readLine();
+                        // サーバから結果受け取り
+                        String serverRetStr = br.readLine();
 
-			            String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
+                        String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
 
-			            // 処理の妥当性確認
-			            if (serverRet[0].equals("90")) {
-			                if (!serverRet[1].equals("true")) {
-								// TODO:停止失敗
-								// 異常事態だが、稼動していないことも考えられるので、
-								// 無視する
-								//System.out.println("Slave Master Node setNodeWaitStatus Error [" + slaveList[i] + "]");
-							} 
-						}
-					} catch(Exception e) {
+                        // 処理の妥当性確認
+                        if (serverRet[0].equals("90")) {
+                            if (!serverRet[1].equals("true")) {
+                                // TODO:停止失敗
+                                // 異常事態だが、稼動していないことも考えられるので、
+                                // 無視する
+                                //System.out.println("Slave Master Node setNodeWaitStatus Error [" + slaveList[i] + "]");
+                            } 
+                        }
+                    } catch(Exception e) {
 
-						// TODO:停止失敗
-						// 異常事態だが、稼動していないことも考えられるので、
-						// 無視する
-						//System.out.println("Slave Master Node setNodeWaitStatus Error [" + slaveList[i] + "]");
-						//e.printStackTrace();
-					} finally {
-						try {
-				            if (pw != null) {
-				                // 接続切断を通知
-				                pw.println(ImdstDefine.imdstConnectExitRequest);
-				                pw.flush();
+                        // TODO:停止失敗
+                        // 異常事態だが、稼動していないことも考えられるので、
+                        // 無視する
+                        //System.out.println("Slave Master Node setNodeWaitStatus Error [" + slaveList[i] + "]");
+                        //e.printStackTrace();
+                    } finally {
+                        try {
+                            if (pw != null) {
+                                // 接続切断を通知
+                                pw.println(ImdstDefine.imdstConnectExitRequest);
+                                pw.flush();
 
-				                pw.close();
-				                pw = null;
-				            }
+                                pw.close();
+                                pw = null;
+                            }
 
-				            if (br != null) {
-				                br.close();
-				                br = null;
-				            }
+                            if (br != null) {
+                                br.close();
+                                br = null;
+                            }
 
-				            if (socket != null) {
-				                socket.close();
-				                socket = null;
-				            }
-						} catch(Exception e2) {
-							// 無視
-						}
-					}
-				}
-			}
-		}
+                            if (socket != null) {
+                                socket.close();
+                                socket = null;
+                            }
+                        } catch(Exception e2) {
+                            // 無視
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
@@ -285,98 +285,98 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     protected void removeNodeWaitStatus(String nodeInfo) {
         StatusUtil.removeWaitStatus(nodeInfo);
 
-		// MainのMasterNodeの場合のみ実行
-		// SlaveのMasterNodeにもノードの一時停止解除を依頼
-		if (StatusUtil.isMainMasterNode()) {
+        // MainのMasterNodeの場合のみ実行
+        // SlaveのMasterNodeにもノードの一時停止解除を依頼
+        if (StatusUtil.isMainMasterNode()) {
 
-			// 対象のSlaveMasterNode全てに依頼
-			String slaves = super.getPropertiesValue(ImdstDefine.Prop_SlaveMasterNodes);
+            // 対象のSlaveMasterNode全てに依頼
+            String slaves = StatusUtil.getSlaveMasterNodes();
 
-			if (slaves != null && !slaves.trim().equals("")) {
-				String[] slaveList = slaves.split(",");
+            if (slaves != null && !slaves.trim().equals("")) {
+                String[] slaveList = slaves.split(",");
 
-				// 1ノードづつ実行
-				for (int i = 0; i < slaveList.length; i++) {
+                // 1ノードづつ実行
+                for (int i = 0; i < slaveList.length; i++) {
 
-					Socket socket = null;
-					PrintWriter pw = null;
-					BufferedReader br = null;
+                    Socket socket = null;
+                    PrintWriter pw = null;
+                    BufferedReader br = null;
 
-					try {
+                    try {
 
-						// Slaveノード名とポートに分解
-						String[] slaveNodeDt = slaveList[i].split(":");
-				        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
-						socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+                        // Slaveノード名とポートに分解
+                        String[] slaveNodeDt = slaveList[i].split(":");
+                        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                        socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
-			            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
-																										ImdstDefine.keyHelperClientParamEncoding)));
-			            br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
-																						ImdstDefine.keyHelperClientParamEncoding));
+                        pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
+                                                                                                        ImdstDefine.keyHelperClientParamEncoding)));
+                        br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
+                                                                                        ImdstDefine.keyHelperClientParamEncoding));
 
-			            // 文字列バッファ初期化
-			            StringBuffer serverRequestBuf = new StringBuffer();
+                        // 文字列バッファ初期化
+                        StringBuffer serverRequestBuf = new StringBuffer();
 
-			            // 処理番号連結
-			            serverRequestBuf.append("91");
-			            // セパレータ連結
-			            serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        // 処理番号連結
+                        serverRequestBuf.append("91");
+                        // セパレータ連結
+                        serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
 
-			            // 停止ノード名連結
-			            serverRequestBuf.append(nodeInfo);
+                        // 停止ノード名連結
+                        serverRequestBuf.append(nodeInfo);
 
-			            // サーバ送信
-			            pw.println(serverRequestBuf.toString());
-			            pw.flush();
+                        // サーバ送信
+                        pw.println(serverRequestBuf.toString());
+                        pw.flush();
 
-			            // サーバから結果受け取り
-			            String serverRetStr = br.readLine();
+                        // サーバから結果受け取り
+                        String serverRetStr = br.readLine();
 
-			            String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
+                        String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
 
-			            // 処理の妥当性確認
-			            if (serverRet[0].equals("91")) {
-			                if (!serverRet[1].equals("true")) {
-								// TODO:停止解除失敗
-								// 異常事態だが、稼動していないことも考えられるので、
-								// 無視する
-								//System.out.println("Slave Master Node removeNodeWaitStatus Error [" + slaveList[i] + "]");
-							} 
-						}
-					} catch(Exception e) {
+                        // 処理の妥当性確認
+                        if (serverRet[0].equals("91")) {
+                            if (!serverRet[1].equals("true")) {
+                                // TODO:停止解除失敗
+                                // 異常事態だが、稼動していないことも考えられるので、
+                                // 無視する
+                                //System.out.println("Slave Master Node removeNodeWaitStatus Error [" + slaveList[i] + "]");
+                            } 
+                        }
+                    } catch(Exception e) {
 
-						// TODO:停止解除失敗
-						// 異常事態だが、稼動していないことも考えられるので、
-						// 無視する
-						//System.out.println("Slave Master Node removeNodeWaitStatus Error [" + slaveList[i] + "]");
-						//e.printStackTrace();
-					} finally {
-						try {
-				            if (pw != null) {
-				                // 接続切断を通知
-				                pw.println(ImdstDefine.imdstConnectExitRequest);
-				                pw.flush();
+                        // TODO:停止解除失敗
+                        // 異常事態だが、稼動していないことも考えられるので、
+                        // 無視する
+                        //System.out.println("Slave Master Node removeNodeWaitStatus Error [" + slaveList[i] + "]");
+                        //e.printStackTrace();
+                    } finally {
+                        try {
+                            if (pw != null) {
+                                // 接続切断を通知
+                                pw.println(ImdstDefine.imdstConnectExitRequest);
+                                pw.flush();
 
-				                pw.close();
-				                pw = null;
-				            }
+                                pw.close();
+                                pw = null;
+                            }
 
-				            if (br != null) {
-				                br.close();
-				                br = null;
-				            }
+                            if (br != null) {
+                                br.close();
+                                br = null;
+                            }
 
-				            if (socket != null) {
-				                socket.close();
-				                socket = null;
-				            }
-						} catch(Exception e2) {
-							// 無視
-						}
-					}
-				}
-			}
-		}
+                            if (socket != null) {
+                                socket.close();
+                                socket = null;
+                            }
+                        } catch(Exception e2) {
+                            // 無視
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
@@ -397,48 +397,48 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         return StatusUtil.getNodeUseStatus(nodeInfo);
     }
 
-	/**
-	 *
-	 *
-	 */
-	protected void setActiveConnection(String connectionName, HashMap connectionMap) {
-    	synchronized(connSync) {
-			ArrayList connList = null;
-			connList = (ArrayList)allConnectionMap.get(connectionName);
+    /**
+     *
+     *
+     */
+    protected void setActiveConnection(String connectionName, HashMap connectionMap) {
+        synchronized(connSync) {
+            ArrayList connList = null;
+            connList = (ArrayList)allConnectionMap.get(connectionName);
 
-			if (connList == null) connList = new ArrayList();
+            if (connList == null) connList = new ArrayList();
 
-			connList.add(connectionMap);
-			allConnectionMap.put(connectionName, connList);
-			connPoolCount++;
-		}
-	}
+            connList.add(connectionMap);
+            allConnectionMap.put(connectionName, connList);
+            connPoolCount++;
+        }
+    }
 
 
-	/**
-	 *
-	 *
-	 */
-	protected HashMap getActiveConnection(String connectionName) {
-		HashMap ret = null;
-    	synchronized(connSync) {
-			ArrayList connList = (ArrayList)allConnectionMap.get(connectionName);
-			if (connList != null) {
-				if(connList.size() > 0) {
-					ret = (HashMap)connList.remove(0);
-					connPoolCount--;
-				}
-			}
-		}
+    /**
+     *
+     *
+     */
+    protected HashMap getActiveConnection(String connectionName) {
+        HashMap ret = null;
+        synchronized(connSync) {
+            ArrayList connList = (ArrayList)allConnectionMap.get(connectionName);
+            if (connList != null) {
+                if(connList.size() > 0) {
+                    ret = (HashMap)connList.remove(0);
+                    connPoolCount--;
+                }
+            }
+        }
 
-		if (ret != null) {
-			if(!this.checkConnectionEffective(connectionName, (Long)ret.get("time"))) ret = null;
-		}
-		return ret;
-		
-	}
+        if (ret != null) {
+            if(!this.checkConnectionEffective(connectionName, (Long)ret.get("time"))) ret = null;
+        }
+        return ret;
+        
+    }
 
-	protected int getNowConnectionPoolCount() {
-		return connPoolCount;
-	}
+    protected int getNowConnectionPoolCount() {
+        return connPoolCount;
+    }
 }

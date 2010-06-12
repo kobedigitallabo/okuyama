@@ -125,16 +125,19 @@ public class ImdstDefine {
     public static final String Prop_TransactionManagerInfo = "TransactionManagerInfo";
     public static final String Prop_MainMasterNodeMode = "MainMasterNodeMode";
     public static final String Prop_SlaveMasterNodes = "SlaveMasterNodes";
+    public static final String Prop_SystemConfigMode = "SystemConfigMode";
+    public static final String Prop_MyNodeInfo = "MyNodeInfo";
+    public static final String Prop_MainMasterNodeInfo = "MainMasterNodeInfo";
+    public static final String Prop_AllMasterNodeInfo = "AllMasterNodeInfo";
 
 
+    /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */
     public static final String dataNodeParamKey_1 = "dataNodeNameList";
     public static final String dataNodeParamKey_2 = "dataNodePortList";
     public static final String dataNodeParamKey_3 = "dataSubNodeNameList";
     public static final String dataNodeParamKey_4 = "dataSubNodePortList";
     public static final String dataNodeParamKey_5 = "keyMapNodeInfo";
 
-
-    /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */
     public static final String keyNodeSocketKey = "socket";
     public static final String keyNodeStreamWriterKey = "stream_writer";
     public static final String keyNodeStreamReaderKey = "stream_reader";
@@ -143,6 +146,8 @@ public class ImdstDefine {
     public static final String keyNodeConnectionMapKey = "map";
     public static final String keyNodeConnectionMapTime = "time";
 
+    public static final String configModeFile = "file";
+    public static final String configModeNode = "node";
 
     /* -- プログラム規定数値 ----------------------------------------      */
     // 保存出来る、Key、Tag、Valueの最大長
