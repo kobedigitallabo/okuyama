@@ -15,6 +15,8 @@ import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
 import org.imdst.util.StatusUtil;
 
+import org.imdst.client.ImdstKeyValueClient;
+
 /**
  * MasterNodeの設定関係を管理するJob<br>
  * 主に設定ファイルの初期読み込み及び、データノード上に存在する設定情報を監視して<br>
@@ -24,6 +26,27 @@ import org.imdst.util.StatusUtil;
  * @license GPL(Lv3)
  */
 public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
+
+    private String keyMapNodesStr = null;
+    private String subKeyMapNodesStr = null;
+    private String ruleStrProp = null;
+
+    // トランザクションノードの設定
+    private String transactionModeStr = null;
+    private String transactionManagerStr = null;
+
+    // マスターノードの設定
+    // 自身がMasterNodeかの判定情報(旧設定)
+    private String mainMasterNodeModeStr = null;
+    // Slaveマスターノードの接続情報(旧設定)
+    private String slaveMasterNodeInfoStr = null;
+
+    // 自身の情報
+    private String myNodeInfoStr = null;
+    // メインマスターノード接続情報
+    private String mainMasterNodeInfoStr = null;
+    // 全てのマスターノードの接続情報
+    private String allMasterNodeInfoStr = null;
 
 
     /**
@@ -133,34 +156,166 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
      * 記述の決まり.<br>
      */
     private void parseAllNodesInfo() {
+        // データノードの設定
+        keyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesInfo);
+        subKeyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_SubKeyMapNodesInfo);
+        ruleStrProp = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesRule);
+
+        // トランザクションノードの設定
+        transactionModeStr = super.getPropertiesValue(ImdstDefine.Prop_TransactionMode);
+        transactionManagerStr = super.getPropertiesValue(ImdstDefine.Prop_TransactionManagerInfo);
+
+        // マスターノードの設定
+        // 自身がMasterNodeかの判定情報(旧設定)
+        mainMasterNodeModeStr = super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode);
+        // Slaveマスターノードの接続情報(旧設定)
+        slaveMasterNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_SlaveMasterNodes);
+
+        // 自身の情報
+        myNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_MyNodeInfo);
+        // メインマスターノード接続情報
+        mainMasterNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeInfo);
+        // 全てのマスターノードの接続情報
+        allMasterNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_AllMasterNodeInfo);
+
+		this.infomationSetter();
+	}
+
+
+    /**
+     * KeyMapNodes,DataNodesの情報をパースする<br>
+     * <br>
+     * 以下の要素を設定する.<br>
+     * KeyMapNodesRule=ルール値(2,9,99,999)<br>
+     * KeyMapNodesInfo=Keyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
+     * SubKeyMapNodesInfo=Keyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
+     * <br>
+     * 記述の決まり.<br>
+     */
+    private void parseAllNodesInfo4Node() {
+		ImdstKeyValueClient imdstKeyValueClient = null;
+		String[] nodeRet = null;
+		boolean setterFlg = false;
+		try {
+            imdstKeyValueClient = new ImdstKeyValueClient();
+            imdstKeyValueClient.setConnectionInfos(allMasterNodeInfoStr.split(","));
+            imdstKeyValueClient.autoConnect();
+
+	        // データノードの設定
+			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo);
+			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+				if(!nodeRet[1].equals(keyMapNodesStr)) {
+                	keyMapNodesStr = nodeRet[1];
+					setterFlg = true;
+				}
+			}
+
+			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo);
+			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+				if(!nodeRet[1].equals(subKeyMapNodesStr)) {
+                	subKeyMapNodesStr = nodeRet[1];
+					setterFlg = true;
+				}
+			}
+
+			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesRule);
+			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+				if(!nodeRet[1].equals(ruleStrProp)) {
+                	ruleStrProp = nodeRet[1];
+					setterFlg = true;
+				}
+			}
+
+
+
+	        // トランザクションノードの設定
+			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionMode);
+			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+				if(!nodeRet[1].equals(transactionModeStr)) {
+                	transactionModeStr = nodeRet[1];
+					setterFlg = true;
+				}
+			}
+
+			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionManagerInfo);
+			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+				if(!nodeRet[1].equals(transactionManagerStr)) {
+                	transactionManagerStr = nodeRet[1];
+					setterFlg = true;
+				}
+			}
+
+
+
+	        // マスターノードの設定
+	        // 自身がMasterNodeかの判定情報(旧設定)
+			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeMode);
+			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+				if(!nodeRet[1].equals(mainMasterNodeModeStr)) {
+                	mainMasterNodeModeStr = nodeRet[1];
+					setterFlg = true;
+				}
+			}
+
+	        // Slaveマスターノードの接続情報(旧設定)
+			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SlaveMasterNodes);
+			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+				if(!nodeRet[1].equals(slaveMasterNodeInfoStr)) {
+                	slaveMasterNodeInfoStr = nodeRet[1];
+					setterFlg = true;
+				}
+			}
+
+
+
+	        // 自身の情報
+			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MyNodeInfo);
+			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+				if(!nodeRet[1].equals(myNodeInfoStr)) {
+                	myNodeInfoStr = nodeRet[1];
+					setterFlg = true;
+				}
+			}
+
+	        // メインマスターノード接続情報
+			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo);
+			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+				if(!nodeRet[1].equals(mainMasterNodeInfoStr)) {
+                	mainMasterNodeInfoStr = nodeRet[1];
+					setterFlg = true;
+				}
+			}
+
+
+	        // 全てのマスターノードの接続情報
+			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo);
+			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+				if(!nodeRet[1].equals(allMasterNodeInfoStr)) {
+                	allMasterNodeInfoStr = nodeRet[1];
+					setterFlg = true;
+				}
+			}
+
+			if (setterFlg) {
+				this.infomationSetter();
+			}
+		} catch (Exception e) {
+			logger.error(e);
+		} finally {
+			try {
+				if (imdstKeyValueClient != null) imdstKeyValueClient.close();
+			} catch(Exception e) {
+			}
+		}
+	}
+
+	// 情報を反映する
+	private void infomationSetter() {
+
         String[] mainKeyNodes = null;
         String[] subKeyNodes = new String[0];
         String[] allNodeInfos = null;
         int allNodeCounter = 0;
-
-        // データノードの設定
-        String keyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesInfo);
-        String subKeyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_SubKeyMapNodesInfo);
-        String ruleStrProp = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesRule);
-
-        // トランザクションノードの設定
-        String transactionModeStr = super.getPropertiesValue(ImdstDefine.Prop_TransactionMode);
-        String transactionManagerStr = super.getPropertiesValue(ImdstDefine.Prop_TransactionManagerInfo);
-
-        // マスターノードの設定
-        // 自身がMasterNodeかの判定情報(旧設定)
-        String mainMasterNodeModeStr = super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode);
-        // Slaveマスターノードの接続情報(旧設定)
-        String slaveMasterNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_SlaveMasterNodes);
-
-        // 自身の情報
-        String myNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_MyNodeInfo);
-        // メインマスターノード接続情報
-        String mainMasterNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeInfo);
-        // 全てのマスターノードの接続情報
-        String allMasterNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_AllMasterNodeInfo);
-
-
 
         // MainMasterNodeの情報解析
 
@@ -271,4 +426,6 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
         // DataDispatcher初期化
         DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
     }
+
+
 }
