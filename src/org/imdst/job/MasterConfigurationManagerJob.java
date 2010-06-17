@@ -31,6 +31,8 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
     private String subKeyMapNodesStr = null;
     private String ruleStrProp = null;
 
+    private String loadBalanceStr = null;
+
     // トランザクションノードの設定
     private String transactionModeStr = null;
     private String transactionManagerStr = null;
@@ -130,7 +132,7 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                 } else if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeNode)) {
 
                     // DataNode
-                    
+                    parseAllNodesInfo4Node();
                 }
 
                 Thread.sleep(checkCycle);
@@ -160,6 +162,7 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
         keyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesInfo);
         subKeyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_SubKeyMapNodesInfo);
         ruleStrProp = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesRule);
+        loadBalanceStr = super.getPropertiesValue(ImdstDefine.Prop_LoadBalanceMode);
 
         // トランザクションノードの設定
         transactionModeStr = super.getPropertiesValue(ImdstDefine.Prop_TransactionMode);
@@ -178,8 +181,8 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
         // 全てのマスターノードの接続情報
         allMasterNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_AllMasterNodeInfo);
 
-		this.infomationSetter();
-	}
+        this.infomationSetter();
+    }
 
 
     /**
@@ -193,124 +196,156 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
      * 記述の決まり.<br>
      */
     private void parseAllNodesInfo4Node() {
-		ImdstKeyValueClient imdstKeyValueClient = null;
-		String[] nodeRet = null;
-		boolean setterFlg = false;
-		try {
+        ImdstKeyValueClient imdstKeyValueClient = null;
+        String[] nodeRet = null;
+        boolean setterFlg = false;
+        try {
             imdstKeyValueClient = new ImdstKeyValueClient();
             imdstKeyValueClient.setConnectionInfos(allMasterNodeInfoStr.split(","));
             imdstKeyValueClient.autoConnect();
 
-	        // データノードの設定
-			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo);
-			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
-				if(!nodeRet[1].equals(keyMapNodesStr)) {
-                	keyMapNodesStr = nodeRet[1];
-					setterFlg = true;
-				}
-			}
+            // データノードの設定
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(keyMapNodesStr)) {
+                    keyMapNodesStr = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo, keyMapNodesStr);
+            }
 
-			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo);
-			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
-				if(!nodeRet[1].equals(subKeyMapNodesStr)) {
-                	subKeyMapNodesStr = nodeRet[1];
-					setterFlg = true;
-				}
-			}
-
-			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesRule);
-			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
-				if(!nodeRet[1].equals(ruleStrProp)) {
-                	ruleStrProp = nodeRet[1];
-					setterFlg = true;
-				}
-			}
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(subKeyMapNodesStr)) {
+                    subKeyMapNodesStr = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo, subKeyMapNodesStr);
+            }
 
 
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesRule);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(ruleStrProp)) {
+                    ruleStrProp = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesRule, ruleStrProp);
+            }
 
-	        // トランザクションノードの設定
-			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionMode);
-			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
-				if(!nodeRet[1].equals(transactionModeStr)) {
-                	transactionModeStr = nodeRet[1];
-					setterFlg = true;
-				}
-			}
-
-			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionManagerInfo);
-			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
-				if(!nodeRet[1].equals(transactionManagerStr)) {
-                	transactionManagerStr = nodeRet[1];
-					setterFlg = true;
-				}
-			}
-
-
-
-	        // マスターノードの設定
-	        // 自身がMasterNodeかの判定情報(旧設定)
-			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeMode);
-			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
-				if(!nodeRet[1].equals(mainMasterNodeModeStr)) {
-                	mainMasterNodeModeStr = nodeRet[1];
-					setterFlg = true;
-				}
-			}
-
-	        // Slaveマスターノードの接続情報(旧設定)
-			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SlaveMasterNodes);
-			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
-				if(!nodeRet[1].equals(slaveMasterNodeInfoStr)) {
-                	slaveMasterNodeInfoStr = nodeRet[1];
-					setterFlg = true;
-				}
-			}
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_LoadBalanceMode);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(loadBalanceStr)) {
+                    loadBalanceStr = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_LoadBalanceMode, loadBalanceStr);
+            }
 
 
 
-	        // 自身の情報
-			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MyNodeInfo);
-			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
-				if(!nodeRet[1].equals(myNodeInfoStr)) {
-                	myNodeInfoStr = nodeRet[1];
-					setterFlg = true;
-				}
-			}
 
-	        // メインマスターノード接続情報
-			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo);
-			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
-				if(!nodeRet[1].equals(mainMasterNodeInfoStr)) {
-                	mainMasterNodeInfoStr = nodeRet[1];
-					setterFlg = true;
-				}
-			}
+            // トランザクションノードの設定
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionMode);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(transactionModeStr)) {
+                    transactionModeStr = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionMode, transactionModeStr);
+            }
+
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionManagerInfo);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(transactionManagerStr)) {
+                    transactionManagerStr = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionManagerInfo, transactionManagerStr);
+            }
 
 
-	        // 全てのマスターノードの接続情報
-			nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo);
-			if(nodeRet[0].equals("true") && nodeRet[1] != null) {
-				if(!nodeRet[1].equals(allMasterNodeInfoStr)) {
-                	allMasterNodeInfoStr = nodeRet[1];
-					setterFlg = true;
-				}
-			}
 
-			if (setterFlg) {
-				this.infomationSetter();
-			}
-		} catch (Exception e) {
-			logger.error(e);
-		} finally {
-			try {
-				if (imdstKeyValueClient != null) imdstKeyValueClient.close();
-			} catch(Exception e) {
-			}
-		}
-	}
+            // マスターノードの設定
+            // 自身がMasterNodeかの判定情報(旧設定)
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeMode);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(mainMasterNodeModeStr)) {
+                    mainMasterNodeModeStr = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeMode, mainMasterNodeModeStr);
+            }
 
-	// 情報を反映する
-	private void infomationSetter() {
+            // Slaveマスターノードの接続情報(旧設定)
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SlaveMasterNodes);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(slaveMasterNodeInfoStr)) {
+                    slaveMasterNodeInfoStr = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SlaveMasterNodes, slaveMasterNodeInfoStr);
+            }
+
+
+
+
+            // メインマスターノード接続情報
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(mainMasterNodeInfoStr)) {
+                    mainMasterNodeInfoStr = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, mainMasterNodeInfoStr);
+            }
+
+            // 全てのマスターノードの接続情報
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(allMasterNodeInfoStr)) {
+                    allMasterNodeInfoStr = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo, allMasterNodeInfoStr);
+            }
+
+
+            if (setterFlg) {
+                this.infomationSetter();
+            }
+        } catch (Exception e) {
+            logger.error(e);
+        } finally {
+            try {
+                if (imdstKeyValueClient != null) imdstKeyValueClient.close();
+            } catch(Exception e) {
+            }
+        }
+    }
+
+    // 情報を反映する
+    private void infomationSetter() {
 
         String[] mainKeyNodes = null;
         String[] subKeyNodes = new String[0];
