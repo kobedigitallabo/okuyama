@@ -33,6 +33,10 @@ public class StatusUtil {
     // ノードの最新復活時間を管理
     private static ConcurrentHashMap nodeRebootTimeMap = new ConcurrentHashMap(50, 40, 50);
 
+    // ノードの最新の状態詳細を管理
+    private static ConcurrentHashMap nodeStatusDtMap = new ConcurrentHashMap(50, 5, 5);
+    
+
     private static String nowMemoryStatus = null;
 
     private static String nowCpuStatus = null;
@@ -207,6 +211,15 @@ public class StatusUtil {
         }
     }
 
+    // データノードの最新詳細状態を格納
+    public static void setNodeStatusDt(String nodeInfo, String dtText) {
+        nodeStatusDtMap.put(nodeInfo, dtText);
+    }
+
+    // データノードの最新詳細状態を取得
+    public static String getNodeStatusDt(String nodeInfo) {
+        return (String)nodeStatusDtMap.get(nodeInfo);
+    }
 
 
     public static void setNowMemoryStatus(String statusStr) {

@@ -95,6 +95,8 @@ public class MainServlet extends HttpServlet {
         pageBuf.append("    <title>okuyama manager console</title>");
         pageBuf.append("  </head>");
         pageBuf.append("  <body>");
+        pageBuf.append("    <table width=1024px align=center boder=0>");
+        pageBuf.append("    <tr><td align=center>");
         pageBuf.append("    <h1>Distributed Key Value Store Okuyama Manager Console</h1>");
         pageBuf.append("    <h2>Manager Display</h2>");
         pageBuf.append("    <br />");
@@ -117,6 +119,8 @@ public class MainServlet extends HttpServlet {
             pageBuf.append("  </td>");
             pageBuf.append("</tr>");
         }
+        pageBuf.append("    </td></tr>");
+        pageBuf.append("    </table>");
         pageBuf.append("    </table>");
         pageBuf.append("  </body>");
         pageBuf.append("</html>");

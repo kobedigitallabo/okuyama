@@ -94,6 +94,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             // ノードダウン
                             logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Dead");
                             super.setDeadNode(nodeInfo);
+                            StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "Node Check Dead");
                         } else if (!super.isNodeArrival(nodeInfo)) {
 
                             // ノードが復旧
@@ -127,7 +128,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 }
 
                                 logger.info(nodeInfo + " - Recover Start");
-
+                                StatusUtil.setNodeStatusDt(nodeInfo, "Recover Start");
 
                                 // 復旧開始
                                 if(this.nodeDataRecover(nodeInfo, (String)subNodeList.get(i))) {
@@ -135,9 +136,11 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                     // リカバー成功
                                     // 該当ノードの復帰を登録
                                     logger.info(nodeInfo + " - Recover Success");
+                                    StatusUtil.setNodeStatusDt(nodeInfo, "Recover Success");
                                     super.setArriveNode(nodeInfo);
                                 } else {
                                     logger.info(nodeInfo + " - Recover Miss");
+                                    StatusUtil.setNodeStatusDt(nodeInfo, "Recover Miss");
                                 }
 
                                 logger.info(nodeInfo + " - Recover End");
@@ -152,6 +155,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                         } else {
                             logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
                             logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
+                            StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "[" + this.nodeStatusStr + "]");
                         }
                         logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
 
@@ -167,11 +171,13 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 // ノードダウン
                                 logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Dead");
                                 super.setDeadNode(subNodeInfo);
+                                StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "SubNode Check Dead");
                             } else if (!super.isNodeArrival(subNodeInfo)) {
 
                                 // 停止していたノードが復帰した場合
                                 // 停止中に登録予定であったデータを登録する
                                 logger.info("Node Name [" + subNodeInfo +"] Reboot");
+
                                 logger.info("Node Name [" + subNodeInfo +"] Use Wait Start");
 
                                 // ノードの使用中断を要求
@@ -193,16 +199,18 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 }
 
                                 logger.info(subNodeInfo + " - Recover Start");
-
+                                StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Start");
                                 // 復旧開始
                                 if(this.nodeDataRecover(subNodeInfo, nodeInfo)) {
 
                                     // リカバー成功
                                     // 該当ノードの復帰を登録
                                     logger.info(subNodeInfo + " - Recover Success");
+                                    StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Success");
                                     super.setArriveNode(subNodeInfo);
                                 } else {
                                     logger.info(subNodeInfo + " - Recover Miss");
+                                    StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Miss");
                                 }
 
                                 logger.info(subNodeInfo + " - Recover End");
@@ -213,6 +221,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             } else {
                                 logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Arrival");
                                 logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
+                                StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "[" + this.nodeStatusStr + "]");
                             }
                             logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
                             logger.info("************************************************************");
@@ -253,8 +262,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             // 接続
             socket = new Socket(nodeName, port);
 
-			// Timeout設定
-			socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+            // Timeout設定
+            socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             pw = new PrintWriter(new BufferedWriter(osw));
 
@@ -310,7 +319,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
     /**
      * ダウン状態から復帰したノードに対して、ペアーのノードのデータをコピーする.<br>
      * コピー元のデータをコピー先へ.<br>
-	 * 本メソッドを呼び出す前に必ず両ノードの使用を一時中断していること
+     * 本メソッドを呼び出す前に必ず両ノードの使用を一時中断していること
      *
      * @param コピー先ノード(予定)
      * @param コピー元ノード(予定)
@@ -322,7 +331,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
         String retParam = null;
         String[] retParams = null;
-		String lineCount = null;
+        String lineCount = null;
 
         String[] nodeDt = nodeInfo.split(":");
         String[] masterNodeDt = masterNodeInfo.split(":");
@@ -348,7 +357,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             logger.info("Data Recover Schedule [" + masterNodeInfo + " => " + nodeInfo + "]");
             // コピー先KeyNodeとの接続を確立
             socket = new Socket(nodeName, nodePort);
-			socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+            socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             pw = new PrintWriter(new BufferedWriter(osw));
@@ -358,7 +367,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             // コピー元KeyNodeとの接続を確立
             msocket = new Socket(masterNodeName, masterNodePort);
-			msocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+            msocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             OutputStreamWriter mosw = new OutputStreamWriter(msocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             mpw = new PrintWriter(new BufferedWriter(mosw));
@@ -409,7 +418,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 // 予定どうり
                 logger.info("Data Recover Actually [" + masterNodeInfo + " => " + nodeInfo + "]");
 
-				// もともと生存していたノードを差分モードOnにする
+                // もともと生存していたノードを差分モードOnにする
                 buf = new StringBuffer();
                 // 処理番号22
                 buf.append("22").append(ImdstDefine.keyHelperClientParamSep).append("true");
@@ -417,8 +426,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 mpw.println(buf.toString());
                 mpw.flush();
 
-				// コピー元の一時停止を解除
-				super.removeNodeWaitStatus(masterNodeInfo);
+                // コピー元の一時停止を解除
+                super.removeNodeWaitStatus(masterNodeInfo);
 
 
                 // コピー元からデータ読み込み
@@ -431,8 +440,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 mpw.println(buf.toString());
                 mpw.flush();
 
-				// データ行数取得
-				// 1行にメモリに乗るのに十分余裕のあるサイズが送られてくる
+                // データ行数取得
+                // 1行にメモリに乗るのに十分余裕のあるサイズが送られてくる
                 lineCount = mbr.readLine();
 
 
@@ -446,15 +455,15 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 pw.println(buf.toString());
                 pw.flush();
 
-				for (int i = 0; i < Integer.parseInt(lineCount); i++) {
-	                // 値を書き出し
-					retParam = mbr.readLine();
-	                pw.println(retParam);
-	                pw.flush();
-				}
+                for (int i = 0; i < Integer.parseInt(lineCount); i++) {
+                    // 値を書き出し
+                    retParam = mbr.readLine();
+                    pw.println(retParam);
+                    pw.flush();
+                }
 
 
-				// コピー元を一時停止にする
+                // コピー元を一時停止にする
                 super.setNodeWaitStatus(masterNodeInfo);
                 while(true) {
                     // 使用停止まで待機
@@ -462,7 +471,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                     Thread.sleep(10);
                 }
 
-				// 停止完了後差分データを取得
+                // 停止完了後差分データを取得
                 buf = new StringBuffer();
                 // 処理番号24
                 buf.append("24");
@@ -472,15 +481,15 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 mpw.println(buf.toString());
                 mpw.flush();
 
-				// 差分データを送る
+                // 差分データを送る
                 buf = new StringBuffer();
                 buf.append("25");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
-				buf.append(mbr.readLine());
+                buf.append(mbr.readLine());
                 pw.println(buf.toString());
                 pw.flush();
 
-				// もともと生存していたノードを差分モードOffにする
+                // もともと生存していたノードを差分モードOffにする
                 buf = new StringBuffer();
                 // 処理番号23
                 buf.append("23").append(ImdstDefine.keyHelperClientParamSep).append("true");
@@ -493,7 +502,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 // 当初の予定から逆転
                 logger.info("Data Recover Actually [" + nodeInfo + " => " + masterNodeInfo + "]");
 
-				// 最終更新日付が新しいノードを差分モードOnにする
+                // 最終更新日付が新しいノードを差分モードOnにする
                 buf = new StringBuffer();
                 // 処理番号22
                 buf.append("22").append(ImdstDefine.keyHelperClientParamSep).append("true");
@@ -502,8 +511,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                 pw.flush();
 
-				// コピー元の一時停止を解除
-				super.removeNodeWaitStatus(nodeInfo);
+                // コピー元の一時停止を解除
+                super.removeNodeWaitStatus(nodeInfo);
 
 
                 // コピー元からデータ読み込み
@@ -517,8 +526,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                 pw.flush();
 
-				// データ行数取得
-				// 1行にメモリに乗るのに十分余裕のあるサイズが送られてくる
+                // データ行数取得
+                // 1行にメモリに乗るのに十分余裕のあるサイズが送られてくる
                 lineCount = br.readLine();
 
 
@@ -533,19 +542,19 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 mpw.println(buf.toString());
                 mpw.flush();
 
-				for (int i = 0; i < Integer.parseInt(lineCount); i++) {
+                for (int i = 0; i < Integer.parseInt(lineCount); i++) {
 
-	                // データ取得
-	                retParam = br.readLine();
+                    // データ取得
+                    retParam = br.readLine();
 
-	                // 値を書き出し
-	                mpw.println(retParam);
+                    // 値を書き出し
+                    mpw.println(retParam);
 
-	                mpw.flush();
-				}
+                    mpw.flush();
+                }
 
 
-				// コピー元を一時停止にする
+                // コピー元を一時停止にする
                 super.setNodeWaitStatus(nodeInfo);
 
                 while(true) {
@@ -556,7 +565,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 }
 
 
-				// 停止完了後差分データを取得
+                // 停止完了後差分データを取得
                 buf = new StringBuffer();
                 // 処理番号24
                 buf.append("24");
@@ -567,16 +576,16 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                 pw.flush();
 
-				// 差分データを送る
+                // 差分データを送る
                 buf = new StringBuffer();
                 buf.append("25");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
-				buf.append(br.readLine());
+                buf.append(br.readLine());
                 mpw.println(buf.toString());
 
                 mpw.flush();
 
-				// もともと生存していたノードを差分モードOffにする
+                // もともと生存していたノードを差分モードOffにする
                 buf = new StringBuffer();
                 // 処理番号23
                 buf.append("23").append(ImdstDefine.keyHelperClientParamSep).append("true");
