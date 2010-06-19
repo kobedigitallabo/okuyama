@@ -1232,8 +1232,14 @@ public class KeyMapManager extends Thread {
         return this.keyMapObj.getKLastDataChangeTime();
     }
 
+    // 格納データ数を返す
+    public int getSaveDataCount() {
+        return this.keyMapObj.size();
+    }
+
     // 自身のステータスがエラーでないかを返す
     public boolean checkError() {
         return this.blocking;
     }
+
 }

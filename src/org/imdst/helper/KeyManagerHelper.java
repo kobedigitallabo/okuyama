@@ -303,6 +303,11 @@ public class KeyManagerHelper extends AbstractHelper {
                         // エラーの場合は以下でエラーメッセメッセージも連結
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(StatusUtil.getNowMemoryStatus());
+						retParamBuf.append(";");
+                        retParamBuf.append("Save Data Count=[" + keyMapManager.getSaveDataCount() + "]");
+						retParamBuf.append(";");
+						retParamBuf.append("Last Data Change Time=[" + keyMapManager.getLastDataChangeTime() + "]");
+
                     } else if(clientParameterList[0].equals("11")) {
 
                         // 最終データ更新時間を返す
