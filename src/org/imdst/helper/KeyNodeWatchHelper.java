@@ -85,6 +85,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                         // ノードチェック(メイン)
                         String nodeInfo = (String)mainNodeList.get(i);
+
                         String[] nodeDt = nodeInfo.split(":");
 
                         logger.info("************************************************************");
@@ -131,7 +132,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 StatusUtil.setNodeStatusDt(nodeInfo, "Recover Start");
 
                                 // 復旧開始
-                                if(this.nodeDataRecover(nodeInfo, (String)subNodeList.get(i))) {
+                                if(this.nodeDataRecover(nodeInfo, (String)subNodeList.get(i), DataDispatcher.ruleInt, DataDispatcher.oldRules, i)) {
 
                                     // リカバー成功
                                     // 該当ノードの復帰を登録
@@ -201,7 +202,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 logger.info(subNodeInfo + " - Recover Start");
                                 StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Start");
                                 // 復旧開始
-                                if(this.nodeDataRecover(subNodeInfo, nodeInfo)) {
+                                if(this.nodeDataRecover(subNodeInfo, nodeInfo, DataDispatcher.ruleInt, DataDispatcher.oldRules, i)) {
 
                                     // リカバー成功
                                     // 該当ノードの復帰を登録
@@ -323,9 +324,10 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
      *
      * @param コピー先ノード(予定)
      * @param コピー元ノード(予定)
+     *
      * @return boolean 成否
      */
-    private boolean nodeDataRecover(String nodeInfo, String masterNodeInfo) throws BatchException {
+    private boolean nodeDataRecover(String nodeInfo, String masterNodeInfo, int rule, int[] oldRules, int matchNo) throws BatchException {
 
         boolean ret = true;
 

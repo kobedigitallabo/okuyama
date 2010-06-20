@@ -3,7 +3,7 @@ package org.imdst.util;
 
 import java.util.*;
 import java.io.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
@@ -44,7 +44,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
 
     // コンストラクタ
     public KeyManagerValueMap(int size) {
-        super(size, new Double(size * 0.9).intValue(), 50);
+        super(size, new Double(size * 0.9).intValue(), 512);
     }
 
     /**

@@ -2,6 +2,7 @@ package org.imdst.util;
 
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
@@ -15,14 +16,14 @@ import org.batch.lang.BatchException;
  */
 public class DataDispatcher {
 
-    private static String rule = null;
+    public static String rule = null;
 
-    private static int ruleInt = 0;
+    public static int ruleInt = 0;
 
-    private static int[] oldRules = null;
+    public static int[] oldRules = null;
 
     // 全てのノード情報の詳細を格納
-    private static Hashtable keyNodeMap = new Hashtable(6);
+    private static ConcurrentHashMap keyNodeMap = new ConcurrentHashMap(6, 6, 1024);
 
     private static HashMap allNodeMap = null;
 
@@ -56,13 +57,13 @@ public class DataDispatcher {
      * @param oldRules 過去ルール設定
      * @param keyMapNodes データノードを指定
      * @param subKeyMapNodes スレーブデータノードを指定
-	 * @param transactionManagerStr トランザクションマネージャの指定
+     * @param transactionManagerStr トランザクションマネージャの指定
      */
     public static void init(String ruleStr, int[] oldRules, String keyMapNodes, String subKeyMapNodes, String transactionManagerStr) {
         standby = false;
         String[] keyMapNodesInfo = null;
         String[] subkeyMapNodesInfo = null;
-		String[] transactionManagerInfo = null;
+        String[] transactionManagerInfo = null;
 
         ArrayList keyNodeList = new ArrayList();
         ArrayList subKeyNodeList = new ArrayList();
@@ -71,11 +72,11 @@ public class DataDispatcher {
 
         synchronized(syncObj) {
             allNodeMap = new HashMap();
-			// TransactionManager設定初期化
-			if (transactionManagerStr != null) {
-				transactionManagerList = new ArrayList();
-				transactionManagerList.add(transactionManagerStr);
-			}
+            // TransactionManager設定初期化
+            if (transactionManagerStr != null) {
+                transactionManagerList = new ArrayList();
+                transactionManagerList.add(transactionManagerStr);
+            }
         }
 
 
@@ -102,8 +103,10 @@ public class DataDispatcher {
             allNodeDetailList[0][index] = keyNodeDt[0];
             allNodeDetailList[1][index] = keyNodeDt[1];
         }
-        allNodeMap.put("main", keyNodeList);
 
+        synchronized(syncObj) {
+            allNodeMap.put("main", keyNodeList);
+        }
 
         // SubNode初期化
         if (subKeyMapNodes != null && !subKeyMapNodes.equals("")) {
@@ -118,11 +121,14 @@ public class DataDispatcher {
                 allNodeDetailList[3][index] = subKeyNodeDt[0];
                 allNodeDetailList[4][index] = subKeyNodeDt[1];
             }
-            allNodeMap.put("sub", subKeyNodeList);
+
+            synchronized(syncObj) {
+                allNodeMap.put("sub", subKeyNodeList);
+            }
         }
 
-        keyNodeMap.put("list", allNodeDetailList);
         DataDispatcher.oldRules = oldRules;
+        keyNodeMap.put("list", allNodeDetailList);
         standby = true;
     }
 
@@ -220,8 +226,9 @@ public class DataDispatcher {
         int execKeyInt = key.hashCode();
 
         if (execKeyInt < 0) {
-            String work = new Integer(execKeyInt).toString();
-            execKeyInt = Integer.parseInt(work.substring(1,work.length()));
+            //String work = new Integer(execKeyInt).toString();
+            //execKeyInt = Integer.parseInt(work.substring(1,work.length()));
+            execKeyInt = execKeyInt - execKeyInt - execKeyInt;
         }
 
         int nodeNo = execKeyInt % useRule;
@@ -279,6 +286,36 @@ public class DataDispatcher {
         return ret;
     }
 
+    /**
+     * 引数のKey値が引数のルールのもと引数のmatchNoと合致するかを返す.<br>
+     *
+     * @param key 対象のキー値
+     * @param rule 使用ルール
+     * @param matchNo 検証No
+     * @return boolean 結果
+     */
+    public static boolean isRuleMatchKey (String key ,int rule, int matchNo) {
+        boolean ret = false;
+
+        // Key値からHash値作成
+        int execKeyInt = key.hashCode();
+
+        if (execKeyInt < 0)
+            execKeyInt = execKeyInt - execKeyInt - execKeyInt;
+
+        int targetNo = execKeyInt % rule;
+
+        if (targetNo == 0) {
+            targetNo = rule;
+        }
+
+        targetNo = targetNo - 1;
+
+        if (targetNo == matchNo) 
+            ret = true;
+
+        return ret;
+    }
 
     /**
      * 全てのノードの情報を返す.<br>
@@ -324,9 +361,9 @@ public class DataDispatcher {
         return retMap;
     }
 
-	/**
-	 *
-	 */
+    /**
+     *
+     */
     public static ArrayList getTransactionManagerInfo() {
         while(!standby) {
             try {
@@ -335,15 +372,15 @@ public class DataDispatcher {
             }
         }
 
-		ArrayList retList = null;
+        ArrayList retList = null;
 
         // 内容を複製して返す
         synchronized(syncObj) {
-			if (transactionManagerList != null) 
-				retList = (ArrayList)transactionManagerList.clone();
-		}
-		return retList;
-	}
+            if (transactionManagerList != null) 
+                retList = (ArrayList)transactionManagerList.clone();
+        }
+        return retList;
+    }
 
     public static boolean isStandby() {
         while(!standby) {
