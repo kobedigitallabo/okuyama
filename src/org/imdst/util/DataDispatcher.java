@@ -23,7 +23,7 @@ public class DataDispatcher {
     public static int[] oldRules = null;
 
     // 全てのノード情報の詳細を格納
-    private static ConcurrentHashMap keyNodeMap = new ConcurrentHashMap(6, 6, 1024);
+    private static ConcurrentHashMap keyNodeMap = new ConcurrentHashMap(6, 6, 16);
 
     private static HashMap allNodeMap = null;
 
