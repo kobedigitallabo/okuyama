@@ -199,6 +199,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // Key値でValueを取得する(Scriptを実行する)
                         retParams = this.getKeyValueScript(clientParameterList[1], clientParameterList[2]);
+                    } else if(clientParameterList[0].equals("10")) {
+
+                        // データノードを指定することで現在の詳細を取得する
+                        // ノードの指定フォーマットは"IP:PORT"
+                        String[] nodeDt = new String[3];
+                        nodeDt[0] = "10";
+                        nodeDt[1] = "true";
+                        nodeDt[2] = StatusUtil.getNodeStatusDt(clientParameterList[1]);
+                        retParams = nodeDt;
 
                     } else if(clientParameterList[0].equals("30")) {
 

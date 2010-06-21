@@ -1737,7 +1737,7 @@ public class ImdstKeyValueClient {
                     }
                 }
 
-				byteDataList = new ArrayList(workKeyRet.length * new Double(maxValueSize * 1.38).intValue());
+                byteDataList = new ArrayList(workKeyRet.length * new Double(maxValueSize * 1.38).intValue());
                 for (int idx = 0; idx < workKeyRet.length; idx++) {
 
 
@@ -2010,6 +2010,80 @@ public class ImdstKeyValueClient {
         }
         return ret;
     }
+
+
+    public String getDataNodeStatus(String nodeInfo) throws Exception {
+        String ret = null;
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuffer serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new Exception("No ServerConnect!!");
+
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuffer();
+
+
+            // 処理番号連結
+            serverRequestBuf.append("10");
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            // ノード名連結
+            serverRequestBuf.append(nodeInfo);
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("10")) {
+                if (serverRet[1].equals("true")) {
+                    ret = serverRet[2];
+                } else {
+                    ret = "";
+                }
+            } else {
+
+                // 妥当性違反
+                throw new Exception("Execute Violation of validity");
+            }
+
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getDataNodeStatus(nodeInfo);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getDataNodeStatus(nodeInfo);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
 
     // Base64でエンコード
     private byte[] dataEncoding(byte[] datas) {
