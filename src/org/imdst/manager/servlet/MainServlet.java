@@ -39,11 +39,9 @@ public class MainServlet extends HttpServlet {
 
         ImdstKeyValueClient imdstKeyValueClient = null;
         String[] nodeRet = null;
-
+        String msg = "&nbsp;";
         try {
-            imdstKeyValueClient = OkuyamaManagerServer.getClient();
 
-            imdstKeyValueClient.autoConnect();
             ArrayList settingList = new ArrayList();
             ArrayList dataNodeList = new ArrayList();
             ArrayList slaveDataNodeList = new ArrayList();
@@ -63,7 +61,21 @@ public class MainServlet extends HttpServlet {
             settingParams[7] = ImdstDefine.Prop_SlaveMasterNodes;
             settingParams[8] = ImdstDefine.Prop_MainMasterNodeInfo;
             settingParams[9] = ImdstDefine.Prop_AllMasterNodeInfo;
-            
+
+            // MasterNodeに接続
+            imdstKeyValueClient = OkuyamaManagerServer.getClient();
+            imdstKeyValueClient.autoConnect();
+
+            // 変更が実行されている場合は更新を実行
+            if (request.getParameter("execmethod") != null && 
+                    ((String)request.getParameter("execmethod")).equals("modparam")) {
+
+                if(!this.execModParam(imdstKeyValueClient, 
+                                    (String)request.getParameter("updateparam"), 
+                                        (String)request.getParameter((String)request.getParameter("updateparam")))) 
+                                            throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+                msg = "Update Parameter Success";
+            }
 
             for (int idx = 0; idx < settingParams.length; idx++) {
 
@@ -108,7 +120,7 @@ public class MainServlet extends HttpServlet {
             }
 
             
-            out.println(initPage(settingList, dataNodeList, slaveDataNodeList));
+            out.println(initPage(settingList, dataNodeList, slaveDataNodeList, msg));
             out.flush();
 
         } catch(Exception e) {
@@ -121,9 +133,19 @@ public class MainServlet extends HttpServlet {
             e.printStackTrace();
         }
     }
-    
 
-    private String initPage(ArrayList settingList, ArrayList dataNodeList, ArrayList slaveDataNodeList) {
+    private boolean execModParam (ImdstKeyValueClient imdstKeyValueClient, String updateParamKey, String updateParamVal) throws Exception {
+        boolean ret = false;
+        try {
+            if (imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + updateParamKey, updateParamVal)) ret = true;
+        } catch(Exception e) {
+            throw e;
+        }
+        return ret;
+        
+    }
+
+    private String initPage(ArrayList settingList, ArrayList dataNodeList, ArrayList slaveDataNodeList, String msg) {
         StringBuffer pageBuf = new StringBuffer();
         
         pageBuf.append("<html>");
@@ -132,93 +154,100 @@ public class MainServlet extends HttpServlet {
         pageBuf.append("    <title>okuyama manager console</title>");
         pageBuf.append("  </head>");
         pageBuf.append("  <body>");
-        pageBuf.append("    <table width=1024px align=center boder=0>");
-        pageBuf.append("    <tr><td align=center>");
-        pageBuf.append("    <h1>Distributed Key Value Store Okuyama Manager Console</h1>");
-        pageBuf.append("    <h2>Manager Display</h2>");
-        pageBuf.append("    <br />");
-        pageBuf.append("    <hr />");
-        pageBuf.append("    <table style='width:760px;' border=1>");
-        pageBuf.append("      <tr>");
-        pageBuf.append("        <td colspan=2 align=center bgcolor='Silver' width=760px>");
+        pageBuf.append("    <form name='main' method='post' action'/okuyamamgr'>");
+        pageBuf.append("      <input type='hidden' name='execmethod' value=''>");
+        pageBuf.append("      <input type='hidden' name='updateparam' value=''>");
+        pageBuf.append("      <table width=1024px align=center boder=0>");
+        pageBuf.append("      <tr>  <td align=center>");
+        pageBuf.append("      <h1>Distributed Key Value Store Okuyama Manager Console  </h1>");
+        pageBuf.append("      <h2>Manager Display  </h2>");
+        pageBuf.append("      <br />");
+        pageBuf.append("      <hr />");
+        pageBuf.append(msg);
+        pageBuf.append("      <table style='width:760px;' border=1>");
+        pageBuf.append("        <tr>");
+        pageBuf.append("          <td colspan=2 align=center bgcolor='Silver' width=760px>");
         pageBuf.append("          Okuyama Setup Information");
-        pageBuf.append("        </td>");
-        pageBuf.append("      </tr>");
+        pageBuf.append("          </td>");
+        pageBuf.append("        </tr>");
 
         for (int i = 0; i < settingList.size(); i++) {
             HashMap setting = (HashMap)settingList.get(i);
-            pageBuf.append("<tr>");
-            pageBuf.append("  <td width=160px>");
-            pageBuf.append("    <p>" + (String)setting.get("param") + "</p>");
-            pageBuf.append("  </td>");
-            pageBuf.append("  <td width=600px>");
-            pageBuf.append((String)setting.get("value"));
-            pageBuf.append("  </td>");
-            pageBuf.append("</tr>");
+            pageBuf.append("  <tr>");
+            pageBuf.append("    <td width=160px>");
+            pageBuf.append("      <p>" + (String)setting.get("param") + "  </p>");
+            pageBuf.append("    </td>");
+            pageBuf.append("    <td width=600px>");
+            pageBuf.append("      <input type='text' name='" + (String)setting.get("param") + "' value='" + (String)setting.get("value") + "' size=50>");
+            pageBuf.append("      &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)setting.get("param") + "\";'>");
+            pageBuf.append("    </td>");
+            pageBuf.append("  </tr>");
         }
-        pageBuf.append("    </td></tr>");
-        pageBuf.append("    </table>");
-        pageBuf.append("    <br>");
+        pageBuf.append("      </td>  </tr>");
+        pageBuf.append("      </table>");
+        pageBuf.append("      <br>");
 
         if (dataNodeList.size() > 0) {
-            pageBuf.append("    <table style='width:760px;' border=1>");
-            pageBuf.append("      <tr>");
-            pageBuf.append("        <td colspan=2 align=center bgcolor='Silver' width=760px>");
-            pageBuf.append("          Okuyama DataNode Information");
-            pageBuf.append("        </td>");
-            pageBuf.append("      </tr>");
+            pageBuf.append("      <table style='width:760px;' border=1>");
+            pageBuf.append("        <tr>");
+            pageBuf.append("          <td colspan=2 align=center bgcolor='Silver' width=760px>");
+            pageBuf.append("            Okuyama DataNode Information");
+            pageBuf.append("          </td>");
+            pageBuf.append("        </tr>");
 
             for (int i = 0; i < dataNodeList.size(); i++) {
                 HashMap dataNode = (HashMap)dataNodeList.get(i);
-                pageBuf.append("<tr>");
-                pageBuf.append("  <td width=160px>");
-                pageBuf.append("    <p>" + (String)dataNode.get("name") + "</p>");
-                pageBuf.append("  </td>");
-                pageBuf.append("  <td width=600px>");
+                pageBuf.append("  <tr>");
+                pageBuf.append("    <td width=160px>");
+                pageBuf.append("      <p>" + (String)dataNode.get("name") + "  </p>");
+                pageBuf.append("    </td>");
+                pageBuf.append("    <td width=600px>");
 
                 String[] nodeDtList = ((String)dataNode.get("dt")).split(";");
                 for (int idx = 0; idx < nodeDtList.length; idx++)  {
                     pageBuf.append(nodeDtList[idx]);
-                    pageBuf.append("<br>");
+                    pageBuf.append("  <br>");
                 }
 
-                pageBuf.append("  </td>");
-                pageBuf.append("</tr>");
+                pageBuf.append("    </td>");
+                pageBuf.append("  </tr>");
             }
-            pageBuf.append("    </td></tr>");
-            pageBuf.append("    </table>");
+            pageBuf.append("      </td>  ");
+            pageBuf.append("    </tr>  ");
+            pageBuf.append("  </table>");
         }
 
-        pageBuf.append("    <br>");
+        pageBuf.append("      <br>");
         if (slaveDataNodeList.size() > 0) {
-            pageBuf.append("    <table style='width:760px;' border=1>");
-            pageBuf.append("      <tr>");
-            pageBuf.append("        <td colspan=2 align=center bgcolor='Silver' width=760px>");
-            pageBuf.append("          Okuyama SlaveDataNode Information");
-            pageBuf.append("        </td>");
-            pageBuf.append("      </tr>");
+            pageBuf.append("      <table style='width:760px;' border=1>");
+            pageBuf.append("        <tr>");
+            pageBuf.append("          <td colspan=2 align=center bgcolor='Silver' width=760px>");
+            pageBuf.append("            Okuyama SlaveDataNode Information");
+            pageBuf.append("          </td>");
+            pageBuf.append("        </tr>");
 
             for (int i = 0; i < slaveDataNodeList.size(); i++) {
                 HashMap slaveDataNode = (HashMap)slaveDataNodeList.get(i);
-                pageBuf.append("<tr>");
-                pageBuf.append("  <td width=160px>");
-                pageBuf.append("    <p>" + (String)slaveDataNode.get("name") + "</p>");
-                pageBuf.append("  </td>");
-                pageBuf.append("  <td width=600px>");
+                pageBuf.append("  <tr>");
+                pageBuf.append("    <td width=160px>");
+                pageBuf.append("      <p>" + (String)slaveDataNode.get("name") + "  </p>");
+                pageBuf.append("    </td>");
+                pageBuf.append("    <td width=600px>");
 
                 String[] nodeDtList = ((String)slaveDataNode.get("dt")).split(";");
-                for (int idx = 0; idx < nodeDtList.length; idx++)  {
+                for (int idx = 0; idx  < nodeDtList.length; idx++)  {
                     pageBuf.append(nodeDtList[idx]);
-                    pageBuf.append("<br>");
+                    pageBuf.append("  <br>");
                 }
 
-                pageBuf.append("  </td>");
-                pageBuf.append("</tr>");
+                pageBuf.append("    </td>");
+                pageBuf.append("  </tr>");
             }
-            pageBuf.append("    </td></tr>");
-            pageBuf.append("    </table>");
+            pageBuf.append("      </td>  </tr>");
+            pageBuf.append("      </table>");
         }
-        pageBuf.append("    </table>");
+        pageBuf.append("      </table>");
+        pageBuf.append("    </form>");
         pageBuf.append("  </body>");
         pageBuf.append("</html>");
         return pageBuf.toString();
