@@ -12,6 +12,7 @@ public class MTest extends Thread {
     private boolean startFlg = false;
     public int threadNo = 0;
     public long execCounter = 0;
+	private String prefix = "";
 
     public void run() {
         try {
@@ -31,8 +32,8 @@ public class MTest extends Thread {
                 imdstKeyValueClient.setValue("datasavekey2_test" + threadNo, "savedatavaluestr2_test" + threadNo);
 
 
-                String key = "datasavekey_" + threadNo + "_";
-                String value= "savedatavaluestr_" + threadNo + "_";
+                String key = "datasavekey_" + prefix + "_" + threadNo + "_";
+                String value= "savedatavaluestr_" + prefix + "_" + threadNo + "_";
                 while(true){
 
                     imdstKeyValueClient.setValue(key + this.execCounter, value + this.execCounter);
@@ -52,7 +53,8 @@ public class MTest extends Thread {
                 imdstKeyValueClient.getValue("datasavekey2_" + threadNo);
                 imdstKeyValueClient.getValue("datasavekey2_test" + threadNo);
 
-                String key = "datasavekey_" + threadNo + "_";
+                String key = "datasavekey_" + prefix + "_" + threadNo + "_";
+
                 while(true){
                     imdstKeyValueClient.getValue(key + this.execCounter);
                     this.execCounter++;
@@ -73,8 +75,8 @@ public class MTest extends Thread {
                 imdstKeyValueClient.setValue("datasavekey2_test" + threadNo, "savedatavaluestr2_test" + threadNo);
 
 
-                String key = "datasavekey_" + threadNo + "_";
-                String value= "savedatavaluestr_" + threadNo + "_";
+                String key = "datasavekey_" + prefix + "_" + threadNo + "_";
+                String value= "savedatavaluestr_" + prefix + "_" + threadNo + "_";
                 while(true){
                     imdstKeyValueClient.setValue(key + this.execCounter, value + this.execCounter);
                     this.execCounter++;
@@ -85,6 +87,11 @@ public class MTest extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
     }
 
     public void setStartFlg(boolean flg) {

@@ -30,6 +30,7 @@ public class TestSockM {
             for (int i= 0; i < threadCount; i++) {
 
                 m = new MTest();
+                m.setPrefix(args[3]);
                 m.threadNo = i;
                 list[i] = m;
             }
