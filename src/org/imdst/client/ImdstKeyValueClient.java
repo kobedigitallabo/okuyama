@@ -709,7 +709,6 @@ public class ImdstKeyValueClient {
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-
             serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
 
             // 処理の妥当性確認

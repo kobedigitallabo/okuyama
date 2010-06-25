@@ -135,6 +135,125 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                     parseAllNodesInfo4Node();
                 }
 
+
+                // 自身がチェックしなければいけないMasterNodeに対して生存確認を行う
+                boolean arrivalFlg = false;
+                String[] checkMasterNodes = null;
+                String[] checkMasterNodeInfo = null;
+                ImdstKeyValueClient imdstKeyValueClient = null;
+                String checkMasterNodeStr = StatusUtil.getCheckTargetMasterNodes();
+
+                if (checkMasterNodeStr != null && !checkMasterNodeStr.trim().equals("")) {
+
+                    checkMasterNodes = checkMasterNodeStr.split(",");
+
+                    arrivalFlg = false;
+                    for (int idx = 0; idx < checkMasterNodes.length; idx++) {
+
+                        
+                        try {
+                            checkMasterNodeInfo = checkMasterNodes[idx].split(":");
+
+                            String node = checkMasterNodeInfo[0];
+                            String port = checkMasterNodeInfo[1];
+
+                            imdstKeyValueClient = new ImdstKeyValueClient();
+                            imdstKeyValueClient.connect(node, Integer.parseInt(port));
+
+                            if(imdstKeyValueClient.arrivalMasterNode()) {
+                                arrivalFlg = true;
+                            }
+                        } catch(Exception e) {
+                        } finally {
+                            if (imdstKeyValueClient != null) {
+                                imdstKeyValueClient.close();
+                                imdstKeyValueClient = null;
+                            }
+                        }
+                    }
+
+                    if (!arrivalFlg) {
+
+                        if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) == null ||
+                                super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
+
+                            // ファイルモード
+                            // 自身がメインマスターノード
+                            StatusUtil.setMainMasterNode(true);
+                            // スレーブマスターノードを登録
+                        } else {
+
+                            // Nodeモード
+                            // 自身がメインマスターノード
+                            StatusUtil.setMainMasterNode(true);
+                            // 自身がメインマスターノードであることを登録
+                            String myInfo = StatusUtil.getMyNodeInfo();
+                            String[] myInfos = myInfo.split(":");
+                            String node = myInfos[0];
+                            String port = myInfos[1];
+
+                            try {
+                                // ノードに登録
+                                imdstKeyValueClient = new ImdstKeyValueClient();
+                                imdstKeyValueClient.connect(node, Integer.parseInt(port));
+                                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
+                            } catch(Exception e) {
+                            } finally {
+                                if (imdstKeyValueClient != null) {
+                                    imdstKeyValueClient.close();
+                                    imdstKeyValueClient = null;
+                                }
+                            }
+                        }
+                    } else {
+
+                        if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) == null ||
+                                super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
+
+                            // ファイルモード
+                            // 自身がメインマスターノードではない
+                            StatusUtil.setMainMasterNode(false);
+                        } else {
+                            // Nodeモード
+                            // 自身がメインマスターノードではない
+                            StatusUtil.setMainMasterNode(false);
+                        }
+                    }
+                } else {
+
+                    // 調べるMasterNodeがない場合は自身がMainMasterNode
+                    if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) == null ||
+                            super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
+
+                        // ファイルモード
+                        // 自身がメインマスターノード
+                        StatusUtil.setMainMasterNode(true);
+                        // スレーブマスターノードを登録
+                    } else {
+
+                        // Nodeモード
+                        // 自身がメインマスターノード
+                        StatusUtil.setMainMasterNode(true);
+                        // 自身がメインマスターノードであることを登録
+                        String myInfo = StatusUtil.getMyNodeInfo();
+                        String[] myInfos = myInfo.split(":");
+                        String node = myInfos[0];
+                        String port = myInfos[1];
+
+                        try {
+                            // ノードに登録
+                            imdstKeyValueClient = new ImdstKeyValueClient();
+                            imdstKeyValueClient.connect(node, Integer.parseInt(port));
+                            imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
+                        } catch(Exception e) {
+                        } finally {
+                            if (imdstKeyValueClient != null) {
+                                imdstKeyValueClient.close();
+                                imdstKeyValueClient = null;
+                            }
+                        }
+                    }
+                }
                 Thread.sleep(checkCycle);
             }
         } catch(Exception e) {
@@ -411,22 +530,23 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                     StatusUtil.setSlaveMasterNodes(null);
                 }
 
+
+
                 // 自身がチェックしなければいけないMasterノードを登録
                 StatusUtil.setCheckTargetMasterNodes("");
                 if (allMasterNodeInfoStr != null) {
 
                     String checkTargetMasterNodes = null;
-                    String[] workStrs = allMasterNodeInfoStr.split(myNodeInfoStr);
+                    if (allMasterNodeInfoStr.indexOf(myNodeInfoStr) > 0) {
+                        String[] workStrs = allMasterNodeInfoStr.split(myNodeInfoStr);
 
-                    if (workStrs.length > 0) {
-                        if(!workStrs[0].trim().equals("")) {
-                            StatusUtil.setCheckTargetMasterNodes(workStrs[0]);
+                        if (workStrs.length > 0) {
+                            if(!workStrs[0].trim().equals("")) {
+                                StatusUtil.setCheckTargetMasterNodes(workStrs[0]);
+                            }
                         }
                     }
                 }
-
-                // 自身がメインマスターノードになった場合にチェックしなければいけないスレーブマスターノードを登録
-                
             }
         }
 

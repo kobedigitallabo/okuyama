@@ -211,9 +211,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } else if(clientParameterList[0].equals("12")) {
 
                         // 自身の生存結果を返す
-                        retParams = new String[2];
+                        retParams = new String[3];
                         retParams[0] = "12";
                         retParams[1] = "true";
+                        retParams[2] = "";
 
                     } else if(clientParameterList[0].equals("30")) {
 
@@ -264,10 +265,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } else if (clientParameterList[0].equals("95")) {
 
                         // 渡されたKeyNodeの障害停止をマーク
-						StatusUtil.setDeadNode(clientParameterList[1]);
-                        retParams = new String[2];
-						retParams[0] = "95";
-						retParams[1] = "true";
+                        StatusUtil.setDeadNode(clientParameterList[1]);
+                        retParams = new String[3];
+                        retParams[0] = "95";
+                        retParams[1] = "true";
+                        retParams[2] = "";
                     }
 
                     // Takerで返却値を作成
