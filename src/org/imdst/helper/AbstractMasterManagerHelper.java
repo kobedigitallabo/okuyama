@@ -49,7 +49,106 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     protected void setDeadNode(String nodeInfo) {
         // MainMasterNodeの場合のみ設定される
         if (StatusUtil.isMainMasterNode()) {
-            StatusUtil.setDeadNode(nodeInfo);
+			if (StatusUtil.isNodeArrival(nodeInfo)) {
+	            StatusUtil.setDeadNode(nodeInfo);
+
+	            // 対象のSlaveMasterNode全てに依頼
+	            String slaves = StatusUtil.getSlaveMasterNodes();
+
+	            if (slaves != null && !slaves.trim().equals("")) {
+	                String[] slaveList = slaves.split(",");
+					int execCounter = 0;
+
+					// MasterNodeへの伝搬は失敗しても2回試す
+					while (execCounter < 2) {
+		                // 1ノードづつ実行
+		                for (int i = 0; i < slaveList.length; i++) {
+
+							if (slaveList[i] == null) continue;
+
+		                    Socket socket = null;
+		                    PrintWriter pw = null;
+		                    BufferedReader br = null;
+
+		                    try {
+
+		                        // Slaveノード名とポートに分解
+		                        String[] slaveNodeDt = slaveList[i].split(":");
+
+		                        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+		                        socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+
+		                        pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
+		                                                                                                        ImdstDefine.keyHelperClientParamEncoding)));
+		                        br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
+		                                                                                        ImdstDefine.keyHelperClientParamEncoding));
+
+		                        // 文字列バッファ初期化
+		                        StringBuffer serverRequestBuf = new StringBuffer();
+
+		                        // 処理番号連結
+		                        serverRequestBuf.append("95");
+		                        // セパレータ連結
+		                        serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
+		                        // 障害ノード名連結
+		                        serverRequestBuf.append(nodeInfo);
+
+		                        // サーバ送信
+		                        pw.println(serverRequestBuf.toString());
+		                        pw.flush();
+
+		                        // サーバから結果受け取り
+		                        String serverRetStr = br.readLine();
+
+		                        String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
+
+		                        // 処理の妥当性確認
+		                        if (serverRet[0].equals("95")) {
+		                            if (!serverRet[1].equals("true")) {
+		                                // TODO:復帰登録失敗
+		                                // 異常事態だが、稼動していないことも考えられるので、
+		                                // 無視する
+		                                //System.out.println("Slave Master Node setDeadNode Error [" + slaveList[i] + "]");
+		                            } else {
+										slaveList[i] = null;
+									}
+		                        }
+		                    } catch(Exception e) {
+
+		                        // TODO:復帰登録失敗
+		                        // 異常事態だが、稼動していないことも考えられるので、
+		                        // 無視する
+		                        //System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
+		                        //e.printStackTrace();
+		                    } finally {
+		                        try {
+		                            if (pw != null) {
+		                                // 接続切断を通知
+		                                pw.println(ImdstDefine.imdstConnectExitRequest);
+		                                pw.flush();
+
+		                                pw.close();
+		                                pw = null;
+		                            }
+
+		                            if (br != null) {
+		                                br.close();
+		                                br = null;
+		                            }
+
+		                            if (socket != null) {
+		                                socket.close();
+		                                socket = null;
+		                            }
+		                        } catch(Exception e2) {
+		                            // 無視
+		                        }
+		                    }
+		                }
+						execCounter++;
+					}
+	            }
+			}
         }
     }
 

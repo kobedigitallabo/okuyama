@@ -677,6 +677,83 @@ public class ImdstKeyValueClient {
 
 
     /**
+     * MasterNodeの生死を確認する.<br>
+     *
+     * @return boolean true:開始成功 false:開始失敗
+     * @throws Exception
+     */
+    public boolean arrivalMasterNode() throws Exception {
+        boolean ret = false;
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuffer serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new Exception("No ServerConnect!!");
+
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuffer();
+
+
+            // 処理番号連結
+            serverRequestBuf.append("12");
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("12")) {
+                if (serverRet[1].equals("true")) {
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            } else {
+
+                    ret = false;
+            }
+
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.arrivalMasterNode();
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.arrivalMasterNode();
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
+
+    /**
      * マスタサーバへデータを送信する.<br>
      * Tagなし.<br>
      *

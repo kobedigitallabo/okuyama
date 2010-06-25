@@ -176,6 +176,8 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
 
         // 自身の情報
         myNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_MyNodeInfo);
+        StatusUtil.setMyNodeInfo(myNodeInfoStr);
+
         // メインマスターノード接続情報
         mainMasterNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeInfo);
         // 全てのマスターノードの接続情報
@@ -380,6 +382,8 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                         String[] allMasterNodeInfos = allMasterNodeInfoStr.trim().split(",");
                         StringBuffer slaveMasterNodeInfoBuf = new StringBuffer();
                         String sep  = "";
+
+
                         for (int idx = 0; idx < allMasterNodeInfos.length; idx++) {
 
                             if ((allMasterNodeInfos[idx].trim().equals(myNodeInfoStr.trim())) == false) {
@@ -406,6 +410,23 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                     StatusUtil.setMainMasterNode(false);
                     StatusUtil.setSlaveMasterNodes(null);
                 }
+
+                // 自身がチェックしなければいけないMasterノードを登録
+                StatusUtil.setCheckTargetMasterNodes("");
+                if (allMasterNodeInfoStr != null) {
+
+                    String checkTargetMasterNodes = null;
+                    String[] workStrs = allMasterNodeInfoStr.split(myNodeInfoStr);
+
+                    if (workStrs.length > 0) {
+                        if(!workStrs[0].trim().equals("")) {
+                            StatusUtil.setCheckTargetMasterNodes(workStrs[0]);
+                        }
+                    }
+                }
+
+                // 自身がメインマスターノードになった場合にチェックしなければいけないスレーブマスターノードを登録
+                
             }
         }
 

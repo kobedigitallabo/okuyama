@@ -208,6 +208,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         nodeDt[1] = "true";
                         nodeDt[2] = StatusUtil.getNodeStatusDt(clientParameterList[1]);
                         retParams = nodeDt;
+                    } else if(clientParameterList[0].equals("12")) {
+
+                        // 自身の生存結果を返す
+                        retParams = new String[2];
+                        retParams[0] = "12";
+                        retParams[1] = "true";
 
                     } else if(clientParameterList[0].equals("30")) {
 
@@ -250,11 +256,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         }
                     } else if (clientParameterList[0].equals("94")) {
 
-                        // 渡されたKeyNodeの使用再開をマーク
+                        // 渡されたKeyNodeの使用再開をマーク(複数を一度に)
                         String[] nodes = clientParameterList[1].split("_");
                         for (int i = 0; i < nodes.length; i++) {
                             retParams = this.restartKeyNodeUse(nodes[i]);
                         }
+                    } else if (clientParameterList[0].equals("95")) {
+
+                        // 渡されたKeyNodeの障害停止をマーク
+						StatusUtil.setDeadNode(clientParameterList[1]);
+                        retParams = new String[2];
+						retParams[0] = "95";
+						retParams[1] = "true";
                     }
 
                     // Takerで返却値を作成
@@ -344,7 +357,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] setKeyValue(String keyStr, String tagStr, String transactionCode, String dataStr) throws BatchException {
+    protected String[] setKeyValue(String keyStr, String tagStr, String transactionCode, String dataStr) throws BatchException {
         //logger.debug("MasterManagerHelper - setKeyValue - start");
         String[] retStrs = new String[3];
 

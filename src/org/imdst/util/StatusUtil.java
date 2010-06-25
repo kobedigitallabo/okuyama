@@ -47,11 +47,17 @@ public class StatusUtil {
     // 全体メッセージ
     private static String msg = null;
 
+    // 自身の情報を設定
+    private static String myNodeInfo = null;
+
     // MainMasterNodeである場合はtrueとなる
     private static Boolean mainMasterNode = null;
 
     // SlaveMainMasterNodeの情報
     private static String slaveMainMasterNodeInfo = null;
+
+    // 自身がチェックしなければいけないマスターノードのIP群
+    private static String checkTargetMasterNodes = null;
 
 
     // Transactionの使用有無
@@ -59,7 +65,6 @@ public class StatusUtil {
 
     // TransactionNodeの情報
     private static String[] transactionInfo = null;
-
 
 
     /**
@@ -104,6 +109,40 @@ public class StatusUtil {
      */
     public static String getStatusMessage() {
         return StatusUtil.msg;
+    }
+
+    /**
+     * 自身の情報をセット
+     */
+    public static void setMyNodeInfo(String my) {
+        myNodeInfo = my;
+    }
+
+    /**
+     * 自身の情報を取得
+     */
+    public static String getMyNodeInfo() {
+        return myNodeInfo;
+    }
+
+
+
+    /**
+     * 自身がチェックしなければいけないMasterNodeを登録.<br>
+     *
+     * @param masterNodes
+     */
+    public static void setCheckTargetMasterNodes(String masterNodes) {
+        checkTargetMasterNodes = masterNodes;
+    }
+
+    /**
+     * 自身がチェックしなければいけないMasterNodeを取得.<br>
+     *
+     * @param masterNodes
+     */
+    public static String getCheckTargetMasterNodes() {
+        return checkTargetMasterNodes;
     }
 
 

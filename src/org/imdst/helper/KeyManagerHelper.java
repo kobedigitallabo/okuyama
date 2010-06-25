@@ -314,7 +314,6 @@ public class KeyManagerHelper extends AbstractHelper {
                         retParamBuf.append("11");
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append("true");
-                        // エラーの場合は以下でエラーメッセメッセージも連結
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(keyMapManager.getLastDataChangeTime());
                     } else if(clientParameterList[0].equals("20")) {

@@ -912,7 +912,11 @@ public class KeyMapManager extends Thread {
 
 
     public void diffDataMode(boolean flg) {
-        if (flg) this.diffDataPoolingList = new CopyOnWriteArrayList();
+        if (flg) {
+			this.diffDataPoolingList = new CopyOnWriteArrayList();
+		} else {
+        	this.diffDataPoolingList = null;
+		}
         this.diffDataPoolingFlg = flg;
     }
 
@@ -988,10 +992,10 @@ public class KeyMapManager extends Thread {
                 }
                 //logger.debug("outputKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
-                logger.error("outputKeyMapObj2Stream - Error");
-                blocking = true;
-                StatusUtil.setStatusAndMessage(1, "outputKeyMapObj2Stream - Error [" + e.getMessage() + "]");
-                throw new BatchException(e);
+                logger.error("outputKeyMapObj2Stream - Error =[" + e.getMessage() + "]");
+                //blocking = true;
+                //StatusUtil.setStatusAndMessage(1, "outputKeyMapObj2Stream - Error [" + e.getMessage() + "]");
+                //throw new BatchException(e);
             }
         }
     }
@@ -1031,10 +1035,10 @@ public class KeyMapManager extends Thread {
                 }
                 //logger.debug("outputDiffKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
-                logger.error("outputDiffKeyMapObj2Stream - Error");
-                blocking = true;
-                StatusUtil.setStatusAndMessage(1, "outputDiffKeyMapObj2Stream - Error [" + e.getMessage() + "]");
-                throw new BatchException(e);
+                logger.error("outputDiffKeyMapObj2Stream - Error [" + e.getMessage() + "]");
+                //blocking = true;
+                //StatusUtil.setStatusAndMessage(1, "outputDiffKeyMapObj2Stream - Error [" + e.getMessage() + "]");
+                //throw new BatchException(e);
             }
         }
     }
