@@ -1,4 +1,4 @@
-====== オンメモリ型分散Key-Valueストア 「okuyama」=====================================================
+====== 分散Key-Valueストア 「okuyama」=====================================================
 Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ダウンロード頂きありがとうございます。
 
@@ -10,12 +10,94 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 機能改善]
-[[リリース Ver 0.7.0 - (2010/06/22)]]
-  ■Okuyama管理Webコンソールを追加
-    稼働中のokuyamaの状況を確認できるWeb画面を追加しました。
-    リリース物のexecOkuyamaManager.batを実行すると管理Webアプリが起動します。
-    http://localhost:10088/okuyamamgrでアクセスできます。
-    
+[[リリース Ver 0.7.0 - (2010/06/27)]]
+  ■MasterNodeを複数起動し冗長化した場合の自動エスカレーション機能を追加
+    従来からMasterNodeを複数で冗長化は出来たが、その場合MasterNode内にメインとなるノードが存在し、
+    残りのマスターノードはスレーブという扱いだった。
+    メインのノードがダウンした場合は、スレーブノードにアクセスすればデータの取得、登録、削除等全ての
+    クライアント操作は実行できたが、DataNodeの監視、データノードダウン後の起動時のデータリカバーは
+    スレーブMasterNodeだけでは実行されなかった。
+    その場合は、スレーブMasterNodeの内の1インスタンスのMasterNode.properties内の設定値
+    "MainMasterNodeMode"を"true"に変える必要があった。
+    今回の改修でメインMasterNodeがダウンした場合はスレーブMasterNode内から自動的に1インスタンスが
+    メインMasterNodeに昇格するように改修。
+    この改修によりMasterNode.propertiesに設定項目が追加され、従来の設定項目が使用可能ではあるが、推奨されなくなった。
+
+    ●追加された項目は以下
+      ・SystemConfigMode
+        説明) 設定情報を取得する場所(file or node)
+              設定情報を本ファイルを起動後も参照し続けるか、起動後は本ファイルを一度だけ参照し、
+              以後は、DataNodeに登録されている設定情報を参照するかを決定する
+              "file"の場合は本ファイルを参照する
+              "node"の場合はDataNodeを参照する
+              設定をしない場合は"node"となる
+        記述例)
+             SystemConfigMode=node
+
+
+      ・MyNodeInfo=127.0.0.1:8888
+        説明) 自身の情報
+              自身のIPと起動ポート番号を":"区切りで記述
+              ※使用を推奨
+              ※この設定がない場合はメインMasterNodeの自動昇格機能が機能しない
+        記述例)
+             MyNodeInfo=127.0.0.1:8888
+
+
+      ・MainMasterNodeInfo
+        説明) メインマスターノードの情報
+              起動時にメインMasterNodeとして認識するノードのIPとポート番号
+              自身がメインMasterNodeの場合は自身の情報を記述
+              ※使用を推奨
+        記述例)
+             MainMasterNodeInfo=127.0.0.1:8888
+
+
+      ・AllMasterNodeInfo
+        説明) 全てのマスターノードの情報
+              全てのマスターノードの情報"IP:PORT番号"フォーマットで","区切りで記述 
+              自身の情報はMyNodeInfo設定の内容と同じであること
+              ここでの記述順でメインMasterNodeとして機能する
+              ※使用を推奨
+              ※この設定がない場合はメインMasterNodeの自動昇格機能が機能しない
+        記述例)
+             AllMasterNodeInfo=127.0.0.1:8888,127.0.0.1:8889,127.0.0.1:11211
+
+    ●使用が推奨されなくなった項目
+      ・MainMasterNodeMode
+      ・SlaveMasterNodes
+
+
+  ■MasterNodeが使用する設定情報をMasterNode.propertiesから参照するだけでなく、
+    DataNodeに設定情報を格納しそちらか参照するように改修
+    従来設定情報はMasterNode.propertiesからつねに参照していたが、設定情報をDataNodeに格納する
+    ように改修し、全MasterNodeが情報を共有するよに改修
+    ただし、起動時はDataNodeの情報が分からないため、MasterNode.propertiesから参照する
+    従来通り、MasterNode.propertiesのみで運用することも可能
+    この設定を変更するにはMasterNode.propertiesの以下の設定項目で変更出来る。
+    ●追加された項目
+      ・SystemConfigMode
+        説明) 設定情報を取得する場所(file or node)
+              設定情報を本ファイルを起動後も参照し続けるか、起動後は本ファイルを一度だけ参照し、
+              以後は、DataNodeに登録されている設定情報を参照するかを決定する
+              "file"の場合は本ファイルを参照する
+              "node"の場合はDataNodeを参照する
+              設定をしない場合は"node"となる
+        記述例)
+             SystemConfigMode=node
+
+
+
+  ■okuyama管理Webコンソールアプリケーションを追加
+    稼働中のokuyamaの状況確認と設定の変更が出来るできるWebアプリを作成。
+    リリース物のexecOkuyamaManager.batを実行すると管理Webアプリが起動する。
+
+    URL : http://起動マシンのIP:10088/okuyamamgr
+    でアクセスできる。
+
+    ※execOkuyamaManager.bat内で起動ポート番号(10088番)とWebアプリが情報を参照するMasterNodeのIP:PORTを","区切りで渡しています。
+      MasterNodeの情報はMasterNode.propertiesの設定情報"AllMasterNodeInfo"の内容と同様にしてください。
+
 
 ========================================================================================================
 ========================================================================================================

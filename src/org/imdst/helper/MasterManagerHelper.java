@@ -82,6 +82,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String clientParametersStr = null;
         String[] clientParameterList = null;
 
+        IProtocolTaker okuyamaPorotocolTaker = null;
+
         try{
 
             // Jobからの引数
@@ -94,6 +96,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // プロトコルに合わせてTakerを初期化
             this.protocolMode = (String)parameters[2];
             this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode);
+
+            // プロトコルがokuyamaではない場合はマネージメントコマンド用のokuyamaプロトコルTakerを作成
+            if (!this.protocolMode.equals("okuyama")) {
+                okuyamaPorotocolTaker = ProtocolTakerFactory.getProtocolTaker("okuyama");
+            }
 
             // ロードバランシング指定
             if (parameters[3] != null) {
@@ -273,7 +280,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     // Takerで返却値を作成
-                    retParamStr = this.porotocolTaker.takeResponseLine(retParams);
+                    // プロトコルがマッチしていたかをチェック
+                    // 設定通りのプロトコルの場合はそのまま処理。そうでない場合はokuyamaで処理
+                    if (this.porotocolTaker.isMatchMethod()) {
+                        retParamStr = this.porotocolTaker.takeResponseLine(retParams);
+                    } else {
+                        retParamStr = okuyamaPorotocolTaker.takeResponseLine(retParams);
+                    }
 
                     // クライアントに結果送信
                     pw.println(retParamStr);

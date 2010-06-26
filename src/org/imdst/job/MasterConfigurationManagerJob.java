@@ -115,7 +115,7 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                 }
 
                 // 設定情報を設定ファイルから常に取得するモードとデータノードから取得する設定で処理分岐
-                if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) == null ||
+                if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
                         super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
 
                     // ファイルモード
@@ -129,7 +129,7 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                         // 変更なし
                         logger.info("MasterNode Config File No Change");
                     }
-                } else if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeNode)) {
+                } else {
 
                     // DataNode
                     parseAllNodesInfo4Node();
@@ -164,6 +164,7 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                                 arrivalFlg = true;
                             }
                         } catch(Exception e) {
+                            logger.info("Master Node = [" + checkMasterNodes[idx] +  "] Check Error");
                         } finally {
                             if (imdstKeyValueClient != null) {
                                 imdstKeyValueClient.close();
@@ -174,30 +175,31 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
 
                     if (!arrivalFlg) {
 
-                        if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) == null ||
+                        if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
                                 super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
 
                             // ファイルモード
                             // 自身がメインマスターノード
                             StatusUtil.setMainMasterNode(true);
-                            // スレーブマスターノードを登録
                         } else {
 
                             // Nodeモード
                             // 自身がメインマスターノード
-                            StatusUtil.setMainMasterNode(true);
-                            // 自身がメインマスターノードであることを登録
+                            // メインマスターノードの項目に自身の情報を登録
+                            // そうすることで自動的に設定は変わる
                             String myInfo = StatusUtil.getMyNodeInfo();
                             String[] myInfos = myInfo.split(":");
                             String node = myInfos[0];
                             String port = myInfos[1];
 
                             try {
+
                                 // ノードに登録
                                 imdstKeyValueClient = new ImdstKeyValueClient();
                                 imdstKeyValueClient.connect(node, Integer.parseInt(port));
                                 imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
                             } catch(Exception e) {
+                                logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
                             } finally {
                                 if (imdstKeyValueClient != null) {
                                     imdstKeyValueClient.close();
@@ -207,13 +209,14 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                         }
                     } else {
 
-                        if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) == null ||
+                        if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
                                 super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
 
                             // ファイルモード
                             // 自身がメインマスターノードではない
                             StatusUtil.setMainMasterNode(false);
                         } else {
+
                             // Nodeモード
                             // 自身がメインマスターノードではない
                             StatusUtil.setMainMasterNode(false);
@@ -222,30 +225,31 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
                 } else {
 
                     // 調べるMasterNodeがない場合は自身がMainMasterNode
-                    if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) == null ||
+                    if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
                             super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
 
                         // ファイルモード
                         // 自身がメインマスターノード
                         StatusUtil.setMainMasterNode(true);
-                        // スレーブマスターノードを登録
                     } else {
 
                         // Nodeモード
                         // 自身がメインマスターノード
-                        StatusUtil.setMainMasterNode(true);
-                        // 自身がメインマスターノードであることを登録
+                        // メインマスターノードの項目に自身の情報を登録
+                        // そうすることで自動的に設定は変わる
                         String myInfo = StatusUtil.getMyNodeInfo();
                         String[] myInfos = myInfo.split(":");
                         String node = myInfos[0];
                         String port = myInfos[1];
 
                         try {
+
                             // ノードに登録
                             imdstKeyValueClient = new ImdstKeyValueClient();
                             imdstKeyValueClient.connect(node, Integer.parseInt(port));
                             imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
                         } catch(Exception e) {
+                            logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
                         } finally {
                             if (imdstKeyValueClient != null) {
                                 imdstKeyValueClient.close();

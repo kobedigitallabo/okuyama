@@ -141,7 +141,6 @@ public class ImdstKeyValueClient {
 
                 String nodeStr = (String)tmpMasterNodeList.remove(ran);
                 String[] nodeInfo = nodeStr.split(":");
-//              this.socket = new Socket(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
                 this.socket = new Socket();
                 InetSocketAddress inetAddr = new InetSocketAddress(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
                 this.socket.connect(inetAddr, 5000);
@@ -174,6 +173,61 @@ public class ImdstKeyValueClient {
         }
     }
 
+
+    /**
+     * 設定されたMasterNodeの接続情報を元に自動的に接続を行う.<br>
+     * 接続出来ない場合自動的に別ノードへ再接続を行う.<br>
+     *
+     * @param masterNodes 接続情報の配列 "IP:PORT"の形式
+     */
+    public void nextConnect() throws Exception {
+        ArrayList tmpMasterNodeList = new ArrayList();
+        tmpMasterNodeList = (ArrayList)this.masterNodesList.clone();
+
+        while(tmpMasterNodeList.size() > 0) {
+
+            try {
+                try {
+                    if (this.br != null) this.br.close();
+
+                    if (this.pw != null) this.pw.close();
+
+                    if (this.socket != null) this.socket.close();
+                } catch (Exception e) {}
+
+                String nodeStr = (String)tmpMasterNodeList.remove(0);
+                String[] nodeInfo = nodeStr.split(":");
+                this.socket = new Socket();
+                InetSocketAddress inetAddr = new InetSocketAddress(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
+                this.socket.connect(inetAddr, 5000);
+                this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstKeyValueClient.connectDefaultEncoding)));
+                this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstKeyValueClient.connectDefaultEncoding));
+                this.initClient();
+                break;
+            } catch (Exception e) {
+                try {
+                    if (this.br != null) {
+                        this.br.close();
+                        this.br = null;
+                    }
+
+                    if (this.pw != null) {
+                        this.pw.close();
+                        this.pw = null;
+                    }
+
+                    if (this.socket != null) {
+                        this.socket.close();
+                        this.socket = null;
+                    }
+                } catch (Exception e2) {
+                    // 無視
+                    this.socket = null;
+                }
+                if(tmpMasterNodeList.size() < 1) throw e;
+            }
+        }
+    }
 
 
     /**
@@ -2088,6 +2142,12 @@ public class ImdstKeyValueClient {
     }
 
 
+    /**
+     * DataNodeのステータスを取得する.<br>
+     * DataNodのステータスは常にメインマスターノードが管理しているので、メインマスターノードに<br>
+     * 接続している場合のみ取得可能.<br>
+     *
+     */
     public String getDataNodeStatus(String nodeInfo) throws Exception {
         String ret = null;
         String serverRetStr = null;
@@ -2122,7 +2182,11 @@ public class ImdstKeyValueClient {
             // 処理の妥当性確認
             if (serverRet[0].equals("10")) {
                 if (serverRet[1].equals("true")) {
-                    ret = serverRet[2];
+                    if (serverRet.length >= 3) {
+                        ret = serverRet[2];
+                    } else {
+                        ret = "";
+                    }
                 } else {
                     ret = "";
                 }
@@ -2135,7 +2199,7 @@ public class ImdstKeyValueClient {
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
-                    this.autoConnect();
+                    this.nextConnect();
                     ret = this.getDataNodeStatus(nodeInfo);
                 } catch (Exception e) {
                     throw ce;
@@ -2146,7 +2210,7 @@ public class ImdstKeyValueClient {
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
-                    this.autoConnect();
+                    this.nextConnect();
                     ret = this.getDataNodeStatus(nodeInfo);
                 } catch (Exception e) {
                     throw se;

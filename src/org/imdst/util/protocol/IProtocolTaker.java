@@ -24,5 +24,7 @@ public interface IProtocolTaker {
 
     public String takeResponseLine(String[] retParams) throws Exception;
 
-    public int nextExecution() ;
+    public int nextExecution();
+
+    public boolean isMatchMethod();
 }

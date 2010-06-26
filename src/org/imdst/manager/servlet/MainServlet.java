@@ -50,21 +50,19 @@ public class MainServlet extends HttpServlet {
             String dataNodeStr = null;
             String slaveDataNodeStr = null;
 
-            String[] settingParams = new String[10];
+            String[] settingParams = new String[8];
             settingParams[0] = ImdstDefine.Prop_KeyMapNodesInfo;
             settingParams[1] = ImdstDefine.Prop_SubKeyMapNodesInfo;
             settingParams[2] = ImdstDefine.Prop_KeyMapNodesRule;
             settingParams[3] = ImdstDefine.Prop_LoadBalanceMode;
             settingParams[4] = ImdstDefine.Prop_TransactionMode;
             settingParams[5] = ImdstDefine.Prop_TransactionManagerInfo;
-            settingParams[6] = ImdstDefine.Prop_MainMasterNodeMode;
-            settingParams[7] = ImdstDefine.Prop_SlaveMasterNodes;
-            settingParams[8] = ImdstDefine.Prop_MainMasterNodeInfo;
-            settingParams[9] = ImdstDefine.Prop_AllMasterNodeInfo;
+            settingParams[6] = ImdstDefine.Prop_MainMasterNodeInfo;
+            settingParams[7] = ImdstDefine.Prop_AllMasterNodeInfo;
 
             // MasterNodeに接続
             imdstKeyValueClient = OkuyamaManagerServer.getClient();
-            imdstKeyValueClient.autoConnect();
+            imdstKeyValueClient.nextConnect();
 
             // 変更が実行されている場合は更新を実行
             if (request.getParameter("execmethod") != null && 
@@ -83,6 +81,12 @@ public class MainServlet extends HttpServlet {
                 setting = new HashMap();
                 setting.put("param", settingParams[idx]);
                 setting.put("value", "&nbsp;");
+
+                // Read Only チェック
+                if (settingParams[idx].equals(ImdstDefine.Prop_MainMasterNodeInfo)) {
+                    setting.put("readonly", "");
+                }
+
                 if (clientRet[0].equals("true")) {
                     if (idx == 0) {
                         if (clientRet[1] != null && !clientRet[1].equals("")) {
@@ -178,8 +182,12 @@ public class MainServlet extends HttpServlet {
             pageBuf.append("      <p>" + (String)setting.get("param") + "  </p>");
             pageBuf.append("    </td>");
             pageBuf.append("    <td width=600px>");
-            pageBuf.append("      <input type='text' name='" + (String)setting.get("param") + "' value='" + (String)setting.get("value") + "' size=50>");
-            pageBuf.append("      &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)setting.get("param") + "\";'>");
+            if (setting.get("readonly") == null) {
+                pageBuf.append("      <input type='text' name='" + (String)setting.get("param") + "' value='" + (String)setting.get("value") + "' size=50>");
+                pageBuf.append("      &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)setting.get("param") + "\";'>");
+            } else{
+                pageBuf.append("      <input type='text' name='" + (String)setting.get("param") + "' value='" + (String)setting.get("value") + "' size=50 disabled>");
+            }
             pageBuf.append("    </td>");
             pageBuf.append("  </tr>");
         }

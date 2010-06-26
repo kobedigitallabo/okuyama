@@ -17,6 +17,7 @@ import org.imdst.util.ImdstDefine;
 public class MemcacheProtocolTaker implements IProtocolTaker {
 
     private int nextExec = 0;
+    private boolean methodMatch = true;
 
     // リクエスト文字列
     private String requestLine = null;
@@ -83,6 +84,13 @@ public class MemcacheProtocolTaker implements IProtocolTaker {
         return this.nextExec;
     }
 
+    /**
+     * memcacheのプロトコルにマッチしたかを返す.<br>
+     * @return boolean true:マッチ false:ノーマッチ
+     */
+    public boolean isMatchMethod() {
+        return this.methodMatch;
+    }
 
     /**
      * memcache用にリクエスト文字を変換する.<br>
@@ -90,6 +98,8 @@ public class MemcacheProtocolTaker implements IProtocolTaker {
      */
     private String memcacheMethodCnv(String executeMethodStr, BufferedReader br, PrintWriter pw) throws Exception{
         String retStr = null;
+        this.methodMatch = true;
+
         try {
             executeMethodStr = executeMethodStr.trim();
             String[] executeMethods = executeMethodStr.split(ImdstDefine.memcacheExecuteMethodSep);
@@ -227,6 +237,7 @@ public class MemcacheProtocolTaker implements IProtocolTaker {
             } else {
                 // 存在しないプロトコルはokuyama用として処理する。
                 retStr = executeMethodStr;
+                this.methodMatch = false;
             }
         } catch(Exception e) {
             throw e;
