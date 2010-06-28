@@ -239,7 +239,14 @@ class OkuyamaClient {
             }
 
         } catch (Exception $e) {
-            throw $e;
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->initClient();
+                }
+            } else {
+
+              throw $e;
+            }
         }
     return $ret;
     }
@@ -303,7 +310,15 @@ class OkuyamaClient {
             }
 
         } catch (Exception $e) {
-            throw $e;
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->startTransaction();
+                }
+            } else {
+            
+                // 妥当性違反
+                throw e;
+            }
         }
         return $ret;
     }
@@ -425,7 +440,14 @@ class OkuyamaClient {
                 }
             }
         } catch (Exception $e) {
-            throw $e;
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->lockData($keyStr, $lockingTime, $waitLockTime = 0);
+                }
+            } else {
+
+              throw $e;
+            }
         }
         return $ret;
     }
@@ -512,7 +534,14 @@ class OkuyamaClient {
                 }
             }
         } catch (Exception $e) {
-            throw $e;
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->releaseLockData($keyStr);
+                }
+            } else {
+
+                throw $e;
+            }
         }
         return $ret;
     }
@@ -637,7 +666,148 @@ class OkuyamaClient {
                 }
             }
         } catch (Exception $e) {
-            throw $e;
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->setValue($keyStr, $value, $tagStrs);
+                }
+            } else {
+
+                throw $e;
+            }
+        }
+        return $ret;
+    }
+
+
+    /**
+     * マスタサーバへデータを送信する.<br>
+     * 1度のみ登録可能.<br>
+     * Tag有り.<br>
+     *
+     * @param keyStr
+     * @param tagStrs
+     * @param value
+     * @return boolean
+     * @throws Exception
+     */
+    public function setNewValue($keyStr, $value, $tagStrs = null) {
+        $ret = false; 
+        $serverRetStr = null;
+        $serverRet = null;
+        $serverRequestBuf = null;
+        try {
+            // Byte Lenghtチェック
+            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($tagStrs != null) {
+                for ($i = 0; $i < count($tagStrs); $i++) {
+                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxValueSize) throw new Exception("Tag Max Size " . $this->maxValueSize . " Byte");
+                }
+            }
+            if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new Exception("Save Value Max Size " . $this->maxValueSize . " Byte");
+
+            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new Exception("The blank is not admitted on a key");
+            }
+
+            // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
+            if ($value == null ||  $value === "") {
+
+                $value = $this->blankStr;
+            } else {
+
+                // ValueをBase64でエンコード
+                $value = $this->dataEncoding($value);
+            }
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+
+            // 処理番号連結
+            $serverRequestBuf = "6";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf. $this->dataEncoding($keyStr);
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+
+            // Tag連結
+            // Tag指定の有無を調べる
+            if ($tagStrs == null || count($tagStrs) < 1) {
+
+                // ブランク規定文字列を連結
+                $serverRequestBuf = $serverRequestBuf . $this->blankStr;
+            } else {
+
+                // Tag数分連結
+                $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($tagStrs[0]);
+                for ($i = 1; $i < count($tagStrs); $i++) {
+                    $serverRequestBuf = $serverRequestBuf . $this->tagKeySep;
+                    $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($tagStrs[$i]);
+                }
+            }
+
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // TransactionCode連結
+            $serverRequestBuf = $serverRequestBuf . $this->transactionCode;
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Value連結
+            $serverRequestBuf = $serverRequestBuf . $value;
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if ($serverRet != null  && $serverRet[0] === "6") {
+                if ($serverRet[1] === "true") {
+
+                    // 処理成功
+                    $ret = array();
+                    $ret[0] = "true";
+                } else{
+                    $ret = array();
+                    $ret[0] = "false";
+                    $ret[1] = $serverRet[2];
+                }
+            }  else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->setNewValue($keyStr, $value, $tagStrs);
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new Exception("Execute Violation of validity");
+                }
+            }
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->setNewValue($keyStr, $value, $tagStrs);
+                }
+            } else {
+
+                throw $e;
+            }
         }
         return $ret;
     }
@@ -719,14 +889,20 @@ class OkuyamaClient {
                         $ret = $this->getValue($keyStr, $encoding);
                     }
                 } else {
-                
+
                     // 妥当性違反
                     throw new Exception("Execute Violation of validity");
                 }
             }
 
         } catch (Exception $e) {
-            throw $e;
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->getValue($keyStr, $encoding);
+                }
+            } else {
+                throw $e;
+            }
         }
         return $ret;
     }
@@ -827,7 +1003,13 @@ class OkuyamaClient {
             }
 
         } catch (Exception $e) {
-            throw $e;
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->getValueScript($keyStr, $encoding);
+                }
+            } else {
+                throw $e;
+            }
         }
         return $ret;
     }
@@ -920,13 +1102,20 @@ class OkuyamaClient {
                         $ret = $this->getTagKeys($tagStr);
                     }
                 } else {
-                
+
                     // 妥当性違反
                     throw new Exception("Execute Violation of validity");
                 }
             }
         } catch (Exception $e) {
-            throw $e;
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->getTagKeys($tagStr);
+                }
+            } else {
+
+                throw $e;
+            }
         }
         return $ret;
     }
@@ -1006,7 +1195,7 @@ class OkuyamaClient {
             } else {
                 if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                     if($this->autoConnect()) {
-                        $ret = $this->getValue($keyStr, $encoding);
+                        $ret = $this->removeValue($keyStr, $encoding);
                     }
                 } else {
                 
@@ -1016,7 +1205,14 @@ class OkuyamaClient {
             }
 
         } catch (Exception $e) {
-            throw $e;
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->removeValue($keyStr, $encoding);
+                }
+            } else {
+
+                throw $e;
+            }
         }
         return $ret;
     }
@@ -1149,7 +1345,14 @@ class OkuyamaClient {
             }
 
         } catch (Exception $e) {
-            throw $e;
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->getByteData($keyStr);
+                }
+            } else {
+
+                throw $e;
+            }
         }
         return $ret;
     }
