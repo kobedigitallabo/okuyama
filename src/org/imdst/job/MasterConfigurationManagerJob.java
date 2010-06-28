@@ -325,9 +325,23 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
         String[] nodeRet = null;
         boolean setterFlg = false;
         try {
-            imdstKeyValueClient = new ImdstKeyValueClient();
-            imdstKeyValueClient.setConnectionInfos(allMasterNodeInfoStr.split(","));
-            imdstKeyValueClient.autoConnect();
+            // 設定上のメインマスターノードにまず接続
+            if (mainMasterNodeInfoStr != null) {
+                try {
+                    String[] connectMainMasterNodeInfo = mainMasterNodeInfoStr.split(":");
+                    imdstKeyValueClient = new ImdstKeyValueClient();
+                    imdstKeyValueClient.setConnectionInfos(allMasterNodeInfoStr.split(","));
+                    imdstKeyValueClient.connect(connectMainMasterNodeInfo[0], Integer.parseInt(connectMainMasterNodeInfo[1]));
+                } catch (Throwable e){
+                    imdstKeyValueClient = null;
+                }
+            } 
+
+            if (imdstKeyValueClient == null) {
+                imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.setConnectionInfos(allMasterNodeInfoStr.split(","));
+                imdstKeyValueClient.autoConnect();
+            }
 
             // データノードの設定
             nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo);
