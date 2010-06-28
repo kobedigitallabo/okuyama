@@ -391,8 +391,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.initClient();
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -472,8 +481,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.startTransaction();
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -601,8 +619,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.lockData(keyStr, lockingTime, waitLockTime);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -706,8 +733,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.releaseLockData(keyStr);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -799,8 +835,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.arrivalMasterNode();
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -955,8 +1000,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setValue(keyStr, tagStrs, value);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -1119,8 +1173,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setNewValue(keyStr, tagStrs, value);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -1330,8 +1393,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.sendByteData(keyStr, values);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -1455,8 +1527,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getValue(keyStr, encoding);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -1594,8 +1675,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getValueScript(keyStr, scriptStr, encoding);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -1716,8 +1806,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.removeValue(keyStr, encoding);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -2022,8 +2121,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getByteData(keyStr);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
@@ -2135,8 +2243,17 @@ public class ImdstKeyValueClient {
             } else {
                 throw se;
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getTagKeys(tagStr);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
         }
         return ret;
     }
