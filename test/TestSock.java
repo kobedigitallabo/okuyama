@@ -9,7 +9,8 @@ import org.batch.lang.BatchException;
 
 public class TestSock {
 
-    public static String[] args = null;
+    public static volatile String[] args = null;
+    public static volatile boolean startFlg = false;
 
     public static void main(String[] args) {
         TestSock.args = args;
@@ -49,11 +50,13 @@ public class TestSock {
                 list[i] = m;
             }
 
+            startFlg = true;
+
             System.out.println("  ------- Start -------");
             if (args[0].equals("1")) {
                 String pre = "  --";
                 for(int i = 1; i < 7; i++) {
-                    Thread.sleep(9980);
+                    Thread.sleep(9990);
                     System.out.println(pre + " " + (i * 10) + "•b");
                     pre = pre + "--";
                 }
@@ -61,7 +64,7 @@ public class TestSock {
             }else if (args[0].equals("2")) {
                 String pre = "  --";
                 for(int i = 1; i < 7; i++) {
-                    Thread.sleep(9980);
+                    Thread.sleep(9990);
                     System.out.println(pre + " " + (i * 10) + "•b");
                     pre = pre + "--";
                 }
@@ -81,10 +84,12 @@ public class TestSock {
                 }
                 
             }
-            Thread.sleep(90);
+            startFlg = false;
+
+            Thread.sleep(500);
             System.out.println("  -------- End --------");
             System.out.println("");
-            Thread.sleep(90);
+            Thread.sleep(500);
             for (int i= 0; i < list.length; i++) {
 
                 m = (Test)list[i];

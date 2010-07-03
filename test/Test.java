@@ -8,16 +8,16 @@ import org.imdst.client.ImdstKeyValueClient;
 import org.batch.lang.BatchException;
 
 public class Test extends Thread {
-    private boolean endFlg = false;
-    private boolean startFlg = false;
-    public int threadNo = 0;
-    public long execCounter = 0;
-    private String prefix = "";
-    private int maxPrefix = 0;
+
+    public volatile int threadNo = 0;
+    public volatile long execCounter = 0;
+
+    private volatile String prefix = "";
+    private volatile int maxPrefix = 0;
 
     public void run() {
+        while(!TestSock.startFlg){}
         try {
-
             if (TestSock.args[0].equals("1")) {
                 int counter = 1;
 
@@ -34,8 +34,8 @@ public class Test extends Thread {
 
 
                 String key = "DataSaveKey";
-                String value= "Value012345678901234567890123456789";
-                while(true){
+                String value= "Value012345678901234567890123456789_";
+                while(true &&  TestSock.startFlg){
 
                     if(!imdstKeyValueClient.setValue(key + this.execCounter, value + this.execCounter)) {
                         System.out.println("Error");
@@ -61,7 +61,7 @@ public class Test extends Thread {
                 Random rnd = new Random();
 
 
-                while(true){
+                while(true &&  TestSock.startFlg){
                     String[] ret = imdstKeyValueClient.getValue(key + rnd.nextInt(maxPrefix));
                     if (!ret[0].equals("true")) {
                         System.out.println("Data Not Found");
@@ -84,19 +84,18 @@ public class Test extends Thread {
                 imdstKeyValueClient.getValue("Key3");
                 imdstKeyValueClient.getValue("Key4");
 
-                String key = "Key";
+                String key = "DataSaveKey";
                 //Randomクラスのインスタンス化
                 Random rnd = new Random();
 
 
-                while(true){
+                while(true &&  TestSock.startFlg){
                     String[] ret = imdstKeyValueClient.getValue(key + rnd.nextInt(maxPrefix));
                     if (ret[0].equals("true")) {
                         System.out.println(ret[1]);
                     } else {
                         System.out.println("Data Not Found");
                     }
-                    Thread.sleep(100);
                 }
             } else if (TestSock.args[0].equals("4")) {
                 int counter = 1;
@@ -120,7 +119,6 @@ public class Test extends Thread {
                 }
 
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -133,15 +131,6 @@ public class Test extends Thread {
 
     public void setMaxPrefix(int prefix) {
         this.maxPrefix = prefix;
-    }
-
-    public void setStartFlg(boolean flg) {
-        this.startFlg = flg;
-        if (flg == true) {
-            this.endFlg = false;
-        } else {
-            this.endFlg = true;
-        }
     }
 
     public long getExecCounter() {
