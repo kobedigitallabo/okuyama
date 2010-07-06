@@ -149,7 +149,7 @@ public class ImdstDefine {
     public static final String configModeFile = "file";
     public static final String configModeNode = "node";
 
-	public static final String ConfigSaveNodePrefix = "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ ";
+    public static final String ConfigSaveNodePrefix = "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ ";
 
     /* -- プログラム規定数値 ----------------------------------------      */
     // 保存出来る、Key、Tag、Valueの最大長
@@ -161,7 +161,7 @@ public class ImdstDefine {
     //public static final int saveDataMaxSize =524288;
 
     // Key,Tagの最大長
-    public static final int saveKeyMaxSize = 2048;
+    public static final int saveKeyMaxSize = 486;
 
     // Node間のコネクションタイムアウト時間(ミリ秒)
     public static final int nodeConnectionTimeout = 60000;

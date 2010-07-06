@@ -39,7 +39,9 @@ public class TestSock {
                     if (args.length > 3) 
                         m.setMaxPrefix(Integer.parseInt(args[3]));
                 }
+                m.setThreadNo(i);
                 list[i] = m;
+                
             }
 
 

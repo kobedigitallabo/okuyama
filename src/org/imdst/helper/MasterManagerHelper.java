@@ -42,6 +42,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // プロトコルモード
     private String protocolMode = null;
     private IProtocolTaker porotocolTaker = null;
+    private boolean isProtocolOkuyama = true;
 
     // 自身のモード(1=Key-Value, 2=DataSystem)
     private int mode = 1;
@@ -99,6 +100,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // プロトコルがokuyamaではない場合はマネージメントコマンド用のokuyamaプロトコルTakerを作成
             if (!this.protocolMode.equals("okuyama")) {
+                isProtocolOkuyama = false;
                 okuyamaPorotocolTaker = ProtocolTakerFactory.getProtocolTaker("okuyama");
             }
 
@@ -289,7 +291,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     // クライアントに結果送信
-                    pw.println(retParamStr);
+                    if (isProtocolOkuyama) {
+
+                        // Okuyama
+                        pw.println(retParamStr);
+                    } else{
+
+                        // Okuyama以外の場合
+                        pw.print(retParamStr);
+                        pw.print("\r\n");
+                    }
                     pw.flush();
 
                 } catch (SocketException se) {

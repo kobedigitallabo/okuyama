@@ -49,7 +49,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
         Object[] shareKeys = null;
         ServerSocket serverSocket = null;
 
-		String[] pingRet = null;
+        String[] pingRet = null;
 
         try{
             while (serverRunning) {
@@ -93,8 +93,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                         logger.info("************************************************************");
                         logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
 
-						pingRet = this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue(), logger);
-						if (pingRet[1] != null) this.nodeStatusStr = pingRet[1];
+                        pingRet = this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue(), logger);
+                        if (pingRet[1] != null) this.nodeStatusStr = pingRet[1];
 
                         if(pingRet[0].equals("false")) {
                             // ノードダウン
@@ -174,8 +174,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                             logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Start");
 
-							pingRet = super.execNodePing(subNodeDt[0], new Integer(subNodeDt[1]).intValue(), logger);
-							if (pingRet[1] != null) this.nodeStatusStr = pingRet[1];
+                            pingRet = super.execNodePing(subNodeDt[0], new Integer(subNodeDt[1]).intValue(), logger);
+                            if (pingRet[1] != null) this.nodeStatusStr = pingRet[1];
 
                             if(pingRet[0].equals("false")) {
                                 // ノードダウン

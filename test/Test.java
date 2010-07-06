@@ -32,12 +32,13 @@ public class Test extends Thread {
                 imdstKeyValueClient.setValue("Key3", "Value3");
                 imdstKeyValueClient.setValue("Key4", "Value4");
 
+                Random rnd = new Random();
 
-                String key = "DataSaveKey";
-                String value= "Value012345678901234567890123456789_";
+                String key = "DataSaveKey_" + threadNo + "_";
+                String value= "Value012345678901234567890123456789_" + threadNo + "_";
                 while(true &&  TestSock.startFlg){
 
-                    if(!imdstKeyValueClient.setValue(key + this.execCounter, value + this.execCounter)) {
+                    if(!imdstKeyValueClient.setValue(key + rnd.nextInt(1000000), value)) {
                         System.out.println("Error");
                     }
                     this.execCounter++;
@@ -124,6 +125,9 @@ public class Test extends Thread {
         }
     }
 
+    public void setThreadNo(int i) {
+        this.threadNo = i;
+    }
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
