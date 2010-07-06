@@ -17,7 +17,7 @@ import org.imdst.util.DataDispatcher;
 import org.imdst.util.JavaSystemApi;
 
 /**
- * KeyNodeから該当Keyノードが保持しないKey値を取り出、Getを実行しデータの最適化を行う.<br>
+ * KeyNodeから該当Keyノードが保持しているKey値を取り出、Getを実行しデータの最適化を行う.<br>
  *
  *
  * @author T.Okuyama

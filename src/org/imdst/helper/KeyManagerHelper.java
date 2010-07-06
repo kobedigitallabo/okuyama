@@ -303,10 +303,10 @@ public class KeyManagerHelper extends AbstractHelper {
                         // エラーの場合は以下でエラーメッセメッセージも連結
                         retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                         retParamBuf.append(StatusUtil.getNowMemoryStatus());
-						retParamBuf.append(";");
+                        retParamBuf.append(";");
                         retParamBuf.append("Save Data Count=[" + keyMapManager.getSaveDataCount() + "]");
-						retParamBuf.append(";");
-						retParamBuf.append("Last Data Change Time=[" + keyMapManager.getLastDataChangeTime() + "]");
+                        retParamBuf.append(";");
+                        retParamBuf.append("Last Data Change Time=[" + keyMapManager.getLastDataChangeTime() + "]");
 
                     } else if(clientParameterList[0].equals("11")) {
 
@@ -332,29 +332,38 @@ public class KeyManagerHelper extends AbstractHelper {
                     } else if(clientParameterList[0].equals("22")) {
 
                         // KeyManagerの差分取得モードをONにする
-						// !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                        // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
                         this.keyMapManager.diffDataMode(true);
                         retParamBuf = null;
                     } else if(clientParameterList[0].equals("23")) {
 
                         // KeyManagerの差分取得モードをOFFにする
-						// !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                        // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
                         this.keyMapManager.diffDataMode(false);
                         retParamBuf = null;
                     } else if(clientParameterList[0].equals("24")) {
 
                         // KeyManagerの差分データを読み込んで渡す
-						// !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                        // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
                         this.keyMapManager.outputDiffKeyMapObj2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
                         pw.flush();
                         retParamBuf = null;
                     } else if(clientParameterList[0].equals("25")) {
 
                         // KeyMapManagerに差分データを登録する
-						// !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                        // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
                         this.keyMapManager.inputDiffKeyMapObj2Stream(br);
                         retParamBuf = null;
-					}
+                    } else if(clientParameterList[0].equals("26")) {
+
+                        // KeyMapManager Direct Connection
+                        // KeyMapObjectから自身が管理するべてきでは内データのKey値を返す
+                        this.keyMapManager.outputNoMatchKeyMapKey2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
+                        pw.flush();
+                        retParamBuf = null;
+                    }
+
+
 
                     if (retParamBuf != null) {
                         // プロトコルに合わせて処理を分岐

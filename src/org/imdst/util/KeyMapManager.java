@@ -842,8 +842,8 @@ public class KeyMapManager extends Thread {
     }
 
     private void setLastDataChangeTime() {
-    	this.keyMapObj.setKLastDataChangeTime(System.currentTimeMillis());
-	}
+        this.keyMapObj.setKLastDataChangeTime(System.currentTimeMillis());
+    }
     /**
      * keyMapObjに対するアクセスメソッド.<br>
      * 更新時間を登録しない.<br>
@@ -913,10 +913,10 @@ public class KeyMapManager extends Thread {
 
     public void diffDataMode(boolean flg) {
         if (flg) {
-			this.diffDataPoolingList = new CopyOnWriteArrayList();
-		} else {
-        	this.diffDataPoolingList = null;
-		}
+            this.diffDataPoolingList = new CopyOnWriteArrayList();
+        } else {
+            this.diffDataPoolingList = null;
+        }
         this.diffDataPoolingFlg = flg;
     }
 
@@ -924,14 +924,14 @@ public class KeyMapManager extends Thread {
     public void outputKeyMapObj2Stream(PrintWriter pw, int matchNo, String rulesStr) throws BatchException {
         if (!blocking) {
             try {
-				String[] rules = null;
-				int[] rulesInt = null;
-				rules = rulesStr.split(",");
-				rulesInt = new int[rules.length];
+                String[] rules = null;
+                int[] rulesInt = null;
+                rules = rulesStr.split(",");
+                rulesInt = new int[rules.length];
 
-				for (int i = 0; i < rules.length; i++) {
-					rulesInt[i] = Integer.parseInt(rules[i]);
-				}
+                for (int i = 0; i < rules.length; i++) {
+                    rulesInt[i] = Integer.parseInt(rules[i]);
+                }
 
                 synchronized(poolKeyLock) {
                     logger.info("outputKeyMapObj2Stream - synchronized - start");
@@ -943,8 +943,8 @@ public class KeyMapManager extends Thread {
 
                     int printLineCount = 0;
                     // 一度に送信するデータ量を算出。空きメモリの50%を使用する
-                    //int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.5) / ImdstDefine.saveDataMaxSize).intValue();
-					int maxLineCount = 500;
+                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.5) / ImdstDefine.saveDataMaxSize).intValue();
+                    //int maxLineCount = 500;
                     if (entrySet.size() > 0) {
                         printLineCount = new Double(entrySet.size() / maxLineCount).intValue();
                         if (entrySet.size() % maxLineCount > 0) {
@@ -961,25 +961,25 @@ public class KeyMapManager extends Thread {
                     int counter = 0;
                     while(entryIte.hasNext()) {
                         Map.Entry obj = (Map.Entry)entryIte.next();
-						String key = null;
-						boolean sendFlg = false;
+                        String key = null;
+                        boolean sendFlg = false;
 
-						key = (String)obj.getKey();
-						for (int idx = 0; idx < rulesInt.length; idx++) {
-							if (DataDispatcher.isRuleMatchKey(key, rulesInt[idx], matchNo)) {
-								sendFlg = true;
-								break;
-							}
-						}
+                        key = (String)obj.getKey();
+                        for (int idx = 0; idx < rulesInt.length; idx++) {
+                            if (DataDispatcher.isRuleMatchKey(key, rulesInt[idx], matchNo)) {
+                                sendFlg = true;
+                                break;
+                            }
+                        }
 
-						// 送信すべきデータのみ送る
-						if (sendFlg) {
-	                        allDataBuf.append(allDataSep);
-	                        allDataBuf.append(key);
-	                        allDataBuf.append(workFileSeq);
-	                        allDataBuf.append(this.keyMapObjGet(key));
-	                        allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
-						}
+                        // 送信すべきデータのみ送る
+                        if (sendFlg) {
+                            allDataBuf.append(allDataSep);
+                            allDataBuf.append(key);
+                            allDataBuf.append(workFileSeq);
+                            allDataBuf.append(this.keyMapObjGet(key));
+                            allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                        }
                         counter++;
                         if (counter > (maxLineCount - 1)) {
                             pw.println(allDataBuf.toString());
@@ -1006,14 +1006,14 @@ public class KeyMapManager extends Thread {
     public void outputDiffKeyMapObj2Stream(PrintWriter pw, int matchNo, String rulesStr) throws BatchException {
         if (!blocking) {
             try {
-				String[] rules = null;
-				int[] rulesInt = null;
-				rules = rulesStr.split(",");
-				rulesInt = new int[rules.length];
+                String[] rules = null;
+                int[] rulesInt = null;
+                rules = rulesStr.split(",");
+                rulesInt = new int[rules.length];
 
-				for (int i = 0; i < rules.length; i++) {
-					rulesInt[i] = Integer.parseInt(rules[i]);
-				}
+                for (int i = 0; i < rules.length; i++) {
+                    rulesInt[i] = Integer.parseInt(rules[i]);
+                }
 
                 synchronized(poolKeyLock) {
                     logger.info("outputDiffKeyMapObj2Stream - synchronized - start");
@@ -1049,7 +1049,7 @@ public class KeyMapManager extends Thread {
             try {
                 int i = 0;
                 String[] oneDatas = null;
-				boolean setDataExec = false;
+                boolean setDataExec = false;
                 logger.info("inputKeyMapObj2Stream - synchronized - start");
                 synchronized(this.poolKeyLock) {
                     // 事前に不要なファイルを削除
@@ -1095,7 +1095,7 @@ public class KeyMapManager extends Thread {
                     this.osw = new OutputStreamWriter(fos , workMapFileEnc);
                     this.bw = new BufferedWriter(osw);
 
-					// 取り込み開始
+                    // 取り込み開始
                     for (int idx = 0; idx < dataLineCount; idx++) {
 
                         // 最終更新日付変えずに全てのデータを登録する
@@ -1108,19 +1108,19 @@ public class KeyMapManager extends Thread {
                             if (!allDataLines[i].trim().equals("")) {
                                 oneDatas = allDataLines[i].split(workFileSeq);
                                 if (oneDatas.length == 2) {
-									setDataExec = true;
+                                    setDataExec = true;
                                     this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1]);
                                 } else if (oneDatas.length == 3) {
-									setDataExec = true;
+                                    setDataExec = true;
                                     this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1] + workFileSeq + oneDatas[2]);
                                 }
                             }
                         }
-					}
+                    }
 
-					// 全てのデータを取り込んだタイミングで最終更新時間を変更
-					// 1件でも取り込んでいる場合のみ
-					if (setDataExec == true) this.setLastDataChangeTime();
+                    // 全てのデータを取り込んだタイミングで最終更新時間を変更
+                    // 1件でも取り込んでいる場合のみ
+                    if (setDataExec == true) this.setLastDataChangeTime();
                 }
                 logger.info("inputKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
@@ -1225,6 +1225,80 @@ public class KeyMapManager extends Thread {
         }
     }
 
+
+    // 引数で渡されてストリームに対しKey値を書き出す
+    // 書き出すKey値は引数のrulesStrを使用して割り出した値がmatchNoとマッチしないデータ
+    // 終了時は-1が返る
+    public void outputNoMatchKeyMapKey2Stream(PrintWriter pw, int matchNo, String rulesStr) throws BatchException {
+        if (!blocking) {
+            try {
+                String[] rules = null;
+                int[] rulesInt = null;
+                rules = rulesStr.split(",");
+                rulesInt = new int[rules.length];
+
+                for (int i = 0; i < rules.length; i++) {
+                    rulesInt[i] = Integer.parseInt(rules[i]);
+                }
+
+
+                String allDataSep = "";
+                StringBuffer allDataBuf = new StringBuffer();
+
+                // keyMapObjの全内容を1行文字列として書き出し
+                Set entrySet = this.keyMapObj.entrySet();
+
+                int printLineCount = 0;
+                // 一度に送信するデータ量を算出。空きメモリの10%を使用する
+                int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / (ImdstDefine.saveKeyMaxSize * 1.38)).intValue();
+                //int maxLineCount = 500;
+                if (entrySet.size() > 0) {
+                    printLineCount = new Double(entrySet.size() / maxLineCount).intValue();
+                    if (entrySet.size() % maxLineCount > 0) {
+                        printLineCount = printLineCount + 1;
+                    }
+                }
+
+
+                Iterator entryIte = entrySet.iterator(); 
+
+                int counter = 0;
+                while(entryIte.hasNext()) {
+                    Map.Entry obj = (Map.Entry)entryIte.next();
+                    String key = null;
+                    boolean sendFlg = true;
+
+                    key = (String)obj.getKey();
+                    for (int idx = 0; idx < rulesInt.length; idx++) {
+                        if (DataDispatcher.isRuleMatchKey(key, rulesInt[idx], matchNo)) {
+                            sendFlg = false;
+                            break;
+                        }
+                    }
+
+                    // 送信すべきデータのみ送る
+                    if (sendFlg) {
+                        allDataBuf.append(allDataSep);
+                        allDataBuf.append(key);
+                        allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                    }
+
+                    counter++;
+
+                    if (counter > (maxLineCount - 1)) {
+                        pw.println(allDataBuf.toString());
+                        allDataBuf = new StringBuffer();
+                        counter = 0;
+                        allDataSep = "";
+                    }
+                }
+                pw.println(allDataBuf.toString());
+                pw.println("-1");
+            } catch (Exception e) {
+                logger.error("outputNoMatchKeyMapKey2Stream - Error =[" + e.getMessage() + "]");
+            }
+        }
+    }
 
     // データの最終更新時間を返す
     public long getLastDataChangeTime() {

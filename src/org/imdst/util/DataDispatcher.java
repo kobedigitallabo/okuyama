@@ -16,11 +16,11 @@ import org.batch.lang.BatchException;
  */
 public class DataDispatcher {
 
-    public static String rule = null;
+    public volatile static String rule = null;
 
-    public static int ruleInt = 0;
+    public volatile static int ruleInt = 0;
 
-    public static int[] oldRules = null;
+    public volatile static int[] oldRules = null;
 
     // 全てのノード情報の詳細を格納
     private static ConcurrentHashMap keyNodeMap = new ConcurrentHashMap(6, 6, 16);
@@ -29,7 +29,7 @@ public class DataDispatcher {
 
     private static ArrayList transactionManagerList = null;
 
-    private static boolean standby = false;
+    private volatile static boolean standby = false;
 
     private static Object syncObj = new Object();
 
