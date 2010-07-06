@@ -205,8 +205,6 @@ public class HttpGatewayServerHelper extends AbstractHelper {
             }
 
             outStr.flush();
-            //System.out.println("送信完了");
-            //System.out.println("処理が終了したので接続を切ります");
   
             retString = super.SUCCESS;
         } catch(Exception e) {
