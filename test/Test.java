@@ -18,7 +18,7 @@ public class Test extends Thread {
     public void run() {
         while(!TestSock.startFlg){}
         try {
-            if (TestSock.args[0].equals("1")) {
+            if (TestSock.args[0].equals("set")) {
                 int counter = 1;
 
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
@@ -44,7 +44,7 @@ public class Test extends Thread {
                     this.execCounter++;
                 }
 
-            } else if (TestSock.args[0].equals("2")) {
+            } else if (TestSock.args[0].equals("get")) {
                 int counter = 1;
 
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
@@ -72,7 +72,7 @@ public class Test extends Thread {
                     this.execCounter++;
                 }
 
-            } else if (TestSock.args[0].equals("3")) {
+            } else if (TestSock.args[0].equals("print")) {
                 int counter = 1;
 
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();

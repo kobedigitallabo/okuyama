@@ -55,7 +55,7 @@ public class TestSock {
             startFlg = true;
 
             System.out.println("  ------- Start -------");
-            if (args[0].equals("1")) {
+            if (args[0].equals("set")) {
                 String pre = "  --";
                 for(int i = 1; i < 7; i++) {
                     Thread.sleep(9990);
@@ -63,14 +63,14 @@ public class TestSock {
                     pre = pre + "--";
                 }
 
-            }else if (args[0].equals("2")) {
+            }else if (args[0].equals("get")) {
                 String pre = "  --";
                 for(int i = 1; i < 7; i++) {
                     Thread.sleep(9990);
                     System.out.println(pre + " " + (i * 10) + "•b");
                     pre = pre + "--";
                 }
-            } else if (args[0].equals("3")) {
+            } else if (args[0].equals("print")) {
                 Thread.sleep(120000);
             } else if (args[0].equals("4")) {
                 boolean execFlg = true;
