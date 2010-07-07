@@ -117,8 +117,6 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                         while((optimizeTargetKeys = this.nextData()) != null) {
                             for (int idx = 0; idx < optimizeTargetKeys.length; idx++) {
                                 if (!optimizeTargetKeys[i].trim().equals("")) {
-                                System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-                                System.out.println(optimizeTargetKeys[idx]);
                                     imdstKeyValueClient.getValueNoEncode(optimizeTargetKeys[idx]);
                                 }
                             }
@@ -149,9 +147,6 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
 
     private void searchTargetData(String nodeName, int nodePort, int dataNodeMatchNo) throws BatchException {
-        System.out.println("searchTargetData - start");
-        System.out.println(nodeName + " " + nodePort + " " + dataNodeMatchNo);
-
         StringBuffer buf = null;
 
         try {
@@ -174,12 +169,11 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             buf.append(dataNodeMatchNo);
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append(DataDispatcher.ruleInt);
-System.out.println(buf.toString());
 
             // 送信
             pw.println(buf.toString());
             pw.flush();
-        System.out.println("searchTargetData - end");
+
 
         } catch(Exception e) {
             throw new BatchException(e);
@@ -188,27 +182,25 @@ System.out.println(buf.toString());
 
 
     private String[] nextData() throws BatchException {
-        System.out.println("nextData - start");
 
         String[] ret = null;
         String line = null;
 
         try {
             while((line = this.br.readLine()) != null) {
-        System.out.println(line);
+
                 if (line.length() > 0) {
                     if (line.length() == 2 && line.equals("-1")) {
                       
-        System.out.println("break ---------------- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
                         break;
                     } else {
-        System.out.println("no break ---------------- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
                         ret = line.split(ImdstDefine.imdstConnectAllDataSendDataSep);
                         break;
                     }
                 }
             }
-        System.out.println("nextData - end");
         } catch(Exception e) {
             throw new BatchException(e);
         }

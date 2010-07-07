@@ -490,7 +490,7 @@ public class KeyMapManager extends Thread {
                     }
 
             } catch (Exception e) {
-                logger.error("System.out.println(removeKeyPair - Error");
+                logger.error("removeKeyPair - Error");
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "removeKeyPair - Error[" + e.getMessage() + "]");
                 throw new BatchException(e);

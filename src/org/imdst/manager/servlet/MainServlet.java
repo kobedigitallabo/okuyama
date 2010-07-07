@@ -66,13 +66,36 @@ public class MainServlet extends HttpServlet {
 
             // 変更が実行されている場合は更新を実行
             if (request.getParameter("execmethod") != null && 
-                    ((String)request.getParameter("execmethod")).equals("modparam")) {
+                    ((String)request.getParameter("execmethod")).equals("modparam") &&
+                        (String)request.getParameter("updateparam") != null) {
 
-                if(!this.execModParam(imdstKeyValueClient, 
-                                    (String)request.getParameter("updateparam"), 
-                                        (String)request.getParameter((String)request.getParameter("updateparam")))) 
-                                            throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
-                msg = "Update Parameter Success";
+
+                // 複数のParameterを一度に更新する場合はupdateparamに"#"区切りでパラメータ名が渡される想定
+                String[] updateParams = ((String)request.getParameter("updateparam")).split("#");
+                for (int idx = 0; idx < updateParams.length; idx++) {
+
+                    // Rule値は設定されたサーバ台数で自動的に作成する
+                    if (updateParams[idx].equals(ImdstDefine.Prop_KeyMapNodesRule)) {
+
+                        String[] nextKeyNodes = ((String)request.getParameter(ImdstDefine.Prop_KeyMapNodesInfo)).trim().split(",");
+                        String[] nowRules = ((String)request.getParameter(ImdstDefine.Prop_KeyMapNodesRule)).trim().split(",");
+                        String nextRulesStr = (String)request.getParameter(ImdstDefine.Prop_KeyMapNodesRule);
+
+                        if (nextKeyNodes.length != Integer.parseInt(nowRules[0])) {
+                            nextRulesStr = nextKeyNodes.length + "," + nextRulesStr;
+                        }
+                        if(!this.execModParam(imdstKeyValueClient, updateParams[idx], nextRulesStr)) 
+                                                    throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+
+                    } else {
+
+                        if(!this.execModParam(imdstKeyValueClient, 
+                                                updateParams[idx], 
+                                                (String)request.getParameter(updateParams[idx]))) 
+                                                    throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+                    }
+                    msg = "Update Parameter Success";
+                }
             }
 
             for (int idx = 0; idx < settingParams.length; idx++) {
@@ -151,7 +174,10 @@ public class MainServlet extends HttpServlet {
 
     private String initPage(ArrayList settingList, ArrayList dataNodeList, ArrayList slaveDataNodeList, String msg) {
         StringBuffer pageBuf = new StringBuffer();
-        
+        HashMap keyNodeSetting = (HashMap)settingList.get(0);
+        HashMap subKeyNodeSetting = (HashMap)settingList.get(1);
+        HashMap ruleSetting = (HashMap)settingList.get(2);
+
         pageBuf.append("<html>");
         pageBuf.append("  <head>");
         pageBuf.append("    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />");
@@ -161,6 +187,7 @@ public class MainServlet extends HttpServlet {
         pageBuf.append("    <form name='main' method='post' action'/okuyamamgr'>");
         pageBuf.append("      <input type='hidden' name='execmethod' value=''>");
         pageBuf.append("      <input type='hidden' name='updateparam' value=''>");
+        pageBuf.append("      <input type='hidden' name='" + (String)ruleSetting.get("param") + "' value='" + (String)ruleSetting.get("value") + "'>");
         pageBuf.append("      <table width=1024px align=center boder=0>");
         pageBuf.append("      <tr>  <td align=center>");
         pageBuf.append("      <h1>Distributed Key Value Store Okuyama Manager Console  </h1>");
@@ -175,7 +202,45 @@ public class MainServlet extends HttpServlet {
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
 
-        for (int i = 0; i < settingList.size(); i++) {
+        // KeyNode関係の設定
+        pageBuf.append("  <tr>");
+        pageBuf.append("    <td width=160px>");
+        pageBuf.append("      <p>" + (String)keyNodeSetting.get("param") + "  </p>");
+        pageBuf.append("    </td>");
+        pageBuf.append("    <td width=600px rowspan=3>");
+        pageBuf.append("      <table border=0 width=600px>");
+        pageBuf.append("        <tr>");
+        pageBuf.append("          <td>");
+        pageBuf.append("            <input type='text' name='" + (String)keyNodeSetting.get("param") + "' value='" + (String)keyNodeSetting.get("value") + "' size=50>");
+        pageBuf.append("          </td>");
+        pageBuf.append("        </tr>");
+        pageBuf.append("        <tr>");
+        pageBuf.append("          <td>");
+        pageBuf.append("            <input type='text' name='" + (String)subKeyNodeSetting.get("param") + "' value='" + (String)subKeyNodeSetting.get("value") + "' size=50>");
+        pageBuf.append("          </td>");
+        pageBuf.append("        </tr>");
+        pageBuf.append("        <tr>");
+        pageBuf.append("          <td>");
+        pageBuf.append("            <input type='text' name='dummyrule' value='" + (String)ruleSetting.get("value") + "' size=15 disabled>");
+        pageBuf.append("            &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)keyNodeSetting.get("param") + "#" + (String)subKeyNodeSetting.get("param") + "#" + (String)ruleSetting.get("param") + "\";'>");
+        pageBuf.append("          </td>");
+        pageBuf.append("        </tr>");
+        pageBuf.append("      </table>");
+        pageBuf.append("    </td>");
+        pageBuf.append("  </tr>");
+        pageBuf.append("  <tr>");
+        pageBuf.append("    <td width=160px>");
+        pageBuf.append("      <p>" + (String)subKeyNodeSetting.get("param") + "  </p>");
+        pageBuf.append("    </td>");
+        pageBuf.append("  </tr>");
+        pageBuf.append("  <tr>");
+        pageBuf.append("    <td width=160px>");
+        pageBuf.append("      <p>" + (String)ruleSetting.get("param") + "  </p>");
+        pageBuf.append("    </td>");
+        pageBuf.append("  </tr>");
+
+        // それ以外
+        for (int i = 3; i < settingList.size(); i++) {
             HashMap setting = (HashMap)settingList.get(i);
             pageBuf.append("  <tr>");
             pageBuf.append("    <td width=160px>");

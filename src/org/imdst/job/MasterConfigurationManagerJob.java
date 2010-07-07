@@ -66,7 +66,7 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
     public String executeJob(String optionParam) throws BatchException {
         logger.debug("MasterConfigurationManagerJob - executeJob - start");
         String ret = SUCCESS;
-        int checkCycle = 2500;
+        int checkCycle = 5000;
 
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
