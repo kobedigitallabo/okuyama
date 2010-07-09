@@ -149,7 +149,7 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
 
             InetSocketAddress inetAddr = new InetSocketAddress(nodeInfos[0], Integer.parseInt(nodeInfos[1]));
             Socket socket = new Socket();
-            socket.connect(inetAddr, ImdstDefine.nodeConnectionTimeout);
+            socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
             socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);

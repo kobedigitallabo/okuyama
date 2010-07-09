@@ -75,7 +75,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                 // Slaveノード名とポートに分解
                                 String[] slaveNodeDt = slaveList[i].split(":");
 
-                                socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                                InetSocketAddress inetAddr = new InetSocketAddress(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                                socket = new Socket();
+                                socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenSortTimeout);
                                 socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
                                 pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
@@ -120,6 +122,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                 // 無視する
                                 //System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
                                 //e.printStackTrace();
+
                             } finally {
                                 try {
                                     if (pw != null) {
@@ -181,7 +184,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
                         // Slaveノード名とポートに分解
                         String[] slaveNodeDt = slaveList[i].split(":");
-                        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                        InetSocketAddress inetAddr = new InetSocketAddress(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                        socket = new Socket();
+                        socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
                         socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
                         pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
@@ -302,7 +307,10 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
                         // Slaveノード名とポートに分解
                         String[] slaveNodeDt = slaveList[i].split(":");
-                        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+
+                        InetSocketAddress inetAddr = new InetSocketAddress(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                        socket = new Socket();
+                        socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
                         socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
                         pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
@@ -405,7 +413,10 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
                         // Slaveノード名とポートに分解
                         String[] slaveNodeDt = slaveList[i].split(":");
-                        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+
+                        InetSocketAddress inetAddr = new InetSocketAddress(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                        socket = new Socket();
+                        socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
                         socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
                         pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
@@ -516,10 +527,11 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
         try {
             // 接続
-            socket = new Socket(nodeName, port);
-
-            // Timeout設定
+            InetSocketAddress inetAddr = new InetSocketAddress(nodeName, port);
+            socket = new Socket();
+            socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
             socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             pw = new PrintWriter(new BufferedWriter(osw));
 

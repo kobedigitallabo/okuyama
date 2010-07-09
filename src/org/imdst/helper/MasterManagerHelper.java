@@ -2622,7 +2622,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     InetSocketAddress inetAddr = new InetSocketAddress(keyNodeName, Integer.parseInt(keyNodePort));
                     Socket socket = new Socket();
-                    socket.connect(inetAddr, ImdstDefine.nodeConnectionTimeout);
+                    socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
                     socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
                     OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);

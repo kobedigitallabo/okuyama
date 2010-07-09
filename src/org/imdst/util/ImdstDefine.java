@@ -164,7 +164,13 @@ public class ImdstDefine {
     public static final int saveKeyMaxSize = 486;
 
     // クライアントのコネクションタイムアウト時間(ミリ秒)
-    public static final int clientConnectionTimeout = 3000;
+    public static final int clientConnectionTimeout = 8000;
+
+    // Node間のコネクションオープンタイムアウト時間(ミリ秒)
+    public static final int nodeConnectionOpenSortTimeout = 1500;
+
+    // Node間のコネクションオープンタイムアウト時間(ミリ秒)
+    public static final int nodeConnectionOpenTimeout = 2000;
 
     // Node間のコネクションタイムアウト時間(ミリ秒)
     public static final int nodeConnectionTimeout = 3000;
