@@ -24,6 +24,9 @@ public class ImdstKeyValueClient {
     // ソケット
     private Socket socket = null;
 
+    // 現在接続中のMasterServer
+    private String nowConnectServerInfo = "";
+
     // サーバへの出力用
     private PrintWriter pw = null;
 
@@ -124,8 +127,14 @@ public class ImdstKeyValueClient {
      */
     public void autoConnect() throws Exception {
         ArrayList tmpMasterNodeList = new ArrayList();
-        tmpMasterNodeList = (ArrayList)this.masterNodesList.clone();
+        ArrayList workList = (ArrayList)this.masterNodesList.clone();
         Random rnd = new Random();
+
+        for (int idx = 0; idx < workList.size(); idx++) {
+            if (!((String)workList.get(idx)).equals(this.nowConnectServerInfo)) {
+                tmpMasterNodeList.add(workList.get(idx));
+            }
+        }
 
         while(tmpMasterNodeList.size() > 0) {
 
@@ -148,6 +157,7 @@ public class ImdstKeyValueClient {
                 this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstKeyValueClient.connectDefaultEncoding)));
                 this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstKeyValueClient.connectDefaultEncoding));
                 this.initClient();
+                this.nowConnectServerInfo = nodeStr;
                 break;
             } catch (Exception e) {
                 try {
@@ -205,6 +215,7 @@ public class ImdstKeyValueClient {
                 this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstKeyValueClient.connectDefaultEncoding)));
                 this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstKeyValueClient.connectDefaultEncoding));
                 this.initClient();
+                this.nowConnectServerInfo = nodeStr;
                 break;
             } catch (Exception e) {
                 try {
@@ -261,7 +272,7 @@ public class ImdstKeyValueClient {
             this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encoding)));
             this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), encoding));
             this.initClient();
-
+            this.nowConnectServerInfo = server + ":" + new Integer(port).toString();
         } catch (Exception e) {
             try {
                 if (this.br != null) {
@@ -1470,7 +1481,6 @@ public class ImdstKeyValueClient {
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-
             serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
 
             // 処理の妥当性確認
