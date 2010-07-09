@@ -163,6 +163,9 @@ public class ImdstDefine {
     // Key,Tagの最大長
     public static final int saveKeyMaxSize = 486;
 
+    // クライアントのコネクションオープンタイムアウト時間(ミリ秒)
+    public static final int clientConnectionOpenTimeout = 4000;
+
     // クライアントのコネクションタイムアウト時間(ミリ秒)
     public static final int clientConnectionTimeout = 8000;
 

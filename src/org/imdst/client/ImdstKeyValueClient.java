@@ -152,7 +152,7 @@ public class ImdstKeyValueClient {
                 String[] nodeInfo = nodeStr.split(":");
                 this.socket = new Socket();
                 InetSocketAddress inetAddr = new InetSocketAddress(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
-                this.socket.connect(inetAddr, ImdstDefine.clientConnectionTimeout);
+                this.socket.connect(inetAddr, ImdstDefine.clientConnectionOpenTimeout);
                 this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
                 this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstKeyValueClient.connectDefaultEncoding)));
                 this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstKeyValueClient.connectDefaultEncoding));
@@ -210,7 +210,7 @@ public class ImdstKeyValueClient {
                 String[] nodeInfo = nodeStr.split(":");
                 this.socket = new Socket();
                 InetSocketAddress inetAddr = new InetSocketAddress(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
-                this.socket.connect(inetAddr, ImdstDefine.clientConnectionTimeout);
+                this.socket.connect(inetAddr, ImdstDefine.clientConnectionOpenTimeout);
                 this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
                 this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstKeyValueClient.connectDefaultEncoding)));
                 this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstKeyValueClient.connectDefaultEncoding));
@@ -266,7 +266,9 @@ public class ImdstKeyValueClient {
      */
     public void connect(String server, int port, String encoding) throws Exception {
         try {
-            this.socket = new Socket(server, port);
+            this.socket = new Socket();
+            InetSocketAddress inetAddr = new InetSocketAddress(server, port);
+            this.socket.connect(inetAddr, ImdstDefine.clientConnectionOpenTimeout);
             this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
 
             this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encoding)));
