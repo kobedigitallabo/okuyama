@@ -49,106 +49,106 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     protected void setDeadNode(String nodeInfo) {
         // MainMasterNodeの場合のみ設定される
         if (StatusUtil.isMainMasterNode()) {
-			if (StatusUtil.isNodeArrival(nodeInfo)) {
-	            StatusUtil.setDeadNode(nodeInfo);
+            if (StatusUtil.isNodeArrival(nodeInfo)) {
+                StatusUtil.setDeadNode(nodeInfo);
 
-	            // 対象のSlaveMasterNode全てに依頼
-	            String slaves = StatusUtil.getSlaveMasterNodes();
+                // 対象のSlaveMasterNode全てに依頼
+                String slaves = StatusUtil.getSlaveMasterNodes();
 
-	            if (slaves != null && !slaves.trim().equals("")) {
-	                String[] slaveList = slaves.split(",");
-					int execCounter = 0;
+                if (slaves != null && !slaves.trim().equals("")) {
+                    String[] slaveList = slaves.split(",");
+                    int execCounter = 0;
 
-					// MasterNodeへの伝搬は失敗しても2回試す
-					while (execCounter < 2) {
-		                // 1ノードづつ実行
-		                for (int i = 0; i < slaveList.length; i++) {
+                    // MasterNodeへの伝搬は失敗しても2回試す
+                    while (execCounter < 2) {
+                        // 1ノードづつ実行
+                        for (int i = 0; i < slaveList.length; i++) {
 
-							if (slaveList[i] == null) continue;
+                            if (slaveList[i] == null) continue;
 
-		                    Socket socket = null;
-		                    PrintWriter pw = null;
-		                    BufferedReader br = null;
+                            Socket socket = null;
+                            PrintWriter pw = null;
+                            BufferedReader br = null;
 
-		                    try {
+                            try {
 
-		                        // Slaveノード名とポートに分解
-		                        String[] slaveNodeDt = slaveList[i].split(":");
+                                // Slaveノード名とポートに分解
+                                String[] slaveNodeDt = slaveList[i].split(":");
 
-		                        socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
-		                        socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+                                socket = new Socket(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                                socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
-		                        pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
-		                                                                                                        ImdstDefine.keyHelperClientParamEncoding)));
-		                        br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
-		                                                                                        ImdstDefine.keyHelperClientParamEncoding));
+                                pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
+                                                                                                                ImdstDefine.keyHelperClientParamEncoding)));
+                                br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
+                                                                                                ImdstDefine.keyHelperClientParamEncoding));
 
-		                        // 文字列バッファ初期化
-		                        StringBuffer serverRequestBuf = new StringBuffer();
+                                // 文字列バッファ初期化
+                                StringBuffer serverRequestBuf = new StringBuffer();
 
-		                        // 処理番号連結
-		                        serverRequestBuf.append("95");
-		                        // セパレータ連結
-		                        serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
-		                        // 障害ノード名連結
-		                        serverRequestBuf.append(nodeInfo);
+                                // 処理番号連結
+                                serverRequestBuf.append("95");
+                                // セパレータ連結
+                                serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                // 障害ノード名連結
+                                serverRequestBuf.append(nodeInfo);
 
-		                        // サーバ送信
-		                        pw.println(serverRequestBuf.toString());
-		                        pw.flush();
+                                // サーバ送信
+                                pw.println(serverRequestBuf.toString());
+                                pw.flush();
 
-		                        // サーバから結果受け取り
-		                        String serverRetStr = br.readLine();
+                                // サーバから結果受け取り
+                                String serverRetStr = br.readLine();
 
-		                        String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
+                                String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
 
-		                        // 処理の妥当性確認
-		                        if (serverRet[0].equals("95")) {
-		                            if (!serverRet[1].equals("true")) {
-		                                // TODO:復帰登録失敗
-		                                // 異常事態だが、稼動していないことも考えられるので、
-		                                // 無視する
-		                                //System.out.println("Slave Master Node setDeadNode Error [" + slaveList[i] + "]");
-		                            } else {
-										slaveList[i] = null;
-									}
-		                        }
-		                    } catch(Exception e) {
+                                // 処理の妥当性確認
+                                if (serverRet[0].equals("95")) {
+                                    if (!serverRet[1].equals("true")) {
+                                        // TODO:復帰登録失敗
+                                        // 異常事態だが、稼動していないことも考えられるので、
+                                        // 無視する
+                                        //System.out.println("Slave Master Node setDeadNode Error [" + slaveList[i] + "]");
+                                    } else {
+                                        slaveList[i] = null;
+                                    }
+                                }
+                            } catch(Exception e) {
 
-		                        // TODO:復帰登録失敗
-		                        // 異常事態だが、稼動していないことも考えられるので、
-		                        // 無視する
-		                        //System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
-		                        //e.printStackTrace();
-		                    } finally {
-		                        try {
-		                            if (pw != null) {
-		                                // 接続切断を通知
-		                                pw.println(ImdstDefine.imdstConnectExitRequest);
-		                                pw.flush();
+                                // TODO:復帰登録失敗
+                                // 異常事態だが、稼動していないことも考えられるので、
+                                // 無視する
+                                //System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
+                                //e.printStackTrace();
+                            } finally {
+                                try {
+                                    if (pw != null) {
+                                        // 接続切断を通知
+                                        pw.println(ImdstDefine.imdstConnectExitRequest);
+                                        pw.flush();
 
-		                                pw.close();
-		                                pw = null;
-		                            }
+                                        pw.close();
+                                        pw = null;
+                                    }
 
-		                            if (br != null) {
-		                                br.close();
-		                                br = null;
-		                            }
+                                    if (br != null) {
+                                        br.close();
+                                        br = null;
+                                    }
 
-		                            if (socket != null) {
-		                                socket.close();
-		                                socket = null;
-		                            }
-		                        } catch(Exception e2) {
-		                            // 無視
-		                        }
-		                    }
-		                }
-						execCounter++;
-					}
-	            }
-			}
+                                    if (socket != null) {
+                                        socket.close();
+                                        socket = null;
+                                    }
+                                } catch(Exception e2) {
+                                    // 無視
+                                }
+                            }
+                        }
+                        execCounter++;
+                    }
+                }
+            }
         }
     }
 
@@ -500,14 +500,14 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     /**
      * ノードに対して生存確認用のPingを行う.<br>
      *
- 	 * @param nodeName ノード名
- 	 * @param port ポート番号
- 	 * @param logger ロガー
- 	 * @return String[] 結果 配列の1番目:"true" or "false", 配列の2番目:1番目が"true"の場合ステータス文字列
+     * @param nodeName ノード名
+     * @param port ポート番号
+     * @param logger ロガー
+     * @return String[] 結果 配列の1番目:"true" or "false", 配列の2番目:1番目が"true"の場合ステータス文字列
      */
     protected String[] execNodePing(String nodeName, int port, ILogger logger) {
-		String[] retStrs = new String[2];
-		retStrs[0] = "true";
+        String[] retStrs = new String[2];
+        retStrs[0] = "true";
 
         BufferedReader br = null;
         PrintWriter pw = null;
@@ -546,16 +546,16 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
             if (!retParams[1].equals("true")) {
 
-				retStrs[0] = "false";
+                retStrs[0] = "false";
             } else {
 
-				retStrs[0] = "true";
-				retStrs[1] = retParams[2];
+                retStrs[0] = "true";
+                retStrs[1] = retParams[2];
             }
             pw.println(ImdstDefine.imdstConnectExitRequest);
             pw.flush();
         } catch(Exception e) {
-			retStrs[0] = "false";
+            retStrs[0] = "false";
             logger.info("Node Ping Chekc Error Node Name = [" + nodeName + "] Port [" + port + "]");
             logger.info(e);
         } finally {
@@ -586,8 +586,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @return boolean 成否
      */
     protected boolean nodeDataRecover(String nodeInfo, String masterNodeInfo, int rule, int[] oldRules, int matchNo, ILogger logger) throws BatchException {
-		return this.nodeDataRecover(nodeInfo, masterNodeInfo, rule, oldRules, matchNo, false, logger);
-	}
+        return this.nodeDataRecover(nodeInfo, masterNodeInfo, rule, oldRules, matchNo, false, logger);
+    }
 
     /**
      * ダウン状態から復帰したノードに対して、ペアーのノードのデータをコピーする.<br>
@@ -616,8 +616,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         String masterNodeName = masterNodeDt[0];
         int masterNodePort = new Integer(masterNodeDt[1]).intValue();
 
-		String rulesStr = "";
-		String ruleSep = "";
+        String rulesStr = "";
+        String ruleSep = "";
 
         PrintWriter pw = null;
         BufferedReader br = null;
@@ -689,14 +689,14 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
             long nodeDate = new Long(updateDate[2]).longValue();
 
-			// 引数となるルール文字列を作り出す
-			rulesStr = new Integer(rule).toString();
+            // 引数となるルール文字列を作り出す
+            rulesStr = new Integer(rule).toString();
 
-			if (oldRules != null) {
-				for (int oldRulesIdx = 0; oldRulesIdx < oldRules.length; oldRulesIdx++) {
-					rulesStr = rulesStr + "," + oldRules[oldRulesIdx];
-				}
-			}
+            if (oldRules != null) {
+                for (int oldRulesIdx = 0; oldRulesIdx < oldRules.length; oldRulesIdx++) {
+                    rulesStr = rulesStr + "," + oldRules[oldRulesIdx];
+                }
+            }
 
             // どちらが新しいか比べる
             if (noDataCheck == true || masterDate >= nodeDate) {
@@ -722,9 +722,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 buf.append("20");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append("true");
-				buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(matchNo);
-				buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(rulesStr);
 
                 // 送信
@@ -768,9 +768,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 buf.append("24");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append("true");
-				buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(matchNo);
-				buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(rulesStr);
 
                 // 送信
@@ -817,9 +817,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 buf.append("20");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append("true");
-				buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(matchNo);
-				buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(rulesStr);
 
                 // 送信
@@ -872,9 +872,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 buf.append("24");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append("true");
-				buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(matchNo);
-				buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(rulesStr);
 
                 // 送信

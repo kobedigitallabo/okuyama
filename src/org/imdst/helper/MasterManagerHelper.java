@@ -2620,7 +2620,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // 接続が存在しない場合は自身で接続処理を行う
                 if (connectMap == null) {
 
-                    Socket socket = new Socket(keyNodeName, Integer.parseInt(keyNodePort));
+                    InetSocketAddress inetAddr = new InetSocketAddress(keyNodeName, Integer.parseInt(keyNodePort));
+                    Socket socket = new Socket();
+                    socket.connect(inetAddr, ImdstDefine.nodeConnectionTimeout);
                     socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
                     OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
