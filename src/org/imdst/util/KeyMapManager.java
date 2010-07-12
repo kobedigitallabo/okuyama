@@ -63,7 +63,7 @@ public class KeyMapManager extends Thread {
     // TODO:Mapファイル本体を保存しないように一時的に変更updateInterval=30秒
     // 起動時にトランザクションログから復旧
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
-    private static int updateInterval = 3000;
+    private static int updateInterval = 10000;
     private static int intervalCount = 10;
 
     // workMap(トランザクションログ)ファイルのデータセパレータ文字列

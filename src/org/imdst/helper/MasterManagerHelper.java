@@ -1557,7 +1557,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 if (counter == 1) subNodeSave = true;
                             } else {
                                 // 論理的に登録失敗
-                                super.setDeadNode(nodeName + ":" + nodePort);
+                                super.setDeadNode(nodeName + ":" + nodePort, 3, null);
                                 logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
                             }
                         } else if (type.equals("3")) {
@@ -1571,22 +1571,22 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 if (counter == 1) subNodeSave = true;
                             } else {
                                 // 論理的に登録失敗
-                                super.setDeadNode(nodeName + ":" + nodePort);
+                                super.setDeadNode(nodeName + ":" + nodePort, 4, null);
                                 logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
                             }
                         }
 
                     } catch (SocketException se) {
 
-                        super.setDeadNode(nodeName + ":" + nodePort);
+                        super.setDeadNode(nodeName + ":" + nodePort, 5, se);
                         logger.debug(se);
                     } catch (IOException ie) {
 
-                        super.setDeadNode(nodeName + ":" + nodePort);
+                        super.setDeadNode(nodeName + ":" + nodePort, 6, ie);
                         logger.debug(ie);
-                    } catch (Exception superE) {
-                        super.setDeadNode(nodeName + ":" + nodePort);
-                        logger.debug(superE);
+                    } catch (Exception ee) {
+                        super.setDeadNode(nodeName + ":" + nodePort, 7, ee);
+                        logger.debug(ee);
                     }
 
                 } 
@@ -1736,15 +1736,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
                 } catch (SocketException se) {
                     mainNodeNetworkError = true;
-                    super.setDeadNode(keyNodeName + ":" + keyNodePort);
+                    super.setDeadNode(keyNodeName + ":" + keyNodePort, 8, se);
                     logger.debug(se);
                 } catch (IOException ie) {
                     mainNodeNetworkError = true;
-                    super.setDeadNode(keyNodeName + ":" + keyNodePort);
+                    super.setDeadNode(keyNodeName + ":" + keyNodePort, 9, ie);
                     logger.debug(ie);
-                } catch (Exception superE) {
-                    super.setDeadNode(keyNodeName + ":" + keyNodePort);
-                    logger.debug(superE);
+                } catch (Exception ee) {
+                    super.setDeadNode(keyNodeName + ":" + keyNodePort, 10, ee);
+                    logger.debug(ee);
                 }
 
             } else {
@@ -1801,15 +1801,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             }
                         } catch (SocketException se) {
                             subNodeNetworkError = true;
-                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
+                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 11, se);
                             logger.debug(se);
                         } catch (IOException ie) {
                             subNodeNetworkError = true;
-                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
+                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 12, ie);
                             logger.debug(ie);
-                        } catch (Exception superE) {
-                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort);
-                            logger.debug(superE);
+                        } catch (Exception ee) {
+                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 13, ee);
+                            logger.debug(ee);
                         }
 
                     } else {
@@ -1968,20 +1968,20 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             if (counter == 1) subNodeSave = true;
                         } else if (retParam == null || retParam.indexOf(ImdstDefine.keyNodeKeyRemoveNotFoundStr) != 0){
                             // 論理的に削除失敗
-                            super.setDeadNode(nodeName + ":" + nodePort);
+                            super.setDeadNode(nodeName + ":" + nodePort, 14, null);
                             logger.error("removeKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
 
                         }
                     } catch (SocketException se) {
 
-                        super.setDeadNode(nodeName + ":" + nodePort);
+                        super.setDeadNode(nodeName + ":" + nodePort, 15, se);
                         logger.debug(se);
                     } catch (IOException ie) {
-                        super.setDeadNode(nodeName + ":" + nodePort);
+                        super.setDeadNode(nodeName + ":" + nodePort, 16, ie);
                         logger.debug(ie);
-                    } catch (Exception superE) {
-                        super.setDeadNode(nodeName + ":" + nodePort);
-                        logger.debug(superE);
+                    } catch (Exception ee) {
+                        super.setDeadNode(nodeName + ":" + nodePort, 17, ee);
+                        logger.debug(ee);
                     }
                 }
 
@@ -2517,7 +2517,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         errorRet = mainNodeSender.getRetParam();
                     } else if (mainNodeSender.getErrorType() != -1) {
 
-                        super.setDeadNode(keyNodeFullName);
+                        super.setDeadNode(keyNodeFullName, 18, null);
                         logger.debug(mainNodeSender.getErrorMsg());
                     }
                     mainNodeSave = false;
@@ -2538,7 +2538,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         errorRet = subNodeSender.getRetParam();
                     } else if (subNodeSender.getErrorType() != -1) {
 
-                        super.setDeadNode(subKeyNodeFullName);
+                        super.setDeadNode(subKeyNodeFullName, 19, null);
                         logger.debug(subNodeSender.getErrorMsg());
                     }
                     subNodeSave = false;
@@ -2653,12 +2653,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 this.keyNodeConnectTimeMap.put(connectionFullName, connectTime);
             }
         } catch (Exception e) {
-e.printStackTrace();
             logger.error(connectionFullName + " " + e);
             dtMap = null;
 
             // 一度接続不慮が発生した場合はこのSESSIONでは接続しない設定とする
-            super.setDeadNode(connectionFullName);
+            super.setDeadNode(connectionFullName, 20, e);
         }
 
         return dtMap;

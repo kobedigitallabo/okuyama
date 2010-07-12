@@ -46,8 +46,12 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      *
      * @param nodeInfo 対象のノード情報
      */
-    protected void setDeadNode(String nodeInfo) {
-        System.out.println("1111111111111111111111111111=[" + nodeInfo + "]");
+    protected void setDeadNode(String nodeInfo, int setPoint, Throwable te) {
+        System.out.println(setPoint);
+        if (te != null) {
+            te.printStackTrace();
+        }
+
         // MainMasterNodeの場合のみ設定される
         if (StatusUtil.isMainMasterNode()) {
             if (StatusUtil.isNodeArrival(nodeInfo)) {

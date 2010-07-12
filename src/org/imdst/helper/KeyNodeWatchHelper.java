@@ -21,7 +21,7 @@ import org.imdst.util.StatusUtil;
 public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
     // ノードの監視サイクル時間(ミリ秒)
-    private int checkCycle = 1000;
+    private int checkCycle = 2000;
 
     private ArrayList mainNodeList = null;
 
@@ -100,7 +100,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             if(pingRet[0].equals("false")) {
                                 // ノードダウン
                                 logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Dead");
-                                super.setDeadNode(nodeInfo);
+                                super.setDeadNode(nodeInfo, 1, null);
                                 StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "Node Check Dead");
                             } else if (!super.isNodeArrival(nodeInfo)) {
 
@@ -181,7 +181,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 if(pingRet[0].equals("false")) {
                                     // ノードダウン
                                     logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Dead");
-                                    super.setDeadNode(subNodeInfo);
+                                    super.setDeadNode(subNodeInfo, 2 ,null);
                                     StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "SubNode Check Dead");
                                 } else if (!super.isNodeArrival(subNodeInfo)) {
 

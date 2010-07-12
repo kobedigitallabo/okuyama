@@ -23,7 +23,7 @@ import org.imdst.client.ImdstKeyValueClient;
 public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
     // ノードの監視サイクル時間(ミリ秒)
-    private int checkCycle = 1000;
+    private int checkCycle = 60000 * 3;
 
     private ArrayList mainNodeList = null;
 
