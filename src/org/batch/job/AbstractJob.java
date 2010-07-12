@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.batch.parameter.config.ConfigFolder;
 import org.batch.parameter.config.JobConfigMap;
@@ -64,7 +65,7 @@ abstract public class AbstractJob extends Thread {
      * Job間に値やり取りを行う領域.<br>
      * 一度登録した値はバッチが終了するまで維持される.<br>
      */
-    private static Hashtable jobParamShareMap = new Hashtable();
+    private static ConcurrentHashMap jobParamShareMap = new ConcurrentHashMap(10, 10, 10);
 
     /**
      * コンストラクタ

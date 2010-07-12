@@ -1,8 +1,8 @@
 package org.batch.job;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.batch.parameter.config.ConfigFolder;
 import org.batch.parameter.config.HelperConfigMap;
@@ -10,6 +10,7 @@ import org.batch.lang.BatchException;
 import org.batch.lang.BatchDefine;
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
+
 /**
  * JobHelperの基底クラス.<br>
  *
@@ -60,7 +61,7 @@ abstract public class AbstractHelper  implements Runnable{
      * Helper同士で値やり取りを行う領域.<br>
      * 一度登録した値はHelperが終了するまで維持される.<br>
      */
-    private static Hashtable helperParamShareMap = new Hashtable();
+    private static ConcurrentHashMap helperParamShareMap = new ConcurrentHashMap(1024, 512, 1024);
 
     // 呼び出し時に直接渡すパラメータ
     private Object[] parameters = null;

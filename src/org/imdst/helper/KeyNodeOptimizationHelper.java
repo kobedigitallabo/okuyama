@@ -123,6 +123,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                         }
 
                         imdstKeyValueClient.close();
+                        imdstKeyValueClient = null;
 
                         logger.info(nodeInfo + " Optimization End");    
                         logger.info("************************************************************");
@@ -130,6 +131,10 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                 }
             } catch(Exception e) {
                 logger.error("KeyNodeOptimizationHelper - executeHelper - Error", e);
+            } finally {
+                try {
+                    if (imdstKeyValueClient != null) imdstKeyValueClient.close();
+                } catch (Exception e2) {}
             }
         }
 

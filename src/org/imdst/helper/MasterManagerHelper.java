@@ -1544,8 +1544,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // 返却値取得
                         retParam = br.readLine();
-//long end1 = System.nanoTime();
-//System.out.println("[" + (end1 - start1) + "]");
 
 
                         // 処理種別判別
@@ -2601,7 +2599,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-            if (!super.isNodeArrival(connectionFullName)) return null;
+            if (!super.isNodeArrival(connectionFullName)) {
+                System.out.println("EEEEEEEEEEEEEEEEEEEEEEEEEEEE" + connectionFullName + "]");
+                return null;
+            }
+
             // フラグがtrueの場合はキャッシュしている接続を破棄してやり直す
             if (retryFlg) {
                 if (this.keyNodeConnectMap.containsKey(connectionFullName)) this.keyNodeConnectMap.remove(connectionFullName);
@@ -2651,6 +2653,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 this.keyNodeConnectTimeMap.put(connectionFullName, connectTime);
             }
         } catch (Exception e) {
+e.printStackTrace();
             logger.error(connectionFullName + " " + e);
             dtMap = null;
 

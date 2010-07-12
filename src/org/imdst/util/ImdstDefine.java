@@ -169,14 +169,23 @@ public class ImdstDefine {
     // クライアントのコネクションタイムアウト時間(ミリ秒)
     public static final int clientConnectionTimeout = 8000;
 
+
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenSortTimeout = 1500;
+    public static final int nodeConnectionOpenShortTimeout = 1500;
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
     public static final int nodeConnectionOpenTimeout = 2000;
 
-    // Node間のコネクションタイムアウト時間(ミリ秒)
+    // Node間のコネクションReadタイムアウト時間(ミリ秒)
     public static final int nodeConnectionTimeout = 3000;
+
+
+    // Node間のコネクションオープンタイムアウト時間(PING)(ミリ秒)
+    public static final int nodeConnectionOpenPingTimeout = 5000;
+
+    // Node間のコネクションReadタイムアウト時間(PING)(ミリ秒)
+    public static final int nodeConnectionPingTimeout = 10000;
+
 
    // Recoverのコネクションタイムアウト時間(ミリ秒)
     public static final int recoverConnectionTimeout = 60000 * 60;

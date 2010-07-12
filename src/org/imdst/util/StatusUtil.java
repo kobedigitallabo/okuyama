@@ -175,6 +175,7 @@ public class StatusUtil {
      * @param nodeInfo 対象のノード情報
      */
     public static void setDeadNode(String nodeInfo) {
+        System.out.println("222222222222222222222222222222=[" + nodeInfo + "]");
         checkErrorMap.put(nodeInfo, new Boolean(false));
     }
 

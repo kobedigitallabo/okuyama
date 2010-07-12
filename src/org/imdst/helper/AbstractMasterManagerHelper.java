@@ -47,6 +47,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @param nodeInfo 対象のノード情報
      */
     protected void setDeadNode(String nodeInfo) {
+        System.out.println("1111111111111111111111111111=[" + nodeInfo + "]");
         // MainMasterNodeの場合のみ設定される
         if (StatusUtil.isMainMasterNode()) {
             if (StatusUtil.isNodeArrival(nodeInfo)) {
@@ -77,7 +78,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
                                 InetSocketAddress inetAddr = new InetSocketAddress(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
                                 socket = new Socket();
-                                socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenSortTimeout);
+                                socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenShortTimeout);
                                 socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
                                 pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
@@ -529,8 +530,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
             // 接続
             InetSocketAddress inetAddr = new InetSocketAddress(nodeName, port);
             socket = new Socket();
-            socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
-            socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+            socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenPingTimeout);
+            socket.setSoTimeout(ImdstDefine.nodeConnectionPingTimeout);
 
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             pw = new PrintWriter(new BufferedWriter(osw));
