@@ -190,4 +190,5 @@ public class ImdstDefine {
    // Recoverのコネクションタイムアウト時間(ミリ秒)
     public static final int recoverConnectionTimeout = 60000 * 60;
 
+
 }
