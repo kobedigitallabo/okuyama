@@ -535,62 +535,76 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         Socket socket = null;
         String[] retParams = null;
 
-        try {
-            // 接続
-            InetSocketAddress inetAddr = new InetSocketAddress(nodeName, port);
-            socket = new Socket();
-            socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenPingTimeout);
-            socket.setSoTimeout(ImdstDefine.nodeConnectionPingTimeout);
+        for (int tryCount = 0; tryCount < deadCount; tryCount++) {
+            retStrs = new String[2];
+            retStrs[0] = "true";
 
-            OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-            pw = new PrintWriter(new BufferedWriter(osw));
+            br = null;
+            pw = null;
+            socket = null;
+            retParams = null;
 
-            InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-            br = new BufferedReader(isr);
+            try {
+                // 接続
+                InetSocketAddress inetAddr = new InetSocketAddress(nodeName, port);
+                socket = new Socket();
+                socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenPingTimeout);
+                socket.setSoTimeout(ImdstDefine.nodeConnectionPingTimeout);
 
-            // Key値でデータノード名を保存
-            StringBuffer buf = new StringBuffer();
-            // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
-            buf.append("10");
-            buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append("PING_CHECK");
-            buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append("Check");
+                OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
+                pw = new PrintWriter(new BufferedWriter(osw));
 
-            // 送信
-            pw.println(buf.toString());
-            pw.flush();
+                InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
+                br = new BufferedReader(isr);
 
-            // 返却値取得
-            String retParam = br.readLine();
+                // Key値でデータノード名を保存
+                StringBuffer buf = new StringBuffer();
+                // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+                buf.append("10");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append("PING_CHECK");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append("Check");
 
-            retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                // 送信
+                pw.println(buf.toString());
+                pw.flush();
 
-            if (!retParams[1].equals("true")) {
+                // 返却値取得
+                String retParam = br.readLine();
+
+                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+
+                if (!retParams[1].equals("true")) {
+
+                    retStrs[0] = "false";
+                } else {
+
+                    retStrs[0] = "true";
+                    retStrs[1] = retParams[2];
+                    
+                }
+                pw.println(ImdstDefine.imdstConnectExitRequest);
+                pw.flush();
+
+                if (retStrs[0].equals("true")) break;
+            } catch(Exception e) {
 
                 retStrs[0] = "false";
-            } else {
+                logger.info("Node Ping Chekc Error Node Name = [" + nodeName + "] Port [" + port + "]");
+                logger.info(e);
+            } finally {
+                try {
 
-                retStrs[0] = "true";
-                retStrs[1] = retParams[2];
-            }
-            pw.println(ImdstDefine.imdstConnectExitRequest);
-            pw.flush();
-        } catch(Exception e) {
-            retStrs[0] = "false";
-            logger.info("Node Ping Chekc Error Node Name = [" + nodeName + "] Port [" + port + "]");
-            logger.info(e);
-        } finally {
-            try {
-
-                if (br != null) br.close();
-                if (pw != null) {
-                    pw.close();
+                    if (br != null) br.close();
+                    if (pw != null) {
+                        pw.close();
+                    }
+                    if (socket != null) socket.close();
+                } catch(Exception e2) {
+                    // 無視
+                    logger.error(e2);
                 }
-                if (socket != null) socket.close();
-            } catch(Exception e2) {
-                // 無視
-                logger.error(e2);
             }
         }
         return retStrs;

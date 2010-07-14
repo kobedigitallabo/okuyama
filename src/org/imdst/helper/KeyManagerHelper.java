@@ -448,11 +448,12 @@ public class KeyManagerHelper extends AbstractHelper {
 
     // KeyとDataNode値を格納する
     private String[] setDatanode(String key, String dataNodeStr, String transactionCode) {
-        //logger.debug("KeyManagerHelper - setDatanode - start");
+        logger.debug("KeyManagerHelper - setDatanode - start = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
         String[] retStrs = new String[3];
         try {
             if (dataNodeStr.length() < setDatanodeMaxSize) {
                 if(!this.keyMapManager.checkError()) {
+
                     this.keyMapManager.setKeyPair(key, dataNodeStr, transactionCode);
                     retStrs[0] = "1";
                     retStrs[1] = "true";
@@ -468,12 +469,13 @@ public class KeyManagerHelper extends AbstractHelper {
                 retStrs[2] = "NG:Max Data Size Over";
             }
         } catch (BatchException be) {
-            logger.debug("KeyManagerHelper - setDatanode - Error", be);
+            logger.debug("KeyManagerHelper - setDatanode - Error = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]", be);
+            //logger.debug("KeyManagerHelper - setDatanode - Error", be);
             retStrs[0] = "1";
             retStrs[1] = "false";
             retStrs[2] = "NG:KeyManagerHelper - setDatanode - Exception - " + be.toString();
         }
-        //logger.debug("KeyManagerHelper - setDatanode - end");
+        logger.debug("KeyManagerHelper - setDatanode - end = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
         return retStrs;
     }
 
