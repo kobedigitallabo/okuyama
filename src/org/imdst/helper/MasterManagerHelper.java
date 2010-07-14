@@ -2600,7 +2600,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             if (!super.isNodeArrival(connectionFullName)) {
-                System.out.println("EEEEEEEEEEEEEEEEEEEEEEEEEEEE" + connectionFullName + "]");
+                System.out.println("EEEEEEEEEEEEEEEEEEEEEEEEEEEE_[" + connectionFullName + "]");
                 return null;
             }
 

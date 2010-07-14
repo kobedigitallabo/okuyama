@@ -513,15 +513,20 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     }
 
 
+    protected String[] execNodePing(String nodeName, int port, ILogger logger) {
+        return execNodePing(nodeName, port, logger, ImdstDefine.defaultDeadPingCount); 
+    }
+
     /**
      * ノードに対して生存確認用のPingを行う.<br>
      *
      * @param nodeName ノード名
      * @param port ポート番号
      * @param logger ロガー
+     * @param deadCount Deadとみなす回数
      * @return String[] 結果 配列の1番目:"true" or "false", 配列の2番目:1番目が"true"の場合ステータス文字列
      */
-    protected String[] execNodePing(String nodeName, int port, ILogger logger) {
+    protected String[] execNodePing(String nodeName, int port, ILogger logger, int deadCount) {
         String[] retStrs = new String[2];
         retStrs[0] = "true";
 

@@ -163,6 +163,9 @@ public class ImdstDefine {
     // Key,Tagの最大長
     public static final int saveKeyMaxSize = 486;
 
+    // ノードのDeadとする際のPing実行回数
+    public static final int defaultDeadPingCount = 2;
+
     // クライアントのコネクションオープンタイムアウト時間(ミリ秒)
     public static final int clientConnectionOpenTimeout = 4000;
 

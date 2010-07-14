@@ -50,6 +50,7 @@ public class TestSock {
                     //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
                         System.out.println("ImdstKeyValueClient - error");
                     }
+                    if ((i % 10000) == 0) System.out.println(i);
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
