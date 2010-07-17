@@ -56,6 +56,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     private String[] transactionManagerInfo = null;
 
+    private long setTime = 0L;
+
     /**
      * Logger.<br>
      */
@@ -153,6 +155,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // パラメータ分解
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
+
+                    setTime = System.nanoTime();
 
                     // 処理番号で処理を分岐
                     if(clientParameterList[0].equals("0")) {
@@ -1513,9 +1517,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append(this.stringCnv(values[0]));               // Key値
             buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append(transactionCode);                    // Transaction値
+            buf.append(transactionCode);                         // Transaction値
             buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append(values[1]);                          // Value値
+            buf.append(values[1]);                               // Value値
+            buf.append(ImdstDefine.setTimeParamSep);
+            buf.append(setTime);                                 // 保存時間
+
+
             sendData = buf.toString();
 
             // KeyNodeとの接続を確立
@@ -1712,9 +1720,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(this.stringCnv(values[0]));               // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(transactionCode);                    // Transaction値
+                    buf.append(transactionCode);                         // Transaction値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(values[1]);                          // Value値
+                    buf.append(values[1]);                               // Value値
+                    buf.append(ImdstDefine.setTimeParamSep);
+                    buf.append(setTime);                                 // 保存時間
 
                     // 送信
                     pw.println(buf.toString());
@@ -1755,7 +1765,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             if (subKeyNodeName != null) {
                 // Subノードで実施
                 if (mainNodeSave == true || (mainNodeSave == false && mainNodeNetworkError == true)) {
-                    // Mainノードが処理成功もしくは、ネットワークエラーの場合はSubノードを処理を行う。
+                    // Mainノードが処理成功もしくは、ネットワークエラーの場合はSubノードの処理を行う。
                     // KeyNodeとの接続を確立
                     dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
 
@@ -1776,9 +1786,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(this.stringCnv(values[0]));               // Key値
                             buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(transactionCode);                    // Transaction値
+                            buf.append(transactionCode);                         // Transaction値
                             buf.append(ImdstDefine.keyHelperClientParamSep);
-                            buf.append(values[1]);                          // Value値
+                            buf.append(values[1]);                               // Value値
+                            buf.append(ImdstDefine.setTimeParamSep);
+                            buf.append(setTime);                                 // 保存時間
 
                             // 送信
                             pw.println(buf.toString());
@@ -2486,12 +2498,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         if (counter == 0) {
                             // Mainノード
                             mainNodeSender = new DataNodeSender();
-                            mainNodeSender.setSendInfo(type,values[0], values[1], transactionCode, pw, br);
+                            mainNodeSender.setSendInfo(type, values[0], values[1], transactionCode, pw, br);
                             mainNodeSender.start();
                         } else {
                             // Subノード
                             subNodeSender = new DataNodeSender();
-                            subNodeSender.setSendInfo(type,values[0], values[1], transactionCode, pw, br);
+                            subNodeSender.setSendInfo(type, values[0], values[1], transactionCode, pw, br);
                             subNodeSender.start();
                         }
                     }
@@ -2840,6 +2852,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 buf.append(transactionCode);
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(value);
+                buf.append(ImdstDefine.setTimeParamSep);
+                buf.append(setTime);
 
                 // 送信
                 pw.println(buf.toString());
