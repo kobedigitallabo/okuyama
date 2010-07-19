@@ -51,6 +51,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     private boolean reverseAccess = false;
 
+    // 一貫性モード
+    private boolean strongConsistencyMode = false;
+
     // Transactionモードで起動するかを指定
     private boolean transactionMode = false;
 
@@ -700,6 +703,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 // 現在ルールのノードにデータ反映
                                 setKeyValueOnlyOnce(keyStr, ImdstDefine.imdstBlankStrData, "0", keyNodeSaveRet[2]);
 
+                                
+                                // キー値を使用して取得先を決定
+                                // 本来は既に取得している、ノード指定を使用すれば良いが、ノードの使用許可等の兼ね合いでここで再度DataDispatcherを使用
+                                if (loadBalancing) {
+                                    keyNodeInfo = DataDispatcher.dispatchReverseKeyNode(keyStr, reverseAccess, this.oldRule[i]);
+                                } else {
+                                    keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.oldRule[i]);
+                                }
+
                                 // 過去ルールの場所のデータを削除
                                 if (keyNodeInfo.length == 3) {
                                     removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, "0");
@@ -1206,6 +1218,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         HashMap dtMap = null;
 
         String[] retParams = null;
+        String[] cnvConsistencyRet = null;
 
         boolean slaveUse = false;
         boolean mainRetry = false;
@@ -1277,7 +1290,24 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // value値にセパレータが入っていても無視する
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     }
-                    break;
+
+
+                    // 一貫性のモードに合わせて処理を分岐
+                    if (!this.strongConsistencyMode) {
+
+                        // 弱一貫性の場合はデータが取れ次第返却
+                        // 一貫性データが付随した状態から通常データに変換する
+                        // 弱一貫性の場合は時間は使用しない
+                        if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
+                            cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
+                            retParams[2] = cnvConsistencyRet[0];
+                        }
+                        break;
+                    } else {
+
+                        // 強一貫性の場合は両方のデータの状態を確かめる
+                    }
+
                 } catch(SocketException tSe) {
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     se = tSe;
@@ -1341,11 +1371,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         HashMap dtMap = null;
 
         String[] retParams = null;
+        String[] cnvConsistencyRet = null;
 
         boolean slaveUse = false;
         boolean mainRetry = false;
 
         String nowUseNodeInfo = null;
+
 
         SocketException se = null;
         IOException ie = null;
@@ -1395,6 +1427,24 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // value値にセパレータが入っていても無視する
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     } 
+
+                    // 一貫性のモードに合わせて処理を分岐
+                    if (!this.strongConsistencyMode) {
+
+                        // 弱一貫性の場合はデータが取れ次第返却
+                        if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
+
+                            // 一貫性データが付随した状態から通常データに変換する
+                            // 弱一貫性の場合は時間は使用しない
+                            cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
+                            retParams[2] = cnvConsistencyRet[0];
+                        }
+                        break;
+                    } else {
+
+                        // 強一貫性の場合は両方のデータの状態を確かめる
+                    }
+
                     break;
                 } catch(SocketException tSe) {
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
@@ -1912,6 +1962,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String nodeFullName = keyNodeFullName;
 
         String[] retParams = null;
+        String[] cnvConsistencyRet = null;
 
         int counter = 0;
 
@@ -2021,7 +2072,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // 返却地値をパースする
             if (retParam != null) {
+
                 retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                if (retParams[1].equals("true")) {
+                    cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
+                    retParams[2] = cnvConsistencyRet[0];
+                }
             }
         }
 
@@ -2612,13 +2668,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             if (!super.isNodeArrival(connectionFullName)) {
-                System.out.println("EEEEEEEEEEEEEEEEEEEEEEEEEEEE_[" + connectionFullName + "]");
                 return null;
             }
 
             // フラグがtrueの場合はキャッシュしている接続を破棄してやり直す
             if (retryFlg) {
-                if (this.keyNodeConnectMap.containsKey(connectionFullName)) this.keyNodeConnectMap.remove(connectionFullName);
+                if (this.keyNodeConnectMap.containsKey(connectionFullName)) {
+                    this.closeKeyNodeConnect(connectionFullName);
+                    this.keyNodeConnectMap.remove(connectionFullName);
+                }
             }
 
             // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
@@ -2661,6 +2719,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     connectTime = (Long)connectMap.get(ImdstDefine.keyNodeConnectionMapTime);
                 }
 
+                this.closeKeyNodeConnect(connectionFullName);
                 this.keyNodeConnectMap.put(connectionFullName, dtMap);
                 this.keyNodeConnectTimeMap.put(connectionFullName, connectTime);
             }
@@ -2729,6 +2788,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     connectTime = (Long)connectMap.get(ImdstDefine.keyNodeConnectionMapTime);
                 }
 
+                this.closeKeyNodeConnect(connectionFullName);
                 this.keyNodeConnectMap.put(connectionFullName, dtMap);
                 this.keyNodeConnectTimeMap.put(connectionFullName, connectTime);
             }
@@ -2740,6 +2800,57 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return dtMap;
     }
 
+
+
+    /**
+     * 指定したノードとの接続を切断する.<br>
+     *
+     * @param connKeyStr 接続文字列
+     */
+    private void closeKeyNodeConnect(String connKeyStr) {
+        HashMap cacheConn = null;
+
+        try {
+            if (this.keyNodeConnectMap.containsKey(connKeyStr)) {
+                cacheConn = (HashMap)this.keyNodeConnectMap.get(connKeyStr);
+
+                PrintWriter cachePw = (PrintWriter)cacheConn.get(ImdstDefine.keyNodeWriterKey);
+                if (cachePw != null) {
+                    // 切断要求を送る
+                    cachePw.println(ImdstDefine.imdstConnectExitRequest);
+                    cachePw.flush();
+                    cachePw.close();
+                }
+
+                BufferedReader cacheBr = (BufferedReader)cacheConn.get(ImdstDefine.keyNodeReaderKey);
+                if (cacheBr != null) {
+                    cacheBr.close();
+                }
+
+                OutputStreamWriter cacheOsw = (OutputStreamWriter)cacheConn.get(ImdstDefine.keyNodeStreamWriterKey);
+                if (cacheOsw != null) {
+                    cacheOsw.close();
+                }
+
+                InputStreamReader cacheIsr = (InputStreamReader)cacheConn.get(ImdstDefine.keyNodeStreamReaderKey);
+                if (cacheIsr != null) {
+                    cacheIsr.close();
+                }
+            }
+        } catch (Exception e) {
+        } finally {
+            try {
+                if (cacheConn != null) {
+                    Socket cacheSoc = (Socket)cacheConn.get(ImdstDefine.keyNodeSocketKey);
+                    if (cacheSoc != null) {
+                        cacheSoc.close();
+                        cacheSoc = null;
+                    }
+                }
+            } catch (Exception ee) {
+            }
+        }
+    }
 
     /**
      * 全てのKeyNodeとの接続を切断する.<br>
@@ -2756,15 +2867,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 if (keys != null) {
                     for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
                         connKeyStr = (String)iterator.next();
+                        closeKeyNodeConnect(connKeyStr);
+                        /*
                         cacheConn = (HashMap)this.keyNodeConnectMap.get(connKeyStr);
 
-                        /*HashMap connMap = new HashMap();
-                        connMap.put(ImdstDefine.keyNodeConnectionMapKey, cacheConn);
-                        connMap.put(ImdstDefine.keyNodeConnectionMapTime, (Long)this.keyNodeConnectTimeMap.get(connKeyStr));*/
-
-                        // キャッシュ層に登録
-                        //super.setActiveConnection(connKeyStr, connMap);
-                        
                         PrintWriter cachePw = (PrintWriter)cacheConn.get(ImdstDefine.keyNodeWriterKey);
                         if (cachePw != null) {
                             // 切断要求を送る
@@ -2793,6 +2899,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             cacheSoc.close();
                             cacheSoc = null;
                         }
+                        */
                     }
                     this.keyNodeConnectMap = null;
                 }
@@ -2802,6 +2909,37 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
     }
 
+
+    /**
+     * データノードからの結果文字列を結果値と更新時間の2つに分解する.<br>
+     *
+     * @param targetStr 対象値
+     * @return String[] 結果 [0]=取り出した結果文字列, [1]=更新時間(登録されていない場合は-1)
+     */
+    private String[] dataConvert4Consistency(String targetStr) {
+        String[] ret = new String[2];
+        ret[0] = null;
+        ret[1] = "-1";
+
+        if (targetStr != null) {
+
+            String[] setTimeSplitRet = targetStr.split(ImdstDefine.setTimeParamSep);
+
+            if(setTimeSplitRet.length > 1) {
+
+                ret[0] = setTimeSplitRet[0];
+
+                if (setTimeSplitRet[1].trim().length() > 0) {
+
+                    ret[1] = setTimeSplitRet[1];
+                }
+            } else {
+
+                ret[0] = setTimeSplitRet[0];
+            }
+        }
+        return ret;
+    }
 
     private String stringCnv(String str) {
         return str;

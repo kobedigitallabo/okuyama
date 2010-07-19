@@ -42,6 +42,15 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
     // 初期化メソッド定義
     public void initHelper(String initValue) {
+        // 監視サイクル初期化
+        if (initValue != null) {
+            // 単位は秒
+            try {
+                this.checkCycle = Integer.parseInt(initValue);
+            } catch (Exception e) {
+                // 変換失敗
+            }
+        }
     }
 
     // Jobメイン処理定義

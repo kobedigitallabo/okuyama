@@ -112,25 +112,27 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                                     // 停止していたノードが復帰した場合
                                     // 停止中に登録予定であったデータを登録する
-                                    logger.info("Node Name [" + nodeInfo +"] Use Wait Start");
+                                    logger.info("Node Name [" + nodeInfo +"] Use Wait 1-1 Start");
 
                                     // ノードの使用中断を要求
                                     super.setNodeWaitStatus(nodeInfo);
                                     while(true) {
                                         // 使用停止まで待機
                                         if(super.getNodeUseStatus(nodeInfo) == 0) break;
-                                        Thread.sleep(10);
+                                        logger.info("Node Name [" + nodeInfo +"] Use Wait 1-1 Exec Status = [" + super.getNodeUseStatus(nodeInfo) + "] TimeWait ");
+                                        Thread.sleep(50);
                                     }
 
                                     // 該当ノードのデータをリカバーする場合は該当ノードと対になるノードの使用停止を要求し、
                                     // 遂になるノードの使用数が0になってからリカバーを開始する。
                                     if (subNodeList != null && i < subNodeList.size()) {
                                         super.setNodeWaitStatus((String)subNodeList.get(i));
-                                        logger.info("Node Name [" + (String)subNodeList.get(i) +"] Use Wait Start");
+                                        logger.info("Node Name [" + (String)subNodeList.get(i) +"] Use Wait 1-2 Start");
                                         while(true) {
                                             // 使用停止まで待機
                                             if(super.getNodeUseStatus((String)subNodeList.get(i)) == 0) break;
-                                            Thread.sleep(10);
+                                            logger.info("Node Name [" + (String)subNodeList.get(i) +"] Use Wait 1-2 Exec Status = [" + super.getNodeUseStatus((String)subNodeList.get(i)) + "] TimeWait ");
+                                            Thread.sleep(50);
                                         }
                                     }
 
@@ -189,24 +191,27 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                     // 停止中に登録予定であったデータを登録する
                                     logger.info("Node Name [" + subNodeInfo +"] Reboot");
 
-                                    logger.info("Node Name [" + subNodeInfo +"] Use Wait Start");
+                                    logger.info("Node Name [" + subNodeInfo +"] Use Wait 2-1 Start");
 
                                     // ノードの使用中断を要求
                                     super.setNodeWaitStatus(subNodeInfo);
                                     while(true) {
                                         // 使用停止まで待機
                                         if(super.getNodeUseStatus(subNodeInfo) == 0) break;
-                                        Thread.sleep(10);
+                                        logger.info("Node Name [" + subNodeInfo +"] Use Wait 2-1 Exec Status = [" + super.getNodeUseStatus(subNodeInfo) + "] TimeWait ");
+                                        Thread.sleep(50);
+                                        
                                     }
 
                                     // 該当ノードのデータをリカバーする場合は該当ノードと対になるノードの使用停止を要求し、
                                     // 遂になるノードの使用数が0になってからリカバーを開始する。
                                     super.setNodeWaitStatus(nodeInfo);
-                                    logger.info("Node Name [" + nodeInfo +"] Use Wait Start");
+                                    logger.info("Node Name [" + nodeInfo +"] Use Wait 2-2 Start");
                                     while(true) {
                                         // 使用停止まで待機
                                         if(super.getNodeUseStatus(nodeInfo) == 0) break;
-                                        Thread.sleep(5);
+                                        logger.info("Node Name [" + nodeInfo +"] Use Wait 2-2 Exec Status = [" + super.getNodeUseStatus(nodeInfo) + "] TimeWait ");
+                                        Thread.sleep(50);
                                     }
 
                                     logger.info(subNodeInfo + " - Recover Start");

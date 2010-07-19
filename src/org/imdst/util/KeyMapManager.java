@@ -522,8 +522,10 @@ public class KeyMapManager extends Thread {
                         if (this.containsKeyPair(tagCnv)) {
                             firsrtRegist = false;
                             keyStrs = this.getKeyPair(tagCnv);
+                            String[] workStrs = keyStrs.split(ImdstDefine.setTimeParamSep);
+                            keyStrs = workStrs[0];
 
-                            if (keyStrs.indexOf(key) != -1) {
+                            if (keyStrs.indexOf(((String[])key.split(ImdstDefine.setTimeParamSep))[0]) != -1) {
 
                                 // 既に登録済み
                                 appendFlg = false;
@@ -556,7 +558,8 @@ public class KeyMapManager extends Thread {
                         } else {
 
                             // 既に別のKeyが登録済みなので、そのキーにアペンドしても良いかを確認
-                            if ((keyStrs.getBytes().length + tagKeySep.getBytes().length + key.getBytes().length) >= ImdstDefine.saveDataMaxSize) {
+                            // 登録時間の長さ(16)もプラス
+                            if ((keyStrs.getBytes().length + tagKeySep.getBytes().length + key.getBytes().length + 16) >= ImdstDefine.saveDataMaxSize) {
 
                                 // 既にキー値が最大のサイズに到達しているので別のキーを生み出す
                                 counter++;
@@ -587,10 +590,13 @@ public class KeyMapManager extends Thread {
     // Tagを指定することでKeyリストを返す
     public String getTagPair(String tag) {
         String keyStrs = "";
+        String[] setTimeSplitWork = null;
+
         boolean isMatch = false;
         StringBuffer tmpBuf = new StringBuffer();
         String tmpStr = null;
         String tmpSep = "";
+        String lastSetTime = "";
 
         if (!blocking) {
 
@@ -608,7 +614,12 @@ public class KeyMapManager extends Thread {
 
                         isMatch = true;
                         tmpBuf.append(tmpSep);
-                        tmpBuf.append(tmpStr);
+
+                        setTimeSplitWork = tmpStr.split(ImdstDefine.setTimeParamSep);
+
+                        if (setTimeSplitWork.length > 1) lastSetTime = setTimeSplitWork[1];
+
+                        tmpBuf.append(setTimeSplitWork[0]);
                         tmpSep = tagKeySep;
                     } else {
 
@@ -617,7 +628,7 @@ public class KeyMapManager extends Thread {
                             keyStrs = null;
                         } else {
 
-                            keyStrs = tmpBuf.toString();
+                            keyStrs = tmpBuf.append(ImdstDefine.setTimeParamSep).append(lastSetTime).toString();
                         }
                         break;
                     }
@@ -626,7 +637,7 @@ public class KeyMapManager extends Thread {
                     if (!isMatch) {
                         keyStrs = null;
                     } else {
-                        keyStrs = tmpBuf.toString();
+                        keyStrs = tmpBuf.append(ImdstDefine.setTimeParamSep).append(lastSetTime).toString();
                     }
                     break;
                 }

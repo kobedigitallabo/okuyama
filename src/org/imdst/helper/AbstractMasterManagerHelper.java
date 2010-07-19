@@ -47,7 +47,6 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @param nodeInfo 対象のノード情報
      */
     protected void setDeadNode(String nodeInfo, int setPoint, Throwable te) {
-        System.out.println(setPoint);
         if (te != null) {
             te.printStackTrace();
         }

@@ -31,7 +31,7 @@ public class ImdstDefine {
     public static final String keyHelperClientParamSep = ",";
 
     // クライアントからのリクエスト文字列のセパレータ
-    public static final String setTimeParamSep = "$";
+    public static final String setTimeParamSep = "!";
 
     // クラインととの連携文字列でのブランクを表す代行文字列
     public static final String imdstBlankStrData = "(B)";

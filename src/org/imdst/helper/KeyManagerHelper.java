@@ -526,6 +526,7 @@ public class KeyManagerHelper extends AbstractHelper {
             if(!this.keyMapManager.checkError()) {
                 if (this.keyMapManager.containsKeyPair(key)) {
                     String ret = this.keyMapManager.getKeyPair(key);
+
                     if (ret != null) {
                         retStrs = new String[3];
                         retStrs[0] = "2";
@@ -579,49 +580,75 @@ public class KeyManagerHelper extends AbstractHelper {
                     retStrs = new String[3];
                     retStrs[0] = "8";
                     retStrs[1] = "true";
-                    String tmpValue = this.keyMapManager.getKeyPair(key);
-                    
-                    if (scriptStr != null && !scriptStr.trim().equals("") &&
-                        !(new String(BASE64DecoderStream.decode(scriptStr.getBytes())).equals(ImdstDefine.imdstBlankStrData))) {
+                    String workValueStr = this.keyMapManager.getKeyPair(key);
+                    String[] workValues = null;
+                    String[] setTimeValues = null;
+                    String setTimeStr = "";
+                    String tmpValue = null;
 
-                        // TODO:エンジンの初期化に時間がかかるので他の影響を考えここで初期化
-                        ScriptEngineManager manager = new ScriptEngineManager();
-                        ScriptEngine engine = manager.getEngineByName("JavaScript");
+                    // 取得した値からScriptを実行する部分だけ取り出し
+                    if (workValueStr != null) {
 
-                        // 引数設定
-                        if (tmpValue == null) {
-                            engine.put("dataValue", "");
-                        } else if (tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
-                            engine.put("dataValue", "");
-                        } else {
-                            engine.put("dataValue", new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.keyWorkFileEncoding));
-                        }
+                        // memcachedのプロトコルにより、フラグデータが格納されている可能性があるので左辺のみ取り出し
+                        workValues = workValueStr.split(ImdstDefine.keyHelperClientParamSep);
+                        // データ保存日時が記録されている場合があるので左辺のみ取り出し
+                        setTimeValues = workValues[0].split(ImdstDefine.setTimeParamSep);
+                        tmpValue = setTimeValues[0];
 
-                        // 実行 
-                        try {
-                            engine.eval(new String(BASE64DecoderStream.decode(scriptStr.getBytes()), ImdstDefine.keyWorkFileEncoding));
+                        // 返却用に事前に更新日付を作成しておく
+                        if (setTimeValues.length > 1) setTimeStr = ImdstDefine.setTimeParamSep + setTimeValues[1];
 
-                            String execRet = (String)engine.get("execRet");
-                            if (execRet != null && execRet.equals("1")) {
-                                // データを返す
-                                String retValue = (String)engine.get("retValue");
-                                if (retValue != null && !retValue.equals("")) {
-                                    retStrs[2] = new String(BASE64EncoderStream.encode(retValue.getBytes()),ImdstDefine.keyWorkFileEncoding);
-                                } else { 
-                                    retStrs[2] = ImdstDefine.imdstBlankStrData;
-                                }
+                        if (scriptStr != null && !scriptStr.trim().equals("") &&
+                            !(new String(BASE64DecoderStream.decode(scriptStr.getBytes())).equals(ImdstDefine.imdstBlankStrData))) {
+
+                            // TODO:エンジンの初期化に時間がかかるので他の影響を考えここで初期化
+                            ScriptEngineManager manager = new ScriptEngineManager();
+                            ScriptEngine engine = manager.getEngineByName("JavaScript");
+
+                            // 引数設定
+                            if (tmpValue == null) {
+                                engine.put("dataValue", "");
+                            } else if (tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
+                                engine.put("dataValue", "");
                             } else {
-                                // データを返さない
-                                retStrs[1] = "false";
+                                engine.put("dataValue", new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.keyWorkFileEncoding));
                             }
-                        } catch (Exception e) {
-                            retStrs[1] = "error";
-                            retStrs[2] = e.getMessage();
+
+                            // 実行 
+                            try {
+                                engine.eval(new String(BASE64DecoderStream.decode(scriptStr.getBytes()), ImdstDefine.keyWorkFileEncoding));
+
+                                String execRet = (String)engine.get("execRet");
+                                if (execRet != null && execRet.equals("1")) {
+                                    // データを返す
+
+                                    // 最後に更新日付を結合する
+                                    String retValue = (String)engine.get("retValue");
+
+                                    if (retValue != null && !retValue.equals("")) {
+                                        retStrs[2] = new String(BASE64EncoderStream.encode(retValue.getBytes()),ImdstDefine.keyWorkFileEncoding) + setTimeStr;
+                                    } else { 
+                                        retStrs[2] = ImdstDefine.imdstBlankStrData + setTimeStr;
+                                    }
+                                } else {
+                                    // データを返さない
+                                    retStrs[1] = "false";
+                                }
+                            } catch (Exception e) {
+                                retStrs[1] = "error";
+                                retStrs[2] = e.getMessage();
+                            }
+                        } else {
+                            retStrs[2] = tmpValue;
                         }
                     } else {
-                        retStrs[2] = tmpValue;
+
+                        retStrs = new String[2];
+                        retStrs[0] = "8";
+                        retStrs[1] = "false";
                     }
                 } else {
+
                     retStrs = new String[2];
                     retStrs[0] = "8";
                     retStrs[1] = "false";
@@ -678,6 +705,7 @@ public class KeyManagerHelper extends AbstractHelper {
             if(!this.keyMapManager.checkError()) {
                 if (this.keyMapManager.containsKeyPair(key)) {
                     String ret = this.keyMapManager.removeKeyPair(key, transactionCode);
+
                     if (ret != null) {
                         retStrs = new String[3];
                         retStrs[0] = "5";
