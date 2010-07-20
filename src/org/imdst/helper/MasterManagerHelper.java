@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
-
 import org.batch.lang.BatchException;
 import org.batch.job.AbstractHelper;
 import org.batch.job.IJob;
@@ -15,7 +14,6 @@ import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
 import org.imdst.util.StatusUtil;
 import org.imdst.util.protocol.*;
-
 
 //import com.sun.mail.util.BASE64DecoderStream;
 
@@ -44,21 +42,25 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private IProtocolTaker porotocolTaker = null;
     private boolean isProtocolOkuyama = true;
 
-    // 自身のモード(1=Key-Value, 2=DataSystem)
-    private int mode = 1;
-
+    // DataNodeアクセスバランシング指定
     private boolean loadBalancing = false;
 
+    // DataNode逆アクセス指定
     private boolean reverseAccess = false;
 
     // 一貫性モード
-    private boolean strongConsistencyMode = false;
+    // 0=弱一貫性(デフォルト)
+    // 1=中一貫性(常に最後に更新されるノードのデータを取得)
+    // 2=強一貫性(常に全てのノードのデータの更新時間を比べる)
+    private int dataConsistencyMode = 0;
 
     // Transactionモードで起動するかを指定
     private boolean transactionMode = false;
 
+    // トランザクションの使用
     private String[] transactionManagerInfo = null;
 
+    // 更新時間
     private long setTime = 0L;
 
     /**
@@ -68,12 +70,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     // 初期化メソッド定義
     public void initHelper(String initValue) {
-        this.mode = Integer.parseInt(initValue);
     }
 
     // Jobメイン処理定義
     public String executeHelper(String optionParam) throws BatchException {
-        logger.debug("MasterManagerHelper - executeHelper - start");
+        //logger.debug("MasterManagerHelper - executeHelper - start");
 
         String ret = null;
 
@@ -115,6 +116,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 reverseAccess = ((Boolean)parameters[3]).booleanValue();
             }
 
+
             // トランザクション設定
             this.transactionMode = ((Boolean)parameters[4]).booleanValue();
             if (this.transactionMode) {
@@ -131,6 +133,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             InputStreamReader isr = new InputStreamReader(soc.getInputStream(),
                                                             ImdstDefine.keyHelperClientParamEncoding);
             BufferedReader br = new BufferedReader(isr);
+
 
             // 接続終了までループ
             while(!closeFlg) {
@@ -159,8 +162,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // パラメータ分解
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
-                    setTime = System.nanoTime();
+                    // 更新時間初期化
+                    this.initSetTime();
+                    // 一貫性モード初期化
+                    this.initConsistencyMode();
 
+
+                    // 本体処理開始
                     // 処理番号で処理を分岐
                     if(clientParameterList[0].equals("0")) {
 
@@ -308,6 +316,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         pw.print(retParamStr);
                         pw.print("\r\n");
                     }
+
                     pw.flush();
 
                 } catch (SocketException se) {
@@ -345,7 +354,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         }
 
-        logger.debug("MasterManagerHelper - executeHelper - end");
+        //logger.debug("MasterManagerHelper - executeHelper - end");
         return ret;
     }
 
@@ -1222,15 +1231,21 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         boolean slaveUse = false;
         boolean mainRetry = false;
+        int nowUse = 0;
+
+        String[] mainNodeRetParam = null;
+        String[] subNodeRetParam = null;
 
         String nowUseNodeInfo = null;
 
         SocketException se = null;
         IOException ie = null;
+
         try {
 
             // KeyNodeとの接続を確立
             dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+            nowUse = 1;
 
             while (true) {
 
@@ -1239,14 +1254,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 if (dtMap == null) {
                     if (subKeyNodeName != null) dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
 
-                    if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                    if (dtMap == null) {
+
+                        if (mainNodeRetParam != null) break;
+                        throw new BatchException("Key Node IO Error: detail info for log file");
+                    }
                     slaveUse = true;
+                    nowUse = 2;
                 }
 
                 // writerとreaderを取り出し
                 pw = (PrintWriter)dtMap.get("writer");
                 br = (BufferedReader)dtMap.get("reader");
-
 
                 try {
                     // 処理種別判別
@@ -1254,7 +1273,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // Key値でValueを取得
                         StringBuffer buf = new StringBuffer();
-                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
+                        // パラメータ作成 処理タイプ[セパレータ]キー値
                         buf.append("2");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(this.stringCnv(key));
@@ -1273,7 +1292,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // Tag値でキー値群を取得
                         StringBuffer buf = new StringBuffer();
-                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
+                        // パラメータ作成 処理タイプ[セパレータ]キー値
                         buf.append("4");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(this.stringCnv(key));
@@ -1293,11 +1312,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
                     // 一貫性のモードに合わせて処理を分岐
-                    if (!this.strongConsistencyMode) {
+                    if (this.dataConsistencyMode < 2) {
 
-                        // 弱一貫性の場合はデータが取れ次第返却
+                        // 弱一貫性 or 中一貫性の場合はデータが取れ次第返却
                         // 一貫性データが付随した状態から通常データに変換する
-                        // 弱一貫性の場合は時間は使用しない
+                        // 弱一貫性 or 中一貫の場合は時間は使用しない
                         if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
                             cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
                             retParams[2] = cnvConsistencyRet[0];
@@ -1306,6 +1325,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } else {
 
                         // 強一貫性の場合は両方のデータの状態を確かめる
+                        if (nowUse == 1) mainNodeRetParam = retParams;
+                        if (nowUse == 2) subNodeRetParam = retParams;
+
+                        if (subKeyNodeName == null) break;
+                        if (mainNodeRetParam != null && subNodeRetParam != null) break;
                     }
 
                 } catch(SocketException tSe) {
@@ -1320,6 +1344,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // それで駄目な場合はエラーとする
                 if (slaveUse) {
                     if (mainRetry) {
+
+                        if (mainNodeRetParam != null || subNodeRetParam != null) break;
+
                         if (se != null) throw se;
                         if (ie != null) throw ie;
                         throw new BatchException("Key Node IO Error: detail info for log file");
@@ -1327,17 +1354,27 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // メインKeyNodeとの接続を確立
                         dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
-                        if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                        if (dtMap == null) {
+                            if (mainNodeRetParam != null || subNodeRetParam != null) break;
+                            throw new BatchException("Key Node IO Error: detail info for log file");
+                        }
                         mainRetry = true;
+                        nowUse = 1;
                     }
                 } else {
                     if (subKeyNodeName == null) {
+                        if (mainNodeRetParam != null) break;
                         if (se != null) throw se;
                         if (ie != null) throw ie;
                     } else{
                         dtMap = null;
                     }
                 }
+            }
+
+            // 強一貫性の場合は処理
+            if (this.dataConsistencyMode == 2) {
+                retParams = this.strongConsistencyDataConvert(retParams, mainNodeRetParam, subNodeRetParam, type);
             }
         } catch (Exception e) {
             throw new BatchException(e);
@@ -1429,7 +1466,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } 
 
                     // 一貫性のモードに合わせて処理を分岐
-                    if (!this.strongConsistencyMode) {
+                    if (this.dataConsistencyMode == 0) {
 
                         // 弱一貫性の場合はデータが取れ次第返却
                         if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
@@ -2801,7 +2838,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
-
     /**
      * 指定したノードとの接続を切断する.<br>
      *
@@ -2852,6 +2888,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
     }
 
+
     /**
      * 全てのKeyNodeとの接続を切断する.<br>
      *
@@ -2868,44 +2905,41 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
                         connKeyStr = (String)iterator.next();
                         closeKeyNodeConnect(connKeyStr);
-                        /*
-                        cacheConn = (HashMap)this.keyNodeConnectMap.get(connKeyStr);
-
-                        PrintWriter cachePw = (PrintWriter)cacheConn.get(ImdstDefine.keyNodeWriterKey);
-                        if (cachePw != null) {
-                            // 切断要求を送る
-                            cachePw.println(ImdstDefine.imdstConnectExitRequest);
-                            cachePw.flush();
-                            cachePw.close();
-                        }
-
-                        BufferedReader cacheBr = (BufferedReader)cacheConn.get(ImdstDefine.keyNodeReaderKey);
-                        if (cacheBr != null) {
-                            cacheBr.close();
-                        }
-
-                        OutputStreamWriter cacheOsw = (OutputStreamWriter)cacheConn.get(ImdstDefine.keyNodeStreamWriterKey);
-                        if (cacheOsw != null) {
-                            cacheOsw.close();
-                        }
-
-                        InputStreamReader cacheIsr = (InputStreamReader)cacheConn.get(ImdstDefine.keyNodeStreamReaderKey);
-                        if (cacheIsr != null) {
-                            cacheIsr.close();
-                        }
-
-                        Socket cacheSoc = (Socket)cacheConn.get(ImdstDefine.keyNodeSocketKey);
-                        if (cacheSoc != null) {
-                            cacheSoc.close();
-                            cacheSoc = null;
-                        }
-                        */
                     }
                     this.keyNodeConnectMap = null;
                 }
             }
         } catch (Exception e) {
             logger.error(e);
+        }
+    }
+
+
+    /**
+     * 更新時間を自身に蓄積.<br>
+     *
+     */
+    private void initSetTime() {
+        // 現在の時間を取得(更新時間として使用)
+        this.setTime = System.nanoTime();
+    }
+
+
+    /**
+     * 一貫性モードに合わせてパラメータ変更.<br>
+     *
+     */
+    private void initConsistencyMode() {
+
+        // 一貫性モードでreverseAccess値を変更
+        // 中一貫性時は常にスレーブNodeからアクセス
+        if (this.dataConsistencyMode == 1) {
+
+            this.reverseAccess = true;
+        } else if (this.dataConsistencyMode == 2) {
+        
+            // 強一貫性時は常にメインNodeからアクセス
+            this.reverseAccess = false;
         }
     }
 
@@ -2941,11 +2975,91 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return ret;
     }
 
+
+    /**
+     * 強一貫性の処理.<br>
+     * 
+     * @param execRetParams
+     *
+     */
+    private String[] strongConsistencyDataConvert(String[] execRetParams, String[] mainNodeRetParam, String[] subNodeRetParam, String type) {
+        String[] checkConsistencyRetMain = null;
+        String[] checkConsistencyRetSub = null;
+
+        String[] retParams = execRetParams;
+
+
+        if (mainNodeRetParam != null && mainNodeRetParam.length > 1 && mainNodeRetParam[1].equals("true")) {
+
+            checkConsistencyRetMain = dataConvert4Consistency(mainNodeRetParam[2]);
+        } else if (mainNodeRetParam != null && mainNodeRetParam.length > 1 && mainNodeRetParam[1].equals("false")) {
+
+            checkConsistencyRetMain = new String[2];
+            checkConsistencyRetMain[0] = null;
+            checkConsistencyRetMain[1] = "-1";
+        }
+
+        if (subNodeRetParam != null && subNodeRetParam.length > 1 && subNodeRetParam[1].equals("true")) {
+
+            checkConsistencyRetSub = dataConvert4Consistency(subNodeRetParam[2]);
+        } else if (subNodeRetParam != null && subNodeRetParam.length > 1 && subNodeRetParam[1].equals("false")) {
+
+            checkConsistencyRetSub = new String[2];
+            checkConsistencyRetSub[0] = null;
+            checkConsistencyRetSub[1] = "-1";
+        }
+
+
+        if (checkConsistencyRetMain != null && checkConsistencyRetSub != null) {
+
+            if (checkConsistencyRetMain[0] == null && checkConsistencyRetSub[0] == null) {
+
+                retParams = new String[2];
+                retParams[0] = type;
+                retParams[1] = "false";
+            } else if (Long.parseLong(checkConsistencyRetMain[1]) >= Long.parseLong(checkConsistencyRetSub[1])) {
+
+                retParams = new String[3];
+                retParams[0] = type;
+                retParams[1] = "true";
+                retParams[2] = checkConsistencyRetMain[0];
+            } else {
+
+                retParams = new String[3];
+                retParams[0] = type;
+                retParams[1] = "true";
+                retParams[2] = checkConsistencyRetSub[0];
+            }
+        } else if (checkConsistencyRetMain != null) {
+
+            if (checkConsistencyRetMain[0] == null) {
+
+                retParams[1] = "false";
+            } else {
+
+                retParams[2] = checkConsistencyRetMain[0];
+            }
+        } else {
+
+            if (checkConsistencyRetSub[0] == null) {
+                retParams[1] = "false";
+            } else {
+
+                retParams[2] = checkConsistencyRetSub[0];
+            }
+        }
+        return retParams;
+    }
+
+
+    // 文字列変換メソッド
     private String stringCnv(String str) {
         return str;
         //return str.hashCode();
     }
 
+
+    // キー値の長さをチェック
     private boolean checkKeyLength(String key) {
         if (key == null) return false;
         if (key.length() >= ImdstDefine.saveKeyMaxSize) return false;
