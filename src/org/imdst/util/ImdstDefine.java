@@ -156,6 +156,8 @@ public class ImdstDefine {
 
     public static final String dispatchModeConsistentHash = "consitenthash";
 
+    public static final int consistentHashVirtualNode = 10;
+
     /* -- プログラム規定数値 ----------------------------------------      */
     // 保存出来る、Key、Tag、Valueの最大長
     // Valueの最大長

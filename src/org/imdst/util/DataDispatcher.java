@@ -8,6 +8,8 @@ import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
 import org.batch.lang.BatchException;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 /**
  * MasterNodeが使用するDataNode決定モジュール.<br>
  *
@@ -33,9 +35,12 @@ public class DataDispatcher {
 
     private static Object syncObj = new Object();
 
+    private static int virtualNodeSize = ImdstDefine.consistentHashVirtualNode;
+
     // 振り分けモード 0=mod 1=ConsistentHash
     private static int dispatchMode = 0;
 
+    // 振り分けモードの初期化状態を表す
     private static boolean fixDispatchMode = false;
 
 
@@ -200,22 +205,39 @@ public class DataDispatcher {
         keyMapNodesInfo = keyMapNodes.split(",");
         String[][] allNodeDetailList = new String[6][keyMapNodesInfo.length];
 
+        // メインデータノード用ConsistentHashのサークル作成
+        SortedMap nodeCircle = new TreeMap();
+
         // MainNode初期化
         for (int index = 0; index < keyMapNodesInfo.length; index++) {
             String keyNode = keyMapNodesInfo[index].trim();
+            String[] keyNodeDt = keyNode.split(":");
             keyNodeList.add(keyNode);
 
             allNodeDetailList[2][index] = keyNode;
-
-            String[] keyNodeDt = keyNode.split(":");
-
             allNodeDetailList[0][index] = keyNodeDt[0];
             allNodeDetailList[1][index] = keyNodeDt[1];
+            String[] mainNodeDt = {allNodeDetailList[0][index], allNodeDetailList[1][index], allNodeDetailList[2][index]};
+
+            keyNodeMap.put(keyNode, mainNodeDt);
+
+            // ConsistentHash用のサークルを初期化
+            for (int i = 0; i < virtualNodeSize; i++) {
+
+                // ノードFullNameを使用してその値のバーチャル数を連結した値をHash化してその、Circle登録時に
+                // KeyNodeのフルネームを入れる
+                // 後から、keyNodeMapから取り出すため
+                nodeCircle.put(new Integer(sha1Hash4Int(keyNode + "_" + i)), keyNode);
+            }
         }
+
+        // メインデータノードのサークルを登録
+        keyNodeMap.put("nodeCircle", nodeCircle);
 
         synchronized(syncObj) {
             allNodeMap.put("main", keyNodeList);
         }
+
 
         // SubNode初期化
         if (subKeyMapNodes != null && !subKeyMapNodes.equals("")) {
@@ -229,6 +251,9 @@ public class DataDispatcher {
                 allNodeDetailList[5][index] = subKeyNode;
                 allNodeDetailList[3][index] = subKeyNodeDt[0];
                 allNodeDetailList[4][index] = subKeyNodeDt[1];
+                String[] subNodeDt = {allNodeDetailList[3][index], allNodeDetailList[4][index], allNodeDetailList[5][index]};
+
+                keyNodeMap.put(allNodeDetailList[2][index] + "_sub", subNodeDt);
             }
 
             synchronized(syncObj) {
@@ -237,9 +262,186 @@ public class DataDispatcher {
         }
 
         keyNodeMap.put("list", allNodeDetailList);
+        // 準備完了
         standby = true;
     }
 
+    /**
+     * ConsitentHashモード時にノードの追加をおこなう.<br>
+     * 本メソッドを呼びだすと、新しいノードのサークルを作りなおす前に、旧ノードのサークルを作成し、keyNodeMapに<br>
+     * "oldNodeCircle"という名前で登録する.<br>
+     * 返却値はノード登録によって移動しなければいけないデータのHash化した数値の範囲データ。このデータをノードの<br>
+     * FullNameをキー値としてHashMapに詰めて返す.<br>
+     * メインデータノードは返却値のHashMapに"main"というキー値で、スレーブは"sub"というキーとでMapが格納されている.<br>
+     *
+     * @param keyNodeFullName 追加するメインデータノード フォーマット"192.168.1.3:5555"
+     * @param subKeyNodeFullName 追加するスレーブデータノード フォーマット"192.168.2.3:5555"
+     * @return HashMap 変更対象データの情報
+     */
+    public static HashMap addNode4ConsistentHash4(String keyNodeFullName, String subKeyNodeFullName) {
+        HashMap retMap = new HashMap(2);
+        HashMap convertMap = new HashMap();
+        HashMap subConvertMap = new HashMap();
+        ArrayList keyNodeList = new ArrayList();
+        ArrayList subKeyNodeList = new ArrayList();
+
+        SortedMap oldCircle = new TreeMap<Integer, Map>();
+
+        // 現状のサークルを取り出し
+        SortedMap nodeCircle = (SortedMap)keyNodeMap.get("nodeCircle");
+        Set set = nodeCircle.keySet();
+        Iterator iterator = set.iterator();
+
+        // oldCircle作成
+        while(iterator.hasNext()) {
+            Integer key = (Integer)iterator.next();
+            String nodeFullName = (String)nodeCircle.get(key);
+            oldCircle.put(key, nodeFullName);
+        }
+
+        // データ移動表作成
+        convertMap = new HashMap();
+
+
+        for (int i = 0; i < virtualNodeSize; i++) {
+
+            int targetHash = sha1Hash4Int(keyNodeFullName + "_" + i);
+            int targetHashStart = 0;
+            int targetHashEnd = targetHash;
+            String nodeName = null;
+
+            SortedMap<Integer, Map> headMap = nodeCircle.headMap(targetHash);
+            SortedMap<Integer, Map> tailMap = nodeCircle.tailMap(targetHash);
+
+            // 登録されたノードの仮想ノード単位でどのレンジのデータを必要としているかを
+            // 自身から大きい数値に1つめのノードまでの距離で求める
+            // どのノードからどれだけのレンジのデータが必要か求める
+            // たとえばNode01,Node02,Node03に対してNode04を追加した場合に、
+            // Node01から5111～12430まで、Node02から45676～987654とか
+            if (headMap.isEmpty()) {
+
+                int hash = ((Integer)nodeCircle.lastKey()).intValue();
+                targetHashStart = hash + 1;
+                nodeName = (String)nodeCircle.get(nodeCircle.firstKey());
+            } else {
+                
+                int hash = ((Integer)headMap.lastKey()).intValue();
+                targetHashStart = hash + 1;
+                if (tailMap.isEmpty()) {
+//System.out.println("bbbbbbbb");
+                    nodeName = (String)nodeCircle.get(nodeCircle.firstKey());
+                } else {
+//System.out.println("cccccccc");
+                    //System.out.println(tailMap.firstKey());
+                    //System.out.println(tailMap.lastKey());
+                    nodeName = (String)nodeCircle.get(tailMap.firstKey());
+                }
+            }
+            //System.out.println("     targetHash=" + targetHash);
+            //System.out.println("targetHashStart=" + targetHashStart);
+            //System.out.println("  targetHashEnd=" + targetHashEnd);
+            //System.out.println("Data Targe Node=" + nodeName);
+            //if (targetHashStart > targetHashEnd) System.out.println(targetHashStart + "-" +  targetHashEnd);
+            // 求めたレンジを取得ノード名単位でまとめる
+            // Node01,"6756-9876,12345-987654"
+            // Node02,"342-3456,156456-178755"
+            if (convertMap.containsKey(nodeName)) {
+
+                String work = (String)convertMap.get(nodeName);
+                convertMap.put(nodeName, work + "," + targetHashStart + "-" +  targetHashEnd);
+                subConvertMap.put(nodeName + "_sub", work + "," + targetHashStart + "-" +  targetHashEnd);
+            } else {
+
+                convertMap.put(nodeName, targetHashStart + "-" +  targetHashEnd);
+                subConvertMap.put(nodeName + "_sub", targetHashStart + "-" +  targetHashEnd);
+            }
+        }
+
+        // 返却用のデータ移動支持Mapに登録
+        retMap.put("main", convertMap);
+        retMap.put("msub", subConvertMap);
+
+
+        // 全体格納配列に追加
+        // 配列内容は
+        // [0][*]=メインノードName
+        // [1][*]=メインノードPort
+        // [2][*]=メインノードFull
+        // [3][*]=サブノードName
+        // [4][*]=サブノードPort
+        // [5][*]=サブノードFull
+        String[][] allNodeDetailList = (String[][])keyNodeMap.get("list");
+        String[][] newAllNodeDetailList = new String[6][allNodeDetailList.length + 1];
+        keyNodeList = (ArrayList)allNodeMap.get("main");
+
+        // allNodeDetailListに追加するために複製を作成
+        for (int allNodeDetailListIdx = 0; allNodeDetailListIdx < allNodeDetailList.length; allNodeDetailListIdx++) {
+            newAllNodeDetailList[0][allNodeDetailListIdx] = allNodeDetailList[0][allNodeDetailListIdx];
+            newAllNodeDetailList[1][allNodeDetailListIdx] = allNodeDetailList[1][allNodeDetailListIdx];
+            newAllNodeDetailList[2][allNodeDetailListIdx] = allNodeDetailList[2][allNodeDetailListIdx];
+            newAllNodeDetailList[3][allNodeDetailListIdx] = allNodeDetailList[3][allNodeDetailListIdx];
+            newAllNodeDetailList[4][allNodeDetailListIdx] = allNodeDetailList[4][allNodeDetailListIdx];
+            newAllNodeDetailList[5][allNodeDetailListIdx] = allNodeDetailList[5][allNodeDetailListIdx];
+        }
+
+        // MainNodeに
+        String keyNode = keyNodeFullName;
+        String[] keyNodeDt = keyNode.split(":");
+        keyNodeList.add(keyNode);
+
+        // 新しいallNodeDetailListに追加
+        newAllNodeDetailList[2][allNodeDetailList.length] = keyNode;
+        newAllNodeDetailList[0][allNodeDetailList.length] = keyNodeDt[0];
+        newAllNodeDetailList[1][allNodeDetailList.length] = keyNodeDt[1];
+        String[] mainNodeDt = {keyNodeDt[0], keyNodeDt[1], keyNode};
+
+        // keyNodeMapにも追加
+        keyNodeMap.put(keyNode, mainNodeDt);
+
+        // ConsistentHash用のサークルに追加
+        for (int i = 0; i < virtualNodeSize; i++) {
+
+            // ノードFullNameを使用してその値のバーチャル数を連結した値をHash化して、Circle登録時に
+            // KeyNodeのフルネームを入れる
+            // 後から、keyNodeMapから取り出すため
+            nodeCircle.put(new Integer(sha1Hash4Int(keyNode + "_" + i)), keyNode);
+        }
+
+        // メインデータノードのサークルを登録
+        keyNodeMap.put("nodeCircle", nodeCircle);
+        keyNodeMap.put("oldNodeCircle", oldCircle);
+
+        synchronized(syncObj) {
+            allNodeMap.put("main", keyNodeList);
+        }
+
+
+        // SubNode初期化
+        if (subKeyNodeFullName != null && !subKeyNodeFullName.equals("")) {
+            String subKeyNode = subKeyNodeFullName;
+            String[] subKeyNodeDt = subKeyNode.split(":");
+            subKeyNodeList = (ArrayList)allNodeMap.put("sub", subKeyNodeList);
+
+            subKeyNodeList.add(subKeyNode);
+
+            newAllNodeDetailList[5][allNodeDetailList.length] = subKeyNode;
+            newAllNodeDetailList[3][allNodeDetailList.length] = subKeyNodeDt[0];
+            newAllNodeDetailList[4][allNodeDetailList.length] = subKeyNodeDt[1];
+            String[] subNodeDt = {subKeyNodeDt[0], subKeyNodeDt[1], subKeyNode};
+
+            keyNodeMap.put(newAllNodeDetailList[2][allNodeDetailList.length] + "_sub", subNodeDt);
+
+            synchronized(syncObj) {
+                allNodeMap.put("sub", subKeyNodeList);
+            }
+        }
+
+        // 新しい全体リストを上書き
+        keyNodeMap.put("list", newAllNodeDetailList);
+
+
+        return retMap;
+    }
 
 
     /**
@@ -443,38 +645,70 @@ public class DataDispatcher {
      * @param useRule ルール値
      * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] dispatchConsistentHashKeyNode(String key, boolean oldCircle) {
+    public static String[] dispatchConsistentHashKeyNode(String key, boolean useOldCircle) {
         String[] ret = null;
         boolean noWaitFlg = false;
+        SortedMap nodeCircle = null;
+        String targetNode = null;
+        String[] mainDataNodeInfo = null;
+        String[] slaveDataNodeInfo = null;
 
         // ノード詳細取り出し
         String[][] allNodeDetailList = (String[][])keyNodeMap.get("list");
 
         // Key値からHash値作成
-        int execKeyInt = key.hashCode();
+        int execKeyInt = sha1Hash4Int(key);
 
+        // マイナス値は使用しない
         if (execKeyInt < 0) {
             //String work = new Integer(execKeyInt).toString();
             //execKeyInt = Integer.parseInt(work.substring(1,work.length()));
             execKeyInt = execKeyInt - execKeyInt - execKeyInt;
         }
 
+        // ノードサークルを取り出し
+        // useOldCircleフラグに合わせて旧サークルを使い分ける
+        if (useOldCircle && keyNodeMap.containsKey("oldNodeCircle")) {
+            nodeCircle = (SortedMap)keyNodeMap.get("oldNodeCircle");
+        } else {
+            nodeCircle = (SortedMap)keyNodeMap.get("nodeCircle");
+        }
+
+        // 該当ノード割り出し
+        int hash = sha1Hash4Int(key);
+
+        if (!nodeCircle.containsKey(hash)) {
+            SortedMap<Integer, Map> tailMap = nodeCircle.tailMap(hash);
+            if (tailMap.isEmpty()) {
+                hash = ((Integer)nodeCircle.firstKey()).intValue();
+            } else {
+                hash = ((Integer)tailMap.firstKey()).intValue();
+            }
+        }
+
+        // 対象ノード名を取得
+        targetNode = (String)nodeCircle.get(hash);
+
+        // 対象メインノード詳細取り出し
+        mainDataNodeInfo = (String[])keyNodeMap.get(targetNode);
+        // 対象スレーブノード詳細取り出し
+        slaveDataNodeInfo = (String[])keyNodeMap.get(targetNode + "sub");
 
         // スレーブノードの有無に合わせて配列を初期化
-        if (allNodeDetailList[3][0] != null) {
+        if (slaveDataNodeInfo != null) {
 
             ret = new String[6];
 
-            ret[3] = allNodeDetailList[3][nodeNo];
-            ret[4] = allNodeDetailList[4][nodeNo];
-            ret[5] = allNodeDetailList[5][nodeNo];
+            ret[3] = slaveDataNodeInfo[0];
+            ret[4] = slaveDataNodeInfo[1];
+            ret[5] = slaveDataNodeInfo[2];
         } else {
             ret = new String[3];
         }
 
-        ret[0] = allNodeDetailList[0][nodeNo];
-        ret[1] = allNodeDetailList[1][nodeNo];
-        ret[2] = allNodeDetailList[2][nodeNo];
+        ret[0] = mainDataNodeInfo[0];
+        ret[1] = mainDataNodeInfo[1];
+        ret[2] = mainDataNodeInfo[2];
 
 
         // 該当ノードが一時使用停止の場合は使用再開されるまで停止(データ復旧時に起こりえる)
@@ -482,10 +716,10 @@ public class DataDispatcher {
         while(true) {
             noWaitFlg = false;
             // 停止ステータスか確認する
-            if (!StatusUtil.isWaitStatus(allNodeDetailList[2][nodeNo])) noWaitFlg = true;
+            if (!StatusUtil.isWaitStatus(mainDataNodeInfo[2])) noWaitFlg = true;
 
             if (ret.length > 3) {
-                if(!StatusUtil.isWaitStatus(allNodeDetailList[5][nodeNo])) noWaitFlg = true;
+                if(!StatusUtil.isWaitStatus(slaveDataNodeInfo[2])) noWaitFlg = true;
             }
 
             if  (noWaitFlg) break;
@@ -498,10 +732,10 @@ public class DataDispatcher {
 
         // ノードに対するアクセスを開始をマーク
         // 終了はMasterManagerHelperで行われる
-        StatusUtil.addNodeUse(allNodeDetailList[2][nodeNo]);
+        StatusUtil.addNodeUse(mainDataNodeInfo[2]);
 
         if (ret.length > 3) {
-            StatusUtil.addNodeUse(allNodeDetailList[5][nodeNo]);
+            StatusUtil.addNodeUse(slaveDataNodeInfo[2]);
         }
 
         return ret;
@@ -544,6 +778,7 @@ public class DataDispatcher {
 
         return ret;
     }
+
 
     /**
      * 全てのノードの情報を返す.<br>
@@ -589,7 +824,9 @@ public class DataDispatcher {
         return retMap;
     }
 
+
     /**
+     * TransactionManagerの情報を返す.<br>
      *
      */
     public static ArrayList getTransactionManagerInfo() {
@@ -610,6 +847,23 @@ public class DataDispatcher {
         return retList;
     }
 
+
+    /**
+     * sha1のアルゴリズムでHashした値をjavaのhashCodeして返す.<br>
+     *
+     * @param targete
+     * @param int
+     */
+    public static int sha1Hash4Int(String target) {
+        return new String(DigestUtils.sha(target.getBytes())).hashCode();
+    }
+
+
+    /**
+     * 本メソッド呼び出すと本クラスを使用できるまで呼び出し元をロック停止させる.<br>
+     *
+     * @return boolean 
+     */
     public static boolean isStandby() {
         while(!standby) {
             try {
