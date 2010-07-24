@@ -932,18 +932,9 @@ public class KeyMapManager extends Thread {
     }
 
     // 引数で渡されてストリームに対しkeyMapObjを書き出す
-    public void outputKeyMapObj2Stream(PrintWriter pw, int matchNo, String rulesStr) throws BatchException {
+    public void outputKeyMapObj2Stream(PrintWriter pw) throws BatchException {
         if (!blocking) {
             try {
-                String[] rules = null;
-                int[] rulesInt = null;
-                rules = rulesStr.split(",");
-                rulesInt = new int[rules.length];
-
-                for (int i = 0; i < rules.length; i++) {
-                    rulesInt[i] = Integer.parseInt(rules[i]);
-                }
-
                 synchronized(poolKeyLock) {
                     logger.info("outputKeyMapObj2Stream - synchronized - start");
                     String allDataSep = "";
@@ -973,24 +964,16 @@ public class KeyMapManager extends Thread {
                     while(entryIte.hasNext()) {
                         Map.Entry obj = (Map.Entry)entryIte.next();
                         String key = null;
-                        boolean sendFlg = false;
 
                         key = (String)obj.getKey();
-                        for (int idx = 0; idx < rulesInt.length; idx++) {
-                            if (DataDispatcher.isRuleMatchKey(key, rulesInt[idx], matchNo)) {
-                                sendFlg = true;
-                                break;
-                            }
-                        }
 
-                        // 送信すべきデータのみ送る
-                        if (sendFlg) {
-                            allDataBuf.append(allDataSep);
-                            allDataBuf.append(key);
-                            allDataBuf.append(workFileSeq);
-                            allDataBuf.append(this.keyMapObjGet(key));
-                            allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
-                        }
+                        // 全てのデータを送る
+                        allDataBuf.append(allDataSep);
+                        allDataBuf.append(key);
+                        allDataBuf.append(workFileSeq);
+                        allDataBuf.append(this.keyMapObjGet(key));
+                        allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+
                         counter++;
                         if (counter > (maxLineCount - 1)) {
                             pw.println(allDataBuf.toString());
@@ -1014,17 +997,9 @@ public class KeyMapManager extends Thread {
 
     // 引数で渡されてストリームに対し復旧中の差分データを書き出す
     // 
-    public void outputDiffKeyMapObj2Stream(PrintWriter pw, int matchNo, String rulesStr) throws BatchException {
+    public void outputDiffKeyMapObj2Stream(PrintWriter pw) throws BatchException {
         if (!blocking) {
             try {
-                String[] rules = null;
-                int[] rulesInt = null;
-                rules = rulesStr.split(",");
-                rulesInt = new int[rules.length];
-
-                for (int i = 0; i < rules.length; i++) {
-                    rulesInt[i] = Integer.parseInt(rules[i]);
-                }
 
                 synchronized(poolKeyLock) {
                     logger.info("outputDiffKeyMapObj2Stream - synchronized - start");

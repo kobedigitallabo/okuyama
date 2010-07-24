@@ -33,6 +33,23 @@ public class DataDispatcher {
 
     private static Object syncObj = new Object();
 
+    // 振り分けモード 0=mod 1=ConsistentHash
+    private static int dispatchMode = 0;
+
+    private static boolean fixDispatchMode = false;
+
+
+    // 振り分けモードを設定
+    // 1度のみ呼び出し可能
+    public static void setDispatchMode(String mode) {
+        if (!fixDispatchMode) {
+            if (mode.equals(ImdstDefine.dispatchModeConsistentHash)) {
+                dispatchMode = 1;
+                fixDispatchMode = true;
+            }
+        }
+    }
+
     /**
      * 初期化<br>
      * <br>
@@ -132,6 +149,99 @@ public class DataDispatcher {
         standby = true;
     }
 
+
+    /**
+     * 初期化<br>
+     * ConsistentHash専用.<br>
+     * <br>
+     * 以下の要素を設定する.<br>
+     * KeyMapNodesInfo=Keyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
+     * SubKeyMapNodesInfo=スレーブKeyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
+     * SubKeyMapNodesInfoは設定なしも可能。その場合はnullを設定<br>
+     * <br>
+     * 記述の決まり.<br>
+     * <br>
+     * <br>
+     * KeyMapNodesInfo:KeyNode(データ保存ノード)をIPアドレス(マシン名)とポート番号を":"で連結した状態で記述<br>
+     * <br>
+     * SubKeyMapNodesInfo:スレーブとなるのKeyNodeをKeyMapNodesInfoと同様の記述方法で記述。KeyMapNodesInfoと同様の数である必要がある。<br>
+     *
+     * @param keyMapNodes データノードを指定
+     * @param subKeyMapNodes スレーブデータノードを指定
+     * @param transactionManagerStr トランザクションマネージャの指定
+     */
+    public static void initConsistentHashMode(String keyMapNodes, String subKeyMapNodes, String transactionManagerStr) {
+        standby = false;
+        String[] keyMapNodesInfo = null;
+        String[] subkeyMapNodesInfo = null;
+        String[] transactionManagerInfo = null;
+
+        ArrayList keyNodeList = new ArrayList();
+        ArrayList subKeyNodeList = new ArrayList();
+
+        synchronized(syncObj) {
+            allNodeMap = new HashMap();
+            // TransactionManager設定初期化
+            if (transactionManagerStr != null) {
+                transactionManagerList = new ArrayList();
+                transactionManagerList.add(transactionManagerStr);
+            }
+        }
+
+
+        // 全体格納配列初期化
+        // 配列内容は
+        // [0][*]=メインノードName
+        // [1][*]=メインノードPort
+        // [2][*]=メインノードFull
+        // [3][*]=サブノードName
+        // [4][*]=サブノードPort
+        // [5][*]=サブノードFull
+        keyMapNodesInfo = keyMapNodes.split(",");
+        String[][] allNodeDetailList = new String[6][keyMapNodesInfo.length];
+
+        // MainNode初期化
+        for (int index = 0; index < keyMapNodesInfo.length; index++) {
+            String keyNode = keyMapNodesInfo[index].trim();
+            keyNodeList.add(keyNode);
+
+            allNodeDetailList[2][index] = keyNode;
+
+            String[] keyNodeDt = keyNode.split(":");
+
+            allNodeDetailList[0][index] = keyNodeDt[0];
+            allNodeDetailList[1][index] = keyNodeDt[1];
+        }
+
+        synchronized(syncObj) {
+            allNodeMap.put("main", keyNodeList);
+        }
+
+        // SubNode初期化
+        if (subKeyMapNodes != null && !subKeyMapNodes.equals("")) {
+            subkeyMapNodesInfo = subKeyMapNodes.split(",");
+
+            for (int index = 0; index < subkeyMapNodesInfo.length; index++) {
+                String subKeyNode = subkeyMapNodesInfo[index].trim();
+                String[] subKeyNodeDt = subKeyNode.split(":");
+                subKeyNodeList.add(subKeyNode);
+
+                allNodeDetailList[5][index] = subKeyNode;
+                allNodeDetailList[3][index] = subKeyNodeDt[0];
+                allNodeDetailList[4][index] = subKeyNodeDt[1];
+            }
+
+            synchronized(syncObj) {
+                allNodeMap.put("sub", subKeyNodeList);
+            }
+        }
+
+        keyNodeMap.put("list", allNodeDetailList);
+        standby = true;
+    }
+
+
+
     /**
      * 過去ルールを返す.<br>
      *
@@ -151,8 +261,8 @@ public class DataDispatcher {
      */
     public static String[] dispatchKeyNode(String key) {
         return dispatchKeyNode(key, ruleInt);
-
     }
+
 
     /**
      * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
@@ -285,6 +395,124 @@ public class DataDispatcher {
 
         return ret;
     }
+
+
+
+
+
+
+
+
+
+
+    /**
+     *
+     * @param key キー値
+     * @param reverse 逆転指定
+     * @return String 対象キーノードの情報(サーバ名、ポート番号)
+     */
+    public static String[] dispatchReverseConsistentHashKeyNode(String key, boolean reverse, boolean oldCircle) {
+        String[] ret = null;
+        String[] tmp = dispatchConsistentHashKeyNode(key, oldCircle);
+
+        if (reverse) {
+            // SubNodeが存在する場合は逆転させる
+            if (tmp.length > 3) {
+                ret = new String[6];
+                ret[3] = tmp[0];
+                ret[4] = tmp[1];
+                ret[5] = tmp[2];
+
+                ret[0] = tmp[3];
+                ret[1] = tmp[4];
+                ret[2] = tmp[5];
+            } else {
+                ret = tmp;
+            }
+            
+        } else {
+            ret = tmp;
+        }
+        return ret;
+    }
+
+
+    /**
+     *
+     * @param key キー値
+     * @param useRule ルール値
+     * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
+     */
+    public static String[] dispatchConsistentHashKeyNode(String key, boolean oldCircle) {
+        String[] ret = null;
+        boolean noWaitFlg = false;
+
+        // ノード詳細取り出し
+        String[][] allNodeDetailList = (String[][])keyNodeMap.get("list");
+
+        // Key値からHash値作成
+        int execKeyInt = key.hashCode();
+
+        if (execKeyInt < 0) {
+            //String work = new Integer(execKeyInt).toString();
+            //execKeyInt = Integer.parseInt(work.substring(1,work.length()));
+            execKeyInt = execKeyInt - execKeyInt - execKeyInt;
+        }
+
+
+        // スレーブノードの有無に合わせて配列を初期化
+        if (allNodeDetailList[3][0] != null) {
+
+            ret = new String[6];
+
+            ret[3] = allNodeDetailList[3][nodeNo];
+            ret[4] = allNodeDetailList[4][nodeNo];
+            ret[5] = allNodeDetailList[5][nodeNo];
+        } else {
+            ret = new String[3];
+        }
+
+        ret[0] = allNodeDetailList[0][nodeNo];
+        ret[1] = allNodeDetailList[1][nodeNo];
+        ret[2] = allNodeDetailList[2][nodeNo];
+
+
+        // 該当ノードが一時使用停止の場合は使用再開されるまで停止(データ復旧時に起こりえる)
+        // どちらか一方でも一時停止の場合はWait
+        while(true) {
+            noWaitFlg = false;
+            // 停止ステータスか確認する
+            if (!StatusUtil.isWaitStatus(allNodeDetailList[2][nodeNo])) noWaitFlg = true;
+
+            if (ret.length > 3) {
+                if(!StatusUtil.isWaitStatus(allNodeDetailList[5][nodeNo])) noWaitFlg = true;
+            }
+
+            if  (noWaitFlg) break;
+
+            try {
+                //System.out.println("DataDispatcher - 停止中");
+                Thread.sleep(50);
+            } catch (Exception e) {}
+        }
+
+        // ノードに対するアクセスを開始をマーク
+        // 終了はMasterManagerHelperで行われる
+        StatusUtil.addNodeUse(allNodeDetailList[2][nodeNo]);
+
+        if (ret.length > 3) {
+            StatusUtil.addNodeUse(allNodeDetailList[5][nodeNo]);
+        }
+
+        return ret;
+    }
+
+
+
+
+
+
+
 
     /**
      * 引数のKey値が引数のルールのもと引数のmatchNoと合致するかを返す.<br>

@@ -620,8 +620,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      *
      * @return boolean 成否
      */
-    protected boolean nodeDataRecover(String nodeInfo, String masterNodeInfo, int rule, int[] oldRules, int matchNo, ILogger logger) throws BatchException {
-        return this.nodeDataRecover(nodeInfo, masterNodeInfo, rule, oldRules, matchNo, false, logger);
+    protected boolean nodeDataRecover(String nodeInfo, String masterNodeInfo, ILogger logger) throws BatchException {
+        return this.nodeDataRecover(nodeInfo, masterNodeInfo, false, logger);
     }
 
     /**
@@ -634,7 +634,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      *
      * @return boolean 成否
      */
-    protected boolean nodeDataRecover(String nodeInfo, String masterNodeInfo, int rule, int[] oldRules, int matchNo, boolean noDataCheck, ILogger logger) throws BatchException {
+    protected boolean nodeDataRecover(String nodeInfo, String masterNodeInfo, boolean noDataCheck, ILogger logger) throws BatchException {
 
         boolean ret = true;
 
@@ -651,8 +651,6 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         String masterNodeName = masterNodeDt[0];
         int masterNodePort = new Integer(masterNodeDt[1]).intValue();
 
-        String rulesStr = "";
-        String ruleSep = "";
 
         PrintWriter pw = null;
         BufferedReader br = null;
@@ -724,14 +722,6 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
             long nodeDate = new Long(updateDate[2]).longValue();
 
-            // 引数となるルール文字列を作り出す
-            rulesStr = new Integer(rule).toString();
-
-            if (oldRules != null) {
-                for (int oldRulesIdx = 0; oldRulesIdx < oldRules.length; oldRulesIdx++) {
-                    rulesStr = rulesStr + "," + oldRules[oldRulesIdx];
-                }
-            }
 
             // どちらが新しいか比べる
             if (noDataCheck == true || masterDate >= nodeDate) {
@@ -757,10 +747,6 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 buf.append("20");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append("true");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(matchNo);
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(rulesStr);
 
                 // 送信
                 mpw.println(buf.toString());
@@ -794,7 +780,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 while(true) {
                     // 使用停止まで待機
                     if(this.getNodeUseStatus(masterNodeInfo) == 0) break;
-                    Thread.sleep(10);
+                    Thread.sleep(50);
                 }
 
                 // 停止完了後差分データを取得
@@ -803,10 +789,6 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 buf.append("24");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append("true");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(matchNo);
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(rulesStr);
 
                 // 送信
                 mpw.println(buf.toString());
@@ -852,10 +834,6 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 buf.append("20");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append("true");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(matchNo);
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(rulesStr);
 
                 // 送信
                 pw.println(buf.toString());
@@ -897,7 +875,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
                     // 使用停止まで待機
                     if(this.getNodeUseStatus(nodeInfo) == 0) break;
-                    Thread.sleep(10);
+                    Thread.sleep(50);
                 }
 
 
@@ -907,10 +885,6 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 buf.append("24");
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append("true");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(matchNo);
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(rulesStr);
 
                 // 送信
                 pw.println(buf.toString());

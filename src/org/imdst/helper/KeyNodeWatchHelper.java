@@ -140,7 +140,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                     StatusUtil.setNodeStatusDt(nodeInfo, "Recover Start");
 
                                     // 復旧開始
-                                    if(super.nodeDataRecover(nodeInfo, (String)subNodeList.get(i), DataDispatcher.ruleInt, DataDispatcher.oldRules, i, logger)) {
+                                    if(super.nodeDataRecover(nodeInfo, (String)subNodeList.get(i), logger)) {
 
                                         // リカバー成功
                                         // 該当ノードの復帰を登録
@@ -217,7 +217,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                     logger.info(subNodeInfo + " - Recover Start");
                                     StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Start");
                                     // 復旧開始
-                                    if(super.nodeDataRecover(subNodeInfo, nodeInfo, DataDispatcher.ruleInt, DataDispatcher.oldRules, i, logger)) {
+                                    if(super.nodeDataRecover(subNodeInfo, nodeInfo, logger)) {
 
                                         // リカバー成功
                                         // 該当ノードの復帰を登録

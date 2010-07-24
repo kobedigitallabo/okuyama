@@ -50,6 +50,9 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
     // 全てのマスターノードの接続情報
     private String allMasterNodeInfoStr = null;
 
+    // 分散方式 デフォルトはmode
+    // 他にはconsistenthash
+    private String dispatchMode = "mod";
 
     /**
      * Logger.<br>
@@ -87,6 +90,12 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
         reloadKeys[10] = ImdstDefine.Prop_MainMasterNodeInfo;
         reloadKeys[11] = ImdstDefine.Prop_AllMasterNodeInfo;
 
+        if(super.getPropertiesValue("dispatchmode") != null) {
+            dispatchMode = super.getPropertiesValue("dispatchmode");
+        }
+
+        // 振り分けモード設定
+        DataDispatcher.setDispatchMode(dispatchMode);
 
         try{
             // 起動時は設定ファイルから情報取得
@@ -618,7 +627,12 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
 
 
         // DataDispatcher初期化
-        DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
+        if (dispatchMode.equals("consistenthash")) {
+            DataDispatcher.initConsistentHashMode(keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
+        } else {
+            // デフォルトはMod
+            DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
+        } 
     }
 
 

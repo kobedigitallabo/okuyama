@@ -320,7 +320,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                         // KeyMapManager Direct Connection
                         // KeyMapObjectを読み込んで渡す
-                        this.keyMapManager.outputKeyMapObj2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
+                        this.keyMapManager.outputKeyMapObj2Stream(pw);
                         pw.flush();
                         retParamBuf = null;
                     } else if(clientParameterList[0].equals("21")) {
@@ -345,7 +345,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                         // KeyManagerの差分データを読み込んで渡す
                         // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
-                        this.keyMapManager.outputDiffKeyMapObj2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
+                        this.keyMapManager.outputDiffKeyMapObj2Stream(pw);
                         pw.flush();
                         retParamBuf = null;
                     } else if(clientParameterList[0].equals("25")) {
@@ -357,7 +357,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     } else if(clientParameterList[0].equals("26")) {
 
                         // KeyMapManager Direct Connection
-                        // KeyMapObjectから自身が管理するべてきでは内データのKey値を返す
+                        // KeyMapObjectから自身が管理するべてきではないデータのKey値を返す
                         this.keyMapManager.outputNoMatchKeyMapKey2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
                         pw.flush();
                         retParamBuf = null;
