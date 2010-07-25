@@ -132,6 +132,7 @@ public class ImdstDefine {
     public static final String Prop_MyNodeInfo = "MyNodeInfo";
     public static final String Prop_MainMasterNodeInfo = "MainMasterNodeInfo";
     public static final String Prop_AllMasterNodeInfo = "AllMasterNodeInfo";
+    public static final String Prop_DistributionAlgorithm = "DistributionAlgorithm";
 
 
     /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */
@@ -154,7 +155,13 @@ public class ImdstDefine {
 
     public static final String ConfigSaveNodePrefix = "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ ";
 
+    public static final int dispatchModeModInt = 0;
+    public static final int dispatchModeConsistentHashInt = 1;
+
+    public static final String dispatchModeMod = "mod";
     public static final String dispatchModeConsistentHash = "consistenthash";
+
+    public static final String addNode4ConsistentHashMode = "addNode4ConsistentHashMode";
 
     public static final int consistentHashVirtualNode = 50;
 

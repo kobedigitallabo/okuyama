@@ -66,6 +66,9 @@ public class StatusUtil {
     // TransactionNodeの情報
     private static String[] transactionInfo = null;
 
+    // 振る分けアルゴリズム
+    private static String distributionAlgorithm = "mod";
+
 
     /**
      * ノード使用状態の枠を初期化
@@ -336,6 +339,16 @@ public class StatusUtil {
             } catch(Exception e) {}
         }
         return transactionInfo;
+    }
+
+    // 振り分けアルゴリズムを設定
+    public static void setDistributionAlgorithm(String algorithm) {
+        distributionAlgorithm = algorithm;
+    }
+
+    // 振り分けアルゴリズムを返す
+    public static String getDistributionAlgorithm() {
+        return distributionAlgorithm;
     }
 
     public static boolean isStandby() {

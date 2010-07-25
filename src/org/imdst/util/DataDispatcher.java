@@ -38,7 +38,7 @@ public class DataDispatcher {
     private static int virtualNodeSize = ImdstDefine.consistentHashVirtualNode;
 
     // 振り分けモード 0=mod 1=ConsistentHash
-    private static int dispatchMode = 0;
+    private static int dispatchMode = ImdstDefine.dispatchModeModInt;
 
     // 振り分けモードの初期化状態を表す
     private static boolean fixDispatchMode = false;
@@ -49,10 +49,19 @@ public class DataDispatcher {
     public static void setDispatchMode(String mode) {
         if (!fixDispatchMode) {
             if (mode.equals(ImdstDefine.dispatchModeConsistentHash)) {
-                dispatchMode = 1;
+                dispatchMode = ImdstDefine.dispatchModeConsistentHashInt;
                 fixDispatchMode = true;
             }
         }
+    }
+
+    /**
+     * 振り分けモードを返す.<br>
+     *
+     * @return int 0=mod, 1=ConsistentHash
+     */
+    public static int getDispatchMode() {
+        return dispatchMode;
     }
 
     /**
@@ -446,6 +455,15 @@ public class DataDispatcher {
         return retMap;
     }
 
+    /**
+     * 旧サークルが存在する場合は削除する.<br>
+     *
+     */
+    public static void clearConsistentHashOldCircle() {
+        if (keyNodeMap != null && keyNodeMap.containsKey("oldNodeCircle")) {
+            keyNodeMap.remove("oldNodeCircle");
+        }
+    }
 
     /**
      * 過去ルールを返す.<br>

@@ -202,6 +202,23 @@ abstract public class AbstractHelper  implements Runnable{
         return ConfigFolder.getJobUserParam(key);
     }
 
+    /**
+     * Job設定ファイルの変更をチェック.<br>
+     * 
+     * @return boolean 変更有無
+     **/
+    protected boolean isJobFileChange() throws BatchException {
+        return ConfigFolder.isJobFileChange();
+    }
+
+    /**
+     * Job設定ファイルの指定のキー値を再読み込みする.<br>
+     * 
+     * @param String[] キー値
+     **/
+    protected void reloadJobFileParameter(String[] keys) throws BatchException {
+        ConfigFolder.reloadJobFileParameter(keys);
+    }
 
     /**
      * Helper間で共有する値をセットする.<br>
