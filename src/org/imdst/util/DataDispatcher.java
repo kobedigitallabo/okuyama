@@ -273,6 +273,7 @@ public class DataDispatcher {
      * 返却値はノード登録によって移動しなければいけないデータのHash化した数値の範囲データ。このデータをノードの<br>
      * FullNameをキー値としてHashMapに詰めて返す.<br>
      * メインデータノードは返却値のHashMapに"main"というキー値で、スレーブは"sub"というキーとでMapが格納されている.<br>
+     * 移動先のノードはメインノードが"tomain"というキー値で、スレーブが"tosub"というキー値で格納されている.<br>
      *
      * @param keyNodeFullName 追加するメインデータノード フォーマット"192.168.1.3:5555"
      * @param subKeyNodeFullName 追加するスレーブデータノード フォーマット"192.168.2.3:5555"
@@ -285,7 +286,7 @@ public class DataDispatcher {
         ArrayList keyNodeList = new ArrayList();
         ArrayList subKeyNodeList = new ArrayList();
 
-        SortedMap oldCircle = new TreeMap<Integer, Map>();
+        SortedMap oldCircle = new TreeMap();
 
         // 現状のサークルを取り出し
         SortedMap nodeCircle = (SortedMap)keyNodeMap.get("nodeCircle");
@@ -310,8 +311,8 @@ public class DataDispatcher {
             int targetHashEnd = targetHash;
             String nodeName = null;
 
-            SortedMap<Integer, Map> headMap = nodeCircle.headMap(targetHash);
-            SortedMap<Integer, Map> tailMap = nodeCircle.tailMap(targetHash);
+            SortedMap headMap = nodeCircle.headMap(targetHash);
+            SortedMap tailMap = nodeCircle.tailMap(targetHash);
 
             // 登録されたノードの仮想ノード単位でどのレンジのデータを必要としているかを
             // 自身から大きい数値に1つめのノードまでの距離で求める
@@ -357,6 +358,8 @@ public class DataDispatcher {
         }
 
         // 返却用のデータ移動支持Mapに登録
+        retMap.put("tomain",keyNodeFullName);
+        retMap.put("tosub",subKeyNodeFullName);
         retMap.put("main", convertMap);
         retMap.put("sub", subConvertMap);
 
