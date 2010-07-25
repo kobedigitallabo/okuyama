@@ -278,7 +278,7 @@ public class DataDispatcher {
      * @param subKeyNodeFullName 追加するスレーブデータノード フォーマット"192.168.2.3:5555"
      * @return HashMap 変更対象データの情報
      */
-    public static HashMap addNode4ConsistentHash4(String keyNodeFullName, String subKeyNodeFullName) {
+    public static HashMap addNode4ConsistentHash(String keyNodeFullName, String subKeyNodeFullName) {
         HashMap retMap = new HashMap(2);
         HashMap convertMap = new HashMap();
         HashMap subConvertMap = new HashMap();
@@ -328,20 +328,15 @@ public class DataDispatcher {
                 int hash = ((Integer)headMap.lastKey()).intValue();
                 targetHashStart = hash + 1;
                 if (tailMap.isEmpty()) {
-//System.out.println("bbbbbbbb");
+
                     nodeName = (String)nodeCircle.get(nodeCircle.firstKey());
                 } else {
-//System.out.println("cccccccc");
-                    //System.out.println(tailMap.firstKey());
-                    //System.out.println(tailMap.lastKey());
+
                     nodeName = (String)nodeCircle.get(tailMap.firstKey());
                 }
             }
-            //System.out.println("     targetHash=" + targetHash);
-            //System.out.println("targetHashStart=" + targetHashStart);
-            //System.out.println("  targetHashEnd=" + targetHashEnd);
-            //System.out.println("Data Targe Node=" + nodeName);
-            //if (targetHashStart > targetHashEnd) System.out.println(targetHashStart + "-" +  targetHashEnd);
+
+
             // 求めたレンジを取得ノード名単位でまとめる
             // Node01,"6756-9876,12345-987654"
             // Node02,"342-3456,156456-178755"
@@ -349,17 +344,21 @@ public class DataDispatcher {
 
                 String work = (String)convertMap.get(nodeName);
                 convertMap.put(nodeName, work + "," + targetHashStart + "-" +  targetHashEnd);
-                subConvertMap.put(nodeName + "_sub", work + "," + targetHashStart + "-" +  targetHashEnd);
+
+                String[] mainDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_sub");
+                subConvertMap.put(mainDataNodeInfo[2], work + "," + targetHashStart + "-" +  targetHashEnd);
             } else {
 
                 convertMap.put(nodeName, targetHashStart + "-" +  targetHashEnd);
-                subConvertMap.put(nodeName + "_sub", targetHashStart + "-" +  targetHashEnd);
+
+                String[] mainDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_sub");
+                subConvertMap.put(mainDataNodeInfo[2], targetHashStart + "-" +  targetHashEnd);
             }
         }
 
         // 返却用のデータ移動支持Mapに登録
         retMap.put("main", convertMap);
-        retMap.put("msub", subConvertMap);
+        retMap.put("sub", subConvertMap);
 
 
         // 全体格納配列に追加
@@ -375,13 +374,14 @@ public class DataDispatcher {
         keyNodeList = (ArrayList)allNodeMap.get("main");
 
         // allNodeDetailListに追加するために複製を作成
-        for (int allNodeDetailListIdx = 0; allNodeDetailListIdx < allNodeDetailList.length; allNodeDetailListIdx++) {
+        for (int allNodeDetailListIdx = 0; allNodeDetailListIdx < allNodeDetailList[0].length; allNodeDetailListIdx++) {
             newAllNodeDetailList[0][allNodeDetailListIdx] = allNodeDetailList[0][allNodeDetailListIdx];
             newAllNodeDetailList[1][allNodeDetailListIdx] = allNodeDetailList[1][allNodeDetailListIdx];
             newAllNodeDetailList[2][allNodeDetailListIdx] = allNodeDetailList[2][allNodeDetailListIdx];
             newAllNodeDetailList[3][allNodeDetailListIdx] = allNodeDetailList[3][allNodeDetailListIdx];
             newAllNodeDetailList[4][allNodeDetailListIdx] = allNodeDetailList[4][allNodeDetailListIdx];
             newAllNodeDetailList[5][allNodeDetailListIdx] = allNodeDetailList[5][allNodeDetailListIdx];
+
         }
 
         // MainNodeに
@@ -641,8 +641,18 @@ public class DataDispatcher {
 
     /**
      *
+     *
      * @param key キー値
-     * @param useRule ルール値
+     * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
+     */
+    public static String[] dispatchConsistentHashKeyNode(String key) {
+        return dispatchConsistentHashKeyNode(key, false);
+    }
+
+    /**
+     *
+     * @param key キー値
+     * @param useOldCircle ルール値
      * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
      */
     public static String[] dispatchConsistentHashKeyNode(String key, boolean useOldCircle) {
@@ -658,13 +668,6 @@ public class DataDispatcher {
 
         // Key値からHash値作成
         int execKeyInt = sha1Hash4Int(key);
-
-        // マイナス値は使用しない
-        if (execKeyInt < 0) {
-            //String work = new Integer(execKeyInt).toString();
-            //execKeyInt = Integer.parseInt(work.substring(1,work.length()));
-            execKeyInt = execKeyInt - execKeyInt - execKeyInt;
-        }
 
         // ノードサークルを取り出し
         // useOldCircleフラグに合わせて旧サークルを使い分ける
@@ -692,7 +695,7 @@ public class DataDispatcher {
         // 対象メインノード詳細取り出し
         mainDataNodeInfo = (String[])keyNodeMap.get(targetNode);
         // 対象スレーブノード詳細取り出し
-        slaveDataNodeInfo = (String[])keyNodeMap.get(targetNode + "sub");
+        slaveDataNodeInfo = (String[])keyNodeMap.get(targetNode + "_sub");
 
         // スレーブノードの有無に合わせて配列を初期化
         if (slaveDataNodeInfo != null) {
@@ -710,7 +713,7 @@ public class DataDispatcher {
         ret[1] = mainDataNodeInfo[1];
         ret[2] = mainDataNodeInfo[2];
 
-
+/*
         // 該当ノードが一時使用停止の場合は使用再開されるまで停止(データ復旧時に起こりえる)
         // どちらか一方でも一時停止の場合はWait
         while(true) {
@@ -737,7 +740,7 @@ public class DataDispatcher {
         if (ret.length > 3) {
             StatusUtil.addNodeUse(slaveDataNodeInfo[2]);
         }
-
+*/
         return ret;
     }
 
@@ -850,12 +853,17 @@ public class DataDispatcher {
 
     /**
      * sha1のアルゴリズムでHashした値をjavaのhashCodeして返す.<br>
+     * マイナス値は返さない
      *
      * @param targete
      * @param int
      */
     public static int sha1Hash4Int(String target) {
-        return new String(DigestUtils.sha(target.getBytes())).hashCode();
+        int ret = new String(DigestUtils.sha(target.getBytes())).hashCode();
+        if (ret < 0) {
+            ret = ret - ret - ret;
+        }
+        return ret;
     }
 
 

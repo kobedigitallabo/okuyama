@@ -154,9 +154,9 @@ public class ImdstDefine {
 
     public static final String ConfigSaveNodePrefix = "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ ";
 
-    public static final String dispatchModeConsistentHash = "consitenthash";
+    public static final String dispatchModeConsistentHash = "consistenthash";
 
-    public static final int consistentHashVirtualNode = 10;
+    public static final int consistentHashVirtualNode = 50;
 
     /* -- プログラム規定数値 ----------------------------------------      */
     // 保存出来る、Key、Tag、Valueの最大長
