@@ -67,7 +67,7 @@ public class StatusUtil {
     private static String[] transactionInfo = null;
 
     // 振る分けアルゴリズム
-    private static String distributionAlgorithm = "mod";
+    private static String distributionAlgorithm = null;
 
 
     /**
@@ -352,7 +352,7 @@ public class StatusUtil {
     }
 
     public static boolean isStandby() {
-        while(mainMasterNode == null || transactionMode == null) {
+        while(mainMasterNode == null || transactionMode == null || distributionAlgorithm == null) {
             try {
                 Thread.sleep(50);
             } catch(Exception e) {}

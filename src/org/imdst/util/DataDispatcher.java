@@ -27,6 +27,13 @@ public class DataDispatcher {
     // 全てのノード情報の詳細を格納
     private static ConcurrentHashMap keyNodeMap = new ConcurrentHashMap(6, 6, 16);
 
+    // ConsistentHash用Circle
+    private static SortedMap nodeCircle = null;
+
+    // ConsistentHash用OldCircle
+    private static SortedMap oldCircle = null;
+
+
     private static HashMap allNodeMap = null;
 
     private static ArrayList transactionManagerList = null;
@@ -43,6 +50,8 @@ public class DataDispatcher {
     // 振り分けモードの初期化状態を表す
     private static boolean fixDispatchMode = false;
 
+    // 自身を一度でも初期している場合はtrue;
+    private static boolean initFlg = false;
 
     // 振り分けモードを設定
     // 1度のみ呼び出し可能
@@ -91,6 +100,7 @@ public class DataDispatcher {
      * @param transactionManagerStr トランザクションマネージャの指定
      */
     public static void init(String ruleStr, int[] oldRules, String keyMapNodes, String subKeyMapNodes, String transactionManagerStr) {
+        initFlg = true;
         standby = false;
         String[] keyMapNodesInfo = null;
         String[] subkeyMapNodesInfo = null;
@@ -185,6 +195,7 @@ public class DataDispatcher {
      * @param transactionManagerStr トランザクションマネージャの指定
      */
     public static void initConsistentHashMode(String keyMapNodes, String subKeyMapNodes, String transactionManagerStr) {
+        initFlg = true;
         standby = false;
         String[] keyMapNodesInfo = null;
         String[] subkeyMapNodesInfo = null;
@@ -215,7 +226,7 @@ public class DataDispatcher {
         String[][] allNodeDetailList = new String[6][keyMapNodesInfo.length];
 
         // メインデータノード用ConsistentHashのサークル作成
-        SortedMap nodeCircle = new TreeMap();
+        nodeCircle = new TreeMap();
 
         // MainNode初期化
         for (int index = 0; index < keyMapNodesInfo.length; index++) {
@@ -240,13 +251,10 @@ public class DataDispatcher {
             }
         }
 
-        // メインデータノードのサークルを登録
-        keyNodeMap.put("nodeCircle", nodeCircle);
 
         synchronized(syncObj) {
             allNodeMap.put("main", keyNodeList);
         }
-
 
         // SubNode初期化
         if (subKeyMapNodes != null && !subKeyMapNodes.equals("")) {
@@ -275,6 +283,16 @@ public class DataDispatcher {
         standby = true;
     }
 
+
+    /**
+     * 初期化の状態を返す.<br>
+     *
+     */ 
+    public static boolean getInitFlg() {
+        return initFlg;
+    }
+
+
     /**
      * ConsitentHashモード時にノードの追加をおこなう.<br>
      * 本メソッドを呼びだすと、新しいノードのサークルを作りなおす前に、旧ノードのサークルを作成し、keyNodeMapに<br>
@@ -289,16 +307,16 @@ public class DataDispatcher {
      * @return HashMap 変更対象データの情報
      */
     public static HashMap addNode4ConsistentHash(String keyNodeFullName, String subKeyNodeFullName) {
+        if (oldCircle != null) return null;
         HashMap retMap = new HashMap(2);
         HashMap convertMap = new HashMap();
         HashMap subConvertMap = new HashMap();
         ArrayList keyNodeList = new ArrayList();
         ArrayList subKeyNodeList = new ArrayList();
 
-        SortedMap oldCircle = new TreeMap();
+        oldCircle = new TreeMap();
 
-        // 現状のサークルを取り出し
-        SortedMap nodeCircle = (SortedMap)keyNodeMap.get("nodeCircle");
+        // 現状のサークルのコピーを作成
         Set set = nodeCircle.keySet();
         Iterator iterator = set.iterator();
 
@@ -419,9 +437,6 @@ public class DataDispatcher {
             nodeCircle.put(new Integer(sha1Hash4Int(keyNode + "_" + i)), keyNode);
         }
 
-        // メインデータノードのサークルを登録
-        keyNodeMap.put("nodeCircle", nodeCircle);
-        keyNodeMap.put("oldNodeCircle", oldCircle);
 
         synchronized(syncObj) {
             allNodeMap.put("main", keyNodeList);
@@ -460,8 +475,8 @@ public class DataDispatcher {
      *
      */
     public static void clearConsistentHashOldCircle() {
-        if (keyNodeMap != null && keyNodeMap.containsKey("oldNodeCircle")) {
-            keyNodeMap.remove("oldNodeCircle");
+        if (oldCircle != null) {
+            oldCircle = null;
         }
     }
 
@@ -634,9 +649,9 @@ public class DataDispatcher {
      * @param reverse 逆転指定
      * @return String 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] dispatchReverseConsistentHashKeyNode(String key, boolean reverse, boolean oldCircle) {
+    public static String[] dispatchReverseConsistentHashKeyNode(String key, boolean reverse, boolean useOldCircle) {
         String[] ret = null;
-        String[] tmp = dispatchConsistentHashKeyNode(key, oldCircle);
+        String[] tmp = dispatchConsistentHashKeyNode(key, useOldCircle);
 
         if (reverse) {
             // SubNodeが存在する場合は逆転させる
@@ -679,7 +694,7 @@ public class DataDispatcher {
     public static String[] dispatchConsistentHashKeyNode(String key, boolean useOldCircle) {
         String[] ret = null;
         boolean noWaitFlg = false;
-        SortedMap nodeCircle = null;
+        SortedMap useNodeCircle = null;
         String targetNode = null;
         String[] mainDataNodeInfo = null;
         String[] slaveDataNodeInfo = null;
@@ -692,26 +707,26 @@ public class DataDispatcher {
 
         // ノードサークルを取り出し
         // useOldCircleフラグに合わせて旧サークルを使い分ける
-        if (useOldCircle && keyNodeMap.containsKey("oldNodeCircle")) {
-            nodeCircle = (SortedMap)keyNodeMap.get("oldNodeCircle");
+        if (useOldCircle && oldCircle != null) {
+            useNodeCircle = oldCircle;
         } else {
-            nodeCircle = (SortedMap)keyNodeMap.get("nodeCircle");
+            useNodeCircle = nodeCircle;
         }
 
         // 該当ノード割り出し
         int hash = sha1Hash4Int(key);
 
-        if (!nodeCircle.containsKey(hash)) {
-            SortedMap<Integer, Map> tailMap = nodeCircle.tailMap(hash);
+        if (!useNodeCircle.containsKey(hash)) {
+            SortedMap<Integer, Map> tailMap = useNodeCircle.tailMap(hash);
             if (tailMap.isEmpty()) {
-                hash = ((Integer)nodeCircle.firstKey()).intValue();
+                hash = ((Integer)useNodeCircle.firstKey()).intValue();
             } else {
                 hash = ((Integer)tailMap.firstKey()).intValue();
             }
         }
 
         // 対象ノード名を取得
-        targetNode = (String)nodeCircle.get(hash);
+        targetNode = (String)useNodeCircle.get(hash);
 
         // 対象メインノード詳細取り出し
         mainDataNodeInfo = (String[])keyNodeMap.get(targetNode);
@@ -734,7 +749,7 @@ public class DataDispatcher {
         ret[1] = mainDataNodeInfo[1];
         ret[2] = mainDataNodeInfo[2];
 
-/*
+
         // 該当ノードが一時使用停止の場合は使用再開されるまで停止(データ復旧時に起こりえる)
         // どちらか一方でも一時停止の場合はWait
         while(true) {
@@ -761,7 +776,7 @@ public class DataDispatcher {
         if (ret.length > 3) {
             StatusUtil.addNodeUse(slaveDataNodeInfo[2]);
         }
-*/
+
         return ret;
     }
 
@@ -874,7 +889,7 @@ public class DataDispatcher {
 
     /**
      * sha1のアルゴリズムでHashした値をjavaのhashCodeして返す.<br>
-     * マイナス値は返さない
+     * マイナス値は返さない<br>
      *
      * @param targete
      * @param int

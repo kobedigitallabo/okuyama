@@ -51,7 +51,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
     // 分散方式 デフォルトはmode
     // 他にはconsistenthash
-    private String dispatchMode = "mod";
+    private String dispatchMode = ImdstDefine.dispatchModeMod;
 
 
     /**
@@ -99,9 +99,9 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         }
 
         // 振り分けモード設定
+        StatusUtil.setDistributionAlgorithm(dispatchMode);
         DataDispatcher.setDispatchMode(dispatchMode);
 
-        StatusUtil.setDistributionAlgorithm(dispatchMode);
 
         try{
             // 起動時は設定ファイルから情報取得
@@ -328,7 +328,12 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         // 全てのマスターノードの接続情報
         allMasterNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_AllMasterNodeInfo);
 
-        this.infomationSetter();
+        // DataDispatcher初期化
+        if (dispatchMode.equals(ImdstDefine.dispatchModeConsistentHash)) {
+            infomationSetterConsistentHash();
+        } else {
+            this.infomationSetter();
+        }
     }
 
 
@@ -491,8 +496,14 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
 
             // ConsistentHashModeの場合はノードの追加要望がないかを調べる
-            // メインマスターノードの場合のみ実行
-            if (dispatchMode.equals(ImdstDefine.dispatchModeConsistentHash) && StatusUtil.isMainMasterNode()) {
+            // サークルへの追加アルゴリズムはまずノード一覧を設定ファイルもしくはノードから取り出す。
+            // ノード一覧からサークルを作成する。
+            // そのノードに追加対象ノードを追加してoldCircleと現行サークルの2つをDataDispatcher上に作り上げる
+            // この時の戻り値のデータ範囲を利用して、メインマスターノードの場合はデータ移行を行う。
+            // メインマスターノードはデータ移行が終了したタイミングで追加対象ノードの情報を
+            // データノード上から消しこむ
+            // 消えたタイミングで、DataDispatcherからもoldCircleを削除する
+            if (dispatchMode.equals(ImdstDefine.dispatchModeConsistentHash)) {
 
                 // 取得できる値のフォーマットは"main=192.168.1.5:5553,sub=192.168.2.5:5553"のようなフォーマット
                 String[] addNodeRequest = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode);
@@ -503,8 +514,13 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 }
             }
 
+            // DataDispatcher初期化
             if (setterFlg) {
-                this.infomationSetter();
+                if (dispatchMode.equals(ImdstDefine.dispatchModeConsistentHash)) {
+                    this.infomationSetterConsistentHash();
+                } else {
+                    this.infomationSetter();
+                }
             }
         } catch (Exception e) {
             logger.error(e);
@@ -651,12 +667,168 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
 
         // DataDispatcher初期化
-        if (dispatchMode.equals(ImdstDefine.dispatchModeConsistentHash)) {
-            // ConsistentHashの場合は都度初期化は出来ないので、
-            DataDispatcher.initConsistentHashMode(keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
+        DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
+
+    }
+
+
+    // 情報を反映する
+    // ConsistentHash用
+    private void infomationSetterConsistentHash() {
+
+        String[] mainKeyNodes = null;
+        String[] subKeyNodes = new String[0];
+        String[] allNodeInfos = null;
+        int allNodeCounter = 0;
+
+        // MainMasterNodeの情報解析
+
+        // 旧情報から解析
+        // 自身がMainMasterNodeか解析
+        if (mainMasterNodeModeStr != null && 
+                mainMasterNodeModeStr.equals("true")) {
+            StatusUtil.setMainMasterNode(true);
         } else {
-            // デフォルトはMod
-            DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
-        } 
+            StatusUtil.setMainMasterNode(false);
+        }
+
+        StatusUtil.setSlaveMasterNodes(slaveMasterNodeInfoStr);
+
+        // 新設定を解析
+        // 新設定が設定されている場合はこちらを優先とする
+        if (myNodeInfoStr != null) {
+
+            if (mainMasterNodeInfoStr != null) {
+
+                if (mainMasterNodeInfoStr.trim().equals(myNodeInfoStr.trim())) {
+
+                    // 自身がメインマスターノード
+                    StatusUtil.setMainMasterNode(true);
+                    if (allMasterNodeInfoStr != null) {
+
+                        String[] allMasterNodeInfos = allMasterNodeInfoStr.trim().split(",");
+                        StringBuffer slaveMasterNodeInfoBuf = new StringBuffer();
+                        String sep  = "";
+
+
+                        for (int idx = 0; idx < allMasterNodeInfos.length; idx++) {
+
+                            if ((allMasterNodeInfos[idx].trim().equals(myNodeInfoStr.trim())) == false) {
+
+                                slaveMasterNodeInfoBuf.append(sep);
+                                slaveMasterNodeInfoBuf.append(allMasterNodeInfos[idx]);
+                                sep = ",";
+                            }
+                        }
+
+                        if (slaveMasterNodeInfoBuf.toString().equals("")) {
+                            StatusUtil.setSlaveMasterNodes(null);
+                        } else {
+                            StatusUtil.setSlaveMasterNodes(slaveMasterNodeInfoBuf.toString());
+                        }
+                    } else{
+
+                        StatusUtil.setSlaveMasterNodes(null);
+                    }
+
+                } else {
+
+                    // 自身はメインマスターノードではない
+                    StatusUtil.setMainMasterNode(false);
+                    StatusUtil.setSlaveMasterNodes(null);
+                }
+
+
+
+                // 自身がチェックしなければいけないMasterノードを登録
+                StatusUtil.setCheckTargetMasterNodes("");
+                if (allMasterNodeInfoStr != null) {
+
+                    String checkTargetMasterNodes = null;
+                    if (allMasterNodeInfoStr.indexOf(myNodeInfoStr) > 0) {
+                        String[] workStrs = allMasterNodeInfoStr.split(myNodeInfoStr);
+
+                        if (workStrs.length > 0) {
+                            if(!workStrs[0].trim().equals("")) {
+                                StatusUtil.setCheckTargetMasterNodes(workStrs[0]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        //DataNode情報解析
+
+        // ノード追加によりルールが変更されている可能性があるのでパース
+        // ルールは最新ルールが先頭に来るように設定される想定なので、先頭文字列を取得
+        String[] ruleStrs = ruleStrProp.split(",") ;
+        // 過去ルールを保存
+        int[] oldRules = null;
+        if (ruleStrs.length > 1) {
+            oldRules = new int[ruleStrs.length - 1];
+            for (int i = 1; i < ruleStrs.length; i++) {
+                oldRules[i - 1] = new Integer(ruleStrs[i].trim()).intValue();
+            }
+        }
+
+        mainKeyNodes = keyMapNodesStr.split(",");
+
+        allNodeCounter = mainKeyNodes.length;
+
+        if (subKeyMapNodesStr != null && !subKeyMapNodesStr.equals("")) {
+            subKeyNodes = subKeyMapNodesStr.split(",");
+            allNodeCounter = allNodeCounter + subKeyNodes.length;
+        }
+
+        allNodeInfos = new String[allNodeCounter];
+
+        for (int i = 0; i < mainKeyNodes.length; i++) {
+            allNodeInfos[i] = mainKeyNodes[i];
+        }
+
+        for (int i = 0; i < subKeyNodes.length; i++) {
+            allNodeInfos[i + mainKeyNodes.length] = subKeyNodes[i];
+        }
+
+        // DataNodeの情報を初期化
+        StatusUtil.initNodeExecMap(allNodeInfos);
+
+
+        // TransactionNodeの情報を初期化
+        if (transactionModeStr != null) {
+            StatusUtil.setTransactionMode(new Boolean(transactionModeStr).booleanValue());
+            if (StatusUtil.isTransactionMode()) {
+                StatusUtil.setTransactionNode(transactionManagerStr.trim().split(":"));
+            }
+        } else {
+            StatusUtil.setTransactionMode(false);
+        }
+
+
+        // ConsistentHashの場合は都度初期化は出来ないので、確認
+        if (!DataDispatcher.getInitFlg()) {
+            DataDispatcher.initConsistentHashMode(keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
+        }
+
+        // 追加データノードの情報がnullの場合はDataDispatcherから削除
+        if (addNodeInfos == null) {
+            DataDispatcher.clearConsistentHashOldCircle();
+        } else {
+            HashMap moveDataMap = null;
+            if (addNodeInfos.length == 1) {
+                moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], addNodeInfos[1]);
+            } else if (addNodeInfos.length == 2) {
+                moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], addNodeInfos[1]);
+            }
+
+            // MainMasterNodeの場合のみデータ移行を実行
+            if (StatusUtil.isMainMasterNode()) {
+                if (moveDataMap != null) {
+                    
+                }
+            }
+        }
     }
 }

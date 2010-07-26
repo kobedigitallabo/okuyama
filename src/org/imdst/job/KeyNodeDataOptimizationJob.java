@@ -50,7 +50,17 @@ public class KeyNodeDataOptimizationJob extends AbstractJob implements IJob {
             } else {
                 Thread.sleep(20000);
             }
-            int helperCode = super.executeHelper("KeyNodeOptimizationHelper", null);
+
+            // 起動準備完了まで待つ
+            StatusUtil.isStandby();
+ 
+            int helperCode = 0;
+
+            if (ImdstDefine.dispatchModeConsistentHash.equals(StatusUtil.getDistributionAlgorithm())) {
+                helperCode = super.executeHelper("KeyNodeOptimizationHelper", null);
+            } else {
+                helperCode = super.executeHelper("KeyNodeOptimizationHelper", null);
+            }
 
             Object[] helperRet = null;
             while(helperRet == null) {

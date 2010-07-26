@@ -30,6 +30,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
     private static Object connSync = new Object();
 
+    private static HashMap moveData4ConsistentHash = null;
+
     /**
      * ノードの生存を確認
      *
@@ -960,6 +962,21 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
             allConnectionMap.put(connectionName, connList);
             connPoolCount++;
         }
+    }
+
+
+    protected HashMap getConsistentHashMoveData() {
+        return moveData4ConsistentHash;
+    }
+
+
+    protected void setConsistentHashMoveData(HashMap map) {
+        moveData4ConsistentHash = map;
+    }
+
+
+    protected void removeConsistentHashMoveData() {
+        moveData4ConsistentHash = null;
     }
 
 
