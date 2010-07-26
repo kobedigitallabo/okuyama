@@ -824,9 +824,13 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             }
 
             // MainMasterNodeの場合のみデータ移行を実行
+            // ここでsuperのconsistentHashMoveDataに登録
+            // KeyNodeOptimizationConsistentHashHelper側でこのデータを監視して、登録されたら、
+            // 移行処理を開始する。
+            // 移行完了後、superのconsistentHashMoveDataを削除し、ノードに保存されている移行指示も削除する
             if (StatusUtil.isMainMasterNode()) {
                 if (moveDataMap != null) {
-                    
+                    super.setConsistentHashMoveData(moveDataMap);
                 }
             }
         }

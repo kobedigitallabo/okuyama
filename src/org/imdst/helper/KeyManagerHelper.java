@@ -365,19 +365,16 @@ public class KeyManagerHelper extends AbstractHelper {
 
                         // KeyMapManager Direct Connection
                         // ConsistentHash時のデータ移動(抽出)
-                        this.keyMapManager.outputNoMatchKeyMapKey2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
+                        this.keyMapManager.outputConsistentHashMoveData2Stream(pw, clientParameterList[2]);
                         pw.flush();
                         retParamBuf = null;
-                    } else if(clientParameterList[0].equals("2")) {
+                    } else if(clientParameterList[0].equals("28")) {
 
                         // KeyMapManager Direct Connection
                         // ConsistentHash時のデータ移動(登録)
-                        this.keyMapManager.outputNoMatchKeyMapKey2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
-                        pw.flush();
+                        this.keyMapManager.inputConsistentHashMoveData2Stream(br);
                         retParamBuf = null;
                     }
-
-
 
 
                     if (retParamBuf != null) {

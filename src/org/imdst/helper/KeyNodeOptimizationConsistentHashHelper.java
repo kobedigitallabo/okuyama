@@ -65,6 +65,20 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
         ImdstKeyValueClient imdstKeyValueClient = null;
 
+        HashMap moveTargetData = null;
+
+        String addMainDataNodeInfo = null;
+        HashMap mainMoveTargetMap = null;
+
+        String addSubDataNodeInfo = null;
+        HashMap subMoveTargetMap = null;
+
+        Set mainSet = null;
+        Iterator mainIterator = null;
+
+        Set subSet = null;
+        Iterator subIterator = null;
+
         String[] optimizeTargetKeys = null;
         String myInfo = null;
         String[] myInfoDt = null;
@@ -78,14 +92,45 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
         while (serverRunning) {
 
-            HashMap moveTargetData = super.getConsistentHashMoveData();
+            moveTargetData = super.getConsistentHashMoveData();
+
 
             if (moveTargetData != null) {
+                addMainDataNodeInfo = (String)moveTargetData.get("tomain");
+                mainMoveTargetMap = (HashMap)moveTargetData.get("main");
+
+                addSubDataNodeInfo = (String)moveTargetData.get("tosub");
+                subMoveTargetMap = (HashMap)moveTargetData.get("sub");
+
+                subSet = null;
+                subIterator = null;
+
                 try {
 
                     // 全ての移動対象のノードを処理
-                    Set set = moveTargetData.keySet();
-                    Iterator iterator = set.iterator();
+                    mainSet = mainMoveTargetMap.keySet();
+                    mainIterator = mainSet.iterator();
+
+                    if (addSubDataNodeInfo != null) {
+                        subSet = mainMoveTargetMap.keySet();
+                        subIterator = mainSet.iterator();
+                    }
+
+                    // 対象データノード1ノードづつ処理
+                    while(mainIterator.hasNext()) {
+                        Map.Entry obj = (Map.Entry)mainIterator.next();
+                        String dataNodeStr = null;
+
+                        // キー値を取り出し
+                        dataNodeStr = (String)obj.getKey();
+
+
+-------------------------------- ここまで -------------------------------------------------------------
+ここからIterator回しながらMain,Slaveそれぞれのレンジ対象データを移行する
+その後 super.removeConsistentHashMoveData()呼び出して、dataNode上から移行依頼のデータも消す
+
+
+
 
                     String[] keyList = new String[convertMap.size()];
                     for (int idx = 0; idx < keyList.length; idx++) {

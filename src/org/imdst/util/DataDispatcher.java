@@ -366,21 +366,25 @@ public class DataDispatcher {
 
 
             // 求めたレンジを取得ノード名単位でまとめる
-            // Node01,"6756-9876,12345-987654"
-            // Node02,"342-3456,156456-178755"
+            // Node01:5553,"6756-9876,12345-987654"
+            // Node02:5553,"342-3456,156456-178755"
             if (convertMap.containsKey(nodeName)) {
 
                 String work = (String)convertMap.get(nodeName);
                 convertMap.put(nodeName, work + "," + targetHashStart + "-" +  targetHashEnd);
 
-                String[] mainDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_sub");
-                subConvertMap.put(mainDataNodeInfo[2], work + "," + targetHashStart + "-" +  targetHashEnd);
+                String[] subDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_sub");
+                if (subDataNodeInfo != null) {
+                    subConvertMap.put(subDataNodeInfo[2], work + "," + targetHashStart + "-" +  targetHashEnd);
+                }
             } else {
 
                 convertMap.put(nodeName, targetHashStart + "-" +  targetHashEnd);
 
-                String[] mainDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_sub");
-                subConvertMap.put(mainDataNodeInfo[2], targetHashStart + "-" +  targetHashEnd);
+                String[] subDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_sub");
+                if (subDataNodeInfo != null) {
+                    subConvertMap.put(subDataNodeInfo[2], targetHashStart + "-" +  targetHashEnd);
+                }
             }
         }
 
@@ -414,7 +418,6 @@ public class DataDispatcher {
 
         }
 
-        // MainNodeに
         String keyNode = keyNodeFullName;
         String[] keyNodeDt = keyNode.split(":");
         keyNodeList.add(keyNode);
@@ -795,7 +798,7 @@ public class DataDispatcher {
      * @param matchNo 検証No
      * @return boolean 結果
      */
-    public static boolean isRuleMatchKey (String key ,int rule, int matchNo) {
+    public static boolean isRuleMatchKey(String key ,int rule, int matchNo) {
         boolean ret = false;
 
         // Key値からHash値作成
@@ -814,6 +817,50 @@ public class DataDispatcher {
 
         if (targetNo == matchNo) 
             ret = true;
+
+        return ret;
+    }
+
+
+    /**
+     * 引数のKey値が引数のレンジの範囲のデータか確認し結果を返す.<br>
+     *
+     * @param key 対象のキー値
+     * @param rangs 範囲
+     * @return boolean 結果
+     */
+    public static boolean isRangeData(String key ,int[][] rangs) {
+        boolean ret = false;
+
+        // 対象データ判定
+        for (int rangsIdx = 0; rangsIdx < rangs.length; rangsIdx++) {
+
+            // レンジ start < endの場合
+            if (rangs[rangsIdx][0] < rangs[rangsIdx][1]) {
+
+                if (rangs[rangsIdx][0] <= sha1Hash4Int(key) && sha1Hash4Int(key) <= rangs[rangsIdx][1]) {
+
+                    // 移行対象データ
+                    ret = true;
+                    break;
+                }
+            } else {
+
+                // レンジが逆転 一度サークルの最大値に達してファーストノードのまでの値
+                // レンジ start > endの場合
+                if (rangs[rangsIdx][0] <= sha1Hash4Int(key)) {
+
+                    // 移行対象データ
+                    ret = true;
+                    break;
+                } else if (rangs[rangsIdx][1] >= sha1Hash4Int(key)){
+
+                    // 移行対象データ
+                    ret = true;
+                    break;
+                }
+            }
+        }
 
         return ret;
     }

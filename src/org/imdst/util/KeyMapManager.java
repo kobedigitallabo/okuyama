@@ -1286,6 +1286,141 @@ public class KeyMapManager extends Thread {
         }
     }
 
+
+    // 引数で渡されてストリームに対しKey値を書き出す
+    // 書き出すKey値は引数のrulesStrを使用して割り出した値がmatchNoとマッチしないデータ
+    // 終了時は-1が返る
+    public void outputConsistentHashMoveData2Stream(PrintWriter pw, String targetRangStr) throws BatchException {
+        if (!blocking) {
+            try {
+                String allDataSep = "";
+                StringBuffer allDataBuf = new StringBuffer();
+                int counter = 0;
+
+                String[] targetRangs = targetRangStr.split(",");
+                int[][] rangs = new int[targetRangs.length][2];
+
+                // レンジのstartとendをセット単位でintの配列に落とす
+                for (int ii = 0; ii < targetRangs.length; ii++) {
+
+                    String[] workRangs = targetRangs[ii].split("-");
+                    rangs[ii][0] = Integer.parseInt(workRangs[0]);
+                    rangs[ii][1] = Integer.parseInt(workRangs[1]);
+                }
+
+
+                // keyMapObjの内容を1行文字列として書き出し
+                Set entrySet = this.keyMapObj.entrySet();
+
+                int printLineCount = 0;
+                // 一度に送信するデータ量を算出。空きメモリの10%を使用する
+                int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / (ImdstDefine.saveKeyMaxSize * 1.38)).intValue();
+                //int maxLineCount = 500;
+                if (entrySet.size() > 0) {
+                    printLineCount = new Double(entrySet.size() / maxLineCount).intValue();
+                    if (entrySet.size() % maxLineCount > 0) {
+                        printLineCount = printLineCount + 1;
+                    }
+                }
+
+
+                // KeyMapObject内のデータを1件づつ対象になるか確認
+                Iterator entryIte = entrySet.iterator(); 
+
+                // キー値を1件づつレンジに含まれているか確認
+                while(entryIte.hasNext()) {
+                    Map.Entry obj = (Map.Entry)entryIte.next();
+                    String key = null;
+                    boolean sendFlg = false;
+
+                    // キー値を取り出し
+                    key = (String)obj.getKey();
+
+                    // 対象データ判定
+                    sendFlg = DataDispatcher.isRangeData(key, rangs);
+
+                    // 送信すべきデータのみ送る
+                    if (sendFlg) {
+
+                        String data = this.keyMapObjGet(key);
+                        if (data != null) {
+                            // 全てのデータを送る
+                            allDataBuf.append(allDataSep);
+                            allDataBuf.append(key);
+                            allDataBuf.append(workFileSeq);
+                            allDataBuf.append(data);
+                            allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                        }
+                    }
+
+                    counter++;
+
+                    if (counter > (maxLineCount - 1)) {
+                        pw.println(allDataBuf.toString());
+                        allDataBuf = new StringBuffer();
+                        counter = 0;
+                        allDataSep = "";
+                    }
+                }
+
+                pw.println(allDataBuf.toString());
+                pw.println("-1");
+
+            } catch (Exception e) {
+                logger.error("outputConsistentHashMoveData2Stream - Error =[" + e.getMessage() + "]");
+            }
+        }
+    }
+
+
+    // 引数で渡されてストリームからの値をデータ登録する
+    // この際、既に登録されているデータは登録しない
+    public void inputConsistentHashMoveData2Stream(BufferedReader br) throws BatchException {
+        if (!blocking) {
+            try {
+                int i = 0;
+                String[] oneDatas = null;
+
+
+                // 最終更新日付変えずに全てのデータを登録する
+                // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
+                // 既に同一のキー値で登録データが存在する場合はそちらのデータを優先
+                String dataStr = null;
+
+                while(true) {
+                    logger.info("inputConsistentHashMoveData2Stream - synchronized - start");
+                    synchronized(this.poolKeyLock) {
+
+                        dataStr = br.readLine();
+                        if (dataStr == null || dataStr.equals("-1")) break;
+
+                        String[] dataLines = dataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+
+                        for (i = 0; i < dataLines.length; i++) {
+
+                            if (!dataLinedataLines[i].trim().equals("")) {
+
+                                oneDatas = dataLinedataLines[i].split(workFileSeq);
+                                // 成功、失敗関係なく全て登録処理
+                                this.setKeyPairOnlyOnce(oneDatas[0], oneDatas[1], "0");
+                            }
+                        }
+                    }
+                    logger.info("inputConsistentHashMoveData2Stream - synchronized - end");
+                }
+
+            } catch (Exception e) {
+                logger.error("inputConsistentHashMoveData2Stream - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "inputConsistentHashMoveData2Stream - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+    }
+
+
+
+
     // データの最終更新時間を返す
     public long getLastDataChangeTime() {
         return this.keyMapObj.getKLastDataChangeTime();
