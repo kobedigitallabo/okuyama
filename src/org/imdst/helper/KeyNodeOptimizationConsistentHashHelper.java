@@ -96,6 +96,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                         // レンジを分解
                         String allConvertRang = (String)convertMap.get(keyList[idx]);
+
+                        
+
                         String[] convertRangs = allConvertRang.split(",");
                         int[][] rangs = new int[convertRangs.length][2];
 
@@ -204,7 +207,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
     }
 
 
-    private void searchTargetData(String nodeName, int nodePort, int dataNodeMatchNo) throws BatchException {
+    private void getTargetData(String nodeName, int nodePort, String rangStr) throws BatchException {
         StringBuffer buf = null;
 
         try {

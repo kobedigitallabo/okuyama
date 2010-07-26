@@ -361,7 +361,22 @@ public class KeyManagerHelper extends AbstractHelper {
                         this.keyMapManager.outputNoMatchKeyMapKey2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
                         pw.flush();
                         retParamBuf = null;
+                    } else if(clientParameterList[0].equals("27")) {
+
+                        // KeyMapManager Direct Connection
+                        // ConsistentHash時のデータ移動(抽出)
+                        this.keyMapManager.outputNoMatchKeyMapKey2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
+                        pw.flush();
+                        retParamBuf = null;
+                    } else if(clientParameterList[0].equals("2")) {
+
+                        // KeyMapManager Direct Connection
+                        // ConsistentHash時のデータ移動(登録)
+                        this.keyMapManager.outputNoMatchKeyMapKey2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
+                        pw.flush();
+                        retParamBuf = null;
                     }
+
 
 
 
