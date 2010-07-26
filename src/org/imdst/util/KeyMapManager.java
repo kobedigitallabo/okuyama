@@ -11,7 +11,7 @@ import org.imdst.util.StatusUtil;
 
 /**
  * DataNodeが使用するKey-Valueを管理するモジュール.<br>
- * データの定期的なファイルストア、登録ログの出力、同期化を行う.<br>
+ * データのファイルストア、登録ログの出力、同期化を行う.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -1417,9 +1417,6 @@ public class KeyMapManager extends Thread {
             }
         }
     }
-
-
-
 
     // データの最終更新時間を返す
     public long getLastDataChangeTime() {

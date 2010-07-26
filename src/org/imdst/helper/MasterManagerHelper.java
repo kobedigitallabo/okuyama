@@ -619,7 +619,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
             }
 
-
             retStrs[0] = "6";
             retStrs[1] = "true";
             retStrs[2] = "OK";
@@ -1479,7 +1478,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         break;
                     } else {
 
+                        
                         // 強一貫性の場合は両方のデータの状態を確かめる
+
+                        // 弱一貫性の場合はデータが取れ次第返却
+                        if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
+
+                            // 一貫性データが付随した状態から通常データに変換する
+                            // 弱一貫性の場合は時間は使用しない
+                            cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
+                            retParams[2] = cnvConsistencyRet[0];
+                        }
+                        break;
                     }
 
                     break;
@@ -1626,7 +1636,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         pw = (PrintWriter)dtMap.get("writer");
                         br = (BufferedReader)dtMap.get("reader");
 
-//long start1 = System.nanoTime();
                         // 送信
                         pw.println(buf.toString());
                         pw.flush();
@@ -2049,18 +2058,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(transactionCode);
 
-//long start1 = System.nanoTime();
-
-
                         // 送信
                         pw.println(buf.toString());
                         pw.flush();
 
                         // 返却値取得
                         retParam = br.readLine();
-//long end1 = System.nanoTime();
-//System.out.println("[" + (end1 - start1) + "]");
-
 
                         // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                         if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRemoveSuccessStr) == 0) {
@@ -2167,7 +2170,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     StringBuffer buf = new StringBuffer();
                     buf.append("30");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(this.stringCnv(key));               // Key値
+                    buf.append(this.stringCnv(key));                // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(transactionCode);                    // Transaction値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -2270,9 +2273,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     StringBuffer buf = new StringBuffer();
                     buf.append("31");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(this.stringCnv(key));               // Key値
+                    buf.append(this.stringCnv(key));                  // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(transactionCode);              // Transaction値
+                    buf.append(transactionCode);                      // Transaction値
 
                     // 送信
                     pw.println(buf.toString());
@@ -2439,7 +2442,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             while(true) {
                 // 使用停止まで待機
                 if(super.getNodeUseStatus(keyNodeFullName) == 0) break;
-                Thread.sleep(5);
+                Thread.sleep(50);
             }
 
             // 停止成功
@@ -2584,7 +2587,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     pw = (PrintWriter)dtMap.get("writer");
                     br = (BufferedReader)dtMap.get("reader");
 
-//long start1 = System.nanoTime();
                     // 処理種別判別
                     if (type.equals("1") || type.equals("3")) {
                         // Key値でデータを保存 or TagでKey値を保存
@@ -2600,8 +2602,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             subNodeSender.start();
                         }
                     }
-//long end1 = System.nanoTime();
-//System.out.println("[" + (end1 - start1) + "]");
                 }
 
                 // スレーブデータノードの名前を代入
@@ -2773,8 +2773,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
     /**
+     * TransactionMangerとの接続を作成.<br>
      *
-     *
+     * @param keyNodeName
+     * @param keyNodePort
+     * @param keyNodeFullName
+     * @return HashMap
+     * @throws BatchException
      */
     private HashMap createTransactionManagerConnection(String keyNodeName, String keyNodePort, String keyNodeFullName) throws BatchException {
         PrintWriter pw = null;
