@@ -77,9 +77,48 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         myInfoDt = myInfo.split(":");
 
         while (serverRunning) {
+
             HashMap moveTargetData = super.getConsistentHashMoveData();
+
             if (moveTargetData != null) {
                 try {
+
+                    // 全ての移動対象のノードを処理
+                    Set set = moveTargetData.keySet();
+                    Iterator iterator = set.iterator();
+
+                    String[] keyList = new String[convertMap.size()];
+                    for (int idx = 0; idx < keyList.length; idx++) {
+                        keyList[idx] = (String)iterator.next();
+                    }
+
+                    for (int idx = 0; idx < keyList.length; idx++) {
+
+                        // レンジを分解
+                        String allConvertRang = (String)convertMap.get(keyList[idx]);
+                        String[] convertRangs = allConvertRang.split(",");
+                        int[][] rangs = new int[convertRangs.length][2];
+
+                        // レンジのstartとendをセット単位でintの配列に落とす
+                        for (int ii = 0; ii < convertRangs.length; ii++) {
+
+                            String[] workRangs = convertRangs[ii].split("-");
+                            rangs[ii][0] = Integer.parseInt(workRangs[0]);
+                            rangs[ii][1] = Integer.parseInt(workRangs[1]);
+                        }
+
+                    }
+
+
+
+
+
+
+
+
+
+
+
 
                     HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
                     this.mainNodeList = (ArrayList)allNodeInfo.get("main");
