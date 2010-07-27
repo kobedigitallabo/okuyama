@@ -67,17 +67,32 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
         HashMap moveTargetData = null;
 
+
         String addMainDataNodeInfo = null;
         HashMap mainMoveTargetMap = null;
-
-        String addSubDataNodeInfo = null;
-        HashMap subMoveTargetMap = null;
-
+        String[] toMainDataNodeDt = null;
         Set mainSet = null;
         Iterator mainIterator = null;
 
+        Socket toMainSocket = null;
+        OutputStreamWriter toMainOsw = null;
+        PrintWriter toMainPw = null;
+        InputStreamReader toMainIsr = null;
+        BufferedReader toMainBr = null;
+
+
+        String addSubDataNodeInfo = null;
+        HashMap subMoveTargetMap = null;
+        String[] toSubDataNodeDt = null;
         Set subSet = null;
         Iterator subIterator = null;
+
+        Socket toSubSocket = null;
+        OutputStreamWriter toSubOsw = null;
+        PrintWriter toSubPw = null;
+        InputStreamReader toSubIsr = null;
+        BufferedReader toSubBr = null;
+
 
         String[] optimizeTargetKeys = null;
         String myInfo = null;
@@ -96,35 +111,71 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
 
             if (moveTargetData != null) {
+
+                // データ移動先のメインデータノードに接続
                 addMainDataNodeInfo = (String)moveTargetData.get("tomain");
+                toMainDataNodeDt = addMainDataNodeInfo.split(":");
                 mainMoveTargetMap = (HashMap)moveTargetData.get("main");
 
+                toMainSocket = new Socket(toMainDataNodeDt[0], Integer.parseInt(toMainDataNodeDt[1]));
+                toMainSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+
+                toMainOsw = new OutputStreamWriter(toMainSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
+                toMainPw = new PrintWriter(new BufferedWriter(toMainOsw));
+
+                toMainIsr = new InputStreamReader(toMainSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
+                toMainBr = new BufferedReader(toMainIsr);
+
+                mainSet = mainMoveTargetMap.keySet();
+                mainIterator = mainSet.iterator();
+
+
+                // スレーブノード処理
                 addSubDataNodeInfo = (String)moveTargetData.get("tosub");
                 subMoveTargetMap = (HashMap)moveTargetData.get("sub");
-
                 subSet = null;
                 subIterator = null;
+
+                if (addSubDataNodeInfo != null) {
+                    toSubDataNodeDt = addSubDataNodeInfo.split(":");
+                    toSubSocket = new Socket(toSubDataNodeDt[0], Integer.parseInt(toSubDataNodeDt[1]));
+                    toSubSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+
+                    toSubOsw = new OutputStreamWriter(toSubSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
+                    toSubPw = new PrintWriter(new BufferedWriter(toSubOsw));
+
+                    toSubIsr = new InputStreamReader(toSubSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
+                    toSubBr = new BufferedReader(toSubIsr);
+        
+                    subSet = subMoveTargetMap.keySet();
+                    subIterator = subSet.iterator();
+                }
+
 
                 try {
 
                     // 全ての移動対象のノードを処理
-                    mainSet = mainMoveTargetMap.keySet();
-                    mainIterator = mainSet.iterator();
-
-                    if (addSubDataNodeInfo != null) {
-                        subSet = mainMoveTargetMap.keySet();
-                        subIterator = mainSet.iterator();
-                    }
-
                     // 対象データノード1ノードづつ処理
                     while(mainIterator.hasNext()) {
                         Map.Entry obj = (Map.Entry)mainIterator.next();
                         String dataNodeStr = null;
+                        String[] dataNodeDetail = null;
+                        String rangStr = null;
+                        String rangStr = null;
 
                         // キー値を取り出し
                         dataNodeStr = (String)obj.getKey();
+                        dataNodeDetail = dataNodeStr.split(":");
 
+                        // Rangの文字列を取り出し
+                        rangStr = mainMoveTargetMap.get(dataNodeStr);
 
+                        // 対象ノードからデータ取り出し
+                        this.getTargetData(dataNodeDetail[0], Integer.parseInt(dataNodeDetail[1]), rangStr);
+
+                        while()
+
+                    }
 -------------------------------- ここまで -------------------------------------------------------------
 ここからIterator回しながらMain,Slaveそれぞれのレンジ対象データを移行する
 その後 super.removeConsistentHashMoveData()呼び出して、dataNode上から移行依頼のデータも消す
@@ -265,16 +316,14 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
             this.isr = new InputStreamReader(this.socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
             this.br = new BufferedReader(this.isr);
 
-            // コピー元からデータ読み込み
+            // 移動元からデータ読み込み
             buf = new StringBuffer();
-            // 処理番号20
-            buf.append("26");
+            // 処理番号27
+            buf.append("27");
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append("true");
             buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append(dataNodeMatchNo);
-            buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append(DataDispatcher.ruleInt);
+            buf.append(rangStr);
 
             // 送信
             pw.println(buf.toString());
@@ -287,9 +336,8 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
     }
 
 
-    private String[] nextData() throws BatchException {
-
-        String[] ret = null;
+    private String nextData() throws BatchException {
+        String ret = null;
         String line = null;
 
         try {
@@ -297,12 +345,11 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                 if (line.length() > 0) {
                     if (line.length() == 2 && line.equals("-1")) {
-                      
 
                         break;
                     } else {
 
-                        ret = line.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+                        ret = line;
                         break;
                     }
                 }
