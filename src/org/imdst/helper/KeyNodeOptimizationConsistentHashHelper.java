@@ -161,7 +161,8 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                         String dataNodeStr = null;
                         String[] dataNodeDetail = null;
                         String rangStr = null;
-                        String rangStr = null;
+                        String targetDataStr = null;
+                        StringBuffer
 
                         // キー値を取り出し
                         dataNodeStr = (String)obj.getKey();
@@ -173,7 +174,11 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                         // 対象ノードからデータ取り出し
                         this.getTargetData(dataNodeDetail[0], Integer.parseInt(dataNodeDetail[1]), rangStr);
 
-                        while()
+                
+
+                        while((targetDataStr = this.nextData()) != null) {
+                            
+                        }
 
                     }
 -------------------------------- ここまで -------------------------------------------------------------
