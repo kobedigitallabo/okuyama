@@ -24,7 +24,7 @@ import org.imdst.client.ImdstKeyValueClient;
 public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManagerHelper {
 
     // ノードの監視サイクル時間(ミリ秒)
-    private int checkCycle = 60000 * 3;
+    private int checkCycle = 10000 * 1;
 
     private ArrayList mainNodeList = null;
 
@@ -105,195 +105,163 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
         myInfoDt = myInfo.split(":");
 
-        while (serverRunning) {
+        try {
+            while (serverRunning) {
+                Thread.sleep(checkCycle);
 
-            moveTargetData = super.getConsistentHashMoveData();
+                if (StatusUtil.isMainMasterNode()) {
 
+                    moveTargetData = super.getConsistentHashMoveData();
 
-            if (moveTargetData != null) {
+                    StringBuffer sendRequestBuf = new StringBuffer();
 
-                // データ移動先のメインデータノードに接続
-                addMainDataNodeInfo = (String)moveTargetData.get("tomain");
-                toMainDataNodeDt = addMainDataNodeInfo.split(":");
-                mainMoveTargetMap = (HashMap)moveTargetData.get("main");
+                    // 送信リクエスト文字列作成
+                    sendRequestBuf.append()
+                    // 処理番号28
+                    sendRequestBuf.append("28");
+                    sendRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
+                    sendRequestBuf.append("true");
 
-                toMainSocket = new Socket(toMainDataNodeDt[0], Integer.parseInt(toMainDataNodeDt[1]));
-                toMainSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+                    if (moveTargetData != null) {
+                        while (true) {
+                            try {
 
-                toMainOsw = new OutputStreamWriter(toMainSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-                toMainPw = new PrintWriter(new BufferedWriter(toMainOsw));
+                                // 全て初期化
+                                toMainSocket = null;
+                                toMainOsw = null;
+                                toMainPw = null;
+                                mainSet = null;
+                                mainIterator = null;
 
-                toMainIsr = new InputStreamReader(toMainSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-                toMainBr = new BufferedReader(toMainIsr);
-
-                mainSet = mainMoveTargetMap.keySet();
-                mainIterator = mainSet.iterator();
-
-
-                // スレーブノード処理
-                addSubDataNodeInfo = (String)moveTargetData.get("tosub");
-                subMoveTargetMap = (HashMap)moveTargetData.get("sub");
-                subSet = null;
-                subIterator = null;
-
-                if (addSubDataNodeInfo != null) {
-                    toSubDataNodeDt = addSubDataNodeInfo.split(":");
-                    toSubSocket = new Socket(toSubDataNodeDt[0], Integer.parseInt(toSubDataNodeDt[1]));
-                    toSubSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-
-                    toSubOsw = new OutputStreamWriter(toSubSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-                    toSubPw = new PrintWriter(new BufferedWriter(toSubOsw));
-
-                    toSubIsr = new InputStreamReader(toSubSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-                    toSubBr = new BufferedReader(toSubIsr);
-        
-                    subSet = subMoveTargetMap.keySet();
-                    subIterator = subSet.iterator();
-                }
+                                toSubSocket = null;
+                                toSubOsw = null;
+                                toSubPw = null;
+                                subSet = null;
+                                subIterator = null;
 
 
-                try {
+                                // データ移動先のメインデータノードに接続
+                                addMainDataNodeInfo = (String)moveTargetData.get("tomain");
+                                toMainDataNodeDt = addMainDataNodeInfo.split(":");
+                                mainMoveTargetMap = (HashMap)moveTargetData.get("main");
 
-                    // 全ての移動対象のノードを処理
-                    // 対象データノード1ノードづつ処理
-                    while(mainIterator.hasNext()) {
-                        Map.Entry obj = (Map.Entry)mainIterator.next();
-                        String dataNodeStr = null;
-                        String[] dataNodeDetail = null;
-                        String rangStr = null;
-                        String targetDataStr = null;
-                        StringBuffer
+                                try {
+                                    toMainSocket = new Socket(toMainDataNodeDt[0], Integer.parseInt(toMainDataNodeDt[1]));
+                                    toMainSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
-                        // キー値を取り出し
-                        dataNodeStr = (String)obj.getKey();
-                        dataNodeDetail = dataNodeStr.split(":");
+                                    toMainOsw = new OutputStreamWriter(toMainSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
+                                    toMainPw = new PrintWriter(new BufferedWriter(toMainOsw));
 
-                        // Rangの文字列を取り出し
-                        rangStr = mainMoveTargetMap.get(dataNodeStr);
+                                    mainSet = mainMoveTargetMap.keySet();
+                                    mainIterator = mainSet.iterator();
 
-                        // 対象ノードからデータ取り出し
-                        this.getTargetData(dataNodeDetail[0], Integer.parseInt(dataNodeDetail[1]), rangStr);
+                                    // 移行先メインデータノードにデータ移行開始を送信
+                                    toMainPw.println(sendRequestBuf.toString());
+                                    toMainPw.flush();
+                                } catch (Exception e) {
+                                    toMainPw = null;
+                                }
 
-                
 
-                        while((targetDataStr = this.nextData()) != null) {
-                            
+                                // スレーブノード処理
+                                addSubDataNodeInfo = (String)moveTargetData.get("tosub");
+                                subMoveTargetMap = (HashMap)moveTargetData.get("sub");
+
+                                if (addSubDataNodeInfo != null) {
+                                    try {
+                                        toSubDataNodeDt = addSubDataNodeInfo.split(":");
+                                        toSubSocket = new Socket(toSubDataNodeDt[0], Integer.parseInt(toSubDataNodeDt[1]));
+                                        toSubSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+
+                                        toSubOsw = new OutputStreamWriter(toSubSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
+                                        toSubPw = new PrintWriter(new BufferedWriter(toSubOsw));
+
+                                        subSet = subMoveTargetMap.keySet();
+                                        subIterator = subSet.iterator();
+
+                                        // 移行先スレーブデータノードにデータ移行開始を送信
+                                        toSubPw.println(sendRequestBuf.toString());
+                                        toSubPw.flush();
+                                    } catch (Exception e) {
+                                        toSubPw = null;
+                                    }
+                                }
+
+
+                                // 全ての移動対象のノードを処理
+                                // 対象データノード1ノードづつ処理
+                                while(mainIterator.hasNext()) {
+                                    Map.Entry obj = (Map.Entry)mainIterator.next();
+                                    String dataNodeStr = null;
+                                    String[] dataNodeDetail = null;
+                                    String rangStr = null;
+                                    String targetDataStr = null;
+
+                                    // キー値を取り出し
+                                    dataNodeStr = (String)obj.getKey();
+                                    dataNodeDetail = dataNodeStr.split(":");
+
+                                    // Rangの文字列を取り出し
+                                    rangStr = mainMoveTargetMap.get(dataNodeStr);
+
+                                    // 対象ノードからデータ取り出し
+                                    this.getTargetData(dataNodeDetail[0], Integer.parseInt(dataNodeDetail[1]), rangStr);
+
+
+                                    // 対象のデータを順次対象のノードに移動
+                                    while((targetDataStr = this.nextData()) != null) {
+                                        toMainPw.println(targetDataStr);
+                                        toMainPw.flush();
+
+                                        if (toSubPw != null) {
+                                            toSubPw.println(targetDataStr);
+                                            toSubPw.flush();
+                                        }
+                                    }
+
+                                    this.closeConnect();
+                                }
+
+                                // 全てのデータの移行が完了
+                                toMainPw.println("-1");
+                                toMainPw.flush();
+                                toMainPw.println(ImdstDefine.imdstConnectExitRequest);
+                                toMainPw.flush();
+                                toMainPw.close();
+                                toMainSocket.close();
+
+                                if (toSubPw != null) {
+
+                                    toSubPw.println("-1");
+                                    toSubPw.flush();
+                                    toSubPw.println(ImdstDefine.imdstConnectExitRequest);
+                                    toSubPw.flush();
+                                    toSubPw.close();
+                                    toSubSocket.close();
+                                }
+
+                                // 移動もとのデータを消す処理をここに追加
+                                // データ消す
+
+                                // メモリ上から依頼を消す
+                                super.removeConsistentHashMoveData();
+                                break
+                            } catch (Exception e) {
+                                // もしエラーが発生した場合はリトライ
+                                logger.error("Data shift Error =[" + e.toString() + "]");
+                                e.printStackTrace();
+                                logger.error("Data shift Error Detail =[" + moveTargetData + "]");
+                            }
                         }
-
                     }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("KeyNodeOptimizationConsistentHashHelper - executeHelper - error", e);
+        }
 -------------------------------- ここまで -------------------------------------------------------------
 ここからIterator回しながらMain,Slaveそれぞれのレンジ対象データを移行する
 その後 super.removeConsistentHashMoveData()呼び出して、dataNode上から移行依頼のデータも消す
-
-
-
-
-                    String[] keyList = new String[convertMap.size()];
-                    for (int idx = 0; idx < keyList.length; idx++) {
-                        keyList[idx] = (String)iterator.next();
-                    }
-
-                    for (int idx = 0; idx < keyList.length; idx++) {
-
-                        // レンジを分解
-                        String allConvertRang = (String)convertMap.get(keyList[idx]);
-
-                        
-
-                        String[] convertRangs = allConvertRang.split(",");
-                        int[][] rangs = new int[convertRangs.length][2];
-
-                        // レンジのstartとendをセット単位でintの配列に落とす
-                        for (int ii = 0; ii < convertRangs.length; ii++) {
-
-                            String[] workRangs = convertRangs[ii].split("-");
-                            rangs[ii][0] = Integer.parseInt(workRangs[0]);
-                            rangs[ii][1] = Integer.parseInt(workRangs[1]);
-                        }
-
-                    }
-
-
-
-
-
-
-
-
-
-
-
-
-                    HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
-                    this.mainNodeList = (ArrayList)allNodeInfo.get("main");
-
-                    // ノード数分チェック
-                    for (int i = 0; i < mainNodeList.size(); i++) {
-                        Thread.sleep(checkCycle);
-
-
-                        // 停止ファイル関係チェック
-                        if (StatusUtil.getStatus() == 1) {
-                            serverRunning = false;
-                            logger.info("KeyNodeOptimizationConsistentHashHelper - 状態異常です");
-                        }
-
-                        if (StatusUtil.getStatus() == 2) {
-                            serverRunning = false;
-                            logger.info("KeyNodeOptimizationConsistentHashHelper - 終了状態です");
-                        }
-
-                        serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
-
-                        serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
-                        if (serverStopMarkerFile.exists()) {
-                            serverRunning = false;
-                            logger.info("KeyNodeOptimizationConsistentHashHelper - Server停止ファイルが存在します");
-                            StatusUtil.setStatus(2);
-                        }
-
-                        // MainのMasterNodeの場合のみ実行
-                        if (StatusUtil.isMainMasterNode()) {
-                            imdstKeyValueClient = new ImdstKeyValueClient();
-
-                            imdstKeyValueClient.connect(myInfoDt[0], Integer.parseInt(myInfoDt[1]));
-
-                            // ノードチェック(メイン)
-                            String nodeInfo = (String)mainNodeList.get(i);
-
-                            logger.info("************************************************************");
-                            logger.info(nodeInfo + " Optimization Start");
-
-
-                            String[] nodeDt = nodeInfo.split(":");
-                            optimizeTargetKeys = null;
-                            
-                            this.closeConnect();
-                            this.searchTargetData(nodeDt[0], Integer.parseInt(nodeDt[1]), i);
-                            while((optimizeTargetKeys = this.nextData()) != null) {
-                                for (int idx = 0; idx < optimizeTargetKeys.length; idx++) {
-                                    if (!optimizeTargetKeys[i].trim().equals("")) {
-                                        imdstKeyValueClient.getValueNoEncode(optimizeTargetKeys[idx]);
-                                    }
-                                }
-                            }
-
-                            imdstKeyValueClient.close();
-                            imdstKeyValueClient = null;
-
-                            logger.info(nodeInfo + " Optimization End");    
-                            logger.info("************************************************************");
-                        }
-                    }
-                } catch(Exception e) {
-                    logger.error("KeyNodeOptimizationConsistentHashHelper - executeHelper - Error", e);
-                } finally {
-                    try {
-                        if (imdstKeyValueClient != null) imdstKeyValueClient.close();
-                    } catch (Exception e2) {}
-                }
-            }
-        }
 
         logger.debug("KeyNodeOptimizationConsistentHashHelper - executeHelper - end");
         return ret;
