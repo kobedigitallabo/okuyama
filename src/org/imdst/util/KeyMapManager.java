@@ -1398,9 +1398,9 @@ public class KeyMapManager extends Thread {
 
                         for (i = 0; i < dataLines.length; i++) {
 
-                            if (!dataLinedataLines[i].trim().equals("")) {
+                            if (!dataLines[i].trim().equals("")) {
 
-                                oneDatas = dataLinedataLines[i].split(workFileSeq);
+                                oneDatas = dataLines[i].split(workFileSeq);
                                 // 成功、失敗関係なく全て登録処理
                                 this.setKeyPairOnlyOnce(oneDatas[0], oneDatas[1], "0");
                             }

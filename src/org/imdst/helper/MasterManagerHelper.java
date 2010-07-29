@@ -1492,7 +1492,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         break;
                     }
 
-                    break;
                 } catch(SocketException tSe) {
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     se = tSe;

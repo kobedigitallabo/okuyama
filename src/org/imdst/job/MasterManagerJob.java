@@ -56,6 +56,37 @@ public class MasterManagerJob extends AbstractJob implements IJob {
     public String executeJob(String optionParam) throws BatchException {
         logger.debug("MasterManagerJob - executeJob - start");
         String ret = SUCCESS;
+
+        try{
+
+            // KeyMapNode情報の初期化完了を確認
+            if(DataDispatcher.isStandby() && StatusUtil.isStandby()) {
+                if (StatusUtil.getDistributionAlgorithm().equals(ImdstDefine.dispatchModeMod)) {
+
+                    // Modアルゴリズム
+                    ret = this.executeModMasterServer(optionParam);
+                } else if (StatusUtil.getDistributionAlgorithm().equals(ImdstDefine.dispatchModeConsistentHash)) {
+                }
+            }
+
+        } catch(Exception e) {
+            logger.error("MasterManagerJob - executeJob - Error", e);
+            throw new BatchException(e);
+        }
+
+        //logger.debug("MasterManagerJob - executeJob - end");
+        return ret;
+    }
+
+
+    /**
+     * Modアルゴリズム処理.<br>
+     * ServerSocketをOpenしてクライアントを待ち受ける.<br>
+     * 1クライアント1スレッド型.<br>
+     */
+    private String executeModMasterServer (String optionParam) throws Exception {
+        String ret = SUCCESS;
+
         Object[] helperParams = null;
         String[] transactionManagerInfos = null;
 
@@ -70,27 +101,6 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 loadBalance = new Boolean(loadBalanceStr).booleanValue();
             }
 
-            // MainMasterNodeの設定
-            /*if (super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode) != null && 
-                    super.getPropertiesValue(ImdstDefine.Prop_MainMasterNodeMode).equals("true")) {
-                StatusUtil.setMainMasterNode(true);
-            } else {
-                StatusUtil.setMainMasterNode(false);
-            }*/
-
-
-            // Transaction設定
-            /*String transactionModeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_TransactionMode);
-            if (transactionModeStr != null) {
-                transactionMode = new Boolean(transactionModeStr).booleanValue();
-                if (transactionMode) {
-                    String transactionMgrStr = null;
-                    transactionMgrStr = (String)super.getPropertiesValue(ImdstDefine.Prop_TransactionManagerInfo);
-                    transactionManagerInfos = transactionMgrStr.split(":");
-                }
-            }*/
-
-
             // サーバソケットの生成
             this.serverSocket = new ServerSocket(this.portNo);
             // 共有領域にServerソケットのポインタを格納
@@ -98,39 +108,36 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
             Socket socket = null;
 
-            // KeyMapNode情報の初期化完了を確認
-            if(DataDispatcher.isStandby() && StatusUtil.isStandby()) {
 
-                while (true) {
-                    if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;
-                    try {
+            while (true) {
+                if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;
+                try {
 
-                        // クライアントからの接続待ち
-                        socket = serverSocket.accept();
+                    // クライアントからの接続待ち
+                    socket = serverSocket.accept();
 
-                        int paramSize = 6;
+                    int paramSize = 6;
 
-                        helperParams = new Object[paramSize];
-                        helperParams[0] = socket;
-                        helperParams[1] = DataDispatcher.getOldRules();
-                        helperParams[2] = this.mode;
-                        if (loadBalance) helperParams[3] = new Boolean(blanceMode);
-                        helperParams[4] = StatusUtil.isTransactionMode();
-                        helperParams[5] = StatusUtil.getTransactionNode();
-                        super.executeHelper("MasterManagerHelper", helperParams);
+                    helperParams = new Object[paramSize];
+                    helperParams[0] = socket;
+                    helperParams[1] = DataDispatcher.getOldRules();
+                    helperParams[2] = this.mode;
+                    if (loadBalance) helperParams[3] = new Boolean(blanceMode);
+                    helperParams[4] = StatusUtil.isTransactionMode();
+                    helperParams[5] = StatusUtil.getTransactionNode();
+                    super.executeHelper("MasterManagerHelper", helperParams);
 
-                        if (blanceMode) {
-                            blanceMode = false;
-                        } else {
-                            blanceMode = true;
-                        }
-                    } catch (Exception e) {
-                        if (StatusUtil.getStatus() == 2) {
-                            logger.info("MasterManagerJob - executeJob - ServerEnd");
-                            break;
-                        }
-                        logger.error(e);
+                    if (blanceMode) {
+                        blanceMode = false;
+                    } else {
+                        blanceMode = true;
                     }
+                } catch (Exception e) {
+                    if (StatusUtil.getStatus() == 2) {
+                        logger.info("MasterManagerJob - executeJob - ServerEnd");
+                        break;
+                    }
+                    logger.error(e);
                 }
             }
         } catch(Exception e) {
@@ -140,5 +147,6 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
         //logger.debug("MasterManagerJob - executeJob - end");
         return ret;
+
     }
 }

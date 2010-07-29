@@ -116,7 +116,6 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                     StringBuffer sendRequestBuf = new StringBuffer();
 
                     // 送信リクエスト文字列作成
-                    sendRequestBuf.append()
                     // 処理番号28
                     sendRequestBuf.append("28");
                     sendRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
@@ -202,7 +201,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                     dataNodeDetail = dataNodeStr.split(":");
 
                                     // Rangの文字列を取り出し
-                                    rangStr = mainMoveTargetMap.get(dataNodeStr);
+                                    rangStr = (String)mainMoveTargetMap.get(dataNodeStr);
 
                                     // 対象ノードからデータ取り出し
                                     this.getTargetData(dataNodeDetail[0], Integer.parseInt(dataNodeDetail[1]), rangStr);
@@ -245,7 +244,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                 // メモリ上から依頼を消す
                                 super.removeConsistentHashMoveData();
-                                break
+                                break;
                             } catch (Exception e) {
                                 // もしエラーが発生した場合はリトライ
                                 logger.error("Data shift Error =[" + e.toString() + "]");
@@ -259,9 +258,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         } catch (Exception e) {
             logger.error("KeyNodeOptimizationConsistentHashHelper - executeHelper - error", e);
         }
--------------------------------- ここまで -------------------------------------------------------------
-ここからIterator回しながらMain,Slaveそれぞれのレンジ対象データを移行する
-その後 super.removeConsistentHashMoveData()呼び出して、dataNode上から移行依頼のデータも消す
+//-------------------------------- ここまで -------------------------------------------------------------
+//ここからIterator回しながらMain,Slaveそれぞれのレンジ対象データを移行する
+//その後 super.removeConsistentHashMoveData()呼び出して、dataNode上から移行依頼のデータも消す
 
         logger.debug("KeyNodeOptimizationConsistentHashHelper - executeHelper - end");
         return ret;

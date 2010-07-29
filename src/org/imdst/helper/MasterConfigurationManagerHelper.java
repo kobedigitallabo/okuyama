@@ -330,7 +330,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         // DataDispatcher初期化
         if (dispatchMode.equals(ImdstDefine.dispatchModeConsistentHash)) {
-            infomationSetterConsistentHash();
+            this.infomationSetterConsistentHash();
         } else {
             this.infomationSetter();
         }
@@ -507,10 +507,27 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
                 // 取得できる値のフォーマットは"main=192.168.1.5:5553,sub=192.168.2.5:5553"のようなフォーマット
                 String[] addNodeRequest = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode);
+
                 if (addNodeRequest[0].equals("true")) {
-                    addNodeInfos = addNodeRequest[1].split(",");
-                } else {
-                    addNodeInfos = null;
+
+                    if (this.addNodeInfos == null) {
+                        setterFlg = true;
+                        this.addNodeInfos = addNodeRequest[1].split(",");
+                    } else {
+
+                        // データ移行処理依頼中
+                        // データ移行中はなにもしない
+                        if (super.getConsistentHashMoveData() == null) {
+
+                            // データ移行終了
+                            // ノード中から移行依頼を消す
+                            String[] removeRet = imdstKeyValueClient.removeValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode);
+                            if(removeRet[0].equals("true")) {
+                                setterFlg = true;
+                                this.addNodeInfos = null;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -761,17 +778,6 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         //DataNode情報解析
 
-        // ノード追加によりルールが変更されている可能性があるのでパース
-        // ルールは最新ルールが先頭に来るように設定される想定なので、先頭文字列を取得
-        String[] ruleStrs = ruleStrProp.split(",") ;
-        // 過去ルールを保存
-        int[] oldRules = null;
-        if (ruleStrs.length > 1) {
-            oldRules = new int[ruleStrs.length - 1];
-            for (int i = 1; i < ruleStrs.length; i++) {
-                oldRules[i - 1] = new Integer(ruleStrs[i].trim()).intValue();
-            }
-        }
 
         mainKeyNodes = keyMapNodesStr.split(",");
 
@@ -795,7 +801,6 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         // DataNodeの情報を初期化
         StatusUtil.initNodeExecMap(allNodeInfos);
 
-
         // TransactionNodeの情報を初期化
         if (transactionModeStr != null) {
             StatusUtil.setTransactionMode(new Boolean(transactionModeStr).booleanValue());
@@ -814,11 +819,14 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         // 追加データノードの情報がnullの場合はDataDispatcherから削除
         if (addNodeInfos == null) {
+
             DataDispatcher.clearConsistentHashOldCircle();
         } else {
+
             HashMap moveDataMap = null;
+            // 移行対象が存在する場合のみ、moveDataMapはnullではなくなる
             if (addNodeInfos.length == 1) {
-                moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], addNodeInfos[1]);
+                moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], null);
             } else if (addNodeInfos.length == 2) {
                 moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], addNodeInfos[1]);
             }
@@ -827,7 +835,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             // ここでsuperのconsistentHashMoveDataに登録
             // KeyNodeOptimizationConsistentHashHelper側でこのデータを監視して、登録されたら、
             // 移行処理を開始する。
-            // 移行完了後、superのconsistentHashMoveDataを削除し、ノードに保存されている移行指示も削除する
+            // 移行完了後、superのconsistentHashMoveDataを削除する
             if (StatusUtil.isMainMasterNode()) {
                 if (moveDataMap != null) {
                     super.setConsistentHashMoveData(moveDataMap);
