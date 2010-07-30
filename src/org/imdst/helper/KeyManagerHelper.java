@@ -72,8 +72,6 @@ public class KeyManagerHelper extends AbstractHelper {
     // KeyMapManagerインスタンス
     private KeyMapManager keyMapManager = null;
 
-    private Socket soc = null;
-
     // プロトコルモード
     private String protocolMode = null;
     private IProtocolTaker porotocolTaker = null;
@@ -92,8 +90,32 @@ public class KeyManagerHelper extends AbstractHelper {
         this.protocolMode = initValue;
     }
 
-    // Jobメイン処理定義
     public String executeHelper(String optionParam) throws BatchException {
+        String ret = null;
+        try {
+            while(true) {
+                if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) {
+                    ret = super.SUCCESS;
+                    break;
+                }
+
+                System.out.println("pollParameterQueue - start");
+                Object[] socketParam = super.pollParameterQueue();
+                System.out.println("pollParameterQueue - get");
+                Socket soc = (Socket)socketParam[0];
+                this.keyMapManager = (KeyMapManager)socketParam[1];
+                executeMainTask(optionParam, soc);
+            }
+        } catch (Exception e) {
+            throw new BatchException(e);
+        } finally {
+        }
+
+        return ret;
+    }
+
+    // Jobメイン処理定義
+    public String executeMainTask(String optionParam, Socket soc) throws BatchException {
         //logger.debug("KeyManagerHelper - executeHelper - start");
 
         String ret = null;
@@ -105,7 +127,7 @@ public class KeyManagerHelper extends AbstractHelper {
         BufferedReader br = null;
         String[] retParams = null;
         StringBuffer retParamBuf = null;
-        
+
 
         try{
 
@@ -122,9 +144,9 @@ public class KeyManagerHelper extends AbstractHelper {
 
             String transactionCode = null;
 
-            // Jobからの引数
-            this.keyMapManager = (KeyMapManager)parameters[0];
-            this.soc = (Socket)parameters[1];
+            // Jobからの引数はなし
+            //this.keyMapManager = (KeyMapManager)parameters[0];
+            //this.soc = (Socket)parameters[1];
 
             // プロトコル決定
             if (this.protocolMode != null && !this.protocolMode.trim().equals("") && !this.protocolMode.equals("okuyama")) {
@@ -132,12 +154,12 @@ public class KeyManagerHelper extends AbstractHelper {
             }
 
             // クライアントへのアウトプット
-            osw = new OutputStreamWriter(this.soc.getOutputStream() , 
+            osw = new OutputStreamWriter(soc.getOutputStream() , 
                                                             ImdstDefine.keyHelperClientParamEncoding);
             pw = new PrintWriter(new BufferedWriter(osw));
 
             // クライアントからのインプット
-            isr = new InputStreamReader(this.soc.getInputStream(),
+            isr = new InputStreamReader(soc.getInputStream(),
                                                           ImdstDefine.keyHelperClientParamEncoding);
             br = new BufferedReader(isr);
 
@@ -402,7 +424,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
             logger.error("KeyManagerHelper - executeHelper - Error", e);
             ret = super.ERROR;
-            throw new BatchException(e);
+            //throw new BatchException(e);
         } finally {
 
             try {
@@ -427,17 +449,18 @@ public class KeyManagerHelper extends AbstractHelper {
                     isr = null;
                 }
 
-                if (this.soc != null) {
-                    this.soc.close();
-                    this.soc = null;
+                if (soc != null) {
+                    soc.close();
+                    soc = null;
                 }
             } catch(Exception e2) {
                 logger.error("KeyManagerHelper - executeHelper - Error2", e2);
                 ret = super.ERROR;
-                throw new BatchException(e2);
+                //throw new BatchException(e2);
             }
         }
 
+        System.out.println("KeyManagerHelper - Loop END");
         //logger.debug("KeyManagerHelper - executeHelper - end");
         return ret;
     }
@@ -446,21 +469,11 @@ public class KeyManagerHelper extends AbstractHelper {
      * 初期化メソッド定義
      */
     public void endHelper() {
-        //logger.debug("KeyManagerHelper - endHelper - start");
-        try {
-            if (this.soc != null) {
-                this.soc.close();
-                this.soc = null;
-            }
-        } catch(Exception e2) {
-            logger.error("KeyManagerHelper - executeHelper - Error2", e2);
-        }
-        //logger.debug("KeyManagerHelper - endHelper - end");
     }
 
     // KeyとDataNode値を格納する
     private String[] setDatanode(String key, String dataNodeStr, String transactionCode) {
-        logger.debug("KeyManagerHelper - setDatanode - start = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
+        //logger.debug("KeyManagerHelper - setDatanode - start = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
         String[] retStrs = new String[3];
         try {
             if (dataNodeStr.length() < setDatanodeMaxSize) {
@@ -487,7 +500,7 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[1] = "false";
             retStrs[2] = "NG:KeyManagerHelper - setDatanode - Exception - " + be.toString();
         }
-        logger.debug("KeyManagerHelper - setDatanode - end = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
+        //logger.debug("KeyManagerHelper - setDatanode - end = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
         return retStrs;
     }
 

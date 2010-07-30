@@ -3,6 +3,7 @@ package org.batch.job;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.batch.parameter.config.ConfigFolder;
 import org.batch.parameter.config.HelperConfigMap;
@@ -10,6 +11,7 @@ import org.batch.lang.BatchException;
 import org.batch.lang.BatchDefine;
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
+import org.batch.util.HelperPool;
 
 /**
  * JobHelperの基底クラス.<br>
@@ -69,10 +71,37 @@ abstract public class AbstractHelper  implements Runnable{
     // Helper実行後に返したい値を格納する
     private Object returnParameter = null;
 
+
+
     /**
      * コンストラクタ
      */
     public AbstractHelper() {
+    }
+
+
+    /**
+     * Helper用のパラメータキューに追加
+     *
+     * @param params パラメータ
+     * @return int
+     */
+    public void addParameterQueue(Object[] params) throws Exception {
+        try {
+            HelperPool.addParameterQueue(params);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+
+    /**
+     * Helper用のパラメータキューから取得
+     *
+     * @return Object[] パラメータ
+     */
+    public Object[] pollParameterQueue() {
+        return (Object[])HelperPool.pollParameterQueue();
     }
 
     /**

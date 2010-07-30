@@ -151,6 +151,51 @@ abstract public class AbstractJob extends Thread {
         logger.debug("実行終了");
     }
 
+    /**
+     * Helperクラスインスタンスを返す.<br>
+     * Helperが存在しない場合はExceptionを返す.<br>
+     * 
+     * 
+     * @param helperName helperName名
+     * @param helpreParams helperパラメータ配列
+     * @return AbstractHelper Helperインスタンス
+     * @throws BatchException
+     **/
+    protected int executeHelperQueue(String helperName, Object[] helpreParams) throws BatchException {
+        logger.debug("executeHelperQueue - start");
+        int ret = 0;
+        AbstractHelper helper = null;
+        try {
+            while (true) {
+                helper = HelperPool.getHelper(helperName);
+                if (helper != null) break;
+            }
+
+            helper.addParameterQueue(helpreParams);
+            helper.setParameters(null);
+            // ExecutorService を使用するために変更
+            //helper.start();
+
+            HelperPool.returnHelper(helperName,helper);
+            ret = helper.hashCode();
+        } catch (BatchException be) {
+            logger.error("createHelper - BatchException");
+            throw be;
+        } catch (Exception e) {
+            logger.error("createHelper - Exception");
+            throw new BatchException(e);
+        }
+        logger.debug("executeHelper - end");
+        return ret;
+    }
+
+    protected void addHelperQueueParam(Object[] params) throws Exception {
+        try {
+            HelperPool.addParameterQueue(params);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
 
     /**
      * Helperクラスインスタンスを返す.<br>
@@ -237,6 +282,16 @@ abstract public class AbstractJob extends Thread {
      */
     public String getHelperStatus(int code) {
         return HelperPool.getHelperStatus(code);
+    }
+
+    /**
+     * 指定のHelperの実行中の数を返す
+     * 
+     * @param hashName Helper名
+     * @return int 実行中の数
+     */
+    public int getActiveHelperCount(String helperName) {
+        return HelperPool.getActiveHelperInstanceCount(helperName);
     }
 
     /**

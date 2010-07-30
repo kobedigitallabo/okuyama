@@ -10,6 +10,7 @@ import org.batch.job.IJob;
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
 import org.imdst.util.KeyMapManager;
+import org.imdst.util.ImdstDefine;
 import org.imdst.util.StatusUtil;
 
 /**
@@ -22,6 +23,8 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
     // ポート番号
     private int portNo = 5554;
+
+    private int maxParallelExecution = 32;
 
     // サーバーソケット
     ServerSocket serverSocket = null;
@@ -41,6 +44,8 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         logger.debug("KeyManagerJob - initJob - start");
 
         this.portNo = Integer.parseInt(initValue);
+        String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyManagerNodeMaxParallelExecution);
+        if (sizeStr != null && !sizeStr.trim().equals("")) maxParallelExecution = Integer.parseInt(sizeStr);
 
         logger.debug("KeyManagerJob - initJob - end");
     }
@@ -87,6 +92,13 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode);
             this.keyMapManager.start();
 
+
+            for (int i = 0; i < maxParallelExecution; i++) {
+
+                super.executeHelper("KeyManagerHelper", null);
+            }
+
+
             // サーバソケットの生成
             this.serverSocket = new ServerSocket(this.portNo);
             // 共有領域にServerソケットのポインタを格納
@@ -99,10 +111,23 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                     // クライアントからの接続待ち
                     socket = serverSocket.accept();
                     //logger.debug(socket.getInetAddress() + " ACCESS");
-                    helperParams = new Object[2];
+                    /*helperParams = new Object[2];
                     helperParams[0] = this.keyMapManager;
                     helperParams[1] = socket;
-                    super.executeHelper("KeyManagerHelper", helperParams);
+                    super.executeHelper("KeyManagerHelper", helperParams);*/
+
+                    Object[] param = new Object[2];
+                    param[0] = socket;
+                    param[1] = this.keyMapManager;
+
+
+                    // Socketをスタック
+                    super.addHelperQueueParam(param);
+
+                    if (super.getActiveHelperCount("KeyManagerHelper") < maxParallelExecution) {
+                        super.executeHelper("KeyManagerHelper", helperParams);
+                    }
+
                 } catch (Exception e) {
                     if (StatusUtil.getStatus() == 2) {
                         logger.info("KeyManagerJob - executeJob - ServerEnd");

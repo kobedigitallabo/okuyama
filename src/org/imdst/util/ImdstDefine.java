@@ -133,7 +133,8 @@ public class ImdstDefine {
     public static final String Prop_MainMasterNodeInfo = "MainMasterNodeInfo";
     public static final String Prop_AllMasterNodeInfo = "AllMasterNodeInfo";
     public static final String Prop_DistributionAlgorithm = "DistributionAlgorithm";
-
+    public static final String Prop_MasterNodeMaxParallelExecution = "MasterNodeMaxParallelExecution";
+    public static final String Prop_KeyManagerNodeMaxParallelExecution = "KeyManagerNodeMaxParallelExecution";
 
     /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */
     public static final String dataNodeParamKey_1 = "dataNodeNameList";
@@ -181,20 +182,23 @@ public class ImdstDefine {
     public static final int defaultDeadPingCount = 2;
 
     // クライアントのコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int clientConnectionOpenTimeout = 4000;
+    public static final int clientConnectionOpenTimeout = 5000;
 
     // クライアントのコネクションタイムアウト時間(ミリ秒)
-    public static final int clientConnectionTimeout = 8000;
+    public static final int clientConnectionTimeout = 30000;
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenShortTimeout = 1500;
+    //public static final int nodeConnectionOpenShortTimeout = 1500;
+    public static final int nodeConnectionOpenShortTimeout = 5000;
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenTimeout = 2000;
+    //public static final int nodeConnectionOpenTimeout = 2000;
+    public static final int nodeConnectionOpenTimeout = 10000;
 
     // Node間のコネクションReadタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionTimeout = 3000;
+    //public static final int nodeConnectionTimeout = 3000;
+    public static final int nodeConnectionTimeout = 15000;
 
 
     // Node間のコネクションオープンタイムアウト時間(PING)(ミリ秒)

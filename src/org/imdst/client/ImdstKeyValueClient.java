@@ -273,6 +273,7 @@ public class ImdstKeyValueClient {
 
             this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encoding)));
             this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), encoding));
+
             this.initClient();
             this.nowConnectServerInfo = server + ":" + new Integer(port).toString();
         } catch (Exception e) {

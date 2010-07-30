@@ -26,6 +26,8 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
     private int portNo = 5554;
 
+    private int maxParallelExecution = 64;
+
     // サーバーソケット
     ServerSocket serverSocket = null;
 
@@ -48,6 +50,8 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         logger.debug("MasterManagerJob - initJob - start");
 
         this.portNo = Integer.parseInt(initValue);
+        String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_MasterNodeMaxParallelExecution);
+        if (sizeStr != null) maxParallelExecution = Integer.parseInt(sizeStr);
 
         logger.debug("MasterManagerJob - initJob - end");
     }
@@ -108,6 +112,25 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
             Socket socket = null;
 
+            int paramSize = 6;
+
+            for (int i = 0; i < maxParallelExecution; i++) {
+
+
+                helperParams = new Object[paramSize];
+                helperParams[0] = null;
+                helperParams[1] = null;
+                helperParams[2] = this.mode;
+                if (loadBalance) helperParams[3] = new Boolean(blanceMode);
+                helperParams[4] = StatusUtil.isTransactionMode();
+                helperParams[5] = StatusUtil.getTransactionNode();
+                super.executeHelper("MasterManagerHelper", helperParams);
+                if (blanceMode) {
+                    blanceMode = false;
+                } else {
+                    blanceMode = true;
+                }
+            }
 
             while (true) {
                 if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;
@@ -116,21 +139,37 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                     // クライアントからの接続待ち
                     socket = serverSocket.accept();
 
-                    int paramSize = 6;
+                    /*int paramSize = 6;
 
                     helperParams = new Object[paramSize];
-                    helperParams[0] = socket;
+                    helperParams[0] = null;
                     helperParams[1] = DataDispatcher.getOldRules();
                     helperParams[2] = this.mode;
                     if (loadBalance) helperParams[3] = new Boolean(blanceMode);
                     helperParams[4] = StatusUtil.isTransactionMode();
                     helperParams[5] = StatusUtil.getTransactionNode();
-                    super.executeHelper("MasterManagerHelper", helperParams);
+                    //super.executeHelper("MasterManagerHelper", null);*/
+                    Object[] param = new Object[1];
+                    param[0] = socket;
 
-                    if (blanceMode) {
-                        blanceMode = false;
-                    } else {
-                        blanceMode = true;
+                    // Socketをスタック
+                    super.addHelperQueueParam(param);
+
+                    if (super.getActiveHelperCount("MasterManagerHelper") < maxParallelExecution) {
+                        helperParams = new Object[paramSize];
+                        helperParams[0] = null;
+                        helperParams[1] = null;
+                        helperParams[2] = this.mode;
+                        if (loadBalance) helperParams[3] = new Boolean(blanceMode);
+                        helperParams[4] = StatusUtil.isTransactionMode();
+                        helperParams[5] = StatusUtil.getTransactionNode();
+
+                        super.executeHelper("MasterManagerHelper", helperParams);
+                        if (blanceMode) {
+                            blanceMode = false;
+                        } else {
+                            blanceMode = true;
+                        }
                     }
                 } catch (Exception e) {
                     if (StatusUtil.getStatus() == 2) {

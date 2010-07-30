@@ -2,8 +2,11 @@ package org.batch.util;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.ArrayList;
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
@@ -30,6 +33,7 @@ public class  HelperPool extends Thread {
     private static Hashtable helperMap = new Hashtable();
     private static Hashtable helperReturnParamMap = new Hashtable();
     private static Hashtable helperStatusMap = new Hashtable();
+    private static HashMap executorServiceMap = new HashMap();
 
     // Helperチェック間隔
     private static int helperCheckTime = 10000;
@@ -42,7 +46,11 @@ public class  HelperPool extends Thread {
     // スレッド内でのチェックをコントロール
     private boolean poolRunning = true;
 
-    private static ExecutorService ex = Executors.newCachedThreadPool();
+
+
+
+    // 呼び出し時に直接渡すパラメータ
+    private static ArrayBlockingQueue helperParamQueue = new ArrayBlockingQueue(1000);
 
     public HelperPool() {
         poolRunning = true;
@@ -58,8 +66,10 @@ public class  HelperPool extends Thread {
                 Thread.sleep(helperCheckTime);
             }
             logger.info("HelperPool - 終了処理開始");
-            // システムの停止が要求されているのでHelperを強制終了
-            ex.shutdown();
+            // システムの停止が要求されているのでHelperを制終了
+            for (int i = 0; i < helperNameList.size(); i++) {
+                ((ThreadPoolExecutor)executorServiceMap.get((String)helperNameList.get(i))).shutdown();
+            }
             logger.info("HelperPool - 終了処理終了");
         } catch (Exception e) {
             e.printStackTrace();
@@ -160,13 +170,17 @@ public class  HelperPool extends Thread {
 
         try {
             // ExecutorService を使用するために変更. 2010/03/22
-            ex.execute(helper);
-
+            ((ThreadPoolExecutor)executorServiceMap.get(helperName)).execute(helper);
+            //ex.execute(helper);
         } catch (Exception be) {
             logger.error("HelperPool - returnHelper - BatchException");
             throw new BatchException(be);
         }
         logger.debug("HelperPool - returnHelper - end");
+    }
+
+    public static int getActiveHelperInstanceCount(String helperName) {
+        return ((ThreadPoolExecutor)executorServiceMap.get(helperName)).getActiveCount();
     }
 
     /**
@@ -181,9 +195,42 @@ public class  HelperPool extends Thread {
         helperNameList.add(helperConfigMap.getHelperName());
         configMap.put(helperConfigMap.getHelperName(),helperConfigMap);
         helperMap.put(helperConfigMap.getHelperName(),new ArrayList());
+        executorServiceMap.put(helperConfigMap.getHelperName(), Executors.newCachedThreadPool());
 
         logger.debug("HelperPool - poolingHelper - end");
     }
+
+    /**
+     * Helper用のパラメータキューに追加
+     *
+     * @param params パラメータ
+     */
+    public static void addParameterQueue(Object[] params) throws Exception {
+        try {
+            helperParamQueue.add(params);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+
+    /**
+     * Helper用のパラメータキューから取得
+     *
+     * @return Object[] パラメータ
+     */
+    public static Object[] pollParameterQueue() {
+        Object[] ret = null;
+        try {
+            
+            ret = (Object[])helperParamQueue.take();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ret;
+    }
+
 
     /**
      * Helperが終了時にセットした返却値を取得する.<br>

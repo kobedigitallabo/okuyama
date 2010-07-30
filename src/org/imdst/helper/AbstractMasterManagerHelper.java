@@ -22,6 +22,7 @@ import org.imdst.util.StatusUtil;
  */
 abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
+
     private static int connPoolCount = 0;
 
     private int nowSt = 0;
@@ -31,6 +32,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     private static Object connSync = new Object();
 
     private static HashMap moveData4ConsistentHash = null;
+
+    private static boolean executeKeyNodeOptimizationFlg = false;
+
 
     /**
      * ノードの生存を確認
@@ -964,6 +968,14 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         }
     }
 
+
+    protected void executeKeyNodeOptimization(boolean flg) {
+        executeKeyNodeOptimizationFlg = flg;
+    }
+
+    protected boolean isExecuteKeyNodeOptimization() {
+        return executeKeyNodeOptimizationFlg;
+    }
 
     protected HashMap getConsistentHashMoveData() {
         return moveData4ConsistentHash;

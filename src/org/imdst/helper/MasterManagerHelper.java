@@ -25,9 +25,9 @@ import org.imdst.util.protocol.*;
  */
 public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
-    private HashMap keyNodeConnectMap = new HashMap();
+    private HashMap keyNodeConnectMap = null;
 
-    private HashMap keyNodeConnectTimeMap = new HashMap();
+    private HashMap keyNodeConnectTimeMap = null;
 
     // Subノードが存在する場合のデータ保存処理方式を並列処理にするかを指定
     // true:並列 false:順次
@@ -72,19 +72,45 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     public void initHelper(String initValue) {
     }
 
-    // Jobメイン処理定義
     public String executeHelper(String optionParam) throws BatchException {
+        String ret = null;
+        try {
+            while(true) {
+                if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) {
+                    
+                    ret = super.SUCCESS;
+                    break;
+                }
+
+                Object[] socketParam = super.pollParameterQueue();
+                Socket soc = (Socket)socketParam[0];
+                keyNodeConnectMap = new HashMap();
+                keyNodeConnectTimeMap = new HashMap();
+
+                executeMainTask(optionParam, soc);
+            }
+        } catch (Exception e) {
+            throw new BatchException(e);
+        } finally {
+            // KeyNodeとの接続を切断
+            this.closeAllKeyNodeConnect();
+        }
+
+        return ret;
+    }
+
+    // Jobメイン処理定義
+    public String executeMainTask(String optionParam, Socket soc) throws BatchException {
         //logger.debug("MasterManagerHelper - executeHelper - start");
 
         String ret = null;
 
-        Socket soc = null;
+        Object[] parameters = null;
+
         boolean closeFlg = false;
 
         String[] retParams = null;
         String retParamStr = null;
-
-        Object[] parameters = super.getParameters();
 
         String clientParametersStr = null;
         String[] clientParameterList = null;
@@ -93,11 +119,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try{
 
+            // パラメータ取り出し
+            parameters = super.getParameters();
+
             // Jobからの引数
-            soc = (Socket)parameters[0];
 
             // 過去ルール
-            this.oldRule = (int[])parameters[1];
+            this.oldRule = DataDispatcher.getOldRules();
 
             // プロトコルモードを取得
             // プロトコルに合わせてTakerを初期化
@@ -122,6 +150,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             if (this.transactionMode) {
                 transactionManagerInfo = (String[])parameters[5];
             }
+
 
             // クライアントへのアウトプット(結果セット用の文字列用と、バイトデータ転送用)
             OutputStreamWriter osw = new OutputStreamWriter(soc.getOutputStream(),
@@ -335,7 +364,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             logger.error("MasterManagerHelper - executeHelper - Error", e);
             ret = super.ERROR;
-            throw new BatchException(e);
+            //throw new BatchException(e);
         } finally {
 
             try {
@@ -350,7 +379,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             } catch(Exception e2) {
                 logger.error("MasterManagerHelper - executeHelper - Error2", e2);
                 ret = super.ERROR;
-                throw new BatchException(e2);
+                //throw new BatchException(e2);
             }
         }
 
@@ -2898,6 +2927,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      *
      */
     private void closeAllKeyNodeConnect() {
+        System.out.println("closeAllKeyNodeConnect()");
         try {
             // KeyNodeとの接続を切断
             if (this.keyNodeConnectMap != null) {

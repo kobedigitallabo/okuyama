@@ -77,6 +77,20 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
         while (serverRunning) {
             try {
+                Thread.sleep(checkCycle);
+                // 停止ファイル関係チェック
+                if (StatusUtil.getStatus() == 1) {
+                    serverRunning = false;
+                    logger.info("KeyNodeOptimizationHelper - 状態異常です");
+                }
+
+                if (StatusUtil.getStatus() == 2) {
+                    serverRunning = false;
+                    logger.info("KeyNodeOptimizationHelper - 終了状態です");
+                }
+
+                if (!super.isExecuteKeyNodeOptimization()) continue;
+
                 HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
                 this.mainNodeList = (ArrayList)allNodeInfo.get("main");
 
@@ -120,12 +134,12 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
                         String[] nodeDt = nodeInfo.split(":");
                         optimizeTargetKeys = null;
-                        
+
                         this.closeConnect();
                         this.searchTargetData(nodeDt[0], Integer.parseInt(nodeDt[1]), i);
                         while((optimizeTargetKeys = this.nextData()) != null) {
                             for (int idx = 0; idx < optimizeTargetKeys.length; idx++) {
-                                if (!optimizeTargetKeys[i].trim().equals("")) {
+                                if (optimizeTargetKeys[i] != null && !optimizeTargetKeys[i].trim().equals("")) {
                                     imdstKeyValueClient.getValueNoEncode(optimizeTargetKeys[idx]);
                                 }
                             }
@@ -138,6 +152,8 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                         logger.info("************************************************************");
                     }
                 }
+
+                super.executeKeyNodeOptimization(false);
             } catch(Exception e) {
                 logger.error("KeyNodeOptimizationHelper - executeHelper - Error", e);
             } finally {

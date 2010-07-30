@@ -686,6 +686,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         // DataDispatcher初期化
         DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
 
+        super.executeKeyNodeOptimization(true);
     }
 
 
