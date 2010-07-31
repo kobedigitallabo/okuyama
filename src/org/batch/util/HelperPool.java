@@ -34,6 +34,8 @@ public class  HelperPool extends Thread {
     private static Hashtable helperReturnParamMap = new Hashtable();
     private static Hashtable helperStatusMap = new Hashtable();
     private static HashMap executorServiceMap = new HashMap();
+    private static HashMap serviceParameterQueueMap = new HashMap();
+
 
     // Helperチェック間隔
     private static int helperCheckTime = 10000;
@@ -45,8 +47,6 @@ public class  HelperPool extends Thread {
 
     // スレッド内でのチェックをコントロール
     private boolean poolRunning = true;
-
-
 
 
     // 呼び出し時に直接渡すパラメータ
@@ -86,6 +86,7 @@ public class  HelperPool extends Thread {
         helperMap = new Hashtable();
         helperReturnParamMap = new Hashtable();
         helperStatusMap = new Hashtable();
+        serviceParameterQueueMap = new HashMap();
     }
 
     /**
@@ -196,12 +197,13 @@ public class  HelperPool extends Thread {
         configMap.put(helperConfigMap.getHelperName(),helperConfigMap);
         helperMap.put(helperConfigMap.getHelperName(),new ArrayList());
         executorServiceMap.put(helperConfigMap.getHelperName(), Executors.newCachedThreadPool());
-
+        serviceParameterQueueMap.put(helperConfigMap.getHelperName(), new ArrayBlockingQueue(20000));
         logger.debug("HelperPool - poolingHelper - end");
     }
 
     /**
-     * Helper用のパラメータキューに追加
+     * Helper用のパラメータキューに追加.<br>
+     * 全てのHelper共通.<br>
      *
      * @param params パラメータ
      */
@@ -216,7 +218,24 @@ public class  HelperPool extends Thread {
 
 
     /**
+     * Helper用のパラメータキューに追加.<br>
+     * Helper個別.<br>
+     *
+     * @param params パラメータ
+     */
+    public static void addSpecificationParameterQueue(String helperName, Object[] params) throws Exception {
+        try {
+            ((ArrayBlockingQueue)serviceParameterQueueMap.get(helperName)).add(params);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+
+    /**
      * Helper用のパラメータキューから取得
+     * 全てのHelper共通
      *
      * @return Object[] パラメータ
      */
@@ -228,6 +247,27 @@ public class  HelperPool extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return ret;
+    }
+
+
+    /**
+     * Helper用のパラメータキューに追加|.<br>
+     * Helper個別.<br>
+     *
+     * @param params パラメータ
+     */
+    public static Object[] pollSpecificationParameterQueue(String helperName) throws Exception {
+        Object[] ret = null;
+
+        try {
+
+            ret = (Object[])((ArrayBlockingQueue)serviceParameterQueueMap.get(helperName)).take();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+
         return ret;
     }
 
