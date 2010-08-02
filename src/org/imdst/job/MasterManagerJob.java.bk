@@ -1,6 +1,5 @@
 package org.imdst.job;
 
-import java.util.*;
 import java.io.*;
 import java.net.*;
 
@@ -27,7 +26,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
     private int portNo = 5554;
 
-    private int maxParallelExecution = 12;
+    private int maxParallelExecution = 64;
 
     // サーバーソケット
     ServerSocket serverSocket = null;
@@ -116,8 +115,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             int paramSize = 6;
 
             for (int i = 0; i < maxParallelExecution; i++) {
-                
-                super.executeHelper("MasterManagerAcceptHelper", null);
+
 
                 helperParams = new Object[paramSize];
                 helperParams[0] = null;
@@ -141,23 +139,21 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                     // クライアントからの接続待ち
                     socket = serverSocket.accept();
 
-                    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
-                    BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
+                    /*int paramSize = 6;
 
-                    HashMap clientMap = new HashMap();
-                    clientMap.put("socket", socket);
-                    clientMap.put("pw", pw);
-                    clientMap.put("br", br);
-                    clientMap.put("start", new Long(System.currentTimeMillis()));
-                    clientMap.put("last", new Long(System.currentTimeMillis()));
-                    Object[] queueParam = new Object[1];
-                    queueParam[0] = clientMap;
-                    super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
+                    helperParams = new Object[paramSize];
+                    helperParams[0] = null;
+                    helperParams[1] = DataDispatcher.getOldRules();
+                    helperParams[2] = this.mode;
+                    if (loadBalance) helperParams[3] = new Boolean(blanceMode);
+                    helperParams[4] = StatusUtil.isTransactionMode();
+                    helperParams[5] = StatusUtil.getTransactionNode();
+                    //super.executeHelper("MasterManagerHelper", null);*/
+                    Object[] param = new Object[1];
+                    param[0] = socket;
 
-
-                    if (super.getActiveHelperCount("MasterManagerAcceptHelper") < maxParallelExecution) {
-                        super.executeHelper("MasterManagerAcceptHelper", null);
-                    }
+                    // Socketをスタック
+                    super.addHelperQueueParam(param);
 
                     if (super.getActiveHelperCount("MasterManagerHelper") < maxParallelExecution) {
                         helperParams = new Object[paramSize];

@@ -93,11 +93,11 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             this.keyMapManager.start();
 
 
-/*            for (int i = 0; i < maxParallelExecution; i++) {
+            for (int i = 0; i < maxParallelExecution; i++) {
 
                 super.executeHelper("KeyManagerHelper", null);
             }
-*/
+
 
             // サーバソケットの生成
             this.serverSocket = new ServerSocket(this.portNo);
@@ -111,11 +111,11 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                     // クライアントからの接続待ち
                     socket = serverSocket.accept();
                     //logger.debug(socket.getInetAddress() + " ACCESS");
-                    helperParams = new Object[2];
+                    /*helperParams = new Object[2];
                     helperParams[0] = this.keyMapManager;
                     helperParams[1] = socket;
-                    super.executeHelper("KeyManagerHelper", helperParams);
-/*
+                    super.executeHelper("KeyManagerHelper", helperParams);*/
+
                     Object[] param = new Object[2];
                     param[0] = socket;
                     param[1] = this.keyMapManager;
@@ -127,7 +127,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                     if (super.getActiveHelperCount("KeyManagerHelper") < maxParallelExecution) {
                         super.executeHelper("KeyManagerHelper", helperParams);
                     }
-*/
+
                 } catch (Exception e) {
                     if (StatusUtil.getStatus() == 2) {
                         logger.info("KeyManagerJob - executeJob - ServerEnd");

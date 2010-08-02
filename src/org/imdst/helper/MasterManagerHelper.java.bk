@@ -70,13 +70,37 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     // 初期化メソッド定義
     public void initHelper(String initValue) {
-        keyNodeConnectMap = new HashMap();
-        keyNodeConnectTimeMap = new HashMap();
     }
 
+    public String executeHelper(String optionParam) throws BatchException {
+        String ret = null;
+        try {
+            while(true) {
+                if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) {
+                    
+                    ret = super.SUCCESS;
+                    break;
+                }
+
+                Object[] socketParam = super.pollParameterQueue();
+                Socket soc = (Socket)socketParam[0];
+                keyNodeConnectMap = new HashMap();
+                keyNodeConnectTimeMap = new HashMap();
+
+                executeMainTask(optionParam, soc);
+            }
+        } catch (Exception e) {
+            throw new BatchException(e);
+        } finally {
+            // KeyNodeとの接続を切断
+            this.closeAllKeyNodeConnect();
+        }
+
+        return ret;
+    }
 
     // Jobメイン処理定義
-    public String executeHelper(String optionParam) throws BatchException {
+    public String executeMainTask(String optionParam, Socket soc) throws BatchException {
         //logger.debug("MasterManagerHelper - executeHelper - start");
 
         String ret = null;
@@ -85,8 +109,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         boolean closeFlg = false;
 
-        boolean serverRunning = true;
-
         String[] retParams = null;
         String retParamStr = null;
 
@@ -94,11 +116,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] clientParameterList = null;
 
         IProtocolTaker okuyamaPorotocolTaker = null;
-
-        // クライアントへのアウトプット(結果セット用の文字列用と、バイトデータ転送用)
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        Socket socket = null;
 
         try{
 
@@ -113,6 +130,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // プロトコルモードを取得
             // プロトコルに合わせてTakerを初期化
             this.protocolMode = (String)parameters[2];
+            this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode);
 
             // プロトコルがokuyamaではない場合はマネージメントコマンド用のokuyamaプロトコルTakerを作成
             if (!this.protocolMode.equals("okuyama")) {
@@ -134,42 +152,21 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
 
-            // 一貫性モード初期化
-            this.initConsistencyMode();
+            // クライアントへのアウトプット(結果セット用の文字列用と、バイトデータ転送用)
+            OutputStreamWriter osw = new OutputStreamWriter(soc.getOutputStream(),
+                                                            ImdstDefine.keyHelperClientParamEncoding);
+            BufferedOutputStream bos = new BufferedOutputStream(soc.getOutputStream());
+            PrintWriter pw = new PrintWriter(new BufferedWriter(osw));
+
+            // クライアントからのインプット
+            InputStreamReader isr = new InputStreamReader(soc.getInputStream(),
+                                                            ImdstDefine.keyHelperClientParamEncoding);
+            BufferedReader br = new BufferedReader(isr);
 
 
             // 接続終了までループ
-            while(serverRunning) {
+            while(!closeFlg) {
                 try {
-
-                    // 切断確認
-                    if (closeFlg) {
-                        this.closeClientConnect(pw, br, socket);
-                    }
-
-                    Object[] queueParam = super.pollSpecificationParameterQueue("MasterManagerHelper");
-
-                    HashMap queueMap = (HashMap)queueParam[0];
-
-                    pw = (PrintWriter)queueMap.get("pw");
-                    br = (BufferedReader)queueMap.get("br");
-                    socket = (Socket)queueMap.get("socket");
-                    socket.setSoTimeout(0);
-                    closeFlg = false;
-
-                    // 停止ファイル関係チェック
-                    if (StatusUtil.getStatus() == 1) {
-                        serverRunning = false;
-                        logger.info("MasterManagerHelper - 状態異常です");
-                        continue;
-                    }
-
-                    if (StatusUtil.getStatus() == 2) {
-                        serverRunning = false;
-                        logger.info("MasterManagerHelper - 終了状態です");
-                        continue;
-                    }
-
 
                     // 結果格納用String
                     retParamStr = "";
@@ -177,25 +174,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // クライアントからの要求を取得
                     // Takerで会話開始
-                    this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode);
                     clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
 
                     if (this.porotocolTaker.nextExecution() != 1) {
 
                         // 処理をやり直し
-                        if (this.porotocolTaker.nextExecution() == 2) { 
-                            // 処理が完了したらキューに戻す
-                            queueMap.put("last", new Long(System.currentTimeMillis()));
-                            queueParam[0] = queueMap;
-                            super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
-                            continue;
-                        }
+                        if (this.porotocolTaker.nextExecution() == 2) continue;
 
                         // クライアントからの要求が接続切要求ではないか確認
                         if (this.porotocolTaker.nextExecution() == 3) {
-                            // 切断要求
                             closeFlg = true;
-                            continue;
+                            break;
                         }
                     }
 
@@ -204,6 +193,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // 更新時間初期化
                     this.initSetTime();
+                    // 一貫性モード初期化
+                    this.initConsistencyMode();
 
 
                     // 本体処理開始
@@ -355,15 +346,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         pw.print("\r\n");
                     }
 
-                    // 書き出し
                     pw.flush();
-
-
-                    // 処理が完了したら読み出し待機キューに戻す
-                    queueMap.put("last", new Long(System.currentTimeMillis()));
-                    queueParam[0] = queueMap;
-                    super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
-                    //this.closeAllKeyNodeConnect();
 
                 } catch (SocketException se) {
 
@@ -371,6 +354,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     closeFlg = true;
                 }
             }
+
+            // クライアントとの接続を切断
+            pw.close();
+            bos.close();
 
             ret = super.SUCCESS;
         } catch(Exception e) {
@@ -381,6 +368,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } finally {
 
             try {
+                // クライアントとのメインソケットクローズ
+                if (soc != null) {
+                    soc.close();
+                    soc = null;
+                }
 
                 // KeyNodeとの接続を切断
                 this.closeAllKeyNodeConnect();
@@ -2948,7 +2940,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         connKeyStr = (String)iterator.next();
                         closeKeyNodeConnect(connKeyStr);
                     }
-                    this.keyNodeConnectMap = new HashMap();
+                    this.keyNodeConnectMap = null;
                 }
             }
         } catch (Exception e) {
@@ -2956,33 +2948,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
     }
 
-
-    /**
-     * Clientとの接続を切断する.<br>
-     *
-     */
-    private void closeClientConnect(PrintWriter pw, BufferedReader br, Socket socket) {
-        //System.out.println("closeAllKeyNodeConnect()");
-        try {
-            if(pw != null) {
-                pw.close();
-                pw = null;
-            }
-
-            if(br != null) {
-                br.close();
-                br = null;
-            }
-
-            if(socket != null) {
-                socket.close();
-                socket = null;
-            }
-        } catch (Exception e) {
-            logger.error(e);
-        }
-    }
-    
 
     /**
      * 更新時間を自身に蓄積.<br>

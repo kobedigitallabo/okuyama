@@ -69,8 +69,6 @@ import com.sun.mail.util.BASE64EncoderStream;
  */
 public class KeyManagerHelper extends AbstractHelper {
 
-    private Socket soc = null;
-    
     // KeyMapManagerインスタンス
     private KeyMapManager keyMapManager = null;
 
@@ -92,7 +90,7 @@ public class KeyManagerHelper extends AbstractHelper {
         this.protocolMode = initValue;
     }
 
-    public String a(String optionParam) throws BatchException {
+    public String executeHelper(String optionParam) throws BatchException {
         String ret = null;
         try {
             while(true) {
@@ -106,7 +104,7 @@ public class KeyManagerHelper extends AbstractHelper {
 //                System.out.println("pollParameterQueue - get");
                 Socket soc = (Socket)socketParam[0];
                 this.keyMapManager = (KeyMapManager)socketParam[1];
-                //executeMainTask(optionParam, soc);
+                executeMainTask(optionParam, soc);
             }
         } catch (Exception e) {
             throw new BatchException(e);
@@ -117,7 +115,7 @@ public class KeyManagerHelper extends AbstractHelper {
     }
 
     // Jobメイン処理定義
-    public String executeHelper(String optionParam) throws BatchException {
+    public String executeMainTask(String optionParam, Socket soc) throws BatchException {
         //logger.debug("KeyManagerHelper - executeHelper - start");
 
         String ret = null;
@@ -147,8 +145,8 @@ public class KeyManagerHelper extends AbstractHelper {
             String transactionCode = null;
 
             // Jobからの引数はなし
-            this.keyMapManager = (KeyMapManager)parameters[0];
-            this.soc = (Socket)parameters[1];
+            //this.keyMapManager = (KeyMapManager)parameters[0];
+            //this.soc = (Socket)parameters[1];
 
             // プロトコル決定
             if (this.protocolMode != null && !this.protocolMode.trim().equals("") && !this.protocolMode.equals("okuyama")) {

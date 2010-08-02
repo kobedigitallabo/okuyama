@@ -80,6 +80,21 @@ abstract public class AbstractHelper  implements Runnable{
     }
 
 
+
+    /**
+     * Helper用のパラメータキューに追加
+     *
+     * @param params パラメータ
+     * @return int
+     */
+    public void addSpecificationParameterQueue(String helperName, Object[] params) throws Exception {
+        try {
+            HelperPool.addSpecificationParameterQueue(helperName, params);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+    
     /**
      * Helper用のパラメータキューに追加
      *
@@ -94,6 +109,17 @@ abstract public class AbstractHelper  implements Runnable{
         }
     }
 
+
+
+    /**
+     * Helper用のパラメータキューから取得
+     *
+     * @return Object[] パラメータ
+     */
+    public Object[] pollSpecificationParameterQueue(String helperName) {
+    
+        return (Object[])HelperPool.pollSpecificationParameterQueue(helperName);
+    }
 
     /**
      * Helper用のパラメータキューから取得

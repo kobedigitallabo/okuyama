@@ -209,7 +209,7 @@ public class  HelperPool extends Thread {
      */
     public static void addParameterQueue(Object[] params) throws Exception {
         try {
-            helperParamQueue.add(params);
+            helperParamQueue.put(params);
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -225,7 +225,7 @@ public class  HelperPool extends Thread {
      */
     public static void addSpecificationParameterQueue(String helperName, Object[] params) throws Exception {
         try {
-            ((ArrayBlockingQueue)serviceParameterQueueMap.get(helperName)).add(params);
+            ((ArrayBlockingQueue)serviceParameterQueueMap.get(helperName)).put(params);
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -257,7 +257,7 @@ public class  HelperPool extends Thread {
      *
      * @param params パラメータ
      */
-    public static Object[] pollSpecificationParameterQueue(String helperName) throws Exception {
+    public static Object[] pollSpecificationParameterQueue(String helperName) {
         Object[] ret = null;
 
         try {
@@ -265,7 +265,6 @@ public class  HelperPool extends Thread {
             ret = (Object[])((ArrayBlockingQueue)serviceParameterQueueMap.get(helperName)).take();
         } catch (Exception e) {
             e.printStackTrace();
-            throw e;
         }
 
         return ret;

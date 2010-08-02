@@ -189,6 +189,14 @@ abstract public class AbstractJob extends Thread {
         return ret;
     }
 
+    protected void addSpecificationParameterQueue(String helperName, Object[] params) throws Exception {
+        try {
+            HelperPool.addSpecificationParameterQueue(helperName, params);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
     protected void addHelperQueueParam(Object[] params) throws Exception {
         try {
             HelperPool.addParameterQueue(params);

@@ -255,7 +255,7 @@ public class JobConfig {
 
 
                     // HelperDbgroupValue値取得(NULLの可能性もある)
-                    helperDbgroupValue = (String)prop.remove(jobList[index] + BatchDefine.JOB_CONFIG_JOIN_SEP + BatchDefine.JOB_CONFIG_HELPER_DBGROUP_KEY);
+                    helperDbgroupValue = (String)prop.remove(helperList[index] + BatchDefine.JOB_CONFIG_JOIN_SEP + BatchDefine.JOB_CONFIG_HELPER_DBGROUP_KEY);
                     if (helperDbgroupValue != null && !helperDbgroupValue.equals("")) {
                         if(helperDbgroupValue.indexOf(BatchDefine.JOB_CONFIG_HELPER_DBGROUP_SEP) == -1) {
                             helperDbgroupList = new String[1];
@@ -266,7 +266,7 @@ public class JobConfig {
                     }
 
                     // Commit値取得(NULLの可能性もある)
-                    helperCommitValue = (String)prop.remove(jobList[index] + BatchDefine.JOB_CONFIG_JOIN_SEP + BatchDefine.JOB_CONFIG_HELPER_COMMIT_KEY);
+                    helperCommitValue = (String)prop.remove(helperList[index] + BatchDefine.JOB_CONFIG_JOIN_SEP + BatchDefine.JOB_CONFIG_HELPER_COMMIT_KEY);
 
                     // 値を保存
                     helperConfigMap = new HelperConfigMap(helperList[index], helperClass, initValue, optionValue, helperLimitSize, helperMaxUse, helperDbgroupList, helperCommitValue);
