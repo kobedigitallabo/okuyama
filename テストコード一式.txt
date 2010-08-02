@@ -1,0 +1,36 @@
+■Set
+java -cp ./;./lib/mail.jar;./classes TestSock 1 127.0.0.1 8888 1000
+
+■Get
+java -cp ./;./lib/mail.jar;./classes TestSock 2.11 127.0.0.1 8888 1000
+
+■Tag Set
+java -cp ./;./lib/mail.jar;./classes TestSock 3 127.0.0.1 8888 100
+
+■Tag Get
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag1
+
+■SetByte
+java -cp ./;./lib/mail.jar;./classes TestSock 5 127.0.0.1 8888 1 C:\test.txt txt
+
+■GetByte
+java -cp ./;./lib/mail.jar;./classes TestSock 6.1 127.0.0.1 8888 1 C:\test_get.txt txt
+
+■Remove
+java -cp ./;./lib/mail.jar;./classes TestSock 7 127.0.0.1 8888 100
+
+■Remove Data Get
+java -cp ./;./lib/mail.jar;./classes TestSock 2 127.0.0.1 8888 111
+
+■Lock
+java -cp ./;./lib/mail.jar;./classes TestSock 9 127.0.0.1 8888
+
+■Lock => データを更新 => 取得 => Lock解除
+java -cp ./;./lib/mail.jar;./classes TestSock 10 127.0.0.1 8888 key1 5 10
+
+■setNewValue(append) =>成功
+java -cp ./;./lib/mail.jar;./classes TestSock 11 127.0.0.1 8888 key1 value
+
+■setNewValue(append) =>失敗
+java -cp ./;./lib/mail.jar;./classes TestSock 11 127.0.0.1 8888 key1 value
+
