@@ -44,8 +44,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         logger.debug("KeyManagerJob - initJob - start");
 
         this.portNo = Integer.parseInt(initValue);
-        String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyManagerNodeMaxParallelExecution);
-        if (sizeStr != null && !sizeStr.trim().equals("")) maxParallelExecution = Integer.parseInt(sizeStr);
+
 
         logger.debug("KeyManagerJob - initJob - end");
     }
