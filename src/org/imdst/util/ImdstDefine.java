@@ -136,7 +136,10 @@ public class ImdstDefine {
     public static final String Prop_MasterNodeMaxConnectParallelExecution = "MasterNodeMaxConnectParallelExecution";
     public static final String Prop_MasterNodeMaxAcceptParallelExecution = "MasterNodeMaxAcceptParallelExecution";
     public static final String Prop_MasterNodeMaxWorkerParallelExecution = "MasterNodeMaxWorkerParallelExecution";
-    public static final String Prop_KeyManagerNodeMaxParallelExecution = "KeyManagerNodeMaxParallelExecution";
+    public static final String Prop_KeyNodeMaxConnectParallelExecution = "KeyNodeMaxConnectParallelExecution";
+    public static final String Prop_KeyNodeMaxAcceptParallelExecution = "KeyNodeMaxAcceptParallelExecution";
+    public static final String Prop_KeyNodeMaxWorkerParallelExecution = "KeyNodeMaxWorkerParallelExecution";
+
 
     /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */
     public static final String dataNodeParamKey_1 = "dataNodeNameList";
@@ -157,6 +160,12 @@ public class ImdstDefine {
     public static final String configModeNode = "node";
 
     public static final String ConfigSaveNodePrefix = "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ ";
+
+    public static final int paramSocket = 0;
+    public static final int paramPw     = 1;
+    public static final int paramBr     = 2;
+    public static final int paramStart  = 3;
+    public static final int paramLast   = 4;
 
     public static final int dispatchModeModInt = 0;
     public static final int dispatchModeConsistentHashInt = 1;

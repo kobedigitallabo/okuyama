@@ -149,11 +149,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     Object[] queueParam = super.pollSpecificationParameterQueue("MasterManagerHelper");
 
-                    HashMap queueMap = (HashMap)queueParam[0];
+                    Object[] queueMap = (Object[])queueParam[0];
 
-                    pw = (PrintWriter)queueMap.get("pw");
-                    br = (BufferedReader)queueMap.get("br");
-                    socket = (Socket)queueMap.get("socket");
+                    pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
+                    br = (BufferedReader)queueMap[ImdstDefine.paramBr];
+                    socket = (Socket)queueMap[ImdstDefine.paramSocket];
                     socket.setSoTimeout(0);
                     closeFlg = false;
 
@@ -185,7 +185,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 処理をやり直し
                         if (this.porotocolTaker.nextExecution() == 2) { 
                             // 処理が完了したらキューに戻す
-                            queueMap.put("last", new Long(System.currentTimeMillis()));
+                            queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                             queueParam[0] = queueMap;
                             super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
                             continue;
@@ -358,9 +358,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 書き出し
                     pw.flush();
 
-
                     // 処理が完了したら読み出し待機キューに戻す
-                    queueMap.put("last", new Long(System.currentTimeMillis()));
+                    queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                     queueParam[0] = queueMap;
                     super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
                     //this.closeAllKeyNodeConnect();

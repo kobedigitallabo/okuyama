@@ -57,16 +57,6 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                     logger.info("MasterManagerConnectHelper - 終了状態です");
                 }
 
-/*
-                serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
-
-                serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
-                if (serverStopMarkerFile.exists()) {
-                    serverRunning = false;
-                    logger.info("MasterManagerConnectHelper - Server停止ファイルが存在します");
-                    StatusUtil.setStatus(2);
-                }
-*/
                 Object[] param = super.pollSpecificationParameterQueue("MasterManagerConnectHelper");
                 if (param == null || param.length < 1) continue;
 
@@ -74,12 +64,13 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                 PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
 
-                HashMap clientMap = new HashMap();
-                clientMap.put("socket", socket);
-                clientMap.put("pw", pw);
-                clientMap.put("br", br);
-                clientMap.put("start", new Long(System.currentTimeMillis()));
-                clientMap.put("last", new Long(System.currentTimeMillis()));
+                Object[] clientMap = new Object[5];
+                clientMap[ImdstDefine.paramSocket] = socket;
+                clientMap[ImdstDefine.paramPw] = pw;
+                clientMap[ImdstDefine.paramBr] = br;
+                clientMap[ImdstDefine.paramStart] = new Long(System.currentTimeMillis());
+                clientMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+
                 Object[] queueParam = new Object[1];
                 queueParam[0] = clientMap;
                 super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);

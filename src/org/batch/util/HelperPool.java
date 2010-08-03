@@ -201,6 +201,18 @@ public class  HelperPool extends Thread {
         logger.debug("HelperPool - poolingHelper - end");
     }
 
+
+    /**
+     * オリジナルのキュー領域を作成する.<br>
+     *
+     * @param uniqueQueueName キュー名
+     * @param size キューの最大サイズ
+     */
+    public static void createUniqueHelperParamQueue(String uniqueQueueName, int size) {
+        serviceParameterQueueMap.put(uniqueQueueName, new ArrayBlockingQueue(size));
+    }
+
+
     /**
      * Helper用のパラメータキューに追加.<br>
      * 全てのHelper共通.<br>

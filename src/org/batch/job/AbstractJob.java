@@ -189,6 +189,25 @@ abstract public class AbstractJob extends Thread {
         return ret;
     }
 
+
+    /**
+     * オリジナルのキュー領域を作成する.<br>
+     *
+     */
+    protected void createUniqueHelperParamQueue(String helperName, int size) throws Exception {
+        try {
+            HelperPool.createUniqueHelperParamQueue(helperName, size);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+
+    /**
+     * キューに対する追加メソッド.<br>
+     * キュー指定あり.<br>
+     *
+     */
     protected void addSpecificationParameterQueue(String helperName, Object[] params) throws Exception {
         try {
             HelperPool.addSpecificationParameterQueue(helperName, params);
@@ -197,6 +216,11 @@ abstract public class AbstractJob extends Thread {
         }
     }
 
+    /**
+     * キューに対する追加メソッド.<br>
+     * 全共通キュー.<br>
+     *
+     */
     protected void addHelperQueueParam(Object[] params) throws Exception {
         try {
             HelperPool.addParameterQueue(params);

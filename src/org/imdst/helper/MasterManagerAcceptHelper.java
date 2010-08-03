@@ -13,15 +13,17 @@ import org.imdst.util.KeyMapManager;
 import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
 import org.imdst.util.StatusUtil;
+
 /**
- * <br>
+ * MasterManagerの使用する接続ソケットを監視し、読み込み待ちのソケットを見つけ出し、<br>
+ * 処理対象のキューに登録する.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
 public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
 
-    // ノードの監視サイクル時間(ミリ秒)
+    // 無操作上限時間
     private long connetionTimeout = 30000;
 
     /**
@@ -36,12 +38,12 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
     // Jobメイン処理定義
     public String executeHelper(String optionParam) throws BatchException {
         logger.debug("MasterManagerAcceptHelper - executeHelper - start");
+
         String ret = SUCCESS;
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
 
         boolean serverRunning = true;
-
 
         try{
             while (serverRunning) {
@@ -57,50 +59,51 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                     logger.info("MasterManagerAcceptHelper - 終了状態です");
                 }
 
-/*
-                serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
 
-                serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
-                if (serverStopMarkerFile.exists()) {
-                    serverRunning = false;
-                    logger.info("MasterManagerAcceptHelper - Server停止ファイルが存在します");
-                    StatusUtil.setStatus(2);
-                }
-*/
                 Object[] param = super.pollSpecificationParameterQueue("MasterManagerAcceptHelper");
                 if (param == null || param.length < 1) continue;
 
-                HashMap clientMap = (HashMap)param[0];
-                BufferedReader br = (BufferedReader)clientMap.get("br");
-                Socket socket = (Socket)clientMap.get("socket");
+                Object[] clientMap = (Object[])param[0];
+                BufferedReader br = (BufferedReader)clientMap[ImdstDefine.paramBr];
+                Socket socket = (Socket)clientMap[ImdstDefine.paramSocket];
 
+                // 読み込みのデータがバッファに存在するかをチェック
                 if(br.ready()) {
 
-                    clientMap.put("last", new Long(System.currentTimeMillis()));
+                    // 読み込みのデータがバッファに存在する
+                    clientMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                     Object[] queueParam = new Object[1];
                     queueParam[0] = clientMap;
                     super.addSpecificationParameterQueue("MasterManagerHelper", queueParam);
                 } else {
 
+                    // 読み込みのデータがバッファに存在しない
                     try {
                         int test = 0;
                         br.mark(2);
-    
-                        long start = ((Long)clientMap.get("start")).longValue();
-                        long last = ((Long)clientMap.get("last")).longValue();
-                        
+
+                        // 無操作時間が上限に達していないかを確認
+                        long start = ((Long)clientMap[ImdstDefine.paramStart]).longValue();
+                        long last = ((Long)clientMap[ImdstDefine.paramLast]).longValue();
 
                         if ((System.currentTimeMillis() - last) < connetionTimeout) {
-                            socket.setSoTimeout(1);
 
+                            // 上限に達していない
+                            // 既にコネクションが切断されていないかを確認
+                            socket.setSoTimeout(1);
                             test = br.read();
 
                             br.reset(); 
                         } else {
+
+                            // 上限に達している
                             test = -1;
                         }
 
+                        // 無操作時間の上限もしくは、コネクション切断済み
                         if (test == -1) {
+
+                            // クローズ
                             br.close();
                             socket.close();
                             br = null;
@@ -110,6 +113,8 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                     } catch (SocketTimeoutException se) {
                     } catch (Exception e) {
                         try {
+
+                            // エラーの場合はクローズ
                             br.close();
                             socket.close();
                             br = null;
@@ -120,6 +125,7 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                         }
                     } 
 
+                    // 無操作時間が上限に達せず切断もされていない場合は再度確認キューに登録
                     if (socket != null) {
                         Object[] queueParam = new Object[1];
                         queueParam[0] = clientMap;
