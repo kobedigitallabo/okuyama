@@ -133,7 +133,9 @@ public class ImdstDefine {
     public static final String Prop_MainMasterNodeInfo = "MainMasterNodeInfo";
     public static final String Prop_AllMasterNodeInfo = "AllMasterNodeInfo";
     public static final String Prop_DistributionAlgorithm = "DistributionAlgorithm";
-    public static final String Prop_MasterNodeMaxParallelExecution = "MasterNodeMaxParallelExecution";
+    public static final String Prop_MasterNodeMaxConnectParallelExecution = "MasterNodeMaxConnectParallelExecution";
+    public static final String Prop_MasterNodeMaxAcceptParallelExecution = "MasterNodeMaxAcceptParallelExecution";
+    public static final String Prop_MasterNodeMaxWorkerParallelExecution = "MasterNodeMaxWorkerParallelExecution";
     public static final String Prop_KeyManagerNodeMaxParallelExecution = "KeyManagerNodeMaxParallelExecution";
 
     /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */

@@ -25,12 +25,18 @@ import org.imdst.util.StatusUtil;
  */
 public class MasterManagerJob extends AbstractJob implements IJob {
 
-    private int portNo = 5554;
+    // デフォルト起動ポート
+    private int portNo = 8888;
 
-    private int maxParallelExecution = 12;
 
-    // サーバーソケット
-    ServerSocket serverSocket = null;
+    // Accept後のコネクター作成までの処理並列数
+    private int maxConnectParallelExecution = 12;
+
+    // Acceptコネクタがリードできるかを監視する処理並列数
+    private int maxAcceptParallelExecution = 12;
+
+    // 実際のデータ処理並列数
+    private int maxWorkerParallelExecution = 12;
 
     // ロードバランス設定
     private boolean loadBalance = false;
@@ -40,6 +46,10 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
     // 起動モード(okuyama=okuyamaオリジナル, memcache=memcache)
     private String mode = "okuyama";
+
+    // サーバーソケット
+    ServerSocket serverSocket = null;
+
 
     /**
      * Logger.<br>
@@ -51,8 +61,15 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         logger.debug("MasterManagerJob - initJob - start");
 
         this.portNo = Integer.parseInt(initValue);
-        String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_MasterNodeMaxParallelExecution);
-        if (sizeStr != null) maxParallelExecution = Integer.parseInt(sizeStr);
+
+        String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_MasterNodeMaxConnectParallelExecution);
+        if (sizeStr != null) maxConnectParallelExecution = Integer.parseInt(sizeStr);
+
+        sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_MasterNodeMaxAcceptParallelExecution);
+        if (sizeStr != null) maxAcceptParallelExecution = Integer.parseInt(sizeStr);
+
+        sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_MasterNodeMaxWorkerParallelExecution);
+        if (sizeStr != null) maxWorkerParallelExecution = Integer.parseInt(sizeStr);
 
         logger.debug("MasterManagerJob - initJob - end");
     }
@@ -93,7 +110,11 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         String ret = SUCCESS;
 
         Object[] helperParams = null;
+        int paramSize = 6;
+
         String[] transactionManagerInfos = null;
+
+        Socket socket = null;
 
         try{
 
@@ -111,14 +132,17 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             // 共有領域にServerソケットのポインタを格納
             super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
 
-            Socket socket = null;
 
-            int paramSize = 6;
+            for (int i = 0; i < maxConnectParallelExecution; i++) {
+                super.executeHelper("MasterManagerConnectHelper", null);
+            }
 
-            for (int i = 0; i < maxParallelExecution; i++) {
-                
+            for (int i = 0; i < maxAcceptParallelExecution; i++) {
+
                 super.executeHelper("MasterManagerAcceptHelper", null);
+            }
 
+            for (int i = 0; i < maxWorkerParallelExecution; i++) {
                 helperParams = new Object[paramSize];
                 helperParams[0] = null;
                 helperParams[1] = null;
@@ -134,6 +158,8 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 }
             }
 
+
+            // メイン処理開始
             while (true) {
                 if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;
                 try {
@@ -141,25 +167,22 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                     // クライアントからの接続待ち
                     socket = serverSocket.accept();
 
-                    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
-                    BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
-
-                    HashMap clientMap = new HashMap();
-                    clientMap.put("socket", socket);
-                    clientMap.put("pw", pw);
-                    clientMap.put("br", br);
-                    clientMap.put("start", new Long(System.currentTimeMillis()));
-                    clientMap.put("last", new Long(System.currentTimeMillis()));
                     Object[] queueParam = new Object[1];
-                    queueParam[0] = clientMap;
-                    super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
+                    queueParam[0] = socket;
 
+                    // アクセス済みのソケットをキューに貯める
+                    super.addSpecificationParameterQueue("MasterManagerConnectHelper", queueParam);
 
-                    if (super.getActiveHelperCount("MasterManagerAcceptHelper") < maxParallelExecution) {
+                    // 各スレッドが減少していないかを確かめる
+                    if (super.getActiveHelperCount("MasterManagerConnectHelper") < (maxConnectParallelExecution / 2)) {
+                        super.executeHelper("MasterManagerConnectHelper", null);
+                    }
+
+                    if (super.getActiveHelperCount("MasterManagerAcceptHelper") < (maxAcceptParallelExecution / 2)) {
                         super.executeHelper("MasterManagerAcceptHelper", null);
                     }
 
-                    if (super.getActiveHelperCount("MasterManagerHelper") < maxParallelExecution) {
+                    if (super.getActiveHelperCount("MasterManagerHelper") < (maxWorkerParallelExecution / 2)) {
                         helperParams = new Object[paramSize];
                         helperParams[0] = null;
                         helperParams[1] = null;
