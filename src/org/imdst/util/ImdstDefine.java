@@ -139,6 +139,7 @@ public class ImdstDefine {
     public static final String Prop_KeyNodeMaxConnectParallelExecution = "KeyNodeMaxConnectParallelExecution";
     public static final String Prop_KeyNodeMaxAcceptParallelExecution = "KeyNodeMaxAcceptParallelExecution";
     public static final String Prop_KeyNodeMaxWorkerParallelExecution = "KeyNodeMaxWorkerParallelExecution";
+    public static final String Prop_DataConsistencyMode = "DataConsistencyMode";
 
 
     /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */

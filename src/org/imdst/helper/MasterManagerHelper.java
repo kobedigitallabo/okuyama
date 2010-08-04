@@ -72,6 +72,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     public void initHelper(String initValue) {
         keyNodeConnectMap = new HashMap();
         keyNodeConnectTimeMap = new HashMap();
+
+        // データ一貫性モードの設定
+        String consistencyModeStr = super.getPropertiesValue(ImdstDefine.Prop_DataConsistencyMode);
+
+        if (consistencyModeStr != null && !consistencyModeStr.trim().equals("")) {
+            dataConsistencyMode = Integer.parseInt(consistencyModeStr);
+        }
     }
 
 
