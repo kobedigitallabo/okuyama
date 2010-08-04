@@ -1,6 +1,5 @@
 package org.imdst.helper;
 
-
 import java.io.*;
 import java.util.*;
 import java.net.*;
@@ -70,10 +69,10 @@ import com.sun.mail.util.BASE64EncoderStream;
  */
 public class KeyManagerHelper extends AbstractHelper {
 
-    private Socket soc = null;
-    
     // KeyMapManagerインスタンス
     private KeyMapManager keyMapManager = null;
+
+    private String queuePrefix = null;
 
     // プロトコルモード
     private String protocolMode = null;
@@ -93,41 +92,20 @@ public class KeyManagerHelper extends AbstractHelper {
         this.protocolMode = initValue;
     }
 
-    public String a(String optionParam) throws BatchException {
-        String ret = null;
-        try {
-            while(true) {
-                if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) {
-                    ret = super.SUCCESS;
-                    break;
-                }
-
-//                System.out.println("pollParameterQueue - start");
-                Object[] socketParam = super.pollParameterQueue();
-//                System.out.println("pollParameterQueue - get");
-                Socket soc = (Socket)socketParam[0];
-                this.keyMapManager = (KeyMapManager)socketParam[1];
-                //executeMainTask(optionParam, soc);
-            }
-        } catch (Exception e) {
-            throw new BatchException(e);
-        } finally {
-        }
-
-        return ret;
-    }
 
     // Jobメイン処理定義
     public String executeHelper(String optionParam) throws BatchException {
         //logger.debug("KeyManagerHelper - executeHelper - start");
 
         String ret = null;
-        boolean closeFlg = false;
 
-        OutputStreamWriter osw = null;
+        boolean closeFlg = false;
+        boolean serverRunning = true;
+
+        Socket soc = null;
         PrintWriter pw = null;
-        InputStreamReader isr = null;
         BufferedReader br = null;
+
         String[] retParams = null;
         StringBuffer retParamBuf = null;
 
@@ -149,29 +127,48 @@ public class KeyManagerHelper extends AbstractHelper {
 
             // Jobからの引数はなし
             this.keyMapManager = (KeyMapManager)parameters[0];
-            this.soc = (Socket)parameters[1];
+            this.queuePrefix = (String)parameters[1];
 
             // プロトコル決定
             if (this.protocolMode != null && !this.protocolMode.trim().equals("") && !this.protocolMode.equals("okuyama")) {
                 this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode + "_datanode");
             }
 
-            // クライアントへのアウトプット
-            osw = new OutputStreamWriter(soc.getOutputStream() , 
-                                                            ImdstDefine.keyHelperClientParamEncoding);
-            pw = new PrintWriter(new BufferedWriter(osw));
-
-            // クライアントからのインプット
-            isr = new InputStreamReader(soc.getInputStream(),
-                                                          ImdstDefine.keyHelperClientParamEncoding);
-            br = new BufferedReader(isr);
-
-
-            while(!closeFlg) {
+            while(serverRunning) {
                 try {
+                    // 切断確認
+                    if (closeFlg) {
+                        this.closeClientConnect(pw, br, soc);
+                    }
+
+                    Object[] queueParam = super.pollSpecificationParameterQueue("KeyManagerHelper" + this.queuePrefix);
+                    Object[] queueMap = (Object[])queueParam[0];
+
+                    pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
+                    br = (BufferedReader)queueMap[ImdstDefine.paramBr];
+                    soc = (Socket)queueMap[ImdstDefine.paramSocket];
+                    soc.setSoTimeout(0);
+                    closeFlg = false;
+
+
+                    // 停止ファイル関係チェック
+                    if (StatusUtil.getStatus() == 1) {
+                        serverRunning = false;
+                        logger.info("KeyManagerHelper - 状態異常です");
+                        continue;
+                    }
+
+                    if (StatusUtil.getStatus() == 2) {
+                        serverRunning = false;
+                        logger.info("KeyManagerHelper - 終了状態です");
+                        continue;
+                    }
+
 
                     // プロトコルに合わせて処理を分岐
                     if (this.porotocolTaker != null) {
+
+                        this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode + "_datanode");
 
                         // Takerで会話開始
                         clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
@@ -179,7 +176,13 @@ public class KeyManagerHelper extends AbstractHelper {
                         if (this.porotocolTaker.nextExecution() != 1) {
 
                             // 処理をやり直し
-                            if (this.porotocolTaker.nextExecution() == 2) continue;
+                            if (this.porotocolTaker.nextExecution() == 2) { 
+                                // 処理が完了したらキューに戻す
+                                queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+                                queueParam[0] = queueMap;
+                                super.addSpecificationParameterQueue("KeyManagerAcceptHelper" + this.queuePrefix, queueParam);
+                                continue;
+                            }
 
                             // クライアントからの要求が接続切要求ではないか確認
                             if (this.porotocolTaker.nextExecution() == 3) {
@@ -188,20 +191,24 @@ public class KeyManagerHelper extends AbstractHelper {
                             }
                         }
                     } else {
+
                         // okuyamaプロトコル
                         clientParametersStr = br.readLine();
                     }
+
 
 
                     // クライアントからの要求が接続切要求ではないか確認
                     if (clientParametersStr == null || 
                             clientParametersStr.equals("") || 
                                 clientParametersStr.equals(ImdstDefine.imdstConnectExitRequest)) {
+
                         // 切断要求
                         //logger.debug("Client Connect Exit Request");
                         closeFlg = true;
-                        break;
+                        continue;
                     }
+
 
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
@@ -415,13 +422,17 @@ public class KeyManagerHelper extends AbstractHelper {
                             pw.flush();
                         }
                     }
+
+                    // 処理が完了したら読み出し確認キュー(KeyManagerAcceptHelper)に戻す
+                    queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+                    queueParam[0] = queueMap;
+                    super.addSpecificationParameterQueue("KeyManagerAcceptHelper" + this.queuePrefix, queueParam);
+
                 } catch (SocketException se) {
                     closeFlg = true;
                 }
             }
 
-            retParams = null;
-            retParamBuf = null;
             ret = super.SUCCESS;
         } catch(Exception e) {
 
@@ -437,19 +448,10 @@ public class KeyManagerHelper extends AbstractHelper {
                     pw = null;
                 }
 
-                if (osw != null) {
-                    osw.close();
-                    osw = null;
-                }
 
                 if (br != null) {
                     br.close();
                     br = null;
-                }
-
-                if (isr != null) {
-                    isr.close();
-                    isr = null;
                 }
 
                 if (soc != null) {
@@ -795,6 +797,32 @@ public class KeyManagerHelper extends AbstractHelper {
         }
         //logger.debug("KeyManagerHelper - getTagdata - end");
         return retStrs;
+    }
+
+
+    /**
+     * Clientとの接続を切断する.<br>
+     *
+     */
+    private void closeClientConnect(PrintWriter pw, BufferedReader br, Socket socket) {
+        try {
+            if(pw != null) {
+                pw.close();
+                pw = null;
+            }
+
+            if(br != null) {
+                br.close();
+                br = null;
+            }
+
+            if(socket != null) {
+                socket.close();
+                socket = null;
+            }
+        } catch (Exception e) {
+            logger.error(e);
+        }
     }
 
 }
