@@ -3,6 +3,9 @@ package org.imdst.helper;
 import java.io.*;
 import java.util.*;
 import java.net.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.batch.lang.BatchException;
 import org.batch.job.AbstractHelper;
@@ -23,13 +26,11 @@ import org.imdst.util.StatusUtil;
 abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
 
-    private static int connPoolCount = 0;
+    private static AtomicInteger connPoolCount = new AtomicInteger(0);
 
     private int nowSt = 0;
 
-    private static HashMap allConnectionMap = new HashMap();
-
-    private static Object connSync = new Object();
+    private static ConcurrentHashMap allConnectionMap = new ConcurrentHashMap(40, 30, 64);
 
     private static HashMap moveData4ConsistentHash = null;
 
@@ -164,6 +165,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
             }
         }
     }
+
 
     /**
      * ノードの復帰を登録
@@ -672,9 +674,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
             logger.info("Data Recover Schedule [" + masterNodeInfo + " => " + nodeInfo + "]");
             // コピー先KeyNodeとの接続を確立
             socket = new Socket(nodeName, nodePort);
-            logger.info("11111111111111111111111111111");
             socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-            logger.info("22222222222222222222222222222");
+
 
             OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
             pw = new PrintWriter(new BufferedWriter(osw));
@@ -683,9 +684,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
             br = new BufferedReader(isr);
 
             // コピー元KeyNodeとの接続を確立
-            logger.info("3333333333333333333333333333");            
             msocket = new Socket(masterNodeName, masterNodePort);
-            logger.info("44444444444444444444444444444");
             msocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             OutputStreamWriter mosw = new OutputStreamWriter(msocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
@@ -697,8 +696,6 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
             // TODO:ここでそれぞれのノードの最終更新時間を見て新しいほうのデータで上書き
             //      するが微妙かも
-
-            logger.info("55555555555555555555555555555");
             // コピー元予定から最終更新時刻取得
             StringBuffer buf = new StringBuffer();
             // 処理番号11
@@ -706,13 +703,10 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append("true");
             // 送信
-            logger.info("666666666666666666666666666666");            
             mpw.println(buf.toString());
             mpw.flush();
             // データ取得
-            logger.info("77777777777777777777777777777");
             retParam = mbr.readLine();
-            logger.info("88888888888888888888888888888");
             String[] updateDate = retParam.split(ImdstDefine.keyHelperClientParamSep);
 
             long masterDate = new Long(updateDate[2]).longValue();
@@ -725,13 +719,10 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append("true");
             // 送信
-            logger.info("9999999999999999999999999999");
             pw.println(buf.toString());
             pw.flush();
             // データ取得
-            logger.info("1010101010101010101010101010");            
             retParam = br.readLine();
-            logger.info("11-11-11-11-11-11-11-11-11-11");            
             updateDate = retParam.split(ImdstDefine.keyHelperClientParamSep);
 
             long nodeDate = new Long(updateDate[2]).longValue();
@@ -960,20 +951,21 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
 
     /**
-     *
+     * データノードとのコネクションをセットする.<br>
      *
      */
     protected void setActiveConnection(String connectionName, HashMap connectionMap) {
-        synchronized(connSync) {
-            ArrayList connList = null;
-            connList = (ArrayList)allConnectionMap.get(connectionName);
 
-            if (connList == null) connList = new ArrayList();
+        ArrayBlockingQueue connList = null;
+        connList = (ArrayBlockingQueue)allConnectionMap.get(connectionName);
 
-            connList.add(connectionMap);
+        if (connList == null) connList = new ArrayBlockingQueue(512);
+
+        if(connList.offer(connectionMap)) {
             allConnectionMap.put(connectionName, connList);
-            connPoolCount++;
+            connPoolCount.incrementAndGet();
         }
+
     }
 
 
@@ -1006,6 +998,23 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      */
     protected HashMap getActiveConnection(String connectionName) {
         HashMap ret = null;
+        ArrayBlockingQueue connList = (ArrayBlockingQueue)allConnectionMap.get(connectionName);
+
+        if (connList != null) {
+
+            ret = (HashMap)connList.poll();
+            if (ret != null) {
+                connPoolCount.decrementAndGet();
+                if(!this.checkConnectionEffective(connectionName, (Long)ret.get("time"))) ret = null;
+            }
+        }
+        return ret;
+        
+    }
+
+/*
+    protected HashMap getActiveConnection(String connectionName) {
+        HashMap ret = null;
         synchronized(connSync) {
             ArrayList connList = (ArrayList)allConnectionMap.get(connectionName);
             if (connList != null) {
@@ -1022,8 +1031,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         return ret;
         
     }
-
+*/
     protected int getNowConnectionPoolCount() {
-        return connPoolCount;
+        return connPoolCount.intValue();
     }
 }

@@ -25,6 +25,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
     private String keyMapNodesStr = null;
     private String subKeyMapNodesStr = null;
+    private String thirdKeyMapNodesStr = null;
     private String ruleStrProp = null;
 
     private String loadBalanceStr = null;
@@ -77,7 +78,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         boolean serverRunning = true;
 
-        String reloadKeys[] = new String[13];
+        String reloadKeys[] = new String[14];
         reloadKeys[0] = ImdstDefine.Prop_KeyMapNodesInfo;
         reloadKeys[1] = ImdstDefine.Prop_SubKeyMapNodesInfo;
         reloadKeys[2] = ImdstDefine.Prop_KeyMapNodesRule;
@@ -91,6 +92,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         reloadKeys[10] = ImdstDefine.Prop_MainMasterNodeInfo;
         reloadKeys[11] = ImdstDefine.Prop_AllMasterNodeInfo;
         reloadKeys[12] = ImdstDefine.Prop_DistributionAlgorithm;
+        reloadKeys[13] = ImdstDefine.Prop_ThirdKeyMapNodesInfo;
 
         if(super.getPropertiesValue(ImdstDefine.Prop_DistributionAlgorithm) != null) {
             if (super.getPropertiesValue(ImdstDefine.Prop_DistributionAlgorithm).equals(ImdstDefine.dispatchModeConsistentHash)) {
@@ -306,6 +308,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         // データノードの設定
         keyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesInfo);
         subKeyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_SubKeyMapNodesInfo);
+        thirdKeyMapNodesStr = super.getPropertiesValue(ImdstDefine.Prop_ThirdKeyMapNodesInfo);
         ruleStrProp = super.getPropertiesValue(ImdstDefine.Prop_KeyMapNodesRule);
         loadBalanceStr = super.getPropertiesValue(ImdstDefine.Prop_LoadBalanceMode);
 
@@ -382,6 +385,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo, keyMapNodesStr);
             }
 
+            // サブデータノードの設定
             nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo);
             if(nodeRet[0].equals("true") && nodeRet[1] != null) {
                 if(!nodeRet[1].equals(subKeyMapNodesStr)) {
@@ -391,6 +395,18 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
                 // 設定情報の枠がない場合は自身の情報を登録
                 imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo, subKeyMapNodesStr);
+            }
+
+            // サードデータノードの設定
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_ThirdKeyMapNodesInfo);
+            if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                if(!nodeRet[1].equals(thirdKeyMapNodesStr)) {
+                    thirdKeyMapNodesStr = nodeRet[1];
+                    setterFlg = true;
+                }
+            } else if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo, thirdKeyMapNodesStr);
             }
 
 
@@ -505,7 +521,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             // 消えたタイミングで、DataDispatcherからもoldCircleを削除する
             if (dispatchMode.equals(ImdstDefine.dispatchModeConsistentHash)) {
 
-                // 取得できる値のフォーマットは"main=192.168.1.5:5553,sub=192.168.2.5:5553"のようなフォーマット
+                // 取得できる値のフォーマットは"main=192.168.1.5:5553,sub=192.168.2.5:5553,third=192.168.2.5:5553"のようなフォーマット
                 String[] addNodeRequest = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode);
 
                 if (addNodeRequest[0].equals("true")) {
@@ -554,6 +570,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         String[] mainKeyNodes = null;
         String[] subKeyNodes = new String[0];
+        String[] thirdKeyNodes = new String[0];
         String[] allNodeInfos = null;
         int allNodeCounter = 0;
 
@@ -658,6 +675,11 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             allNodeCounter = allNodeCounter + subKeyNodes.length;
         }
 
+        if (thirdKeyMapNodesStr != null && !thirdKeyMapNodesStr.equals("")) {
+            thirdKeyNodes = thirdKeyMapNodesStr.split(",");
+            allNodeCounter = allNodeCounter + thirdKeyNodes.length;
+        }
+
         allNodeInfos = new String[allNodeCounter];
 
         for (int i = 0; i < mainKeyNodes.length; i++) {
@@ -666,6 +688,10 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         for (int i = 0; i < subKeyNodes.length; i++) {
             allNodeInfos[i + mainKeyNodes.length] = subKeyNodes[i];
+        }
+
+        for (int i = 0; i < thirdKeyNodes.length; i++) {
+            allNodeInfos[i + mainKeyNodes.length + subKeyNodes.length] = thirdKeyNodes[i];
         }
 
         // DataNodeの情報を初期化
@@ -684,7 +710,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
 
         // DataDispatcher初期化
-        DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
+        DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr, thirdKeyMapNodesStr, transactionManagerStr);
 
         super.executeKeyNodeOptimization(true);
     }
@@ -696,6 +722,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         String[] mainKeyNodes = null;
         String[] subKeyNodes = new String[0];
+        String[] thirdKeyNodes = new String[0];        
         String[] allNodeInfos = null;
         int allNodeCounter = 0;
 
@@ -789,6 +816,11 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             allNodeCounter = allNodeCounter + subKeyNodes.length;
         }
 
+        if (thirdKeyMapNodesStr != null && !thirdKeyMapNodesStr.equals("")) {
+            thirdKeyNodes = thirdKeyMapNodesStr.split(",");
+            allNodeCounter = allNodeCounter + thirdKeyNodes.length;
+        }
+
         allNodeInfos = new String[allNodeCounter];
 
         for (int i = 0; i < mainKeyNodes.length; i++) {
@@ -797,6 +829,10 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         for (int i = 0; i < subKeyNodes.length; i++) {
             allNodeInfos[i + mainKeyNodes.length] = subKeyNodes[i];
+        }
+
+        for (int i = 0; i < thirdKeyNodes.length; i++) {
+            allNodeInfos[i + mainKeyNodes.length + subKeyNodes.length] = thirdKeyNodes[i];
         }
 
         // DataNodeの情報を初期化
@@ -815,7 +851,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         // ConsistentHashの場合は都度初期化は出来ないので、確認
         if (!DataDispatcher.getInitFlg()) {
-            DataDispatcher.initConsistentHashMode(keyMapNodesStr, subKeyMapNodesStr, transactionManagerStr);
+            DataDispatcher.initConsistentHashMode(keyMapNodesStr, subKeyMapNodesStr, thirdKeyMapNodesStr, transactionManagerStr);
         }
 
         // 追加データノードの情報がnullの場合はDataDispatcherから削除
@@ -827,10 +863,13 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             HashMap moveDataMap = null;
             // 移行対象が存在する場合のみ、moveDataMapはnullではなくなる
             if (addNodeInfos.length == 1) {
-                moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], null);
+                moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], null, null);
             } else if (addNodeInfos.length == 2) {
-                moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], addNodeInfos[1]);
+                moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], addNodeInfos[1], null);
+            } else if (addNodeInfos.length == 3) {
+                moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], addNodeInfos[1], addNodeInfos[2]);
             }
+
 
             // MainMasterNodeの場合のみデータ移行を実行
             // ここでsuperのconsistentHashMoveDataに登録

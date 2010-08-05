@@ -123,6 +123,7 @@ public class ImdstDefine {
     public static final String Prop_KeyMapNodesRule = "KeyMapNodesRule";
     public static final String Prop_KeyMapNodesInfo = "KeyMapNodesInfo";
     public static final String Prop_SubKeyMapNodesInfo = "SubKeyMapNodesInfo";
+    public static final String Prop_ThirdKeyMapNodesInfo = "ThirdKeyMapNodesInfo";
     public static final String Prop_LoadBalanceMode = "LoadBalanceMode";
     public static final String Prop_TransactionMode = "TransactionMode";
     public static final String Prop_TransactionManagerInfo = "TransactionManagerInfo";
@@ -147,7 +148,11 @@ public class ImdstDefine {
     public static final String dataNodeParamKey_2 = "dataNodePortList";
     public static final String dataNodeParamKey_3 = "dataSubNodeNameList";
     public static final String dataNodeParamKey_4 = "dataSubNodePortList";
-    public static final String dataNodeParamKey_5 = "keyMapNodeInfo";
+    public static final String dataNodeParamKey_5 = "dataThirdNodeNameList";
+    public static final String dataNodeParamKey_6 = "dataThirdNodePortList";
+    // TODO:変更
+    public static final String dataNodeParamKey_7 = "keyMapNodeInfo";
+
 
     public static final String keyNodeSocketKey = "socket";
     public static final String keyNodeStreamWriterKey = "stream_writer";

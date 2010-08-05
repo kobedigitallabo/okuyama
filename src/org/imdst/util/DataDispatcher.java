@@ -25,7 +25,7 @@ public class DataDispatcher {
     public volatile static int[] oldRules = null;
 
     // 全てのノード情報の詳細を格納
-    private static ConcurrentHashMap keyNodeMap = new ConcurrentHashMap(6, 6, 16);
+    private static ConcurrentHashMap keyNodeMap = new ConcurrentHashMap(6, 6, 64);
 
     // ConsistentHash用Circle
     private static SortedMap nodeCircle = null;
@@ -81,6 +81,10 @@ public class DataDispatcher {
      * KeyMapNodesInfo=Keyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
      * SubKeyMapNodesInfo=スレーブKeyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
      * SubKeyMapNodesInfoは設定なしも可能。その場合はnullを設定<br>
+     * ThirdKeyMapNodesInfo=サードKeyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
+     * ThirdKeyMapNodesInfoは設定なしも可能。その場合はnullを設定<br>
+     * ※SubKeyMapNodesInfoは設定しないがThirdKeyMapNodesInfoは設定することは出来ない
+     *
      * <br>
      * 記述の決まり.<br>
      * <br>
@@ -92,22 +96,27 @@ public class DataDispatcher {
      * KeyMapNodesInfo:KeyNode(データ保存ノード)をIPアドレス(マシン名)とポート番号を":"で連結した状態で記述<br>
      * <br>
      * SubKeyMapNodesInfo:スレーブとなるのKeyNodeをKeyMapNodesInfoと同様の記述方法で記述。KeyMapNodesInfoと同様の数である必要がある。<br>
+     * <br>
+     * ThirdKeyMapNodesInfo:サードとなるのKeyNodeをKeyMapNodesInfoと同様の記述方法で記述。KeyMapNodesInfoと同様の数である必要がある。<br>
      *
      * @param ruleStr ルール設定
      * @param oldRules 過去ルール設定
      * @param keyMapNodes データノードを指定
      * @param subKeyMapNodes スレーブデータノードを指定
+     * @param thirdKeyMapNodes スレーブデータノードを指定
      * @param transactionManagerStr トランザクションマネージャの指定
      */
-    public static void init(String ruleStr, int[] oldRules, String keyMapNodes, String subKeyMapNodes, String transactionManagerStr) {
+    public static void init(String ruleStr, int[] oldRules, String keyMapNodes, String subKeyMapNodes, String thirdKeyMapNodes, String transactionManagerStr) {
         initFlg = true;
         standby = false;
         String[] keyMapNodesInfo = null;
         String[] subkeyMapNodesInfo = null;
+        String[] thirdkeyMapNodesInfo = null;
         String[] transactionManagerInfo = null;
 
         ArrayList keyNodeList = new ArrayList();
         ArrayList subKeyNodeList = new ArrayList();
+        ArrayList thirdKeyNodeList = new ArrayList();
         rule = ruleStr.trim();
         ruleInt = new Integer(rule).intValue();
 
@@ -129,8 +138,11 @@ public class DataDispatcher {
         // [3][*]=サブノードName
         // [4][*]=サブノードPort
         // [5][*]=サブノードFull
+        // [6][*]=サードノードName
+        // [7][*]=サードノードPort
+        // [8][*]=サードノードFull
         keyMapNodesInfo = keyMapNodes.split(",");
-        String[][] allNodeDetailList = new String[6][keyMapNodesInfo.length];
+        String[][] allNodeDetailList = new String[9][keyMapNodesInfo.length];
 
         // MainNode初期化
         for (int index = 0; index < keyMapNodesInfo.length; index++) {
@@ -168,6 +180,26 @@ public class DataDispatcher {
             }
         }
 
+
+        // ThirdNode初期化
+        if (thirdKeyMapNodes != null && !thirdKeyMapNodes.equals("")) {
+            thirdkeyMapNodesInfo = thirdKeyMapNodes.split(",");
+
+            for (int index = 0; index < thirdkeyMapNodesInfo.length; index++) {
+                String thirdKeyNode = thirdkeyMapNodesInfo[index].trim();
+                String[] thirdKeyNodeDt = thirdKeyNode.split(":");
+                thirdKeyNodeList.add(thirdKeyNode);
+
+                allNodeDetailList[8][index] = thirdKeyNode;
+                allNodeDetailList[6][index] = thirdKeyNodeDt[0];
+                allNodeDetailList[7][index] = thirdKeyNodeDt[1];
+            }
+
+            synchronized(syncObj) {
+                allNodeMap.put("third", thirdKeyNodeList);
+            }
+        }
+
         DataDispatcher.oldRules = oldRules;
         keyNodeMap.put("list", allNodeDetailList);
         standby = true;
@@ -182,6 +214,9 @@ public class DataDispatcher {
      * KeyMapNodesInfo=Keyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
      * SubKeyMapNodesInfo=スレーブKeyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
      * SubKeyMapNodesInfoは設定なしも可能。その場合はnullを設定<br>
+     * ThirdKeyMapNodesInfo=スレーブKeyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
+     * ThirdKeyMapNodesInfoは設定なしも可能。その場合はnullを設定<br>
+     * ※SubKeyMapNodesInfoは設定しないがThirdKeyMapNodesInfoは設定することは出来ない
      * <br>
      * 記述の決まり.<br>
      * <br>
@@ -189,20 +224,25 @@ public class DataDispatcher {
      * KeyMapNodesInfo:KeyNode(データ保存ノード)をIPアドレス(マシン名)とポート番号を":"で連結した状態で記述<br>
      * <br>
      * SubKeyMapNodesInfo:スレーブとなるのKeyNodeをKeyMapNodesInfoと同様の記述方法で記述。KeyMapNodesInfoと同様の数である必要がある。<br>
+     * <br>
+     * ThirdKeyMapNodesInfo:サードとなるのKeyNodeをKeyMapNodesInfoと同様の記述方法で記述。KeyMapNodesInfoと同様の数である必要がある。<br>
      *
      * @param keyMapNodes データノードを指定
      * @param subKeyMapNodes スレーブデータノードを指定
+     * @param thirdKeyMapNodes スレーブデータノードを指定
      * @param transactionManagerStr トランザクションマネージャの指定
      */
-    public static void initConsistentHashMode(String keyMapNodes, String subKeyMapNodes, String transactionManagerStr) {
+    public static void initConsistentHashMode(String keyMapNodes, String subKeyMapNodes, String thirdKeyMapNodes, String transactionManagerStr) {
         initFlg = true;
         standby = false;
         String[] keyMapNodesInfo = null;
         String[] subkeyMapNodesInfo = null;
+        String[] thirdkeyMapNodesInfo = null;
         String[] transactionManagerInfo = null;
 
         ArrayList keyNodeList = new ArrayList();
         ArrayList subKeyNodeList = new ArrayList();
+        ArrayList thirdKeyNodeList = new ArrayList();
 
         synchronized(syncObj) {
             allNodeMap = new HashMap();
@@ -222,8 +262,11 @@ public class DataDispatcher {
         // [3][*]=サブノードName
         // [4][*]=サブノードPort
         // [5][*]=サブノードFull
+        // [6][*]=サードノードName
+        // [7][*]=サードノードPort
+        // [8][*]=サードノードFull
         keyMapNodesInfo = keyMapNodes.split(",");
-        String[][] allNodeDetailList = new String[6][keyMapNodesInfo.length];
+        String[][] allNodeDetailList = new String[9][keyMapNodesInfo.length];
 
         // メインデータノード用ConsistentHashのサークル作成
         nodeCircle = new TreeMap();
@@ -278,6 +321,30 @@ public class DataDispatcher {
             }
         }
 
+
+        // ThirdNode初期化
+        if (thirdKeyMapNodes != null && !thirdKeyMapNodes.equals("")) {
+            thirdkeyMapNodesInfo = thirdKeyMapNodes.split(",");
+
+            for (int index = 0; index < thirdkeyMapNodesInfo.length; index++) {
+                String thirdKeyNode = thirdkeyMapNodesInfo[index].trim();
+                String[] thirdKeyNodeDt = thirdKeyNode.split(":");
+                thirdKeyNodeList.add(thirdKeyNode);
+
+                allNodeDetailList[8][index] = thirdKeyNode;
+                allNodeDetailList[6][index] = thirdKeyNodeDt[0];
+                allNodeDetailList[7][index] = thirdKeyNodeDt[1];
+                String[] thirdNodeDt = {allNodeDetailList[6][index], allNodeDetailList[7][index], allNodeDetailList[8][index]};
+
+                keyNodeMap.put(allNodeDetailList[2][index] + "_third", thirdNodeDt);
+            }
+
+            synchronized(syncObj) {
+                allNodeMap.put("third", thirdKeyNodeList);
+            }
+        }
+
+
         keyNodeMap.put("list", allNodeDetailList);
         // 準備完了
         standby = true;
@@ -299,20 +366,23 @@ public class DataDispatcher {
      * "oldNodeCircle"という名前で登録する.<br>
      * 返却値はノード登録によって移動しなければいけないデータのHash化した数値の範囲データ。このデータをノードの<br>
      * FullNameをキー値としてHashMapに詰めて返す.<br>
-     * メインデータノードは返却値のHashMapに"main"というキー値で、スレーブは"sub"というキーとでMapが格納されている.<br>
-     * 移動先のノードはメインノードが"tomain"というキー値で、スレーブが"tosub"というキー値で格納されている.<br>
+     * メインデータノードは返却値のHashMapに"main"というキー値で、スレーブは"sub"というキーとで、サードは"third"というキーとでMapが格納されている.<br>
+     * 移動先のノードはメインノードが"tomain"というキー値で、スレーブが"tosub"というキー値で、サードが"tothird"というキー値で格納されている.<br>
      *
      * @param keyNodeFullName 追加するメインデータノード フォーマット"192.168.1.3:5555"
      * @param subKeyNodeFullName 追加するスレーブデータノード フォーマット"192.168.2.3:5555"
+     * @param thirdKeyNodeFullName 追加するサードデータノード フォーマット"192.168.2.3:5555"
      * @return HashMap 変更対象データの情報
      */
-    public static HashMap addNode4ConsistentHash(String keyNodeFullName, String subKeyNodeFullName) {
+    public static HashMap addNode4ConsistentHash(String keyNodeFullName, String subKeyNodeFullName, String thirdKeyNodeFullName) {
         if (oldCircle != null) return null;
         HashMap retMap = new HashMap(2);
         HashMap convertMap = new HashMap();
         HashMap subConvertMap = new HashMap();
+        HashMap thirdConvertMap = new HashMap();
         ArrayList keyNodeList = new ArrayList();
         ArrayList subKeyNodeList = new ArrayList();
+        ArrayList thirdKeyNodeList = new ArrayList();
 
         oldCircle = new TreeMap();
 
@@ -373,26 +443,44 @@ public class DataDispatcher {
                 String work = (String)convertMap.get(nodeName);
                 convertMap.put(nodeName, work + "," + targetHashStart + "-" +  targetHashEnd);
 
+                // サブ
                 String[] subDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_sub");
                 if (subDataNodeInfo != null) {
                     subConvertMap.put(subDataNodeInfo[2], work + "," + targetHashStart + "-" +  targetHashEnd);
                 }
+
+                // サード
+                String[] thirdDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_third");
+                if (thirdDataNodeInfo != null) {
+                    thirdConvertMap.put(thirdDataNodeInfo[2], work + "," + targetHashStart + "-" +  targetHashEnd);
+                }
+
             } else {
 
                 convertMap.put(nodeName, targetHashStart + "-" +  targetHashEnd);
 
+                // サブ
                 String[] subDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_sub");
                 if (subDataNodeInfo != null) {
                     subConvertMap.put(subDataNodeInfo[2], targetHashStart + "-" +  targetHashEnd);
                 }
+
+                // サード
+                String[] thirdDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_third");
+                if (thirdDataNodeInfo != null) {
+                    thirdConvertMap.put(thirdDataNodeInfo[2], targetHashStart + "-" +  targetHashEnd);
+                }
+
             }
         }
 
         // 返却用のデータ移動支持Mapに登録
         retMap.put("tomain",keyNodeFullName);
         retMap.put("tosub",subKeyNodeFullName);
+        retMap.put("tothird",thirdKeyNodeFullName);
         retMap.put("main", convertMap);
         retMap.put("sub", subConvertMap);
+        retMap.put("third", thirdConvertMap);
 
 
         // 全体格納配列に追加
@@ -403,8 +491,11 @@ public class DataDispatcher {
         // [3][*]=サブノードName
         // [4][*]=サブノードPort
         // [5][*]=サブノードFull
+        // [6][*]=サードノードName
+        // [7][*]=サードノードPort
+        // [8][*]=サードノードFull
         String[][] allNodeDetailList = (String[][])keyNodeMap.get("list");
-        String[][] newAllNodeDetailList = new String[6][allNodeDetailList.length + 1];
+        String[][] newAllNodeDetailList = new String[9][allNodeDetailList.length + 1];
         keyNodeList = (ArrayList)allNodeMap.get("main");
 
         // allNodeDetailListに追加するために複製を作成
@@ -415,6 +506,10 @@ public class DataDispatcher {
             newAllNodeDetailList[3][allNodeDetailListIdx] = allNodeDetailList[3][allNodeDetailListIdx];
             newAllNodeDetailList[4][allNodeDetailListIdx] = allNodeDetailList[4][allNodeDetailListIdx];
             newAllNodeDetailList[5][allNodeDetailListIdx] = allNodeDetailList[5][allNodeDetailListIdx];
+            newAllNodeDetailList[6][allNodeDetailListIdx] = allNodeDetailList[6][allNodeDetailListIdx];
+            newAllNodeDetailList[7][allNodeDetailListIdx] = allNodeDetailList[7][allNodeDetailListIdx];
+            newAllNodeDetailList[8][allNodeDetailListIdx] = allNodeDetailList[8][allNodeDetailListIdx];
+
 
         }
 
@@ -463,6 +558,27 @@ public class DataDispatcher {
 
             synchronized(syncObj) {
                 allNodeMap.put("sub", subKeyNodeList);
+            }
+        }
+
+
+        // ThirdNode初期化
+        if (thirdKeyNodeFullName != null && !thirdKeyNodeFullName.equals("")) {
+            String thirdKeyNode = thirdKeyNodeFullName;
+            String[] thirdKeyNodeDt = thirdKeyNode.split(":");
+            thirdKeyNodeList = (ArrayList)allNodeMap.put("third", thirdKeyNodeList);
+
+            thirdKeyNodeList.add(thirdKeyNode);
+
+            newAllNodeDetailList[8][allNodeDetailList.length] = thirdKeyNode;
+            newAllNodeDetailList[6][allNodeDetailList.length] = thirdKeyNodeDt[0];
+            newAllNodeDetailList[7][allNodeDetailList.length] = thirdKeyNodeDt[1];
+            String[] thirdNodeDt = {thirdKeyNodeDt[0], thirdKeyNodeDt[1], thirdKeyNode};
+
+            keyNodeMap.put(newAllNodeDetailList[2][allNodeDetailList.length] + "_third", thirdNodeDt);
+
+            synchronized(syncObj) {
+                allNodeMap.put("third", thirdKeyNodeList);
             }
         }
 
@@ -536,7 +652,20 @@ public class DataDispatcher {
 
         if (reverse) {
             // SubNodeが存在する場合は逆転させる
-            if (tmp.length > 3) {
+            if (tmp.length > 6) {
+                ret = new String[9];
+                ret[3] = tmp[0];
+                ret[4] = tmp[1];
+                ret[5] = tmp[2];
+
+                ret[0] = tmp[3];
+                ret[1] = tmp[4];
+                ret[2] = tmp[5];
+
+                ret[6] = tmp[6];
+                ret[7] = tmp[7];
+                ret[8] = tmp[8];
+            } else if (tmp.length > 3) {
                 ret = new String[6];
                 ret[3] = tmp[0];
                 ret[4] = tmp[1];
@@ -590,9 +719,20 @@ public class DataDispatcher {
 
         nodeNo = nodeNo - 1;
 
-        // スレーブノードの有無に合わせて配列を初期化
-        if (allNodeDetailList[3][0] != null) {
+        // サードノードの有無に合わせて配列を初期化
+        if (allNodeDetailList[6][0] != null) {
+            // サードノード有り
+            ret = new String[9];
 
+            ret[3] = allNodeDetailList[3][nodeNo];
+            ret[4] = allNodeDetailList[4][nodeNo];
+            ret[5] = allNodeDetailList[5][nodeNo];
+
+            ret[6] = allNodeDetailList[6][nodeNo];
+            ret[7] = allNodeDetailList[7][nodeNo];
+            ret[8] = allNodeDetailList[8][nodeNo];
+        } else if (allNodeDetailList[3][0] != null) {
+            // スレーブノードの有無に合わせて配列を初期化
             ret = new String[6];
 
             ret[3] = allNodeDetailList[3][nodeNo];
@@ -618,6 +758,10 @@ public class DataDispatcher {
                 if(!StatusUtil.isWaitStatus(allNodeDetailList[5][nodeNo])) noWaitFlg = true;
             }
 
+            if (ret.length > 6) {
+                if(!StatusUtil.isWaitStatus(allNodeDetailList[8][nodeNo])) noWaitFlg = true;
+            }
+
             if  (noWaitFlg) break;
 
             try {
@@ -633,6 +777,11 @@ public class DataDispatcher {
         if (ret.length > 3) {
             StatusUtil.addNodeUse(allNodeDetailList[5][nodeNo]);
         }
+
+        if (ret.length > 6) {
+            StatusUtil.addNodeUse(allNodeDetailList[8][nodeNo]);
+        }
+
 
         return ret;
     }
@@ -658,7 +807,21 @@ public class DataDispatcher {
 
         if (reverse) {
             // SubNodeが存在する場合は逆転させる
-            if (tmp.length > 3) {
+            if (tmp.length > 6) {
+                ret = new String[9];
+                ret[3] = tmp[0];
+                ret[4] = tmp[1];
+                ret[5] = tmp[2];
+
+                ret[0] = tmp[3];
+                ret[1] = tmp[4];
+                ret[2] = tmp[5];
+
+                ret[6] = tmp[6];
+                ret[7] = tmp[7];
+                ret[8] = tmp[8];
+
+            } else if (tmp.length > 3) {
                 ret = new String[6];
                 ret[3] = tmp[0];
                 ret[4] = tmp[1];
@@ -701,6 +864,7 @@ public class DataDispatcher {
         String targetNode = null;
         String[] mainDataNodeInfo = null;
         String[] slaveDataNodeInfo = null;
+        String[] thirdDataNodeInfo = null;
 
         // ノード詳細取り出し
         String[][] allNodeDetailList = (String[][])keyNodeMap.get("list");
@@ -735,10 +899,20 @@ public class DataDispatcher {
         mainDataNodeInfo = (String[])keyNodeMap.get(targetNode);
         // 対象スレーブノード詳細取り出し
         slaveDataNodeInfo = (String[])keyNodeMap.get(targetNode + "_sub");
+        // 対象サードノード詳細取り出し
+        thirdDataNodeInfo = (String[])keyNodeMap.get(targetNode + "_third");
 
-        // スレーブノードの有無に合わせて配列を初期化
-        if (slaveDataNodeInfo != null) {
 
+        // サードノードの有無に合わせて配列を初期化
+        if (thirdDataNodeInfo != null) {
+            ret = new String[9];
+
+            ret[6] = thirdDataNodeInfo[0];
+            ret[7] = thirdDataNodeInfo[1];
+            ret[8] = thirdDataNodeInfo[2];
+
+        } else if (slaveDataNodeInfo != null) {
+            // スレーブノードの有無に合わせて配列を初期化
             ret = new String[6];
 
             ret[3] = slaveDataNodeInfo[0];
@@ -764,6 +938,10 @@ public class DataDispatcher {
                 if(!StatusUtil.isWaitStatus(slaveDataNodeInfo[2])) noWaitFlg = true;
             }
 
+            if (ret.length > 6) {
+                if(!StatusUtil.isWaitStatus(thirdDataNodeInfo[2])) noWaitFlg = true;
+            }
+
             if  (noWaitFlg) break;
 
             try {
@@ -778,6 +956,10 @@ public class DataDispatcher {
 
         if (ret.length > 3) {
             StatusUtil.addNodeUse(slaveDataNodeInfo[2]);
+        }
+
+        if (ret.length > 6) {
+            StatusUtil.addNodeUse(thirdDataNodeInfo[2]);
         }
 
         return ret;
@@ -868,9 +1050,11 @@ public class DataDispatcher {
 
     /**
      * 全てのノードの情報を返す.<br>
-     * その際返却値のMapには"main"と"sub"という文字列Keyで、それぞれArrayListに<br>
+     * その際返却値のMapには"main"と"sub"と"third"という文字列Keyで、それぞれArrayListに<br>
      * 名前とポート番号を":"で連結した状態で格納して返す.<br>
      * "sub"はスレーブノードが設定しれていない場合はなしとなる<br>
+     * "third"はサードノードが設定しれていない場合はなしとなる<br>
+     *※subは設定しないがthirdは設定することは出来ない
      *
      * @return 
      */
@@ -885,6 +1069,7 @@ public class DataDispatcher {
         HashMap retMap = null;
         ArrayList mainNodeList = new ArrayList();
         ArrayList subNodeList = new ArrayList();
+        ArrayList thirdNodeList = new ArrayList();
 
         // 内容を複製して返す
         synchronized(syncObj) {
@@ -898,6 +1083,7 @@ public class DataDispatcher {
             }
             retMap.put("main", mainNodeList);
 
+            // サブノード
             if (allNodeMap.containsKey("sub")) {
                 tmpNodeList = (ArrayList)allNodeMap.get("sub");
 
@@ -906,6 +1092,17 @@ public class DataDispatcher {
                 }
                 retMap.put("sub", subNodeList);
             }
+
+            // サードノード
+            if (allNodeMap.containsKey("third")) {
+                tmpNodeList = (ArrayList)allNodeMap.get("third");
+
+                for (int i = 0; i < tmpNodeList.size(); i++) {
+                    thirdNodeList.add(tmpNodeList.get(i));
+                }
+                retMap.put("third", thirdNodeList);
+            }
+
         }
         return retMap;
     }
