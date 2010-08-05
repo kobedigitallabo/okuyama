@@ -496,7 +496,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], null, null, null, "3", tagKeyPair, transactionCode);
                     } else if (tagKeyNodeInfo.length == 6) {
                         keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], "3", tagKeyPair, transactionCode);
+                    } else if (tagKeyNodeInfo.length == 9) {
+                        keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], tagKeyNodeInfo[6], tagKeyNodeInfo[7], tagKeyNodeInfo[8], "3", tagKeyPair, transactionCode);
                     }
+
 
                     // 保存結果確認
                     if (keyNodeSaveRet[1].equals("false")) {
@@ -524,7 +527,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "1", keyDataNodePair, transactionCode);
             } else if (keyNodeInfo.length == 6) {
                 keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "1", keyDataNodePair, transactionCode);
+            } else if (keyNodeInfo.length == 9) {
+                keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "1", keyDataNodePair, transactionCode);
             }
+
 
             // 保存結果確認
             if (keyNodeSaveRet[1].equals("false")) {
@@ -608,7 +614,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 keyNodeSaveRet = this.setKeyNodeValueOnlyOnce(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "1", keyDataNodePair, transactionCode);
             } else if (keyNodeInfo.length == 6) {
                 keyNodeSaveRet = this.setKeyNodeValueOnlyOnce(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "1", keyDataNodePair, transactionCode);
+            } else if (keyNodeInfo.length == 9) {
+                keyNodeSaveRet = this.setKeyNodeValueOnlyOnce(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "1", keyDataNodePair, transactionCode);
             }
+
 
             // 保存結果確認
             if (keyNodeSaveRet[1].equals("false")) {
@@ -649,7 +658,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], null, null, null, "3", tagKeyPair, transactionCode);
                     } else if (tagKeyNodeInfo.length == 6) {
                         keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], "3", tagKeyPair, transactionCode);
+                    } else if (tagKeyNodeInfo.length == 9) {
+                        keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], tagKeyNodeInfo[6], tagKeyNodeInfo[7], tagKeyNodeInfo[8], "3", tagKeyPair, transactionCode);
                     }
+
 
                     // 保存結果確認
                     if (keyNodeSaveRet[1].equals("false")) {
@@ -719,9 +731,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 取得実行
             if (keyNodeInfo.length == 3) {
                 keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "2", keyStr);
-            } else {
+            } else if (keyNodeInfo.length == 6) {
                 keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
+            } else if (keyNodeInfo.length == 9) {
+                keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
             }
+
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
             // でそちらのルールでのデータ格納場所も調べる
@@ -741,9 +756,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 取得実行
                         if (keyNodeInfo.length == 3) {
                             keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "2", keyStr);
-                        } else {
+                        } else if (keyNodeInfo.length == 6) {
                             keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
+                        } else if (keyNodeInfo.length == 9) {
+                            keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
                         }
+
 
                         // 過去ルールからデータを発見
                         if (keyNodeSaveRet[1].equals("true")) {
@@ -766,8 +784,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 // 過去ルールの場所のデータを削除
                                 if (keyNodeInfo.length == 3) {
                                     removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, "0");
-                                } else {
+                                } else if (keyNodeInfo.length == 6) {
                                     removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, "0");
+                                } else if (keyNodeInfo.length == 9) {
+                                    removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], keyStr, "0");
                                 }
                             } catch (Exception e) {
                                 logger.info("Old Rule Data Set Error" + e);
@@ -846,9 +866,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 取得実行
             if (keyNodeInfo.length == 3) {
                 keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "8", keyStr, scriptStr);
-            } else {
+            } else if (keyNodeInfo.length == 6) {
                 keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "8", keyStr, scriptStr);
+            } else if (keyNodeInfo.length == 9) {
+                keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "8", keyStr, scriptStr);
             }
+
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
             // でそちらのルールでのデータ格納場所も調べる
@@ -868,9 +891,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 取得実行
                         if (keyNodeInfo.length == 3) {
                             keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "8", keyStr, scriptStr);
-                        } else {
+                        } else if (keyNodeInfo.length == 6) {
                             keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "8", keyStr, scriptStr);
+                        } else if (keyNodeInfo.length == 9) {
+                            keyNodeSaveRet = getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8],  "8", keyStr, scriptStr);
                         }
+
 
                         // 過去ルールからデータを発見
                         if (keyNodeSaveRet[1].equals("true")) {
@@ -941,9 +967,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 取得実行
             if (keyNodeInfo.length == 3) {
                 keyNodeSaveRet = removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, transactionCode);
-            } else {
+            } else if (keyNodeInfo.length == 6) {
                 keyNodeSaveRet = removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, transactionCode);
+            } else if (keyNodeInfo.length == 9) {
+                keyNodeSaveRet = removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], keyStr, transactionCode);
             }
+
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
             // そちらのルールでも削除する
@@ -957,8 +986,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 取得実行
                     if (keyNodeInfo.length == 3) {
                         removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, transactionCode);
-                    } else {
+                    } else if (keyNodeInfo.length == 6) {
                         removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, transactionCode);
+                    } else if (keyNodeInfo.length == 9) {
+                        removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], keyStr, transactionCode);
                     }
                 }
             }
@@ -1180,9 +1211,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 取得実行
             if (keyNodeInfo.length == 3) {
                 keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
-            } else {
+            } else if (keyNodeInfo.length == 6) {
                 keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
+            } else if (keyNodeInfo.length == 9) {
+                keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
             }
+
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
             // そちらのルールでのデータ格納場所も調べる
@@ -1202,9 +1236,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 取得実行
                         if (keyNodeInfo.length == 3) {
                             keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
-                        } else {
+                        } else if (keyNodeInfo.length == 6) {
                             keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
+                        } else if (keyNodeInfo.length == 9) {
+                            keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
                         }
+
                         if (keyNodeSaveRet[1].equals("true")) break;
                     }
                 }
@@ -1591,6 +1628,49 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
+    private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
+        boolean exceptionFlg = false;
+        String[] ret = null;
+        String[] thirdRet = null;
+        BatchException retBe = null;
+
+        try {
+
+            ret = this.setKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values, transactionCode);
+        } catch (BatchException be) {
+
+            retBe = be;
+            exceptionFlg = true;
+        } catch (Exception e) {
+
+            retBe = new BatchException(e);
+            exceptionFlg = true;
+        } finally {
+            
+            try {
+                thirdRet = this.setKeyNodeValue(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, values, transactionCode);
+                if (exceptionFlg) ret = thirdRet;
+            } catch (Exception e) {
+                if (exceptionFlg) throw retBe;
+            }
+        }
+
+        
+        return ret;
+    }
+
+    /**
+     * KeyNodeに対してデータを保存する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加, 30=ロックを取得, 31=ロックを解除)
+     * @param values 送信データ
+     * @return String[] 結果
+     * @throws BatchException
+     */
     private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
 
         // 並列処理指定の場合は分岐(試験的に導入(デフォルト無効))
@@ -1781,6 +1861,59 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return retParams;
     }
 
+
+    /**
+     * KeyNodeに対してデータを保存する.<br>
+     * 既に登録されている場合は失敗する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加, 30=ロックを取得, 31=ロックを解除)
+     * @param values 送信データ
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyNodeValueOnlyOnce(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
+        boolean exceptionFlg = false;
+        String[] ret = null;
+        String[] thirdRet = null;
+        BatchException retBe = null;
+
+        try {
+
+            ret = this.setKeyNodeValueOnlyOnce(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values, transactionCode);
+        } catch (BatchException be) {
+
+            retBe = be;
+            exceptionFlg = true;
+        } catch (Exception e) {
+
+            retBe = new BatchException(e);
+            exceptionFlg = true;
+        } finally {
+            
+            try {
+                if (exceptionFlg) {
+                    thirdRet = this.setKeyNodeValueOnlyOnce(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, values, transactionCode);
+                    ret = thirdRet;
+                } else {
+                    if (ret[1].equals("true")) {
+
+                        // 保存成功
+                        // まだ登録されていない
+                        // 無条件で登録
+                        thirdRet = this.setKeyNodeValue(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, "1", values, transactionCode);
+                    }
+                }
+            } catch (Exception e) {
+                if (exceptionFlg) throw retBe;
+            }
+        }
+
+        return ret;
+    }
 
     /**
      * KeyNodeに対してデータを保存する.<br>
