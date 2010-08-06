@@ -186,7 +186,7 @@ public class ImdstDefine {
     /* -- プログラム規定数値 ----------------------------------------      */
     // 保存出来る、Key、Tag、Valueの最大長
     // Valueの最大長
-    public static final int saveDataMaxSize = 2560;
+    public static final int saveDataMaxSize = 512;
 
     // 大きいデータ保存する場合は以下の数値の用に最も保存する回数の多いサイズに合わせると
     // レスポンスが向上す。下記の場合は512KB

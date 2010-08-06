@@ -27,6 +27,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
     private ArrayList subNodeList = null;
 
+    private ArrayList thirdNodeList = null;
+
     private String nodeStatusStr = null;
     /**
      * Logger.<br>
@@ -57,6 +59,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                     HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
                     this.mainNodeList = (ArrayList)allNodeInfo.get("main");
                     this.subNodeList = (ArrayList)allNodeInfo.get("sub");
+                    this.thirdNodeList = (ArrayList)allNodeInfo.get("third");
 
                     // ノード数分チェック
                     for (int i = 0; i < mainNodeList.size(); i++) {

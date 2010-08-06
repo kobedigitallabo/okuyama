@@ -111,7 +111,7 @@ public class Test extends Thread {
 
                 String key = "DataSaveKey";
                 String value= "Value012345678901234567890123456789";
-                for (int i = this.maxPrefix; i < (this.maxPrefix + 100000); i++){
+                for (int i = this.maxPrefix; i < (this.maxPrefix + 20000); i++){
 
                     if(!imdstKeyValueClient.setValue(key + i, value + i)) {
                         System.out.println("Error");

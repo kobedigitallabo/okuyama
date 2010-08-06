@@ -33,7 +33,7 @@ public class TestSock {
                 if (args[0].equals("4")) {
                     m = new Test();
                     m.setMaxPrefix(count);
-                    count = count + 100000;
+                    count = count + 20000;
                 } else {
                     m = new Test();
                     if (args.length > 3) 
@@ -79,7 +79,7 @@ public class TestSock {
                     for (int i= 0; i < list.length; i++) {
                         m = (Test)list[i];
                         System.out.println(m.getExecCounter());
-                        if(m.getExecCounter() != 100000) execFlg = true;
+                        if(m.getExecCounter() != 20000) execFlg = true;
                     }
                     Thread.sleep(5000);
                     

@@ -22,7 +22,7 @@ import org.imdst.util.StatusUtil;
 public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
 
     // ノードの監視サイクル時間(ミリ秒)
-    private int connectCycle = 2000;
+    private int connectCycle = 1000;
 
     private ArrayList nodeList = null;
 
@@ -176,6 +176,7 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
             logger.info("Connection Pool Error = [" + nodeInfo + "]");
             ret = null;
         }
+        logger.info("Connection Pool Error = [" + nodeInfo + "]");
         return ret;
     }
 

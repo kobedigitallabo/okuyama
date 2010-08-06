@@ -25,7 +25,7 @@ import org.imdst.util.StatusUtil;
 public class KeyManagerAcceptHelper extends AbstractHelper {
 
     // 無操作上限時間
-    private long connetionTimeout = 60000 * 60;
+    private long connetionTimeout = -1;
 
     private String queuePrefix = null;
 
@@ -92,7 +92,7 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
                         long start = ((Long)clientMap[ImdstDefine.paramStart]).longValue();
                         long last = ((Long)clientMap[ImdstDefine.paramLast]).longValue();
 
-                        if ((System.currentTimeMillis() - last) < connetionTimeout) {
+                        if (connetionTimeout == -1 || (System.currentTimeMillis() - last) < connetionTimeout) {
 
                             // 上限に達していない
                             // 既にコネクションが切断されていないかを確認
