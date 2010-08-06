@@ -3,7 +3,7 @@ package org.imdst.util;
 import java.util.*;
 import java.io.*;
 import java.util.concurrent.ConcurrentHashMap;
-
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
@@ -25,16 +25,16 @@ public class StatusUtil {
     private static Object nodeSync = new Object();
 
     // ノードの死活状態を管理
-    private static ConcurrentHashMap checkErrorMap = new ConcurrentHashMap(50, 40, 50);
+    private static ConcurrentHashMap checkErrorMap = new ConcurrentHashMap(50, 40, 300);
 
     // ノードの使用状態を管理(数値でプラス、マイナスが格納)
-    private static HashMap nodeExecMap = new HashMap();
+    private static ConcurrentHashMap nodeExecMap = new ConcurrentHashMap(50,40,300);
 
     // ノードの最新復活時間を管理
-    private static ConcurrentHashMap nodeRebootTimeMap = new ConcurrentHashMap(50, 40, 50);
+    private static ConcurrentHashMap nodeRebootTimeMap = new ConcurrentHashMap(50, 40, 300);
 
     // ノードの最新の状態詳細を管理
-    private static ConcurrentHashMap nodeStatusDtMap = new ConcurrentHashMap(50, 5, 5);
+    private static ConcurrentHashMap nodeStatusDtMap = new ConcurrentHashMap(50, 40, 300);
     
 
     private static String nowMemoryStatus = null;
@@ -74,6 +74,15 @@ public class StatusUtil {
      * ノード使用状態の枠を初期化
      */
     public static void initNodeExecMap(String[] nodeInfos) {
+
+        for (int i = 0; i < nodeInfos.length; i++) {
+            if (!nodeExecMap.containsKey(nodeInfos[i])) {
+                nodeExecMap.put(nodeInfos[i], new AtomicInteger(0));
+            }
+        }
+    }
+    /*
+    public static void initNodeExecMap(String[] nodeInfos) {
         synchronized(nodeExecMap) {
             for (int i = 0; i < nodeInfos.length; i++) {
                 if (!nodeExecMap.containsKey(nodeInfos[i])) {
@@ -82,6 +91,7 @@ public class StatusUtil {
             }
         }
     }
+    */
 
 
     /**
@@ -230,13 +240,31 @@ public class StatusUtil {
 
     // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
     public static void addNodeUse(String nodeInfo) {
+
+        AtomicInteger cnt = (AtomicInteger)nodeExecMap.get(nodeInfo);
+        cnt.incrementAndGet();
+        nodeExecMap.put(nodeInfo, cnt);
+    }
+/*
+    public static void addNodeUse(String nodeInfo) {
         synchronized(nodeExecMap) {
             Integer cnt = (Integer)nodeExecMap.get(nodeInfo);
             cnt = cnt + 1;
             nodeExecMap.put(nodeInfo, cnt);
         }
     }
+*/
 
+
+    // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
+    public static void endNodeUse(String nodeInfo) {
+
+        AtomicInteger cnt = (AtomicInteger)nodeExecMap.get(nodeInfo);
+        cnt.decrementAndGet();
+        nodeExecMap.put(nodeInfo, cnt);
+
+    }
+/*
     // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
     public static void endNodeUse(String nodeInfo) {
         synchronized(nodeExecMap) {
@@ -245,13 +273,23 @@ public class StatusUtil {
             nodeExecMap.put(nodeInfo, cnt);
         }
     }
+*/
 
+
+    // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
+    public static int getNodeUseStatus(String nodeInfo) {
+
+        return ((AtomicInteger)nodeExecMap.get(nodeInfo)).intValue();
+    }
+/*
     // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
     public static int getNodeUseStatus(String nodeInfo) {
         synchronized(nodeExecMap) {
             return ((Integer)nodeExecMap.get(nodeInfo)).intValue();
         }
     }
+*/
+
 
     // データノードの最新詳細状態を格納
     public static void setNodeStatusDt(String nodeInfo, String dtText) {

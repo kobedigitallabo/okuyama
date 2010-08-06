@@ -1001,12 +1001,31 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         ArrayBlockingQueue connList = (ArrayBlockingQueue)allConnectionMap.get(connectionName);
 
         if (connList != null) {
-
+            //long start = System.nanoTime();
             ret = (HashMap)connList.poll();
             if (ret != null) {
                 connPoolCount.decrementAndGet();
-                if(!this.checkConnectionEffective(connectionName, (Long)ret.get("time"))) ret = null;
+                if(!this.checkConnectionEffective(connectionName, (Long)ret.get("time"))) return null;
+////////////////
+
+                /*BufferedReader br = (BufferedReader)((HashMap)ret.get(ImdstDefine.keyNodeConnectionMapKey)).get("reader");
+                Socket soc = (Socket)((HashMap)ret.get(ImdstDefine.keyNodeConnectionMapKey)).get(ImdstDefine.keyNodeSocketKey);
+                try {
+                    soc.setSoTimeout(1);
+                    br.read();
+                } catch (SocketTimeoutException se) {
+                } catch (Exception e) {
+                    try {
+                        soc.close();
+                    } catch (Exception ee) {
+                    }
+                    ret = null;
+                }*/
+
             }
+            //long end = System.nanoTime();
+            //System.out.println((end - start));
+
         }
         return ret;
         
