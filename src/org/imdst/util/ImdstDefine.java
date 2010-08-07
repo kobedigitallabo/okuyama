@@ -159,8 +159,8 @@ public class ImdstDefine {
     public static final String keyNodeStreamReaderKey = "stream_reader";
     public static final String keyNodeWriterKey = "writer";
     public static final String keyNodeReaderKey = "reader";
-    public static final String keyNodeConnectionMapKey = "map";
-    public static final String keyNodeConnectionMapTime = "time";
+    public static final int keyNodeConnectionMapKey = 0;
+    public static final int keyNodeConnectionMapTime = 1;
 
     public static final String configModeFile = "file";
     public static final String configModeNode = "node";

@@ -235,10 +235,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     } else if(clientParameterList[0].equals("2")) {
                         //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
-
+//long start = System.nanoTime();
                         // Key値でValueを取得する
                         retParams = this.getKeyValue(clientParameterList[1]);
-
+//long end = System.nanoTime();
+//System.out.println("ALL[" + (end - start) + "]");
                     } else if(clientParameterList[0].equals("3")) {
 
                         // Tag値でキー値群を取得する
@@ -1294,8 +1295,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         BatchException retBe = null;
 
         try {
+long start1 = System.nanoTime();
 
             ret = this.getKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, key);
+long end1 = System.nanoTime();
+System.out.println("this.getKeyNodeValue[" + (end1 - start1) + "]");
+
         } catch (BatchException be) {
 
             retBe = be;
@@ -1356,15 +1361,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             // KeyNodeとの接続を確立
-            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false, type);
             nowUse = 1;
-
             while (true) {
 
                 // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
                 // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
+
                 if (dtMap == null) {
-                    if (subKeyNodeName != null) dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                    if (subKeyNodeName != null) dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false, type);
 
                     if (dtMap == null) {
 
@@ -1375,6 +1380,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     nowUse = 2;
                 }
 
+
                 // writerとreaderを取り出し
                 pw = (PrintWriter)dtMap.get("writer");
                 br = (BufferedReader)dtMap.get("reader");
@@ -1384,18 +1390,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     if (type.equals("2")) {
 
                         // Key値でValueを取得
-                        StringBuffer buf = new StringBuffer();
                         // パラメータ作成 処理タイプ[セパレータ]キー値
-                        buf.append("2");
-                        buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(this.stringCnv(key));
-
                         // 送信
-                        pw.println(buf.toString());
+//long start3 = System.nanoTime();
+
+                        pw.println(this.stringCnv(key));
                         pw.flush();
 
                         // 返却値取得
                         String retParam = br.readLine();
+/*long end3 = System.nanoTime();
+System.out.println("3=" + (end3 - start3));*/
+
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
                         // value値にセパレータが入っていても無視する
@@ -1403,14 +1409,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } else if (type.equals("4")) {
 
                         // Tag値でキー値群を取得
-                        StringBuffer buf = new StringBuffer();
                         // パラメータ作成 処理タイプ[セパレータ]キー値
-                        buf.append("4");
-                        buf.append(ImdstDefine.keyHelperClientParamSep);
-                        buf.append(this.stringCnv(key));
 
                         // 送信
-                        pw.println(buf.toString());
+                        pw.println(this.stringCnv(key));
                         pw.flush();
 
                         // 返却値取得
@@ -1465,7 +1467,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } else {
 
                         // メインKeyNodeとの接続を確立
-                        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
+                        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true, type);
                         if (dtMap == null) {
                             if (mainNodeRetParam != null || subNodeRetParam != null) break;
                             throw new BatchException("Key Node IO Error: detail info for log file");
@@ -1579,14 +1581,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             // KeyNodeとの接続を確立
-            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false, "8");
 
             while (true) {
 
                 // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
                 // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
                 if (dtMap == null) {
-                    if (subKeyNodeName != null) dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                    if (subKeyNodeName != null) dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false, "8");
 
                     if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
                     slaveUse = true;
@@ -1604,8 +1606,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // Key値でValueを取得
                         StringBuffer buf = new StringBuffer();
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
-                        buf.append("8");
-                        buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(this.stringCnv(key));
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(scriptStr);
@@ -1669,7 +1669,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } else {
 
                         // メインKeyNodeとの接続を確立
-                        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
+                        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true, "8");
                         if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
                         mainRetry = true;
                     }
@@ -1800,20 +1800,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
 
-            // 送信パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
-            if (type.equals("1")) {
-
-                // Key値でValueを保存
-                buf.append("1");
-            } else if (type.equals("3")) {
-
-                // Tag値でキー値を保存
-                buf.append("3");
-            } else {
-                throw new BatchException("setKeyNodeValue No Type Method [" + type + "]");
-            }
-
-            buf.append(ImdstDefine.keyHelperClientParamSep);
+            // 送信パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
             buf.append(this.stringCnv(values[0]));               // Key値
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append(transactionCode);                         // Transaction値
@@ -1826,7 +1813,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             sendData = buf.toString();
 
             // KeyNodeとの接続を確立
-            dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+            dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false, type);
 
             // DataNodeに送信
             do {
@@ -1844,7 +1831,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // SlaveNodeに保存する必要がある場合はDataNodeからの処理返却待ちの間に接続を済ませておく
                         if (counter == 0 && subKeyNodeName != null) {
-                            dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                            dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false, type);
                             subNodeConnect = true;
                         }
 
@@ -1900,7 +1887,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // SubNodeの指定は存在するが接続前に処理を抜けた場合はここで接続
                 // 原因はMainNodeの接続に失敗したか、接続後Exceptionが発生した場合
                 if (subNodeConnect == false && subKeyNodeName != null) {
-                    dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                    dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false, type);
                 }
 
                 // スレーブデータノードの名前を代入
@@ -2056,7 +2043,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // まずメインデータノードへデータ登録
 
             // KeyNodeとの接続を確立
-            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false, "6");
 
             if (dtMap != null) {
                 try {
@@ -2066,9 +2053,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // Key値でデータノード名を保存
                     StringBuffer buf = new StringBuffer();
-                    // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
-                    buf.append("6");
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
                     buf.append(this.stringCnv(values[0]));               // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(transactionCode);                         // Transaction値
@@ -2118,7 +2103,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 if (mainNodeSave == true || (mainNodeSave == false && mainNodeNetworkError == true)) {
                     // Mainノードが処理成功もしくは、ネットワークエラーの場合はSubノードの処理を行う。
                     // KeyNodeとの接続を確立
-                    dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                    if (!mainNodeSave) {
+                        dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false, "6");
+                    } else {
+                        dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false, "1");
+                    }
+
 
                     if (dtMap != null) {
                         try {
@@ -2128,13 +2118,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // Key値でデータノード名を保存
                             StringBuffer buf = new StringBuffer();
-                            // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
-                            if (!mainNodeSave) {
-                                buf.append("6");
-                            } else {
-                                buf.append("1");
-                            }
-                            buf.append(ImdstDefine.keyHelperClientParamSep);
+                            // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
                             buf.append(this.stringCnv(values[0]));               // Key値
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(transactionCode);                         // Transaction値
@@ -2338,7 +2322,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             do {
                 // KeyNodeとの接続を確立
-                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false, "5");
 
 
                 // 接続結果と、現在の保存先状況で処理を分岐
@@ -2351,9 +2335,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // Key値でデータノード名を保存
                         StringBuffer buf = new StringBuffer();
-                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
-                        buf.append("5");
-                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
                         buf.append(this.stringCnv(key));
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(transactionCode);
@@ -2877,7 +2859,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             do {
                 // KeyNodeとの接続を確立
-                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false, type);
 
 
                 // 接続結果と、現在の保存先状況で処理を分岐
@@ -2994,7 +2976,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return HashMap
      * @throws BatchException
      */
-    private HashMap createKeyNodeConnection(String keyNodeName, String keyNodePort, String keyNodeFullName, boolean retryFlg) throws BatchException {
+    private HashMap createKeyNodeConnection(String keyNodeName, String keyNodePort, String keyNodeFullName, boolean retryFlg, String sendCommandPrefix) throws BatchException {
         PrintWriter pw = null;
         BufferedReader br = null;
         HashMap dtMap = null;
@@ -3016,19 +2998,52 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
             }
 
+
             // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
             if (this.keyNodeConnectMap.containsKey(connectionFullName) && 
                 super.checkConnectionEffective(connectionFullName, (Long)this.keyNodeConnectTimeMap.get(connectionFullName))) {
+
                 dtMap = (HashMap)this.keyNodeConnectMap.get(connectionFullName);
-            } else {
+                // キャッシュから取れた接続に対して実行予定コマンドのプレフィックスを送る
+                try {
+                    pw = (PrintWriter)dtMap.get(ImdstDefine.keyNodeWriterKey);
+                    pw.print(sendCommandPrefix + ImdstDefine.keyHelperClientParamSep);
+                    pw.flush();
+                } catch (Exception e) {
+                    // エラーならなんだかの理由で接続が切断されている
+                    dtMap = null;
+                    this.keyNodeConnectMap.remove(connectionFullName);
+                }
+            } 
+
+
+
+            // まだ接続が完了していない場合は接続処理続行
+            if (dtMap == null) {
                 // 新規接続
                 // 親クラスから既に接続済みの接続をもらう
-                HashMap connectMap = super.getActiveConnection(connectionFullName);
+                Object[] connectMap = super.getActiveConnection(connectionFullName);
 
+                if (connectMap != null) {
+                    dtMap = (HashMap)connectMap[ImdstDefine.keyNodeConnectionMapKey];
+                 
+                    try {
+                        // Poolから取れた接続に対して実行予定コマンドのプレフィックスを送る
+                        pw = (PrintWriter)dtMap.get(ImdstDefine.keyNodeWriterKey);
+                        pw.print(sendCommandPrefix + ImdstDefine.keyHelperClientParamSep);
+                        pw.flush();
+
+                        connectTime = (Long)connectMap[ImdstDefine.keyNodeConnectionMapTime];
+                    } catch (Exception e) {
+
+                        // エラーならなんだかの理由で接続が切断されている
+                        dtMap = null;
+                        connectMap = null;
+                    }
+                }
 
                 // 接続が存在しない場合は自身で接続処理を行う
                 if (connectMap == null) {
-
                     InetSocketAddress inetAddr = new InetSocketAddress(keyNodeName, Integer.parseInt(keyNodePort));
                     Socket socket = new Socket();
                     socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
@@ -3050,10 +3065,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
                     dtMap.put(ImdstDefine.keyNodeReaderKey, br);
                     connectTime = new Long(System.currentTimeMillis());
-                } else {
 
-                    dtMap = (HashMap)connectMap.get(ImdstDefine.keyNodeConnectionMapKey);
-                    connectTime = (Long)connectMap.get(ImdstDefine.keyNodeConnectionMapTime);
+                    // 自身で接続したSocketに対して実行予定コマンドのプレフィックスを送る
+                    pw.print(sendCommandPrefix + ImdstDefine.keyHelperClientParamSep);
+                    pw.flush();
                 }
 
                 this.closeKeyNodeConnect(connectionFullName);
@@ -3100,7 +3115,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 // 新規接続
                 // 親クラスから既に接続済みの接続をもらう
-                HashMap connectMap = super.getActiveConnection(connectionFullName);
+                Object[] connectMap = super.getActiveConnection(connectionFullName);
 
 
                 // 接続が存在しない場合は自身で接続処理を行う
@@ -3126,8 +3141,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     dtMap.put(ImdstDefine.keyNodeReaderKey, br);
                     connectTime = new Long(System.currentTimeMillis());
                 } else {
-                    dtMap = (HashMap)connectMap.get(ImdstDefine.keyNodeConnectionMapKey);
-                    connectTime = (Long)connectMap.get(ImdstDefine.keyNodeConnectionMapTime);
+                    dtMap = (HashMap)connectMap[ImdstDefine.keyNodeConnectionMapKey];
+                    connectTime = (Long)connectMap[ImdstDefine.keyNodeConnectionMapTime];
                 }
 
                 this.closeKeyNodeConnect(connectionFullName);
@@ -3430,8 +3445,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         public void run() {
             try {
                 StringBuffer buf = new StringBuffer();
-                buf.append(type);
-                buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(stringCnv(key));
                 buf.append(ImdstDefine.keyHelperClientParamSep);
                 buf.append(transactionCode);

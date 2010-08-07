@@ -954,7 +954,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * データノードとのコネクションをセットする.<br>
      *
      */
-    protected void setActiveConnection(String connectionName, HashMap connectionMap) {
+    protected void setActiveConnection(String connectionName, Object[] connectionMap) {
 
         ArrayBlockingQueue connList = null;
         connList = (ArrayBlockingQueue)allConnectionMap.get(connectionName);
@@ -996,36 +996,17 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      *
      *
      */
-    protected HashMap getActiveConnection(String connectionName) {
-        HashMap ret = null;
+    protected Object[] getActiveConnection(String connectionName) {
+        Object[] ret = null;
         ArrayBlockingQueue connList = (ArrayBlockingQueue)allConnectionMap.get(connectionName);
 
         if (connList != null) {
             //long start = System.nanoTime();
-            ret = (HashMap)connList.poll();
+            ret = (Object[])connList.poll();
             if (ret != null) {
                 connPoolCount.decrementAndGet();
-                if(!this.checkConnectionEffective(connectionName, (Long)ret.get("time"))) return null;
-////////////////
-
-                /*BufferedReader br = (BufferedReader)((HashMap)ret.get(ImdstDefine.keyNodeConnectionMapKey)).get("reader");
-                Socket soc = (Socket)((HashMap)ret.get(ImdstDefine.keyNodeConnectionMapKey)).get(ImdstDefine.keyNodeSocketKey);
-                try {
-                    soc.setSoTimeout(1);
-                    br.read();
-                } catch (SocketTimeoutException se) {
-                } catch (Exception e) {
-                    try {
-                        soc.close();
-                    } catch (Exception ee) {
-                    }
-                    ret = null;
-                }*/
-
+                if(!this.checkConnectionEffective(connectionName, (Long)ret[ImdstDefine.keyNodeConnectionMapTime])) return null;
             }
-            //long end = System.nanoTime();
-            //System.out.println((end - start));
-
         }
         return ret;
         

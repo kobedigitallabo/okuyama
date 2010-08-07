@@ -105,7 +105,7 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
                     for (int j = 0; j < this.nodeList.size(); j++) {
 
                         String nodeInfo = (String)nodeList.get(j);
-                        HashMap connectionMap = this.createNodeConnection(nodeInfo);
+                        Object[] connectionMap = this.createNodeConnection(nodeInfo);
                         if (connectionMap != null) {
                             super.setActiveConnection(nodeInfo, connectionMap);
                         }
@@ -139,8 +139,8 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
      * ノードに対しての接続を作成する
      *
      */
-    private HashMap createNodeConnection(String nodeInfo) {
-        HashMap ret = null;
+    private Object[] createNodeConnection(String nodeInfo) {
+        Object[] ret = null;
         HashMap dtMap = null;
         Long connectTime = null;
         String[] nodeInfos = nodeInfo.split(":");
@@ -168,10 +168,10 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
             dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
             dtMap.put(ImdstDefine.keyNodeReaderKey, br);
             connectTime = new Long(System.currentTimeMillis());
-            ret = new HashMap(2);
+            ret = new Object[2];
 
-            ret.put(ImdstDefine.keyNodeConnectionMapKey, dtMap);
-            ret.put(ImdstDefine.keyNodeConnectionMapTime, connectTime);
+            ret[ImdstDefine.keyNodeConnectionMapKey] = dtMap;
+            ret[ImdstDefine.keyNodeConnectionMapTime] =  connectTime;
         } catch(Exception e) {
             logger.info("Connection Pool Error = [" + nodeInfo + "]");
             ret = null;

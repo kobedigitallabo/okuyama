@@ -24,8 +24,8 @@ import org.imdst.util.StatusUtil;
  */
 public class KeyManagerAcceptHelper extends AbstractHelper {
 
-    // 無操作上限時間
-    private long connetionTimeout = -1;
+    // 無操作上限時間 -1は切断なし
+    private long connetionTimeout = 60000 * 5;
 
     private String queuePrefix = null;
 
