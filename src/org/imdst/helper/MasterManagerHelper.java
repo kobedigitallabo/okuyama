@@ -3,6 +3,9 @@ package org.imdst.helper;
 import java.io.*;
 import java.util.*;
 import java.net.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ArrayBlockingQueue;
+
 
 import org.batch.lang.BatchException;
 import org.batch.job.AbstractHelper;
@@ -24,6 +27,9 @@ import org.imdst.util.protocol.*;
  * @license GPL(Lv3)
  */
 public class MasterManagerHelper extends AbstractMasterManagerHelper {
+
+
+    private static ConcurrentHashMap keyNodeConnectPool = new ConcurrentHashMap(100, 90, 50);
 
     private HashMap keyNodeConnectMap = null;
 
@@ -144,7 +150,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 一貫性モード初期化
             this.initConsistencyMode();
 
-
+//long start = 0L;
+//long end = 0L;
             // 接続終了までループ
             while(serverRunning) {
                 try {
@@ -155,7 +162,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     Object[] queueParam = super.pollSpecificationParameterQueue("MasterManagerHelper");
-
+//start = System.nanoTime();
                     Object[] queueMap = (Object[])queueParam[0];
 
                     pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
@@ -368,6 +375,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // 処理が完了したら読み出し待機キューに戻す
                     queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+//end = System.nanoTime();
+//System.out.println("Exec Time[" + (end - start) + "]");
                     queueParam[0] = queueMap;
                     super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
                     //this.closeAllKeyNodeConnect();
@@ -1295,11 +1304,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         BatchException retBe = null;
 
         try {
-long start1 = System.nanoTime();
+
 
             ret = this.getKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, key);
-long end1 = System.nanoTime();
-System.out.println("this.getKeyNodeValue[" + (end1 - start1) + "]");
 
         } catch (BatchException be) {
 
@@ -1399,8 +1406,8 @@ System.out.println("this.getKeyNodeValue[" + (end1 - start1) + "]");
 
                         // 返却値取得
                         String retParam = br.readLine();
-/*long end3 = System.nanoTime();
-System.out.println("3=" + (end3 - start3));*/
+//long end3 = System.nanoTime();
+//System.out.println("1=" + (end3 - start3));
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
@@ -1423,6 +1430,10 @@ System.out.println("3=" + (end3 - start3));*/
                         // value値にセパレータが入っていても無視する
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     }
+
+
+                    // 使用済みの接続を戻す
+                    this.addKeyNodeConnectionPool(dtMap);
 
 
                     // 一貫性のモードに合わせて処理を分岐
@@ -1623,6 +1634,9 @@ System.out.println("3=" + (end3 - start3));*/
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     } 
 
+                    // 使用済みの接続を戻す
+                    this.addKeyNodeConnectionPool(dtMap);
+
                     // 一貫性のモードに合わせて処理を分岐
                     if (this.dataConsistencyMode == 0) {
 
@@ -1759,6 +1773,7 @@ System.out.println("3=" + (end3 - start3));*/
         PrintWriter pw = null;
         BufferedReader br = null;
         HashMap dtMap = null;
+        HashMap slaveDtMap = null;
 
         String nodeName = keyNodeName;
         String nodePort = keyNodePort;
@@ -1799,7 +1814,6 @@ System.out.println("3=" + (end3 - start3));*/
                 }
             }
 
-
             // 送信パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
             buf.append(this.stringCnv(values[0]));               // Key値
             buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -1808,8 +1822,6 @@ System.out.println("3=" + (end3 - start3));*/
             buf.append(values[1]);                               // Value値
             buf.append(ImdstDefine.setTimeParamSep);
             buf.append(setTime);                                 // 保存時間
-
-
             sendData = buf.toString();
 
             // KeyNodeとの接続を確立
@@ -1821,6 +1833,7 @@ System.out.println("3=" + (end3 - start3));*/
                 // 接続結果と、現在の保存先状況で処理を分岐
                 if (dtMap != null) {
                     try {
+
                         // writerとreaderを取り出し
                         pw = (PrintWriter)dtMap.get("writer");
                         br = (BufferedReader)dtMap.get("reader");
@@ -1829,15 +1842,11 @@ System.out.println("3=" + (end3 - start3));*/
                         pw.println(buf.toString());
                         pw.flush();
 
-                        // SlaveNodeに保存する必要がある場合はDataNodeからの処理返却待ちの間に接続を済ませておく
-                        if (counter == 0 && subKeyNodeName != null) {
-                            dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false, type);
-                            subNodeConnect = true;
-                        }
-
                         // 返却値取得
                         retParam = br.readLine();
 
+                        // 使用済みの接続を戻す
+                        this.addKeyNodeConnectionPool(dtMap);
 
                         // 処理種別判別
                         if (type.equals("1")) {
@@ -2069,6 +2078,9 @@ System.out.println("3=" + (end3 - start3));*/
                     // 返却値取得
                     retParam = br.readLine();
 
+                    // 使用済みの接続を戻す
+                    this.addKeyNodeConnectionPool(dtMap);
+
                     // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                     //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
                     if (retParam.indexOf(ImdstDefine.keyNodeKeyNewRegistSuccessStr) == 0) {
@@ -2133,6 +2145,9 @@ System.out.println("3=" + (end3 - start3));*/
 
                             // 返却値取得
                             retParam = br.readLine();
+
+                            // 使用済みの接続を戻す
+                            this.addKeyNodeConnectionPool(dtMap);
 
 
                             // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
@@ -2346,6 +2361,9 @@ System.out.println("3=" + (end3 - start3));*/
 
                         // 返却値取得
                         retParam = br.readLine();
+
+                        // 使用済みの接続を戻す
+                        this.addKeyNodeConnectionPool(dtMap);
 
                         // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                         if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRemoveSuccessStr) == 0) {
@@ -2937,6 +2955,9 @@ System.out.println("3=" + (end3 - start3));*/
                 subNodeSender = null;
             }
 
+            // 使用済みの接続を戻す
+            this.addKeyNodeConnectionPool(dtMap);
+
             // ノードへの保存状況を確認
             if (mainNodeSave == false && subNodeSave == false) {
                 // 返却地値をパースする
@@ -2982,7 +3003,6 @@ System.out.println("3=" + (end3 - start3));*/
         HashMap dtMap = null;
 
         String connectionFullName = keyNodeFullName;
-        Long connectTime = new Long(0);
 
         try {
 
@@ -2990,29 +3010,30 @@ System.out.println("3=" + (end3 - start3));*/
                 return null;
             }
 
+
             // フラグがtrueの場合はキャッシュしている接続を破棄してやり直す
-            if (retryFlg) {
+/*            if (retryFlg) {
                 if (this.keyNodeConnectMap.containsKey(connectionFullName)) {
                     this.closeKeyNodeConnect(connectionFullName);
                     this.keyNodeConnectMap.remove(connectionFullName);
                 }
             }
+*/
 
-
+            String connTimeKey = "time";
             // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
-            if (this.keyNodeConnectMap.containsKey(connectionFullName) && 
-                super.checkConnectionEffective(connectionFullName, (Long)this.keyNodeConnectTimeMap.get(connectionFullName))) {
+            if (keyNodeConnectPool.containsKey(connectionFullName)) {
+                if((dtMap = (HashMap)((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).poll()) != null) {
 
-                dtMap = (HashMap)this.keyNodeConnectMap.get(connectionFullName);
-                // キャッシュから取れた接続に対して実行予定コマンドのプレフィックスを送る
-                try {
-                    pw = (PrintWriter)dtMap.get(ImdstDefine.keyNodeWriterKey);
-                    pw.print(sendCommandPrefix + ImdstDefine.keyHelperClientParamSep);
-                    pw.flush();
-                } catch (Exception e) {
-                    // エラーならなんだかの理由で接続が切断されている
-                    dtMap = null;
-                    this.keyNodeConnectMap.remove(connectionFullName);
+                    // キャッシュから取れた接続に対して実行予定コマンドのプレフィックスを送る
+                    try {
+                        pw = (PrintWriter)dtMap.get(ImdstDefine.keyNodeWriterKey);
+                        pw.print(sendCommandPrefix + ImdstDefine.keyHelperClientParamSep);
+                        pw.flush();
+                    } catch (Exception e) {
+                        // エラーならなんだかの理由で接続が切断されている
+                        dtMap = null;
+                    }
                 }
             } 
 
@@ -3033,7 +3054,6 @@ System.out.println("3=" + (end3 - start3));*/
                         pw.print(sendCommandPrefix + ImdstDefine.keyHelperClientParamSep);
                         pw.flush();
 
-                        connectTime = (Long)connectMap[ImdstDefine.keyNodeConnectionMapTime];
                     } catch (Exception e) {
 
                         // エラーならなんだかの理由で接続が切断されている
@@ -3064,16 +3084,15 @@ System.out.println("3=" + (end3 - start3));*/
 
                     dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
                     dtMap.put(ImdstDefine.keyNodeReaderKey, br);
-                    connectTime = new Long(System.currentTimeMillis());
 
                     // 自身で接続したSocketに対して実行予定コマンドのプレフィックスを送る
                     pw.print(sendCommandPrefix + ImdstDefine.keyHelperClientParamSep);
                     pw.flush();
                 }
 
-                this.closeKeyNodeConnect(connectionFullName);
-                this.keyNodeConnectMap.put(connectionFullName, dtMap);
-                this.keyNodeConnectTimeMap.put(connectionFullName, connectTime);
+                //this.keyNodeConnectMap.put(connectionFullName, dtMap);
+                //this.keyNodeConnectTimeMap.put(connectionFullName, connectTime);
+                if (dtMap != null) dtMap.put("name", connectionFullName);
             }
         } catch (Exception e) {
             logger.error(connectionFullName + " " + e);
@@ -3086,6 +3105,38 @@ System.out.println("3=" + (end3 - start3));*/
         return dtMap;
     }
 
+    /**
+     * 使用済みの接続をPoolに戻す
+     *
+     *
+     */
+    private void addKeyNodeConnectionPool(HashMap dtMap) {
+        String connectionFullName = null;
+        if (dtMap != null) {
+
+            connectionFullName = (String)dtMap.get("name");
+
+            if (keyNodeConnectPool.containsKey(connectionFullName)) {
+
+                ((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).offer(dtMap);
+            } else {
+
+                synchronized(keyNodeConnectPool) {
+
+                    if (!keyNodeConnectPool.containsKey(connectionFullName)) {
+
+                        ArrayBlockingQueue connPoolQueue = new ArrayBlockingQueue(20000);
+                        connPoolQueue.offer(dtMap);
+                        keyNodeConnectPool.put(connectionFullName, connPoolQueue);
+                    } else {
+
+                        
+                        addKeyNodeConnectionPool(dtMap);
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * TransactionMangerとの接続を作成.<br>

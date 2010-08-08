@@ -142,6 +142,8 @@ public class KeyManagerHelper extends AbstractHelper {
                     }
 
                     Object[] queueParam = super.pollSpecificationParameterQueue("KeyManagerHelper" + this.queuePrefix);
+
+
                     Object[] queueMap = (Object[])queueParam[0];
 
                     pw = (PrintWriter)queueMap[ImdstDefine.paramPw];

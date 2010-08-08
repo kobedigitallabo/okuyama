@@ -969,13 +969,15 @@ public class ImdstKeyValueClient {
 
             // Value連結
             serverRequestBuf.append(value);
-
+//long start = System.nanoTime();
             // サーバ送信
             pw.println(serverRequestBuf.toString());
             pw.flush();
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
+//long end = System.nanoTime();
+//System.out.println((end - start));
             serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
 
 
@@ -1479,11 +1481,15 @@ public class ImdstKeyValueClient {
 
 
             // サーバ送信
+//long start = System.nanoTime();
+
             pw.println(serverRequestBuf.toString());
             pw.flush();
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
+//long end = System.nanoTime();
+//System.out.println((end - start));
             serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
 
             // 処理の妥当性確認
