@@ -75,7 +75,6 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
 
                 // 読み込みのデータがバッファに存在するかをチェック
                 if(br.ready()) {
-
                     // 読み込みのデータがバッファに存在する
                     clientMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                     Object[] queueParam = new Object[1];
@@ -86,7 +85,7 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
                     // 読み込みのデータがバッファに存在しない
                     try {
                         int test = 0;
-                        br.mark(2);
+                        br.mark(1);
 
                         // 無操作時間が上限に達していないかを確認
                         long start = ((Long)clientMap[ImdstDefine.paramStart]).longValue();

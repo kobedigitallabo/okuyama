@@ -134,6 +134,8 @@ public class KeyManagerHelper extends AbstractHelper {
                 this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode + "_datanode");
             }
 
+long start = 0L;
+long end = 0L;
             while(serverRunning) {
                 try {
                     // 切断確認
@@ -141,8 +143,8 @@ public class KeyManagerHelper extends AbstractHelper {
                         this.closeClientConnect(pw, br, soc);
                     }
 
+                    // キューを待ち受ける
                     Object[] queueParam = super.pollSpecificationParameterQueue("KeyManagerHelper" + this.queuePrefix);
-
 
                     Object[] queueMap = (Object[])queueParam[0];
 
@@ -193,9 +195,9 @@ public class KeyManagerHelper extends AbstractHelper {
                             }
                         }
                     } else {
-
                         // okuyamaプロトコル
                         clientParametersStr = br.readLine();
+
                     }
 
 
