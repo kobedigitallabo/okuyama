@@ -168,6 +168,8 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
             dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
             dtMap.put(ImdstDefine.keyNodeReaderKey, br);
             connectTime = new Long(System.currentTimeMillis());
+            dtMap.put("name", nodeInfo);
+            dtMap.put("time", connectTime);
             ret = new Object[2];
 
             ret[ImdstDefine.keyNodeConnectionMapKey] = dtMap;

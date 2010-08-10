@@ -29,7 +29,7 @@ import org.imdst.util.protocol.*;
 public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
-    private static ConcurrentHashMap keyNodeConnectPool = new ConcurrentHashMap(100, 90, 50);
+    private static ConcurrentHashMap keyNodeConnectPool = new ConcurrentHashMap(1024, 1000, 512);
 
     private HashMap keyNodeConnectMap = null;
 
@@ -1462,6 +1462,7 @@ long end = 0L;
                     }
 
                 } catch(SocketException tSe) {
+
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     se = tSe;
                 } catch(IOException tIe) {
@@ -3064,6 +3065,7 @@ long end = 0L;
      * @throws BatchException
      */
     private HashMap createKeyNodeConnection(String keyNodeName, String keyNodePort, String keyNodeFullName, boolean retryFlg) throws BatchException {
+        Socket socket = null;
         PrintWriter pw = null;
         BufferedReader br = null;
         HashMap dtMap = null;
@@ -3071,6 +3073,8 @@ long end = 0L;
         String connectionFullName = keyNodeFullName;
         Long connectTime = new Long(0);
         String connTimeKey = "time";
+
+        boolean sockCheck = false;
 
         try {
 
@@ -3096,57 +3100,76 @@ long end = 0L;
                         if (!super.checkConnectionEffective(connectionFullName, (Long)dtMap.get("time"))) {
                             // エラーならなんだかの理由で接続が切断されている
                             dtMap = null;
+                        } else {
+                            sockCheck = true;
                         }
                     }
                 } 
+
+
+                // まだ接続が完了していない場合は接続処理続行
+                if (dtMap == null) {
+                    // 新規接続
+                    // 親クラスから既に接続済みの接続をもらう
+                    Object[] connectMap = super.getActiveConnection(connectionFullName);
+
+                    if (connectMap != null) {
+                        dtMap = (HashMap)connectMap[ImdstDefine.keyNodeConnectionMapKey];
+                        sockCheck = true;
+                    }
+                }
             }
-
-
+/*
+            // 既存の接続を使用する場合はチェック
+            if (dtMap != null && sockCheck == true) {
+                try {
+                    socket = (Socket)dtMap.get(ImdstDefine.keyNodeSocketKey);
+                    socket.setSoTimeout(1);
+                    br = (BufferedReader)dtMap.get(ImdstDefine.keyNodeReaderKey);
+                    br.mark(1);
+                    int ch = br.read();
+                    br.reset();
+                } catch (SocketTimeoutException se) {
+                } catch (Exception ee) {
+                    // タイムアウト意外のエラー発生
+                    dtMap = null;
+                }
+            }
+*/
             // まだ接続が完了していない場合は接続処理続行
             if (dtMap == null) {
-                // 新規接続
-                // 親クラスから既に接続済みの接続をもらう
-                Object[] connectMap = super.getActiveConnection(connectionFullName);
-
-                if (connectMap != null) {
-                    dtMap = (HashMap)connectMap[ImdstDefine.keyNodeConnectionMapKey];
-                }
-
-
                 // 接続が存在しない場合は自身で接続処理を行う
-                if (connectMap == null) {
-                    InetSocketAddress inetAddr = new InetSocketAddress(keyNodeName, Integer.parseInt(keyNodePort));
-                    Socket socket = new Socket();
-                    socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
-                    socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
-                    OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-                    pw = new PrintWriter(new BufferedWriter(osw));
+                InetSocketAddress inetAddr = new InetSocketAddress(keyNodeName, Integer.parseInt(keyNodePort));
+                socket = new Socket();
+                socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
+                connectTime = new Long(System.currentTimeMillis());
+                socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
-                    InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-                    br = new BufferedReader(isr);
+                OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
+                pw = new PrintWriter(new BufferedWriter(osw));
 
-                    dtMap = new HashMap();
+                InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
+                br = new BufferedReader(isr);
 
-                    // Socket, Writer, Readerをキャッシュ
-                    dtMap.put(ImdstDefine.keyNodeSocketKey, socket);
-                    dtMap.put(ImdstDefine.keyNodeStreamWriterKey, osw);
-                    dtMap.put(ImdstDefine.keyNodeStreamReaderKey, isr);
+                dtMap = new HashMap();
 
-                    dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
-                    dtMap.put(ImdstDefine.keyNodeReaderKey, br);
+                // Socket, Writer, Readerをキャッシュ
+                dtMap.put(ImdstDefine.keyNodeSocketKey, socket);
+                dtMap.put(ImdstDefine.keyNodeStreamWriterKey, osw);
+                dtMap.put(ImdstDefine.keyNodeStreamReaderKey, isr);
 
-                    connectTime = new Long(System.currentTimeMillis());
-
-                }
-
-                //this.keyNodeConnectMap.put(connectionFullName, dtMap);
-                //this.keyNodeConnectTimeMap.put(connectionFullName, connectTime);
-                if (dtMap != null) {
-                    dtMap.put("name", connectionFullName);
-                    dtMap.put("time", connectTime);
-                }
+                dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
+                dtMap.put(ImdstDefine.keyNodeReaderKey, br);
+                dtMap.put("name", connectionFullName);
+                dtMap.put("time", connectTime);
+                dtMap.put("type", "new");
+            } else {
+                dtMap.put("type", "old");
             }
+
+
+            
         } catch (Exception e) {
             logger.error(connectionFullName + " " + e);
             dtMap = null;
