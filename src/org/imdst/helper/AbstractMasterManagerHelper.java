@@ -16,6 +16,7 @@ import org.imdst.util.KeyMapManager;
 import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
 import org.imdst.util.StatusUtil;
+import org.imdst.util.io.KeyNodeConnector;
 
 /**
  * MasterNodeのメイン実行部分<br>
@@ -954,14 +955,14 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * データノードとのコネクションをセットする.<br>
      *
      */
-    protected void setActiveConnection(String connectionName, Object[] connectionMap) {
+    protected void setActiveConnection(String connectionName, KeyNodeConnector keyNodeConnector) {
 
         ArrayBlockingQueue connList = null;
         connList = (ArrayBlockingQueue)allConnectionMap.get(connectionName);
 
         if (connList == null) connList = new ArrayBlockingQueue(512);
 
-        if(connList.offer(connectionMap)) {
+        if(connList.offer(keyNodeConnector)) {
             allConnectionMap.put(connectionName, connList);
             connPoolCount.incrementAndGet();
         }
@@ -996,42 +997,22 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      *
      *
      */
-    protected Object[] getActiveConnection(String connectionName) {
-        Object[] ret = null;
+    protected KeyNodeConnector getActiveConnection(String connectionName) {
+        KeyNodeConnector keyNodeConnector = null;
         ArrayBlockingQueue connList = (ArrayBlockingQueue)allConnectionMap.get(connectionName);
 
         if (connList != null) {
             //long start = System.nanoTime();
-            ret = (Object[])connList.poll();
-            if (ret != null) {
+            keyNodeConnector = (KeyNodeConnector)connList.poll();
+            if (keyNodeConnector != null) {
                 connPoolCount.decrementAndGet();
-                if(!this.checkConnectionEffective(connectionName, (Long)ret[ImdstDefine.keyNodeConnectionMapTime])) return null;
+                if(!this.checkConnectionEffective(connectionName, keyNodeConnector.getConnetTime())) return null;
             }
         }
-        return ret;
+        return keyNodeConnector;
         
     }
 
-/*
-    protected HashMap getActiveConnection(String connectionName) {
-        HashMap ret = null;
-        synchronized(connSync) {
-            ArrayList connList = (ArrayList)allConnectionMap.get(connectionName);
-            if (connList != null) {
-                if(connList.size() > 0) {
-                    ret = (HashMap)connList.remove(0);
-                    connPoolCount--;
-                }
-            }
-        }
-
-        if (ret != null) {
-            if(!this.checkConnectionEffective(connectionName, (Long)ret.get("time"))) ret = null;
-        }
-        return ret;
-        
-    }
-*/
     protected int getNowConnectionPoolCount() {
         return connPoolCount.intValue();
     }

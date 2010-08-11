@@ -6,7 +6,6 @@ import java.net.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 
-
 import org.batch.lang.BatchException;
 import org.batch.job.AbstractHelper;
 import org.batch.job.IJob;
@@ -17,6 +16,7 @@ import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
 import org.imdst.util.StatusUtil;
 import org.imdst.util.protocol.*;
+import org.imdst.util.io.KeyNodeConnector;
 
 //import com.sun.mail.util.BASE64DecoderStream;
 
@@ -28,12 +28,7 @@ import org.imdst.util.protocol.*;
  */
 public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
-
     private static ConcurrentHashMap keyNodeConnectPool = new ConcurrentHashMap(1024, 1000, 512);
-
-    private HashMap keyNodeConnectMap = null;
-
-    private HashMap keyNodeConnectTimeMap = null;
 
     // Subノードが存在する場合のデータ保存処理方式を並列処理にするかを指定
     // true:並列 false:順次
@@ -76,8 +71,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     // 初期化メソッド定義
     public void initHelper(String initValue) {
-        keyNodeConnectMap = new HashMap();
-        keyNodeConnectTimeMap = new HashMap();
 
         // データ一貫性モードの設定
         String consistencyModeStr = super.getPropertiesValue(ImdstDefine.Prop_DataConsistencyMode);
@@ -393,16 +386,6 @@ long end = 0L;
             ret = super.ERROR;
             //throw new BatchException(e);
         } finally {
-
-            try {
-
-                // KeyNodeとの接続を切断
-                this.closeAllKeyNodeConnect();
-            } catch(Exception e2) {
-                logger.error("MasterManagerHelper - executeHelper - Error2", e2);
-                ret = super.ERROR;
-                //throw new BatchException(e2);
-            }
         }
 
         //logger.debug("MasterManagerHelper - executeHelper - end");
@@ -415,7 +398,6 @@ long end = 0L;
      *
      */
     public void endHelper() {
-        this.closeAllKeyNodeConnect();
     }
 
 
@@ -1344,9 +1326,7 @@ long end = 0L;
      * @throws BatchException
      */
     private String[] getKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String key) throws BatchException {
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
+        KeyNodeConnector keyNodeConnector = null;
 
         String[] retParams = null;
         String[] cnvConsistencyRet = null;
@@ -1367,17 +1347,17 @@ long end = 0L;
 
             // KeyNodeとの接続を確立
 
-            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+            keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
             nowUse = 1;
             while (true) {
 
                 // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
                 // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
 
-                if (dtMap == null) {
-                    if (subKeyNodeName != null) dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                if (keyNodeConnector == null) {
+                    if (subKeyNodeName != null) keyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
 
-                    if (dtMap == null) {
+                    if (keyNodeConnector == null) {
 
                         if (mainNodeRetParam != null) break;
                         throw new BatchException("Key Node IO Error: detail info for log file");
@@ -1386,11 +1366,7 @@ long end = 0L;
                     nowUse = 2;
                 }
 
-
-                // writerとreaderを取り出し
-                pw = (PrintWriter)dtMap.get("writer");
-                br = (BufferedReader)dtMap.get("reader");
-
+                // ノード書き出し処理
                 try {
                     StringBuffer sendData = new StringBuffer();
 
@@ -1404,11 +1380,11 @@ long end = 0L;
                         sendData.append(type);
                         sendData.append(ImdstDefine.keyHelperClientParamSep);
                         sendData.append(this.stringCnv(key));
-                        pw.println(sendData.toString());
-                        pw.flush();
+                        keyNodeConnector.println(sendData.toString());
+                        keyNodeConnector.flush();
 
                         // 返却値取得
-                        String retParam = br.readLine();
+                        String retParam = keyNodeConnector.readLine();
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
@@ -1423,11 +1399,11 @@ long end = 0L;
                         sendData.append(type);
                         sendData.append(ImdstDefine.keyHelperClientParamSep);
                         sendData.append(this.stringCnv(key));
-                        pw.println(sendData.toString());
-                        pw.flush();
+                        keyNodeConnector.println(sendData.toString());
+                        keyNodeConnector.flush();
 
                         // 返却値取得
-                        String retParam = br.readLine();
+                        String retParam = keyNodeConnector.readLine();
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
@@ -1437,7 +1413,7 @@ long end = 0L;
 
 
                     // 使用済みの接続を戻す
-                    this.addKeyNodeConnectionPool(dtMap);
+                    this.addKeyNodeConnectionPool(keyNodeConnector);
 
 
                     // 一貫性のモードに合わせて処理を分岐
@@ -1483,8 +1459,8 @@ long end = 0L;
                     } else {
 
                         // メインKeyNodeとの接続を確立
-                        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
-                        if (dtMap == null) {
+                        keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
+                        if (keyNodeConnector == null) {
                             if (mainNodeRetParam != null || subNodeRetParam != null) break;
                             throw new BatchException("Key Node IO Error: detail info for log file");
                         }
@@ -1497,7 +1473,7 @@ long end = 0L;
                         if (se != null) throw se;
                         if (ie != null) throw ie;
                     } else{
-                        dtMap = null;
+                        keyNodeConnector = null;
                     }
                 }
             }
@@ -1579,9 +1555,7 @@ long end = 0L;
      * @throws BatchException
      */
     private String[] getKeyNodeValueScript(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String key, String scriptStr) throws BatchException {
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
+        KeyNodeConnector keyNodeConnector = null;
 
         String[] retParams = null;
         String[] cnvConsistencyRet = null;
@@ -1597,22 +1571,18 @@ long end = 0L;
         try {
 
             // KeyNodeとの接続を確立
-            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+            keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
 
             while (true) {
 
                 // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
                 // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
-                if (dtMap == null) {
-                    if (subKeyNodeName != null) dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                if (keyNodeConnector == null) {
+                    if (subKeyNodeName != null) keyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
 
-                    if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                    if (keyNodeConnector == null) throw new BatchException("Key Node IO Error: detail info for log file");
                     slaveUse = true;
                 }
-
-                // writerとreaderを取り出し
-                pw = (PrintWriter)dtMap.get("writer");
-                br = (BufferedReader)dtMap.get("reader");
 
 
                 try {
@@ -1629,11 +1599,11 @@ long end = 0L;
                         buf.append(scriptStr);
 
                         // 送信
-                        pw.println(buf.toString());
-                        pw.flush();
+                        keyNodeConnector.println(buf.toString());
+                        keyNodeConnector.flush();
 
                         // 返却値取得
-                        String retParam = br.readLine();
+                        String retParam = keyNodeConnector.readLine();
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
@@ -1642,7 +1612,7 @@ long end = 0L;
                     } 
 
                     // 使用済みの接続を戻す
-                    this.addKeyNodeConnectionPool(dtMap);
+                    this.addKeyNodeConnectionPool(keyNodeConnector);
 
                     // 一貫性のモードに合わせて処理を分岐
                     if (this.dataConsistencyMode == 0) {
@@ -1690,8 +1660,8 @@ long end = 0L;
                     } else {
 
                         // メインKeyNodeとの接続を確立
-                        dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
-                        if (dtMap == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                        keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
+                        if (keyNodeConnector == null) throw new BatchException("Key Node IO Error: detail info for log file");
                         mainRetry = true;
                     }
                 } else {
@@ -1699,7 +1669,7 @@ long end = 0L;
                         if (se != null) throw se;
                         if (ie != null) throw ie;
                     } else{
-                        dtMap = null;
+                        keyNodeConnector = null;
                     }
                 }
             }
@@ -1774,13 +1744,8 @@ long end = 0L;
      */
     private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
 
-        // 並列処理指定の場合は分岐(試験的に導入(デフォルト無効))
-        if (multiSend) return this.setKeyNodeValueMultiSend(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values, transactionCode);
-
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
-        HashMap slaveDtMap = null;
+        KeyNodeConnector keyNodeConnector = null;
+        KeyNodeConnector slaveKeyNodeConnector = null;
 
         String nodeName = keyNodeName;
         String nodePort = keyNodePort;
@@ -1834,23 +1799,19 @@ long end = 0L;
             sendData = buf.toString();
 
             // KeyNodeとの接続を確立
-            dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+            keyNodeConnector = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
 
             // DataNodeに送信
-            if (dtMap != null) {
+            if (keyNodeConnector != null) {
                 // 接続結果と、現在の保存先状況で処理を分岐
                 try {
 
-                    // writerとreaderを取り出し
-                    pw = (PrintWriter)dtMap.get("writer");
-                    br = (BufferedReader)dtMap.get("reader");
-
                     // 送信
-                    pw.println(buf.toString());
-                    pw.flush();
+                    keyNodeConnector.println(buf.toString());
+                    keyNodeConnector.flush();
 
                     // 返却値取得
-                    retParam = br.readLine();
+                    retParam = keyNodeConnector.readLine();
 
                     // 処理種別判別
                     if (type.equals("1")) {
@@ -1883,7 +1844,7 @@ long end = 0L;
                     }
 
                     // 使用済みの接続を戻す
-                    this.addKeyNodeConnectionPool(dtMap);
+                    this.addKeyNodeConnectionPool(keyNodeConnector);
                 } catch (SocketException se) {
                     super.setDeadNode(nodeName + ":" + nodePort, 5, se);
                     logger.debug(se);
@@ -1901,22 +1862,17 @@ long end = 0L;
             if (subKeyNodeName != null) {
 
                 // SubBDataNodeに送信
-                dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
 
-                if (dtMap != null) {
+                if (slaveKeyNodeConnector != null) {
                     // 接続結果と、現在の保存先状況で処理を分岐
                     try {
-
-                        // writerとreaderを取り出し
-                        pw = (PrintWriter)dtMap.get("writer");
-                        br = (BufferedReader)dtMap.get("reader");
-
                         // 送信
-                        pw.println(buf.toString());
-                        pw.flush();
+                        slaveKeyNodeConnector.println(buf.toString());
+                        slaveKeyNodeConnector.flush();
 
                         // 返却値取得
-                        retParam = br.readLine();
+                        retParam = slaveKeyNodeConnector.readLine();
 
                         // 処理種別判別
                         if (type.equals("1")) {
@@ -1948,7 +1904,7 @@ long end = 0L;
                         }
 
                         // 使用済みの接続を戻す
-                        this.addKeyNodeConnectionPool(dtMap);
+                        this.addKeyNodeConnectionPool(slaveKeyNodeConnector);
                     } catch (SocketException se) {
 
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 5, se);
@@ -2063,9 +2019,7 @@ long end = 0L;
      */
     private String[] setKeyNodeValueOnlyOnce(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
 
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
+        KeyNodeConnector keyNodeConnector = null;
 
         String nodeName = keyNodeName;
         String nodePort = keyNodePort;
@@ -2109,13 +2063,10 @@ long end = 0L;
             // まずメインデータノードへデータ登録
 
             // KeyNodeとの接続を確立
-            dtMap = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+            keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
 
-            if (dtMap != null) {
+            if (keyNodeConnector != null) {
                 try {
-                    // writerとreaderを取り出し
-                    pw = (PrintWriter)dtMap.get("writer");
-                    br = (BufferedReader)dtMap.get("reader");
 
                     // Key値でデータノード名を保存
                     StringBuffer buf = new StringBuffer();
@@ -2131,14 +2082,14 @@ long end = 0L;
                     buf.append(setTime);                                 // 保存時間
 
                     // 送信
-                    pw.println(buf.toString());
-                    pw.flush();
+                    keyNodeConnector.println(buf.toString());
+                    keyNodeConnector.flush();
 
                     // 返却値取得
-                    retParam = br.readLine();
+                    retParam = keyNodeConnector.readLine();
 
                     // 使用済みの接続を戻す
-                    this.addKeyNodeConnectionPool(dtMap);
+                    this.addKeyNodeConnectionPool(keyNodeConnector);
 
                     // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                     //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
@@ -2182,13 +2133,10 @@ long end = 0L;
                         subNodeExecType = "1";
                     }
 
-                    dtMap = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                    keyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
 
-                    if (dtMap != null) {
+                    if (keyNodeConnector != null) {
                         try {
-                            // writerとreaderを取り出し
-                            pw = (PrintWriter)dtMap.get("writer");
-                            br = (BufferedReader)dtMap.get("reader");
 
                             // Key値でデータノード名を保存
                             StringBuffer buf = new StringBuffer();
@@ -2205,14 +2153,14 @@ long end = 0L;
                             buf.append(setTime);                                 // 保存時間
 
                             // 送信
-                            pw.println(buf.toString());
-                            pw.flush();
+                            keyNodeConnector.println(buf.toString());
+                            keyNodeConnector.flush();
 
                             // 返却値取得
-                            retParam = br.readLine();
+                            retParam = keyNodeConnector.readLine();
 
                             // 使用済みの接続を戻す
-                            this.addKeyNodeConnectionPool(dtMap);
+                            this.addKeyNodeConnectionPool(keyNodeConnector);
 
 
                             // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
@@ -2363,9 +2311,7 @@ long end = 0L;
      */
     private String[] removeKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String key, String transactionCode) throws BatchException {
 
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
+        KeyNodeConnector keyNodeConnector = null;
 
         String nodeName = keyNodeName;
         String nodePort = keyNodePort;
@@ -2402,16 +2348,12 @@ long end = 0L;
 
             do {
                 // KeyNodeとの接続を確立
-                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+                keyNodeConnector = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
 
 
                 // 接続結果と、現在の保存先状況で処理を分岐
-                if (dtMap != null) {
+                if (keyNodeConnector != null) {
                     try {
-                        // writerとreaderを取り出し
-                        pw = (PrintWriter)dtMap.get("writer");
-                        br = (BufferedReader)dtMap.get("reader");
-
 
                         // Key値でデータノード名を保存
                         StringBuffer buf = new StringBuffer();
@@ -2423,14 +2365,14 @@ long end = 0L;
                         buf.append(transactionCode);
 
                         // 送信
-                        pw.println(buf.toString());
-                        pw.flush();
+                        keyNodeConnector.println(buf.toString());
+                        keyNodeConnector.flush();
 
                         // 返却値取得
-                        retParam = br.readLine();
+                        retParam = keyNodeConnector.readLine();
 
                         // 使用済みの接続を戻す
-                        this.addKeyNodeConnectionPool(dtMap);
+                        this.addKeyNodeConnectionPool(keyNodeConnector);
 
                         // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                         if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRemoveSuccessStr) == 0) {
@@ -2507,9 +2449,7 @@ long end = 0L;
      */
     private String[] lockKeyNodeValue(String transactionManagerName, String transactionManagerPort, String key, String transactionCode, String lockingTime, String lockingWaitTime) throws BatchException {
 
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
+        KeyNodeConnector keyNodeConnector = null;
 
         String retParam = null;
         String[] retParams = null;
@@ -2523,15 +2463,12 @@ long end = 0L;
 
 
             // KeyNodeとの接続を確立
-            dtMap = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
+            keyNodeConnector = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
 
 
             // 接続結果と、現在の保存先状況で処理を分岐
-            if (dtMap != null) {
+            if (keyNodeConnector != null) {
                 try {
-                    // writerとreaderを取り出し
-                    pw = (PrintWriter)dtMap.get("writer");
-                    br = (BufferedReader)dtMap.get("reader");
 
                     // Key値でLockを取得
                     StringBuffer buf = new StringBuffer();
@@ -2546,11 +2483,11 @@ long end = 0L;
                     buf.append(lockingWaitTime);                    // lockingWaitTime値
 
                     // 送信
-                    pw.println(buf.toString());
-                    pw.flush();
+                    keyNodeConnector.println(buf.toString());
+                    keyNodeConnector.flush();
 
                     // 返却値取得
-                    retParam = br.readLine();
+                    retParam = keyNodeConnector.readLine();
                 } catch (SocketException se) {
 
                     logger.error("TransactionManager - Error " + se);
@@ -2610,9 +2547,7 @@ long end = 0L;
      */
     private String[] releaseLockKeyNodeValue(String transactionManagerName, String transactionManagerPort, String key, String transactionCode) throws BatchException {
 
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
+        KeyNodeConnector keyNodeConnector = null;
 
         String retParam = null;
         String[] retParams = null;
@@ -2626,15 +2561,12 @@ long end = 0L;
 
 
             // KeyNodeとの接続を確立
-            dtMap = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
+            keyNodeConnector = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
 
 
             // 接続結果と、現在の保存先状況で処理を分岐
-            if (dtMap != null) {
+            if (keyNodeConnector != null) {
                 try {
-                    // writerとreaderを取り出し
-                    pw = (PrintWriter)dtMap.get("writer");
-                    br = (BufferedReader)dtMap.get("reader");
 
                     // Key値でLockを取得
                     StringBuffer buf = new StringBuffer();
@@ -2645,11 +2577,11 @@ long end = 0L;
                     buf.append(transactionCode);                      // Transaction値
 
                     // 送信
-                    pw.println(buf.toString());
-                    pw.flush();
+                    keyNodeConnector.println(buf.toString());
+                    keyNodeConnector.flush();
 
                     // 返却値取得
-                    retParam = br.readLine();
+                    retParam = keyNodeConnector.readLine();
                 } catch (SocketException se) {
 
                     logger.error("TransactionManager - Error " + se);
@@ -2709,9 +2641,7 @@ long end = 0L;
      */
     private String[] hasLockKeyNode(String transactionManagerName, String transactionManagerPort, String key) throws BatchException {
 
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
+        KeyNodeConnector keyNodeConnector = null;
 
         String retParam = null;
         String[] retParams = null;
@@ -2725,15 +2655,12 @@ long end = 0L;
 
 
             // KeyNodeとの接続を確立
-            dtMap = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
+            keyNodeConnector = this.createTransactionManagerConnection(transactionManagerName, transactionManagerPort, transactionManagerName + ":" + transactionManagerPort);
 
 
             // 接続結果と、現在の保存先状況で処理を分岐
-            if (dtMap != null) {
+            if (keyNodeConnector != null) {
                 try {
-                    // writerとreaderを取り出し
-                    pw = (PrintWriter)dtMap.get("writer");
-                    br = (BufferedReader)dtMap.get("reader");
 
                     // Key値でLockを取得
                     StringBuffer buf = new StringBuffer();
@@ -2742,11 +2669,11 @@ long end = 0L;
                     buf.append(this.stringCnv(key));               // Key値
 
                     // 送信
-                    pw.println(buf.toString());
-                    pw.flush();
+                    keyNodeConnector.println(buf.toString());
+                    keyNodeConnector.flush();
 
                     // 返却値取得
-                    retParam = br.readLine();
+                    retParam = keyNodeConnector.readLine();
                 } catch (SocketException se) {
 
                     logger.error("TransactionManager - Error " + se);
@@ -2818,10 +2745,8 @@ long end = 0L;
             retParams[2] = "";
 
         } catch (Exception e) {
-
             throw new BatchException(e);
-        } 
-
+        }
         return retParams;
     }
 
@@ -2887,174 +2812,6 @@ long end = 0L;
 
 
     /**
-     * KeyNodeに対して並列処理でデータを保存を行う.<br>
-     * 
-     * @param keyNodeName マスターデータノードの名前(IPなど)
-     * @param keyNodePort マスターデータノードのアクセスポート番号
-     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
-     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
-     * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加, 30=ロックを取得, 31=ロックを解除)
-     * @param values 送信データ
-     * @return String[] 結果
-     * @throws BatchException
-     */
-    private String[] setKeyNodeValueMultiSend(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
-
-        String nodeName = keyNodeName;
-        String nodePort = keyNodePort;
-        String nodeFullName = keyNodeFullName;
-
-        String[] retParams = null;
-
-        int counter = 0;
-
-        String tmpSaveHost = null;
-        String[] tmpSaveData = null;
-        String retParam = null;
-
-        DataNodeSender mainNodeSender = null;
-        DataNodeSender subNodeSender = null;
-
-        boolean mainNodeSave = false;
-        boolean subNodeSave = false;
-
-        String successRet = null;
-        String errorRet = null;
-
-        try {
-            // TransactionModeの状態に合わせてLock状態を確かめる
-            if (transactionMode) {
-                while (true) {
-                    // TransactionMode時
-
-                    // TransactionManagerに処理を依頼
-                    String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], values[0]);
-
-                    // 取得結果確認
-                    if (keyNodeLockRet[1].equals("true")) {
-                        if (keyNodeLockRet[2].equals(transactionCode)) break;
-                    } else {
-                        break;
-                    }
-                }
-            }
-
-            do {
-                // KeyNodeとの接続を確立
-                dtMap = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
-
-
-                // 接続結果と、現在の保存先状況で処理を分岐
-                if (dtMap != null) {
-
-                    // writerとreaderを取り出し
-                    pw = (PrintWriter)dtMap.get("writer");
-                    br = (BufferedReader)dtMap.get("reader");
-
-                    // 処理種別判別
-                    if (type.equals("1") || type.equals("3")) {
-                        // Key値でデータを保存 or TagでKey値を保存
-                        if (counter == 0) {
-                            // Mainノード
-                            mainNodeSender = new DataNodeSender();
-                            mainNodeSender.setSendInfo(type, values[0], values[1], transactionCode, pw, br);
-                            mainNodeSender.start();
-                        } else {
-                            // Subノード
-                            subNodeSender = new DataNodeSender();
-                            subNodeSender.setSendInfo(type, values[0], values[1], transactionCode, pw, br);
-                            subNodeSender.start();
-                        }
-                    }
-                }
-
-                // スレーブデータノードの名前を代入
-                nodeName = subKeyNodeName;
-                nodePort = subKeyNodePort;
-                nodeFullName = subKeyNodeFullName;
-
-                counter++;
-                // スレーブデータノードが存在しない場合もしくは、既に2回保存を実施した場合は終了
-            } while(nodeName != null && counter < 2);
-
-            // Mainノード保存スレッドを確認
-            if (mainNodeSender != null) {
-                mainNodeSender.join();
-                if (mainNodeSender.isError()) {
-                    if (mainNodeSender.getErrorType() == -1) {
-
-                        errorRet = mainNodeSender.getRetParam();
-                    } else if (mainNodeSender.getErrorType() != -1) {
-
-                        super.setDeadNode(keyNodeFullName, 18, null);
-                        logger.debug(mainNodeSender.getErrorMsg());
-                    }
-                    mainNodeSave = false;
-                } else {
-
-                    successRet = mainNodeSender.getRetParam();
-                    mainNodeSave = true;
-                }
-                mainNodeSender = null;
-            }
-
-            // Subノード保存スレッドを確認
-            if (subNodeSender != null) {
-                subNodeSender.join();
-                if (subNodeSender.isError()) {
-                    if (subNodeSender.getErrorType() == -1) {
-
-                        errorRet = subNodeSender.getRetParam();
-                    } else if (subNodeSender.getErrorType() != -1) {
-
-                        super.setDeadNode(subKeyNodeFullName, 19, null);
-                        logger.debug(subNodeSender.getErrorMsg());
-                    }
-                    subNodeSave = false;
-                } else {
-
-                    successRet = subNodeSender.getRetParam();
-                    subNodeSave = true;
-                }
-                subNodeSender = null;
-            }
-
-            // 使用済みの接続を戻す
-            this.addKeyNodeConnectionPool(dtMap);
-
-            // ノードへの保存状況を確認
-            if (mainNodeSave == false && subNodeSave == false) {
-                // 返却地値をパースする
-                if (errorRet != null) {
-                    retParams = errorRet.split(ImdstDefine.keyHelperClientParamSep);
-                }
-                throw new BatchException("Key Node IO Error: detail info for log file");
-            } else {
-                // 返却地値をパースする
-                if (successRet != null) {
-                    retParams = successRet.split(ImdstDefine.keyHelperClientParamSep);
-                }
-            }
-        } catch (BatchException be) {
-            throw be;
-        } catch (Exception e) {
-            throw new BatchException(e);
-        } finally {
-            // ノードの使用終了をマーク
-            super.execNodeUseEnd(keyNodeFullName);
-
-            if (subKeyNodeName != null) 
-                super.execNodeUseEnd(subKeyNodeFullName);
-        }
-
-        return retParams;
-    }
-
-
-    /**
      * KeyNodeとの接続を確立して返す.<br>
      * 接続が確立出来ない場合はエラー結果をログに残し、戻り値はnullとなる.<br>
      *
@@ -3064,11 +2821,8 @@ long end = 0L;
      * @return HashMap
      * @throws BatchException
      */
-    private HashMap createKeyNodeConnection(String keyNodeName, String keyNodePort, String keyNodeFullName, boolean retryFlg) throws BatchException {
-        Socket socket = null;
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
+    private KeyNodeConnector createKeyNodeConnection(String keyNodeName, String keyNodePort, String keyNodeFullName, boolean retryFlg) throws BatchException {
+        KeyNodeConnector keyNodeConnector = null;
 
         String connectionFullName = keyNodeFullName;
         Long connectTime = new Long(0);
@@ -3083,102 +2837,41 @@ long end = 0L;
             }
 
 
-            // フラグがtrueの場合はキャッシュしている接続を破棄してやり直す
-/*            if (retryFlg) {
-                if (this.keyNodeConnectMap.containsKey(connectionFullName)) {
-                    this.closeKeyNodeConnect(connectionFullName);
-                    this.keyNodeConnectMap.remove(connectionFullName);
-                }
-            }
-*/
-
-
             if (!retryFlg) {
                 // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
                 if (keyNodeConnectPool.containsKey(connectionFullName)) {
-                    if((dtMap = (HashMap)((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).poll()) != null) {
-                        if (!super.checkConnectionEffective(connectionFullName, (Long)dtMap.get("time"))) {
-                            // エラーならなんだかの理由で接続が切断されている
-                            dtMap = null;
-                        } else {
-                            sockCheck = true;
+                    if((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).poll()) != null) {
+                        if (!super.checkConnectionEffective(connectionFullName, keyNodeConnector.getConnetTime())) {
+                            keyNodeConnector = null;
                         }
                     }
                 } 
 
 
                 // まだ接続が完了していない場合は接続処理続行
-                if (dtMap == null) {
+                if (keyNodeConnector == null) {
                     // 新規接続
                     // 親クラスから既に接続済みの接続をもらう
-                    Object[] connectMap = super.getActiveConnection(connectionFullName);
+                    keyNodeConnector = super.getActiveConnection(connectionFullName);
+                }
+            }
 
-                    if (connectMap != null) {
-                        dtMap = (HashMap)connectMap[ImdstDefine.keyNodeConnectionMapKey];
-                        sockCheck = true;
-                    }
-                }
-            }
-/*
-            // 既存の接続を使用する場合はチェック
-            if (dtMap != null && sockCheck == true) {
-                try {
-                    socket = (Socket)dtMap.get(ImdstDefine.keyNodeSocketKey);
-                    socket.setSoTimeout(1);
-                    br = (BufferedReader)dtMap.get(ImdstDefine.keyNodeReaderKey);
-                    br.mark(1);
-                    int ch = br.read();
-                    br.reset();
-                } catch (SocketTimeoutException se) {
-                } catch (Exception ee) {
-                    // タイムアウト意外のエラー発生
-                    dtMap = null;
-                }
-            }
-*/
+
             // まだ接続が完了していない場合は接続処理続行
-            if (dtMap == null) {
+            if (keyNodeConnector == null) {
                 // 接続が存在しない場合は自身で接続処理を行う
-
-                InetSocketAddress inetAddr = new InetSocketAddress(keyNodeName, Integer.parseInt(keyNodePort));
-                socket = new Socket();
-                socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
-                connectTime = new Long(System.currentTimeMillis());
-                socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
-
-                OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-                pw = new PrintWriter(new BufferedWriter(osw));
-
-                InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-                br = new BufferedReader(isr);
-
-                dtMap = new HashMap();
-
-                // Socket, Writer, Readerをキャッシュ
-                dtMap.put(ImdstDefine.keyNodeSocketKey, socket);
-                dtMap.put(ImdstDefine.keyNodeStreamWriterKey, osw);
-                dtMap.put(ImdstDefine.keyNodeStreamReaderKey, isr);
-
-                dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
-                dtMap.put(ImdstDefine.keyNodeReaderKey, br);
-                dtMap.put("name", connectionFullName);
-                dtMap.put("time", connectTime);
-                dtMap.put("type", "new");
-            } else {
-                dtMap.put("type", "old");
+                keyNodeConnector = new KeyNodeConnector(keyNodeName, Integer.parseInt(keyNodePort), keyNodeFullName);
             }
 
-
-            
         } catch (Exception e) {
             logger.error(connectionFullName + " " + e);
-            dtMap = null;
+            keyNodeConnector = null;
 
             // 一度接続不慮が発生した場合はこのSESSIONでは接続しない設定とする
             super.setDeadNode(connectionFullName, 20, e);
         } 
 
-        return dtMap;
+        return keyNodeConnector;
     }
 
 
@@ -3187,16 +2880,15 @@ long end = 0L;
      *
      *
      */
-    private void addKeyNodeConnectionPool(HashMap dtMap) {
+    private void addKeyNodeConnectionPool(KeyNodeConnector keyNodeConnector) {
         String connectionFullName = null;
-        if (dtMap != null) {
+        if (keyNodeConnector != null) {
 
-            connectionFullName = (String)dtMap.get("name");
-
+            connectionFullName = keyNodeConnector.getNodeFullName();
 
             if (keyNodeConnectPool.containsKey(connectionFullName)) {
 
-                ((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).offer(dtMap);
+                ((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).offer(keyNodeConnector);
             } else {
 
                 synchronized(keyNodeConnectPool) {
@@ -3204,17 +2896,18 @@ long end = 0L;
                     if (!keyNodeConnectPool.containsKey(connectionFullName)) {
 
                         ArrayBlockingQueue connPoolQueue = new ArrayBlockingQueue(20000);
-                        connPoolQueue.offer(dtMap);
+                        connPoolQueue.offer(keyNodeConnector);
                         keyNodeConnectPool.put(connectionFullName, connPoolQueue);
                     } else {
 
                         
-                        addKeyNodeConnectionPool(dtMap);
+                        addKeyNodeConnectionPool(keyNodeConnector);
                     }
                 }
             }
         }
     }
+
 
     /**
      * TransactionMangerとの接続を作成.<br>
@@ -3225,143 +2918,8 @@ long end = 0L;
      * @return HashMap
      * @throws BatchException
      */
-    private HashMap createTransactionManagerConnection(String keyNodeName, String keyNodePort, String keyNodeFullName) throws BatchException {
-        PrintWriter pw = null;
-        BufferedReader br = null;
-        HashMap dtMap = null;
-
-        String connectionFullName = keyNodeFullName;
-        Long connectTime = new Long(0);
-
-        try {
-
-            // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
-            if (this.keyNodeConnectMap.containsKey(connectionFullName) && 
-                super.checkConnectionEffective(connectionFullName, (Long)this.keyNodeConnectTimeMap.get(connectionFullName))) {
-
-                dtMap = (HashMap)this.keyNodeConnectMap.get(connectionFullName);
-            } else {
-
-                // 新規接続
-                // 親クラスから既に接続済みの接続をもらう
-                Object[] connectMap = super.getActiveConnection(connectionFullName);
-
-
-                // 接続が存在しない場合は自身で接続処理を行う
-                if (connectMap == null) {
-
-                    Socket socket = new Socket(keyNodeName, Integer.parseInt(keyNodePort));
-                    socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
-
-                    OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-                    pw = new PrintWriter(new BufferedWriter(osw));
-
-                    InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-                    br = new BufferedReader(isr);
-
-                    dtMap = new HashMap();
-
-                    // Socket, Writer, Readerをキャッシュ
-                    dtMap.put(ImdstDefine.keyNodeSocketKey, socket);
-                    dtMap.put(ImdstDefine.keyNodeStreamWriterKey, osw);
-                    dtMap.put(ImdstDefine.keyNodeStreamReaderKey, isr);
-
-                    dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
-                    dtMap.put(ImdstDefine.keyNodeReaderKey, br);
-                    connectTime = new Long(System.currentTimeMillis());
-                } else {
-                    dtMap = (HashMap)connectMap[ImdstDefine.keyNodeConnectionMapKey];
-                    connectTime = (Long)connectMap[ImdstDefine.keyNodeConnectionMapTime];
-                }
-
-                this.closeKeyNodeConnect(connectionFullName);
-                this.keyNodeConnectMap.put(connectionFullName, dtMap);
-                this.keyNodeConnectTimeMap.put(connectionFullName, connectTime);
-            }
-        } catch (Exception e) {
-            logger.error(connectionFullName + " " + e);
-            dtMap = null;
-        }
-
-        return dtMap;
-    }
-
-
-    /**
-     * 指定したノードとの接続を切断する.<br>
-     *
-     * @param connKeyStr 接続文字列
-     */
-    private void closeKeyNodeConnect(String connKeyStr) {
-        HashMap cacheConn = null;
-
-        try {
-            if (this.keyNodeConnectMap.containsKey(connKeyStr)) {
-                cacheConn = (HashMap)this.keyNodeConnectMap.get(connKeyStr);
-
-                PrintWriter cachePw = (PrintWriter)cacheConn.get(ImdstDefine.keyNodeWriterKey);
-                if (cachePw != null) {
-                    // 切断要求を送る
-                    cachePw.println(ImdstDefine.imdstConnectExitRequest);
-                    cachePw.flush();
-                    cachePw.close();
-                }
-
-                BufferedReader cacheBr = (BufferedReader)cacheConn.get(ImdstDefine.keyNodeReaderKey);
-                if (cacheBr != null) {
-                    cacheBr.close();
-                }
-
-                OutputStreamWriter cacheOsw = (OutputStreamWriter)cacheConn.get(ImdstDefine.keyNodeStreamWriterKey);
-                if (cacheOsw != null) {
-                    cacheOsw.close();
-                }
-
-                InputStreamReader cacheIsr = (InputStreamReader)cacheConn.get(ImdstDefine.keyNodeStreamReaderKey);
-                if (cacheIsr != null) {
-                    cacheIsr.close();
-                }
-            }
-        } catch (Exception e) {
-        } finally {
-            try {
-                if (cacheConn != null) {
-                    Socket cacheSoc = (Socket)cacheConn.get(ImdstDefine.keyNodeSocketKey);
-                    if (cacheSoc != null) {
-                        cacheSoc.close();
-                        cacheSoc = null;
-                    }
-                }
-            } catch (Exception ee) {
-            }
-        }
-    }
-
-
-    /**
-     * 全てのKeyNodeとの接続を切断する.<br>
-     *
-     */
-    private void closeAllKeyNodeConnect() {
-        //System.out.println("closeAllKeyNodeConnect()");
-        try {
-            // KeyNodeとの接続を切断
-            if (this.keyNodeConnectMap != null) {
-                Set keys = this.keyNodeConnectMap.keySet();
-                String connKeyStr = null;
-                HashMap cacheConn = null;
-
-                if (keys != null) {
-                    for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
-                        connKeyStr = (String)iterator.next();
-                        closeKeyNodeConnect(connKeyStr);
-                    }
-                    this.keyNodeConnectMap = new HashMap();
-                }
-            }
-        } catch (Exception e) {
-            logger.error(e);
-        }
+    private KeyNodeConnector createTransactionManagerConnection(String keyNodeName, String keyNodePort, String keyNodeFullName) throws BatchException {
+        return createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
     }
 
 
@@ -3370,7 +2928,7 @@ long end = 0L;
      *
      */
     private void closeClientConnect(PrintWriter pw, BufferedReader br, Socket socket) {
-        //System.out.println("closeAllKeyNodeConnect()");
+        //System.out.println("closeClientConnect()");
         try {
             if(pw != null) {
                 pw.close();
@@ -3541,111 +3099,5 @@ long end = 0L;
         if (key == null) return false;
         if (key.length() >= ImdstDefine.saveKeyMaxSize) return false;
         return true;
-    }
-
-    /**
-     * データをノードへ反映する内部スレッド.<br>
-     *
-     */
-    private class DataNodeSender extends Thread {
-
-        private boolean isError = false;
-
-        private String ret = null;
-
-        // 1:SocketException 2:IOException 3:それ以外 -1:論理エラー
-        private int errorType = 0;
-
-        private String errorMsg = null;
-
-
-        private String type = null;
-
-        private String key = null;
-
-        private String value = null;
-
-        private String transactionCode = null;
-
-        private PrintWriter pw = null;
-
-        private BufferedReader br = null;
-
-        public void run() {
-            try {
-                StringBuffer buf = new StringBuffer();
-                buf.append(type);
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(stringCnv(key));
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(transactionCode);
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(value);
-                buf.append(ImdstDefine.setTimeParamSep);
-                buf.append(setTime);
-
-                // 送信
-                pw.println(buf.toString());
-                pw.flush();
-
-                // 返却値取得
-                ret = br.readLine();
-
-                if (type.equals("1")) {
-                    if (ret.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) != 0) {
-                        isError = true;
-                        errorType = -1;
-                    }
-                }
-
-                if (type.equals("3")) {
-                    if (ret.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) != 0) {
-                        isError = true;
-                        errorType = -1;
-                    }
-                }
-
-            } catch (SocketException se) {
-
-                errorType = 1;
-                errorMsg = se.getMessage();
-                isError = true;
-            } catch (IOException ie) {
-
-                errorType = 2;
-                errorMsg = ie.getMessage();
-                isError = true;
-            } catch (Exception e) {
-
-                errorType = 3;
-                errorMsg = e.getMessage();
-                isError = true;
-            }
-        }
-
-        public void setSendInfo(String type, String key, String value, String transactionCode, PrintWriter pw, BufferedReader br) {
-            this.type = type;
-            this.key = key;
-            this.value = value;
-            this.transactionCode = transactionCode;
-            this.pw = pw;
-            this.br = br;
-        }
-
-        public String getRetParam() {
-            return this.ret;
-        }
-
-        public boolean isError() {
-            return this.isError;
-        }
-
-        public int getErrorType() {
-            return this.errorType;
-        }
-
-        public String getErrorMsg() {
-            return this.errorMsg;
-        }
     }
 }

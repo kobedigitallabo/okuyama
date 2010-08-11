@@ -13,6 +13,9 @@ import org.imdst.util.KeyMapManager;
 import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
 import org.imdst.util.StatusUtil;
+import org.imdst.util.io.KeyNodeConnector;
+
+
 /**
  * Node間の接続プールを管理するクラス<br>
  *
@@ -105,9 +108,9 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
                     for (int j = 0; j < this.nodeList.size(); j++) {
 
                         String nodeInfo = (String)nodeList.get(j);
-                        Object[] connectionMap = this.createNodeConnection(nodeInfo);
-                        if (connectionMap != null) {
-                            super.setActiveConnection(nodeInfo, connectionMap);
+                        KeyNodeConnector keyNodeConnector = this.createNodeConnection(nodeInfo);
+                        if (keyNodeConnector != null) {
+                            super.setActiveConnection(nodeInfo, keyNodeConnector);
                         }
                         counter++;
                         if (counter >= maxConnCnt) break;
@@ -139,47 +142,18 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
      * ノードに対しての接続を作成する
      *
      */
-    private Object[] createNodeConnection(String nodeInfo) {
-        Object[] ret = null;
-        HashMap dtMap = null;
-        Long connectTime = null;
+    private KeyNodeConnector createNodeConnection(String nodeInfo) {
+        KeyNodeConnector keyNodeConnector = null;
         String[] nodeInfos = nodeInfo.split(":");
 
         try {
-
-            InetSocketAddress inetAddr = new InetSocketAddress(nodeInfos[0], Integer.parseInt(nodeInfos[1]));
-            Socket socket = new Socket();
-            socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
-            socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
-
-            OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-            PrintWriter pw = new PrintWriter(new BufferedWriter(osw));
-
-            InputStreamReader isr = new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-            BufferedReader br = new BufferedReader(isr);
-
-            dtMap = new HashMap();
-
-            // Socket, Writer, Readerをキャッシュ
-            dtMap.put(ImdstDefine.keyNodeSocketKey, socket);
-            dtMap.put(ImdstDefine.keyNodeStreamWriterKey, osw);
-            dtMap.put(ImdstDefine.keyNodeStreamReaderKey, isr);
-
-            dtMap.put(ImdstDefine.keyNodeWriterKey, pw);
-            dtMap.put(ImdstDefine.keyNodeReaderKey, br);
-            connectTime = new Long(System.currentTimeMillis());
-            dtMap.put("name", nodeInfo);
-            dtMap.put("time", connectTime);
-            ret = new Object[2];
-
-            ret[ImdstDefine.keyNodeConnectionMapKey] = dtMap;
-            ret[ImdstDefine.keyNodeConnectionMapTime] =  connectTime;
+            keyNodeConnector = new KeyNodeConnector(nodeInfos[0], Integer.parseInt(nodeInfos[1]), nodeInfo);
         } catch(Exception e) {
             logger.info("Connection Pool Error = [" + nodeInfo + "]");
-            ret = null;
+            keyNodeConnector = null;
         }
         logger.info("Connection Pool Error = [" + nodeInfo + "]");
-        return ret;
+        return keyNodeConnector;
     }
 
 
