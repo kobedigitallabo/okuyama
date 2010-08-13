@@ -4,9 +4,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-import java.util.Hashtable;
-import java.util.HashMap;
 import java.util.ArrayList;
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
@@ -15,6 +15,7 @@ import org.batch.lang.BatchException;
 import org.batch.job.AbstractJob;
 import org.batch.job.AbstractHelper;
 import org.batch.parameter.config.HelperConfigMap;
+
 
 /**
  * Helperの蓄積と状態の管理を行うスレッド.<br>
@@ -28,13 +29,13 @@ public class  HelperPool extends Thread {
     private static ILogger logger = LoggerFactory.createLogger(HelperPool.class);
 
     // Helper管理用
-    private static ArrayList helperNameList = new ArrayList();
-    private static Hashtable configMap = new Hashtable();
-    private static Hashtable helperMap = new Hashtable();
-    private static Hashtable helperReturnParamMap = new Hashtable();
-    private static Hashtable helperStatusMap = new Hashtable();
-    private static HashMap executorServiceMap = new HashMap();
-    private static HashMap serviceParameterQueueMap = new HashMap();
+    private static CopyOnWriteArrayList helperNameList = new CopyOnWriteArrayList();
+    private static ConcurrentHashMap configMap = new ConcurrentHashMap(1024, 1000, 512);
+    private static ConcurrentHashMap helperMap = new ConcurrentHashMap(1024, 1000, 512);
+    private static ConcurrentHashMap helperReturnParamMap = new ConcurrentHashMap(1024, 1000, 512);
+    private static ConcurrentHashMap helperStatusMap = new ConcurrentHashMap(1024, 1000, 512);
+    private static ConcurrentHashMap executorServiceMap = new ConcurrentHashMap(1024, 1000, 512);
+    private static ConcurrentHashMap serviceParameterQueueMap = new ConcurrentHashMap(1024, 1000, 512);
 
 
     // Helperチェック間隔
@@ -81,12 +82,12 @@ public class  HelperPool extends Thread {
      * 明示的に初期化を行う
      */
     public static void initializeHelperPool() {
-        helperNameList = new ArrayList();
-        configMap = new Hashtable();
-        helperMap = new Hashtable();
-        helperReturnParamMap = new Hashtable();
-        helperStatusMap = new Hashtable();
-        serviceParameterQueueMap = new HashMap();
+        helperNameList = new CopyOnWriteArrayList();
+        configMap = new ConcurrentHashMap(1024, 1000, 512);
+        helperMap = new ConcurrentHashMap(1024, 1000, 512);
+        helperReturnParamMap = new ConcurrentHashMap(1024, 1000, 512);
+        helperStatusMap = new ConcurrentHashMap(1024, 1000, 512);
+        serviceParameterQueueMap = new ConcurrentHashMap(1024, 1000, 512);
     }
 
     /**
@@ -134,40 +135,9 @@ public class  HelperPool extends Thread {
      * @param AbstractHelper ヘルパーインスタンス
      * @throw  BatchException
      */
-/*    public static void returnHelper(String helperName, AbstractHelper helper) throws BatchException {
-        logger.debug("HelperPool - returnHelper - start");
-        logger.debug("HelperPool - returnHelper - helperName = [" + helperName + "]");
-        ArrayList helperList = null;
-
-        try {
-            if (!helperMap.containsKey(helperName)) 
-                throw new BatchException("Helper [" + helperName + "]は存在しません");
-
-            synchronized(poolLock) {
-                helperList = (ArrayList)helperMap.get(helperName);
-                helperList.add(helper);
-
-                helperMap.put(helperName, helperList);
-            }
-        } catch (BatchException be) {
-            logger.error("HelperPool - returnHelper - BatchException");
-            throw be;
-        }
-        logger.debug("HelperPool - returnHelper - end");
-    }
-*/
-    /**
-     * Helperインスタンスを返す.<br>
-     * Helperが定義として存在しない場合BatchExceptionがthrowされる.<br>
-     *
-     * @param String helperName
-     * @param AbstractHelper ヘルパーインスタンス
-     * @throw  BatchException
-     */
     public static void returnHelper(String helperName, AbstractHelper helper) throws BatchException {
-        logger.debug("HelperPool - returnHelper - start");
-        logger.debug("HelperPool - returnHelper - helperName = [" + helperName + "]");
-        ArrayList helperList = null;
+        //logger.debug("HelperPool - returnHelper - start");
+        //logger.debug("HelperPool - returnHelper - helperName = [" + helperName + "]");
 
         try {
             // ExecutorService を使用するために変更. 2010/03/22
@@ -177,7 +147,7 @@ public class  HelperPool extends Thread {
             logger.error("HelperPool - returnHelper - BatchException");
             throw new BatchException(be);
         }
-        logger.debug("HelperPool - returnHelper - end");
+        //logger.debug("HelperPool - returnHelper - end");
     }
 
     public static int getActiveHelperInstanceCount(String helperName) {
@@ -190,15 +160,15 @@ public class  HelperPool extends Thread {
      * @param HelperConfigMap helperConfigMap プールしたHelperの設定ファイル
      */
     public static void managedHelperConfig(HelperConfigMap helperConfigMap) throws BatchException {
-        logger.debug("HelperPool - poolingHelper - start");
-        logger.debug("HelperPool - poolingHelper - heplerConfig = " + helperConfigMap);
+        //logger.debug("HelperPool - poolingHelper - start");
+        //logger.debug("HelperPool - poolingHelper - heplerConfig = " + helperConfigMap);
 
         helperNameList.add(helperConfigMap.getHelperName());
         configMap.put(helperConfigMap.getHelperName(),helperConfigMap);
         helperMap.put(helperConfigMap.getHelperName(),new ArrayList());
         executorServiceMap.put(helperConfigMap.getHelperName(), Executors.newCachedThreadPool());
         serviceParameterQueueMap.put(helperConfigMap.getHelperName(), new ArrayBlockingQueue(20000));
-        logger.debug("HelperPool - poolingHelper - end");
+        //logger.debug("HelperPool - poolingHelper - end");
     }
 
 
@@ -295,6 +265,8 @@ public class  HelperPool extends Thread {
 
             ret = (Object[])((ArrayBlockingQueue)serviceParameterQueueMap.get(helperName)).take();
         } catch (Exception e) {
+            System.out.println("pollSpecificationParameterQueue - ERROR [" + helperName  +"]");
+            System.out.println(serviceParameterQueueMap);
             e.printStackTrace();
         }
 

@@ -11,8 +11,10 @@ import org.imdst.util.ImdstDefine;
 
 /**
  * クライアントとのProtocolの差を保管する.<br>
- * memcacheProtocol用のTaker.<br>
+ * memcachedのProtocol用のTaker.<br>
  *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  */
 public class MemcachedProtocolTaker4Data implements IProtocolTaker {
 
@@ -25,10 +27,24 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
     private String[] requestSplit = null;
 
     /**
+     * 初期化
+     *
+     */
+    public void init() {
+        this.nextExec = 0;
+        this.methodMatch = true;
+        this.requestLine = null;
+        this.requestSplit = null;
+    }
+
+    /**
      * memcache用のリクエストをパースし共通のプロトコルに変換.<br>
      * 対応しているメソッドはset,get,deleteのみ.<br>
      *
-     *
+     * @param br
+     * @param pw
+     * @return String 
+     * @throw Exception
      */
     public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception {
         String retStr = null;
@@ -64,6 +80,9 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
      * memcache用のレスポンスを作成.<br>
      * 対応しているメソッドはset,get,deleteのみ.<br>
      *
+     * @param retParams
+     * @return String
+     * @throw Exception
      */
     public String takeResponseLine(String[] retParams) throws Exception {
         String retStr = "";
@@ -80,13 +99,15 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
     /**
      * 次の動きを指示.<br>
      *
+     * @return int 1=正しく処理完了 2=クライアントからのデータ不正 3=接続切断要求
      */
     public int nextExecution() {
         return this.nextExec;
     }
 
     /**
-     * memcacheのプロトコルにマッチしたかを返す.<br>
+     * memcachedのプロトコルにマッチしたかを返す.<br>
+     *
      * @return boolean true:マッチ false:ノーマッチ
      */
     public boolean isMatchMethod() {
@@ -95,8 +116,13 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
 
 
     /**
-     * memcache用にリクエスト文字を変換する.<br>
-     *
+     * memcached用にリクエスト文字を変換する.<br>
+     * 
+     * @param executeMethodStr
+     * @param br
+     * @param pw
+     * @return String
+     * @Exception
      */
     private String memcacheMethodCnv(String executeMethodStr, BufferedReader br, PrintWriter pw) throws Exception{
         String retStr = null;

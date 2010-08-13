@@ -10,25 +10,35 @@ import org.imdst.util.ImdstDefine;
  * クライアントとのProtocolの差を保管する.<br>
  * okuyamaの標準Protocol用のTaker.<br>
  *
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  */
 public class OkuyamaProtocolTaker implements IProtocolTaker {
 
     private int nextExec = 0;
     private boolean methodMatch = true;
 
-    public int nextExecution() {
-        return this.nextExec;
-    }
 
     /**
-     * okuyamaのプロトコルにマッチしたかを返す.<br>
-     * @return boolean true:マッチ false:ノーマッチ
+     * 初期化
+     *
      */
-    public boolean isMatchMethod() {
-        return this.methodMatch;
+    public void init() {
+        this.nextExec = 0;
+        this.methodMatch = true;
     }
 
 
+    /**
+     * okuyama用のリクエストをパースし共通のプロトコルに変換.<br>
+     * 未使用.<br>
+     *
+     * @param is
+     * @param pw
+     * @return String[] 
+     * @throw Exception
+     */
     public String[] takeRequestLine(InputStream is, PrintWriter pw) throws Exception {
         String retStrs[] = new String[5];
 
@@ -62,6 +72,14 @@ public class OkuyamaProtocolTaker implements IProtocolTaker {
         return retStrs;
     }
 
+    /**
+     * okuyama用のリクエストをパースし共通のプロトコルに変換.<br>
+     *
+     * @param br
+     * @param pw
+     * @return String[] 
+     * @throw Exception
+     */
     public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception {
         String retStr = null;
         retStr = br.readLine();
@@ -77,6 +95,15 @@ public class OkuyamaProtocolTaker implements IProtocolTaker {
         return retStr;
     }
 
+
+    /**
+     * okuyama用のレスポンスを作成.<br>
+     * 対応しているメソッドはset,get,deleteのみ.<br>
+     *
+     * @param retParams
+     * @return String
+     * @throw Exception
+     */
     public String takeResponseLine(String[] retParams) throws Exception {
         StringBuffer retParamBuf = new StringBuffer();
 
@@ -93,5 +120,25 @@ public class OkuyamaProtocolTaker implements IProtocolTaker {
             this.nextExec = 1;
         }
         return retParamBuf.toString();
+    }
+
+
+    /**
+     * 次の動きを指示.<br>
+     *
+     * @return int 1=正しく処理完了 2=クライアントからのデータ不正 3=接続切断要求
+     */
+    public int nextExecution() {
+        return this.nextExec;
+    }
+
+
+    /**
+     * okuyamaのプロトコルにマッチしたかを返す.<br>
+     *
+     * @return boolean true:マッチ false:ノーマッチ
+     */
+    public boolean isMatchMethod() {
+        return this.methodMatch;
     }
 }

@@ -39,11 +39,19 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
         String ret = SUCCESS;
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
+        String pollQueueName = "MasterManagerConnectHelper";
+        String addQueueName = "MasterManagerAcceptHelper";
+        String queuePrefix = "";
 
         boolean serverRunning = true;
 
-
         try{
+            Object[] parameters = super.getParameters();
+
+            queuePrefix = (String)parameters[0];
+            pollQueueName = pollQueueName + queuePrefix;
+            addQueueName = addQueueName + queuePrefix;
+
             while (serverRunning) {
 
                 // 停止ファイル関係チェック
@@ -57,7 +65,8 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                     logger.info("MasterManagerConnectHelper - 終了状態です");
                 }
 
-                Object[] param = super.pollSpecificationParameterQueue("MasterManagerConnectHelper");
+                // キューから取り出し
+                Object[] param = super.pollSpecificationParameterQueue(pollQueueName);
                 if (param == null || param.length < 1) continue;
 
                 Socket socket = (Socket)param[0];
@@ -73,7 +82,9 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
 
                 Object[] queueParam = new Object[1];
                 queueParam[0] = clientMap;
-                super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
+
+                // キューに追加
+                super.addSpecificationParameterQueue(addQueueName, queueParam);
             }
         } catch(Exception e) {
             logger.error("MasterManagerConnectHelper - executeHelper - Error", e);

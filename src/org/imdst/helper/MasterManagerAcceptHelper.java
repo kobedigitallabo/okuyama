@@ -42,10 +42,21 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
         String ret = SUCCESS;
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
+        String pollQueueName = "MasterManagerAcceptHelper";
+        String addExecQueueName = "MasterManagerHelper";
+        String addCheckQueueName = "MasterManagerAcceptHelper";
+        String queuePrefix = "";
 
         boolean serverRunning = true;
 
         try{
+            Object[] parameters = super.getParameters();
+
+            queuePrefix = (String)parameters[0];
+            pollQueueName = pollQueueName + queuePrefix;
+            addExecQueueName = addExecQueueName + queuePrefix;
+            addCheckQueueName = addCheckQueueName + queuePrefix;
+
             while (serverRunning) {
 
                 // 停止ファイル関係チェック
@@ -60,7 +71,7 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                 }
 
 
-                Object[] param = super.pollSpecificationParameterQueue("MasterManagerAcceptHelper");
+                Object[] param = super.pollSpecificationParameterQueue(pollQueueName);
                 if (param == null || param.length < 1) continue;
 
                 Object[] clientMap = (Object[])param[0];
@@ -74,7 +85,7 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                     clientMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                     Object[] queueParam = new Object[1];
                     queueParam[0] = clientMap;
-                    super.addSpecificationParameterQueue("MasterManagerHelper", queueParam);
+                    super.addSpecificationParameterQueue(addExecQueueName, queueParam);
                 } else {
 
                     // 読み込みのデータがバッファに存在しない
@@ -129,7 +140,7 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                     if (socket != null) {
                         Object[] queueParam = new Object[1];
                         queueParam[0] = clientMap;
-                        super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
+                        super.addSpecificationParameterQueue(addCheckQueueName, queueParam);
                     }
                 }
             }

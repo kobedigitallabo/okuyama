@@ -16,9 +16,13 @@ import org.imdst.util.ImdstDefine;
  * return 2=continue
  * return 3=接続切断
  * return 9=異常終了
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  */
 public interface IProtocolTaker {
 
+    public void init();
 
     public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception;
 
@@ -27,4 +31,5 @@ public interface IProtocolTaker {
     public int nextExecution();
 
     public boolean isMatchMethod();
+
 }

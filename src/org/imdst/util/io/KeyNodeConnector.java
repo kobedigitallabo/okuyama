@@ -56,11 +56,19 @@ public class KeyNodeConnector {
         }
     }
 
+
     public String readLine() throws Exception {
+        return this.readLine(null);
+    }
+
+
+    public String readLine(String retryStr) throws Exception {
+
         String ret = null;
         try {
 
             ret = this.br.readLine();
+            if (ret == null) throw new IOException("readLine Ret = null");
             retry = false;
         } catch (Exception e) {
             if (e instanceof SocketException || e instanceof IOException) {
@@ -69,6 +77,12 @@ public class KeyNodeConnector {
                     try {
                         if (this.socket != null) socket.close();
                         this.connect();
+
+                        // リトライフラグが有効でかつ、送信文字が指定されている場合は再送後、取得
+                        if (retryStr != null) {
+                            this.println(retryStr);
+                            this.flush();
+                        }
                         ret = this.readLine();
                     } catch(Exception ee) {
                         throw e;
@@ -150,6 +164,9 @@ public class KeyNodeConnector {
         return this.poolConnect;
     }
 
+    public void initRetryFlg() {
+        this.retry = false;
+    }
 
     public void setRetryConnectMode(boolean mode) {
         this.retryConnectMode = mode;
@@ -166,5 +183,31 @@ public class KeyNodeConnector {
 
     public int getNodePort() {
         return this.nodePort;
+    }
+
+
+    public String connectorDump() {
+        StringBuffer dump = new StringBuffer();
+        dump.append(nodeName);
+        dump.append(" / ");
+        dump.append(nodePort);
+        dump.append(" / ");
+        dump.append(nodeFullName);
+        dump.append(" / ");
+        dump.append(socket);
+        dump.append(" / ");
+        dump.append(pw);
+        dump.append(" / ");
+        dump.append(br);
+        dump.append(" / ");
+        dump.append(connectTime);
+        dump.append(" / ");
+        dump.append(poolConnect);
+        dump.append(" / ");
+        dump.append(retryConnectMode);
+        dump.append(" / ");
+        dump.append(retry);
+        dump.append(" / ");
+        return dump.toString();
     }
 }

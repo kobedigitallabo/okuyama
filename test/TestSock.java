@@ -27,10 +27,18 @@ public class TestSock {
             long total = 0;
             Object  [] list = new Object[Integer.parseInt(args[2])];
             int threadCount = Integer.parseInt(args[2]);
+            int socketCount = 0;
             Test m = null;
             int count = 0;
+
             for (int i= 0; i < threadCount; i++) {
-                if (args[0].equals("4")) {
+                if (args[0].equals("5")) {
+                    // 引数は 5 "IP:Port" スレッド数 接続数
+                    m = new Test();
+                    socketCount = Integer.parseInt(args[3]);
+                    m.setMaxPrefix(socketCount / threadCount);
+
+                } else if (args[0].equals("4")) {
                     m = new Test();
                     m.setMaxPrefix(count);
                     count = count + 20000;
@@ -85,6 +93,20 @@ public class TestSock {
                     
                 }
                 
+            } else if (args[0].equals("5")) {
+                boolean execFlg = true;
+                long start = System.currentTimeMillis();
+                while(execFlg) {
+                    execFlg = false;
+                    for (int i= 0; i < list.length; i++) {
+                        m = (Test)list[i];
+                        System.out.println(m.getExecCounter());
+                        if(!m.getEndFlg()) execFlg = true;
+                    }
+                    Thread.sleep(5000);
+                }
+                long end = System.currentTimeMillis();
+                System.out.println((end - start) + " Time Millis");
             }
             startFlg = false;
 
@@ -92,6 +114,8 @@ public class TestSock {
             System.out.println("  -------- End --------");
             System.out.println("");
             Thread.sleep(500);
+
+
             for (int i= 0; i < list.length; i++) {
 
                 m = (Test)list[i];
@@ -105,8 +129,9 @@ public class TestSock {
             System.out.println("合計処理件数 = " + total + "件");
             //System.out.println("1 Thread Avg Query Count = " + one);
             //System.out.println("QPS = " + (total / 60));
+
             System.exit(1);
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

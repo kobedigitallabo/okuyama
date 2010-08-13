@@ -15,6 +15,8 @@ public class Test extends Thread {
     private volatile String prefix = "";
     private volatile int maxPrefix = 0;
 
+    private volatile boolean endFlg = false;
+
     public void run() {
         while(!TestSock.startFlg){}
         try {
@@ -119,9 +121,69 @@ public class Test extends Thread {
                     this.execCounter++;
                 }
 
+            } else if (TestSock.args[0].equals("5")) {
+                int counter = 1;
+                boolean execMethodFlg =false;
+                
+                ImdstKeyValueClient imdstKeyValueClient = null;
+                ArrayList clientList = new ArrayList();
+                String[] infos = TestSock.args[1].split(",");
+
+                System.out.println("Connect Start ThreadNo[" + this.threadNo + "]");
+                for (int i = 0; i < this.maxPrefix; i++){
+
+                    imdstKeyValueClient = new ImdstKeyValueClient();
+                    imdstKeyValueClient.setConnectionInfos(infos);
+                    imdstKeyValueClient.autoConnect();
+                    clientList.add(imdstKeyValueClient);
+                }
+
+                System.out.println("Connect End ThreadNo[" + this.threadNo + "]");
+
+                //Randomクラスのインスタンス化
+                Random rnd = new Random();
+
+                String key = "DataSaveKey";
+                String value= "Value012345678901234567890123456789";
+
+                if (this.threadNo == 0) {
+                    execMethodFlg = true;
+                } else if ((this.threadNo % 2) == 1) {
+                    execMethodFlg = false;
+                } else {
+                    execMethodFlg = true;
+                }
+
+                for (int t = 0; t < 10; t++) {
+                    for (int i = 0; i < clientList.size(); i++){
+
+                        imdstKeyValueClient = (ImdstKeyValueClient)clientList.get(i);
+                        if (execMethodFlg) {
+                            String[] ret = imdstKeyValueClient.getValue(key + rnd.nextInt(1000000));
+                            if (ret[0].equals("true")) {
+                                //System.out.println(ret[1]);
+                            } else {
+                                System.out.println("Data Get Not Found");
+                            }
+                        } else {
+                            if(!imdstKeyValueClient.setValue(key + rnd.nextInt(1000000), value + rnd.nextInt(1000000))) System.out.println("Data Set Error");
+                        }
+                        this.execCounter++;
+                       
+                    }
+                }
+
+                for (int i = 0; i < clientList.size(); i++){
+
+                    imdstKeyValueClient = (ImdstKeyValueClient)clientList.get(i);
+                    imdstKeyValueClient.close();
+                }
+                endFlg = true;
+                System.out.println("Connect End Method End ThreadNo[" + this.threadNo + "]");
             }
         } catch (Exception e) {
             e.printStackTrace();
+            endFlg = true;
         }
     }
 
@@ -141,4 +203,7 @@ public class Test extends Thread {
         return this.execCounter;
     }
 
+    public boolean getEndFlg() {
+        return endFlg;
+    }
 }

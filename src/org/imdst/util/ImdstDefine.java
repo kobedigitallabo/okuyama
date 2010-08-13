@@ -150,9 +150,13 @@ public class ImdstDefine {
     public static final String dataNodeParamKey_4 = "dataSubNodePortList";
     public static final String dataNodeParamKey_5 = "dataThirdNodeNameList";
     public static final String dataNodeParamKey_6 = "dataThirdNodePortList";
-    // TODO:変更
     public static final String dataNodeParamKey_7 = "keyMapNodeInfo";
 
+    public static final String okuyamaProtocol = "okuyama";
+    public static final String memcacheProtocol = "memcache";
+    public static final String memcachedProtocol = "memcached";
+    public static final String memcache4datanodeProtocol = "memcache_datanode";
+    public static final String memcached4datanodeProtocol = "memcached_datanode";    
 
     public static final String keyNodeSocketKey = "socket";
     public static final String keyNodeStreamWriterKey = "stream_writer";

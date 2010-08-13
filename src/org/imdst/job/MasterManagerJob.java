@@ -28,15 +28,16 @@ public class MasterManagerJob extends AbstractJob implements IJob {
     // デフォルト起動ポート
     private int portNo = 8888;
 
-
     // Accept後のコネクター作成までの処理並列数
-    private int maxConnectParallelExecution = 12;
+    private int maxConnectParallelExecution = 10;
 
     // Acceptコネクタがリードできるかを監視する処理並列数
-    private int maxAcceptParallelExecution = 12;
+    private int maxAcceptParallelExecution = 15;
 
     // 実際のデータ処理並列数
-    private int maxWorkerParallelExecution = 12;
+    private int maxWorkerParallelExecution = 15;
+
+    private long multiQueue = 3;
 
     // ロードバランス設定
     private boolean loadBalance = false;
@@ -63,10 +64,14 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         this.portNo = Integer.parseInt(initValue);
 
         String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_MasterNodeMaxConnectParallelExecution);
-        if (sizeStr != null) maxConnectParallelExecution = Integer.parseInt(sizeStr);
+        if (sizeStr != null && Integer.parseInt(sizeStr) > maxConnectParallelExecution) {
+            maxConnectParallelExecution = Integer.parseInt(sizeStr);
+        }
 
         sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_MasterNodeMaxAcceptParallelExecution);
-        if (sizeStr != null) maxAcceptParallelExecution = Integer.parseInt(sizeStr);
+        if (sizeStr != null && Integer.parseInt(sizeStr) > maxAcceptParallelExecution) {
+            maxAcceptParallelExecution = Integer.parseInt(sizeStr);
+        }
 
         sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_MasterNodeMaxWorkerParallelExecution);
         if (sizeStr != null) maxWorkerParallelExecution = Integer.parseInt(sizeStr);
@@ -110,11 +115,14 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         String ret = SUCCESS;
 
         Object[] helperParams = null;
-        int paramSize = 6;
+        int paramSize = 7;
 
         String[] transactionManagerInfos = null;
 
         Socket socket = null;
+        long queueIndex = 0L;
+
+        long accessCount = 0L;
 
         try{
 
@@ -132,17 +140,31 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             // 共有領域にServerソケットのポインタを格納
             super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
 
+            // オリジナルのキュー領域を作成
+            for (int i = 0; i < this.multiQueue; i++) {
+                super.createUniqueHelperParamQueue("MasterManagerConnectHelper" + i, 7000);
+                super.createUniqueHelperParamQueue("MasterManagerAcceptHelper" + i, 7000);
+                super.createUniqueHelperParamQueue("MasterManagerHelper" + i, 7000);
+            }
 
             for (int i = 0; i < maxConnectParallelExecution; i++) {
-                super.executeHelper("MasterManagerConnectHelper", null);
+                queueIndex = (i+1) % this.multiQueue;
+                helperParams = new Object[1];
+                helperParams[0] = new Long(queueIndex).toString();
+                super.executeHelper("MasterManagerConnectHelper", helperParams);
             }
 
             for (int i = 0; i < maxAcceptParallelExecution; i++) {
+                queueIndex = (i+1) % this.multiQueue;
+                helperParams = new Object[1];
+                helperParams[0] = new Long(queueIndex).toString();
 
-                super.executeHelper("MasterManagerAcceptHelper", null);
+                super.executeHelper("MasterManagerAcceptHelper", helperParams);
             }
 
             for (int i = 0; i < maxWorkerParallelExecution; i++) {
+                queueIndex = (i+1) % this.multiQueue;
+
                 helperParams = new Object[paramSize];
                 helperParams[0] = null;
                 helperParams[1] = null;
@@ -150,6 +172,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 if (loadBalance) helperParams[3] = new Boolean(blanceMode);
                 helperParams[4] = StatusUtil.isTransactionMode();
                 helperParams[5] = StatusUtil.getTransactionNode();
+                helperParams[6] = new Long(queueIndex).toString();
                 super.executeHelper("MasterManagerHelper", helperParams);
                 if (blanceMode) {
                     blanceMode = false;
@@ -166,23 +189,35 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
                     // クライアントからの接続待ち
                     socket = serverSocket.accept();
+                    accessCount++;
 
                     Object[] queueParam = new Object[1];
                     queueParam[0] = socket;
 
                     // アクセス済みのソケットをキューに貯める
-                    super.addSpecificationParameterQueue("MasterManagerConnectHelper", queueParam);
+                    super.addSpecificationParameterQueue("MasterManagerConnectHelper" + (accessCount%this.multiQueue), queueParam);
+
 
                     // 各スレッドが減少していないかを確かめる
                     if (super.getActiveHelperCount("MasterManagerConnectHelper") < (maxConnectParallelExecution / 2)) {
-                        super.executeHelper("MasterManagerConnectHelper", null);
+                        queueIndex = (accessCount) % this.multiQueue;
+                        helperParams = new Object[1];
+                        helperParams[0] = new Long(queueIndex).toString();
+
+                        super.executeHelper("MasterManagerConnectHelper", helperParams);
                     }
 
                     if (super.getActiveHelperCount("MasterManagerAcceptHelper") < (maxAcceptParallelExecution / 2)) {
-                        super.executeHelper("MasterManagerAcceptHelper", null);
+                        queueIndex = (accessCount) % this.multiQueue;
+                        helperParams = new Object[1];
+                        helperParams[0] = new Long(queueIndex).toString();
+
+                        super.executeHelper("MasterManagerAcceptHelper", helperParams);
                     }
 
                     if (super.getActiveHelperCount("MasterManagerHelper") < (maxWorkerParallelExecution / 2)) {
+                        queueIndex = (accessCount) % this.multiQueue;
+
                         helperParams = new Object[paramSize];
                         helperParams[0] = null;
                         helperParams[1] = null;
@@ -190,6 +225,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                         if (loadBalance) helperParams[3] = new Boolean(blanceMode);
                         helperParams[4] = StatusUtil.isTransactionMode();
                         helperParams[5] = StatusUtil.getTransactionNode();
+                        helperParams[6] = new Long(queueIndex).toString();
 
                         super.executeHelper("MasterManagerHelper", helperParams);
                         if (blanceMode) {

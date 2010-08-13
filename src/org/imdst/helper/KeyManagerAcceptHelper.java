@@ -45,12 +45,18 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
         String ret = SUCCESS;
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
+        String pollQueueName = "KeyManagerAcceptHelper";
+        String addExecQueueName = "KeyManagerHelper";
+        String addCheckQueueName = "KeyManagerAcceptHelper";
 
         boolean serverRunning = true;
 
         try{
             Object[] parameters = super.getParameters();
-            queuePrefix = (String)parameters[0];
+            this.queuePrefix = (String)parameters[0];
+            pollQueueName = pollQueueName + this.queuePrefix;
+            addExecQueueName = addExecQueueName + this.queuePrefix;
+            addCheckQueueName = addCheckQueueName + this.queuePrefix;
 
             while (serverRunning) {
 
@@ -66,7 +72,7 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
                 }
 
                 
-                Object[] param = super.pollSpecificationParameterQueue("KeyManagerAcceptHelper" + this.queuePrefix);
+                Object[] param = super.pollSpecificationParameterQueue(pollQueueName);
                 if (param == null || param.length < 1) continue;
 
                 Object[] clientMap = (Object[])param[0];
@@ -79,7 +85,8 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
                     clientMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                     Object[] queueParam = new Object[1];
                     queueParam[0] = clientMap;
-                    super.addSpecificationParameterQueue("KeyManagerHelper" + this.queuePrefix, queueParam, true);
+
+                    super.addSpecificationParameterQueue(addExecQueueName, queueParam, true);
                 } else {
 
                     // 読み込みのデータがバッファに存在しない
@@ -134,7 +141,7 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
                     if (socket != null) {
                         Object[] queueParam = new Object[1];
                         queueParam[0] = clientMap;
-                        super.addSpecificationParameterQueue("KeyManagerAcceptHelper" + this.queuePrefix, queueParam);
+                        super.addSpecificationParameterQueue(addCheckQueueName, queueParam);
                     }
                 }
             }

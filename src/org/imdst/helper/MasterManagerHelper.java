@@ -30,11 +30,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     private static ConcurrentHashMap keyNodeConnectPool = new ConcurrentHashMap(1024, 1000, 512);
 
-    // Subノードが存在する場合のデータ保存処理方式を並列処理にするかを指定
-    // true:並列 false:順次
-    // 並列化すると都度スレッド生成の手間がかかる為、方法を再考する必要がある
-    private boolean multiSend = false;
-
     // 過去ルール
     private int[] oldRule = null;
 
@@ -93,11 +88,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         boolean serverRunning = true;
 
+        String pollQueueName = "MasterManagerHelper";
+        String addQueueName = "MasterManagerAcceptHelper";
+        String queuePrefix = "";
+
+
         String[] retParams = null;
         String retParamStr = null;
 
         String clientParametersStr = null;
         String[] clientParameterList = null;
+        String[] clientTargetNodes = null;
 
         IProtocolTaker okuyamaPorotocolTaker = null;
 
@@ -120,6 +121,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // プロトコルに合わせてTakerを初期化
             this.protocolMode = (String)parameters[2];
 
+            // プロトコルに合わせて作成
+            this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode);
+
             // プロトコルがokuyamaではない場合はマネージメントコマンド用のokuyamaプロトコルTakerを作成
             if (!this.protocolMode.equals("okuyama")) {
                 isProtocolOkuyama = false;
@@ -139,23 +143,32 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 transactionManagerInfo = (String[])parameters[5];
             }
 
-
             // 一貫性モード初期化
             this.initConsistencyMode();
 
-long start = 0L;
-long end = 0L;
-            // 接続終了までループ
+            // Queue名作成
+            queuePrefix = (String)parameters[6];
+            pollQueueName = pollQueueName + queuePrefix;
+            addQueueName = addQueueName + queuePrefix;
+
+
+            // 終了までループ
             while(serverRunning) {
                 try {
 
+                    // 結果格納用String
+                    retParamStr = "";
+
                     // 切断確認
-                    if (closeFlg) {
-                        this.closeClientConnect(pw, br, socket);
-                    }
+                    if (closeFlg) this.closeClientConnect(pw, br, socket);
 
-                    Object[] queueParam = super.pollSpecificationParameterQueue("MasterManagerHelper");
+                    // Taker初期化
+                    this.porotocolTaker.init();
 
+                    // Queueから処理取得
+                    Object[] queueParam = super.pollSpecificationParameterQueue(pollQueueName);
+long start1 = System.nanoTime();
+                    // Queueからのパラメータ
                     Object[] queueMap = (Object[])queueParam[0];
 
                     pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
@@ -178,23 +191,19 @@ long end = 0L;
                     }
 
 
-                    // 結果格納用String
-                    retParamStr = "";
-
-
                     // クライアントからの要求を取得
                     // Takerで会話開始
-                    this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode);
+                    //this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode);
                     clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
 
                     if (this.porotocolTaker.nextExecution() != 1) {
 
                         // 処理をやり直し
                         if (this.porotocolTaker.nextExecution() == 2) { 
-                            // 処理が完了したらキューに戻す
+                            // 処理が完了したらQueueに戻す
                             queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                             queueParam[0] = queueMap;
-                            super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
+                            super.addSpecificationParameterQueue(addQueueName, queueParam);
                             continue;
                         }
 
@@ -212,133 +221,157 @@ long end = 0L;
                     // 更新時間初期化
                     this.initSetTime();
 
-
                     // 本体処理開始
                     // 処理番号で処理を分岐
-                    if(clientParameterList[0].equals("0")) {
+                    switch (Integer.parseInt(clientParameterList[0])) {
 
-                        // Client初期化情報
-                        retParams = this.initClient();
+                        case 0 :
 
-                    } else if(clientParameterList[0].equals("1")) {
-                        //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
+                            // Client初期化情報
+                            retParams = this.initClient();
+                            break;
+                        case 1 :
+                            //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
 
-                        // Key値とValueを格納する
-                        if (clientParameterList.length > 5) {
-                            clientParameterList[4] = 
-                                clientParameterList[4] + 
-                                    ImdstDefine.keyHelperClientParamSep + 
-                                        clientParameterList[5];
-                        }
+                            // Key値とValueを格納する
+                            if (clientParameterList.length > 5) {
+                                clientParameterList[4] = 
+                                    clientParameterList[4] + 
+                                        ImdstDefine.keyHelperClientParamSep + 
+                                            clientParameterList[5];
+                            }
+//long start2 = System.nanoTime();
+                            retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
+//long end2 = System.nanoTime();
+//System.out.println("Set [" + ((end2 - start2) / 1000 / 1000) + "]");
+                            break;
+                        case 2 :
+                            //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
+//long start3 = System.nanoTime();
+                            // Key値でValueを取得する
+                            retParams = this.getKeyValue(clientParameterList[1]);
 
-                        retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
+//long end3 = System.nanoTime();
+//System.out.println("Get [" + ((end3 - start3) / 1000 / 1000) + "]");
+                            break;
+                        case 3 :
 
-                    } else if(clientParameterList[0].equals("2")) {
-                        //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
+                            // Tag値でキー値群を取得する
+                            retParams = this.getTagKeys(clientParameterList[1]);
+                            break;
+                        case 4 :
 
-                        // Key値でValueを取得する
-                        retParams = this.getKeyValue(clientParameterList[1]);
+                            // Tag値で紐付くキーとValueのセット配列を返す
+                            break;
+                        case 5 :
 
-                    } else if(clientParameterList[0].equals("3")) {
+                            // キー値でデータを消す
+                            retParams = this.removeKeyValue(clientParameterList[1], clientParameterList[2]);
+                            break;
+                        case 6 :
 
-                        // Tag値でキー値群を取得する
-                        retParams = this.getTagKeys(clientParameterList[1]);
-                    } else if(clientParameterList[0].equals("(4")) {
+                            // Key値とValueを格納する
+                            // 既に登録されている場合は失敗する
+                            if (clientParameterList.length > 5) {
+                                clientParameterList[4] = 
+                                    clientParameterList[4] + 
+                                        ImdstDefine.keyHelperClientParamSep + 
+                                            clientParameterList[5];
+                            }
 
-                        // Tag値で紐付くキーとValueのセット配列を返す
+                            retParams = this.setKeyValueOnlyOnce(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
+                            break;
+                        case 8 :
 
-                    } else if(clientParameterList[0].equals("5")) {
+                            // Key値でValueを取得する(Scriptを実行する)
+                            retParams = this.getKeyValueScript(clientParameterList[1], clientParameterList[2]);
+                            break;
+                        case 10 :
 
-                        // キー値でデータを消す
-                        retParams = this.removeKeyValue(clientParameterList[1], clientParameterList[2]);
-                    } else if(clientParameterList[0].equals("6")) {
+                            // データノードを指定することで現在の詳細を取得する
+                            // ノードの指定フォーマットは"IP:PORT"
+                            String[] nodeDt = new String[3];
+                            nodeDt[0] = "10";
+                            nodeDt[1] = "true";
+                            nodeDt[2] = StatusUtil.getNodeStatusDt(clientParameterList[1]);
+                            retParams = nodeDt;
+                            break;
+                        case 12 :
 
-                        // Key値とValueを格納する
-                        // 既に登録されている場合は失敗する
-                        if (clientParameterList.length > 5) {
-                            clientParameterList[4] = 
-                                clientParameterList[4] + 
-                                    ImdstDefine.keyHelperClientParamSep + 
-                                        clientParameterList[5];
-                        }
+                            // 自身の生存結果を返す
+                            retParams = new String[3];
+                            retParams[0] = "12";
+                            retParams[1] = "true";
+                            retParams[2] = "";
+                            break;
+                        case 30 :
 
-                        retParams = this.setKeyValueOnlyOnce(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
+                            // 各キーノードへデータロック依頼
+                            retParams = this.lockingData(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
+                            break;
+                        case 31 :
 
-                    } else if(clientParameterList[0].equals("8")) {
+                            // 各キーノードへデータロック解除依頼
+                            retParams = this.releaseLockingData(clientParameterList[1], clientParameterList[2]);
+                            break;
+                        case 37 :
 
-                        // Key値でValueを取得する(Scriptを実行する)
-                        retParams = this.getKeyValueScript(clientParameterList[1], clientParameterList[2]);
-                    } else if(clientParameterList[0].equals("10")) {
+                            // Transactionの開始を行う
+                            retParams = this.startTransaction();
+                            break;
+                        case 38 :
 
-                        // データノードを指定することで現在の詳細を取得する
-                        // ノードの指定フォーマットは"IP:PORT"
-                        String[] nodeDt = new String[3];
-                        nodeDt[0] = "10";
-                        nodeDt[1] = "true";
-                        nodeDt[2] = StatusUtil.getNodeStatusDt(clientParameterList[1]);
-                        retParams = nodeDt;
-                    } else if(clientParameterList[0].equals("12")) {
+                            // TransactionのCommitを行う
+                            //retParams = this.commitTransaction(clientParameterList[1]);
+                            break;
+                        case 39 :
 
-                        // 自身の生存結果を返す
-                        retParams = new String[3];
-                        retParams[0] = "12";
-                        retParams[1] = "true";
-                        retParams[2] = "";
+                            // TransactionのRollbackを行う
+                            //retParams = this.rollbackTransaction(clientParameterList[1]);
+                            break;
+                        case 90 :
 
-                    } else if(clientParameterList[0].equals("30")) {
+                            // KeyNodeの使用停止をマーク
+                            retParams = this.pauseKeyNodeUse(clientParameterList[1]);
+                            break;
+                        case 91 :
 
-                        // 各キーノードへデータロック依頼
-                        retParams = this.lockingData(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
-                    } else if(clientParameterList[0].equals("31")) {
+                            // KeyNodeの使用再開をマーク
+                            retParams = this.restartKeyNodeUse(clientParameterList[1]);
+                            break;
+                        case 92 :
 
-                        // 各キーノードへデータロック解除依頼
-                        retParams = this.releaseLockingData(clientParameterList[1], clientParameterList[2]);
-                    } else if(clientParameterList[0].equals("37")) {
+                            // KeyNodeの復旧をマーク
+                            retParams = this.arriveKeyNode(clientParameterList[1]);
+                            break;
+                        case 93 :
 
-                        // Transactionの開始を行う
-                        retParams = this.startTransaction();
-                    } else if(clientParameterList[0].equals("38")) {
+                            // 渡されたKeyNodeの使用停止をマーク
+                            clientTargetNodes = clientParameterList[1].split("_");
+                            for (int i = 0; i < clientTargetNodes.length; i++) {
+                                retParams = this.pauseKeyNodeUse(clientTargetNodes[i]);
+                            }
+                            break;
+                        case 94 :
 
-                        // TransactionのCommitを行う
-                        //retParams = this.commitTransaction(clientParameterList[1]);
-                    } else if(clientParameterList[0].equals("39")) {
+                            // 渡されたKeyNodeの使用再開をマーク(複数を一度に)
+                            clientTargetNodes = clientParameterList[1].split("_");
+                            for (int i = 0; i < clientTargetNodes.length; i++) {
+                                retParams = this.restartKeyNodeUse(clientTargetNodes[i]);
+                            }
+                            break;
+                        case 95 :
 
-                        // TransactionのRollbackを行う
-                        //retParams = this.rollbackTransaction(clientParameterList[1]);
-                    } else if (clientParameterList[0].equals("90")) {
-
-                        // KeyNodeの使用停止をマーク
-                        retParams = this.pauseKeyNodeUse(clientParameterList[1]);
-                    } else if (clientParameterList[0].equals("91")) {
-
-                        // KeyNodeの使用再開をマーク
-                        retParams = this.restartKeyNodeUse(clientParameterList[1]);
-                    } else if (clientParameterList[0].equals("92")) {
-
-                        // KeyNodeの復旧をマーク
-                        retParams = this.arriveKeyNode(clientParameterList[1]);
-                    } else if (clientParameterList[0].equals("93")) {
-
-                        // 渡されたKeyNodeの使用停止をマーク
-                        String[] nodes = clientParameterList[1].split("_");
-                        for (int i = 0; i < nodes.length; i++) {
-                            retParams = this.pauseKeyNodeUse(nodes[i]);
-                        }
-                    } else if (clientParameterList[0].equals("94")) {
-
-                        // 渡されたKeyNodeの使用再開をマーク(複数を一度に)
-                        String[] nodes = clientParameterList[1].split("_");
-                        for (int i = 0; i < nodes.length; i++) {
-                            retParams = this.restartKeyNodeUse(nodes[i]);
-                        }
-                    } else if (clientParameterList[0].equals("95")) {
-
-                        // 渡されたKeyNodeの障害停止をマーク
-                        StatusUtil.setDeadNode(clientParameterList[1]);
-                        retParams = new String[3];
-                        retParams[0] = "95";
-                        retParams[1] = "true";
-                        retParams[2] = "";
+                            // 渡されたKeyNodeの障害停止をマーク
+                            StatusUtil.setDeadNode(clientParameterList[1]);
+                            retParams = new String[3];
+                            retParams[0] = "95";
+                            retParams[1] = "true";
+                            retParams[2] = "";
+                            break;
+                        default :
+                            logger.info("MasterManagerHelper No Method =[" + clientParameterList[0] + "]");
+                            break;
                     }
 
                     // Takerで返却値を作成
@@ -365,16 +398,20 @@ long end = 0L;
                     // 書き出し
                     pw.flush();
 
-                    // 処理が完了したら読み出し待機キューに戻す
+                    // 処理が完了したら読み出し待機Queueに戻す
                     queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
 
                     queueParam[0] = queueMap;
-                    super.addSpecificationParameterQueue("MasterManagerAcceptHelper", queueParam);
-                    //this.closeAllKeyNodeConnect();
-
+                    super.addSpecificationParameterQueue(addQueueName, queueParam);
+//long end1 = System.nanoTime();
+//System.out.println("ALL [" + ((end1 - start1) / 1000 / 1000) + "]");
                 } catch (SocketException se) {
 
                     // クライアントとの接続が強制的に切れた場合は切断要求とみなす
+                    closeFlg = true;
+                } catch (IOException ie) {
+
+                    // 無条件で切断
                     closeFlg = true;
                 }
             }
@@ -384,7 +421,6 @@ long end = 0L;
 
             logger.error("MasterManagerHelper - executeHelper - Error", e);
             ret = super.ERROR;
-            //throw new BatchException(e);
         } finally {
         }
 
@@ -1369,6 +1405,7 @@ long end = 0L;
                 // ノード書き出し処理
                 try {
                     StringBuffer sendData = new StringBuffer();
+                    String sendStr = null;
 
                     // 処理種別判別
                     if (type.equals("2")) {
@@ -1380,11 +1417,13 @@ long end = 0L;
                         sendData.append(type);
                         sendData.append(ImdstDefine.keyHelperClientParamSep);
                         sendData.append(this.stringCnv(key));
-                        keyNodeConnector.println(sendData.toString());
+                        sendStr = sendData.toString();
+
+                        keyNodeConnector.println(sendStr);
                         keyNodeConnector.flush();
 
                         // 返却値取得
-                        String retParam = keyNodeConnector.readLine();
+                        String retParam = keyNodeConnector.readLine(sendStr);
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
@@ -1399,11 +1438,12 @@ long end = 0L;
                         sendData.append(type);
                         sendData.append(ImdstDefine.keyHelperClientParamSep);
                         sendData.append(this.stringCnv(key));
+                        sendStr = sendData.toString();
                         keyNodeConnector.println(sendData.toString());
                         keyNodeConnector.flush();
 
                         // 返却値取得
-                        String retParam = keyNodeConnector.readLine();
+                        String retParam = keyNodeConnector.readLine(sendStr);
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
@@ -1438,10 +1478,11 @@ long end = 0L;
                     }
 
                 } catch(SocketException tSe) {
-
+                    tSe.printStackTrace();
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     se = tSe;
                 } catch(IOException tIe) {
+                    tIe.printStackTrace();
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     ie = tIe;
                 }
@@ -1483,6 +1524,7 @@ long end = 0L;
                 retParams = this.strongConsistencyDataConvert(retParams, mainNodeRetParam, subNodeRetParam, type);
             }
         } catch (Exception e) {
+            e.printStackTrace();
             throw new BatchException(e);
         } finally {
             // ノードの使用終了をマーク
@@ -1591,19 +1633,21 @@ long end = 0L;
 
                         // Key値でValueを取得
                         StringBuffer buf = new StringBuffer();
+                        String sendStr = null;
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
                         buf.append("8");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(this.stringCnv(key));
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(scriptStr);
+                        sendStr = buf.toString();
 
                         // 送信
                         keyNodeConnector.println(buf.toString());
                         keyNodeConnector.flush();
 
                         // 返却値取得
-                        String retParam = keyNodeConnector.readLine();
+                        String retParam = keyNodeConnector.readLine(sendStr);
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
@@ -1763,7 +1807,7 @@ long end = 0L;
         boolean subNodeSave = false;
 
         StringBuffer buf = new StringBuffer();
-        String sendData = null;
+        String sendStr = null;
         boolean subNodeConnect = false;
 
         try {
@@ -1796,7 +1840,7 @@ long end = 0L;
             buf.append(values[1]);                               // Value値
             buf.append(ImdstDefine.setTimeParamSep);
             buf.append(setTime);                                 // 保存時間
-            sendData = buf.toString();
+            sendStr = buf.toString();
 
             // KeyNodeとの接続を確立
             keyNodeConnector = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
@@ -1807,11 +1851,11 @@ long end = 0L;
                 try {
 
                     // 送信
-                    keyNodeConnector.println(buf.toString());
+                    keyNodeConnector.println(sendStr);
                     keyNodeConnector.flush();
 
                     // 返却値取得
-                    retParam = keyNodeConnector.readLine();
+                    retParam = keyNodeConnector.readLine(sendStr);
 
                     // 処理種別判別
                     if (type.equals("1")) {
@@ -1825,7 +1869,7 @@ long end = 0L;
                         } else {
                             // 論理的に登録失敗
                             super.setDeadNode(nodeName + ":" + nodePort, 3, null);
-                            logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
+                            logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
                         }
                     } else if (type.equals("3")) {
 
@@ -1839,19 +1883,22 @@ long end = 0L;
                         } else {
                             // 論理的に登録失敗
                             super.setDeadNode(nodeName + ":" + nodePort, 4, null);
-                            logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
+                            logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
                         }
                     }
 
                     // 使用済みの接続を戻す
                     this.addKeyNodeConnectionPool(keyNodeConnector);
                 } catch (SocketException se) {
+                    se.printStackTrace();
                     super.setDeadNode(nodeName + ":" + nodePort, 5, se);
                     logger.debug(se);
                 } catch (IOException ie) {
+                    ie.printStackTrace();
                     super.setDeadNode(nodeName + ":" + nodePort, 6, ie);
                     logger.debug(ie);
                 } catch (Exception ee) {
+                    ee.printStackTrace();
                     super.setDeadNode(nodeName + ":" + nodePort, 7, ee);
                     logger.debug(ee);
                 }
@@ -1868,11 +1915,11 @@ long end = 0L;
                     // 接続結果と、現在の保存先状況で処理を分岐
                     try {
                         // 送信
-                        slaveKeyNodeConnector.println(buf.toString());
+                        slaveKeyNodeConnector.println(sendStr);
                         slaveKeyNodeConnector.flush();
 
                         // 返却値取得
-                        retParam = slaveKeyNodeConnector.readLine();
+                        retParam = slaveKeyNodeConnector.readLine(sendStr);
 
                         // 処理種別判別
                         if (type.equals("1")) {
@@ -1885,7 +1932,7 @@ long end = 0L;
                             } else {
                                 // 論理的に登録失敗
                                 super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 3, null);
-                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
+                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
                             }
 
                         } else if (type.equals("3")) {
@@ -1899,22 +1946,22 @@ long end = 0L;
                             } else {
                                 // 論理的に登録失敗
                                 super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 4, null);
-                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
+                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
                             }
                         }
 
                         // 使用済みの接続を戻す
                         this.addKeyNodeConnectionPool(slaveKeyNodeConnector);
                     } catch (SocketException se) {
-
+                        se.printStackTrace();
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 5, se);
                         logger.debug(se);
                     } catch (IOException ie) {
-
+                        ie.printStackTrace();
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 6, ie);
                         logger.debug(ie);
                     } catch (Exception ee) {
-
+                        ee.printStackTrace();
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 7, ee);
                         logger.debug(ee);
                     }
@@ -1929,7 +1976,7 @@ long end = 0L;
             }
 
         } catch (BatchException be) {
-
+            be.printStackTrace();
             throw be;
         } catch (Exception e) {
 
@@ -2070,6 +2117,7 @@ long end = 0L;
 
                     // Key値でデータノード名を保存
                     StringBuffer buf = new StringBuffer();
+                    String sendStr = null;
                     // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
                     buf.append("6");                                     // Type
                     buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -2080,13 +2128,14 @@ long end = 0L;
                     buf.append(values[1]);                               // Value値
                     buf.append(ImdstDefine.setTimeParamSep);
                     buf.append(setTime);                                 // 保存時間
+                    sendStr = buf.toString();
 
                     // 送信
-                    keyNodeConnector.println(buf.toString());
+                    keyNodeConnector.println(sendStr);
                     keyNodeConnector.flush();
 
                     // 返却値取得
-                    retParam = keyNodeConnector.readLine();
+                    retParam = keyNodeConnector.readLine(sendStr);
 
                     // 使用済みの接続を戻す
                     this.addKeyNodeConnectionPool(keyNodeConnector);
@@ -2140,8 +2189,9 @@ long end = 0L;
 
                             // Key値でデータノード名を保存
                             StringBuffer buf = new StringBuffer();
-                            // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
+                            String sendStr = null;
 
+                            // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
                             buf.append(subNodeExecType);                         // Type
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(this.stringCnv(values[0]));               // Key値
@@ -2151,13 +2201,14 @@ long end = 0L;
                             buf.append(values[1]);                               // Value値
                             buf.append(ImdstDefine.setTimeParamSep);
                             buf.append(setTime);                                 // 保存時間
+                            sendStr = buf.toString();
 
                             // 送信
-                            keyNodeConnector.println(buf.toString());
+                            keyNodeConnector.println(sendStr);
                             keyNodeConnector.flush();
 
                             // 返却値取得
-                            retParam = keyNodeConnector.readLine();
+                            retParam = keyNodeConnector.readLine(sendStr);
 
                             // 使用済みの接続を戻す
                             this.addKeyNodeConnectionPool(keyNodeConnector);
@@ -2357,19 +2408,21 @@ long end = 0L;
 
                         // Key値でデータノード名を保存
                         StringBuffer buf = new StringBuffer();
+                        String sendStr = null;
                         // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
                         buf.append("5");
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(this.stringCnv(key));
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(transactionCode);
+                        sendStr = buf.toString();
 
                         // 送信
-                        keyNodeConnector.println(buf.toString());
+                        keyNodeConnector.println(sendStr);
                         keyNodeConnector.flush();
 
                         // 返却値取得
-                        retParam = keyNodeConnector.readLine();
+                        retParam = keyNodeConnector.readLine(sendStr);
 
                         // 使用済みの接続を戻す
                         this.addKeyNodeConnectionPool(keyNodeConnector);
@@ -2381,7 +2434,7 @@ long end = 0L;
                         } else if (retParam == null || retParam.indexOf(ImdstDefine.keyNodeKeyRemoveNotFoundStr) != 0){
                             // 論理的に削除失敗
                             super.setDeadNode(nodeName + ":" + nodePort, 14, null);
-                            logger.error("removeKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]");
+                            logger.error("removeKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
 
                         }
                     } catch (SocketException se) {
@@ -2863,6 +2916,7 @@ long end = 0L;
                 keyNodeConnector = new KeyNodeConnector(keyNodeName, Integer.parseInt(keyNodePort), keyNodeFullName);
             }
 
+            if(keyNodeConnector != null) keyNodeConnector.initRetryFlg();
         } catch (Exception e) {
             logger.error(connectionFullName + " " + e);
             keyNodeConnector = null;
@@ -2948,7 +3002,7 @@ long end = 0L;
             logger.error(e);
         }
     }
-    
+
 
     /**
      * 更新時間を自身に蓄積.<br>

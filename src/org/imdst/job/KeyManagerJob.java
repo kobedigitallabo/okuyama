@@ -28,14 +28,15 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
 
     // Accept後のコネクター作成までの処理並列数
-    private int maxConnectParallelExecution = 5;
+    private int maxConnectParallelExecution = 10;
 
     // Acceptコネクタがリードできるかを監視する処理並列数
-    private int maxAcceptParallelExecution = 10;
+    private int maxAcceptParallelExecution = 15;
 
     // 実際のデータ処理並列数
     private int maxWorkerParallelExecution = 15;
 
+    private long multiQueue = 5;
 
     // サーバーソケット
     ServerSocket serverSocket = null;
@@ -59,13 +60,19 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         this.portNo = Integer.parseInt(initValue);
 
         String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyNodeMaxConnectParallelExecution);
-        if (sizeStr != null) maxConnectParallelExecution = Integer.parseInt(sizeStr);
+        if (sizeStr != null && Integer.parseInt(sizeStr) > maxConnectParallelExecution) {
+            maxConnectParallelExecution = Integer.parseInt(sizeStr);
+        }
 
         sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyNodeMaxAcceptParallelExecution);
-        if (sizeStr != null) maxAcceptParallelExecution = Integer.parseInt(sizeStr);
+        if (sizeStr != null && Integer.parseInt(sizeStr) > maxAcceptParallelExecution) {
+            maxAcceptParallelExecution = Integer.parseInt(sizeStr);
+        }
 
         sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyNodeMaxWorkerParallelExecution);
-        if (sizeStr != null) maxWorkerParallelExecution = Integer.parseInt(sizeStr);
+        if (sizeStr != null && Integer.parseInt(sizeStr) > maxWorkerParallelExecution) {
+            maxWorkerParallelExecution = Integer.parseInt(sizeStr);
+        }
 
         logger.debug("KeyManagerJob - initJob - end");
     }
@@ -93,6 +100,10 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         Socket socket = null;
 
         String keyManagerConnectHelperQueuePrefix = "KeyManagerConnectHelper" + this.myPrefix;
+        long queueIndex = 0L;
+
+
+        long accessCount = 0L;
 
         try{
 
@@ -115,28 +126,37 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
 
             // オリジナルのキュー領域を作成
-            super.createUniqueHelperParamQueue("KeyManagerConnectHelper" + this.myPrefix, 20000);
-            super.createUniqueHelperParamQueue("KeyManagerAcceptHelper" + this.myPrefix, 20000);
-            super.createUniqueHelperParamQueue("KeyManagerHelper" + this.myPrefix, 20000);
+            // オリジナルのキュー領域を作成
+            for (int i = 0; i < this.multiQueue; i++) {
+                super.createUniqueHelperParamQueue("KeyManagerConnectHelper" + this.myPrefix + i, 4000);
+                super.createUniqueHelperParamQueue("KeyManagerAcceptHelper" + this.myPrefix + i, 6000);
+                super.createUniqueHelperParamQueue("KeyManagerHelper" + this.myPrefix + i, 6000);
+            }
 
 
             // 監視スレッド起動
             for (int i = 0; i < maxConnectParallelExecution; i++) {
+                queueIndex = (i+1) % this.multiQueue;
+
                 Object[] prefixParam = new Object[1];
-                prefixParam[0] = this.myPrefix;
+                prefixParam[0] = this.myPrefix + queueIndex;
                 super.executeHelper("KeyManagerConnectHelper", prefixParam);
             }
 
             for (int i = 0; i < maxAcceptParallelExecution; i++) {
+                queueIndex = (i+1) % this.multiQueue;
+
                 Object[] prefixParam = new Object[1];
-                prefixParam[0] = this.myPrefix;
+                prefixParam[0] = this.myPrefix + queueIndex;
                 super.executeHelper("KeyManagerAcceptHelper", prefixParam);
             }
 
             for (int i = 0; i < maxWorkerParallelExecution; i++) {
+                queueIndex = (i+1) % this.multiQueue;
+
                 helperParams = new Object[2];
                 helperParams[0] = this.keyMapManager;
-                helperParams[1] = this.myPrefix;
+                helperParams[1] = this.myPrefix + queueIndex;
                 super.executeHelper("KeyManagerHelper", helperParams);
             }
 
@@ -151,32 +171,37 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                 try {
 
                     // クライアントからの接続待ち
+                    accessCount++;
                     socket = serverSocket.accept();
 
                     Object[] queueParam = new Object[1];
                     queueParam[0] = socket;
 
                     // アクセス済みのソケットをキューに貯める
-                    super.addSpecificationParameterQueue(keyManagerConnectHelperQueuePrefix, queueParam);
+                    queueIndex = accessCount % this.multiQueue;
+                    super.addSpecificationParameterQueue(keyManagerConnectHelperQueuePrefix + queueIndex, queueParam);
 
 
                     // 各スレッドが減少していないかを確かめる
                     if (super.getActiveHelperCount("KeyManagerConnectHelper") < (maxConnectParallelExecution / 2)) {
+                        queueIndex = accessCount % this.multiQueue;
                         Object[] prefixParam = new Object[1];
-                        prefixParam[0] = this.myPrefix;
+                        prefixParam[0] = this.myPrefix + queueIndex;
                         super.executeHelper("KeyManagerConnectHelper", prefixParam);
                     }
 
                     if (super.getActiveHelperCount("KeyManagerAcceptHelper") < (maxAcceptParallelExecution / 2)) {
+                        queueIndex = accessCount % this.multiQueue;
                         Object[] prefixParam = new Object[1];
-                        prefixParam[0] = this.myPrefix;
+                        prefixParam[0] = this.myPrefix + queueIndex;
                         super.executeHelper("KeyManagerAcceptHelper", prefixParam);
                     }
 
                     if (super.getActiveHelperCount("KeyManagerHelper") < (maxWorkerParallelExecution / 2)) {
+                        queueIndex = accessCount % this.multiQueue;
                         helperParams = new Object[2];
                         helperParams[0] = this.keyMapManager;
-                        helperParams[1] = this.myPrefix;
+                        helperParams[1] = this.myPrefix + queueIndex;
                         super.executeHelper("KeyManagerHelper", helperParams);
                     }
                 } catch (Exception e) {

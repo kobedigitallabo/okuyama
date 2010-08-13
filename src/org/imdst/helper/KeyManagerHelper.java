@@ -125,9 +125,14 @@ public class KeyManagerHelper extends AbstractHelper {
 
             String transactionCode = null;
 
-            // Jobからの引数はなし
+            String accessQueueName = null;
+
+
+            // Jobからの引数
             this.keyMapManager = (KeyMapManager)parameters[0];
             this.queuePrefix = (String)parameters[1];
+            String pollQueueName = "KeyManagerHelper" + this.queuePrefix;
+            String putQueueName = "KeyManagerAcceptHelper" + this.queuePrefix;
 
             // プロトコル決定
             if (this.protocolMode != null && !this.protocolMode.trim().equals("") && !this.protocolMode.equals("okuyama")) {
@@ -144,7 +149,7 @@ long end = 0L;
                     }
 
                     // キューを待ち受ける
-                    Object[] queueParam = super.pollSpecificationParameterQueue("KeyManagerHelper" + this.queuePrefix);
+                    Object[] queueParam = super.pollSpecificationParameterQueue(pollQueueName);
 
                     Object[] queueMap = (Object[])queueParam[0];
 
@@ -184,7 +189,7 @@ long end = 0L;
                                 // 処理が完了したらキューに戻す
                                 queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                                 queueParam[0] = queueMap;
-                                super.addSpecificationParameterQueue("KeyManagerAcceptHelper" + this.queuePrefix, queueParam);
+                                super.addSpecificationParameterQueue(putQueueName, queueParam);
                                 continue;
                             }
 
@@ -430,7 +435,7 @@ long end = 0L;
                     // 処理が完了したら読み出し確認キュー(KeyManagerAcceptHelper)に戻す
                     queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                     queueParam[0] = queueMap;
-                    super.addSpecificationParameterQueue("KeyManagerAcceptHelper" + this.queuePrefix, queueParam);
+                    super.addSpecificationParameterQueue(putQueueName, queueParam);
 
                 } catch (SocketException se) {
                     closeFlg = true;
