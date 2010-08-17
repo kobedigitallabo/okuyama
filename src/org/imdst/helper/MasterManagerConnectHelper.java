@@ -39,18 +39,17 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
         String ret = SUCCESS;
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
-        String pollQueueName = "MasterManagerConnectHelper";
-        String addQueueName = "MasterManagerAcceptHelper";
-        String queuePrefix = "";
+        String pollQueueName = null;
+        String[] addQueueNames = null;
 
         boolean serverRunning = true;
 
         try{
             Object[] parameters = super.getParameters();
 
-            queuePrefix = (String)parameters[0];
-            pollQueueName = pollQueueName + queuePrefix;
-            addQueueName = addQueueName + queuePrefix;
+            // Queue名取得
+            pollQueueName = (String)parameters[0];
+            addQueueNames = (String[])parameters[1];
 
             while (serverRunning) {
 
@@ -70,8 +69,13 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                 if (param == null || param.length < 1) continue;
 
                 Socket socket = (Socket)param[0];
-                PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
+                PrintWriter pw = new PrintWriter(
+                                    new BufferedWriter(
+                                        new OutputStreamWriter(socket.getOutputStream(), 
+                                                                ImdstDefine.keyHelperClientParamEncoding)));
+                BufferedReader br = new BufferedReader(
+                                        new InputStreamReader(socket.getInputStream(), 
+                                                                ImdstDefine.keyHelperClientParamEncoding));
 
                 Object[] clientMap = new Object[5];
                 clientMap[ImdstDefine.paramSocket] = socket;
@@ -84,7 +88,7 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                 queueParam[0] = clientMap;
 
                 // キューに追加
-                super.addSpecificationParameterQueue(addQueueName, queueParam);
+                super.addSmallSizeParameterQueue(addQueueNames, queueParam);
             }
         } catch(Exception e) {
             logger.error("MasterManagerConnectHelper - executeHelper - Error", e);

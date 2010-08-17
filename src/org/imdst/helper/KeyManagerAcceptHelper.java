@@ -45,18 +45,17 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
         String ret = SUCCESS;
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
-        String pollQueueName = "KeyManagerAcceptHelper";
-        String addExecQueueName = "KeyManagerHelper";
-        String addCheckQueueName = "KeyManagerAcceptHelper";
+        String pollQueueName = null;
+        String[] addExecQueueNames = null;
+        String addCheckQueueName = null;
 
         boolean serverRunning = true;
 
         try{
             Object[] parameters = super.getParameters();
-            this.queuePrefix = (String)parameters[0];
-            pollQueueName = pollQueueName + this.queuePrefix;
-            addExecQueueName = addExecQueueName + this.queuePrefix;
-            addCheckQueueName = addCheckQueueName + this.queuePrefix;
+            pollQueueName = (String)parameters[0];
+            addExecQueueNames = (String[])parameters[1];
+            addCheckQueueName = (String)parameters[0];
 
             while (serverRunning) {
 
@@ -71,7 +70,7 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
                     logger.info("KeyManagerAcceptHelper - 終了状態です");
                 }
 
-                
+
                 Object[] param = super.pollSpecificationParameterQueue(pollQueueName);
                 if (param == null || param.length < 1) continue;
 
@@ -86,7 +85,7 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
                     Object[] queueParam = new Object[1];
                     queueParam[0] = clientMap;
 
-                    super.addSpecificationParameterQueue(addExecQueueName, queueParam, true);
+                    super.addSmallSizeParameterQueue(addExecQueueNames, queueParam);
                 } else {
 
                     // 読み込みのデータがバッファに存在しない

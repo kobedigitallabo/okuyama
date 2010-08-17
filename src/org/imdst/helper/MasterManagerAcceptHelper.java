@@ -42,20 +42,20 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
         String ret = SUCCESS;
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
-        String pollQueueName = "MasterManagerAcceptHelper";
-        String addExecQueueName = "MasterManagerHelper";
-        String addCheckQueueName = "MasterManagerAcceptHelper";
-        String queuePrefix = "";
+        String pollQueueName = null;
+        String addExecQueueName = null;
+        String[] addExecQueueNames = null;
+        String addCheckQueueName = null;
 
         boolean serverRunning = true;
 
         try{
             Object[] parameters = super.getParameters();
 
-            queuePrefix = (String)parameters[0];
-            pollQueueName = pollQueueName + queuePrefix;
-            addExecQueueName = addExecQueueName + queuePrefix;
-            addCheckQueueName = addCheckQueueName + queuePrefix;
+            // Queue名取得
+            pollQueueName = (String)parameters[0];
+            addExecQueueNames = (String[])parameters[1];
+            addCheckQueueName = (String)parameters[0];
 
             while (serverRunning) {
 
@@ -85,7 +85,7 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                     clientMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                     Object[] queueParam = new Object[1];
                     queueParam[0] = clientMap;
-                    super.addSpecificationParameterQueue(addExecQueueName, queueParam);
+                    super.addSmallSizeParameterQueue(addExecQueueNames, queueParam);
                 } else {
 
                     // 読み込みのデータがバッファに存在しない

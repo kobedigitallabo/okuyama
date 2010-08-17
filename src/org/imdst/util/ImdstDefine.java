@@ -135,11 +135,17 @@ public class ImdstDefine {
     public static final String Prop_AllMasterNodeInfo = "AllMasterNodeInfo";
     public static final String Prop_DistributionAlgorithm = "DistributionAlgorithm";
     public static final String Prop_MasterNodeMaxConnectParallelExecution = "MasterNodeMaxConnectParallelExecution";
+    public static final String Prop_MasterNodeMaxConnectParallelQueue = "MasterNodeMaxConnectParallelQueue";
     public static final String Prop_MasterNodeMaxAcceptParallelExecution = "MasterNodeMaxAcceptParallelExecution";
+    public static final String Prop_MasterNodeMaxAcceptParallelQueue = "MasterNodeMaxAcceptParallelQueue";
     public static final String Prop_MasterNodeMaxWorkerParallelExecution = "MasterNodeMaxWorkerParallelExecution";
+    public static final String Prop_MasterNodeMaxWorkerParallelQueue = "MasterNodeMaxWorkerParallelQueue";
     public static final String Prop_KeyNodeMaxConnectParallelExecution = "KeyNodeMaxConnectParallelExecution";
+    public static final String Prop_KeyNodeMaxConnectParallelQueue = "KeyNodeMaxConnectParallelQueue";
     public static final String Prop_KeyNodeMaxAcceptParallelExecution = "KeyNodeMaxAcceptParallelExecution";
+    public static final String Prop_KeyNodeMaxAcceptParallelQueue = "KeyNodeMaxAcceptParallelQueue";
     public static final String Prop_KeyNodeMaxWorkerParallelExecution = "KeyNodeMaxWorkerParallelExecution";
+    public static final String Prop_KeyNodeMaxWorkerParallelQueue = "KeyNodeMaxWorkerParallelQueue";
     public static final String Prop_DataConsistencyMode = "DataConsistencyMode";
 
 

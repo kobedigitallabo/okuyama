@@ -88,9 +88,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         boolean serverRunning = true;
 
-        String pollQueueName = "MasterManagerHelper";
-        String addQueueName = "MasterManagerAcceptHelper";
-        String queuePrefix = "";
+        String pollQueueName = null;
+        String[] addQueueNames = null;
 
 
         String[] retParams = null;
@@ -146,10 +145,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 一貫性モード初期化
             this.initConsistencyMode();
 
-            // Queue名作成
-            queuePrefix = (String)parameters[6];
-            pollQueueName = pollQueueName + queuePrefix;
-            addQueueName = addQueueName + queuePrefix;
+            // Queue名取得
+            pollQueueName = (String)parameters[6];
+            addQueueNames = (String[])parameters[7];
 
 
             // 終了までループ
@@ -167,7 +165,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // Queueから処理取得
                     Object[] queueParam = super.pollSpecificationParameterQueue(pollQueueName);
-long start1 = System.nanoTime();
                     // Queueからのパラメータ
                     Object[] queueMap = (Object[])queueParam[0];
 
@@ -203,7 +200,7 @@ long start1 = System.nanoTime();
                             // 処理が完了したらQueueに戻す
                             queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                             queueParam[0] = queueMap;
-                            super.addSpecificationParameterQueue(addQueueName, queueParam);
+                            super.addSmallSizeParameterQueue(addQueueNames, queueParam);
                             continue;
                         }
 
@@ -240,19 +237,13 @@ long start1 = System.nanoTime();
                                         ImdstDefine.keyHelperClientParamSep + 
                                             clientParameterList[5];
                             }
-//long start2 = System.nanoTime();
                             retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
-//long end2 = System.nanoTime();
-//System.out.println("Set [" + ((end2 - start2) / 1000 / 1000) + "]");
                             break;
                         case 2 :
                             //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
-//long start3 = System.nanoTime();
+
                             // Key値でValueを取得する
                             retParams = this.getKeyValue(clientParameterList[1]);
-
-//long end3 = System.nanoTime();
-//System.out.println("Get [" + ((end3 - start3) / 1000 / 1000) + "]");
                             break;
                         case 3 :
 
@@ -402,9 +393,7 @@ long start1 = System.nanoTime();
                     queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
 
                     queueParam[0] = queueMap;
-                    super.addSpecificationParameterQueue(addQueueName, queueParam);
-//long end1 = System.nanoTime();
-//System.out.println("ALL [" + ((end1 - start1) / 1000 / 1000) + "]");
+                    super.addSmallSizeParameterQueue(addQueueNames, queueParam);
                 } catch (SocketException se) {
 
                     // クライアントとの接続が強制的に切れた場合は切断要求とみなす

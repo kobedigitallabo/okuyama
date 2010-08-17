@@ -313,8 +313,8 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
      */
     public Object remove(Object key) {
 
-        if (vacuumExecFlg) {
-            synchronized (sync) {
+        synchronized (sync) {
+            if (vacuumExecFlg) {
                 Object diffObj[] = {"2", key};
                 vacuumDiffDataList.add(diffObj);
             }
@@ -364,7 +364,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
 
 
         synchronized (sync) {
-            vacuumDiffDataList = new ArrayList(1000);
+            vacuumDiffDataList = new ArrayList(10000);
             vacuumExecFlg = true;
         }
 

@@ -81,7 +81,49 @@ abstract public class AbstractHelper  implements Runnable{
 
 
     /**
-     * Helper用のパラメータキューに追加
+     * Queueの現在のサイズを返す
+     *
+     * @param params パラメータ
+     * @return int
+     */
+    public int getParameterQueueSize(String helperName) throws Exception {
+        int ret = -1;
+        try {
+            ret = HelperPool.getParameterQueueSize(helperName);
+        } catch (Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
+
+    /**
+     * 最もサイズの小さいQueueに追加する
+     *
+     * @param params パラメータ
+     * @return int
+     */
+    public void addSmallSizeParameterQueue(String helperNames[], Object[] params) throws Exception {
+        try {
+            String targetQueue = null;
+            int targetSize = Integer.MAX_VALUE;
+
+            for (int i = 0; i < helperNames.length; i++) {
+                int size = this.getParameterQueueSize(helperNames[i]);
+                if (targetSize > size) {
+                    targetSize = size;
+                    targetQueue = helperNames[i];
+                }
+            }
+            addSpecificationParameterQueue(targetQueue, params, false);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+
+    /**
+     * Helper用のパラメータQueueに追加
      *
      * @param params パラメータ
      * @return int
@@ -96,7 +138,7 @@ abstract public class AbstractHelper  implements Runnable{
 
 
     /**
-     * Helper用のパラメータキューに追加
+     * Helper用のパラメータQueueに追加
      *
      * @param params パラメータ
      * @return int
@@ -110,7 +152,7 @@ abstract public class AbstractHelper  implements Runnable{
     }
     
     /**
-     * Helper用のパラメータキューに追加
+     * Helper用のパラメータQueueに追加
      *
      * @param params パラメータ
      * @return int
@@ -126,7 +168,7 @@ abstract public class AbstractHelper  implements Runnable{
 
 
     /**
-     * Helper用のパラメータキューから取得
+     * Helper用のパラメータQueueから取得
      *
      * @return Object[] パラメータ
      */
@@ -136,7 +178,7 @@ abstract public class AbstractHelper  implements Runnable{
     }
 
     /**
-     * Helper用のパラメータキューから取得
+     * Helper用のパラメータQueueから取得
      *
      * @return Object[] パラメータ
      */

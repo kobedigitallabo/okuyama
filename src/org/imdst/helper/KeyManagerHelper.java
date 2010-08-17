@@ -130,17 +130,14 @@ public class KeyManagerHelper extends AbstractHelper {
 
             // Jobからの引数
             this.keyMapManager = (KeyMapManager)parameters[0];
-            this.queuePrefix = (String)parameters[1];
-            String pollQueueName = "KeyManagerHelper" + this.queuePrefix;
-            String putQueueName = "KeyManagerAcceptHelper" + this.queuePrefix;
+            String pollQueueName = (String)parameters[1];
+            String[] addQueueNames = (String[])parameters[2];
 
             // プロトコル決定
             if (this.protocolMode != null && !this.protocolMode.trim().equals("") && !this.protocolMode.equals("okuyama")) {
                 this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode + "_datanode");
             }
 
-long start = 0L;
-long end = 0L;
             while(serverRunning) {
                 try {
                     // 切断確認
@@ -189,7 +186,7 @@ long end = 0L;
                                 // 処理が完了したらキューに戻す
                                 queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                                 queueParam[0] = queueMap;
-                                super.addSpecificationParameterQueue(putQueueName, queueParam);
+                                super.addSmallSizeParameterQueue(addQueueNames, queueParam);
                                 continue;
                             }
 
@@ -435,7 +432,7 @@ long end = 0L;
                     // 処理が完了したら読み出し確認キュー(KeyManagerAcceptHelper)に戻す
                     queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                     queueParam[0] = queueMap;
-                    super.addSpecificationParameterQueue(putQueueName, queueParam);
+                    super.addSmallSizeParameterQueue(addQueueNames, queueParam);
 
                 } catch (SocketException se) {
                     closeFlg = true;

@@ -41,17 +41,16 @@ public class KeyManagerConnectHelper extends AbstractHelper {
         String ret = SUCCESS;
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
-        String pollQueueName = "KeyManagerConnectHelper";
-        String addQueueName = "KeyManagerAcceptHelper";
+        String pollQueueName = null;
+        String[] addQueueNames = null;
 
         boolean serverRunning = true;
 
         try{
 
             Object[] parameters = super.getParameters();
-            this.queuePrefix = (String)parameters[0];
-            pollQueueName = pollQueueName + this.queuePrefix;
-            addQueueName = addQueueName + this.queuePrefix;
+            pollQueueName = (String)parameters[0];
+            addQueueNames = (String[])parameters[1];
 
             while (serverRunning) {
 
@@ -82,7 +81,7 @@ public class KeyManagerConnectHelper extends AbstractHelper {
 
                 Object[] queueParam = new Object[1];
                 queueParam[0] = clientMap;
-                super.addSpecificationParameterQueue(addQueueName, queueParam);
+                super.addSmallSizeParameterQueue(addQueueNames, queueParam);
             }
         } catch(Exception e) {
             logger.error("KeyManagerConnectHelper - executeHelper - Error", e);

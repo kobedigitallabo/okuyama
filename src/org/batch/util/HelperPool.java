@@ -184,6 +184,23 @@ public class  HelperPool extends Thread {
 
 
     /**
+     * パラメータキューのサイズを返す.<br>
+     *
+     * @param queueName 名前
+     */
+    public static int getParameterQueueSize(String queueName) throws Exception {
+        int ret = -1;
+        try {
+            ret = ((ArrayBlockingQueue)serviceParameterQueueMap.get(queueName)).size();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+        return ret;
+    }
+
+
+    /**
      * Helper用のパラメータキューに追加.<br>
      * 全てのHelper共通.<br>
      *
@@ -232,6 +249,9 @@ public class  HelperPool extends Thread {
             throw e;
         }
     }
+
+
+
 
 
     /**

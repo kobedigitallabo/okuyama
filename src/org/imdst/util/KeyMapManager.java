@@ -234,7 +234,7 @@ public class KeyMapManager extends Thread {
                         int counter = 1;
 
                         while((line=br.readLine())!=null){
-                            if ((counter % 2000) == 0) {
+                            if ((counter % 5000) == 0) {
                                 logger.info("workKeyMapFile - Read - Count =[" + counter + "]");
                             }
 
