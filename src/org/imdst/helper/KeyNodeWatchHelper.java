@@ -21,7 +21,7 @@ import org.imdst.util.StatusUtil;
 public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
     // ノードの監視サイクル時間(ミリ秒)
-    private int checkCycle = 2000;
+    private int checkCycle = 100;
 
     private ArrayList mainNodeList = null;
 
