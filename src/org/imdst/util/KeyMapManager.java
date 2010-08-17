@@ -35,10 +35,11 @@ public class KeyMapManager extends Thread {
 
     // Key系の書き込み、取得
     private Object poolKeyLock = new Object();
-    private Object getKeyLock = new Object();
     private Object setKeyLock = new Object();
-    private Object rmKeyLock = new Object();
     private Object lockKeyLock = new Object();
+    // set,remove系のシンクロオブジェクト
+    private Integer[] parallelSyncObjs = new Integer[100];
+
 
     // Tag系の書き込み、取得
     private Object setTagLock = new Object();
@@ -145,6 +146,11 @@ public class KeyMapManager extends Thread {
             // Diskモード時のファイルパス作成
             if (!this.dataMemory) {
                 this.diskModeRestoreFile = keyMapFilePath + ".data";
+            }
+
+            // set,remove系のシンクロオブジェクト初期化
+            for (int i = 0; i < 100; i++) {
+                this.parallelSyncObjs[i] = new Integer(i);
             }
 
             synchronized(poolKeyLock) {
@@ -376,22 +382,24 @@ public class KeyMapManager extends Thread {
         if (!blocking) {
             try {
                 //logger.debug("setKeyPair - synchronized - start");
-                keyMapObjPut(key, keyNode);
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.parallelSyncObjs[((keyNode.hashCode() << 1) >>> 1) % 100]) {
+                    keyMapObjPut(key, keyNode);
 
-                // データの書き込みを指示
-                this.writeMapFileFlg = true;
+                    // データの書き込みを指示
+                    this.writeMapFileFlg = true;
 
-                if (workFileMemory == false) {
+                    if (workFileMemory == false) {
 
-                    // データ格納場所記述ファイル再保存
-                    this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
-                    this.bw.flush();
+                        // データ格納場所記述ファイル再保存
+                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        this.bw.flush();
+                    }
+
+                    if (this.diffDataPoolingFlg) {
+                        this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
+                    }
                 }
-
-                if (this.diffDataPoolingFlg) {
-                    this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
-                }
-
                 //logger.debug("setKeyPair - synchronized - end");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -416,28 +424,28 @@ public class KeyMapManager extends Thread {
         boolean ret = false;
         if (!blocking) {
             try {
-                synchronized(setKeyLock) {
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % 100]) {
 
                     //logger.debug("setKeyPairOnlyOnce - synchronized - start");
                     if(this.containsKeyPair(key)) return ret;
                     keyMapObjPut(key, keyNode);
                     ret = true;
+
+                    // データの書き込みを指示
+                    this.writeMapFileFlg = true;
+
+                    if (workFileMemory == false) {
+
+                        // データ格納場所記述ファイル再保存
+                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        this.bw.flush();
+                    }
+
+                    if (this.diffDataPoolingFlg) {
+                        this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
+                    }
                 }
-
-                // データの書き込みを指示
-                this.writeMapFileFlg = true;
-
-                if (workFileMemory == false) {
-
-                    // データ格納場所記述ファイル再保存
-                    this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
-                    this.bw.flush();
-                }
-
-                if (this.diffDataPoolingFlg) {
-                    this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
-                }
-
                 //logger.debug("setKeyPairOnlyOnce - synchronized - end");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -465,15 +473,17 @@ public class KeyMapManager extends Thread {
         String ret = null;
         if (!blocking) {
             try {
-                    synchronized(this.rmKeyLock) {
-                        ret =  (String)keyMapObjGet(key);
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % 100]) {
 
-                        if (ret != null) {
-                            keyMapObjRemove(key);
-                        } else {
-                            return null;
-                        }
+                    ret =  (String)keyMapObjGet(key);
+
+                    if (ret != null) {
+                        keyMapObjRemove(key);
+                    } else {
+                        return null;
                     }
+
 
                     // データの書き込みを指示
                     this.writeMapFileFlg = true;
@@ -488,7 +498,7 @@ public class KeyMapManager extends Thread {
                     if (this.diffDataPoolingFlg) {
                         this.diffDataPoolingList.add("-" + workFileSeq + key);
                     }
-
+                }
             } catch (Exception e) {
                 logger.error("removeKeyPair - Error");
                 blocking = true;
@@ -498,6 +508,7 @@ public class KeyMapManager extends Thread {
         }
         return ret;
     }
+
 
     // Tagとキーを指定することでTagとキーをセットする
     public void setTagPair(String tag, String key, String transactionCode) throws BatchException {
