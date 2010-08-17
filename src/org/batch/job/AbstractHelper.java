@@ -110,7 +110,10 @@ abstract public class AbstractHelper  implements Runnable{
 
             for (int i = 0; i < helperNames.length; i++) {
                 int size = this.getParameterQueueSize(helperNames[i]);
-                if (targetSize > size) {
+                if (size == 0 ) {
+                    targetQueue = helperNames[i];
+                    break;
+                } else if(targetSize > size) {
                     targetSize = size;
                     targetQueue = helperNames[i];
                 }
