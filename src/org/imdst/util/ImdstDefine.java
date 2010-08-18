@@ -196,7 +196,7 @@ public class ImdstDefine {
     /* -- プログラム規定数値 ----------------------------------------      */
     // 保存出来る、Key、Tag、Valueの最大長
     // Valueの最大長
-    public static final int saveDataMaxSize = 512;
+    public static final int saveDataMaxSize = 2560;
 
     // 大きいデータ保存する場合は以下の数値の用に最も保存する回数の多いサイズに合わせると
     // レスポンスが向上す。下記の場合は512KB
@@ -216,24 +216,24 @@ public class ImdstDefine {
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    //public static final int nodeConnectionOpenShortTimeout = 1500;
-    public static final int nodeConnectionOpenShortTimeout = 3000;
+    public static final int nodeConnectionOpenShortTimeout = 2000;
+    //public static final int nodeConnectionOpenShortTimeout = 3000;
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    //public static final int nodeConnectionOpenTimeout = 2000;
-    public static final int nodeConnectionOpenTimeout = 10000;
+    public static final int nodeConnectionOpenTimeout = 3000;
+    //public static final int nodeConnectionOpenTimeout = 10000;
 
     // Node間のコネクションReadタイムアウト時間(ミリ秒)
-    //public static final int nodeConnectionTimeout = 3000;
-    public static final int nodeConnectionTimeout = 15000;
+    public static final int nodeConnectionTimeout = 4000;
+    //public static final int nodeConnectionTimeout = 15000;
 
 
     // Node間のコネクションオープンタイムアウト時間(PING)(ミリ秒)
-    public static final int nodeConnectionOpenPingTimeout = 5000;
+    public static final int nodeConnectionOpenPingTimeout = 2500;
 
     // Node間のコネクションReadタイムアウト時間(PING)(ミリ秒)
-    public static final int nodeConnectionPingTimeout = 10000;
+    public static final int nodeConnectionPingTimeout = 4000;
 
 
    // Recoverのコネクションタイムアウト時間(ミリ秒)

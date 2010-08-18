@@ -255,13 +255,13 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
         if (memoryMode) {
             ret = super.put(key, value);
         } else {
-            StringBuffer writeStr = new StringBuffer();
+            StringBuffer writeBuf = new StringBuffer();
             int valueSize = (value.toString()).length();
 
             try {
 
                 if (readObjectFlg == true) {
-                    writeStr.append((String)value);
+                    writeBuf.append((String)value);
 
                     // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
                     // 足りない文字列は固定の"&"で補う(38)
@@ -271,9 +271,8 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                         appendDatas[i] = 38;
                     }
 
-                    writeStr.append(new String(appendDatas));
-                    writeStr.append("\n");
-                    String write = writeStr.toString();
+                    writeBuf.append(new String(appendDatas));
+                    writeBuf.append("\n");
 
                     // 書き込む行を決定
                     synchronized (sync) {
@@ -284,7 +283,7 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                             vacuumDiffDataList.add(diffObj);
                         }
 
-                        this.bw.write(write);
+                        this.bw.write(writeBuf.toString());
                         this.bw.flush();
                         this.lineCount++;
                         super.put(key, new Integer(lineCount));
@@ -297,7 +296,6 @@ public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, 
                 e.printStackTrace();
                 // 致命的
                 StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - put - Error [" + e.getMessage() + "]");
-                
             }
         }
         return ret;

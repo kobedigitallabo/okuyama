@@ -12,6 +12,7 @@ import org.batch.util.LoggerFactory;
 import org.imdst.util.ImdstDefine;
 import org.imdst.util.DataDispatcher;
 import org.imdst.util.StatusUtil;
+
 /**
  * KeyNodeの監視を行うHelperクラス<br>
  *
@@ -21,7 +22,7 @@ import org.imdst.util.StatusUtil;
 public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
     // ノードの監視サイクル時間(ミリ秒)
-    private int checkCycle = 100;
+    private int checkCycle = 500;
 
     private ArrayList mainNodeList = null;
 

@@ -62,7 +62,6 @@ public class KeyMapManager extends Thread {
     // Mapファイルを書き込む必要有無
     private boolean writeMapFileFlg = false;
 
-    // TODO:Mapファイル本体を保存しないように一時的に変更updateInterval=30秒
     // 起動時にトランザクションログから復旧
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
     private static int updateInterval = 10000;
@@ -387,20 +386,19 @@ public class KeyMapManager extends Thread {
                 synchronized(this.parallelSyncObjs[((keyNode.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     keyMapObjPut(key, keyNode);
 
-                    // データの書き込みを指示
-                    this.writeMapFileFlg = true;
-
-                    if (workFileMemory == false) {
-
-                        // データ格納場所記述ファイル再保存
+                    // データ操作履歴ファイルに追記
+                    if (this.workFileMemory == false) 
                         this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
-                        this.bw.flush();
-                    }
 
-                    if (this.diffDataPoolingFlg) {
+                    if (this.diffDataPoolingFlg) 
                         this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
-                    }
                 }
+
+                // データの書き込みを指示
+                this.writeMapFileFlg = true;
+
+                // Flushは重いので同期外
+                this.bw.flush();
                 //logger.debug("setKeyPair - synchronized - end");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -433,21 +431,19 @@ public class KeyMapManager extends Thread {
                     keyMapObjPut(key, keyNode);
                     ret = true;
 
-                    // データの書き込みを指示
-                    this.writeMapFileFlg = true;
-
-                    if (workFileMemory == false) {
-
-                        // データ格納場所記述ファイル再保存
+                    // データ操作履歴ファイルに追記
+                    if (this.workFileMemory == false) 
                         this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
-                        this.bw.flush();
-                    }
 
-                    if (this.diffDataPoolingFlg) {
+                    if (this.diffDataPoolingFlg) 
                         this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
-                    }
                 }
-                //logger.debug("setKeyPairOnlyOnce - synchronized - end");
+
+                // データの書き込みを指示
+                this.writeMapFileFlg = true;
+
+                // Flushは重いので同期外
+                this.bw.flush();
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("setKeyPairOnlyOnce - Error");
@@ -486,20 +482,20 @@ public class KeyMapManager extends Thread {
                     }
 
 
-                    // データの書き込みを指示
-                    this.writeMapFileFlg = true;
-
-                    if (workFileMemory == false) {
-
-                        // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
+                    // データ操作履歴ファイルに追記
+                    if (this.workFileMemory == false)
+                        // データ操作履歴ファイル再保存(登録と合わせるために4つに分割できるようにする)
                         this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
-                        this.bw.flush();
-                    }
 
-                    if (this.diffDataPoolingFlg) {
+                    if (this.diffDataPoolingFlg)
                         this.diffDataPoolingList.add("-" + workFileSeq + key);
-                    }
                 }
+
+                // データの書き込みを指示
+                this.writeMapFileFlg = true;
+
+                // Flushは重いので同期外
+                this.bw.flush();
             } catch (Exception e) {
                 logger.error("removeKeyPair - Error");
                 blocking = true;
