@@ -38,7 +38,8 @@ public class KeyMapManager extends Thread {
     private Object setKeyLock = new Object();
     private Object lockKeyLock = new Object();
     // set,remove系のシンクロオブジェクト
-    private Integer[] parallelSyncObjs = new Integer[100];
+    private static final int parallelSize = 5000;
+    private Integer[] parallelSyncObjs = new Integer[KeyMapManager.parallelSize];
 
 
     // Tag系の書き込み、取得
@@ -149,7 +150,7 @@ public class KeyMapManager extends Thread {
             }
 
             // set,remove系のシンクロオブジェクト初期化
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < KeyMapManager.parallelSize; i++) {
                 this.parallelSyncObjs[i] = new Integer(i);
             }
 
@@ -383,7 +384,7 @@ public class KeyMapManager extends Thread {
             try {
                 //logger.debug("setKeyPair - synchronized - start");
                 // このsynchroの方法は正しくないきがするが。。。
-                synchronized(this.parallelSyncObjs[((keyNode.hashCode() << 1) >>> 1) % 100]) {
+                synchronized(this.parallelSyncObjs[((keyNode.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     keyMapObjPut(key, keyNode);
 
                     // データの書き込みを指示
@@ -425,7 +426,7 @@ public class KeyMapManager extends Thread {
         if (!blocking) {
             try {
                 // このsynchroの方法は正しくないきがするが。。。
-                synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % 100]) {
+                synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
 
                     //logger.debug("setKeyPairOnlyOnce - synchronized - start");
                     if(this.containsKeyPair(key)) return ret;
@@ -474,7 +475,7 @@ public class KeyMapManager extends Thread {
         if (!blocking) {
             try {
                 // このsynchroの方法は正しくないきがするが。。。
-                synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % 100]) {
+                synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
 
                     ret =  (String)keyMapObjGet(key);
 

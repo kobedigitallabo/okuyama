@@ -106,19 +106,24 @@ abstract public class AbstractHelper  implements Runnable{
     public void addSmallSizeParameterQueue(String helperNames[], Object[] params) throws Exception {
         try {
             String targetQueue = null;
+            boolean fix = false;
             int targetSize = Integer.MAX_VALUE;
 
             for (int i = 0; i < helperNames.length; i++) {
                 int size = this.getParameterQueueSize(helperNames[i]);
                 if (size == 0 ) {
-                    targetQueue = helperNames[i];
+                    // メソッドチェーンいやなので!
+                    // 多分なにもかわらん。。
+                    HelperPool.addSpecificationParameterQueue(helperNames[i], params, false);
+                    fix = true;
                     break;
                 } else if(targetSize > size) {
                     targetSize = size;
                     targetQueue = helperNames[i];
                 }
             }
-            addSpecificationParameterQueue(targetQueue, params, false);
+
+            if (!fix) addSpecificationParameterQueue(targetQueue, params, false);
         } catch (Exception e) {
             throw e;
         }
