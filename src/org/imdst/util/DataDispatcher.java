@@ -907,6 +907,9 @@ public class DataDispatcher {
         if (thirdDataNodeInfo != null) {
             ret = new String[9];
 
+            ret[3] = slaveDataNodeInfo[0];
+            ret[4] = slaveDataNodeInfo[1];
+            ret[5] = slaveDataNodeInfo[2];
             ret[6] = thirdDataNodeInfo[0];
             ret[7] = thirdDataNodeInfo[1];
             ret[8] = thirdDataNodeInfo[2];
