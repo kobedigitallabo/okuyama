@@ -46,12 +46,13 @@ public class TestHelper extends AbstractHelper {
             StatusUtil.initNodeExecMap(keyMapNodes.split(","));
             StatusUtil.initNodeExecMap(subKeyMapNodes.split(","));
             StatusUtil.initNodeExecMap(thirdKeyMapNodes.split(","));
+            StatusUtil.setDistributionAlgorithm("consistenthash");
+            DataDispatcher.setDispatchMode("consistenthash");
             DataDispatcher.initConsistentHashMode(keyMapNodes, subKeyMapNodes, thirdKeyMapNodes, null);
 //          DataDispatcher.init("3", null, keyMapNodes, subKeyMapNodes, thirdKeyMapNodes, null);
 
             for (int i = 0; i < 10; i++) {
-                String[] ret1 = DataDispatcher.dispatchConsistentHashKeyNode("key---" + i);
-//              String[] ret1 = DataDispatcher.dispatchKeyNode("key---" + i);
+                String[] ret1 = DataDispatcher.dispatchKeyNode("key---" + i, false);
 
                 System.out.println("ret1[0] = " + ret1[0]);
                 System.out.println("ret1[1] = " + ret1[1]);
@@ -88,7 +89,7 @@ public class TestHelper extends AbstractHelper {
             System.out.println("---------------------------------");
 
             for (int i = 0; i < 10; i++) {
-                String[] ret1 = DataDispatcher.dispatchConsistentHashKeyNode("key---" + i, true);
+                String[] ret1 = DataDispatcher.dispatchKeyNode("key---" + i, false, 1);
 
                 System.out.println("ret1[0] = " + ret1[0]);
                 System.out.println("ret1[1] = " + ret1[1]);

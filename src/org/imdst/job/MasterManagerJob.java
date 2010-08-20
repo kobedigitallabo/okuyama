@@ -130,6 +130,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                     // Modアルゴリズム
                     ret = this.executeModMasterServer(optionParam);
                 } else if (StatusUtil.getDistributionAlgorithm().equals(ImdstDefine.dispatchModeConsistentHash)) {
+                    ret = executeConsistentHashMasterServer(optionParam);
                 }
             }
 
@@ -309,6 +310,15 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
         //logger.debug("MasterManagerJob - executeJob - end");
         return ret;
+    }
 
+
+    /**
+     * Modアルゴリズム処理.<br>
+     * ServerSocketをOpenしてクライアントを待ち受ける.<br>
+     * 1クライアント1スレッド型.<br>
+     */
+    private String executeConsistentHashMasterServer (String optionParam) throws Exception {
+        return executeModMasterServer(optionParam);
     }
 }

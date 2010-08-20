@@ -53,6 +53,7 @@ public class DataDispatcher {
     // 自身を一度でも初期している場合はtrue;
     private static boolean initFlg = false;
 
+
     // 振り分けモードを設定
     // 1度のみ呼び出し可能
     public static void setDispatchMode(String mode) {
@@ -64,6 +65,7 @@ public class DataDispatcher {
         }
     }
 
+
     /**
      * 振り分けモードを返す.<br>
      *
@@ -72,6 +74,7 @@ public class DataDispatcher {
     public static int getDispatchMode() {
         return dispatchMode;
     }
+
 
     /**
      * 初期化<br>
@@ -83,7 +86,7 @@ public class DataDispatcher {
      * SubKeyMapNodesInfoは設定なしも可能。その場合はnullを設定<br>
      * ThirdKeyMapNodesInfo=サードKeyノードの設定(KeyNodeName1:11111, KeyNodeName2:22222)<br>
      * ThirdKeyMapNodesInfoは設定なしも可能。その場合はnullを設定<br>
-     * ※SubKeyMapNodesInfoは設定しないがThirdKeyMapNodesInfoは設定することは出来ない
+     * ※SubKeyMapNodesInfoは設定しないとThirdKeyMapNodesInfoは設定することは出来ない
      *
      * <br>
      * 記述の決まり.<br>
@@ -608,21 +611,80 @@ public class DataDispatcher {
         return oldRules;
     }
 
+
+
     /**
      * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
-     * ルールはKeyNodeの台数を記述する。また、システム稼動後KeyNodeを増やす場合、<br>
-     * 増やしたルールを先頭にして古いルールを後ろにカンマ区切りで連結する<br>
+     * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが6、Thirdが存在する場合は9となる<br>
+     * 振り分けアルゴリズムはMod or ConsistentHash<br>
+     * [Mod]<br>
+     * ノード振り分けアルゴリズムは除算のあまりより決定<br>
+     * hash値 % ノード台数 = 振り分け先<br>
+     * <br>
+     * [ConsistentHash]<br>
+     * ConsistentHash法にもとづき決定.<br>
      *
      * @param key キー値
+     * @param reverse 逆転指定
      * @return String 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] dispatchKeyNode(String key) {
-        return dispatchKeyNode(key, ruleInt);
+    public static String[] dispatchKeyNode(String key, boolean reverse) {
+        String[] ret = null;
+        if (dispatchMode == 0) {
+
+            // mod
+            ret = dispatchModKeyNode(key, reverse);
+        } else if (dispatchMode == 1) {
+
+            // Consistent Hash
+            ret = dispatchConsistentHashKeyNode(key, reverse);
+        }
+        return ret;
     }
 
 
     /**
      * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
+     * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが6、Thirdが存在する場合は9となる<br>
+     * 振り分けアルゴリズムはMod or ConsistentHash<br>
+     * 本メソッドはノードを追加後に旧ノード構成時のルールで格納しているノードを返す.<br>
+     * Modではノード追加に合わせて過去の履歴でそれぞれのノードに問い合わせる<br>
+     *
+     *
+     * [Mod]<br>
+     * ノード振り分けアルゴリズムは除算のあまりより決定<br>
+     * hash値 % ノード台数 = 振り分け先<br>
+     * <br>
+     * [ConsistentHash]<br>
+     * ConsistentHash法にもとづき決定.<br>
+     *
+     * @param key キー値
+     * @param reverse 逆転指定
+     * @param useRule 旧ルール世代値
+     * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
+     */
+    public static String[] dispatchKeyNode(String key, boolean reverse, int useRule) {
+
+        String[] ret = null;
+        if (dispatchMode == 0) {
+
+            // mod
+            if (oldRules != null && oldRules.length > useRule)
+                ret = dispatchModKeyNode(key, reverse, oldRules[useRule]);
+        } else if (dispatchMode == 1) {
+
+            // Consistent Hash
+            if (useRule == 1 && oldCircle != null) 
+                ret = dispatchConsistentHashKeyNode(key, reverse, true);
+        }
+        return ret;
+    }
+
+
+
+    /**
+     * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
+     * Modアルゴリズム.<br>
      * ルールはKeyNodeの台数を記述する。また、システム稼動後KeyNodeを増やす場合、<br>
      * 増やしたルールを先頭にして古いルールを後ろにカンマ区切りで連結する<br>
      * MainNodeとSubNodeの情報を返却値の配列内で逆転させて返すことが可能である.<br>
@@ -631,12 +693,13 @@ public class DataDispatcher {
      * @param reverse 逆転指定
      * @return String 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] dispatchReverseKeyNode(String key, boolean reverse) {
-        return dispatchReverseKeyNode(key, reverse, ruleInt);
+    private static String[] dispatchModKeyNode(String key, boolean reverse) {
+        return dispatchModKeyNode(key, reverse, ruleInt);
     }
 
     /**
      * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
+     * Modアルゴリズム.<br>
      * ルールはKeyNodeの台数を記述する。また、システム稼動後KeyNodeを増やす場合、<br>
      * 増やしたルールを先頭にして古いルールを後ろにカンマ区切りで連結する<br>
      * MainNodeとSubNodeの情報を返却値の配列内で逆転させて返すことが可能である.<br>
@@ -646,9 +709,9 @@ public class DataDispatcher {
      * @param useRule ルール指定
      * @return String 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] dispatchReverseKeyNode(String key, boolean reverse, int useRule) {
+    private static String[] dispatchModKeyNode(String key, boolean reverse, int useRule) {
         String[] ret = null;
-        String[] tmp = dispatchKeyNode(key, useRule);
+        String[] tmp = decisionModKeyNode(key, useRule);
 
         if (reverse) {
             // SubNodeが存在する場合は逆転させる
@@ -687,7 +750,8 @@ public class DataDispatcher {
 
     /**
      * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
-     * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが6となる<br>
+     * Modアルゴリズム.<br>
+     * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが6、Thirdが存在する場合は9となる<br>
      * ノード振り分けアルゴリズムは除算のあまりより決定.<br>
      * hash値 % ノード台数 = 振り分け先.<br>
      *
@@ -695,7 +759,7 @@ public class DataDispatcher {
      * @param useRule ルール値
      * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] dispatchKeyNode(String key, int useRule) {
+    private static String[] decisionModKeyNode(String key, int useRule) {
         String[] ret = null;
         boolean noWaitFlg = false;
 
@@ -706,8 +770,6 @@ public class DataDispatcher {
         int execKeyInt = key.hashCode();
 
         if (execKeyInt < 0) {
-            //String work = new Integer(execKeyInt).toString();
-            //execKeyInt = Integer.parseInt(work.substring(1,work.length()));
             execKeyInt = execKeyInt - execKeyInt - execKeyInt;
         }
 
@@ -788,22 +850,33 @@ public class DataDispatcher {
 
 
 
-
-
-
-
-
-
-
     /**
+     * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
+     * ConsistentHashアルゴリズム.<br>
+     * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが6、Thirdが存在する場合は9となる<br>
      *
      * @param key キー値
      * @param reverse 逆転指定
+     * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
+     */
+    public static String[] dispatchConsistentHashKeyNode(String key, boolean reverse) {
+        return dispatchConsistentHashKeyNode(key, reverse, false);
+    }
+
+
+    /**
+     * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
+     * ConsistentHashアルゴリズム.<br>
+     * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが6、Thirdが存在する場合は9となる<br>
+     *
+     * @param key キー値
+     * @param reverse 逆転指定
+     * @param useOldCircle 旧サークル使用設定
      * @return String 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] dispatchReverseConsistentHashKeyNode(String key, boolean reverse, boolean useOldCircle) {
+    public static String[] dispatchConsistentHashKeyNode(String key, boolean reverse, boolean useOldCircle) {
         String[] ret = null;
-        String[] tmp = dispatchConsistentHashKeyNode(key, useOldCircle);
+        String[] tmp = decisionConsistentHashKeyNode(key, useOldCircle);
 
         if (reverse) {
             // SubNodeが存在する場合は逆転させる
@@ -841,23 +914,18 @@ public class DataDispatcher {
     }
 
 
-    /**
-     *
-     *
-     * @param key キー値
-     * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
-     */
-    public static String[] dispatchConsistentHashKeyNode(String key) {
-        return dispatchConsistentHashKeyNode(key, false);
-    }
+
 
     /**
+     * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
+     * ConsistentHashアルゴリズム.<br>
+     * スレーブノードの指定がある場合は同時に値を返す。その場合は配列のレングスが6、Thirdが存在する場合は9となる<br>
      *
      * @param key キー値
-     * @param useOldCircle ルール値
+     * @param useOldCircle 旧サークル使用設定
      * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] dispatchConsistentHashKeyNode(String key, boolean useOldCircle) {
+    public static String[] decisionConsistentHashKeyNode(String key, boolean useOldCircle) {
         String[] ret = null;
         boolean noWaitFlg = false;
         SortedMap useNodeCircle = null;
@@ -967,11 +1035,6 @@ public class DataDispatcher {
 
         return ret;
     }
-
-
-
-
-
 
 
 
