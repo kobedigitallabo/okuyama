@@ -1280,9 +1280,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-
             ret = this.getKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, key);
-
         } catch (BatchException be) {
 
             retBe = be;
@@ -1294,16 +1292,21 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } finally {
             
             try {
+
                 if (exceptionFlg) {
+
                     thirdRet = this.getKeyNodeValue(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, key);
                     ret = thirdRet;
+                } else {
+                    // サードノードの使用終了のみマーク
+                    if (thirdKeyNodeFullName != null) 
+                        super.execNodeUseEnd(thirdKeyNodeFullName);
                 }
             } catch (Exception e) {
+
                 if (exceptionFlg) throw retBe;
             }
         }
-
-        
         return ret;
     }
 
@@ -1341,14 +1344,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             // KeyNodeとの接続を確立
-
             keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
             nowUse = 1;
             while (true) {
 
                 // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
                 // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
-
                 if (keyNodeConnector == null) {
                     if (subKeyNodeName != null) keyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
 
@@ -1372,7 +1373,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // Key値でValueを取得
                         // パラメータ作成 処理タイプ[セパレータ]キー値
                         // 送信
-
                         sendData.append(type);
                         sendData.append(ImdstDefine.keyHelperClientParamSep);
                         sendData.append(this.stringCnv(key));
@@ -1437,11 +1437,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                 } catch(SocketException tSe) {
-                    tSe.printStackTrace();
+                    //tSe.printStackTrace();
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     se = tSe;
                 } catch(IOException tIe) {
-                    tIe.printStackTrace();
+                    //tIe.printStackTrace();
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     ie = tIe;
                 }
@@ -1483,7 +1483,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retParams = this.strongConsistencyDataConvert(retParams, mainNodeRetParam, subNodeRetParam, type);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             throw new BatchException(e);
         } finally {
             // ノードの使用終了をマーク
@@ -1532,6 +1532,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 if (exceptionFlg) {
                     thirdRet = this.getKeyNodeValueScript(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, key, scriptStr);
                     ret = thirdRet;
+                } else {
+                    // サードノードの使用終了のみマーク
+                    if (thirdKeyNodeFullName != null) 
+                        super.execNodeUseEnd(thirdKeyNodeFullName);
                 }
             } catch (Exception e) {
                 if (exceptionFlg) throw retBe;
@@ -1849,15 +1853,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 使用済みの接続を戻す
                     this.addKeyNodeConnectionPool(keyNodeConnector);
                 } catch (SocketException se) {
-                    se.printStackTrace();
+                    //se.printStackTrace();
                     super.setDeadNode(nodeName + ":" + nodePort, 5, se);
                     logger.debug(se);
                 } catch (IOException ie) {
-                    ie.printStackTrace();
+                    //ie.printStackTrace();
                     super.setDeadNode(nodeName + ":" + nodePort, 6, ie);
                     logger.debug(ie);
                 } catch (Exception ee) {
-                    ee.printStackTrace();
+                    //ee.printStackTrace();
                     super.setDeadNode(nodeName + ":" + nodePort, 7, ee);
                     logger.debug(ee);
                 }
@@ -1912,15 +1916,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 使用済みの接続を戻す
                         this.addKeyNodeConnectionPool(slaveKeyNodeConnector);
                     } catch (SocketException se) {
-                        se.printStackTrace();
+                        //se.printStackTrace();
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 5, se);
                         logger.debug(se);
                     } catch (IOException ie) {
-                        ie.printStackTrace();
+                        //ie.printStackTrace();
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 6, ie);
                         logger.debug(ie);
                     } catch (Exception ee) {
-                        ee.printStackTrace();
+                        //ee.printStackTrace();
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 7, ee);
                         logger.debug(ee);
                     }
@@ -1935,7 +1939,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
         } catch (BatchException be) {
-            be.printStackTrace();
+            //be.printStackTrace();
             throw be;
         } catch (Exception e) {
 
@@ -2000,6 +2004,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // まだ登録されていない
                         // 無条件で登録
                         thirdRet = this.setKeyNodeValue(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, "1", values, transactionCode);
+                    } else {
+                        // サードノードの使用終了のみマーク
+                        if (thirdKeyNodeFullName != null) 
+                            super.execNodeUseEnd(thirdKeyNodeFullName);
                     }
                 }
             } catch (Exception e) {

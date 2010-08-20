@@ -22,7 +22,7 @@ import org.imdst.util.StatusUtil;
 public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
     // ノードの監視サイクル時間(ミリ秒)
-    private int checkCycle = 500;
+    private int checkCycle = 250;
 
     private ArrayList mainNodeList = null;
 
@@ -61,6 +61,25 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                     this.mainNodeList = (ArrayList)allNodeInfo.get("main");
                     this.subNodeList = (ArrayList)allNodeInfo.get("sub");
                     this.thirdNodeList = (ArrayList)allNodeInfo.get("third");
+
+                    if (this.thirdNodeList != null && this.thirdNodeList.size() > 0) {
+                        ArrayList newMainNodeList = new ArrayList();
+                        ArrayList newSubNodeList = new ArrayList();
+
+                        for (int i = 0; i < this.mainNodeList.size(); i++) {
+                            newMainNodeList.add(this.mainNodeList.get(i));
+                            newSubNodeList.add(this.subNodeList.get(i));
+                        }
+                        for (int i = 0; i < this.mainNodeList.size(); i++) {
+                            newMainNodeList.add(this.mainNodeList.get(i));
+                            newSubNodeList.add(this.thirdNodeList.get(i));
+                            newMainNodeList.add(this.subNodeList.get(i));
+                            newSubNodeList.add(this.thirdNodeList.get(i));
+                        }
+                        this.mainNodeList = newMainNodeList;
+                        this.subNodeList = newSubNodeList;
+                    }
+
 
                     // ノード数分チェック
                     for (int i = 0; i < mainNodeList.size(); i++) {

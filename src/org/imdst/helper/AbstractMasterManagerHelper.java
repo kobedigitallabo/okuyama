@@ -55,9 +55,10 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @param nodeInfo 対象のノード情報
      */
     protected void setDeadNode(String nodeInfo, int setPoint, Throwable te) {
-        if (te != null) {
-            te.printStackTrace();
-        }
+
+        //if (te != null) {
+        //    te.printStackTrace();
+        //}
 
         // MainMasterNodeの場合のみ設定される
         if (StatusUtil.isMainMasterNode()) {
@@ -122,7 +123,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                         // TODO:復帰登録失敗
                                         // 異常事態だが、稼動していないことも考えられるので、
                                         // 無視する
-                                        //System.out.println("Slave Master Node setDeadNode Error [" + slaveList[i] + "]");
+                                        System.out.println("Slave Master Node setDeadNode Error [" + slaveList[i] + "]");
                                     } else {
                                         slaveList[i] = null;
                                     }
@@ -132,8 +133,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                 // TODO:復帰登録失敗
                                 // 異常事態だが、稼動していないことも考えられるので、
                                 // 無視する
-                                //System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
-                                //e.printStackTrace();
+                                System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
+                                e.printStackTrace();
 
                             } finally {
                                 try {
@@ -233,7 +234,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                 // TODO:復帰登録失敗
                                 // 異常事態だが、稼動していないことも考えられるので、
                                 // 無視する
-                                //System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
+                                System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
                             } 
                         }
                     } catch(Exception e) {
@@ -241,8 +242,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                         // TODO:復帰登録失敗
                         // 異常事態だが、稼動していないことも考えられるので、
                         // 無視する
-                        //System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
-                        //e.printStackTrace();
+                        System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
+                        e.printStackTrace();
                     } finally {
                         try {
                             if (pw != null) {
@@ -357,7 +358,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                 // TODO:停止失敗
                                 // 異常事態だが、稼動していないことも考えられるので、
                                 // 無視する
-                                //System.out.println("Slave Master Node setNodeWaitStatus Error [" + slaveList[i] + "]");
+                                System.out.println("Slave Master Node setNodeWaitStatus Error [" + slaveList[i] + "]");
                             } 
                         }
                     } catch(Exception e) {
@@ -365,8 +366,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                         // TODO:停止失敗
                         // 異常事態だが、稼動していないことも考えられるので、
                         // 無視する
-                        //System.out.println("Slave Master Node setNodeWaitStatus Error [" + slaveList[i] + "]");
-                        //e.printStackTrace();
+                        System.out.println("Slave Master Node setNodeWaitStatus Error [" + slaveList[i] + "]");
+                        e.printStackTrace();
                     } finally {
                         try {
                             if (pw != null) {
@@ -463,7 +464,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                 // TODO:停止解除失敗
                                 // 異常事態だが、稼動していないことも考えられるので、
                                 // 無視する
-                                //System.out.println("Slave Master Node removeNodeWaitStatus Error [" + slaveList[i] + "]");
+                                System.out.println("Slave Master Node removeNodeWaitStatus Error [" + slaveList[i] + "]");
                             } 
                         }
                     } catch(Exception e) {
@@ -471,8 +472,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                         // TODO:停止解除失敗
                         // 異常事態だが、稼動していないことも考えられるので、
                         // 無視する
-                        //System.out.println("Slave Master Node removeNodeWaitStatus Error [" + slaveList[i] + "]");
-                        //e.printStackTrace();
+                        System.out.println("Slave Master Node removeNodeWaitStatus Error [" + slaveList[i] + "]");
+                        e.printStackTrace();
                     } finally {
                         try {
                             if (pw != null) {

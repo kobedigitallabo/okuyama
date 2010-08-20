@@ -35,19 +35,19 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
     // Acceptコネクタがリードできるかを監視する処理並列数
     private int maxAcceptParallelExecution = 15;
-    private long maxAcceptParallelQueue = 15;
+    private long maxAcceptParallelQueue = 5;
     private String[] maxAcceptParallelQueueNames = null;
 
     // 実際のデータ処理並列数
     private int maxWorkerParallelExecution = 15;
-    private int maxWorkerParallelQueue = 15;
+    private int maxWorkerParallelQueue = 5;
     private String[] maxWorkerParallelQueueNames = null;
-
 
 
     // ロードバランス設定
     private boolean loadBalance = false;
-    private boolean blanceMode = false;
+    private boolean[] blanceModes = new boolean[4];
+    private int nowBalanceIdx = 0;
 
     private boolean transactionMode = false;
 
@@ -63,7 +63,12 @@ public class MasterManagerJob extends AbstractJob implements IJob {
      */
     private static ILogger logger = LoggerFactory.createLogger(MasterManagerJob.class);
 
-    // 初期化メソッド定義
+
+    /**
+     * 初期化処理.<br>
+     *
+     * @param initValue
+     */
     public void initJob(String initValue) {
         logger.debug("MasterManagerJob - initJob - start");
 
@@ -111,12 +116,25 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         this.maxWorkerParallelQueueNames = new String[new Long(this.maxWorkerParallelQueue).intValue()];
 
 
+        // データ取得時に使用するノード使用割合を決定
+        blanceModes[0] = false;
+        blanceModes[1] = false;
+        blanceModes[2] = true;
+        blanceModes[3] = true;
+
         logger.debug("MasterManagerJob - initJob - end");
     }
 
 
-
-    // Jobメイン処理定義
+    /**
+     * メイン処理.<br>
+     * ServerSocketをOpenしてクライアントを待ち受ける.<br>
+     * アルゴリズムに合わせて処理を呼びわけ.<br>
+     *
+     * @param optionParam
+     * @return String
+     * @throw Exception
+     */
     public String executeJob(String optionParam) throws BatchException {
         logger.debug("MasterManagerJob - executeJob - start");
         String ret = SUCCESS;
@@ -133,7 +151,6 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                     ret = executeConsistentHashMasterServer(optionParam);
                 }
             }
-
         } catch(Exception e) {
             logger.error("MasterManagerJob - executeJob - Error", e);
             throw new BatchException(e);
@@ -147,7 +164,11 @@ public class MasterManagerJob extends AbstractJob implements IJob {
     /**
      * Modアルゴリズム処理.<br>
      * ServerSocketをOpenしてクライアントを待ち受ける.<br>
-     * 1クライアント1スレッド型.<br>
+     * 処理スレッドとチェーン用のQueueを作成.<br>
+     *
+     * @param optionParam
+     * @return String
+     * @throw Exception
      */
     private String executeModMasterServer (String optionParam) throws Exception {
         String ret = SUCCESS;
@@ -187,12 +208,12 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             }
 
             for (int i = 0; i < this.maxAcceptParallelQueue; i++) {
-                super.createUniqueHelperParamQueue("MasterManagerAcceptHelper" + i, 7000);
+                super.createUniqueHelperParamQueue("MasterManagerAcceptHelper" + i, 4000);
                 this.maxAcceptParallelQueueNames[i] = "MasterManagerAcceptHelper" + i;
             }
 
             for (int i = 0; i < this.maxWorkerParallelQueue; i++) {
-                super.createUniqueHelperParamQueue("MasterManagerHelper" + i, 7000);
+                super.createUniqueHelperParamQueue("MasterManagerHelper" + i, 4000);
                 this.maxWorkerParallelQueueNames[i] = "MasterManagerHelper" + i;
             }
 
@@ -223,17 +244,15 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 helperParams[0] = null;
                 helperParams[1] = null;
                 helperParams[2] = this.mode;
-                if (loadBalance) helperParams[3] = new Boolean(blanceMode);
+                if (loadBalance) helperParams[3] = new Boolean(this.blanceModes[nowBalanceIdx]);
                 helperParams[4] = StatusUtil.isTransactionMode();
                 helperParams[5] = StatusUtil.getTransactionNode();
                 helperParams[6] = "MasterManagerHelper" + queueIndex;
                 helperParams[7] = this.maxAcceptParallelQueueNames;
                 super.executeHelper("MasterManagerHelper", helperParams);
-                if (blanceMode) {
-                    blanceMode = false;
-                } else {
-                    blanceMode = true;
-                }
+
+                this.nowBalanceIdx++;
+                if (this.blanceModes.length == this.nowBalanceIdx) this.nowBalanceIdx = 0;
             }
 
 
@@ -282,18 +301,15 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                         helperParams[0] = null;
                         helperParams[1] = null;
                         helperParams[2] = this.mode;
-                        if (loadBalance) helperParams[3] = new Boolean(blanceMode);
+                        if (loadBalance) helperParams[3] = new Boolean(this.blanceModes[nowBalanceIdx]);
                         helperParams[4] = StatusUtil.isTransactionMode();
                         helperParams[5] = StatusUtil.getTransactionNode();
                         helperParams[6] = "MasterManagerHelper" + queueIndex;
                         helperParams[7] = this.maxAcceptParallelQueueNames;
 
                         super.executeHelper("MasterManagerHelper", helperParams);
-                        if (blanceMode) {
-                            blanceMode = false;
-                        } else {
-                            blanceMode = true;
-                        }
+                        this.nowBalanceIdx++;
+                        if (this.blanceModes.length == this.nowBalanceIdx) this.nowBalanceIdx = 0;
                     }
                 } catch (Exception e) {
                     if (StatusUtil.getStatus() == 2) {
@@ -314,9 +330,13 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
 
     /**
-     * Modアルゴリズム処理.<br>
+     * ConsistentHashアルゴリズム処理.<br>
      * ServerSocketをOpenしてクライアントを待ち受ける.<br>
-     * 1クライアント1スレッド型.<br>
+     * executeModMasterServerを呼び出しているだけ.<br>
+     *
+     * @param optionParam
+     * @return String
+     * @throw Exception
      */
     private String executeConsistentHashMasterServer (String optionParam) throws Exception {
         return executeModMasterServer(optionParam);

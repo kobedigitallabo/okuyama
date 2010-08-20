@@ -503,6 +503,7 @@ public class DataDispatcher {
 
         // allNodeDetailListに追加するために複製を作成
         for (int allNodeDetailListIdx = 0; allNodeDetailListIdx < allNodeDetailList[0].length; allNodeDetailListIdx++) {
+
             newAllNodeDetailList[0][allNodeDetailListIdx] = allNodeDetailList[0][allNodeDetailListIdx];
             newAllNodeDetailList[1][allNodeDetailListIdx] = allNodeDetailList[1][allNodeDetailListIdx];
             newAllNodeDetailList[2][allNodeDetailListIdx] = allNodeDetailList[2][allNodeDetailListIdx];
@@ -512,8 +513,6 @@ public class DataDispatcher {
             newAllNodeDetailList[6][allNodeDetailListIdx] = allNodeDetailList[6][allNodeDetailListIdx];
             newAllNodeDetailList[7][allNodeDetailListIdx] = allNodeDetailList[7][allNodeDetailListIdx];
             newAllNodeDetailList[8][allNodeDetailListIdx] = allNodeDetailList[8][allNodeDetailListIdx];
-
-
         }
 
         String keyNode = keyNodeFullName;
@@ -639,7 +638,8 @@ public class DataDispatcher {
             // Consistent Hash
             ret = dispatchConsistentHashKeyNode(key, reverse);
         }
-        return ret;
+        
+        return adjustmentAccessNode(ret, reverse);
     }
 
 
@@ -677,9 +677,99 @@ public class DataDispatcher {
             if (useRule == 1 && oldCircle != null) 
                 ret = dispatchConsistentHashKeyNode(key, reverse, true);
         }
-        return ret;
+        return adjustmentAccessNode(ret, reverse);
     }
 
+
+    private static String[] adjustmentAccessNode(String[] nodes, boolean reverse) {
+        String[] retNodes = null;
+
+        if (nodes == null) {
+
+            return nodes;
+        } else if (nodes.length == 3) {
+
+            return nodes;
+        } else if (nodes.length == 6) {
+
+            if (!StatusUtil.isNodeArrival(nodes[0]) && StatusUtil.isNodeArrival(nodes[3])) {
+                retNodes = new String[6];
+                retNodes[0] = nodes[3];
+                retNodes[1] = nodes[4];
+                retNodes[2] = nodes[5];
+                retNodes[3] = nodes[0];
+                retNodes[4] = nodes[1];
+                retNodes[5] = nodes[2];
+            } else {
+                retNodes = nodes;
+            }
+        } else if (nodes.length == 9) {
+
+            if (!StatusUtil.isNodeArrival(nodes[0]) && !StatusUtil.isNodeArrival(nodes[3])) {
+                retNodes = new String[9];
+                retNodes[0] = nodes[6];
+                retNodes[1] = nodes[7];
+                retNodes[2] = nodes[8];
+                retNodes[3] = nodes[0];
+                retNodes[4] = nodes[1];
+                retNodes[5] = nodes[2];
+                retNodes[6] = nodes[3];
+                retNodes[7] = nodes[4];
+                retNodes[8] = nodes[5];
+            } else if (!StatusUtil.isNodeArrival(nodes[0]) && StatusUtil.isNodeArrival(nodes[3])) {
+                if (reverse == true) {
+                    retNodes = new String[9];
+                    retNodes[0] = nodes[6];
+                    retNodes[1] = nodes[7];
+                    retNodes[2] = nodes[8];
+                    retNodes[3] = nodes[3];
+                    retNodes[4] = nodes[4];
+                    retNodes[5] = nodes[5];
+                    retNodes[6] = nodes[0];
+                    retNodes[7] = nodes[1];
+                    retNodes[8] = nodes[2];
+                } else {
+                    retNodes = new String[9];
+                    retNodes[0] = nodes[3];
+                    retNodes[1] = nodes[4];
+                    retNodes[2] = nodes[5];
+                    retNodes[3] = nodes[6];
+                    retNodes[4] = nodes[7];
+                    retNodes[5] = nodes[8];
+                    retNodes[6] = nodes[0];
+                    retNodes[7] = nodes[1];
+                    retNodes[8] = nodes[2];
+                }
+            } else if (StatusUtil.isNodeArrival(nodes[0]) && !StatusUtil.isNodeArrival(nodes[3])) {
+                if (reverse == true) {
+                    retNodes = new String[9];
+                    retNodes[0] = nodes[6];
+                    retNodes[1] = nodes[7];
+                    retNodes[2] = nodes[8];
+                    retNodes[3] = nodes[0];
+                    retNodes[4] = nodes[1];
+                    retNodes[5] = nodes[2];
+                    retNodes[6] = nodes[3];
+                    retNodes[7] = nodes[4];
+                    retNodes[8] = nodes[5];
+                } else {
+                    retNodes = new String[9];
+                    retNodes[0] = nodes[0];
+                    retNodes[1] = nodes[1];
+                    retNodes[2] = nodes[2];
+                    retNodes[3] = nodes[6];
+                    retNodes[4] = nodes[7];
+                    retNodes[5] = nodes[8];
+                    retNodes[6] = nodes[3];
+                    retNodes[7] = nodes[4];
+                    retNodes[8] = nodes[5];
+                }
+            } else {
+                retNodes = nodes;
+            }
+        }
+        return retNodes;
+    }
 
 
     /**
@@ -696,6 +786,7 @@ public class DataDispatcher {
     private static String[] dispatchModKeyNode(String key, boolean reverse) {
         return dispatchModKeyNode(key, reverse, ruleInt);
     }
+
 
     /**
      * Rule値に従って、キー値を渡すことで、KeyNodeの名前とポートの配列を返す.<br>
@@ -814,14 +905,25 @@ public class DataDispatcher {
         while(true) {
             noWaitFlg = false;
             // 停止ステータスか確認する
-            if (!StatusUtil.isWaitStatus(allNodeDetailList[2][nodeNo])) noWaitFlg = true;
-
-            if (ret.length > 3) {
-                if(!StatusUtil.isWaitStatus(allNodeDetailList[5][nodeNo])) noWaitFlg = true;
+            if (ret.length == 3) {
+                if (!StatusUtil.isWaitStatus(allNodeDetailList[2][nodeNo])) noWaitFlg = true;
             }
 
-            if (ret.length > 6) {
-                if(!StatusUtil.isWaitStatus(allNodeDetailList[8][nodeNo])) noWaitFlg = true;
+            if (ret.length == 6) {
+                if (!StatusUtil.isWaitStatus(allNodeDetailList[2][nodeNo]) && 
+                        !StatusUtil.isWaitStatus(allNodeDetailList[5][nodeNo])) {
+
+                    noWaitFlg = true;
+                }
+            }
+
+            if (ret.length == 9) {
+                if (!StatusUtil.isWaitStatus(allNodeDetailList[2][nodeNo]) && 
+                        !StatusUtil.isWaitStatus(allNodeDetailList[5][nodeNo]) && 
+                            !StatusUtil.isWaitStatus(allNodeDetailList[8][nodeNo])) {
+
+                    noWaitFlg = true;
+                }
             }
 
             if  (noWaitFlg) break;
@@ -1003,14 +1105,25 @@ public class DataDispatcher {
         while(true) {
             noWaitFlg = false;
             // 停止ステータスか確認する
-            if (!StatusUtil.isWaitStatus(mainDataNodeInfo[2])) noWaitFlg = true;
-
-            if (ret.length > 3) {
-                if(!StatusUtil.isWaitStatus(slaveDataNodeInfo[2])) noWaitFlg = true;
+            if (ret.length == 3) {
+                if (!StatusUtil.isWaitStatus(mainDataNodeInfo[2])) noWaitFlg = true;
             }
 
-            if (ret.length > 6) {
-                if(!StatusUtil.isWaitStatus(thirdDataNodeInfo[2])) noWaitFlg = true;
+            if (ret.length == 6) {
+                if (!StatusUtil.isWaitStatus(mainDataNodeInfo[2]) && 
+                        !StatusUtil.isWaitStatus(slaveDataNodeInfo[2])) {
+
+                    noWaitFlg = true;
+                }
+            }
+
+            if (ret.length == 9) {
+                if (!StatusUtil.isWaitStatus(mainDataNodeInfo[2]) && 
+                        !StatusUtil.isWaitStatus(slaveDataNodeInfo[2]) && 
+                            !StatusUtil.isWaitStatus(thirdDataNodeInfo[2])) {
+
+                    noWaitFlg = true;
+                }
             }
 
             if  (noWaitFlg) break;

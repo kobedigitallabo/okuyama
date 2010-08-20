@@ -81,6 +81,8 @@ public class StatusUtil {
             }
         }
     }
+    
+    
     /*
     public static void initNodeExecMap(String[] nodeInfos) {
         synchronized(nodeExecMap) {
@@ -101,6 +103,7 @@ public class StatusUtil {
         StatusUtil.status = status;
     }
 
+
     /**
      * 全体ステータスを設定
      */
@@ -117,12 +120,14 @@ public class StatusUtil {
         return StatusUtil.status;
     }
 
+
     /**
      * 全体ステータスメッセージを取得
      */
     public static String getStatusMessage() {
         return StatusUtil.msg;
     }
+
 
     /**
      * 自身の情報をセット
@@ -131,13 +136,13 @@ public class StatusUtil {
         myNodeInfo = my;
     }
 
+
     /**
      * 自身の情報を取得
      */
     public static String getMyNodeInfo() {
         return myNodeInfo;
     }
-
 
 
     /**
@@ -148,6 +153,7 @@ public class StatusUtil {
     public static void setCheckTargetMasterNodes(String masterNodes) {
         checkTargetMasterNodes = masterNodes;
     }
+
 
     /**
      * 自身がチェックしなければいけないMasterNodeを取得.<br>
@@ -170,6 +176,7 @@ public class StatusUtil {
         return true;
     }
 
+
     /**
      * ノードの復帰を登録
      *
@@ -180,6 +187,7 @@ public class StatusUtil {
         checkErrorMap.remove(nodeInfo);
         setNodeRebootTime(nodeInfo, new Long(System.currentTimeMillis()));
     }
+
 
     /**
      * ノードの停止を登録
@@ -201,6 +209,7 @@ public class StatusUtil {
         nodeRebootTimeMap.put(nodeInfo, time);
     }
 
+
     /**
      * ノードの最新起動時間を取得
      * 起動時間が記録されていない(一度も再起動が発生していない)場合はnullが応答
@@ -220,6 +229,7 @@ public class StatusUtil {
         return false;
     }
 
+
     /**
      * ノードの使用一時停止を設定
      */
@@ -228,6 +238,7 @@ public class StatusUtil {
             nodeStatusMap.put(nodeInfo, new Boolean(true));
         }
     }
+
 
     /**
      * ノードの使用一時停止を解除
@@ -238,6 +249,7 @@ public class StatusUtil {
         }
     }
 
+
     // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
     public static void addNodeUse(String nodeInfo) {
 
@@ -245,15 +257,6 @@ public class StatusUtil {
         cnt.incrementAndGet();
         nodeExecMap.put(nodeInfo, cnt);
     }
-/*
-    public static void addNodeUse(String nodeInfo) {
-        synchronized(nodeExecMap) {
-            Integer cnt = (Integer)nodeExecMap.get(nodeInfo);
-            cnt = cnt + 1;
-            nodeExecMap.put(nodeInfo, cnt);
-        }
-    }
-*/
 
 
     // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
@@ -262,18 +265,7 @@ public class StatusUtil {
         AtomicInteger cnt = (AtomicInteger)nodeExecMap.get(nodeInfo);
         cnt.decrementAndGet();
         nodeExecMap.put(nodeInfo, cnt);
-
     }
-/*
-    // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
-    public static void endNodeUse(String nodeInfo) {
-        synchronized(nodeExecMap) {
-            Integer cnt = (Integer)nodeExecMap.get(nodeInfo);
-            cnt = cnt - 1;
-            nodeExecMap.put(nodeInfo, cnt);
-        }
-    }
-*/
 
 
     // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
@@ -281,20 +273,13 @@ public class StatusUtil {
 
         return ((AtomicInteger)nodeExecMap.get(nodeInfo)).intValue();
     }
-/*
-    // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
-    public static int getNodeUseStatus(String nodeInfo) {
-        synchronized(nodeExecMap) {
-            return ((Integer)nodeExecMap.get(nodeInfo)).intValue();
-        }
-    }
-*/
 
 
     // データノードの最新詳細状態を格納
     public static void setNodeStatusDt(String nodeInfo, String dtText) {
         nodeStatusDtMap.put(nodeInfo, dtText);
     }
+
 
     // データノードの最新詳細状態を取得
     public static String getNodeStatusDt(String nodeInfo) {
@@ -306,22 +291,27 @@ public class StatusUtil {
         nowMemoryStatus = statusStr;
     }
 
+
     public static void setNowCpuStatus(String statusStr) {
         nowCpuStatus = statusStr;
     }
+
 
     public static String getNowMemoryStatus() {
         return nowMemoryStatus;
     }
 
+
     public static String getNowCpuStatus() {
         return  nowCpuStatus;
     }
+
 
     // MainMasterNodeかを設定
     public static void setMainMasterNode(boolean flg) {
         mainMasterNode = new Boolean(flg);
     }
+
 
     // MainMasterNodeかを判定する
     public static boolean isMainMasterNode() {
@@ -333,10 +323,12 @@ public class StatusUtil {
         return mainMasterNode.booleanValue();
     }
 
+
     // SlaveMainMasterNodeの情報をセットする
     public static void setSlaveMasterNodes(String infos) {
         slaveMainMasterNodeInfo = infos;
     }
+
 
     // SlaveMainMasterNodeの情報を返す
     public static String getSlaveMasterNodes() {
@@ -354,6 +346,7 @@ public class StatusUtil {
         transactionMode = new Boolean(flg);
     }
 
+
     // Transaction設定が有効か判定する
     public static boolean isTransactionMode() {
         while (transactionMode == null) {
@@ -364,10 +357,12 @@ public class StatusUtil {
         return transactionMode.booleanValue();
     }
 
+
     // TransactionNodeの情報をセットする
     public static void setTransactionNode(String[] info) {
         transactionInfo = info;
     }
+
 
     // TransactionNodの情報を返す
     public static String[] getTransactionNode() {
@@ -379,15 +374,18 @@ public class StatusUtil {
         return transactionInfo;
     }
 
+
     // 振り分けアルゴリズムを設定
     public static void setDistributionAlgorithm(String algorithm) {
         distributionAlgorithm = algorithm;
     }
 
+
     // 振り分けアルゴリズムを返す
     public static String getDistributionAlgorithm() {
         return distributionAlgorithm;
     }
+
 
     public static boolean isStandby() {
         while(mainMasterNode == null || transactionMode == null || distributionAlgorithm == null) {
@@ -397,6 +395,4 @@ public class StatusUtil {
         }
         return true;
     }
-
-
 }

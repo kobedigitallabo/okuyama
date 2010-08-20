@@ -35,13 +35,13 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
     // Acceptコネクタがリードできるかを監視する処理並列数
     private int maxAcceptParallelExecution = 15;
-    private long maxAcceptParallelQueue = 15;
+    private long maxAcceptParallelQueue = 5;
     private String[] maxAcceptParallelQueueNames = null;
 
 
     // 実際のデータ処理並列数
     private int maxWorkerParallelExecution = 15;
-    private int maxWorkerParallelQueue = 15;
+    private int maxWorkerParallelQueue = 5;
     private String[] maxWorkerParallelQueueNames = null;
 
 
@@ -165,7 +165,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
             // オリジナルのキュー領域を作成
             for (int i = 0; i < this.maxConnectParallelQueue; i++) {
-                super.createUniqueHelperParamQueue("KeyManagerConnectHelper" + this.myPrefix + i, 4000);
+                super.createUniqueHelperParamQueue("KeyManagerConnectHelper" + this.myPrefix + i, 7000);
                 this.maxConnectParallelQueueNames[i] = "KeyManagerConnectHelper" + this.myPrefix + i;
             }
 
