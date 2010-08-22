@@ -398,7 +398,8 @@ public class KeyMapManager extends Thread {
                 this.writeMapFileFlg = true;
 
                 // Flushは重いので同期外
-                this.bw.flush();
+                if (this.workFileMemory == false) this.bw.flush();
+
                 //logger.debug("setKeyPair - synchronized - end");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -443,7 +444,7 @@ public class KeyMapManager extends Thread {
                 this.writeMapFileFlg = true;
 
                 // Flushは重いので同期外
-                this.bw.flush();
+                if (this.workFileMemory == false) this.bw.flush();
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("setKeyPairOnlyOnce - Error");
@@ -495,7 +496,7 @@ public class KeyMapManager extends Thread {
                 this.writeMapFileFlg = true;
 
                 // Flushは重いので同期外
-                this.bw.flush();
+                if (this.workFileMemory == false) this.bw.flush();
             } catch (Exception e) {
                 logger.error("removeKeyPair - Error");
                 blocking = true;
@@ -1288,6 +1289,7 @@ public class KeyMapManager extends Thread {
                 }
                 pw.println(allDataBuf.toString());
                 pw.println("-1");
+                pw.flush();
             } catch (Exception e) {
                 logger.error("outputNoMatchKeyMapKey2Stream - Error =[" + e.getMessage() + "]");
             }
@@ -1304,18 +1306,8 @@ public class KeyMapManager extends Thread {
                 String allDataSep = "";
                 StringBuffer allDataBuf = new StringBuffer();
                 int counter = 0;
-
-                String[] targetRangs = targetRangStr.split(",");
-                int[][] rangs = new int[targetRangs.length][2];
-
-                // レンジのstartとendをセット単位でintの配列に落とす
-                for (int ii = 0; ii < targetRangs.length; ii++) {
-
-                    String[] workRangs = targetRangs[ii].split("-");
-                    rangs[ii][0] = Integer.parseInt(workRangs[0]);
-                    rangs[ii][1] = Integer.parseInt(workRangs[1]);
-                }
-
+                // レンジデータ作成
+                int[][] rangs = this.convertRangeData(targetRangStr);
 
                 // keyMapObjの内容を1行文字列として書き出し
                 Set entrySet = this.keyMapObj.entrySet();
@@ -1373,7 +1365,7 @@ public class KeyMapManager extends Thread {
 
                 pw.println(allDataBuf.toString());
                 pw.println("-1");
-
+                pw.flush();
             } catch (Exception e) {
                 logger.error("outputConsistentHashMoveData2Stream - Error =[" + e.getMessage() + "]");
             }
@@ -1383,7 +1375,7 @@ public class KeyMapManager extends Thread {
 
     // 引数で渡されてストリームからの値をデータ登録する
     // この際、既に登録されているデータは登録しない
-    public void inputConsistentHashMoveData2Stream(BufferedReader br) throws BatchException {
+    public void inputConsistentHashMoveData2Stream(PrintWriter pw, BufferedReader br) throws BatchException {
         if (!blocking) {
             try {
                 int i = 0;
@@ -1413,11 +1405,20 @@ public class KeyMapManager extends Thread {
                                 this.setKeyPairOnlyOnce(oneDatas[0], oneDatas[1], "0");
                             }
                         }
+                        pw.println("next");
+                        pw.flush();
                     }
                     logger.info("inputConsistentHashMoveData2Stream - synchronized - end");
                 }
 
             } catch (Exception e) {
+                if (pw != null) {
+                    try {
+                        pw.println("error");
+                        pw.flush();
+                    } catch (Exception ee) {
+                    }
+                }
                 logger.error("inputConsistentHashMoveData2Stream - Error");
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "inputConsistentHashMoveData2Stream - Error [" + e.getMessage() + "]");
@@ -1425,6 +1426,65 @@ public class KeyMapManager extends Thread {
             }
         }
     }
+
+
+    // 移動対象のデータが移動完了した後に削除するために呼び出す
+    // 終了時は-1が返る
+    public void removeConsistentHashMoveData2Stream(PrintWriter pw, String targetRangStr) throws BatchException {
+        if (!blocking) {
+            try {
+                // レンジデータ作成
+                int[][] rangs = this.convertRangeData(targetRangStr);
+
+                // keyMapObjの内容を1行文字列として書き出し
+                Set entrySet = this.keyMapObj.entrySet();
+
+                // KeyMapObject内のデータを1件づつ対象になるか確認
+                Iterator entryIte = entrySet.iterator(); 
+
+                // キー値を1件づつレンジに含まれているか確認
+                while(entryIte.hasNext()) {
+                    Map.Entry obj = (Map.Entry)entryIte.next();
+                    String key = null;
+
+                    // キー値を取り出し
+                    key = (String)obj.getKey();
+
+                    // 対象データのみ削除
+                    if (DataDispatcher.isRangeData(key, rangs)) this.removeKeyPair(key, "0");
+                }
+
+                pw.println("-1");
+                pw.flush();
+            } catch (Exception e) {
+                if (pw != null) {
+                    try {
+                        pw.println("error");
+                        pw.flush();
+                    } catch (Exception ee) {
+                    }
+                }
+                logger.error("removeConsistentHashMoveData2Stream - Error =[" + e.getMessage() + "]");
+            }
+        }
+    }
+
+
+    // ConsistentHash時のデータ移動用レンジ用配列作成
+    private int[][] convertRangeData(String rangsStr) {
+        String[] targetRangs = rangsStr.split(",");
+        int[][] rangs = new int[targetRangs.length][2];
+
+        // レンジのstartとendをセット単位でintの配列に落とす
+        for (int ii = 0; ii < targetRangs.length; ii++) {
+
+            String[] workRangs = targetRangs[ii].split("-");
+            rangs[ii][0] = Integer.parseInt(workRangs[0]);
+            rangs[ii][1] = Integer.parseInt(workRangs[1]);
+        }
+        return rangs;
+    }
+
 
     // データの最終更新時間を返す
     public long getLastDataChangeTime() {

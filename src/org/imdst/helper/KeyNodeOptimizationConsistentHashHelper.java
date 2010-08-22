@@ -26,13 +26,17 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
     // ノードの監視サイクル時間(ミリ秒)
     private int checkCycle = 10000 * 1;
 
-    private ArrayList mainNodeList = null;
+    private PrintWriter mainPw = null;
+    private BufferedReader mainBr = null;
+    private Socket mainSocket = null;
 
-    private OutputStreamWriter osw = null;
-    private PrintWriter pw = null;
-    private InputStreamReader isr = null;
-    private BufferedReader br = null;
-    private Socket socket = null;
+    private PrintWriter subPw = null;
+    private BufferedReader subBr = null;
+    private Socket subSocket = null;
+
+    private PrintWriter thirdPw = null;
+    private BufferedReader thirdBr = null;
+    private Socket thirdSocket = null;
 
     private int nextData = 1;
 
@@ -67,7 +71,10 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
         HashMap moveTargetData = null;
 
+        boolean sendError = false;
 
+
+        // Main
         String addMainDataNodeInfo = null;
         HashMap mainMoveTargetMap = null;
         String[] toMainDataNodeDt = null;
@@ -75,12 +82,19 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         Iterator mainIterator = null;
 
         Socket toMainSocket = null;
-        OutputStreamWriter toMainOsw = null;
         PrintWriter toMainPw = null;
-        InputStreamReader toMainIsr = null;
         BufferedReader toMainBr = null;
+        String toMainSendRet = null;
 
+        Map.Entry mainObj = null;
+        String mainDataNodeStr = null;
+        String[] mainDataNodeDetail = null;
+        String mainRangStr = null;
+        String mainTargetDataStr = null;
 
+        ArrayList mainRemoveTargetDatas = null;
+
+        // Sub
         String addSubDataNodeInfo = null;
         HashMap subMoveTargetMap = null;
         String[] toSubDataNodeDt = null;
@@ -88,10 +102,38 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         Iterator subIterator = null;
 
         Socket toSubSocket = null;
-        OutputStreamWriter toSubOsw = null;
         PrintWriter toSubPw = null;
-        InputStreamReader toSubIsr = null;
         BufferedReader toSubBr = null;
+        String toSubSendRet = null;
+
+        Map.Entry subObj = null;
+        String subDataNodeStr = null;
+        String[] subDataNodeDetail = null;
+        String subRangStr = null;
+        String subTargetDataStr = null;
+
+        ArrayList subRemoveTargetDatas = null;
+
+
+        // Third
+        String addThirdDataNodeInfo = null;
+        HashMap thirdMoveTargetMap = null;
+        String[] toThirdDataNodeDt = null;
+        Set thirdSet = null;
+        Iterator thirdIterator = null;
+
+        Socket toThirdSocket = null;
+        PrintWriter toThirdPw = null;
+        BufferedReader toThirdBr = null;
+        String toThirdSendRet = null;
+
+        Map.Entry thirdObj = null;
+        String thirdDataNodeStr = null;
+        String[] thirdDataNodeDetail = null;
+        String thirdRangStr = null;
+        String thirdTargetDataStr = null;
+
+        ArrayList thirdRemoveTargetDatas = null;
 
 
         String[] optimizeTargetKeys = null;
@@ -112,6 +154,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                 if (StatusUtil.isMainMasterNode()) {
 
                     moveTargetData = super.getConsistentHashMoveData();
+                    Thread.sleep(checkCycle);
 
                     StringBuffer sendRequestBuf = new StringBuffer();
 
@@ -126,18 +169,49 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                             try {
 
                                 // 全て初期化
+                                sendError = false;
+
+                                // Main
                                 toMainSocket = null;
-                                toMainOsw = null;
                                 toMainPw = null;
+                                toMainBr = null;
+                                toMainSendRet = null;
                                 mainSet = null;
                                 mainIterator = null;
+                                mainObj = null;
+                                mainDataNodeStr = null;
+                                mainDataNodeDetail = null;
+                                mainRangStr = null;
+                                mainTargetDataStr = null;
+                                mainRemoveTargetDatas = new ArrayList();
 
+                                // Sub
                                 toSubSocket = null;
-                                toSubOsw = null;
                                 toSubPw = null;
+                                toSubBr = null;
+                                toSubSendRet = null;
                                 subSet = null;
                                 subIterator = null;
+                                subObj = null;
+                                subDataNodeStr = null;
+                                subDataNodeDetail = null;
+                                subRangStr = null;
+                                subTargetDataStr = null;
+                                subRemoveTargetDatas = new ArrayList();
 
+                                // Third
+                                toThirdSocket = null;
+                                toThirdPw = null;
+                                toThirdBr = null;
+                                toThirdSendRet = null;
+                                thirdSet = null;
+                                thirdIterator = null;
+                                thirdObj = null;
+                                thirdDataNodeStr = null;
+                                thirdDataNodeDetail = null;
+                                thirdRangStr = null;
+                                thirdTargetDataStr = null;
+                                thirdRemoveTargetDatas = new ArrayList();
 
                                 // データ移動先のメインデータノードに接続
                                 addMainDataNodeInfo = (String)moveTargetData.get("tomain");
@@ -147,9 +221,8 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 try {
                                     toMainSocket = new Socket(toMainDataNodeDt[0], Integer.parseInt(toMainDataNodeDt[1]));
                                     toMainSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-
-                                    toMainOsw = new OutputStreamWriter(toMainSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-                                    toMainPw = new PrintWriter(new BufferedWriter(toMainOsw));
+                                    toMainPw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(toMainSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
+                                    toMainBr = new BufferedReader(new InputStreamReader(toMainSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
 
                                     mainSet = mainMoveTargetMap.keySet();
                                     mainIterator = mainSet.iterator();
@@ -161,7 +234,6 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                     toMainPw = null;
                                 }
 
-
                                 // スレーブノード処理
                                 addSubDataNodeInfo = (String)moveTargetData.get("tosub");
                                 subMoveTargetMap = (HashMap)moveTargetData.get("sub");
@@ -171,9 +243,8 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                         toSubDataNodeDt = addSubDataNodeInfo.split(":");
                                         toSubSocket = new Socket(toSubDataNodeDt[0], Integer.parseInt(toSubDataNodeDt[1]));
                                         toSubSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-
-                                        toSubOsw = new OutputStreamWriter(toSubSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-                                        toSubPw = new PrintWriter(new BufferedWriter(toSubOsw));
+                                        toSubPw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(toSubSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
+                                        toSubBr = new BufferedReader(new InputStreamReader(toSubSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
 
                                         subSet = subMoveTargetMap.keySet();
                                         subIterator = subSet.iterator();
@@ -186,42 +257,124 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                     }
                                 }
 
+                                // サードノード処理
+                                addThirdDataNodeInfo = (String)moveTargetData.get("tothird");
+                                thirdMoveTargetMap = (HashMap)moveTargetData.get("third");
+
+                                if (addThirdDataNodeInfo != null) {
+                                    try {
+                                        toThirdDataNodeDt = addThirdDataNodeInfo.split(":");
+                                        toThirdSocket = new Socket(toThirdDataNodeDt[0], Integer.parseInt(toThirdDataNodeDt[1]));
+                                        toThirdSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+                                        toThirdPw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(toThirdSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
+                                        toThirdBr = new BufferedReader(new InputStreamReader(toThirdSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
+
+                                        thirdSet = thirdMoveTargetMap.keySet();
+                                        thirdIterator = thirdSet.iterator();
+
+                                        // 移行先スレーブデータノードにデータ移行開始を送信
+                                        toThirdPw.println(sendRequestBuf.toString());
+                                        toThirdPw.flush();
+                                    } catch (Exception e) {
+                                        toThirdPw = null;
+                                    }
+                                }
+
 
                                 // 全ての移動対象のノードを処理
                                 // 対象データノード1ノードづつ処理
                                 while(mainIterator.hasNext()) {
-                                    Map.Entry obj = (Map.Entry)mainIterator.next();
-                                    String dataNodeStr = null;
-                                    String[] dataNodeDetail = null;
-                                    String rangStr = null;
-                                    String targetDataStr = null;
 
+                                    // Mainノード処理
+                                    mainObj = (Map.Entry)mainIterator.next();
                                     // キー値を取り出し
-                                    dataNodeStr = (String)obj.getKey();
-                                    dataNodeDetail = dataNodeStr.split(":");
-
+                                    mainDataNodeStr = (String)mainObj.getKey();
+                                    mainDataNodeDetail = mainDataNodeStr.split(":");
                                     // Rangの文字列を取り出し
-                                    rangStr = (String)mainMoveTargetMap.get(dataNodeStr);
-
+                                    mainRangStr = (String)mainMoveTargetMap.get(mainDataNodeStr);
                                     // 対象ノードからデータ取り出し
-                                    this.getTargetData(dataNodeDetail[0], Integer.parseInt(dataNodeDetail[1]), rangStr);
+                                    this.getTargetData(1, mainDataNodeDetail[0], Integer.parseInt(mainDataNodeDetail[1]), mainRangStr);
+                                    mainRemoveTargetDatas.add(new String(mainDataNodeDetail[0] + "#" + mainDataNodeDetail[1] + "#" + mainRangStr));
+
+
+                                    // Subノード処理
+                                    if (subIterator != null) {
+
+                                        subObj = (Map.Entry)subIterator.next();
+                                        // キー値を取り出し
+                                        subDataNodeStr = (String)subObj.getKey();
+                                        subDataNodeDetail = subDataNodeStr.split(":");
+                                        // Rangの文字列を取り出し
+                                        subRangStr = (String)subMoveTargetMap.get(subDataNodeStr);
+                                        // 対象ノードからデータ取り出し
+                                        this.getTargetData(2, subDataNodeDetail[0], Integer.parseInt(subDataNodeDetail[1]), subRangStr);
+                                        subRemoveTargetDatas.add(new String(subDataNodeDetail[0] + "#" + subDataNodeDetail[1] + "#" + subRangStr));
+                                    }
+
+                                    // Thirdノード処理
+                                    if (thirdIterator != null) {
+
+                                        thirdObj = (Map.Entry)thirdIterator.next();
+                                        // キー値を取り出し
+                                        thirdDataNodeStr = (String)thirdObj.getKey();
+                                        thirdDataNodeDetail = thirdDataNodeStr.split(":");
+                                        // Rangの文字列を取り出し
+                                        thirdRangStr = (String)thirdMoveTargetMap.get(thirdDataNodeStr);
+                                        // 対象ノードからデータ取り出し
+                                        this.getTargetData(3, thirdDataNodeDetail[0], Integer.parseInt(thirdDataNodeDetail[1]), thirdRangStr);
+                                        thirdRemoveTargetDatas.add(new String(thirdDataNodeDetail[0] + "#" + thirdDataNodeDetail[1] + "#" + thirdRangStr));
+                                    }
 
 
                                     // 対象のデータを順次対象のノードに移動
-                                    while((targetDataStr = this.nextData()) != null) {
-                                        toMainPw.println(targetDataStr);
+                                    while((mainTargetDataStr = this.nextData(1)) != null) {
+                                        toMainPw.println(mainTargetDataStr);
                                         toMainPw.flush();
+                                        toMainSendRet = toMainBr.readLine();
+                                        // エラーなら移行中止
+                                        if (toMainSendRet == null || !toMainSendRet.equals("next")) { 
+                                            sendError = true;
+                                            break;
+                                        }
 
-                                        if (toSubPw != null) {
-                                            toSubPw.println(targetDataStr);
-                                            toSubPw.flush();
+                                        if (subIterator != null) {
+                                            if ((subTargetDataStr = this.nextData(2)) != null) {
+                                                toSubPw.println(subTargetDataStr);
+                                                toSubPw.flush();
+                                                toSubSendRet = toSubBr.readLine();
+                                                // エラーなら移行中止
+                                                if (toSubSendRet == null || !toSubSendRet.equals("next")) {
+                                                    sendError = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        if (thirdIterator != null) {
+                                            if ((thirdTargetDataStr = this.nextData(3)) != null) {
+                                                toThirdPw.println(thirdTargetDataStr);
+                                                toThirdPw.flush();
+                                                toThirdSendRet = toThirdBr.readLine();
+                                                // エラーなら移行中止
+                                                if (toThirdSendRet == null || !toThirdSendRet.equals("next")) {
+                                                    sendError = true;
+                                                    break;
+                                                }
+                                            }
                                         }
                                     }
 
-                                    this.closeConnect();
+                                    // 転送元を切断
+                                    this.closeConnect(1);
+                                    if (subIterator != null) this.closeConnect(2);
+                                    if (thirdIterator != null) this.closeConnect(3);
+                                    if (sendError == true) break;
                                 }
 
+
                                 // 全てのデータの移行が完了
+                                // 転送先に終了を通知
+                                // Main
                                 toMainPw.println("-1");
                                 toMainPw.flush();
                                 toMainPw.println(ImdstDefine.imdstConnectExitRequest);
@@ -229,7 +382,8 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 toMainPw.close();
                                 toMainSocket.close();
 
-                                if (toSubPw != null) {
+                                // Sub
+                                if (subIterator != null) {
 
                                     toSubPw.println("-1");
                                     toSubPw.flush();
@@ -239,11 +393,60 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                     toSubSocket.close();
                                 }
 
-                                // 移動もとのデータを消す処理をここに追加
-                                // データ消す
+                                // Third
+                                if (thirdIterator != null) {
 
-                                // メモリ上から依頼を消す
-                                super.removeConsistentHashMoveData();
+                                    toThirdPw.println("-1");
+                                    toThirdPw.flush();
+                                    toThirdPw.println(ImdstDefine.imdstConnectExitRequest);
+                                    toThirdPw.flush();
+                                    toThirdPw.close();
+                                    toThirdSocket.close();
+                                }
+
+
+                                // 移動もとのデータを消す処理をここに追加
+                                if (sendError == false) {
+
+                                    // 転送が正しく完了した場合のみ処理開始
+
+                                    // Main
+                                    for (int mainIdx = 0; mainIdx < mainRemoveTargetDatas.size(); mainIdx++) {
+                                        String mainRemoveHostDtStr = (String)mainRemoveTargetDatas.get(mainIdx);
+                                        String[] mainRemoveHostDt = mainRemoveHostDtStr.split("#");
+                                        if(!this.removeTargetData(mainRemoveHostDt[0], Integer.parseInt(mainRemoveHostDt[1]), mainRemoveHostDt[2])) {
+                                            logger.error("KeyNodeOptimizationConsistentHashHelper - removeTargetData - Error target=[" + mainRemoveHostDt[0] + ":" + mainRemoveHostDt[1] + " Range[" + mainRemoveHostDt[2] + "]");
+                                        }
+                                    }
+
+                                    // Sub
+                                    if (subIterator != null) {
+
+                                        for (int subIdx = 0; subIdx < subRemoveTargetDatas.size(); subIdx++) {
+                                            String subRemoveHostDtStr = (String)subRemoveTargetDatas.get(subIdx);
+                                            String[] subRemoveHostDt = subRemoveHostDtStr.split("#");
+                                            if(!this.removeTargetData(subRemoveHostDt[0], Integer.parseInt(subRemoveHostDt[1]), subRemoveHostDt[2])) {
+                                                logger.error("KeyNodeOptimizationConsistentHashHelper - removeTargetData - Error target=[" + subRemoveHostDt[0] + ":" + subRemoveHostDt[1] + " Range[" + subRemoveHostDt[2] + "]");
+                                            }
+                                        }
+                                    }
+
+                                    // Third
+                                    if (thirdIterator != null) {
+
+                                        for (int thirdIdx = 0; thirdIdx < thirdRemoveTargetDatas.size(); thirdIdx++) {
+                                            String thirdRemoveHostDtStr = (String)thirdRemoveTargetDatas.get(thirdIdx);
+                                            String[] thirdRemoveHostDt = thirdRemoveHostDtStr.split("#");
+                                            if(!this.removeTargetData(thirdRemoveHostDt[0], Integer.parseInt(thirdRemoveHostDt[1]), thirdRemoveHostDt[2])) {
+                                                logger.error("KeyNodeOptimizationConsistentHashHelper - removeTargetData - Error target=[" + thirdRemoveHostDt[0] + ":" + thirdRemoveHostDt[1] + " Range[" + thirdRemoveHostDt[2] + "]");
+                                            }
+                                        }
+                                    }
+
+                                    // メモリ上から依頼を消す
+                                    super.removeConsistentHashMoveData();
+                                }
+
                                 break;
                             } catch (Exception e) {
                                 // もしエラーが発生した場合はリトライ
@@ -258,9 +461,6 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         } catch (Exception e) {
             logger.error("KeyNodeOptimizationConsistentHashHelper - executeHelper - error", e);
         }
-//-------------------------------- ここまで -------------------------------------------------------------
-//ここからIterator回しながらMain,Slaveそれぞれのレンジ対象データを移行する
-//その後 super.removeConsistentHashMoveData()呼び出して、dataNode上から移行依頼のデータも消す
 
         logger.debug("KeyNodeOptimizationConsistentHashHelper - executeHelper - end");
         return ret;
@@ -275,18 +475,28 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
     }
 
 
-    private void getTargetData(String nodeName, int nodePort, String rangStr) throws BatchException {
+
+    /**
+     *
+     *
+     * @param target
+     * @param nodeName
+     * @param nodePort
+     * @param rangStr
+     * @throw BatchException
+     */
+    private void getTargetData(int target, String nodeName, int nodePort, String rangStr) throws BatchException {
         StringBuffer buf = null;
+        Socket socket = null;
+        PrintWriter pw = null;
+        BufferedReader br = null;
 
         try {
-            this.socket = new Socket(nodeName, nodePort);
-            this.socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+            socket = new Socket(nodeName, nodePort);
+            socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
-            this.osw = new OutputStreamWriter(this.socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-            this.pw = new PrintWriter(new BufferedWriter(this.osw));
-
-            this.isr = new InputStreamReader(this.socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-            this.br = new BufferedReader(this.isr);
+            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
+            br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
 
             // 移動元からデータ読み込み
             buf = new StringBuffer();
@@ -301,6 +511,22 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
             pw.println(buf.toString());
             pw.flush();
 
+            if (target == 1) {
+
+                this.mainPw = pw;
+                this.mainBr = br;
+                this.mainSocket = socket;
+            } else if (target == 2) {
+
+                this.subPw = pw;
+                this.subBr = br;
+                this.subSocket = socket;
+            } else if (target == 3) {
+
+                this.thirdPw = pw;
+                this.thirdBr = br;
+                this.thirdSocket = socket;
+            }
 
         } catch(Exception e) {
             throw new BatchException(e);
@@ -308,12 +534,31 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
     }
 
 
-    private String nextData() throws BatchException {
+    /**
+     *
+     * @param target
+     * @return String
+     * @throw BatchException
+     */
+    private String nextData(int target) throws BatchException {
         String ret = null;
         String line = null;
 
+        BufferedReader br = null;
+
         try {
-            while((line = this.br.readLine()) != null) {
+            if (target == 1) {
+
+                br = this.mainBr;
+            } else if (target == 2) {
+
+                br = this.subBr;
+            } else if (target == 3) {
+
+                br = this.thirdBr;
+            }
+
+            while((line = br.readLine()) != null) {
 
                 if (line.length() > 0) {
                     if (line.length() == 2 && line.equals("-1")) {
@@ -332,29 +577,144 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         return ret;
     }
 
-    private void closeConnect() {
+
+    /**
+     *
+     *
+     * @param target
+     * @param nodeName
+     * @param nodePort
+     * @param rangStr
+     * @throw BatchException
+     */
+    private boolean removeTargetData(String nodeName, int nodePort, String rangStr) throws BatchException {
+        StringBuffer buf = null;
+        Socket socket = null;
+        PrintWriter pw = null;
+        BufferedReader br = null;
+        String removeRet = null;
+
+        boolean ret = false;
+        try {
+            socket = new Socket(nodeName, nodePort);
+            socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+
+            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
+            br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
+
+            // 移動元からデータ削除
+            buf = new StringBuffer();
+            // 処理番号29
+            buf.append("29");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append("true");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append(rangStr);
+
+            // 送信
+            pw.println(buf.toString());
+            pw.flush();
+
+            removeRet = br.readLine();
+
+            if (removeRet != null && removeRet.equals("-1")) ret = true;
+
+        } catch(Exception e) {
+            logger.error("KeyNodeOptimizationConsistentHashHelper - removeTargetData - Error " + e);
+        } finally {
+            try {
+                // コネクション切断
+                if (pw != null) {
+                    pw.println(ImdstDefine.imdstConnectExitRequest);
+                    pw.flush();
+                    pw.close();
+                    pw = null;
+                }
+
+                // コネクション切断
+                if (br != null) {
+                    br.close();
+                    br = null;
+                }
+
+
+                if (socket != null) {
+                    socket.close();
+                    socket = null;
+                }
+            } catch(Exception ee) {
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     *
+     * @param target
+     */
+    private void closeConnect(int target) {
+        Socket socket = null;
+        PrintWriter pw = null;
+        BufferedReader br = null;
+
         try {
 
+            if (target == 1) {
+
+                pw = this.mainPw;
+                br = this.mainBr;
+                socket = this.mainSocket;
+            } else if (target == 2) {
+
+                pw = this.subPw;
+                br = this.subBr;
+                socket = this.subSocket;
+            } else if (target == 3) {
+
+                pw = this.thirdPw;
+                br = this.thirdBr;
+                socket = this.thirdSocket;
+            }
+
+
             // コネクション切断
-            if (this.pw != null) {
-                this.pw.println(ImdstDefine.imdstConnectExitRequest);
-                this.pw.flush();
-                this.pw.close();
-                this.pw = null;
+            if (pw != null) {
+                pw.println(ImdstDefine.imdstConnectExitRequest);
+                pw.flush();
+                pw.close();
+                pw = null;
             }
 
             // コネクション切断
-            if (this.br != null) {
-                this.br.close();
-                this.br = null;
+            if (br != null) {
+                br.close();
+                br = null;
             }
 
 
-            if (this.socket != null) {
-                this.socket.close();
-                this.socket = null;
+            if (socket != null) {
+                socket.close();
+                socket = null;
             }
 
+
+            if (target == 1) {
+
+                this.mainPw = pw;
+                this.mainBr = br;
+                this.mainSocket = socket;
+            } else if (target == 2) {
+
+                this.subPw = pw;
+                this.subBr = br;
+                this.subSocket = socket;
+            } else if (target == 3) {
+
+                this.thirdPw = pw;
+                this.thirdBr = br;
+                this.thirdSocket = socket;
+            }
         } catch(Exception e2) {
             // 無視
             logger.error(e2);

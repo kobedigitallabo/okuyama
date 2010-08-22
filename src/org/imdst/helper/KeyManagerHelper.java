@@ -203,7 +203,6 @@ public class KeyManagerHelper extends AbstractHelper {
                     }
 
 
-
                     // クライアントからの要求が接続切要求ではないか確認
                     if (clientParametersStr == null || 
                             clientParametersStr.equals("") || 
@@ -221,197 +220,228 @@ public class KeyManagerHelper extends AbstractHelper {
                     // 処理番号を取り出し
                     retParamBuf = new StringBuffer();
 
-                    if(clientParameterList[0].equals("1")) {
+                    switch (Integer.parseInt(clientParameterList[0])) {
 
-                        // Key値とDataNode名を格納する
-                        requestHashCode = clientParameterList[1];
-                        transactionCode = clientParameterList[2];
-                        requestDataNode = clientParameterList[3];
+                        case 1 :
 
-                        // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
-                        if (clientParameterList.length > 4) {
-                            requestDataNode = requestDataNode + 
-                                ImdstDefine.keyHelperClientParamSep + 
-                                    clientParameterList[4];
-                        }
+                            // Key値とDataNode名を格納する
+                            requestHashCode = clientParameterList[1];
+                            transactionCode = clientParameterList[2];
+                            requestDataNode = clientParameterList[3];
 
-                        // メソッド呼び出し
-                        retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
-                        retParamBuf.append(retParams[0]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[1]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[2]);
+                            // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
+                            if (clientParameterList.length > 4) {
+                                requestDataNode = requestDataNode + 
+                                    ImdstDefine.keyHelperClientParamSep + 
+                                        clientParameterList[4];
+                            }
 
-                    } else if(clientParameterList[0].equals("2")) {
-
-                        // Key値でDataNode名を返す
-                        requestHashCode = clientParameterList[1];
-                        // メソッド呼び出し
-                        retParams = this.getDatanode(requestHashCode);
-                        retParamBuf.append(retParams[0]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[1]);
-                        if (retParams.length > 2) {
+                            // メソッド呼び出し
+                            retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
-                        }
-                    } else if(clientParameterList[0].equals("3")) {
+                            break;
+                        case 2 :
 
-                        // Tag値とキー値を格納する
-                        requestTag = clientParameterList[1];
-                        transactionCode = clientParameterList[2];         // TransactionCode
-                        requestKey = clientParameterList[3];
+                            // Key値でDataNode名を返す
+                            requestHashCode = clientParameterList[1];
 
-                        // メソッド呼び出し
-                        retParams = this.setTagdata(requestTag, requestKey, transactionCode);
-                        retParamBuf.append(retParams[0]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[1]);
-                    } else if(clientParameterList[0].equals("4")) {
+                            // メソッド呼び出し
+                            retParams = this.getDatanode(requestHashCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
+                        case 3 :
 
-                        // Tag値でKey値を返す
-                        requestHashCode = clientParameterList[1];
-                        // メソッド呼び出し
-                        retParams = this.getTagdata(requestHashCode);
-                        retParamBuf.append(retParams[0]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[1]);
-                        if (retParams.length > 2) {
+                            // Tag値とキー値を格納する
+                            requestTag = clientParameterList[1];
+                            transactionCode = clientParameterList[2];         // TransactionCode
+                            requestKey = clientParameterList[3];
+
+                            // メソッド呼び出し
+                            retParams = this.setTagdata(requestTag, requestKey, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            break;
+                        case 4 :
+
+                            // Tag値でKey値を返す
+                            requestHashCode = clientParameterList[1];
+                            // メソッド呼び出し
+                            retParams = this.getTagdata(requestHashCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
+                        case 5 :
+
+                            // Key値を指定する事でデータを削除する
+                            requestHashCode = clientParameterList[1];
+                            transactionCode = clientParameterList[2];
+
+                            // メソッド呼び出し
+                            retParams = this.removeDatanode(requestHashCode, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
+                        case 6 :
+
+                            // Key値とDataNode名を格納する
+                            // 既に登録されている場合は失敗する
+                            requestHashCode = clientParameterList[1];
+                            transactionCode = clientParameterList[2];
+                            requestDataNode = clientParameterList[3];
+
+                            // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
+                            if (clientParameterList.length > 4) {
+                                requestDataNode = requestDataNode + 
+                                    ImdstDefine.keyHelperClientParamSep + 
+                                        clientParameterList[4];
+                            }
+
+                            // メソッド呼び出し
+                            retParams = this.setDatanodeOnlyOnce(requestHashCode, requestDataNode, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
-                        }
-                    } else if(clientParameterList[0].equals("5")) {
+                            break;
+                        case 8 :
 
-                        // Key値を指定する事でデータを削除する
-                        requestHashCode = clientParameterList[1];
-                        transactionCode = clientParameterList[2];
-
-                        // メソッド呼び出し
-                        retParams = this.removeDatanode(requestHashCode, transactionCode);
-                        retParamBuf.append(retParams[0]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[1]);
-                        if (retParams.length > 2) {
+                            // Key値でDataNode名を返す(Script実行バージョン)
+                            requestHashCode = clientParameterList[1];
+                            // メソッド呼び出し
+                            retParams = this.getDatanodeScriptExec(requestHashCode,clientParameterList[2]);
+                            retParamBuf.append(retParams[0]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
-                        }
-                    } else if(clientParameterList[0].equals("6")) {
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
+                        case 10 :
 
-                        // Key値とDataNode名を格納する
-                        // 既に登録されている場合は失敗する
-                        requestHashCode = clientParameterList[1];
-                        transactionCode = clientParameterList[2];
-                        requestDataNode = clientParameterList[3];
-
-                        // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
-                        if (clientParameterList.length > 4) {
-                            requestDataNode = requestDataNode + 
-                                ImdstDefine.keyHelperClientParamSep + 
-                                    clientParameterList[4];
-                        }
-
-                        // メソッド呼び出し
-                        retParams = this.setDatanodeOnlyOnce(requestHashCode, requestDataNode, transactionCode);
-                        retParamBuf.append(retParams[0]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[1]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[2]);
-                    } else if(clientParameterList[0].equals("8")) {
-
-                        // Key値でDataNode名を返す(Script実行バージョン)
-                        requestHashCode = clientParameterList[1];
-                        // メソッド呼び出し
-                        retParams = this.getDatanodeScriptExec(requestHashCode,clientParameterList[2]);
-                        retParamBuf.append(retParams[0]);
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(retParams[1]);
-                        if (retParams.length > 2) {
+                            // ServerConnect Test Ping
+                            retParamBuf.append("10");
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[2]);
-                        }
-                    
-                    } else if(clientParameterList[0].equals("10")) {
+                            retParamBuf.append("true");
+                            // エラーの場合は以下でエラーメッセメッセージも連結
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(StatusUtil.getNowMemoryStatus());
+                            retParamBuf.append(";");
+                            retParamBuf.append("Save Data Count=[" + keyMapManager.getSaveDataCount() + "]");
+                            retParamBuf.append(";");
+                            retParamBuf.append("Last Data Change Time=[" + keyMapManager.getLastDataChangeTime() + "]");
+                            break;
+                        case 11 :
 
-                        // ServerConnect Test Ping
-                        retParamBuf.append("10");
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append("true");
-                        // エラーの場合は以下でエラーメッセメッセージも連結
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(StatusUtil.getNowMemoryStatus());
-                        retParamBuf.append(";");
-                        retParamBuf.append("Save Data Count=[" + keyMapManager.getSaveDataCount() + "]");
-                        retParamBuf.append(";");
-                        retParamBuf.append("Last Data Change Time=[" + keyMapManager.getLastDataChangeTime() + "]");
+                            // 最終データ更新時間を返す
+                            retParamBuf.append("11");
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append("true");
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(keyMapManager.getLastDataChangeTime());
+                            break;
+                        case 20 :
 
-                    } else if(clientParameterList[0].equals("11")) {
+                            // KeyMapManager Direct Connection
+                            // KeyMapObjectを読み込んで渡す
+                            this.keyMapManager.outputKeyMapObj2Stream(pw);
+                            pw.flush();
+                            retParamBuf = null;
+                            break;
+                        case 21 :
 
-                        // 最終データ更新時間を返す
-                        retParamBuf.append("11");
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append("true");
-                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                        retParamBuf.append(keyMapManager.getLastDataChangeTime());
-                    } else if(clientParameterList[0].equals("20")) {
+                            // KeyMapManager Direct Connection
+                            // KeyMapObjectを読み込んで書き出す
+                            this.keyMapManager.inputKeyMapObj2Stream(br, Integer.parseInt(clientParameterList[1]));
+                            retParamBuf = null;
+                            break;
+                        case 22 :
 
-                        // KeyMapManager Direct Connection
-                        // KeyMapObjectを読み込んで渡す
-                        this.keyMapManager.outputKeyMapObj2Stream(pw);
-                        pw.flush();
-                        retParamBuf = null;
-                    } else if(clientParameterList[0].equals("21")) {
+                            // KeyManagerの差分取得モードをONにする
+                            // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                            this.keyMapManager.diffDataMode(true);
+                            retParamBuf = null;
+                            break;
+                        case 23 :
 
-                        // KeyMapManager Direct Connection
-                        // KeyMapObjectを読み込んで書き出す
-                        this.keyMapManager.inputKeyMapObj2Stream(br, Integer.parseInt(clientParameterList[1]));
-                        retParamBuf = null;
-                    } else if(clientParameterList[0].equals("22")) {
+                            // KeyManagerの差分取得モードをOFFにする
+                            // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                            this.keyMapManager.diffDataMode(false);
+                            retParamBuf = null;
+                            break;
+                        case 24 :
 
-                        // KeyManagerの差分取得モードをONにする
-                        // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
-                        this.keyMapManager.diffDataMode(true);
-                        retParamBuf = null;
-                    } else if(clientParameterList[0].equals("23")) {
+                            // KeyManagerの差分データを読み込んで渡す
+                            // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                            this.keyMapManager.outputDiffKeyMapObj2Stream(pw);
+                            pw.flush();
+                            retParamBuf = null;
+                            break;
+                        case 25 :
 
-                        // KeyManagerの差分取得モードをOFFにする
-                        // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
-                        this.keyMapManager.diffDataMode(false);
-                        retParamBuf = null;
-                    } else if(clientParameterList[0].equals("24")) {
+                            // KeyMapManagerに差分データを登録する
+                            // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
+                            this.keyMapManager.inputDiffKeyMapObj2Stream(br);
+                            retParamBuf = null;
+                            break;
+                        case 26 :
 
-                        // KeyManagerの差分データを読み込んで渡す
-                        // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
-                        this.keyMapManager.outputDiffKeyMapObj2Stream(pw);
-                        pw.flush();
-                        retParamBuf = null;
-                    } else if(clientParameterList[0].equals("25")) {
+                            // KeyMapManager Direct Connection
+                            // KeyMapObjectから自身が管理するべてきではないデータのKey値を返す
+                            this.keyMapManager.outputNoMatchKeyMapKey2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
+                            pw.flush();
+                            retParamBuf = null;
+                            break;
+                        case 27 :
 
-                        // KeyMapManagerに差分データを登録する
-                        // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
-                        this.keyMapManager.inputDiffKeyMapObj2Stream(br);
-                        retParamBuf = null;
-                    } else if(clientParameterList[0].equals("26")) {
+                            // KeyMapManager Direct Connection
+                            // ConsistentHash時のデータ移動(抽出)
+                            this.keyMapManager.outputConsistentHashMoveData2Stream(pw, clientParameterList[2]);
+                            pw.flush();
+                            retParamBuf = null;
+                            break;
+                        case 28 :
 
-                        // KeyMapManager Direct Connection
-                        // KeyMapObjectから自身が管理するべてきではないデータのKey値を返す
-                        this.keyMapManager.outputNoMatchKeyMapKey2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
-                        pw.flush();
-                        retParamBuf = null;
-                    } else if(clientParameterList[0].equals("27")) {
+                            // KeyMapManager Direct Connection
+                            // ConsistentHash時のデータ移動(登録)
+                            this.keyMapManager.inputConsistentHashMoveData2Stream(pw, br);
+                            pw.flush();
+                            retParamBuf = null;
+                            break;
+                        case 29 :
 
-                        // KeyMapManager Direct Connection
-                        // ConsistentHash時のデータ移動(抽出)
-                        this.keyMapManager.outputConsistentHashMoveData2Stream(pw, clientParameterList[2]);
-                        pw.flush();
-                        retParamBuf = null;
-                    } else if(clientParameterList[0].equals("28")) {
+                            // KeyMapManager Direct Connection
+                            // ConsistentHash時のデータ移動(削除)
+                            this.keyMapManager.removeConsistentHashMoveData2Stream(pw, clientParameterList[2]);
+                            pw.flush();
+                            retParamBuf = null;
+                            break;
+                        default :
 
-                        // KeyMapManager Direct Connection
-                        // ConsistentHash時のデータ移動(登録)
-                        this.keyMapManager.inputConsistentHashMoveData2Stream(br);
-                        retParamBuf = null;
+                            logger.info("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
+                            break;
                     }
 
 

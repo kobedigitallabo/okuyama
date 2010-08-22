@@ -57,7 +57,7 @@ public class KeyNodeDataOptimizationJob extends AbstractJob implements IJob {
             int helperCode = 0;
 
             if (ImdstDefine.dispatchModeConsistentHash.equals(StatusUtil.getDistributionAlgorithm())) {
-                helperCode = super.executeHelper("KeyNodeOptimizationHelper", null);
+                helperCode = super.executeHelper("KeyNodeOptimizationConsistentHashHelper", null);
             } else {
                 helperCode = super.executeHelper("KeyNodeOptimizationHelper", null);
             }
