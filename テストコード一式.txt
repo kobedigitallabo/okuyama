@@ -34,3 +34,25 @@ java -cp ./;./lib/mail.jar;./classes TestSock 11 127.0.0.1 8888 key1 value
 Å°setNewValue(append) =>é∏îs
 java -cp ./;./lib/mail.jar;./classes TestSock 11 127.0.0.1 8888 key1 value
 
+Å°ConsistentHashÇ≈ÉmÅ[Éhí«â¡
+java -cp ./;./lib/mail.jar;./classes TestSock 1 127.0.0.1 8888 1000
+java -cp ./;./lib/mail.jar;./classes TestSock 3 127.0.0.1 8888 300
+
+java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ KeyMapNodesInfo" "localhost:5553,localhost:5554,localhost:8553"
+java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ SubKeyMapNodesInfo" "localhost:5556,localhost:5557,localhost:8554"
+java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ ThirdKeyMapNodesInfo" "localhost:7553,localhost:7554,localhost:8555"
+java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ addNode4ConsistentHashMode" "localhost:8553,localhost:8554,localhost:8555"
+
+java -cp ./;./lib/mail.jar;./classes TestSock 2 127.0.0.1 8888 1000
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag1
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag2
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag3
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag4
+
+java -cp ./;./lib/mail.jar;./classes TestSock 1 127.0.0.1 8888 3000
+java -cp ./;./lib/mail.jar;./classes TestSock 2 127.0.0.1 8888 3000
+java -cp ./;./lib/mail.jar;./classes TestSock 3 127.0.0.1 8888 500
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag1
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag2
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag3
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag4

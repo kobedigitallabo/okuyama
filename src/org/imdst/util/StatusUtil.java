@@ -76,24 +76,12 @@ public class StatusUtil {
     public static void initNodeExecMap(String[] nodeInfos) {
 
         for (int i = 0; i < nodeInfos.length; i++) {
+        System.out.println(nodeInfos[i]);
             if (!nodeExecMap.containsKey(nodeInfos[i])) {
                 nodeExecMap.put(nodeInfos[i], new AtomicInteger(0));
             }
         }
     }
-    
-    
-    /*
-    public static void initNodeExecMap(String[] nodeInfos) {
-        synchronized(nodeExecMap) {
-            for (int i = 0; i < nodeInfos.length; i++) {
-                if (!nodeExecMap.containsKey(nodeInfos[i])) {
-                    nodeExecMap.put(nodeInfos[i], new Integer(0));
-                }
-            }
-        }
-    }
-    */
 
 
     /**
@@ -252,7 +240,6 @@ public class StatusUtil {
 
     // 本メソッドを呼び出す場合は必ずinitNodeExecMapで初期化を行う必要がある
     public static void addNodeUse(String nodeInfo) {
-
         AtomicInteger cnt = (AtomicInteger)nodeExecMap.get(nodeInfo);
         cnt.incrementAndGet();
         nodeExecMap.put(nodeInfo, cnt);

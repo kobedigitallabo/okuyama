@@ -86,7 +86,6 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         BufferedReader toMainBr = null;
         String toMainSendRet = null;
 
-        Map.Entry mainObj = null;
         String mainDataNodeStr = null;
         String[] mainDataNodeDetail = null;
         String mainRangStr = null;
@@ -106,7 +105,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         BufferedReader toSubBr = null;
         String toSubSendRet = null;
 
-        Map.Entry subObj = null;
+
         String subDataNodeStr = null;
         String[] subDataNodeDetail = null;
         String subRangStr = null;
@@ -127,7 +126,6 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         BufferedReader toThirdBr = null;
         String toThirdSendRet = null;
 
-        Map.Entry thirdObj = null;
         String thirdDataNodeStr = null;
         String[] thirdDataNodeDetail = null;
         String thirdRangStr = null;
@@ -178,7 +176,6 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 toMainSendRet = null;
                                 mainSet = null;
                                 mainIterator = null;
-                                mainObj = null;
                                 mainDataNodeStr = null;
                                 mainDataNodeDetail = null;
                                 mainRangStr = null;
@@ -192,7 +189,6 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 toSubSendRet = null;
                                 subSet = null;
                                 subIterator = null;
-                                subObj = null;
                                 subDataNodeStr = null;
                                 subDataNodeDetail = null;
                                 subRangStr = null;
@@ -206,7 +202,6 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 toThirdSendRet = null;
                                 thirdSet = null;
                                 thirdIterator = null;
-                                thirdObj = null;
                                 thirdDataNodeStr = null;
                                 thirdDataNodeDetail = null;
                                 thirdRangStr = null;
@@ -217,6 +212,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 addMainDataNodeInfo = (String)moveTargetData.get("tomain");
                                 toMainDataNodeDt = addMainDataNodeInfo.split(":");
                                 mainMoveTargetMap = (HashMap)moveTargetData.get("main");
+System.out.println("-------------------- tomain -----------------");
+System.out.println(addMainDataNodeInfo);
+System.out.println(mainMoveTargetMap);
 
                                 try {
                                     toMainSocket = new Socket(toMainDataNodeDt[0], Integer.parseInt(toMainDataNodeDt[1]));
@@ -237,7 +235,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 // スレーブノード処理
                                 addSubDataNodeInfo = (String)moveTargetData.get("tosub");
                                 subMoveTargetMap = (HashMap)moveTargetData.get("sub");
-
+System.out.println("-------------------- tosub -----------------");
+System.out.println(addSubDataNodeInfo);
+System.out.println(subMoveTargetMap);
                                 if (addSubDataNodeInfo != null) {
                                     try {
                                         toSubDataNodeDt = addSubDataNodeInfo.split(":");
@@ -260,7 +260,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 // サードノード処理
                                 addThirdDataNodeInfo = (String)moveTargetData.get("tothird");
                                 thirdMoveTargetMap = (HashMap)moveTargetData.get("third");
-
+System.out.println("-------------------- tothird -----------------");
+System.out.println(addThirdDataNodeInfo);
+System.out.println(thirdMoveTargetMap);
                                 if (addThirdDataNodeInfo != null) {
                                     try {
                                         toThirdDataNodeDt = addThirdDataNodeInfo.split(":");
@@ -284,11 +286,10 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 // 全ての移動対象のノードを処理
                                 // 対象データノード1ノードづつ処理
                                 while(mainIterator.hasNext()) {
-
+System.out.println("11111111111111111111111=" + mainRangStr);
                                     // Mainノード処理
-                                    mainObj = (Map.Entry)mainIterator.next();
                                     // キー値を取り出し
-                                    mainDataNodeStr = (String)mainObj.getKey();
+                                    mainDataNodeStr = (String)mainIterator.next();
                                     mainDataNodeDetail = mainDataNodeStr.split(":");
                                     // Rangの文字列を取り出し
                                     mainRangStr = (String)mainMoveTargetMap.get(mainDataNodeStr);
@@ -299,10 +300,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                     // Subノード処理
                                     if (subIterator != null) {
-
-                                        subObj = (Map.Entry)subIterator.next();
+System.out.println("22222222222222222222222222=" + subRangStr);
                                         // キー値を取り出し
-                                        subDataNodeStr = (String)subObj.getKey();
+                                        subDataNodeStr = (String)subIterator.next();
                                         subDataNodeDetail = subDataNodeStr.split(":");
                                         // Rangの文字列を取り出し
                                         subRangStr = (String)subMoveTargetMap.get(subDataNodeStr);
@@ -313,10 +313,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                     // Thirdノード処理
                                     if (thirdIterator != null) {
-
-                                        thirdObj = (Map.Entry)thirdIterator.next();
+System.out.println("333333333333333333333333333=" + thirdRangStr);
                                         // キー値を取り出し
-                                        thirdDataNodeStr = (String)thirdObj.getKey();
+                                        thirdDataNodeStr = (String)thirdIterator.next();
                                         thirdDataNodeDetail = thirdDataNodeStr.split(":");
                                         // Rangの文字列を取り出し
                                         thirdRangStr = (String)thirdMoveTargetMap.get(thirdDataNodeStr);
@@ -328,35 +327,43 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                     // 対象のデータを順次対象のノードに移動
                                     while((mainTargetDataStr = this.nextData(1)) != null) {
+System.out.println("4444444444444444444444444");
                                         toMainPw.println(mainTargetDataStr);
                                         toMainPw.flush();
                                         toMainSendRet = toMainBr.readLine();
                                         // エラーなら移行中止
                                         if (toMainSendRet == null || !toMainSendRet.equals("next")) { 
+System.out.println("55555555555555555555555");
                                             sendError = true;
                                             break;
                                         }
-
+System.out.println("66666666666666666666666666");
                                         if (subIterator != null) {
+System.out.println("7777777777777777777777777");
                                             if ((subTargetDataStr = this.nextData(2)) != null) {
+System.out.println("8888888888888888888888888");
                                                 toSubPw.println(subTargetDataStr);
                                                 toSubPw.flush();
                                                 toSubSendRet = toSubBr.readLine();
                                                 // エラーなら移行中止
                                                 if (toSubSendRet == null || !toSubSendRet.equals("next")) {
+System.out.println("999999999999999999999999999");
                                                     sendError = true;
                                                     break;
                                                 }
                                             }
                                         }
-
+System.out.println("10-10-10-10-10-10-10-10-10-10");
                                         if (thirdIterator != null) {
+System.out.println("11-11-11-11-11-11-11-11-11-11");
                                             if ((thirdTargetDataStr = this.nextData(3)) != null) {
+System.out.println("12-12-12-12-12-12-12-12-12-12");
                                                 toThirdPw.println(thirdTargetDataStr);
                                                 toThirdPw.flush();
                                                 toThirdSendRet = toThirdBr.readLine();
                                                 // エラーなら移行中止
                                                 if (toThirdSendRet == null || !toThirdSendRet.equals("next")) {
+System.out.println("13-13-13-13-13-13-13-13-13-13");
                                                     sendError = true;
                                                     break;
                                                 }
@@ -364,6 +371,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                         }
                                     }
 
+System.out.println("14-14-14-14-14-14-14-14-14-14");
                                     // 転送元を切断
                                     this.closeConnect(1);
                                     if (subIterator != null) this.closeConnect(2);
@@ -371,6 +379,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                     if (sendError == true) break;
                                 }
 
+System.out.println("15-15-15-15-15-15-15-15-15-15");
 
                                 // 全てのデータの移行が完了
                                 // 転送先に終了を通知
@@ -381,10 +390,11 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 toMainPw.flush();
                                 toMainPw.close();
                                 toMainSocket.close();
-
+System.out.println("16-16-16-16-16-16-16-16-16-16");
                                 // Sub
                                 if (subIterator != null) {
-
+                                
+System.out.println("17-17-17-17-17-17-17-17-17-17");
                                     toSubPw.println("-1");
                                     toSubPw.flush();
                                     toSubPw.println(ImdstDefine.imdstConnectExitRequest);
@@ -395,7 +405,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                 // Third
                                 if (thirdIterator != null) {
-
+System.out.println("18-18-18-18-18-18-18-18-18-18");
                                     toThirdPw.println("-1");
                                     toThirdPw.flush();
                                     toThirdPw.println(ImdstDefine.imdstConnectExitRequest);
@@ -407,6 +417,8 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                 // 移動もとのデータを消す処理をここに追加
                                 if (sendError == false) {
+
+System.out.println("19-19-19-19-19-19-19-19-19-19");
 
                                     // 転送が正しく完了した場合のみ処理開始
 
@@ -421,7 +433,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                     // Sub
                                     if (subIterator != null) {
-
+System.out.println("20-20-20-20-20-20-20-20-20-20");
                                         for (int subIdx = 0; subIdx < subRemoveTargetDatas.size(); subIdx++) {
                                             String subRemoveHostDtStr = (String)subRemoveTargetDatas.get(subIdx);
                                             String[] subRemoveHostDt = subRemoveHostDtStr.split("#");
@@ -433,6 +445,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                     // Third
                                     if (thirdIterator != null) {
+System.out.println("21-21-21-21-21-21-21-21-21-21");
 
                                         for (int thirdIdx = 0; thirdIdx < thirdRemoveTargetDatas.size(); thirdIdx++) {
                                             String thirdRemoveHostDtStr = (String)thirdRemoveTargetDatas.get(thirdIdx);
@@ -442,6 +455,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                             }
                                         }
                                     }
+System.out.println("22-22-22-22-22-22-22-22-22-22");
 
                                     // メモリ上から依頼を消す
                                     super.removeConsistentHashMoveData();

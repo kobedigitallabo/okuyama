@@ -558,7 +558,8 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             // 消えたタイミングで、DataDispatcherからもoldCircleを削除する
             if (dispatchMode.equals(ImdstDefine.dispatchModeConsistentHash)) {
 
-                // 取得できる値のフォーマットは"main=192.168.1.5:5553,sub=192.168.2.5:5553,third=192.168.2.5:5553"のようなフォーマット
+                // 取得できる値のフォーマットは"192.168.1.5:5553,192.168.2.5:5553,192.168.2.5:5553"のようなフォーマット
+                // 値が1つならメインノードのみ、2つならメインとスレーブ、3つならメイン、スレーブ、サードとなる
                 String[] addNodeRequest = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode);
 
                 if (addNodeRequest[0].equals("true")) {
@@ -847,8 +848,6 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
 
         //DataNode情報解析
-
-
         mainKeyNodes = keyMapNodesStr.split(",");
 
         allNodeCounter = mainKeyNodes.length;
@@ -862,6 +861,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             thirdKeyNodes = thirdKeyMapNodesStr.split(",");
             allNodeCounter = allNodeCounter + thirdKeyNodes.length;
         }
+
 
         allNodeInfos = new String[allNodeCounter];
 
@@ -877,7 +877,9 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             allNodeInfos[i + mainKeyNodes.length + subKeyNodes.length] = thirdKeyNodes[i];
         }
 
+
         // DataNodeの情報を初期化
+        System.out.println("allNodeInfos=[" + allNodeInfos + "]");
         StatusUtil.initNodeExecMap(allNodeInfos);
 
         // TransactionNodeの情報を初期化

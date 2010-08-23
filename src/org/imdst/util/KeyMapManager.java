@@ -1303,16 +1303,18 @@ public class KeyMapManager extends Thread {
     public void outputConsistentHashMoveData2Stream(PrintWriter pw, String targetRangStr) throws BatchException {
         if (!blocking) {
             try {
+
                 String allDataSep = "";
                 StringBuffer allDataBuf = new StringBuffer();
                 int counter = 0;
+
                 // レンジデータ作成
                 int[][] rangs = this.convertRangeData(targetRangStr);
 
                 // keyMapObjの内容を1行文字列として書き出し
                 Set entrySet = this.keyMapObj.entrySet();
-
                 int printLineCount = 0;
+
                 // 一度に送信するデータ量を算出。空きメモリの10%を使用する
                 int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / (ImdstDefine.saveKeyMaxSize * 1.38)).intValue();
                 //int maxLineCount = 500;
@@ -1356,7 +1358,9 @@ public class KeyMapManager extends Thread {
                     counter++;
 
                     if (counter > (maxLineCount - 1)) {
+
                         pw.println(allDataBuf.toString());
+                        pw.flush();
                         allDataBuf = new StringBuffer();
                         counter = 0;
                         allDataSep = "";
@@ -1472,7 +1476,7 @@ public class KeyMapManager extends Thread {
 
     // ConsistentHash時のデータ移動用レンジ用配列作成
     private int[][] convertRangeData(String rangsStr) {
-        String[] targetRangs = rangsStr.split(",");
+        String[] targetRangs = rangsStr.split("_");
         int[][] rangs = new int[targetRangs.length][2];
 
         // レンジのstartとendをセット単位でintの配列に落とす

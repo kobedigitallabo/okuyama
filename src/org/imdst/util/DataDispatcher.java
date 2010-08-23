@@ -439,23 +439,24 @@ public class DataDispatcher {
 
 
             // 求めたレンジを取得ノード名単位でまとめる
-            // Node01:5553,"6756-9876,12345-987654"
-            // Node02:5553,"342-3456,156456-178755"
+            // _区切りで範囲を連結
+            // Node01:5553,"6756-9876_12345-987654"
+            // Node02:5553,"342-3456_156456-178755"
             if (convertMap.containsKey(nodeName)) {
 
                 String work = (String)convertMap.get(nodeName);
-                convertMap.put(nodeName, work + "," + targetHashStart + "-" +  targetHashEnd);
+                convertMap.put(nodeName, work + "_" + targetHashStart + "-" +  targetHashEnd);
 
                 // サブ
                 String[] subDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_sub");
                 if (subDataNodeInfo != null) {
-                    subConvertMap.put(subDataNodeInfo[2], work + "," + targetHashStart + "-" +  targetHashEnd);
+                    subConvertMap.put(subDataNodeInfo[2], work + "_" + targetHashStart + "-" +  targetHashEnd);
                 }
 
                 // サード
                 String[] thirdDataNodeInfo = (String[])keyNodeMap.get(nodeName + "_third");
                 if (thirdDataNodeInfo != null) {
-                    thirdConvertMap.put(thirdDataNodeInfo[2], work + "," + targetHashStart + "-" +  targetHashEnd);
+                    thirdConvertMap.put(thirdDataNodeInfo[2], work + "_" + targetHashStart + "-" +  targetHashEnd);
                 }
 
             } else {
@@ -1192,10 +1193,11 @@ public class DataDispatcher {
      */
     public static boolean isRangeData(String key ,int[][] rangs) {
         boolean ret = false;
-
+//System.out.println(rangs.length);
+//System.out.println(rangs[0].length);
         // 対象データ判定
         for (int rangsIdx = 0; rangsIdx < rangs.length; rangsIdx++) {
-
+//System.out.println(rangs[rangsIdx][0] + "-" +  rangs[rangsIdx][1]);
             // レンジ start < endの場合
             if (rangs[rangsIdx][0] < rangs[rangsIdx][1]) {
 
