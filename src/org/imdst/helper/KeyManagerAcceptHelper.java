@@ -3,6 +3,7 @@ package org.imdst.helper;
 import java.io.*;
 import java.util.*;
 import java.net.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import org.batch.lang.BatchException;
 import org.batch.job.AbstractHelper;
@@ -29,6 +30,10 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
 
     private String queuePrefix = null;
 
+    private ArrayBlockingQueue connectCheckQueue = new ArrayBlockingQueue(5000);
+
+    private CheckConnection[] checkConnections = null;
+
     /**
      * Logger.<br>
      */
@@ -36,6 +41,8 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
 
     // 初期化メソッド定義
     public void initHelper(String initValue) {
+        this.checkConnections = new CheckConnection[1];
+        this.checkConnections[0] = new CheckConnection();
     }
 
     // Jobメイン処理定義
@@ -56,6 +63,9 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
             pollQueueName = (String)parameters[0];
             addExecQueueNames = (String[])parameters[1];
             addCheckQueueName = (String)parameters[0];
+
+            this.checkConnections[0].setAddQueueName(addCheckQueueName);
+            this.checkConnections[0].start();
 
             while (serverRunning) {
 
@@ -88,59 +98,12 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
                     super.addSmallSizeParameterQueue(addExecQueueNames, queueParam);
                 } else {
 
-                    // 読み込みのデータがバッファに存在しない
-                    try {
-                        int test = 0;
-                        br.mark(1);
-
-                        // 無操作時間が上限に達していないかを確認
-                        long start = ((Long)clientMap[ImdstDefine.paramStart]).longValue();
-                        long last = ((Long)clientMap[ImdstDefine.paramLast]).longValue();
-
-                        if (connetionTimeout == -1 || (System.currentTimeMillis() - last) < connetionTimeout) {
-
-                            // 上限に達していない
-                            // 既にコネクションが切断されていないかを確認
-                            socket.setSoTimeout(1);
-                            test = br.read();
-
-                            br.reset(); 
-                        } else {
-
-                            // 上限に達している
-                            test = -1;
-                        }
-
-                        // 無操作時間の上限もしくは、コネクション切断済み
-                        if (test == -1) {
-
-                            // クローズ
-                            br.close();
-                            socket.close();
-                            br = null;
-                            socket = null;
-                        }
-
-                    } catch (SocketTimeoutException se) {
-                    } catch (Exception e) {
-                        try {
-
-                            // エラーの場合はクローズ
-                            br.close();
-                            socket.close();
-                            br = null;
-                            socket = null;
-                        } catch (Exception ee) {
-                            br = null;
-                            socket = null;
-                        }
-                    } 
-
-                    // 無操作時間が上限に達せず切断もされていない場合は再度確認キューに登録
-                    if (socket != null) {
-                        Object[] queueParam = new Object[1];
-                        queueParam[0] = clientMap;
-                        super.addSpecificationParameterQueue(addCheckQueueName, queueParam);
+                    // 接続確認用のQueueに格納
+                    connectCheckQueue.add(param);
+                    if(!this.checkConnections[0].isAlive()) {
+                        this.checkConnections[0] = new CheckConnection();
+                        this.checkConnections[0].setAddQueueName(addCheckQueueName);
+                        this.checkConnections[0].start();
                     }
                 }
             }
@@ -159,6 +122,106 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
      *
      */
     public void endHelper() {
+    }
+
+
+    /**
+     * インナークラス呼び出し用.<br>
+     *
+     */
+    public boolean addCheckEndParamQueue(String addQueueName, Object[] clientMap) {
+        Object[] queueParam = new Object[1];
+        boolean ret = false;
+        queueParam[0] = clientMap;
+
+        try {
+
+            super.addSpecificationParameterQueue(addQueueName, queueParam);
+            ret = true;
+        } catch (Throwable te) {
+            te.printStackTrace();
+            ret = false;
+        }
+        return ret;
+    }
+
+
+    /**
+     * 接続確認を行うインナークラス.<br>
+     *
+     */
+    private class CheckConnection extends Thread {
+
+        private String addQueueName = null;
+
+        public void setAddQueueName(String addQueueName) {
+            this.addQueueName = addQueueName;
+        }
+
+
+        public void run() {
+            while (true) {
+                Object[] param = null;
+                Object[] clientMap = null;
+                Socket socket = null;
+                BufferedReader br = null;
+
+                // 読み込みのデータがバッファに存在しない
+                try {
+                    param = (Object[])connectCheckQueue.take();
+                    clientMap = (Object[])param[0];
+                    br = (BufferedReader)clientMap[ImdstDefine.paramBr];
+                    socket = (Socket)clientMap[ImdstDefine.paramSocket];
+                    int test = 0;
+                    br.mark(1);
+
+                    // 無操作時間が上限に達していないかを確認
+                    long start = ((Long)clientMap[ImdstDefine.paramStart]).longValue();
+                    long last = ((Long)clientMap[ImdstDefine.paramLast]).longValue();
+
+                    if (connetionTimeout == -1 || (System.currentTimeMillis() - last) < connetionTimeout) {
+
+                        // 上限に達していない
+                        // 既にコネクションが切断されていないかを確認
+                        socket.setSoTimeout(1);
+                        test = br.read();
+
+                        br.reset(); 
+                    } else {
+
+                        // 上限に達している
+                        test = -1;
+                    }
+
+                    // 無操作時間の上限もしくは、コネクション切断済み
+                    if (test == -1) {
+
+                        // クローズ
+                        br.close();
+                        socket.close();
+                        br = null;
+                        socket = null;
+                    }
+
+                } catch (SocketTimeoutException se) {
+                } catch (Throwable te) {
+                    try {
+
+                        // エラーの場合はクローズ
+                        br.close();
+                        socket.close();
+                        br = null;
+                        socket = null;
+                    } catch (Throwable tee) {
+                        br = null;
+                        socket = null;
+                    }
+                } 
+
+                // 無操作時間が上限に達せず切断もされていない場合は再度確認キューに登録
+                if (socket != null) addCheckEndParamQueue(this.addQueueName, clientMap);
+            }
+        }
     }
 
 }
