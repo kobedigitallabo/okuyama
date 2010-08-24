@@ -26,7 +26,6 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
     // ノードの監視サイクル時間(ミリ秒)
     private int checkCycle = 6000 * 3;
 
-    private ArrayList mainNodeList = null;
 
     private OutputStreamWriter osw = null;
     private PrintWriter pw = null;
@@ -34,11 +33,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
     private BufferedReader br = null;
     private Socket socket = null;
 
-    private OutputStreamWriter removeOsw = null;
-    private PrintWriter removePw = null;
-    private InputStreamReader removeIsr = null;
-    private BufferedReader removeBr = null;
-    private Socket removeSocket = null;
+    private ArrayList removeDataKeys = null;
 
     private int nextData = 1;
 
@@ -98,54 +93,57 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                     logger.info("KeyNodeOptimizationHelper - 終了状態です");
                 }
 
+                serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
+
+                serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
+                if (serverStopMarkerFile.exists()) {
+                    serverRunning = false;
+                    logger.info("KeyNodeOptimizationHelper - Server停止ファイルが存在します");
+                    StatusUtil.setStatus(2);
+                }
+
                 if (!super.isExecuteKeyNodeOptimization()) continue;
 
                 HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
-                this.mainNodeList = (ArrayList)allNodeInfo.get("main");
+                ArrayList mainNodeList = (ArrayList)allNodeInfo.get("main");
+                ArrayList subNodeList = (ArrayList)allNodeInfo.get("sub");
+                ArrayList thirdNodeList = (ArrayList)allNodeInfo.get("third");
 
-                // ノード数分チェック
-                for (int i = 0; i < mainNodeList.size(); i++) {
-                    Thread.sleep(checkCycle);
+                Thread.sleep(checkCycle);
 
+                // MainのMasterNodeの場合のみ実行
+                if (StatusUtil.isMainMasterNode()) {
 
-                    // 停止ファイル関係チェック
-                    if (StatusUtil.getStatus() == 1) {
-                        serverRunning = false;
-                        logger.info("KeyNodeOptimizationHelper - 状態異常です");
-                    }
+                    // ノード数分チェック
+                    for (int i = 0; i < mainNodeList.size(); i++) {
 
-                    if (StatusUtil.getStatus() == 2) {
-                        serverRunning = false;
-                        logger.info("KeyNodeOptimizationHelper - 終了状態です");
-                    }
-
-                    serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
-
-                    serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
-                    if (serverStopMarkerFile.exists()) {
-                        serverRunning = false;
-                        logger.info("KeyNodeOptimizationHelper - Server停止ファイルが存在します");
-                        StatusUtil.setStatus(2);
-                    }
-
-                    // MainのMasterNodeの場合のみ実行
-                    if (StatusUtil.isMainMasterNode()) {
                         //imdstKeyValueClient = new ImdstKeyValueClient();
 
                         //imdstKeyValueClient.connect(myInfoDt[0], Integer.parseInt(myInfoDt[1]));
 
                         // ノードチェック(メイン)
                         String nodeInfo = (String)mainNodeList.get(i);
+                        String subNodeInfo = null;
+                        String thirdNodeInfo = null;
+
+                        if (subNodeList != null) subNodeInfo = (String)subNodeList.get(i);
+                        if (thirdNodeList != null) thirdNodeInfo = (String)thirdNodeList.get(i);
 
                         logger.info("************************************************************");
                         logger.info(nodeInfo + " Optimization Start");
 
 
                         String[] nodeDt = nodeInfo.split(":");
-                        optimizeTargetKeys = null;
+                        String[] subNodeDt = new String[2];
+                        String[] thirdNodeDt = new String[2];
+                        if (subNodeInfo != null) subNodeDt = subNodeInfo.split(":");
+                        if (thirdNodeInfo != null) thirdNodeDt = thirdNodeInfo.split(":");
 
-                        this.closeConnect();
+                        optimizeTargetKeys = null;
+                        this.closeGetConnect();
+
                         this.searchTargetData(nodeDt[0], Integer.parseInt(nodeDt[1]), i);
+                        removeDataKeys = new ArrayList(10000);
 
                         while((optimizeTargetKeys = this.nextData()) != null) {
 
@@ -158,7 +156,9 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                             }
                         }
 
-                        this.closeConnect();
+                        this.closeGetConnect();
+                        this.removeTargetData(nodeDt[0], nodeDt[1], subNodeDt[0], subNodeDt[1], thirdNodeDt[0], thirdNodeDt[1]);
+
                         //imdstKeyValueClient.close();
                         //imdstKeyValueClient = null;
 
@@ -204,14 +204,6 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             this.br = new BufferedReader(this.isr);
 
 
-            this.removeSocket = new Socket(nodeName, nodePort);
-            this.removeSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-
-            this.removeOsw = new OutputStreamWriter(this.removeSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-            this.removePw = new PrintWriter(new BufferedWriter(this.removeOsw));
-
-            this.removeIsr = new InputStreamReader(this.removeSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-            this.removeBr = new BufferedReader(this.removeIsr);
 
             // コピー元からデータ読み込み
             buf = new StringBuffer();
@@ -227,18 +219,6 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             // 送信
             pw.println(buf.toString());
             pw.flush();
-
-
-            // 転送済みデータ削除用
-            buf = new StringBuffer();
-            // 処理番号31
-            buf.append("31");
-            buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append("true");
-
-            // 送信
-            removePw.println(buf.toString());
-            removePw.flush();
 
         } catch(Exception e) {
             throw new BatchException(e);
@@ -285,7 +265,18 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
         try {
             targetDatas = targetDataLine.split(ImdstDefine.keyHelperClientParamSep);
-            keyNodeInfo = DataDispatcher.dispatchKeyNode(targetDatas[1], false);
+
+            // タグの場合はKey値からインデッス文字を外して振り分け先を決定
+            if (targetDatas[0].equals("1")) {
+
+                // 通常データ
+                keyNodeInfo = DataDispatcher.dispatchKeyNode(targetDatas[1], false);
+            } else if (targetDatas[0].equals("2")) {
+                // タグ
+                keyNodeInfo = DataDispatcher.dispatchKeyNode(targetDatas[1].substring(0, (targetDatas[1].lastIndexOf("=") +1)), false);
+            }
+
+
             // 取得実行
             if (keyNodeInfo.length > 2) {
 
@@ -356,22 +347,94 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             e.printStackTrace();
             logger.error(e);
         } finally {
-            try {
-                // 正常に転送出来ていれば、データを消しこむ
-                removePw.println(targetDatas[0] + ImdstDefine.keyHelperClientParamSep + targetDatas[1]);
-                removePw.flush();
-                String removeRet = removeBr.readLine();
-            } catch (Exception ee) {
-                ee.printStackTrace();
-                logger.error(ee);
-                ret = false;
-            }
+
+            // 正常に転送出来ていれば、データを消しこむ
+            if (ret) removeDataKeys.add(targetDatas[0] + ImdstDefine.keyHelperClientParamSep + targetDatas[1]);
         }
         return ret;
     }
 
 
-    private void closeConnect() {
+    private void removeTargetData(String mainNodeName, String mainNodePort, String subNodeName, String subNodePort, String thirdNodeName, String thirdNodePort) {
+
+        PrintWriter[] removePw = new PrintWriter[3];
+        BufferedReader[] removeBr = new BufferedReader[3];
+        Socket[] removeSocket = new Socket[3];
+
+        try {
+
+            removeSocket[0] = new Socket(mainNodeName, Integer.parseInt(mainNodePort));
+            removeSocket[0].setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+            removePw[0] = new PrintWriter(new BufferedWriter(new OutputStreamWriter(removeSocket[0].getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
+            removeBr[0] = new BufferedReader(new InputStreamReader(removeSocket[0].getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
+
+            if (subNodeName != null) {
+                removeSocket[1] = new Socket(subNodeName, Integer.parseInt(subNodePort));
+                removeSocket[1].setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+                removePw[1] = new PrintWriter(new BufferedWriter(new OutputStreamWriter(removeSocket[1].getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
+                removeBr[1] = new BufferedReader(new InputStreamReader(removeSocket[1].getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
+            }
+
+            if (thirdNodeName != null) {
+                removeSocket[2] = new Socket(thirdNodeName, Integer.parseInt(thirdNodePort));
+                removeSocket[2].setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+                removePw[2] = new PrintWriter(new BufferedWriter(new OutputStreamWriter(removeSocket[2].getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
+                removeBr[2] = new BufferedReader(new InputStreamReader(removeSocket[2].getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
+            }
+
+
+            for (int idx = 0; idx < removeSocket.length; idx++) {
+                if (removeSocket[idx] == null) break;
+                // 転送済みデータ削除用
+                StringBuffer buf = new StringBuffer();
+                // 処理番号31
+                buf.append("31");
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append("true");
+
+                // 送信
+                removePw[idx].println(buf.toString());
+                removePw[idx].flush();
+            }
+
+            for (int idx = 0; idx < removeDataKeys.size(); idx++) {
+                for (int nodeIdx = 0; nodeIdx < removeSocket.length; nodeIdx++) {
+
+                    if (removeSocket[nodeIdx] == null) break;
+                    // 正常に転送出来ていれば、データを消しこむ
+                    removePw[nodeIdx].println((String)removeDataKeys.get(idx));
+                    removePw[nodeIdx].flush();
+                    String removeRet = removeBr[nodeIdx].readLine();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                for (int idx = 0; idx < removeSocket.length; idx++) {
+                    if (removeSocket[idx] == null) break;
+                    // コネクション切断
+
+                    removePw[idx].println("-1");
+                    removePw[idx].flush();
+                    removePw[idx].println(ImdstDefine.imdstConnectExitRequest);
+                    removePw[idx].flush();
+                    removePw[idx].close();
+                    removePw[idx] = null;
+
+                    removeBr[idx].close();
+                    removeBr[idx] = null;
+
+                    removeSocket[idx].close();
+                    removeSocket[idx] = null;
+                }
+            } catch (Exception ee) {
+            }
+        }
+    }
+
+
+    private void closeGetConnect() {
         try {
 
             // コネクション切断
@@ -394,30 +457,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                 this.socket = null;
             }
 
-
-            // コネクション切断
-            if (this.removePw != null) {
-                this.removePw.println("-1");
-                this.removePw.flush();
-                this.removePw.println(ImdstDefine.imdstConnectExitRequest);
-                this.removePw.flush();
-                this.removePw.close();
-                this.removePw = null;
-            }
-
-            // コネクション切断
-            if (this.removeBr != null) {
-                this.removeBr.close();
-                this.removeBr = null;
-            }
-
-
-            if (this.removeSocket != null) {
-                this.removeSocket.close();
-                this.removeSocket = null;
-            }
-
-
+            // TODO:ここにconnectMap閉じる実装を入れる
         } catch(Exception e2) {
             // 無視
             logger.error(e2);

@@ -374,6 +374,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 imdstKeyValueClient.autoConnect();
             }
 
+System.out.println("1111111111111111111111111111111111");
             // データノードの設定
             nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo);
             if(nodeRet[0].equals("true") && nodeRet[1] != null) {
@@ -385,7 +386,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 // 設定情報の枠がない場合は自身の情報を登録
                 imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo, keyMapNodesStr);
             }
-
+System.out.println("22222222222222222222222222222222");
             // サブデータノードの設定
             nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo);
             if(nodeRet[0].equals("true") && nodeRet[1] != null) {

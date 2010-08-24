@@ -18,7 +18,7 @@ import org.imdst.util.StatusUtil;
 import org.imdst.util.protocol.*;
 import org.imdst.util.io.KeyNodeConnector;
 
-//import com.sun.mail.util.BASE64DecoderStream;
+import com.sun.mail.util.BASE64DecoderStream;
 
 /**
  * MasterNodeのメイン実行部分<br>
@@ -749,7 +749,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
             // でそちらのルールでのデータ格納場所も調べる
             if (keyNodeSaveRet[1].equals("false")) {
-                System.out.println("過去ルールを探索");
+                System.out.println("過去ルールを探索 - get(" + keyNodeInfo[2] + ") =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
                 // キー値を使用して取得先を決定
                 // 過去ルールがなくなれば終了
                 for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess, i)) != null; i++) {
@@ -766,7 +766,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // 過去ルールからデータを発見
                     if (keyNodeSaveRet[1].equals("true")) {
-
+                        System.out.println("過去ルールからデータを発見 =[" + keyNodeInfo[2] + "]");
+/*
                         if (DataDispatcher.getDispatchMode() == ImdstDefine.dispatchModeModInt) {
                             // Modアルゴリズムの場合のみ
                             // TODO:現在のノードへの反映はいずれ別サービス化する
@@ -793,6 +794,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 logger.info("Old Rule Data Set Error" + e);
                             }
                         }
+*/
                         break;
                     }
                 }
@@ -873,7 +875,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // でそちらのルールでのデータ格納場所も調べる
             if (keyNodeSaveRet[1].equals("false")) {
 
-                System.out.println("過去ルールを探索");
+                System.out.println("過去ルールを探索 - getScript =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
                 // キー値を使用して取得先を決定
                 for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess, i)) != null; i++) {
                     System.out.println("過去ルールを探索=" + i);
@@ -967,6 +969,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             //System.out.println("過去ルールを探索");
             // キー値を使用して取得先を決定
             for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, false, i)) != null; i++) {
+                System.out.println("過去ルールを探索 - remove =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
                 System.out.println("過去ルールを探索=" + i);
                 // 取得実行
                 if (keyNodeInfo.length == 3) {
@@ -1204,8 +1207,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
             // そちらのルールでのデータ格納場所も調べる
             if (keyNodeSaveRet[1].equals("false")) {
+                System.out.println("過去ルールを探索 - getTagKeys(" + keyNodeInfo[2] + ") =" + new String(BASE64DecoderStream.decode(tagStr.getBytes())));
 
-                System.out.println("過去ルールを探索");
+
                 for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.reverseAccess, i)) != null; i++) {
                     System.out.println("過去ルールを探索=" + i);
                     // キー値を使用して取得先を決定
