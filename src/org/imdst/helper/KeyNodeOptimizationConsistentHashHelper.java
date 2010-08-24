@@ -328,6 +328,7 @@ System.out.println("333333333333333333333333333=" + thirdRangStr);
                                     // 対象のデータを順次対象のノードに移動
                                     while((mainTargetDataStr = this.nextData(1)) != null) {
 System.out.println("4444444444444444444444444");
+System.out.println(mainTargetDataStr);
                                         toMainPw.println(mainTargetDataStr);
                                         toMainPw.flush();
                                         toMainSendRet = toMainBr.readLine();
@@ -342,6 +343,7 @@ System.out.println("66666666666666666666666666");
 System.out.println("7777777777777777777777777");
                                             if ((subTargetDataStr = this.nextData(2)) != null) {
 System.out.println("8888888888888888888888888");
+System.out.println(subTargetDataStr);
                                                 toSubPw.println(subTargetDataStr);
                                                 toSubPw.flush();
                                                 toSubSendRet = toSubBr.readLine();
@@ -358,6 +360,7 @@ System.out.println("10-10-10-10-10-10-10-10-10-10");
 System.out.println("11-11-11-11-11-11-11-11-11-11");
                                             if ((thirdTargetDataStr = this.nextData(3)) != null) {
 System.out.println("12-12-12-12-12-12-12-12-12-12");
+System.out.println(thirdTargetDataStr);
                                                 toThirdPw.println(thirdTargetDataStr);
                                                 toThirdPw.flush();
                                                 toThirdSendRet = toThirdBr.readLine();

@@ -675,7 +675,7 @@ public class DataDispatcher {
         } else if (dispatchMode == 1) {
 
             // Consistent Hash
-            if (useRule == 1 && oldCircle != null) 
+            if (useRule == 0 && oldCircle != null) 
                 ret = dispatchConsistentHashKeyNode(key, reverse, true);
         }
         return adjustmentAccessNode(ret, reverse);
@@ -1327,6 +1327,21 @@ public class DataDispatcher {
         return ret;
     }
 
+
+    /**
+     * 旧ルールの存在有無を返す
+     * @return boolean
+     */
+    public static boolean hasOldRule() {
+        boolean ret = false;
+
+        if (dispatchMode == ImdstDefine.dispatchModeModInt) {
+            if (oldRules != null) ret = true;
+        } else if (dispatchMode == ImdstDefine.dispatchModeConsistentHashInt) {
+            if (oldCircle != null) ret = true;
+        }
+        return ret;
+    }
 
     /**
      * 本メソッド呼び出すと本クラスを使用できるまで呼び出し元をロック停止させる.<br>

@@ -9,6 +9,8 @@ import org.batch.util.LoggerFactory;
 import org.batch.lang.BatchException;
 import org.imdst.util.StatusUtil;
 
+import com.sun.mail.util.BASE64DecoderStream;
+
 /**
  * DataNodeが使用するKey-Valueを管理するモジュール.<br>
  * データのファイルストア、登録ログの出力、同期化を行う.<br>
@@ -1245,7 +1247,7 @@ public class KeyMapManager extends Thread {
 
                 int printLineCount = 0;
                 // 一度に送信するデータ量を算出。空きメモリの10%を使用する
-                int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / (ImdstDefine.saveKeyMaxSize * 1.38)).intValue();
+                int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / (ImdstDefine.saveKeyMaxSize * 1.38 + ImdstDefine.saveDataMaxSize * 1.38)).intValue();
                 //int maxLineCount = 500;
                 if (entrySet.size() > 0) {
                     printLineCount = new Double(entrySet.size() / maxLineCount).intValue();
@@ -1261,21 +1263,78 @@ public class KeyMapManager extends Thread {
                 while(entryIte.hasNext()) {
                     Map.Entry obj = (Map.Entry)entryIte.next();
                     String key = null;
+                    String sendTagKey = null;
                     boolean sendFlg = true;
+                    boolean tagFlg = false;
 
                     key = (String)obj.getKey();
-                    for (int idx = 0; idx < rulesInt.length; idx++) {
-                        if (DataDispatcher.isRuleMatchKey(key, rulesInt[idx], matchNo)) {
-                            sendFlg = false;
-                            break;
+                    if (key.indexOf(ImdstDefine.imdstTagStartStr) == 0) {
+                        // タグの場合は分解して
+                        tagFlg = true;
+                        int startIdx = 15;
+                        int endIdx = key.lastIndexOf(ImdstDefine.imdstTagEndStr);
+         
+                        String checkKey = key.substring(startIdx, endIdx);
+                        sendTagKey = key.substring(startIdx, endIdx);
+
+                        int lastIdx = checkKey.lastIndexOf("=");
+
+                        // マッチするか確認
+                        // タグの対象データ判定はタグ値に連結されているインデックス文字列や、左右のプレフィックス文字列をはずして判定する
+                        for (int idx = 0; idx < rulesInt.length; idx++) {
+
+                            if (DataDispatcher.isRuleMatchKey(checkKey.substring(0, lastIdx+1), rulesInt[idx], matchNo)) {
+                                sendFlg = false;
+                                break;
+                            }
+                        }
+
+                    } else {
+
+                        // マッチするか確認
+                        for (int idx = 0; idx < rulesInt.length; idx++) {
+
+                            if (DataDispatcher.isRuleMatchKey(key, rulesInt[idx], matchNo)) {
+                                sendFlg = false;
+                                break;
+                            }
                         }
                     }
 
                     // 送信すべきデータのみ送る
                     if (sendFlg) {
-                        allDataBuf.append(allDataSep);
-                        allDataBuf.append(key);
-                        allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                        String data = this.keyMapObjGet(key);
+                        if (data != null) {
+                            if (tagFlg) {
+
+                                // タグ
+                                // タグの場合はValue部分をレコードとしてばらして送る
+                                String[] tagDatas = data.split(ImdstDefine.imdstTagKeyAppendSep);
+                                for (int idx = 0; idx < tagDatas.length; idx++) {
+
+                                    // タグの対象データのキーを送る場合はデータ転送後消しこむ際にインデックス番号が必要なので、
+                                    // 左右のプレフィックス文字列は外すが、インデックス番号はつけたまま送る
+                                    allDataBuf.append(allDataSep);
+                                    allDataBuf.append("2");
+                                    allDataBuf.append(workFileSeq);
+                                    allDataBuf.append(sendTagKey);
+                                    allDataBuf.append(workFileSeq);
+                                    allDataBuf.append(tagDatas[idx]);
+                                    allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                                    counter++;
+                                }
+                            } else {
+
+                                // 通常データ
+                                allDataBuf.append(allDataSep);
+                                allDataBuf.append("1");
+                                allDataBuf.append(workFileSeq);
+                                allDataBuf.append(key);
+                                allDataBuf.append(workFileSeq);
+                                allDataBuf.append(data);
+                                allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                            }
+                        }
                     }
 
                     counter++;
@@ -1316,7 +1375,7 @@ public class KeyMapManager extends Thread {
                 int printLineCount = 0;
 
                 // 一度に送信するデータ量を算出。空きメモリの10%を使用する
-                int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / (ImdstDefine.saveKeyMaxSize * 1.38)).intValue();
+                int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / (ImdstDefine.saveKeyMaxSize * 1.38 + ImdstDefine.saveDataMaxSize * 1.38)).intValue();
                 //int maxLineCount = 500;
                 if (entrySet.size() > 0) {
                     printLineCount = new Double(entrySet.size() / maxLineCount).intValue();
@@ -1333,25 +1392,70 @@ public class KeyMapManager extends Thread {
                 while(entryIte.hasNext()) {
                     Map.Entry obj = (Map.Entry)entryIte.next();
                     String key = null;
+                    String sendTagKey = null;
                     boolean sendFlg = false;
+                    boolean tagFlg = false;
 
                     // キー値を取り出し
                     key = (String)obj.getKey();
 
-                    // 対象データ判定
-                    sendFlg = DataDispatcher.isRangeData(key, rangs);
+                    if (key.indexOf(ImdstDefine.imdstTagStartStr) == 0) {
+                        // タグの場合は分解して
+                        tagFlg = true;
+                        int startIdx = 15;
+                        int endIdx = key.lastIndexOf(ImdstDefine.imdstTagEndStr);
+         
+                        String checkKey = key.substring(startIdx, endIdx);
+                        sendTagKey = key.substring(startIdx, endIdx);
+
+                        int lastIdx = checkKey.lastIndexOf("=");
+
+                        // 対象データ判定
+                        // タグの対象データ判定はタグ値に連結されているインデックス文字列や、左右のプレフィックス文字列をはずして判定する
+                        sendFlg = DataDispatcher.isRangeData(checkKey.substring(0, lastIdx+1), rangs);
+                    } else {
+                        // 対象データ判定
+                        sendFlg = DataDispatcher.isRangeData(key, rangs);
+                    }
+
 
                     // 送信すべきデータのみ送る
                     if (sendFlg) {
 
                         String data = this.keyMapObjGet(key);
                         if (data != null) {
-                            // 全てのデータを送る
-                            allDataBuf.append(allDataSep);
-                            allDataBuf.append(key);
-                            allDataBuf.append(workFileSeq);
-                            allDataBuf.append(data);
-                            allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+
+                            if (tagFlg) {
+
+                                // タグ
+                                // タグの場合はValue部分をレコードとしてばらして送る
+                                String[] tagDatas = data.split(ImdstDefine.imdstTagKeyAppendSep);
+                                for (int idx = 0; idx < tagDatas.length; idx++) {
+System.out.println("------------------------------------------------------------------------------");
+System.out.println(sendTagKey);
+System.out.println(tagDatas[idx]);
+                                    // タグの対象データのキーを送る場合はデータ転送後消しこむ際にインデックス番号が必要なので、
+                                    // 左右のプレフィックス文字列は外すが、インデックス番号はつけたまま送る
+                                    allDataBuf.append(allDataSep);
+                                    allDataBuf.append("2");
+                                    allDataBuf.append(workFileSeq);
+                                    allDataBuf.append(sendTagKey);
+                                    allDataBuf.append(workFileSeq);
+                                    allDataBuf.append(tagDatas[idx]);
+                                    allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                                    counter++;
+                                }
+                            } else {
+
+                                // 通常データ
+                                allDataBuf.append(allDataSep);
+                                allDataBuf.append("1");
+                                allDataBuf.append(workFileSeq);
+                                allDataBuf.append(key);
+                                allDataBuf.append(workFileSeq);
+                                allDataBuf.append(data);
+                                allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                            }
                         }
                     }
 
@@ -1379,6 +1483,13 @@ public class KeyMapManager extends Thread {
 
     // 引数で渡されてストリームからの値をデータ登録する
     // この際、既に登録されているデータは登録しない
+    public void inputNoMatchKeyMapKey2Stream(PrintWriter pw, BufferedReader br) throws BatchException {
+        this.inputConsistentHashMoveData2Stream(pw, br);
+    }
+
+
+    // 引数で渡されてストリームからの値をデータ登録する
+    // この際、既に登録されているデータは登録しない
     public void inputConsistentHashMoveData2Stream(PrintWriter pw, BufferedReader br) throws BatchException {
         if (!blocking) {
             try {
@@ -1397,7 +1508,6 @@ public class KeyMapManager extends Thread {
 
                         dataStr = br.readLine();
                         if (dataStr == null || dataStr.equals("-1")) break;
-
                         String[] dataLines = dataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
 
                         for (i = 0; i < dataLines.length; i++) {
@@ -1405,8 +1515,24 @@ public class KeyMapManager extends Thread {
                             if (!dataLines[i].trim().equals("")) {
 
                                 oneDatas = dataLines[i].split(workFileSeq);
-                                // 成功、失敗関係なく全て登録処理
-                                this.setKeyPairOnlyOnce(oneDatas[0], oneDatas[1], "0");
+
+                                // データの種類に合わせて処理分岐
+                                if (oneDatas[0].equals("1")) {
+
+                                    // 通常データ
+                                    // 成功、失敗関係なく全て登録処理
+                                    this.setKeyPairOnlyOnce(oneDatas[1], oneDatas[2], "0");
+                                } else if (oneDatas[0].equals("2")) {
+
+                                    // Tagデータ
+                                    // 通常通りタグとして保存
+                                    // Tagデータはキー値にインデックス付きで送信されるので、インデックスを取り外す
+                                    int lastIdx = oneDatas[1].lastIndexOf("=");
+
+                                    oneDatas[1] = oneDatas[1].substring(0, lastIdx+1);
+
+                                    this.setTagPair(oneDatas[1], oneDatas[2], "0");
+                                }
                             }
                         }
                         pw.println("next");
@@ -1454,8 +1580,22 @@ public class KeyMapManager extends Thread {
                     // キー値を取り出し
                     key = (String)obj.getKey();
 
-                    // 対象データのみ削除
-                    if (DataDispatcher.isRangeData(key, rangs)) this.removeKeyPair(key, "0");
+                    if (key.indexOf(ImdstDefine.imdstTagStartStr) == 0) {
+                        // タグの場合は分解して
+                        int startIdx = 15;
+                        int endIdx = key.lastIndexOf(ImdstDefine.imdstTagEndStr);
+         
+                        String checkKey = key.substring(startIdx, endIdx);
+
+                        int lastIdx = checkKey.lastIndexOf("=");
+
+                        // 対象データ判定
+                        // タグの対象データ判定はタグ値に連結されているインデックス文字列や、左右のプレフィックス文字列をはずして判定する
+                        if(DataDispatcher.isRangeData(checkKey.substring(0, lastIdx+1), rangs)) this.removeKeyPair(key, "0");
+                    } else {
+                        // 対象データ判定
+                        if(DataDispatcher.isRangeData(key, rangs)) this.removeKeyPair(key, "0");
+                    }
                 }
 
                 pw.println("-1");
@@ -1469,6 +1609,56 @@ public class KeyMapManager extends Thread {
                     }
                 }
                 logger.error("removeConsistentHashMoveData2Stream - Error =[" + e.getMessage() + "]");
+            }
+        }
+    }
+
+
+    public void removeModMoveData2Stream(PrintWriter pw, BufferedReader br) throws BatchException {
+        if (!blocking) {
+            try {
+                int i = 0;
+                String[] oneDatas = null;
+
+
+                // 最終更新日付変えずに全てのデータを登録する
+                // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
+                // 既に同一のキー値で登録データが存在する場合はそちらのデータを優先
+                String dataStr = null;
+
+                while(true) {
+                    logger.info("removeModMoveData2Stream - synchronized - start");
+
+                    dataStr = br.readLine();
+                    if (dataStr == null || dataStr.equals("-1")) break;
+
+                    oneDatas = dataStr.split(workFileSeq);
+
+                    if (oneDatas[0].equals("1")) {
+                        // 通常データ
+                        removeKeyPair(oneDatas[1], "0");
+                    } else if (oneDatas[0].equals("2")) {
+                        // タグ
+                        removeKeyPair(tagStartStr + oneDatas[1] + tagEndStr, "0");
+                    }
+                    pw.println("next");
+                    pw.flush();
+
+                    logger.info("inputConsistentHashMoveData2Stream - synchronized - end");
+                }
+
+            } catch (Exception e) {
+                if (pw != null) {
+                    try {
+                        pw.println("error");
+                        pw.flush();
+                    } catch (Exception ee) {
+                    }
+                }
+                logger.error("inputConsistentHashMoveData2Stream - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "inputConsistentHashMoveData2Stream - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
             }
         }
     }
@@ -1505,4 +1695,42 @@ public class KeyMapManager extends Thread {
         return this.blocking;
     }
 
+    public void dump() {
+        System.out.println("-------------------------------------- Dump Start ------------------------------------");
+        System.out.println("ALL Data Count = [" + this.getSaveDataCount() + "]");
+        System.out.println("======================================================================================");
+        // keyMapObjの内容を1行文字列として書き出し
+        Set entrySet = this.keyMapObj.entrySet();
+
+        // KeyMapObject内のデータを1件づつ対象になるか確認
+        Iterator entryIte = entrySet.iterator(); 
+
+        // キー値を1件づつレンジに含まれているか確認
+        while(entryIte.hasNext()) {
+            Map.Entry obj = (Map.Entry)entryIte.next();
+            String key = null;
+
+            // キー値を取り出し
+            key = (String)obj.getKey();
+            if (key.indexOf(ImdstDefine.imdstTagStartStr) == 0) {
+
+                String tag = key;
+                int startIdx = 15;
+                int endIdx = key.lastIndexOf(ImdstDefine.imdstTagEndStr);
+ 
+                key = key.substring(startIdx, endIdx);
+
+                int lastIdx = key.lastIndexOf("=");
+
+                key = key.substring(0, lastIdx+1);
+
+                System.out.println("Tag=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(tag) + "]");
+
+            } else {
+                System.out.println("Key=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(key) + "]");
+                
+            }
+        }
+        System.out.println("-------------------------------------- Dump End --------------------------------------");
+    }
 }

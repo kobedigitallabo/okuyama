@@ -220,6 +220,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     // 処理番号を取り出し
                     retParamBuf = new StringBuffer();
 
+                    if(clientParameterList[0] == null ||  clientParameterList[0].equals("")) clientParameterList[0] = "-1";
                     switch (Integer.parseInt(clientParameterList[0])) {
 
                         case 1 :
@@ -438,6 +439,30 @@ public class KeyManagerHelper extends AbstractHelper {
                             pw.flush();
                             retParamBuf = null;
                             break;
+                        case 30 :
+
+                            // KeyMapManager Direct Connection
+                            // Mod時のデータ移動(登録)
+                            this.keyMapManager.inputNoMatchKeyMapKey2Stream(pw, br);
+                            pw.flush();
+                            retParamBuf = null;
+                            break;
+
+                        case 31 :
+
+                            // KeyMapManager Direct Connection
+                            // Mod時のデータ移動(登録)
+                            this.keyMapManager.removeModMoveData2Stream(pw, br);
+                            pw.flush();
+                            retParamBuf = null;
+                            break;
+                        case 100 :
+
+                            // KeyMapManager Dump
+                            this.keyMapManager.dump();
+                            retParamBuf = null;
+                            break;
+
                         default :
 
                             logger.info("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
@@ -466,7 +491,9 @@ public class KeyManagerHelper extends AbstractHelper {
 
                 } catch (SocketException se) {
                     closeFlg = true;
-                }
+                } catch (ArrayIndexOutOfBoundsException aie) {
+                    logger.info("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
+                } 
             }
 
             ret = super.SUCCESS;
@@ -478,12 +505,10 @@ public class KeyManagerHelper extends AbstractHelper {
         } finally {
 
             try {
-
                 if (pw != null) {
                     pw.close();
                     pw = null;
                 }
-
 
                 if (br != null) {
                     br.close();
