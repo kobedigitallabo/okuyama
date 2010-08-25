@@ -939,9 +939,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         //logger.debug("MasterManagerHelper - removeKeyValue - start");
         String[] retStrs = new String[3];
 
-        String[] keyNodeSaveRet = null;
+        String[] keyNodeRemoveRet = null;
         String[] keyNodeInfo = null;
 
+        String[] oldKeyNodeRemoveRet = null;
         try {
             // Key値チェック
             if (!this.checkKeyLength(keyStr))  {
@@ -956,11 +957,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // 取得実行
             if (keyNodeInfo.length == 3) {
-                keyNodeSaveRet = this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, transactionCode);
+                keyNodeRemoveRet = this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, transactionCode);
             } else if (keyNodeInfo.length == 6) {
-                keyNodeSaveRet = this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, transactionCode);
+                keyNodeRemoveRet = this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, transactionCode);
             } else if (keyNodeInfo.length == 9) {
-                keyNodeSaveRet = this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], keyStr, transactionCode);
+                keyNodeRemoveRet = this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], keyStr, transactionCode);
             }
 
 
@@ -973,30 +974,37 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 System.out.println("過去ルールを探索=" + i);
                 // 取得実行
                 if (keyNodeInfo.length == 3) {
-                    this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, transactionCode);
+                    oldKeyNodeRemoveRet = this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, transactionCode);
                 } else if (keyNodeInfo.length == 6) {
-                    this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, transactionCode);
+                    oldKeyNodeRemoveRet = this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, transactionCode);
                 } else if (keyNodeInfo.length == 9) {
-                    this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], keyStr, transactionCode);
+                    oldKeyNodeRemoveRet = this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], keyStr, transactionCode);
+                }
+
+                if (keyNodeRemoveRet == null || keyNodeRemoveRet[1].equals("false")) {
+                    if (oldKeyNodeRemoveRet != null && oldKeyNodeRemoveRet[1].equals("true")) {
+                        keyNodeRemoveRet = oldKeyNodeRemoveRet;
+                    }
                 }
             }
 
             // 取得結果確認
-            if (keyNodeSaveRet[1].equals("false")) {
+            if (keyNodeRemoveRet[1].equals("false")) {
 
                 // 削除失敗(元データなし)
-                retStrs[0] = keyNodeSaveRet[0];
+                retStrs[0] = keyNodeRemoveRet[0];
                 retStrs[1] = "false";
                 retStrs[2] = "";
                 
             } else {
-                retStrs[0] = keyNodeSaveRet[0];
+                retStrs[0] = keyNodeRemoveRet[0];
                 retStrs[1] = "true";
-                retStrs[2] = keyNodeSaveRet[2];
+                retStrs[2] = keyNodeRemoveRet[2];
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - removeKeyValue - Error", be);
         } catch (Exception e) {
+            e.printStackTrace();
             retStrs[0] = "5";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - removeKeyValue - Exception - " + e.toString();
@@ -1275,6 +1283,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             ret = this.getKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, key);
+
         } catch (BatchException be) {
 
             retBe = be;
@@ -2300,6 +2309,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             ret = this.removeKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, key, transactionCode);
+            if (ret == null) throw new BatchException("removeKeyNodeValue - RetParam = null");
         } catch (BatchException be) {
 
             retBe = be;
@@ -2318,9 +2328,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         }
 
-        
         return ret;
-
     }
 
 

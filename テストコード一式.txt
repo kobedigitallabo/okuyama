@@ -1,40 +1,47 @@
-■Set
+rem ■Set
 java -cp ./;./lib/mail.jar;./classes TestSock 1 127.0.0.1 8888 1000
 
-■Get
+rem ■Get
 java -cp ./;./lib/mail.jar;./classes TestSock 2.11 127.0.0.1 8888 1000
 
-■Tag Set
+rem ■Tag Set
 java -cp ./;./lib/mail.jar;./classes TestSock 3 127.0.0.1 8888 100
 
-■Tag Get
+rem ■Tag Get
 java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag1
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag2
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag3
+java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag4
 
-■SetByte
-java -cp ./;./lib/mail.jar;./classes TestSock 5 127.0.0.1 8888 1 C:\test.txt txt
+rem ■SetByte
+java -cp ./;./lib/mail.jar;./classes TestSock 5 127.0.0.1 8888 1 C:\work\java\okuyama\trunk\document\okuyama構成図.gif gif
 
-■GetByte
-java -cp ./;./lib/mail.jar;./classes TestSock 6.1 127.0.0.1 8888 1 C:\test_get.txt txt
+rem ■GetByte
+java -cp ./;./lib/mail.jar;./classes TestSock 6.1 127.0.0.1 8888 1 C:\work\java\okuyama\trunk\document\okuyama構成図2.gif gif
 
-■Remove
+rem ■Remove
 java -cp ./;./lib/mail.jar;./classes TestSock 7 127.0.0.1 8888 100
 
-■Remove Data Get
-java -cp ./;./lib/mail.jar;./classes TestSock 2 127.0.0.1 8888 111
+rem ■Remove Data Get
+java -cp ./;./lib/mail.jar;./classes TestSock 7 127.0.0.1 8888 111
 
-■Lock
+rem ■Lock
 java -cp ./;./lib/mail.jar;./classes TestSock 9 127.0.0.1 8888
 
-■Lock => データを更新 => 取得 => Lock解除
+rem ■Lock => データを更新 => 取得 => Lock解除
 java -cp ./;./lib/mail.jar;./classes TestSock 10 127.0.0.1 8888 key1 5 10
 
-■setNewValue(append) =>成功
+rem ■setNewValue(append) =>成功
 java -cp ./;./lib/mail.jar;./classes TestSock 11 127.0.0.1 8888 key1 value
 
-■setNewValue(append) =>失敗
+rem ■setNewValue(append) =>失敗
 java -cp ./;./lib/mail.jar;./classes TestSock 11 127.0.0.1 8888 key1 value
+java -cp ./;./lib/mail.jar;./classes TestSock 8 127.0.0.1 8888 key1
+java -cp ./;./lib/mail.jar;./classes TestSock 11 127.0.0.1 8888 key1 value222
+java -cp ./;./lib/mail.jar;./classes TestSock 2.1 127.0.0.1 8888 key1
 
-■ConsistentHashでノード追加
+
+rem ■ConsistentHashでノード追加
 java -cp ./;./lib/mail.jar;./classes TestSock 1 127.0.0.1 8888 1000
 java -cp ./;./lib/mail.jar;./classes TestSock 3 127.0.0.1 8888 300
 

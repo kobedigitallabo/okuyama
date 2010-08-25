@@ -54,6 +54,8 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
     // 他にはconsistenthash
     private String dispatchMode = ImdstDefine.dispatchModeMod;
 
+    // 監視サイクル(秒)
+    private int checkCycle = 1000 * 1;
 
     /**
      * Logger.<br>
@@ -71,7 +73,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
     public String executeHelper(String optionParam) throws BatchException {
         logger.debug("MasterConfigurationManagerHelper - executeHelper - start");
         String ret = SUCCESS;
-        int checkCycle = 1000 * 15;
+
 
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
@@ -275,7 +277,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                         }
                     }
                 }
-                Thread.sleep(checkCycle);
+                Thread.sleep(this.checkCycle);
             }
         } catch(Exception e) {
             logger.error("MasterConfigurationManagerHelper - executeJob - Error", e);

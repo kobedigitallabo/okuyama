@@ -194,6 +194,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
         StringBuffer buf = null;
 
         try {
+System.out.println("searchTargetData - start");
             this.socket = new Socket(nodeName, nodePort);
             this.socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
@@ -223,6 +224,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
         } catch(Exception e) {
             throw new BatchException(e);
         } 
+System.out.println("searchTargetData - end");
     }
 
 
@@ -232,6 +234,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
         String line = null;
 
         try {
+System.out.println("nextData - start");
             while((line = this.br.readLine()) != null) {
 
                 if (line.length() > 0) {
@@ -246,9 +249,13 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                     }
                 }
             }
+        } catch(SocketException se) {
+            // 切断とみなす
+            logger.error(se);
         } catch(Exception e) {
             throw new BatchException(e);
         }
+System.out.println("nextData - end");
         return ret;
     }
 
@@ -264,6 +271,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
         String[] keyNodeInfo = null;
 
         try {
+System.out.println("sendTargetData - start");
             targetDatas = targetDataLine.split(ImdstDefine.keyHelperClientParamSep);
 
             // タグの場合はKey値からインデッス文字を外して振り分け先を決定
@@ -351,6 +359,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             // 正常に転送出来ていれば、データを消しこむ
             if (ret) removeDataKeys.add(targetDatas[0] + ImdstDefine.keyHelperClientParamSep + targetDatas[1]);
         }
+System.out.println("sendTargetData - end");
         return ret;
     }
 
@@ -362,7 +371,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
         Socket[] removeSocket = new Socket[3];
 
         try {
-
+System.out.println("removeTargetData - start");
             removeSocket[0] = new Socket(mainNodeName, Integer.parseInt(mainNodePort));
             removeSocket[0].setSoTimeout(ImdstDefine.recoverConnectionTimeout);
             removePw[0] = new PrintWriter(new BufferedWriter(new OutputStreamWriter(removeSocket[0].getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
@@ -431,6 +440,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             } catch (Exception ee) {
             }
         }
+System.out.println("removeTargetData - end");
     }
 
 
@@ -458,6 +468,18 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             }
 
             // TODO:ここにconnectMap閉じる実装を入れる
+            Set set = this.connectMap.keySet();
+            Iterator iterator = set.iterator();
+
+            while(iterator.hasNext()) {
+                String key = (String)iterator.next();
+                KeyNodeConnector keyNodeConnector = (KeyNodeConnector)connectMap.get(key);
+                keyNodeConnector.println("-1");
+                keyNodeConnector.flush();
+                String endMsg = keyNodeConnector.readLine();
+                keyNodeConnector.close();
+            }
+            this.connectMap = new HashMap();
         } catch(Exception e2) {
             // 無視
             logger.error(e2);

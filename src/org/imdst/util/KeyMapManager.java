@@ -2,7 +2,9 @@ package org.imdst.util;
 
 import java.util.*;
 import java.io.*;
+import java.net.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.batch.util.ILogger;
 import org.batch.util.LoggerFactory;
@@ -112,7 +114,9 @@ public class KeyMapManager extends Thread {
     private boolean diffDataPoolingFlg = false;
     private CopyOnWriteArrayList diffDataPoolingList = null;
 
-
+    // ノード間でのデータ移動時に削除として蓄積するMap
+    private ConcurrentHashMap moveAdjustmentDataMap = null;
+    private Object moveAdjustmentSync = new Object();
 
     // 初期化メソッド
     // Transactionを管理する場合に呼び出す
@@ -378,7 +382,8 @@ public class KeyMapManager extends Thread {
      *
      * @param key キー値
      * @param keyNode Value値
-     * @param transactionCode 
+     * @param transactionCode
+     * @param boolean 移行データ指定
      */
     public void setKeyPair(String key, String keyNode, String transactionCode) throws BatchException {
         if (!blocking) {
@@ -386,6 +391,14 @@ public class KeyMapManager extends Thread {
                 //logger.debug("setKeyPair - synchronized - start");
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((keyNode.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
+
+                    if (this.moveAdjustmentDataMap != null) {
+                        synchronized (this.moveAdjustmentSync) {
+                            if (this.moveAdjustmentDataMap != null && this.moveAdjustmentDataMap.containsKey(key))
+                                this.moveAdjustmentDataMap.remove(key);
+                        }
+                    }
+
                     keyMapObjPut(key, keyNode);
 
                     // データ操作履歴ファイルに追記
@@ -394,6 +407,7 @@ public class KeyMapManager extends Thread {
 
                     if (this.diffDataPoolingFlg) 
                         this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
+
                 }
 
                 // データの書き込みを指示
@@ -423,6 +437,19 @@ public class KeyMapManager extends Thread {
      * @param transactionCode 
      */
     public boolean setKeyPairOnlyOnce(String key, String keyNode, String transactionCode) throws BatchException {
+        return setKeyPairOnlyOnce(key, keyNode, transactionCode, false);
+    }
+
+
+    /**
+     * キーを指定することでノードをセットする.<br>
+     * 既に登録されている場合は、失敗する。
+     *
+     * @param key キー値
+     * @param keyNode Value値
+     * @param transactionCode 
+     */
+    public boolean setKeyPairOnlyOnce(String key, String keyNode, String transactionCode, boolean moveData) throws BatchException {
         boolean ret = false;
         if (!blocking) {
             try {
@@ -430,7 +457,16 @@ public class KeyMapManager extends Thread {
                 synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
 
                     //logger.debug("setKeyPairOnlyOnce - synchronized - start");
+
                     if(this.containsKeyPair(key)) return ret;
+
+                    if (this.moveAdjustmentDataMap != null) {
+                        synchronized (this.moveAdjustmentSync) {
+                            if (this.moveAdjustmentDataMap != null && this.moveAdjustmentDataMap.containsKey(key) && moveData == false)
+                                this.moveAdjustmentDataMap.remove(key);
+                        }
+                    }
+
                     keyMapObjPut(key, keyNode);
                     ret = true;
 
@@ -477,6 +513,15 @@ public class KeyMapManager extends Thread {
                 synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
 
                     ret =  (String)keyMapObjGet(key);
+
+                    // 削除を記録
+                    if (this.moveAdjustmentDataMap != null) {
+                        synchronized (this.moveAdjustmentSync) {
+                            if (this.moveAdjustmentDataMap != null)
+                                this.moveAdjustmentDataMap.put(key, "");
+                        }
+                    }
+
 
                     if (ret != null) {
                         keyMapObjRemove(key);
@@ -1493,6 +1538,8 @@ System.out.println(tagDatas[idx]);
     public void inputConsistentHashMoveData2Stream(PrintWriter pw, BufferedReader br) throws BatchException {
         if (!blocking) {
             try {
+                this.moveAdjustmentDataMap = new ConcurrentHashMap(1024, 1000, 512);
+
                 int i = 0;
                 String[] oneDatas = null;
 
@@ -1521,7 +1568,7 @@ System.out.println(tagDatas[idx]);
 
                                     // 通常データ
                                     // 成功、失敗関係なく全て登録処理
-                                    this.setKeyPairOnlyOnce(oneDatas[1], oneDatas[2], "0");
+                                    this.setKeyPairOnlyOnce(oneDatas[1], oneDatas[2], "0", true);
                                 } else if (oneDatas[0].equals("2")) {
 
                                     // Tagデータ
@@ -1540,7 +1587,11 @@ System.out.println(tagDatas[idx]);
                     }
                     logger.info("inputConsistentHashMoveData2Stream - synchronized - end");
                 }
-
+                pw.println("end");
+                pw.flush();
+            } catch(SocketException se) {
+                // 切断とみなす
+                logger.error(se);
             } catch (Exception e) {
                 if (pw != null) {
                     try {
@@ -1553,6 +1604,28 @@ System.out.println(tagDatas[idx]);
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "inputConsistentHashMoveData2Stream - Error [" + e.getMessage() + "]");
                 throw new BatchException(e);
+            } finally {
+                synchronized (this.moveAdjustmentSync) {
+
+                    // keyMapObjの内容を1行文字列として書き出し
+                    Set entrySet = this.moveAdjustmentDataMap.entrySet();
+
+                    // KeyMapObject内のデータを1件づつ対象になるか確認
+                    Iterator entryIte = entrySet.iterator(); 
+
+                    // キー値を1件づつレンジに含まれているか確認
+                    while(entryIte.hasNext()) {
+                        Map.Entry obj = (Map.Entry)entryIte.next();
+                        String key = null;
+
+                        // キー値を取り出し
+                        key = (String)obj.getKey();
+                        // 削除
+                        keyMapObjRemove(key);
+                        
+                    }
+                    this.moveAdjustmentDataMap = null;
+                }
             }
         }
     }
@@ -1647,6 +1720,9 @@ System.out.println(tagDatas[idx]);
                     logger.info("inputConsistentHashMoveData2Stream - synchronized - end");
                 }
 
+            } catch(SocketException se) {
+                // 切断とみなす
+                logger.error(se);
             } catch (Exception e) {
                 if (pw != null) {
                     try {

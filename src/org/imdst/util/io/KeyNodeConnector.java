@@ -185,6 +185,31 @@ public class KeyNodeConnector {
         return this.nodePort;
     }
 
+    public void close() {
+        try {
+
+            if (pw != null) {
+                pw.println(ImdstDefine.imdstConnectExitRequest);
+                pw.flush();
+                pw.close();
+                pw = null;
+            }
+
+            if (br != null) {
+                br.close();
+                pw = null;
+            }
+
+            if (socket != null) {
+                socket.close();
+                socket = null;
+            }
+
+        } catch (Exception e) {
+            // 無視
+        }
+    }
+
 
     public String connectorDump() {
         StringBuffer dump = new StringBuffer();

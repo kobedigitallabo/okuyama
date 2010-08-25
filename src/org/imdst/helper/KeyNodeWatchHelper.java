@@ -62,6 +62,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                     this.subNodeList = (ArrayList)allNodeInfo.get("sub");
                     this.thirdNodeList = (ArrayList)allNodeInfo.get("third");
 
+                    // サードノードが存在する場合はマージする
                     if (this.thirdNodeList != null && this.thirdNodeList.size() > 0) {
                         ArrayList newMainNodeList = new ArrayList();
                         ArrayList newSubNodeList = new ArrayList();
