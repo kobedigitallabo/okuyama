@@ -217,6 +217,41 @@ public class StatusUtil {
         return false;
     }
 
+    /**
+     * ノードが使用開始になるまで停止する
+     */
+    public static void waitNodeUseStatus(String mainNodeInfo, String subNodeInfo, String thirdNodeInfo) {
+        boolean noWaitFlg = false;
+        while(true) {
+            noWaitFlg = false;
+            // 停止ステータスか確認する
+            if (thirdNodeInfo != null) {
+                if (!StatusUtil.isWaitStatus(mainNodeInfo) && 
+                        !StatusUtil.isWaitStatus(subNodeInfo) && 
+                            !StatusUtil.isWaitStatus(thirdNodeInfo)) {
+
+                    noWaitFlg = true;
+                }
+            } else if (subNodeInfo != null) {
+
+                if (!StatusUtil.isWaitStatus(mainNodeInfo) && 
+                        !StatusUtil.isWaitStatus(subNodeInfo)) {
+
+                    noWaitFlg = true;
+                }
+            } else if (mainNodeInfo != null) {
+                if (!StatusUtil.isWaitStatus(mainNodeInfo)) noWaitFlg = true;
+            }
+
+            if  (noWaitFlg) break;
+
+            try {
+                //System.out.println("DataDispatcher - 停止中");
+                Thread.sleep(50);
+            } catch (Exception e) {}
+        }
+    }
+
 
     /**
      * ノードの使用一時停止を設定

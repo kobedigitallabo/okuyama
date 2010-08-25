@@ -256,6 +256,9 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             }
 
 
+            // 処理開始
+            System.out.println("MasterNodeServer-Accept-Start");
+
             // メイン処理開始
             while (true) {
                 if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;

@@ -132,36 +132,55 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                         logger.info("************************************************************");
                         logger.info(nodeInfo + " Optimization Start");
 
-
-                        String[] nodeDt = nodeInfo.split(":");
-                        String[] subNodeDt = new String[2];
-                        String[] thirdNodeDt = new String[2];
-                        if (subNodeInfo != null) subNodeDt = subNodeInfo.split(":");
-                        if (thirdNodeInfo != null) thirdNodeDt = thirdNodeInfo.split(":");
-
                         optimizeTargetKeys = null;
                         this.closeGetConnect();
 
-                        this.searchTargetData(nodeDt[0], Integer.parseInt(nodeDt[1]), i);
-                        removeDataKeys = new ArrayList(10000);
+                        String[] searchNodeDt = null;
+                        String[] mainNodeDt = nodeInfo.split(":");
+                        String[] subNodeDt = new String[2];
+                        String[] thirdNodeDt = new String[2];
 
-                        while((optimizeTargetKeys = this.nextData()) != null) {
+                        if (subNodeInfo != null) subNodeDt = subNodeInfo.split(":");
+                        if (thirdNodeInfo != null) thirdNodeDt = thirdNodeInfo.split(":");
 
-                            for (int idx = 0; idx < optimizeTargetKeys.length; idx++) {
 
-                                if (optimizeTargetKeys[idx] != null && !optimizeTargetKeys[idx].trim().equals("")) {
-                                    this.sendTargetData(optimizeTargetKeys[idx]);
-                                    //imdstKeyValueClient.getValueNoEncode(optimizeTargetKeys[idx]);
-                                }
+                        // 生存しているノードを元にデータを取得する
+                        if (!super.isNodeArrival(nodeInfo)) {
+
+                            if (subNodeInfo != null && super.isNodeArrival(subNodeInfo)) {
+
+                                // Subを使用
+                                searchNodeDt = subNodeInfo.split(":");
+                            } else if (thirdNodeInfo != null && super.isNodeArrival(thirdNodeInfo)) {
+                                
+                                // Thirdを使用
+                                searchNodeDt = thirdNodeInfo.split(":");
                             }
+                        } else {
+
+                            // Mainを使用
+                            searchNodeDt = nodeInfo.split(":");
                         }
 
-                        this.closeGetConnect();
-                        this.removeTargetData(nodeDt[0], nodeDt[1], subNodeDt[0], subNodeDt[1], thirdNodeDt[0], thirdNodeDt[1]);
 
-                        //imdstKeyValueClient.close();
-                        //imdstKeyValueClient = null;
+                        // ノードが生存している場合のみ実行
+                        if (searchNodeDt != null) {
+                            this.searchTargetData(searchNodeDt[0], Integer.parseInt(searchNodeDt[1]), i);
+                            removeDataKeys = new ArrayList(100000);
 
+                            while((optimizeTargetKeys = this.nextData()) != null) {
+
+                                for (int idx = 0; idx < optimizeTargetKeys.length; idx++) {
+
+                                    if (optimizeTargetKeys[idx] != null && !optimizeTargetKeys[idx].trim().equals("")) {
+                                        this.sendTargetData(optimizeTargetKeys[idx]);
+                                    }
+                                }
+                            }
+
+                            this.closeGetConnect();
+                            this.removeTargetData(mainNodeDt[0], mainNodeDt[1], subNodeDt[0], subNodeDt[1], thirdNodeDt[0], thirdNodeDt[1]);
+                        }
                         logger.info(nodeInfo + " Optimization End");    
                         logger.info("************************************************************");
                     }
@@ -172,7 +191,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                 logger.error("KeyNodeOptimizationHelper - executeHelper - Error", e);
             } finally {
                 try {
-                    if (imdstKeyValueClient != null) imdstKeyValueClient.close();
+
                 } catch (Exception e2) {}
             }
         }
@@ -190,6 +209,10 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
     }
 
 
+    /**
+     * 対象データを検索
+     *
+     */
     private void searchTargetData(String nodeName, int nodePort, int dataNodeMatchNo) throws BatchException {
         StringBuffer buf = null;
 
@@ -260,6 +283,10 @@ System.out.println("nextData - end");
     }
 
 
+    /**
+     * データ移動先にデータを送信.<br>
+     * Main,Sub,Third全てを対象とする.<br>
+     */
     private boolean sendTargetData(String targetDataLine) {
         boolean ret = false;
 
@@ -269,6 +296,8 @@ System.out.println("nextData - end");
 
         String[] targetDatas = null;
         String[] keyNodeInfo = null;
+
+        String sendTargetNodeInfo = null;
 
         try {
 System.out.println("sendTargetData - start");
@@ -280,75 +309,41 @@ System.out.println("sendTargetData - start");
                 // 通常データ
                 keyNodeInfo = DataDispatcher.dispatchKeyNode(targetDatas[1], false);
             } else if (targetDatas[0].equals("2")) {
+
                 // タグ
                 keyNodeInfo = DataDispatcher.dispatchKeyNode(targetDatas[1].substring(0, (targetDatas[1].lastIndexOf("=") +1)), false);
             }
 
 
-            // 取得実行
-            if (keyNodeInfo.length > 2) {
+            // コネクション確立
 
-                if(connectMap.containsKey(keyNodeInfo[2])) {
+            // Main
+            if (keyNodeInfo.length > 2) 
+                mainKeyNodeConnector = this.createSendTargetConnection(keyNodeInfo[0], Integer.parseInt(keyNodeInfo[1]), keyNodeInfo[2]);
 
-                    mainKeyNodeConnector = (KeyNodeConnector)connectMap.get(keyNodeInfo[2]);
-                } else {
+            // Sub
+            if (keyNodeInfo.length > 5) 
+                subKeyNodeConnector = this.createSendTargetConnection(keyNodeInfo[3], Integer.parseInt(keyNodeInfo[4]), keyNodeInfo[5]);
 
-                    mainKeyNodeConnector = new KeyNodeConnector(keyNodeInfo[0], Integer.parseInt(keyNodeInfo[1]), keyNodeInfo[2]);
-                    mainKeyNodeConnector.connect();
-                    mainKeyNodeConnector.println("30" + ImdstDefine.keyHelperClientParamSep + "true");
-                    mainKeyNodeConnector.flush();
-                    connectMap.put(keyNodeInfo[2], mainKeyNodeConnector);
-                }
-            }
-
-            if (keyNodeInfo.length > 5) {
-                if(connectMap.containsKey(keyNodeInfo[5])) {
-
-                    subKeyNodeConnector = (KeyNodeConnector)connectMap.get(keyNodeInfo[5]);
-                } else {
-
-                    subKeyNodeConnector = new KeyNodeConnector(keyNodeInfo[3], Integer.parseInt(keyNodeInfo[4]), keyNodeInfo[5]);
-                    subKeyNodeConnector.connect();
-                    subKeyNodeConnector.println("30" + ImdstDefine.keyHelperClientParamSep + "true");
-                    subKeyNodeConnector.flush();
-                    connectMap.put(keyNodeInfo[5], subKeyNodeConnector);
-                }
-            }
-
-            if (keyNodeInfo.length > 8) {
-                if(connectMap.containsKey(keyNodeInfo[8])) {
-
-                    thirdKeyNodeConnector = (KeyNodeConnector)connectMap.get(keyNodeInfo[8]);
-                } else {
-
-                    thirdKeyNodeConnector = new KeyNodeConnector(keyNodeInfo[6], Integer.parseInt(keyNodeInfo[7]), keyNodeInfo[8]);
-                    thirdKeyNodeConnector.connect();
-                    thirdKeyNodeConnector.println("30" + ImdstDefine.keyHelperClientParamSep + "true");
-                    thirdKeyNodeConnector.flush();
-                    connectMap.put(keyNodeInfo[8], thirdKeyNodeConnector);
-                }
-            }
+            // Third
+            if (keyNodeInfo.length > 8) 
+                thirdKeyNodeConnector = this.createSendTargetConnection(keyNodeInfo[6], Integer.parseInt(keyNodeInfo[7]), keyNodeInfo[8]);
 
 
+            // 送信処理
+            // Main
             if (mainKeyNodeConnector != null) {
-                mainKeyNodeConnector.println(targetDataLine);
-                mainKeyNodeConnector.flush();
-                String sendRet = mainKeyNodeConnector.readLine(targetDataLine);
-                if(sendRet != null && sendRet.equals("next")) ret = true;
+                if (this.sendDataLine(mainKeyNodeConnector, targetDataLine)) ret = true;
             }
 
+            // Sub
             if (subKeyNodeConnector != null) {
-                subKeyNodeConnector.println(targetDataLine);
-                subKeyNodeConnector.flush();
-                String sendRet = subKeyNodeConnector.readLine(targetDataLine);
-                if(sendRet != null && sendRet.equals("next")) ret = true;
+                if (this.sendDataLine(subKeyNodeConnector, targetDataLine)) ret = true;
             }
 
+            // Third
             if (thirdKeyNodeConnector != null) {
-                thirdKeyNodeConnector.println(targetDataLine);
-                thirdKeyNodeConnector.flush();
-                String sendRet = thirdKeyNodeConnector.readLine(targetDataLine);
-                if(sendRet != null && sendRet.equals("next")) ret = true;
+                if (this.sendDataLine(thirdKeyNodeConnector, targetDataLine)) ret = true;
             }
 
         } catch (Exception e) {
@@ -356,14 +351,88 @@ System.out.println("sendTargetData - start");
             logger.error(e);
         } finally {
 
+            // 使用終了をマーク
+            if (keyNodeInfo.length > 2) 
+                super.execNodeUseEnd(keyNodeInfo[2]);
+
+            if (keyNodeInfo.length > 5) 
+                super.execNodeUseEnd(keyNodeInfo[5]);
+
+            if (keyNodeInfo.length > 8) 
+                super.execNodeUseEnd(keyNodeInfo[8]);
+        
             // 正常に転送出来ていれば、データを消しこむ
             if (ret) removeDataKeys.add(targetDatas[0] + ImdstDefine.keyHelperClientParamSep + targetDatas[1]);
-        }
+        } 
 System.out.println("sendTargetData - end");
         return ret;
     }
 
 
+    /**
+     * データ移動先ノードとのコネクションを確立
+     *
+     */
+    private KeyNodeConnector createSendTargetConnection (String nodeName, int nodePort, String nodeFullName) throws Exception {
+        KeyNodeConnector keyNodeConnector = null;
+        try {
+
+            // ノードが生存している場合のみ実行
+            if (super.isNodeArrival(nodeFullName)) {
+
+                if (this.connectMap.containsKey(nodeFullName)) {
+
+                    keyNodeConnector = (KeyNodeConnector)this.connectMap.get(nodeFullName);
+                } else {
+
+                    keyNodeConnector = new KeyNodeConnector(nodeName, nodePort, nodeFullName);
+                    keyNodeConnector.connect();
+                    keyNodeConnector.println("30" + ImdstDefine.keyHelperClientParamSep + "true");
+                    keyNodeConnector.flush();
+                    this.connectMap.put(nodeFullName, keyNodeConnector);
+                }
+            } else {
+                connectMap.remove(nodeFullName);
+            }
+        } catch (SocketException se) {
+            super.setDeadNode(nodeFullName, 31, se);
+        } catch (IOException ie) {
+            super.setDeadNode(nodeFullName, 32, ie);
+        } catch (Exception e) {
+            throw e;
+        }
+
+        return keyNodeConnector;
+    }
+
+
+    /**
+     * データを移動先データノードに送信
+     *
+     */
+    private boolean sendDataLine (KeyNodeConnector keyNodeConnector, String dataLine) throws Exception {
+        boolean ret = false;
+        try {
+
+            keyNodeConnector.println(dataLine);
+            keyNodeConnector.flush();
+            String sendRet = keyNodeConnector.readLine();
+            if(sendRet != null && sendRet.equals("next")) ret = true;
+
+        } catch (SocketException se) {
+            super.setDeadNode(keyNodeConnector.getNodeFullName(), 33, se);
+        } catch (IOException ie) {
+            super.setDeadNode(keyNodeConnector.getNodeFullName(), 34, ie);
+        } catch (Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
+
+    /**
+     *
+     */
     private void removeTargetData(String mainNodeName, String mainNodePort, String subNodeName, String subNodePort, String thirdNodeName, String thirdNodePort) {
 
         PrintWriter[] removePw = new PrintWriter[3];
@@ -372,71 +441,51 @@ System.out.println("sendTargetData - end");
 
         try {
 System.out.println("removeTargetData - start");
-            removeSocket[0] = new Socket(mainNodeName, Integer.parseInt(mainNodePort));
-            removeSocket[0].setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-            removePw[0] = new PrintWriter(new BufferedWriter(new OutputStreamWriter(removeSocket[0].getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
-            removeBr[0] = new BufferedReader(new InputStreamReader(removeSocket[0].getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
 
-            if (subNodeName != null) {
-                removeSocket[1] = new Socket(subNodeName, Integer.parseInt(subNodePort));
-                removeSocket[1].setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-                removePw[1] = new PrintWriter(new BufferedWriter(new OutputStreamWriter(removeSocket[1].getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
-                removeBr[1] = new BufferedReader(new InputStreamReader(removeSocket[1].getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
+            // 使用開始してよいかをチェック
+            if (subNodeName != null && thirdNodeName != null) {
+                StatusUtil.waitNodeUseStatus(mainNodeName+":"+mainNodePort,  subNodeName+":"+subNodePort, thirdNodeName+":"+thirdNodePort);
+            } else if (subNodeName != null) {
+                StatusUtil.waitNodeUseStatus(mainNodeName+":"+mainNodePort,  subNodeName+":"+subNodePort, null);
+            } else {
+                StatusUtil.waitNodeUseStatus(mainNodeName+":"+mainNodePort, null, null);
             }
 
-            if (thirdNodeName != null) {
-                removeSocket[2] = new Socket(thirdNodeName, Integer.parseInt(thirdNodePort));
-                removeSocket[2].setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-                removePw[2] = new PrintWriter(new BufferedWriter(new OutputStreamWriter(removeSocket[2].getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
-                removeBr[2] = new BufferedReader(new InputStreamReader(removeSocket[2].getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
-            }
+            // 使用開始をマーク
+            // Main
+            StatusUtil.addNodeUse(mainNodeName+":"+mainNodePort);
+            // Sub
+            if (subNodeName != null)
+                StatusUtil.addNodeUse(subNodeName+":"+subNodePort);
+            // Third
+            if (thirdNodeName != null) 
+                StatusUtil.addNodeUse(thirdNodeName+":"+thirdNodePort);
 
 
-            for (int idx = 0; idx < removeSocket.length; idx++) {
-                if (removeSocket[idx] == null) break;
-                // 転送済みデータ削除用
-                StringBuffer buf = new StringBuffer();
-                // 処理番号31
-                buf.append("31");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append("true");
+            // Mainノード削除
+            this.removeData(mainNodeName, Integer.parseInt(mainNodePort), mainNodeName+":"+mainNodePort);
 
-                // 送信
-                removePw[idx].println(buf.toString());
-                removePw[idx].flush();
-            }
+            // Subノード削除
+            if (subNodeName != null) 
+                this.removeData(subNodeName, Integer.parseInt(subNodePort), subNodeName+":"+subNodePort);
 
-            for (int idx = 0; idx < removeDataKeys.size(); idx++) {
-                for (int nodeIdx = 0; nodeIdx < removeSocket.length; nodeIdx++) {
+            // Thirdノード削除
+            if (thirdNodeName != null) 
+                this.removeData(thirdNodeName, Integer.parseInt(thirdNodePort), thirdNodeName+":"+thirdNodePort);
 
-                    if (removeSocket[nodeIdx] == null) break;
-                    // 正常に転送出来ていれば、データを消しこむ
-                    removePw[nodeIdx].println((String)removeDataKeys.get(idx));
-                    removePw[nodeIdx].flush();
-                    String removeRet = removeBr[nodeIdx].readLine();
-                }
-            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
-                for (int idx = 0; idx < removeSocket.length; idx++) {
-                    if (removeSocket[idx] == null) break;
-                    // コネクション切断
 
-                    removePw[idx].println("-1");
-                    removePw[idx].flush();
-                    removePw[idx].println(ImdstDefine.imdstConnectExitRequest);
-                    removePw[idx].flush();
-                    removePw[idx].close();
-                    removePw[idx] = null;
+                // 使用終了をマーク
+                super.execNodeUseEnd(mainNodeName+":"+mainNodePort);
+                
+                if (subNodeName != null) 
+                    super.execNodeUseEnd(subNodeName+":"+subNodePort);
 
-                    removeBr[idx].close();
-                    removeBr[idx] = null;
-
-                    removeSocket[idx].close();
-                    removeSocket[idx] = null;
-                }
+                if (thirdNodeName != null) 
+                    super.execNodeUseEnd(thirdNodeName+":"+thirdNodePort);
             } catch (Exception ee) {
             }
         }
@@ -444,6 +493,53 @@ System.out.println("removeTargetData - end");
     }
 
 
+    /**
+     * 転送完了後のデータを消しこむ.<br>
+     * 1ノードが対象.<br>
+     */
+    private void removeData(String nodeName, int nodePort, String nodeFullName) {
+        KeyNodeConnector keyNodeConnector = null;
+
+        try {
+System.out.println("removeData - start");
+
+            keyNodeConnector = new KeyNodeConnector(nodeName, nodePort, nodeFullName);
+            keyNodeConnector.connect();
+
+            // 転送済みデータ削除用
+            // 処理番号31
+            keyNodeConnector.println("31" + ImdstDefine.keyHelperClientParamSep + "true");
+            keyNodeConnector.flush();
+
+            for (int idx = 0; idx < removeDataKeys.size(); idx++) {
+
+                // 正常に転送出来ていれば、データを消しこむ
+                keyNodeConnector.println((String)removeDataKeys.get(idx));
+                keyNodeConnector.flush();
+                String removeRet = keyNodeConnector.readLine();
+            }
+
+        } catch (SocketException se) {
+            super.setDeadNode(keyNodeConnector.getNodeFullName(), 35, se);
+        } catch (IOException ie) {
+            super.setDeadNode(keyNodeConnector.getNodeFullName(), 36, ie);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+
+                // コネクション切断
+                keyNodeConnector.println("-1");
+                keyNodeConnector.flush();
+                keyNodeConnector.close();
+            } catch (Exception ee) {
+            }
+        }
+    }
+
+    /**
+     *
+     */  
     private void closeGetConnect() {
         try {
 

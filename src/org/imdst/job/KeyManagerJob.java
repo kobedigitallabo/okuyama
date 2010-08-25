@@ -216,6 +216,9 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             // 共有領域にServerソケットのポインタを格納
             super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
 
+            // 処理開始
+            System.out.println("DataNodeServer-Accept-Start");
+
             while (true) {
                 if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;
                 try {

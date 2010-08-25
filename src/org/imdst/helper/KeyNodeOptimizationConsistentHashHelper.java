@@ -212,90 +212,127 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 addMainDataNodeInfo = (String)moveTargetData.get("tomain");
                                 toMainDataNodeDt = addMainDataNodeInfo.split(":");
                                 mainMoveTargetMap = (HashMap)moveTargetData.get("main");
+
+                                addSubDataNodeInfo = (String)moveTargetData.get("tosub");
+                                subMoveTargetMap = (HashMap)moveTargetData.get("sub");
+
+                                addThirdDataNodeInfo = (String)moveTargetData.get("tothird");
+                                thirdMoveTargetMap = (HashMap)moveTargetData.get("third");
+
+                                // 使用開始してよいかをチェック
+                                if (addSubDataNodeInfo != null && addThirdDataNodeInfo != null) {
+
+                                    StatusUtil.waitNodeUseStatus(addMainDataNodeInfo, addSubDataNodeInfo, addThirdDataNodeInfo);
+                                    // 使用をマーク
+                                    StatusUtil.addNodeUse(addMainDataNodeInfo);
+                                    StatusUtil.addNodeUse(addSubDataNodeInfo);
+                                    StatusUtil.addNodeUse(addThirdDataNodeInfo);
+                                } else if (addSubDataNodeInfo != null) {
+
+                                    StatusUtil.waitNodeUseStatus(addMainDataNodeInfo, addSubDataNodeInfo, null);
+                                    // 使用をマーク
+                                    StatusUtil.addNodeUse(addMainDataNodeInfo);
+                                    StatusUtil.addNodeUse(addSubDataNodeInfo);
+                                } else {
+
+                                    StatusUtil.waitNodeUseStatus(addMainDataNodeInfo, null, null);
+                                    // 使用をマーク
+                                    StatusUtil.addNodeUse(addMainDataNodeInfo);
+                                }
+            
 System.out.println("-------------------- tomain -----------------");
 System.out.println(addMainDataNodeInfo);
 System.out.println(mainMoveTargetMap);
 
-                                try {
-                                    toMainSocket = new Socket(toMainDataNodeDt[0], Integer.parseInt(toMainDataNodeDt[1]));
-                                    toMainSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-                                    toMainPw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(toMainSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
-                                    toMainBr = new BufferedReader(new InputStreamReader(toMainSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
 
-                                    mainSet = mainMoveTargetMap.keySet();
-                                    mainIterator = mainSet.iterator();
+                                if (super.isNodeArrival(addMainDataNodeInfo)) {
+                                    try {
+                                        toMainSocket = new Socket(toMainDataNodeDt[0], Integer.parseInt(toMainDataNodeDt[1]));
+                                        toMainSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+                                        toMainPw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(toMainSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
+                                        toMainBr = new BufferedReader(new InputStreamReader(toMainSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
 
-                                    // 移行先メインデータノードにデータ移行開始を送信
-                                    toMainPw.println(sendRequestBuf.toString());
-                                    toMainPw.flush();
-                                } catch (Exception e) {
-                                    toMainPw = null;
+                                        mainSet = mainMoveTargetMap.keySet();
+                                        mainIterator = mainSet.iterator();
+
+                                        // 移行先メインデータノードにデータ移行開始を送信
+                                        toMainPw.println(sendRequestBuf.toString());
+                                        toMainPw.flush();
+                                    } catch (Exception e) {
+                                        // 使用停止を登録
+                                        super.setDeadNode(addMainDataNodeInfo, 37, e);
+                                        toMainPw = null;
+                                    }
                                 }
 
                                 // スレーブノード処理
-                                addSubDataNodeInfo = (String)moveTargetData.get("tosub");
-                                subMoveTargetMap = (HashMap)moveTargetData.get("sub");
 System.out.println("-------------------- tosub -----------------");
 System.out.println(addSubDataNodeInfo);
 System.out.println(subMoveTargetMap);
                                 if (addSubDataNodeInfo != null) {
-                                    try {
-                                        toSubDataNodeDt = addSubDataNodeInfo.split(":");
-                                        toSubSocket = new Socket(toSubDataNodeDt[0], Integer.parseInt(toSubDataNodeDt[1]));
-                                        toSubSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-                                        toSubPw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(toSubSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
-                                        toSubBr = new BufferedReader(new InputStreamReader(toSubSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
+                                    if (super.isNodeArrival(addSubDataNodeInfo)) {
+                                        try {
+                                            toSubDataNodeDt = addSubDataNodeInfo.split(":");
+                                            toSubSocket = new Socket(toSubDataNodeDt[0], Integer.parseInt(toSubDataNodeDt[1]));
+                                            toSubSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+                                            toSubPw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(toSubSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
+                                            toSubBr = new BufferedReader(new InputStreamReader(toSubSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
 
-                                        subSet = subMoveTargetMap.keySet();
-                                        subIterator = subSet.iterator();
+                                            subSet = subMoveTargetMap.keySet();
+                                            subIterator = subSet.iterator();
 
-                                        // 移行先スレーブデータノードにデータ移行開始を送信
-                                        toSubPw.println(sendRequestBuf.toString());
-                                        toSubPw.flush();
-                                    } catch (Exception e) {
-                                        toSubPw = null;
+                                            // 移行先スレーブデータノードにデータ移行開始を送信
+                                            toSubPw.println(sendRequestBuf.toString());
+                                            toSubPw.flush();
+                                        } catch (Exception e) {
+
+                                            // 使用停止を登録
+                                            super.setDeadNode(addSubDataNodeInfo, 38, e);
+                                            toSubPw = null;
+                                        }
                                     }
                                 }
 
                                 // サードノード処理
-                                addThirdDataNodeInfo = (String)moveTargetData.get("tothird");
-                                thirdMoveTargetMap = (HashMap)moveTargetData.get("third");
 System.out.println("-------------------- tothird -----------------");
 System.out.println(addThirdDataNodeInfo);
 System.out.println(thirdMoveTargetMap);
                                 if (addThirdDataNodeInfo != null) {
-                                    try {
-                                        toThirdDataNodeDt = addThirdDataNodeInfo.split(":");
-                                        toThirdSocket = new Socket(toThirdDataNodeDt[0], Integer.parseInt(toThirdDataNodeDt[1]));
-                                        toThirdSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-                                        toThirdPw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(toThirdSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
-                                        toThirdBr = new BufferedReader(new InputStreamReader(toThirdSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
+                                    if (super.isNodeArrival(addThirdDataNodeInfo)) {
+                                        try {
+                                            toThirdDataNodeDt = addThirdDataNodeInfo.split(":");
+                                            toThirdSocket = new Socket(toThirdDataNodeDt[0], Integer.parseInt(toThirdDataNodeDt[1]));
+                                            toThirdSocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
+                                            toThirdPw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(toThirdSocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
+                                            toThirdBr = new BufferedReader(new InputStreamReader(toThirdSocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
 
-                                        thirdSet = thirdMoveTargetMap.keySet();
-                                        thirdIterator = thirdSet.iterator();
+                                            thirdSet = thirdMoveTargetMap.keySet();
+                                            thirdIterator = thirdSet.iterator();
 
-                                        // 移行先スレーブデータノードにデータ移行開始を送信
-                                        toThirdPw.println(sendRequestBuf.toString());
-                                        toThirdPw.flush();
-                                    } catch (Exception e) {
-                                        toThirdPw = null;
+                                            // 移行先スレーブデータノードにデータ移行開始を送信
+                                            toThirdPw.println(sendRequestBuf.toString());
+                                            toThirdPw.flush();
+                                        } catch (Exception e) {
+
+                                            // 使用停止を登録
+                                            super.setDeadNode(addThirdDataNodeInfo, 39, e);
+                                            toThirdPw = null;
+                                        }
                                     }
                                 }
 
 
-                                // 全ての移動対象のノードを処理
+                                // 全ての移動対象(移動元のデータ)のノードを処理
                                 // 対象データノード1ノードづつ処理
                                 while(mainIterator.hasNext()) {
 System.out.println("11111111111111111111111=" + mainRangStr);
+
                                     // Mainノード処理
                                     // キー値を取り出し
                                     mainDataNodeStr = (String)mainIterator.next();
                                     mainDataNodeDetail = mainDataNodeStr.split(":");
                                     // Rangの文字列を取り出し
                                     mainRangStr = (String)mainMoveTargetMap.get(mainDataNodeStr);
-                                    // 対象ノードからデータ取り出し
-                                    this.getTargetData(1, mainDataNodeDetail[0], Integer.parseInt(mainDataNodeDetail[1]), mainRangStr);
-                                    mainRemoveTargetDatas.add(new String(mainDataNodeDetail[0] + "#" + mainDataNodeDetail[1] + "#" + mainRangStr));
 
 
                                     // Subノード処理
@@ -306,9 +343,6 @@ System.out.println("22222222222222222222222222=" + subRangStr);
                                         subDataNodeDetail = subDataNodeStr.split(":");
                                         // Rangの文字列を取り出し
                                         subRangStr = (String)subMoveTargetMap.get(subDataNodeStr);
-                                        // 対象ノードからデータ取り出し
-                                        this.getTargetData(2, subDataNodeDetail[0], Integer.parseInt(subDataNodeDetail[1]), subRangStr);
-                                        subRemoveTargetDatas.add(new String(subDataNodeDetail[0] + "#" + subDataNodeDetail[1] + "#" + subRangStr));
                                     }
 
                                     // Thirdノード処理
@@ -319,6 +353,44 @@ System.out.println("333333333333333333333333333=" + thirdRangStr);
                                         thirdDataNodeDetail = thirdDataNodeStr.split(":");
                                         // Rangの文字列を取り出し
                                         thirdRangStr = (String)thirdMoveTargetMap.get(thirdDataNodeStr);
+                                    }
+
+
+                                    // 使用開始してよいかをチェック
+                                    if (subIterator != null && thirdIterator != null) {
+
+                                        StatusUtil.waitNodeUseStatus(mainDataNodeStr, subDataNodeStr, thirdDataNodeStr);
+                                        // 使用をマーク
+                                        StatusUtil.addNodeUse(mainDataNodeStr);
+                                        StatusUtil.addNodeUse(subDataNodeStr);
+                                        StatusUtil.addNodeUse(thirdDataNodeStr);
+                                    } else if (addSubDataNodeInfo != null) {
+
+                                        StatusUtil.waitNodeUseStatus(mainDataNodeStr, subDataNodeStr, null);
+                                        // 使用をマーク
+                                        StatusUtil.addNodeUse(mainDataNodeStr);
+                                        StatusUtil.addNodeUse(subDataNodeStr);
+                                    } else {
+
+                                        StatusUtil.waitNodeUseStatus(mainDataNodeStr, null, null);
+                                        // 使用をマーク
+                                        StatusUtil.addNodeUse(mainDataNodeStr);
+                                    }
+
+
+                                    // 対象ノードからデータ取り出し
+                                    this.getTargetData(1, mainDataNodeDetail[0], Integer.parseInt(mainDataNodeDetail[1]), mainRangStr);
+                                    mainRemoveTargetDatas.add(new String(mainDataNodeDetail[0] + "#" + mainDataNodeDetail[1] + "#" + mainRangStr));
+
+                                    // Subノード処理
+                                    if (subIterator != null) {
+                                        // 対象ノードからデータ取り出し
+                                        this.getTargetData(2, subDataNodeDetail[0], Integer.parseInt(subDataNodeDetail[1]), subRangStr);
+                                        subRemoveTargetDatas.add(new String(subDataNodeDetail[0] + "#" + subDataNodeDetail[1] + "#" + subRangStr));
+                                    }
+
+                                    // Thirdノード処理
+                                    if (thirdIterator != null) {
                                         // 対象ノードからデータ取り出し
                                         this.getTargetData(3, thirdDataNodeDetail[0], Integer.parseInt(thirdDataNodeDetail[1]), thirdRangStr);
                                         thirdRemoveTargetDatas.add(new String(thirdDataNodeDetail[0] + "#" + thirdDataNodeDetail[1] + "#" + thirdRangStr));
@@ -326,50 +398,47 @@ System.out.println("333333333333333333333333333=" + thirdRangStr);
 
 
                                     // 対象のデータを順次対象のノードに移動
-                                    while((mainTargetDataStr = this.nextData(1)) != null) {
-System.out.println("4444444444444444444444444");
-System.out.println(mainTargetDataStr);
-                                        toMainPw.println(mainTargetDataStr);
-                                        toMainPw.flush();
-                                        toMainSendRet = toMainBr.readLine();
-                                        // エラーなら移行中止
-                                        if (toMainSendRet == null || !toMainSendRet.equals("next")) { 
-System.out.println("55555555555555555555555");
-                                            sendError = true;
-                                            break;
-                                        }
-System.out.println("66666666666666666666666666");
-                                        if (subIterator != null) {
-System.out.println("7777777777777777777777777");
-                                            if ((subTargetDataStr = this.nextData(2)) != null) {
-System.out.println("8888888888888888888888888");
-System.out.println(subTargetDataStr);
-                                                toSubPw.println(subTargetDataStr);
-                                                toSubPw.flush();
-                                                toSubSendRet = toSubBr.readLine();
-                                                // エラーなら移行中止
-                                                if (toSubSendRet == null || !toSubSendRet.equals("next")) {
-System.out.println("999999999999999999999999999");
-                                                    sendError = true;
-                                                    break;
-                                                }
+                                    // Main
+                                    while((mainTargetDataStr = this.nextData(1, mainDataNodeStr)) != null) {
+                                        if (toMainPw != null) {
+                                            toMainPw.println(mainTargetDataStr);
+                                            toMainPw.flush();
+                                            toMainSendRet = toMainBr.readLine();
+                                            // エラーなら移行中止
+                                            if (toMainSendRet == null || !toMainSendRet.equals("next")) { 
+                                                super.setDeadNode(addMainDataNodeInfo, 42, new Exception(addMainDataNodeInfo + "=SendError"));
+                                                sendError = true;
+                                                break;
                                             }
                                         }
-System.out.println("10-10-10-10-10-10-10-10-10-10");
-                                        if (thirdIterator != null) {
-System.out.println("11-11-11-11-11-11-11-11-11-11");
-                                            if ((thirdTargetDataStr = this.nextData(3)) != null) {
-System.out.println("12-12-12-12-12-12-12-12-12-12");
-System.out.println(thirdTargetDataStr);
-                                                toThirdPw.println(thirdTargetDataStr);
-                                                toThirdPw.flush();
-                                                toThirdSendRet = toThirdBr.readLine();
-                                                // エラーなら移行中止
-                                                if (toThirdSendRet == null || !toThirdSendRet.equals("next")) {
-System.out.println("13-13-13-13-13-13-13-13-13-13");
-                                                    sendError = true;
-                                                    break;
-                                                }
+                                    }
+
+                                    // Sub
+                                    if (toSubPw != null) {
+                                        while((subTargetDataStr = this.nextData(2, subDataNodeStr)) != null) {
+                                            toSubPw.println(subTargetDataStr);
+                                            toSubPw.flush();
+                                            toSubSendRet = toSubBr.readLine();
+                                            // エラーなら移行中止
+                                            if (toSubSendRet == null || !toSubSendRet.equals("next")) {
+                                                super.setDeadNode(addSubDataNodeInfo, 43, new Exception(addSubDataNodeInfo + "=SendError"));
+                                                sendError = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    // Third
+                                    if (toThirdPw != null) {
+                                        while ((thirdTargetDataStr = this.nextData(3, thirdDataNodeStr)) != null) {
+                                            toThirdPw.println(thirdTargetDataStr);
+                                            toThirdPw.flush();
+                                            toThirdSendRet = toThirdBr.readLine();
+                                            // エラーなら移行中止
+                                            if (toThirdSendRet == null || !toThirdSendRet.equals("next")) {
+                                                super.setDeadNode(addThirdDataNodeInfo, 44, new Exception(addThirdDataNodeInfo + "=SendError"));
+                                                sendError = true;
+                                                break;
                                             }
                                         }
                                     }
@@ -377,8 +446,18 @@ System.out.println("13-13-13-13-13-13-13-13-13-13");
 System.out.println("14-14-14-14-14-14-14-14-14-14");
                                     // 転送元を切断
                                     this.closeConnect(1);
-                                    if (subIterator != null) this.closeConnect(2);
-                                    if (thirdIterator != null) this.closeConnect(3);
+                                    super.execNodeUseEnd(mainDataNodeStr);
+
+                                    if (subIterator != null) {
+                                        super.execNodeUseEnd(subDataNodeStr);
+                                        this.closeConnect(2);
+                                    }
+
+                                    if (thirdIterator != null)  {
+                                        super.execNodeUseEnd(thirdDataNodeStr);
+                                        this.closeConnect(3);
+                                    }
+
                                     if (sendError == true) break;
                                 }
 
@@ -387,17 +466,23 @@ System.out.println("15-15-15-15-15-15-15-15-15-15");
                                 // 全てのデータの移行が完了
                                 // 転送先に終了を通知
                                 // Main
+                                // 使用終了をマーク
+                                super.execNodeUseEnd(addMainDataNodeInfo);
                                 toMainPw.println("-1");
                                 toMainPw.flush();
                                 toMainPw.println(ImdstDefine.imdstConnectExitRequest);
                                 toMainPw.flush();
                                 toMainPw.close();
                                 toMainSocket.close();
+
 System.out.println("16-16-16-16-16-16-16-16-16-16");
                                 // Sub
                                 if (subIterator != null) {
                                 
 System.out.println("17-17-17-17-17-17-17-17-17-17");
+                                    // 使用終了をマーク
+                                    super.execNodeUseEnd(addSubDataNodeInfo);
+
                                     toSubPw.println("-1");
                                     toSubPw.flush();
                                     toSubPw.println(ImdstDefine.imdstConnectExitRequest);
@@ -409,6 +494,9 @@ System.out.println("17-17-17-17-17-17-17-17-17-17");
                                 // Third
                                 if (thirdIterator != null) {
 System.out.println("18-18-18-18-18-18-18-18-18-18");
+                                    // 使用終了をマーク
+                                    super.execNodeUseEnd(addThirdDataNodeInfo);
+
                                     toThirdPw.println("-1");
                                     toThirdPw.flush();
                                     toThirdPw.println(ImdstDefine.imdstConnectExitRequest);
@@ -509,6 +597,7 @@ System.out.println("22-22-22-22-22-22-22-22-22-22");
         BufferedReader br = null;
 
         try {
+            if (!super.isNodeArrival(nodeName + ":" + nodePort)) return ;
             socket = new Socket(nodeName, nodePort);
             socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
@@ -544,7 +633,10 @@ System.out.println("22-22-22-22-22-22-22-22-22-22");
                 this.thirdBr = br;
                 this.thirdSocket = socket;
             }
-
+        } catch (SocketException se) {
+            super.setDeadNode(nodeName + ":" + nodePort, 39, se);
+        } catch (IOException ie) {
+            super.setDeadNode(nodeName + ":" + nodePort, 40, ie);
         } catch(Exception e) {
             throw new BatchException(e);
         } 
@@ -557,7 +649,7 @@ System.out.println("22-22-22-22-22-22-22-22-22-22");
      * @return String
      * @throw BatchException
      */
-    private String nextData(int target) throws BatchException {
+    private String nextData(int target, String nodeInfo) throws BatchException {
         String ret = null;
         String line = null;
 
@@ -575,6 +667,8 @@ System.out.println("22-22-22-22-22-22-22-22-22-22");
                 br = this.thirdBr;
             }
 
+            if (br == null) return null;
+
             while((line = br.readLine()) != null) {
 
                 if (line.length() > 0) {
@@ -588,6 +682,10 @@ System.out.println("22-22-22-22-22-22-22-22-22-22");
                     }
                 }
             }
+        } catch (SocketException se) {
+            super.setDeadNode(nodeInfo, 43, se);
+        } catch (IOException ie) {
+            super.setDeadNode(nodeInfo, 44, ie);
         } catch(Exception e) {
             throw new BatchException(e);
         }
