@@ -35,10 +35,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private IProtocolTaker porotocolTaker = null;
     private boolean isProtocolOkuyama = true;
 
-    // DataNodeアクセスバランシング指定
-    private boolean loadBalancing = false;
-
-    // DataNode逆アクセス指定
+    // DataNode逆アクセス指定(アクセスバランシング)
     private boolean reverseAccess = false;
 
     // 一貫性モード
@@ -124,12 +121,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 okuyamaPorotocolTaker = ProtocolTakerFactory.getProtocolTaker("okuyama");
             }
 
-            // ロードバランシング指定
-            if (parameters[3] != null) {
-                this.loadBalancing = true;
-                reverseAccess = ((Boolean)parameters[3]).booleanValue();
-            }
-
 
             // トランザクション設定
             this.transactionMode = ((Boolean)parameters[4]).booleanValue();
@@ -162,10 +153,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     Object[] queueParam = super.pollSpecificationParameterQueue(pollQueueName);
 
 
-
                     // Queueからのパラメータ
                     Object[] queueMap = (Object[])queueParam[0];
 
+                    // ロードバランシング指定
+                    this.reverseAccess = ((Boolean)queueMap[ImdstDefine.paramBalance]).booleanValue();
+
+                    // ソケット周り(いずれクラス化します)
                     pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
                     br = (BufferedReader)queueMap[ImdstDefine.paramBr];
                     socket = (Socket)queueMap[ImdstDefine.paramSocket];
@@ -749,11 +743,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
             // でそちらのルールでのデータ格納場所も調べる
             if (keyNodeSaveRet[1].equals("false")) {
-                System.out.println("過去ルールを探索 - get(" + keyNodeInfo[2] + ") =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
+
+                //System.out.println("過去ルールを探索 - get(" + keyNodeInfo[2] + ") =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
                 // キー値を使用して取得先を決定
                 // 過去ルールがなくなれば終了
                 for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess, i)) != null; i++) {
-                    System.out.println("過去ルールを探索=" + i);
+
                     // 取得実行
                     if (keyNodeInfo.length == 3) {
                         keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "2", keyStr);
@@ -766,35 +761,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // 過去ルールからデータを発見
                     if (keyNodeSaveRet[1].equals("true")) {
-                        System.out.println("過去ルールからデータを発見 =[" + keyNodeInfo[2] + "]");
-/*
-                        if (DataDispatcher.getDispatchMode() == ImdstDefine.dispatchModeModInt) {
-                            // Modアルゴリズムの場合のみ
-                            // TODO:現在のノードへの反映はいずれ別サービス化する
-                            // 過去ルールによって取得出来たデータを現在のルールのノードへ反映
-                            try {
-                                // 現在ルールのノードにデータ反映
-                                setKeyValueOnlyOnce(keyStr, ImdstDefine.imdstBlankStrData, "0", keyNodeSaveRet[2]);
-
-                                
-                                // キー値を使用して取得先を決定
-                                // 本来は既に取得している、ノード指定を使用すれば良いが、ノードの使用許可等の兼ね合いでここで再度DataDispatcherを使用
-                                keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess, i);
-
-
-                                // 過去ルールの場所のデータを削除
-                                if (keyNodeInfo.length == 3) {
-                                    removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, "0");
-                                } else if (keyNodeInfo.length == 6) {
-                                    removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyStr, "0");
-                                } else if (keyNodeInfo.length == 9) {
-                                    removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], keyStr, "0");
-                                }
-                            } catch (Exception e) {
-                                logger.info("Old Rule Data Set Error" + e);
-                            }
-                        }
-*/
+                        //System.out.println("過去ルールからデータを発見 =[" + keyNodeInfo[2] + "]");
                         break;
                     }
                 }
@@ -875,10 +842,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // でそちらのルールでのデータ格納場所も調べる
             if (keyNodeSaveRet[1].equals("false")) {
 
-                System.out.println("過去ルールを探索 - getScript =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
+                //System.out.println("過去ルールを探索 - getScript =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
                 // キー値を使用して取得先を決定
                 for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess, i)) != null; i++) {
-                    System.out.println("過去ルールを探索=" + i);
+
                     // 取得実行
                     if (keyNodeInfo.length == 3) {
                         keyNodeSaveRet = this.getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "8", keyStr, scriptStr);
@@ -967,11 +934,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
             // そちらのルールでも削除する
-            //System.out.println("過去ルールを探索");
             // キー値を使用して取得先を決定
             for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, false, i)) != null; i++) {
-                System.out.println("過去ルールを探索 - remove =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
-                System.out.println("過去ルールを探索=" + i);
+
+                //System.out.println("過去ルールを探索 - remove =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
                 // 取得実行
                 if (keyNodeInfo.length == 3) {
                     oldKeyNodeRemoveRet = this.removeKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keyStr, transactionCode);
@@ -1215,11 +1181,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
             // そちらのルールでのデータ格納場所も調べる
             if (keyNodeSaveRet[1].equals("false")) {
-                System.out.println("過去ルールを探索 - getTagKeys(" + keyNodeInfo[2] + ") =" + new String(BASE64DecoderStream.decode(tagStr.getBytes())));
 
-
+                //System.out.println("過去ルールを探索 - getTagKeys(" + keyNodeInfo[2] + ") =" + new String(BASE64DecoderStream.decode(tagStr.getBytes())));
                 for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.reverseAccess, i)) != null; i++) {
-                    System.out.println("過去ルールを探索=" + i);
+
                     // キー値を使用して取得先を決定
                     // 取得実行
                     if (keyNodeInfo.length == 3) {
@@ -2965,7 +2930,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      *
      */
     private void closeClientConnect(PrintWriter pw, BufferedReader br, Socket socket) {
-        //System.out.println("closeClientConnect()");
+
         try {
             if(pw != null) {
                 pw.close();

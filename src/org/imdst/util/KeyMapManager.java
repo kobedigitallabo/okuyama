@@ -1476,11 +1476,13 @@ public class KeyMapManager extends Thread {
                                 // タグの場合はValue部分をレコードとしてばらして送る
                                 String[] tagDatas = data.split(ImdstDefine.imdstTagKeyAppendSep);
                                 for (int idx = 0; idx < tagDatas.length; idx++) {
-System.out.println("------------------------------------------------------------------------------");
-System.out.println(sendTagKey);
-System.out.println(tagDatas[idx]);
+
+                                    // 送信するTag値とTagのValue(実際のKey値群)
+                                    //System.out.println(sendTagKey);
+                                    //System.out.println(tagDatas[idx]);
+
                                     // タグの対象データのキーを送る場合はデータ転送後消しこむ際にインデックス番号が必要なので、
-                                    // 左右のプレフィックス文字列は外すが、インデックス番号はつけたまま送る
+                                    // 左右のプレフィックス文字列は外すが、インデックス番号(TagKey_??)はつけたまま送る
                                     allDataBuf.append(allDataSep);
                                     allDataBuf.append("2");
                                     allDataBuf.append(workFileSeq);
@@ -1804,7 +1806,6 @@ System.out.println(tagDatas[idx]);
 
             } else {
                 System.out.println("Key=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(key) + "]");
-                
             }
         }
         System.out.println("-------------------------------------- Dump End --------------------------------------");

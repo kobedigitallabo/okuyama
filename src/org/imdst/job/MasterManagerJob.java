@@ -46,7 +46,9 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
     // ロードバランス設定
     private boolean loadBalance = false;
-    private boolean[] blanceModes = new boolean[4];
+    private Boolean noBalance = new Boolean(false);
+    private int balancePattern = 4;
+    private Boolean[] balanceModes = new Boolean[balancePattern];
     private int nowBalanceIdx = 0;
 
     private boolean transactionMode = false;
@@ -117,10 +119,10 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
 
         // データ取得時に使用するノード使用割合を決定
-        blanceModes[0] = false;
-        blanceModes[1] = false;
-        blanceModes[2] = true;
-        blanceModes[3] = true;
+        balanceModes[0] = new Boolean(false);
+        balanceModes[1] = new Boolean(false);
+        balanceModes[2] = new Boolean(true);
+        balanceModes[3] = new Boolean(true);
 
         logger.debug("MasterManagerJob - initJob - end");
     }
@@ -244,20 +246,17 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 helperParams[0] = null;
                 helperParams[1] = null;
                 helperParams[2] = this.mode;
-                if (loadBalance) helperParams[3] = new Boolean(this.blanceModes[nowBalanceIdx]);
+                helperParams[3] = null;
                 helperParams[4] = StatusUtil.isTransactionMode();
                 helperParams[5] = StatusUtil.getTransactionNode();
                 helperParams[6] = "MasterManagerHelper" + queueIndex;
                 helperParams[7] = this.maxAcceptParallelQueueNames;
                 super.executeHelper("MasterManagerHelper", helperParams);
-
-                this.nowBalanceIdx++;
-                if (this.blanceModes.length == this.nowBalanceIdx) this.nowBalanceIdx = 0;
             }
 
 
             // 処理開始
-            System.out.println("MasterNodeServer-Accept-Start");
+            logger.info("MasterNodeServer-Accept-Start");
 
             // メイン処理開始
             while (true) {
@@ -268,8 +267,13 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                     socket = serverSocket.accept();
                     accessCount++;
 
-                    Object[] queueParam = new Object[1];
+                    Object[] queueParam = new Object[2];
                     queueParam[0] = socket;
+                    if (this.loadBalance) {
+                        queueParam[1] = this.balanceModes[new Long(accessCount % this.balancePattern).intValue()];
+                    } else {
+                        queueParam[1] = this.noBalance;
+                    }
 
                     // アクセス済みのソケットをキューに貯める
                     super.addSpecificationParameterQueue("MasterManagerConnectHelper" + (accessCount%this.maxConnectParallelQueue), queueParam);
@@ -304,7 +308,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                         helperParams[0] = null;
                         helperParams[1] = null;
                         helperParams[2] = this.mode;
-                        if (loadBalance) helperParams[3] = new Boolean(this.blanceModes[nowBalanceIdx]);
+                        if (loadBalance) helperParams[3] = new Boolean(this.balanceModes[nowBalanceIdx]);
                         helperParams[4] = StatusUtil.isTransactionMode();
                         helperParams[5] = StatusUtil.getTransactionNode();
                         helperParams[6] = "MasterManagerHelper" + queueIndex;
@@ -312,7 +316,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
                         super.executeHelper("MasterManagerHelper", helperParams);
                         this.nowBalanceIdx++;
-                        if (this.blanceModes.length == this.nowBalanceIdx) this.nowBalanceIdx = 0;
+                        if (this.balanceModes.length == this.nowBalanceIdx) this.nowBalanceIdx = 0;
                     }
                 } catch (Exception e) {
                     if (StatusUtil.getStatus() == 2) {

@@ -881,7 +881,6 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
 
         // DataNodeの情報を初期化
-        System.out.println("allNodeInfos=[" + allNodeInfos + "]");
         StatusUtil.initNodeExecMap(allNodeInfos);
 
         // TransactionNodeの情報を初期化

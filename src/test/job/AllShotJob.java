@@ -48,31 +48,46 @@ public class AllShotJob extends AbstractJob implements IJob {
         try{
             execMethods = optionParam.split(",");
 
-            for (int i = 0; i < execMethods.length; i++) {
+            int port = masterNodePort;
 
-                if (execMethods[i].equals("set")) 
-                    retMap.put("set", execSet(null, count));
+            // クライアントインスタンスを作成
+            ImdstKeyValueClient imdstKeyValueClient = null;
 
-                if (execMethods[i].equals("get")) 
-                    retMap.put("get", execGet(null, count));
+            for (int t = 0; t < 2; t++) {
 
-                if (execMethods[i].equals("settag")) 
-                    retMap.put("settag", execTagSet(null, count));
+                System.out.println("Test Count =[" + t + "]");
+                for (int i = 0; i < execMethods.length; i++) {
 
-                if (execMethods[i].equals("gettag")) 
-                    retMap.put("gettag", execTagGet(null, count));
+                    if (execMethods[i].equals("set")) 
+                        retMap.put("set", execSet(imdstKeyValueClient, count));
 
-                if (execMethods[i].equals("remove")) 
-                    retMap.put("remove", execRemove(null, 500));
+                    if (execMethods[i].equals("get")) 
+                        retMap.put("get", execGet(imdstKeyValueClient, count));
 
-                if (execMethods[i].equals("script")) 
-                    retMap.put("script", execScript(null, count));
+                    if (execMethods[i].equals("settag")) 
+                        retMap.put("settag", execTagSet(imdstKeyValueClient, count));
 
-                if (execMethods[i].equals("add")) 
-                    retMap.put("add", execAdd(null, count));
+                    if (execMethods[i].equals("gettag")) 
+                        retMap.put("gettag", execTagGet(imdstKeyValueClient, count));
+
+                    if (execMethods[i].equals("remove")) 
+                        retMap.put("remove", execRemove(imdstKeyValueClient, 500));
+
+                    if (execMethods[i].equals("script")) 
+                        retMap.put("script", execScript(imdstKeyValueClient, count));
+
+                    if (execMethods[i].equals("add")) 
+                        retMap.put("add", execAdd(imdstKeyValueClient, count));
+                }
+
+                System.out.println("ErrorMap=" + retMap.toString());
+                System.out.println("---------------------------------------------");
+                // クライアントインスタンスを作成
+                imdstKeyValueClient = new ImdstKeyValueClient();
+                // マスタサーバに接続
+                imdstKeyValueClient.connect(masterNodeName, port);
             }
 
-            System.out.println(retMap);
         } catch(Exception e) {
             System.out.println(retMap);
             throw new BatchException(e);

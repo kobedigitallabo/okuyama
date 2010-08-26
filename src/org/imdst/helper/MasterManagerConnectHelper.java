@@ -77,12 +77,13 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                                         new InputStreamReader(socket.getInputStream(), 
                                                                 ImdstDefine.keyHelperClientParamEncoding));
 
-                Object[] clientMap = new Object[5];
+                Object[] clientMap = new Object[6];
                 clientMap[ImdstDefine.paramSocket] = socket;
                 clientMap[ImdstDefine.paramPw] = pw;
                 clientMap[ImdstDefine.paramBr] = br;
                 clientMap[ImdstDefine.paramStart] = new Long(System.currentTimeMillis());
                 clientMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+                clientMap[ImdstDefine.paramBalance] = param[1];
 
                 Object[] queueParam = new Object[1];
                 queueParam[0] = clientMap;

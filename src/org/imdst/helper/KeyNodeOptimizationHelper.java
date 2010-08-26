@@ -315,7 +315,8 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
         String sendTargetNodeInfo = null;
 
         try {
-System.out.println("sendTargetData - start");
+            logger.info("sendTargetData - start");
+
             targetDatas = targetDataLine.split(ImdstDefine.keyHelperClientParamSep);
 
             // タグの場合はKey値からインデッス文字を外して振り分け先を決定
@@ -379,7 +380,7 @@ System.out.println("sendTargetData - start");
             // 正常に転送出来ていれば、データを消しこむ
             if (ret) removeDataKeys.add(targetDatas[0] + ImdstDefine.keyHelperClientParamSep + targetDatas[1]);
         } 
-System.out.println("sendTargetData - end");
+        logger.info("sendTargetData - end");
         return ret;
     }
 
@@ -455,7 +456,7 @@ System.out.println("sendTargetData - end");
         Socket[] removeSocket = new Socket[3];
 
         try {
-System.out.println("removeTargetData - start");
+            logger.info("removeTargetData - start");
 
             // 使用開始してよいかをチェック
             if (subNodeName != null && thirdNodeName != null) {
@@ -504,7 +505,7 @@ System.out.println("removeTargetData - start");
             } catch (Exception ee) {
             }
         }
-System.out.println("removeTargetData - end");
+        logger.info("removeTargetData - end");
     }
 
 
@@ -516,7 +517,7 @@ System.out.println("removeTargetData - end");
         KeyNodeConnector keyNodeConnector = null;
 
         try {
-System.out.println("removeData - start");
+            logger.info("removeData - start");
 
             keyNodeConnector = new KeyNodeConnector(nodeName, nodePort, nodeFullName);
             keyNodeConnector.connect();
@@ -550,7 +551,9 @@ System.out.println("removeData - start");
             } catch (Exception ee) {
             }
         }
+        logger.info("removeData - end");
     }
+
 
     /**
      *

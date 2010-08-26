@@ -76,7 +76,6 @@ public class StatusUtil {
     public static void initNodeExecMap(String[] nodeInfos) {
 
         for (int i = 0; i < nodeInfos.length; i++) {
-        System.out.println(nodeInfos[i]);
             if (!nodeExecMap.containsKey(nodeInfos[i])) {
                 nodeExecMap.put(nodeInfos[i], new AtomicInteger(0));
             }

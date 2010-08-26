@@ -239,11 +239,12 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                     // 使用をマーク
                                     StatusUtil.addNodeUse(addMainDataNodeInfo);
                                 }
-            
-System.out.println("-------------------- tomain -----------------");
-System.out.println(addMainDataNodeInfo);
-System.out.println(mainMoveTargetMap);
 
+
+                                // データ移動先MainDataNode
+                                // 移動データレンジMap
+                                //System.out.println(addMainDataNodeInfo);
+                                //System.out.println(mainMoveTargetMap);
 
                                 if (super.isNodeArrival(addMainDataNodeInfo)) {
                                     try {
@@ -266,9 +267,11 @@ System.out.println(mainMoveTargetMap);
                                 }
 
                                 // スレーブノード処理
-System.out.println("-------------------- tosub -----------------");
-System.out.println(addSubDataNodeInfo);
-System.out.println(subMoveTargetMap);
+                                // データ移動先SubDataNode
+                                // 移動データレンジMap
+                                //System.out.println(addSubDataNodeInfo);
+                                //System.out.println(subMoveTargetMap);
+
                                 if (addSubDataNodeInfo != null) {
                                     if (super.isNodeArrival(addSubDataNodeInfo)) {
                                         try {
@@ -294,9 +297,11 @@ System.out.println(subMoveTargetMap);
                                 }
 
                                 // サードノード処理
-System.out.println("-------------------- tothird -----------------");
-System.out.println(addThirdDataNodeInfo);
-System.out.println(thirdMoveTargetMap);
+                                // データ移動先ThirdDataNode
+                                // 移動データレンジMap
+                                //System.out.println(addThirdDataNodeInfo);
+                                //System.out.println(thirdMoveTargetMap);
+
                                 if (addThirdDataNodeInfo != null) {
                                     if (super.isNodeArrival(addThirdDataNodeInfo)) {
                                         try {
@@ -325,7 +330,9 @@ System.out.println(thirdMoveTargetMap);
                                 // 全ての移動対象(移動元のデータ)のノードを処理
                                 // 対象データノード1ノードづつ処理
                                 while(mainIterator.hasNext()) {
-System.out.println("11111111111111111111111=" + mainRangStr);
+
+                                    // 移動データレンジ文字列
+                                    // System.out.println(mainRangStr);
 
                                     // Mainノード処理
                                     // キー値を取り出し
@@ -337,7 +344,10 @@ System.out.println("11111111111111111111111=" + mainRangStr);
 
                                     // Subノード処理
                                     if (subIterator != null) {
-System.out.println("22222222222222222222222222=" + subRangStr);
+
+                                        // 移動データレンジ文字列
+                                        // System.out.println(subRangStr);
+
                                         // キー値を取り出し
                                         subDataNodeStr = (String)subIterator.next();
                                         subDataNodeDetail = subDataNodeStr.split(":");
@@ -347,7 +357,10 @@ System.out.println("22222222222222222222222222=" + subRangStr);
 
                                     // Thirdノード処理
                                     if (thirdIterator != null) {
-System.out.println("333333333333333333333333333=" + thirdRangStr);
+
+                                        // 移動データレンジ文字列
+                                        // System.out.println(thirdRangStr);
+
                                         // キー値を取り出し
                                         thirdDataNodeStr = (String)thirdIterator.next();
                                         thirdDataNodeDetail = thirdDataNodeStr.split(":");
@@ -443,7 +456,6 @@ System.out.println("333333333333333333333333333=" + thirdRangStr);
                                         }
                                     }
 
-System.out.println("14-14-14-14-14-14-14-14-14-14");
                                     // 転送元を切断
                                     this.closeConnect(1);
                                     super.execNodeUseEnd(mainDataNodeStr);
@@ -461,8 +473,6 @@ System.out.println("14-14-14-14-14-14-14-14-14-14");
                                     if (sendError == true) break;
                                 }
 
-System.out.println("15-15-15-15-15-15-15-15-15-15");
-
                                 // 全てのデータの移行が完了
                                 // 転送先に終了を通知
                                 // Main
@@ -475,11 +485,9 @@ System.out.println("15-15-15-15-15-15-15-15-15-15");
                                 toMainPw.close();
                                 toMainSocket.close();
 
-System.out.println("16-16-16-16-16-16-16-16-16-16");
                                 // Sub
                                 if (subIterator != null) {
-                                
-System.out.println("17-17-17-17-17-17-17-17-17-17");
+
                                     // 使用終了をマーク
                                     super.execNodeUseEnd(addSubDataNodeInfo);
 
@@ -493,7 +501,7 @@ System.out.println("17-17-17-17-17-17-17-17-17-17");
 
                                 // Third
                                 if (thirdIterator != null) {
-System.out.println("18-18-18-18-18-18-18-18-18-18");
+
                                     // 使用終了をマーク
                                     super.execNodeUseEnd(addThirdDataNodeInfo);
 
@@ -509,8 +517,6 @@ System.out.println("18-18-18-18-18-18-18-18-18-18");
                                 // 移動もとのデータを消す処理をここに追加
                                 if (sendError == false) {
 
-System.out.println("19-19-19-19-19-19-19-19-19-19");
-
                                     // 転送が正しく完了した場合のみ処理開始
 
                                     // Main
@@ -524,7 +530,7 @@ System.out.println("19-19-19-19-19-19-19-19-19-19");
 
                                     // Sub
                                     if (subIterator != null) {
-System.out.println("20-20-20-20-20-20-20-20-20-20");
+
                                         for (int subIdx = 0; subIdx < subRemoveTargetDatas.size(); subIdx++) {
                                             String subRemoveHostDtStr = (String)subRemoveTargetDatas.get(subIdx);
                                             String[] subRemoveHostDt = subRemoveHostDtStr.split("#");
@@ -536,7 +542,6 @@ System.out.println("20-20-20-20-20-20-20-20-20-20");
 
                                     // Third
                                     if (thirdIterator != null) {
-System.out.println("21-21-21-21-21-21-21-21-21-21");
 
                                         for (int thirdIdx = 0; thirdIdx < thirdRemoveTargetDatas.size(); thirdIdx++) {
                                             String thirdRemoveHostDtStr = (String)thirdRemoveTargetDatas.get(thirdIdx);
@@ -546,7 +551,6 @@ System.out.println("21-21-21-21-21-21-21-21-21-21");
                                             }
                                         }
                                     }
-System.out.println("22-22-22-22-22-22-22-22-22-22");
 
                                     // メモリ上から依頼を消す
                                     super.removeConsistentHashMoveData();
