@@ -32,6 +32,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
     private InputStreamReader isr = null;
     private BufferedReader br = null;
     private Socket socket = null;
+    private String searchNodeInfo = null;
 
     private ArrayList removeDataKeys = null;
 
@@ -102,6 +103,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                     StatusUtil.setStatus(2);
                 }
 
+                // 移動依頼がある場合のみ実行
                 if (!super.isExecuteKeyNodeOptimization()) continue;
 
                 HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
@@ -109,17 +111,11 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                 ArrayList subNodeList = (ArrayList)allNodeInfo.get("sub");
                 ArrayList thirdNodeList = (ArrayList)allNodeInfo.get("third");
 
-                Thread.sleep(checkCycle);
-
                 // MainのMasterNodeの場合のみ実行
                 if (StatusUtil.isMainMasterNode()) {
 
                     // ノード数分チェック
                     for (int i = 0; i < mainNodeList.size(); i++) {
-
-                        //imdstKeyValueClient = new ImdstKeyValueClient();
-
-                        //imdstKeyValueClient.connect(myInfoDt[0], Integer.parseInt(myInfoDt[1]));
 
                         // ノードチェック(メイン)
                         String nodeInfo = (String)mainNodeList.get(i);
@@ -165,9 +161,13 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
                         // ノードが生存している場合のみ実行
                         if (searchNodeDt != null) {
+
+                            // 移動対象データを検索
                             this.searchTargetData(searchNodeDt[0], Integer.parseInt(searchNodeDt[1]), i);
+                            // 移動完了後に削除するデータ保管用
                             removeDataKeys = new ArrayList(100000);
 
+                            // 移動データ量に合わせて転送を繰り返す
                             while((optimizeTargetKeys = this.nextData()) != null) {
 
                                 for (int idx = 0; idx < optimizeTargetKeys.length; idx++) {
@@ -178,7 +178,9 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                                 }
                             }
 
+                            // 検索コネクションを切断
                             this.closeGetConnect();
+                            // 移動完了データを元ノードから削除
                             this.removeTargetData(mainNodeDt[0], mainNodeDt[1], subNodeDt[0], subNodeDt[1], thirdNodeDt[0], thirdNodeDt[1]);
                         }
                         logger.info(nodeInfo + " Optimization End");    
@@ -186,12 +188,14 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                     }
                 }
 
+                // データ移動依頼フラグを落とす
                 super.executeKeyNodeOptimization(false);
             } catch(Exception e) {
+                // 検索コネクションを切断
+                this.closeGetConnect();
                 logger.error("KeyNodeOptimizationHelper - executeHelper - Error", e);
             } finally {
                 try {
-
                 } catch (Exception e2) {}
             }
         }
@@ -217,7 +221,14 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
         StringBuffer buf = null;
 
         try {
-System.out.println("searchTargetData - start");
+
+            // 使用開始してよいかをチェック
+            StatusUtil.waitNodeUseStatus(nodeName+":"+nodePort, null, null);
+
+            // 使用開始をマーク
+            StatusUtil.addNodeUse(nodeName+":"+nodePort);
+            this.searchNodeInfo = nodeName+":"+nodePort;
+
             this.socket = new Socket(nodeName, nodePort);
             this.socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
@@ -226,7 +237,6 @@ System.out.println("searchTargetData - start");
 
             this.isr = new InputStreamReader(this.socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
             this.br = new BufferedReader(this.isr);
-
 
 
             // コピー元からデータ読み込み
@@ -241,13 +251,18 @@ System.out.println("searchTargetData - start");
             buf.append(DataDispatcher.ruleInt);
 
             // 送信
-            pw.println(buf.toString());
-            pw.flush();
+            this.pw.println(buf.toString());
+            this.pw.flush();
 
+        } catch(SocketException se) {
+            super.setDeadNode(nodeName+":"+nodePort, 31, se);
+            throw new BatchException(se);
+        } catch(IOException ie) {
+            super.setDeadNode(nodeName+":"+nodePort, 32, ie);
+            throw new BatchException(ie);
         } catch(Exception e) {
             throw new BatchException(e);
         } 
-System.out.println("searchTargetData - end");
     }
 
 
@@ -257,12 +272,11 @@ System.out.println("searchTargetData - end");
         String line = null;
 
         try {
-System.out.println("nextData - start");
+
             while((line = this.br.readLine()) != null) {
 
                 if (line.length() > 0) {
                     if (line.length() == 2 && line.equals("-1")) {
-                      
 
                         break;
                     } else {
@@ -275,10 +289,11 @@ System.out.println("nextData - start");
         } catch(SocketException se) {
             // 切断とみなす
             logger.error(se);
+            throw new BatchException(se);
         } catch(Exception e) {
             throw new BatchException(e);
         }
-System.out.println("nextData - end");
+
         return ret;
     }
 
@@ -543,6 +558,12 @@ System.out.println("removeData - start");
     private void closeGetConnect() {
         try {
 
+            // 使用終了をマーク
+            if (this.searchNodeInfo != null) {
+                super.execNodeUseEnd(this.searchNodeInfo);
+                this.searchNodeInfo = null;
+            }
+
             // コネクション切断
             if (this.pw != null) {
                 this.pw.println(ImdstDefine.imdstConnectExitRequest);
@@ -551,19 +572,18 @@ System.out.println("removeData - start");
                 this.pw = null;
             }
 
-            // コネクション切断
             if (this.br != null) {
                 this.br.close();
                 this.br = null;
             }
-
 
             if (this.socket != null) {
                 this.socket.close();
                 this.socket = null;
             }
 
-            // TODO:ここにconnectMap閉じる実装を入れる
+
+            // connectMap閉じる
             Set set = this.connectMap.keySet();
             Iterator iterator = set.iterator();
 
@@ -579,6 +599,7 @@ System.out.println("removeData - start");
         } catch(Exception e2) {
             // 無視
             logger.error(e2);
+        } finally {
         }
     }
 }
