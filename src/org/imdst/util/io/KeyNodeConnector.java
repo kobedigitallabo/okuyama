@@ -38,12 +38,17 @@ public class KeyNodeConnector {
     }
 
     public void connect() throws Exception {
+        connect(ImdstDefine.nodeConnectionOpenTimeout);
+    }
+
+
+    public void connect(int connectOpenTime) throws Exception {
         InetSocketAddress inetAddr = null;
 
         try {
             inetAddr = new InetSocketAddress(this.nodeName, this.nodePort);
             this.socket = new Socket();
-            this.socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
+            this.socket.connect(inetAddr, connectOpenTime);
 
             this.connectTime = new Long(System.currentTimeMillis());
             this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
@@ -55,7 +60,6 @@ public class KeyNodeConnector {
             throw e;
         }
     }
-
 
     public String readLine() throws Exception {
         return this.readLine(null);
@@ -96,6 +100,7 @@ public class KeyNodeConnector {
         }
         return ret;
     }
+
 
     public void print(String str) throws Exception {
         try {

@@ -14,6 +14,7 @@ import org.imdst.util.DataDispatcher;
 import org.imdst.util.StatusUtil;
 import org.imdst.client.ImdstKeyValueClient;
 import org.imdst.util.io.*;
+import org.imdst.util.io.KeyNodeConnector;
 
 /**
  * KeyNodeのデータを最適化するHelperクラス<br>
@@ -27,11 +28,8 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
     private int checkCycle = 6000 * 3;
 
 
-    private OutputStreamWriter osw = null;
-    private PrintWriter pw = null;
-    private InputStreamReader isr = null;
     private BufferedReader br = null;
-    private Socket socket = null;
+    private KeyNodeConnector keyNodeConnector = null;
     private String searchNodeInfo = null;
 
     private ArrayList removeDataKeys = null;
@@ -229,15 +227,8 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             StatusUtil.addNodeUse(nodeName+":"+nodePort);
             this.searchNodeInfo = nodeName+":"+nodePort;
 
-            this.socket = new Socket(nodeName, nodePort);
-            this.socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
-
-            this.osw = new OutputStreamWriter(this.socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);
-            this.pw = new PrintWriter(new BufferedWriter(this.osw));
-
-            this.isr = new InputStreamReader(this.socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
-            this.br = new BufferedReader(this.isr);
-
+            this.keyNodeConnector = new KeyNodeConnector(nodeName, nodePort, nodeName+":"+nodePort);
+            this.keyNodeConnector.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             // コピー元からデータ読み込み
             buf = new StringBuffer();
@@ -251,8 +242,8 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             buf.append(DataDispatcher.ruleInt);
 
             // 送信
-            this.pw.println(buf.toString());
-            this.pw.flush();
+            this.keyNodeConnector.println(buf.toString());
+            this.keyNodeConnector.flush();
 
         } catch(SocketException se) {
             super.setDeadNode(nodeName+":"+nodePort, 31, se);
@@ -273,7 +264,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
         try {
 
-            while((line = this.br.readLine()) != null) {
+            while((line = this.keyNodeConnector.readLine()) != null) {
 
                 if (line.length() > 0) {
                     if (line.length() == 2 && line.equals("-1")) {
@@ -568,21 +559,11 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             }
 
             // コネクション切断
-            if (this.pw != null) {
-                this.pw.println(ImdstDefine.imdstConnectExitRequest);
-                this.pw.flush();
-                this.pw.close();
-                this.pw = null;
-            }
-
-            if (this.br != null) {
-                this.br.close();
-                this.br = null;
-            }
-
-            if (this.socket != null) {
-                this.socket.close();
-                this.socket = null;
+            if (this.keyNodeConnector != null) {
+                this.keyNodeConnector.println(ImdstDefine.imdstConnectExitRequest);
+                this.keyNodeConnector.flush();
+                this.keyNodeConnector.close();
+                this.keyNodeConnector = null;
             }
 
 
