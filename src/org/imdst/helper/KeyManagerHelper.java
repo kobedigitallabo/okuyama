@@ -382,7 +382,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             // KeyManagerの差分取得モードをONにする
                             // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
-                            this.keyMapManager.diffDataMode(true);
+                            this.keyMapManager.diffDataMode(true, pw);
                             retParamBuf = null;
                             break;
                         case 23 :

@@ -1006,6 +1006,23 @@ public class KeyMapManager extends Thread {
     }
 
 
+    public void diffDataMode(boolean flg, PrintWriter pw) {
+        synchronized (diffSync) {
+
+            if (flg) {
+                this.diffDataPoolingList = new CopyOnWriteArrayList();
+            } else {
+                this.diffDataPoolingList = null;
+            }
+            this.diffDataPoolingFlg = flg;
+            try {
+                pw.println("1");
+                pw.flush();
+            } catch (Exception e) {
+            }
+        }
+    }
+
     public void diffDataMode(boolean flg) {
         synchronized (diffSync) {
 
@@ -1017,7 +1034,6 @@ public class KeyMapManager extends Thread {
             this.diffDataPoolingFlg = flg;
         }
     }
-
 
     // 強制的に差分モードをOffにする
     public void diffDataModeOff() {

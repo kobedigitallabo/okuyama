@@ -381,6 +381,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 // 送信
                 mpw.println(buf.toString());
                 mpw.flush();
+                String diffModeOn = mbr.readLine();
+
                 logger.info("Recover Step - 2");
 
                 // コピー元からデータ読み込み
@@ -432,7 +434,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                 logger.info("Recover Step - 10");
                 // 停止完了後差分データを取得
-                // この瞬間が登録、削除は一時的に停止する。
+                // この瞬間登録、削除は一時的に停止する。
                 buf = new StringBuffer();
                 // 処理番号24
                 buf.append("24");
@@ -452,7 +454,9 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 pw.flush();
 
                 // データを送信
-                pw.println(mbr.readLine());
+                String str = mbr.readLine();
+                System.out.println(str);
+                pw.println(str);
                 pw.flush();
 
                 logger.info("Recover Step - 12");
@@ -494,6 +498,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 // 送信
                 pw.println(buf.toString());
                 pw.flush();
+                String diffModeOn = br.readLine();
 
                 // コピー元からデータ読み込み
                 buf = new StringBuffer();
