@@ -152,10 +152,6 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                         // 該当ノードの復帰を登録
                                         logger.info(nodeInfo + " - Recover Success");
                                         StatusUtil.setNodeStatusDt(nodeInfo, "Recover Success");
-
-                                        // リカバー終了を伝える
-                                        super.setRecoverNode(false, "");
-                                        super.setArriveNode(nodeInfo);
                                     } else {
                                         logger.info(nodeInfo + " - Recover Miss");
                                         // リカバー終了を伝える
@@ -211,13 +207,9 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                         // 該当ノードの復帰を登録
                                         logger.info(subNodeInfo + " - Recover Success");
                                         StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Success");
-
-                                        // リカバー終了を伝える
-                                        super.setRecoverNode(false, "");
-                                        super.setArriveNode(subNodeInfo);
                                     } else {
-                                        logger.info(subNodeInfo + " - Recover Miss");
 
+                                        logger.info(subNodeInfo + " - Recover Miss");
                                         // リカバー終了を伝える
                                         super.setRecoverNode(false, "");
                                         StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Miss");
@@ -455,7 +447,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                 // データを送信
                 String str = mbr.readLine();
-                System.out.println(str);
+
                 pw.println(str);
                 pw.flush();
 
@@ -472,6 +464,12 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 }
 
                 logger.info("Recover Step - 15");
+
+                // リカバー完了を全MasterNodeへ送信
+                super.setRecoverNode(false, "");
+                super.setArriveNode(nodeInfo);
+
+
                 // 差分読み込み中のノードの差分データ反映完了を送信
                 mpw.println("1");
                 mpw.flush();
@@ -566,6 +564,10 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 } else {
                     throw new Exception("Diff Data Input Error Ret=[" + diffDataInputRet + "]");
                 }
+
+                // リカバー完了を全MasterNodeへ送信
+                super.setRecoverNode(false, "");
+                super.setArriveNode(nodeInfo);
 
                 // 差分読み込み中のノードの差分データ反映完了を送信
                 pw.println("1");
