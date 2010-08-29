@@ -375,7 +375,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             // KeyMapManager Direct Connection
                             // KeyMapObjectを読み込んで書き出す
-                            this.keyMapManager.inputKeyMapObj2Stream(br, Integer.parseInt(clientParameterList[1]));
+                            this.keyMapManager.inputKeyMapObj2Stream(br, pw, Integer.parseInt(clientParameterList[1]));
                             retParamBuf = null;
                             break;
                         case 22 :
@@ -389,14 +389,14 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             // KeyManagerの差分取得モードをOFFにする
                             // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
-                            this.keyMapManager.diffDataMode(false);
+                            this.keyMapManager.diffDataModeOff();
                             retParamBuf = null;
                             break;
                         case 24 :
 
                             // KeyManagerの差分データを読み込んで渡す
                             // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
-                            this.keyMapManager.outputDiffKeyMapObj2Stream(pw);
+                            this.keyMapManager.outputDiffKeyMapObj2Stream(pw, br);
                             pw.flush();
                             retParamBuf = null;
                             break;
@@ -404,7 +404,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             // KeyMapManagerに差分データを登録する
                             // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
-                            this.keyMapManager.inputDiffKeyMapObj2Stream(br);
+                            this.keyMapManager.inputDiffKeyMapObj2Stream(br, pw);
                             retParamBuf = null;
                             break;
                         case 26 :
@@ -492,8 +492,10 @@ public class KeyManagerHelper extends AbstractHelper {
                 } catch (SocketException se) {
                     closeFlg = true;
                 } catch (ArrayIndexOutOfBoundsException aie) {
-                    logger.info("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
-                } 
+                    logger.error("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
+                } catch (NumberFormatException nfe) {
+                    logger.error("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
+                }
             }
 
             ret = super.SUCCESS;

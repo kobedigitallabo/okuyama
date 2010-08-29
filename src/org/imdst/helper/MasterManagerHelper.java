@@ -152,14 +152,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // Queueから処理取得
                     Object[] queueParam = super.pollSpecificationParameterQueue(pollQueueName);
 
-
                     // Queueからのパラメータ
                     Object[] queueMap = (Object[])queueParam[0];
 
                     // ロードバランシング指定
                     this.reverseAccess = ((Boolean)queueMap[ImdstDefine.paramBalance]).booleanValue();
 
-                    // ソケット周り(いずれクラス化します)
+                    // ソケット周り(いずれクラス化する)
                     pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
                     br = (BufferedReader)queueMap[ImdstDefine.paramBr];
                     socket = (Socket)queueMap[ImdstDefine.paramSocket];
@@ -349,6 +348,24 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             StatusUtil.setDeadNode(clientParameterList[1]);
                             retParams = new String[3];
                             retParams[0] = "95";
+                            retParams[1] = "true";
+                            retParams[2] = "";
+                            break;
+                        case 96 :
+
+                            // KeyNodeのリカバリー開始をマーク
+                            KeyNodeConnector.setRecoverMode(true, clientParameterList[1]);
+                            retParams = new String[3];
+                            retParams[0] = "96";
+                            retParams[1] = "true";
+                            retParams[2] = "";
+                            break;
+                        case 97 :
+
+                            // KeyNodeのリカバリー終了をマーク
+                            KeyNodeConnector.setRecoverMode(false, "");
+                            retParams = new String[3];
+                            retParams[0] = "97";
                             retParams[1] = "true";
                             retParams[2] = "";
                             break;
@@ -2837,7 +2854,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 return null;
             }
 
-
             if (!retryFlg) {
                 // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
                 if (keyNodeConnectPool.containsKey(connectionFullName)) {
@@ -2850,19 +2866,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
                 // まだ接続が完了していない場合は接続処理続行
-                if (keyNodeConnector == null) {
+                if (keyNodeConnector == null)
                     // 新規接続
                     // 親クラスから既に接続済みの接続をもらう
                     keyNodeConnector = super.getActiveConnection(connectionFullName);
-                }
             }
-
 
             // まだ接続が完了していない場合は接続処理続行
-            if (keyNodeConnector == null) {
+            if (keyNodeConnector == null) 
                 // 接続が存在しない場合は自身で接続処理を行う
                 keyNodeConnector = new KeyNodeConnector(keyNodeName, Integer.parseInt(keyNodePort), keyNodeFullName);
-            }
 
             if(keyNodeConnector != null) keyNodeConnector.initRetryFlg();
         } catch (Exception e) {

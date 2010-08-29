@@ -275,6 +275,139 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
 
     /**
+     * ノードのリカバリーの開始、終了をスレーブのMasterNodeへ送信
+     *
+     *
+     * @param recoverMode
+     */
+    protected void setRecoverNode(boolean recoverMode, String nodeInfo) {
+
+        //if (te != null) {
+        //    te.printStackTrace();
+        //}
+
+        KeyNodeConnector.setRecoverMode(recoverMode, nodeInfo);
+        // MainMasterNodeの場合のみ設定される
+        if (StatusUtil.isMainMasterNode()) {
+            String sendCheckStr = null;
+
+            if (StatusUtil.isNodeArrival(nodeInfo)) {
+
+                // 対象のSlaveMasterNode全てに依頼
+                String slaves = StatusUtil.getSlaveMasterNodes();
+
+                if (slaves != null && !slaves.trim().equals("")) {
+                    String[] slaveList = slaves.split(",");
+                    int execCounter = 0;
+
+                    // MasterNodeへの伝搬は失敗しても2回試す
+                    while (execCounter < 2) {
+                        // 1ノードづつ実行
+                        for (int i = 0; i < slaveList.length; i++) {
+
+                            if (slaveList[i] == null) continue;
+
+                            Socket socket = null;
+                            PrintWriter pw = null;
+                            BufferedReader br = null;
+
+                            try {
+
+                                // Slaveノード名とポートに分解
+                                String[] slaveNodeDt = slaveList[i].split(":");
+
+                                InetSocketAddress inetAddr = new InetSocketAddress(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                                socket = new Socket();
+                                socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenShortTimeout);
+                                socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+
+                                pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
+                                                                                                                ImdstDefine.keyHelperClientParamEncoding)));
+                                br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
+                                                                                                ImdstDefine.keyHelperClientParamEncoding));
+
+                                // 文字列バッファ初期化
+                                StringBuffer serverRequestBuf = new StringBuffer();
+
+                                
+                                // 処理番号連結
+                                if (recoverMode) {
+                                    // リカバー開始
+                                    serverRequestBuf.append("96");
+                                    // セパレータ連結
+                                    serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    serverRequestBuf.append(nodeInfo);
+                                    sendCheckStr = "96";
+                                } else {
+                                    // リカバー終了
+                                    serverRequestBuf.append("97");
+                                    serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    sendCheckStr = "97";
+                                }
+
+                                // サーバ送信
+                                pw.println(serverRequestBuf.toString());
+                                pw.flush();
+
+                                // サーバから結果受け取り
+                                String serverRetStr = br.readLine();
+
+                                String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
+
+                                // 処理の妥当性確認
+
+                                if (serverRet[0].equals(sendCheckStr)) {
+                                    if (!serverRet[1].equals("true")) {
+                                        // TODO:復帰登録失敗
+                                        // 異常事態だが、稼動していないことも考えられるので、
+                                        // 無視する
+                                        System.out.println("Slave Master Node setDeadNode Error [" + slaveList[i] + "]");
+                                    } else {
+                                        slaveList[i] = null;
+                                    }
+                                }
+                            } catch(Exception e) {
+
+                                // TODO:復帰登録失敗
+                                // 異常事態だが、稼動していないことも考えられるので、
+                                // 無視する
+                                System.out.println("Slave Master Node setArriveNode Error [" + slaveList[i] + "]");
+                                e.printStackTrace();
+
+                            } finally {
+                                try {
+                                    if (pw != null) {
+                                        // 接続切断を通知
+                                        pw.println(ImdstDefine.imdstConnectExitRequest);
+                                        pw.flush();
+
+                                        pw.close();
+                                        pw = null;
+                                    }
+
+                                    if (br != null) {
+                                        br.close();
+                                        br = null;
+                                    }
+
+                                    if (socket != null) {
+                                        socket.close();
+                                        socket = null;
+                                    }
+                                } catch(Exception e2) {
+                                    // 無視
+                                }
+                            }
+                        }
+                        execCounter++;
+                    }
+                }
+            }
+        }
+    }
+
+
+    /**
      * ノードとの接続プールが有効か確認
      *
      *
@@ -582,13 +715,14 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                     retStrs[0] = "true";
                     retStrs[1] = retParams[2];
                 }
-                keyNodeConnector.println(ImdstDefine.imdstConnectExitRequest);
-                keyNodeConnector.flush();
 
                 if (retStrs[0].equals("true")) {
                     try {
 
-                        if (keyNodeConnector != null) keyNodeConnector.close();
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
                     } catch(Exception e1) {
                         // 無視
                         logger.error(e1);

@@ -25,6 +25,9 @@ public class KeyNodeConnector {
 
     private boolean retry = false;
 
+    private static boolean recoverMode = false;
+    private static String recoverTarget = "";
+
     public KeyNodeConnector(String nodeName, int nodePort, String nodeFullName) throws Exception {
 
         this.nodeName = nodeName;
@@ -36,6 +39,17 @@ public class KeyNodeConnector {
             throw e;
         }
     }
+
+
+    public static void setRecoverMode(boolean mode, String target) {
+        recoverMode = mode;
+        if (mode) {
+            recoverTarget = target;
+        } else {
+            recoverTarget = "";
+        }
+    }
+
 
     public void connect() throws Exception {
         connect(ImdstDefine.nodeConnectionOpenTimeout);
@@ -51,7 +65,13 @@ public class KeyNodeConnector {
             this.socket.connect(inetAddr, connectOpenTime);
 
             this.connectTime = new Long(System.currentTimeMillis());
-            this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+
+            // リカバー対象へのコネクションはタイムアウト時間を長くする
+            if (recoverMode && recoverTarget.equals(this.nodeFullName)) {
+                this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
+            } else {
+                this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+            }
 
             this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding)));
 

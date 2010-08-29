@@ -682,6 +682,14 @@ public class DataDispatcher {
     }
 
 
+    /**
+     * DataNodeの並順の入れ替えをおこなう.<br>
+     * 停止ノードは常に後ろに回れされる.<br>
+     *
+     * @param nodes
+     * @param reverse
+     * @return String[]
+     */
     private static String[] adjustmentAccessNode(String[] nodes, boolean reverse) {
         String[] retNodes = null;
 
@@ -693,6 +701,7 @@ public class DataDispatcher {
             return nodes;
         } else if (nodes.length == 6) {
 
+            // MainDataNodeが停止中は強制的にSubが先頭にくる
             if (!StatusUtil.isNodeArrival(nodes[0]) && StatusUtil.isNodeArrival(nodes[3])) {
                 retNodes = new String[6];
                 retNodes[0] = nodes[3];
@@ -706,6 +715,7 @@ public class DataDispatcher {
             }
         } else if (nodes.length == 9) {
 
+            // Main、SubDataNodeが停止中は強制的にThirdが先頭にくる
             if (!StatusUtil.isNodeArrival(nodes[0]) && !StatusUtil.isNodeArrival(nodes[3])) {
                 retNodes = new String[9];
                 retNodes[0] = nodes[6];
@@ -718,7 +728,9 @@ public class DataDispatcher {
                 retNodes[7] = nodes[4];
                 retNodes[8] = nodes[5];
             } else if (!StatusUtil.isNodeArrival(nodes[0]) && StatusUtil.isNodeArrival(nodes[3])) {
+
                 if (reverse == true) {
+                    // MainDataNodeが停止中でSub、Thirdが稼働中の場合はreverseの設定に合わせて入れ替える
                     retNodes = new String[9];
                     retNodes[0] = nodes[6];
                     retNodes[1] = nodes[7];
@@ -743,6 +755,7 @@ public class DataDispatcher {
                 }
             } else if (StatusUtil.isNodeArrival(nodes[0]) && !StatusUtil.isNodeArrival(nodes[3])) {
                 if (reverse == true) {
+                    // SubDataNodeが停止中でMain、Thirdが稼働中の場合はreverseの設定に合わせて入れ替える
                     retNodes = new String[9];
                     retNodes[0] = nodes[6];
                     retNodes[1] = nodes[7];
@@ -962,7 +975,7 @@ public class DataDispatcher {
      * @param reverse 逆転指定
      * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] dispatchConsistentHashKeyNode(String key, boolean reverse) {
+    private static String[] dispatchConsistentHashKeyNode(String key, boolean reverse) {
         return dispatchConsistentHashKeyNode(key, reverse, false);
     }
 
@@ -977,7 +990,7 @@ public class DataDispatcher {
      * @param useOldCircle 旧サークル使用設定
      * @return String 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] dispatchConsistentHashKeyNode(String key, boolean reverse, boolean useOldCircle) {
+    private static String[] dispatchConsistentHashKeyNode(String key, boolean reverse, boolean useOldCircle) {
         String[] ret = null;
         String[] tmp = decisionConsistentHashKeyNode(key, useOldCircle);
 
@@ -1028,7 +1041,7 @@ public class DataDispatcher {
      * @param useOldCircle 旧サークル使用設定
      * @return String[] 対象キーノードの情報(サーバ名、ポート番号)
      */
-    public static String[] decisionConsistentHashKeyNode(String key, boolean useOldCircle) {
+    private static String[] decisionConsistentHashKeyNode(String key, boolean useOldCircle) {
         String[] ret = null;
         boolean noWaitFlg = false;
         SortedMap useNodeCircle = null;

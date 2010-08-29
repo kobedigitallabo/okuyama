@@ -213,7 +213,7 @@ public class ImdstDefine {
     public static final int clientConnectionOpenTimeout = 5000;
 
     // クライアントのコネクションタイムアウト時間(ミリ秒)
-    public static final int clientConnectionTimeout = 30000;
+    public static final int clientConnectionTimeout = 60000 * 5;
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
@@ -229,6 +229,7 @@ public class ImdstDefine {
     public static final int nodeConnectionTimeout = 4000;
     //public static final int nodeConnectionTimeout = 15000;
 
+    public static final int nodeConnectionTimeout4RecoverMode = 60000 * 5;
 
     // Node間のコネクションオープンタイムアウト時間(PING)(ミリ秒)
     public static final int nodeConnectionOpenPingTimeout = 2500;
