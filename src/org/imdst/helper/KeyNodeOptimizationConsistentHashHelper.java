@@ -581,6 +581,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         try {
             if (!super.isNodeArrival(nodeName + ":" + nodePort)) return ;
             keyNodeConnector = new KeyNodeConnector(nodeName, nodePort, nodeName+":"+nodePort);
+            keyNodeConnector.connect();
             keyNodeConnector.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             // 移動元からデータ読み込み
@@ -683,6 +684,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
         boolean ret = false;
         try {
             keyNodeConnector = new KeyNodeConnector(nodeName, nodePort, nodeName+":"+nodePort);
+            keyNodeConnector.connect();
             keyNodeConnector.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             // 移動元からデータ削除

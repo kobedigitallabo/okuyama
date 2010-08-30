@@ -148,6 +148,7 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
 
         try {
             keyNodeConnector = new KeyNodeConnector(nodeInfos[0], Integer.parseInt(nodeInfos[1]), nodeInfo);
+            keyNodeConnector.connect();
         } catch(Exception e) {
             logger.info("Connection Pool Error = [" + nodeInfo + "]");
             keyNodeConnector = null;

@@ -633,11 +633,11 @@ public class DataDispatcher {
         if (dispatchMode == 0) {
 
             // mod
-            ret = dispatchModKeyNode(key, reverse);
+            ret = dispatchModKeyNode(key, false);
         } else if (dispatchMode == 1) {
 
             // Consistent Hash
-            ret = dispatchConsistentHashKeyNode(key, reverse);
+            ret = dispatchConsistentHashKeyNode(key, false);
         }
         
         return adjustmentAccessNode(ret, reverse);
@@ -671,12 +671,12 @@ public class DataDispatcher {
 
             // mod
             if (oldRules != null && oldRules.length > useRule)
-                ret = dispatchModKeyNode(key, reverse, oldRules[useRule]);
+                ret = dispatchModKeyNode(key, false, oldRules[useRule]);
         } else if (dispatchMode == 1) {
 
             // Consistent Hash
             if (useRule == 0 && oldCircle != null) 
-                ret = dispatchConsistentHashKeyNode(key, reverse, true);
+                ret = dispatchConsistentHashKeyNode(key, false, true);
         }
         return adjustmentAccessNode(ret, reverse);
     }
@@ -702,7 +702,7 @@ public class DataDispatcher {
         } else if (nodes.length == 6) {
 
             // MainDataNodeが停止中は強制的にSubが先頭にくる
-            if (!StatusUtil.isNodeArrival(nodes[0]) && StatusUtil.isNodeArrival(nodes[3])) {
+            if (!StatusUtil.isNodeArrival(nodes[2]) && StatusUtil.isNodeArrival(nodes[5])) {
                 retNodes = new String[6];
                 retNodes[0] = nodes[3];
                 retNodes[1] = nodes[4];
@@ -711,12 +711,26 @@ public class DataDispatcher {
                 retNodes[4] = nodes[1];
                 retNodes[5] = nodes[2];
             } else {
-                retNodes = nodes;
+
+                if (reverse) {
+
+                    // SubNodeが存在する場合は逆転させる
+                    retNodes = new String[6];
+                    retNodes[3] = nodes[0];
+                    retNodes[4] = nodes[1];
+                    retNodes[5] = nodes[2];
+
+                    retNodes[0] = nodes[3];
+                    retNodes[1] = nodes[4];
+                    retNodes[2] = nodes[5];
+                } else {
+                    retNodes = nodes;
+                }
             }
         } else if (nodes.length == 9) {
 
             // Main、SubDataNodeが停止中は強制的にThirdが先頭にくる
-            if (!StatusUtil.isNodeArrival(nodes[0]) && !StatusUtil.isNodeArrival(nodes[3])) {
+            if (!StatusUtil.isNodeArrival(nodes[2]) && !StatusUtil.isNodeArrival(nodes[5])) {
                 retNodes = new String[9];
                 retNodes[0] = nodes[6];
                 retNodes[1] = nodes[7];
@@ -727,7 +741,7 @@ public class DataDispatcher {
                 retNodes[6] = nodes[3];
                 retNodes[7] = nodes[4];
                 retNodes[8] = nodes[5];
-            } else if (!StatusUtil.isNodeArrival(nodes[0]) && StatusUtil.isNodeArrival(nodes[3])) {
+            } else if (!StatusUtil.isNodeArrival(nodes[2]) && StatusUtil.isNodeArrival(nodes[5])) {
 
                 if (reverse == true) {
                     // MainDataNodeが停止中でSub、Thirdが稼働中の場合はreverseの設定に合わせて入れ替える
@@ -753,7 +767,7 @@ public class DataDispatcher {
                     retNodes[7] = nodes[1];
                     retNodes[8] = nodes[2];
                 }
-            } else if (StatusUtil.isNodeArrival(nodes[0]) && !StatusUtil.isNodeArrival(nodes[3])) {
+            } else if (StatusUtil.isNodeArrival(nodes[2]) && !StatusUtil.isNodeArrival(nodes[5])) {
                 if (reverse == true) {
                     // SubDataNodeが停止中でMain、Thirdが稼働中の場合はreverseの設定に合わせて入れ替える
                     retNodes = new String[9];

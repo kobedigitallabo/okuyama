@@ -446,9 +446,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 pw.flush();
 
                 // データを送信
-                String str = mbr.readLine();
-
-                pw.println(str);
+                pw.println(mbr.readLine());
                 pw.flush();
 
                 logger.info("Recover Step - 12");

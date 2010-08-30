@@ -45,7 +45,7 @@ public class TestSock {
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     // データ登録
-
+                    System.out.println("datasavekey_" + new Integer(i).toString());
                     if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
                     //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
                         System.out.println("ImdstKeyValueClient - error");
@@ -204,7 +204,7 @@ public class TestSock {
                     if (ret[0].equals("true")) {
                         // データ有り
                     } else if (ret[0].equals("false")) {
-                        System.out.println("データなし");
+                        System.out.println("datasavekey_" + new Integer(i).toString() + " = データなし");
                     } else if (ret[0].equals("error")) {
                         System.out.println(ret[1]);
                     }

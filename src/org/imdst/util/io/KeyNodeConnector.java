@@ -33,11 +33,6 @@ public class KeyNodeConnector {
         this.nodeName = nodeName;
         this.nodePort = nodePort;
         this.nodeFullName = nodeFullName;
-        try {
-            this.connect();
-        } catch (Exception e) {
-            throw e;
-        }
     }
 
 

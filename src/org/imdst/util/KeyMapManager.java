@@ -1135,7 +1135,6 @@ public class KeyMapManager extends Thread {
                         allDataBuf = null;
                         // 取り込み完了をまつ
                         String outputRet = br.readLine();
-                        this.diffDataMode(false);
 
                         if (outputRet == null || !outputRet.equals("1")) {
                             throw new Exception("outputDiffKeyMapObj2Stream - Error Ret=[" + outputRet + "]");
@@ -1143,6 +1142,7 @@ public class KeyMapManager extends Thread {
                         // 終了受信を送信
                         pw.println("1");
                         pw.flush();
+                        this.diffDataMode(false);
                     }
                 }
                 //logger.debug("outputDiffKeyMapObj2Stream - synchronized - end");

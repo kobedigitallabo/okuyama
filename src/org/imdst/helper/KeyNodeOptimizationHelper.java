@@ -227,7 +227,9 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             StatusUtil.addNodeUse(nodeName+":"+nodePort);
             this.searchNodeInfo = nodeName+":"+nodePort;
 
+            if (this.keyNodeConnector != null) this.keyNodeConnector.close();
             this.keyNodeConnector = new KeyNodeConnector(nodeName, nodePort, nodeName+":"+nodePort);
+            this.keyNodeConnector.connect();
             this.keyNodeConnector.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             // コピー元からデータ読み込み

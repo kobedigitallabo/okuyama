@@ -1734,7 +1734,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @throws BatchException
      */
     private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
-
         KeyNodeConnector keyNodeConnector = null;
         KeyNodeConnector slaveKeyNodeConnector = null;
 
@@ -1797,6 +1796,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // 接続結果と、現在の保存先状況で処理を分岐
                 try {
 
+
                     // 送信
                     keyNodeConnector.println(sendStr);
                     keyNodeConnector.flush();
@@ -1811,9 +1811,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                         //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
                         if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
+
                             mainNodeSave = true;
-                            if (counter == 1) subNodeSave = true;
                         } else {
+
                             // 論理的に登録失敗
                             super.setDeadNode(nodeName + ":" + nodePort, 3, null);
                             logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
@@ -1826,7 +1827,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
                         if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
                             mainNodeSave = true;
-                            if (counter == 1) subNodeSave = true;
                         } else {
                             // 論理的に登録失敗
                             super.setDeadNode(nodeName + ":" + nodePort, 4, null);
@@ -1837,18 +1837,22 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 使用済みの接続を戻す
                     this.addKeyNodeConnectionPool(keyNodeConnector);
                 } catch (SocketException se) {
+
                     //se.printStackTrace();
                     super.setDeadNode(nodeName + ":" + nodePort, 5, se);
                     logger.debug(se);
                 } catch (IOException ie) {
+
                     //ie.printStackTrace();
                     super.setDeadNode(nodeName + ":" + nodePort, 6, ie);
                     logger.debug(ie);
                 } catch (Exception ee) {
+
                     //ee.printStackTrace();
                     super.setDeadNode(nodeName + ":" + nodePort, 7, ee);
                     logger.debug(ee);
                 }
+
             }
 
 
@@ -2873,9 +2877,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
             // まだ接続が完了していない場合は接続処理続行
-            if (keyNodeConnector == null) 
+            if (keyNodeConnector == null) {
                 // 接続が存在しない場合は自身で接続処理を行う
                 keyNodeConnector = new KeyNodeConnector(keyNodeName, Integer.parseInt(keyNodePort), keyNodeFullName);
+                keyNodeConnector.connect();
+            }
 
             if(keyNodeConnector != null) keyNodeConnector.initRetryFlg();
         } catch (Exception e) {
