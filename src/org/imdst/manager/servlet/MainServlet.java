@@ -40,29 +40,49 @@ public class MainServlet extends HttpServlet {
         ImdstKeyValueClient imdstKeyValueClient = null;
         String[] nodeRet = null;
         String msg = "&nbsp;";
+        String dispatchAlgorithm = "mod";
+        String addConsistentNodeStr = null;
+        String addConsistentMainNodeStr = null;
+        String addConsistentSubNodeStr = null;
+        String addConsistentThirdNodeStr = null;
+
         try {
 
             ArrayList settingList = new ArrayList();
             ArrayList dataNodeList = new ArrayList();
             ArrayList slaveDataNodeList = new ArrayList();
+            ArrayList thirdDataNodeList = new ArrayList();
             HashMap setting = null;
             String[] clientRet = null;
             String dataNodeStr = null;
             String slaveDataNodeStr = null;
+            String thirdDataNodeStr = null;
 
-            String[] settingParams = new String[8];
+            String[] settingParams = new String[10];
             settingParams[0] = ImdstDefine.Prop_KeyMapNodesInfo;
             settingParams[1] = ImdstDefine.Prop_SubKeyMapNodesInfo;
-            settingParams[2] = ImdstDefine.Prop_KeyMapNodesRule;
-            settingParams[3] = ImdstDefine.Prop_LoadBalanceMode;
-            settingParams[4] = ImdstDefine.Prop_TransactionMode;
-            settingParams[5] = ImdstDefine.Prop_TransactionManagerInfo;
-            settingParams[6] = ImdstDefine.Prop_MainMasterNodeInfo;
-            settingParams[7] = ImdstDefine.Prop_AllMasterNodeInfo;
+            settingParams[2] = ImdstDefine.Prop_ThirdKeyMapNodesInfo;
+            settingParams[3] = ImdstDefine.Prop_KeyMapNodesRule;
+            settingParams[4] = ImdstDefine.Prop_DistributionAlgorithm;
+            settingParams[5] = ImdstDefine.Prop_LoadBalanceMode;
+            settingParams[6] = ImdstDefine.Prop_TransactionMode;
+            settingParams[7] = ImdstDefine.Prop_TransactionManagerInfo;
+            settingParams[8] = ImdstDefine.Prop_MainMasterNodeInfo;
+            settingParams[9] = ImdstDefine.Prop_AllMasterNodeInfo;
+
 
             // MasterNodeに接続
             imdstKeyValueClient = OkuyamaManagerServer.getClient();
             imdstKeyValueClient.nextConnect();
+
+            // 振り分けアルゴリズムを取得
+            clientRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_DistributionAlgorithm);
+            if (clientRet[0].equals("true")) {
+                dispatchAlgorithm = clientRet[1];
+            }
+            clientRet = null;
+
+
 
             // 変更が実行されている場合は更新を実行
             if (request.getParameter("execmethod") != null && 
@@ -87,6 +107,18 @@ public class MainServlet extends HttpServlet {
                         if(!this.execModParam(imdstKeyValueClient, updateParams[idx], nextRulesStr)) 
                                                     throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
 
+                    } else if (updateParams[idx].equals("addMainDataNode")) {
+
+                        if ((String)request.getParameter("addMainDataNode") != null && !((String)request.getParameter("addMainDataNode")).trim().equals("")) 
+                            addConsistentMainNodeStr = (String)request.getParameter("addMainDataNode");
+                    } else if (updateParams[idx].equals("addSubDataNode")) {
+
+                        if ((String)request.getParameter("addSubDataNode") != null && !((String)request.getParameter("addSubDataNode")).trim().equals("")) 
+                            addConsistentSubNodeStr = (String)request.getParameter("addSubDataNode");
+                    } else if (updateParams[idx].equals("addThirdDataNode")) {
+
+                        if ((String)request.getParameter("addThirdDataNode") != null && !((String)request.getParameter("addThirdDataNode")).trim().equals("")) 
+                            addConsistentThirdNodeStr = (String)request.getParameter("addThirdDataNode");
                     } else {
 
                         if(!this.execModParam(imdstKeyValueClient, 
@@ -96,6 +128,65 @@ public class MainServlet extends HttpServlet {
                     }
                     msg = "Update Parameter Success";
                 }
+
+
+                if (request.getParameter(ImdstDefine.Prop_KeyMapNodesInfo) != null && addConsistentMainNodeStr != null) {
+
+                    if ((String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo) != null) {
+
+                        if (addConsistentSubNodeStr != null) {
+                            if ((String)request.getParameter(ImdstDefine.Prop_ThirdKeyMapNodesInfo) != null) {
+                                if (addConsistentThirdNodeStr != null) {
+                                    addConsistentNodeStr = addConsistentMainNodeStr + "," + addConsistentSubNodeStr + "," + addConsistentThirdNodeStr;
+                                    if(!this.execModParam(imdstKeyValueClient, 
+                                                            ImdstDefine.Prop_KeyMapNodesInfo, 
+                                                            (String)request.getParameter(ImdstDefine.Prop_KeyMapNodesInfo) + "," + addConsistentMainNodeStr)) 
+                                                                throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+                                    if(!this.execModParam(imdstKeyValueClient, 
+                                                            ImdstDefine.Prop_SubKeyMapNodesInfo, 
+                                                            (String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo + "," + addConsistentSubNodeStr))) 
+                                                                throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+                                    if(!this.execModParam(imdstKeyValueClient, 
+                                                            ImdstDefine.Prop_ThirdKeyMapNodesInfo, 
+                                                            (String)request.getParameter(ImdstDefine.Prop_ThirdKeyMapNodesInfo + "," + addConsistentMainNodeStr))) 
+                                                                throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+                                    if(!this.execModParam(imdstKeyValueClient, 
+                                                            ImdstDefine.addNode4ConsistentHashMode, 
+                                                            addConsistentNodeStr)) 
+                                                                throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+                                }
+                            } else {
+                                addConsistentNodeStr = addConsistentMainNodeStr + "," + addConsistentSubNodeStr;
+                                if(!this.execModParam(imdstKeyValueClient, 
+                                                        ImdstDefine.Prop_KeyMapNodesInfo, 
+                                                        (String)request.getParameter(ImdstDefine.Prop_KeyMapNodesInfo) + "," + addConsistentMainNodeStr)) 
+                                                            throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+                                if(!this.execModParam(imdstKeyValueClient, 
+                                                        ImdstDefine.Prop_SubKeyMapNodesInfo, 
+                                                        (String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo + "," + addConsistentSubNodeStr))) 
+                                                            throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+                                if(!this.execModParam(imdstKeyValueClient, 
+                                                        ImdstDefine.addNode4ConsistentHashMode, 
+                                                        addConsistentNodeStr)) 
+                                                            throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+                            }
+                        }
+                    } else {
+
+                        addConsistentNodeStr = addConsistentMainNodeStr;
+                        if(!this.execModParam(imdstKeyValueClient, 
+                                                ImdstDefine.Prop_KeyMapNodesInfo, 
+                                                (String)request.getParameter(ImdstDefine.Prop_KeyMapNodesInfo) + "," + addConsistentMainNodeStr)) 
+                                                    throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+                        if(!this.execModParam(imdstKeyValueClient, 
+                                                ImdstDefine.addNode4ConsistentHashMode, 
+                                                addConsistentNodeStr)) 
+                                                    throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
+
+                    }
+                }
+
+
             }
 
             for (int idx = 0; idx < settingParams.length; idx++) {
@@ -141,13 +232,29 @@ public class MainServlet extends HttpServlet {
                         }
                     }
 
+                    if (idx == 2) {
+                        if (clientRet[1] != null && !clientRet[1].equals("")) {
+                            thirdDataNodeStr = clientRet[1];
+                            String[] thirdDataNodeInfos = thirdDataNodeStr.split(",");
+                            for (int dni = 0; dni < thirdDataNodeInfos.length; dni++) {
+                                String thirdDataNodeDt = imdstKeyValueClient.getDataNodeStatus(thirdDataNodeInfos[dni]);
+                                if (thirdDataNodeDt == null) thirdDataNodeDt = "";
+                                HashMap thirdDataNodeDtMap = new HashMap(2);
+                                thirdDataNodeDtMap.put("name", thirdDataNodeInfos[dni]);
+                                thirdDataNodeDtMap.put("dt", thirdDataNodeDt);
+                                thirdDataNodeList.add(thirdDataNodeDtMap);
+                            }
+                        }
+                    }
+
+
                     setting.put("value", clientRet[1]);
                 }
                 settingList.add(setting);
             }
 
             
-            out.println(initPage(settingList, dataNodeList, slaveDataNodeList, msg));
+            out.println(initPage(settingList, dataNodeList, slaveDataNodeList, thirdDataNodeList, msg));
             out.flush();
 
         } catch(Exception e) {
@@ -172,11 +279,26 @@ public class MainServlet extends HttpServlet {
         
     }
 
-    private String initPage(ArrayList settingList, ArrayList dataNodeList, ArrayList slaveDataNodeList, String msg) {
+    private String initPage(ArrayList settingList, ArrayList dataNodeList, ArrayList slaveDataNodeList, ArrayList thirdDataNodeList, String msg) {
         StringBuffer pageBuf = new StringBuffer();
         HashMap keyNodeSetting = (HashMap)settingList.get(0);
         HashMap subKeyNodeSetting = (HashMap)settingList.get(1);
-        HashMap ruleSetting = (HashMap)settingList.get(2);
+        String subKeyNodeReadOnly = "";
+
+        HashMap thirdKeyNodeSetting = (HashMap)settingList.get(2);
+        String thirdKeyNodeReadOnly = "";
+
+        HashMap ruleSetting = (HashMap)settingList.get(3);
+        HashMap dispatchSetting = (HashMap)settingList.get(4);
+
+        if (subKeyNodeSetting.get("value") == null || ((String)subKeyNodeSetting.get("value")).equals("")) {
+            subKeyNodeReadOnly = "readonly";
+        }
+
+        if (thirdKeyNodeSetting.get("value") == null || ((String)thirdKeyNodeSetting.get("value")).equals("")) {
+            thirdKeyNodeReadOnly = "readonly";
+        }
+
 
         pageBuf.append("<html>");
         pageBuf.append("  <head>");
@@ -207,22 +329,36 @@ public class MainServlet extends HttpServlet {
         pageBuf.append("    <td width=160px>");
         pageBuf.append("      <p>" + (String)keyNodeSetting.get("param") + "  </p>");
         pageBuf.append("    </td>");
-        pageBuf.append("    <td width=600px rowspan=3>");
+        pageBuf.append("    <td width=600px rowspan=4>");
         pageBuf.append("      <table border=0 width=600px>");
         pageBuf.append("        <tr>");
         pageBuf.append("          <td>");
         pageBuf.append("            <input type='text' name='" + (String)keyNodeSetting.get("param") + "' value='" + (String)keyNodeSetting.get("value") + "' size=50>");
+        if (!((String)dispatchSetting.get("param")).equals("mod")) {
+            pageBuf.append("            <input type='text' name='addMainDataNode' value=''>");
+        }
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
         pageBuf.append("        <tr>");
         pageBuf.append("          <td>");
-        pageBuf.append("            <input type='text' name='" + (String)subKeyNodeSetting.get("param") + "' value='" + (String)subKeyNodeSetting.get("value") + "' size=50>");
+        pageBuf.append("            <input type='text' name='" + (String)subKeyNodeSetting.get("param") + "' value='" + (String)subKeyNodeSetting.get("value") + "' size=50" + subKeyNodeReadOnly + ">");
+        if (!((String)dispatchSetting.get("param")).equals("mod")) {
+            pageBuf.append("            <input type='text' name='addSubDataNode' value=''>");
+        }
+        pageBuf.append("          </td>");
+        pageBuf.append("        </tr>");
+        pageBuf.append("        <tr>");
+        pageBuf.append("          <td>");
+        pageBuf.append("            <input type='text' name='" + (String)thirdKeyNodeSetting.get("param") + "' value='" + (String)thirdKeyNodeSetting.get("value") + "' size=50" + thirdKeyNodeReadOnly + ">");
+        if (!((String)dispatchSetting.get("param")).equals("mod")) {
+            pageBuf.append("            <input type='text' name='addThirdDataNode' value=''>");
+        }
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
         pageBuf.append("        <tr>");
         pageBuf.append("          <td>");
         pageBuf.append("            <input type='text' name='dummyrule' value='" + (String)ruleSetting.get("value") + "' size=15 disabled>");
-        pageBuf.append("            &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)keyNodeSetting.get("param") + "#" + (String)subKeyNodeSetting.get("param") + "#" + (String)ruleSetting.get("param") + "\";'>");
+        pageBuf.append("            &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)keyNodeSetting.get("param") + "#" + (String)subKeyNodeSetting.get("param") + "#" + (String)thirdKeyNodeSetting.get("param") + "#" + (String)ruleSetting.get("param") + "\";'>");
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
         pageBuf.append("      </table>");
@@ -235,12 +371,27 @@ public class MainServlet extends HttpServlet {
         pageBuf.append("  </tr>");
         pageBuf.append("  <tr>");
         pageBuf.append("    <td width=160px>");
+        pageBuf.append("      <p>" + (String)thirdKeyNodeSetting.get("param") + "  </p>");
+        pageBuf.append("    </td>");
+        pageBuf.append("  </tr>");
+        pageBuf.append("  <tr>");
+        pageBuf.append("    <td width=160px>");
         pageBuf.append("      <p>" + (String)ruleSetting.get("param") + "  </p>");
         pageBuf.append("    </td>");
         pageBuf.append("  </tr>");
+        pageBuf.append("  <tr>");
+        pageBuf.append("    <td width=160px>");
+        pageBuf.append("      <p>" + (String)dispatchSetting.get("param") + "  </p>");
+        pageBuf.append("    </td>");
+        pageBuf.append("    <td width=600px>");
+        pageBuf.append("      <input type='text' name='" + (String)dispatchSetting.get("param") + "' value='" + (String)dispatchSetting.get("value") + "' size=5 disabled>");
+        pageBuf.append("    </td>");
+        pageBuf.append("  </tr>");
+
+
 
         // それ以外
-        for (int i = 3; i < settingList.size(); i++) {
+        for (int i = 5; i < settingList.size(); i++) {
             HashMap setting = (HashMap)settingList.get(i);
             pageBuf.append("  <tr>");
             pageBuf.append("    <td width=160px>");

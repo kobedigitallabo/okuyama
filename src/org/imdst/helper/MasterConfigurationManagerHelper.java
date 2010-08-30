@@ -550,6 +550,10 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             }
 
 
+            // 全てのマスターノードの接続情報
+            imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_DistributionAlgorithm, dispatchMode);
+
+
             // ConsistentHashModeの場合はノードの追加要望がないかを調べる
             // サークルへの追加アルゴリズムはまずノード一覧を設定ファイルもしくはノードから取り出す。
             // ノード一覧からサークルを作成する。
