@@ -47,8 +47,8 @@ public class MasterManagerJob extends AbstractJob implements IJob {
     // ロードバランス設定
     private boolean loadBalance = false;
     private Boolean noBalance = new Boolean(false);
-    private int balancePattern = 4;
-    private Boolean[] balanceModes = new Boolean[balancePattern];
+    private int balancePattern = 10;
+    private Boolean[] balanceModes = null;
     private int nowBalanceIdx = 0;
 
     private boolean transactionMode = false;
@@ -119,10 +119,35 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
 
         // データ取得時に使用するノード使用割合を決定
+        balanceModes = new Boolean[balancePattern];
         balanceModes[0] = new Boolean(false);
         balanceModes[1] = new Boolean(false);
-        balanceModes[2] = new Boolean(true);
-        balanceModes[3] = new Boolean(true);
+        balanceModes[2] = new Boolean(false);
+        balanceModes[3] = new Boolean(false);
+        balanceModes[4] = new Boolean(false);
+        balanceModes[5] = new Boolean(false);
+        balanceModes[6] = new Boolean(false);
+        balanceModes[7] = new Boolean(true);
+        balanceModes[8] = new Boolean(true);
+        balanceModes[9] = new Boolean(true);
+
+        int ratio = 10;
+        String ratioStr = (String)super.getPropertiesValue(ImdstDefine.Prop_BalanceRatio);
+
+        if (ratioStr != null && !ratioStr.trim().equals("")) {
+
+            String[] ratioStrs = ratioStr.split(":");
+            try {
+                if ((Integer.parseInt(ratioStrs[0]) + Integer.parseInt(ratioStrs[1])) == 10) {
+                    for (int i = 0; i < 10; i++) {
+                        if (i >= Integer.parseInt(ratioStrs[0])) {
+                            balanceModes[i] = new Boolean(true);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+            }
+        }
 
         logger.debug("MasterManagerJob - initJob - end");
     }

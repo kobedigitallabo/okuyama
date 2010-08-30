@@ -125,6 +125,7 @@ public class ImdstDefine {
     public static final String Prop_SubKeyMapNodesInfo = "SubKeyMapNodesInfo";
     public static final String Prop_ThirdKeyMapNodesInfo = "ThirdKeyMapNodesInfo";
     public static final String Prop_LoadBalanceMode = "LoadBalanceMode";
+    public static final String Prop_BalanceRatio = "BalanceRatio";
     public static final String Prop_TransactionMode = "TransactionMode";
     public static final String Prop_TransactionManagerInfo = "TransactionManagerInfo";
     public static final String Prop_MainMasterNodeMode = "MainMasterNodeMode";

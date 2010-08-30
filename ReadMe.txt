@@ -11,6 +11,62 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 機能改善]
+[[リリース Ver 0.8.0 - (2010/08/31)]]
+  ■振り分けモードにConsistentHashを追加
+    データ分散アルゴリズムを従来はModのみだったが、新たにConsistentHashを追加。
+    ノード追加時の自動データ移行も実装
+    execOkuyamaManager.batを起動しhttp://localhost:10088/okuyamamgrにアクセスし、"Add Main DataNode"に追加したい
+    ノードのIP:PORTを記述しUPDATEボタンを押下すると自動的にデータ移行が行われる
+    ※Subデータノード、Thirdデータノードも運用している場合は一度に"Add Sub DataNode"、"Add Third DataNode"も
+      IP:PORTを記述してUPDATEボタンを押下しないと更新に失敗する
+      つまり、MainDataNodeだけ増やすとかは出来ない。
+    ※MasterNodeの設定は全ノードModもしくはConsistentHashのどちらかに統一されている必要がある。
+      従来のModアルゴリズムで保存したデータはConsistentHashに移行は出来ない。
+    MasterNode.propertiesの以下の設定項目で制御可能
+
+    ●DistributionAlgorithm
+        設定値) "mod"=Modアルゴリズム
+                "consistenthash"=ConsistentHashアルゴリズム
+        記述例)
+             DistributionAlgorithm=mod
+
+
+  ■DataNodeのレプリケーション先を2ノードに変更
+    従来はKeyMapNodesInfoに対してSubKeyMapNodesInfoがレプリケーション先となり2ノードでデータをレプリケーション
+    していたが、新たにThirdKeyMapNodesInfoを設けた。
+    ThirdKeyMapNodesInfoを記述すると、レプリケーションが行われ3ノードで1組のDataNodeとして機能する。
+    3ノード全てが停止しなければ稼動可能である。
+    MasterNode.propertiesの以下の設定項目で制御可能
+
+    ●ThirdKeyMapNodesInfo
+        設定値) "IP:PORT"
+
+        記述例)
+             ThirdKeyMapNodesInfo=localhost:7553,localhost:7554
+
+
+  ■データ取得時の一貫性モードを追加
+    データ取得時にレプリケーション先の状態に合わせて取得データの一貫性を意識した取得が可能。
+    モードは3種類となる。
+    ・弱一貫性:ランダムにメイン、レプリケーション先のどこかから取得する(同じClient接続を使用している間は1ノードに固定される)
+    ・中一貫性:必ず最後に保存されるレプリケーションノードから取得する
+    ・強一貫性:メイン、レプリケーションの値を検証し、新しいデータを返す(片側が削除されていた場合はデータ有りが返る)
+    MasterNode.propertiesの以下の設定項目で制御可能
+
+    ●DataConsistencyMode
+        設定値) "0"
+                "1"
+                "2"
+ 
+        記述例)
+             DataConsistencyMode=1
+
+
+
+
+========================================================================================================
+========================================================================================================
+[New - 機能改善]
 [[リリース Ver 0.7.0 - (2010/06/27)]]
   ■MasterNodeを複数起動し冗長化した場合の自動エスカレーション機能を追加
     従来からMasterNodeを複数で冗長化は出来たが、その場合MasterNode内にメインとなるノードが存在し、

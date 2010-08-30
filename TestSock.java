@@ -45,12 +45,11 @@ public class TestSock {
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     // ƒf[ƒ^“o˜^
-                    System.out.println("datasavekey_" + new Integer(i).toString());
                     if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
                     //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
                         System.out.println("ImdstKeyValueClient - error");
                     }
-                    if ((i % 10000) == 0) System.out.println(i);
+                    if ((i % 1000) == 0) System.out.println(i);
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");

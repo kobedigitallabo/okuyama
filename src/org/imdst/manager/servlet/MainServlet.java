@@ -108,16 +108,16 @@ public class MainServlet extends HttpServlet {
                                                     throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
 
                     } else if (updateParams[idx].equals("addMainDataNode")) {
-
-                        if ((String)request.getParameter("addMainDataNode") != null && !((String)request.getParameter("addMainDataNode")).trim().equals("")) 
+System.out.println("aaaaaaaaaa");
+                        if ((String)request.getParameter("addMainDataNode") != null && !(((String)request.getParameter("addMainDataNode")).trim()).equals("")) 
                             addConsistentMainNodeStr = (String)request.getParameter("addMainDataNode");
                     } else if (updateParams[idx].equals("addSubDataNode")) {
-
-                        if ((String)request.getParameter("addSubDataNode") != null && !((String)request.getParameter("addSubDataNode")).trim().equals("")) 
+System.out.println("bbbbbbbbbb");
+                        if ((String)request.getParameter("addSubDataNode") != null && !(((String)request.getParameter("addSubDataNode")).trim()).equals("")) 
                             addConsistentSubNodeStr = (String)request.getParameter("addSubDataNode");
                     } else if (updateParams[idx].equals("addThirdDataNode")) {
-
-                        if ((String)request.getParameter("addThirdDataNode") != null && !((String)request.getParameter("addThirdDataNode")).trim().equals("")) 
+System.out.println("cccccccccccc");
+                        if ((String)request.getParameter("addThirdDataNode") != null && !(((String)request.getParameter("addThirdDataNode")).trim()).equals("")) 
                             addConsistentThirdNodeStr = (String)request.getParameter("addThirdDataNode");
                     } else {
 
@@ -131,11 +131,13 @@ public class MainServlet extends HttpServlet {
 
 
                 if (request.getParameter(ImdstDefine.Prop_KeyMapNodesInfo) != null && addConsistentMainNodeStr != null) {
-
+System.out.println("111111");
                     if ((String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo) != null) {
-
+System.out.println("222222");
                         if (addConsistentSubNodeStr != null) {
+System.out.println("333333");
                             if ((String)request.getParameter(ImdstDefine.Prop_ThirdKeyMapNodesInfo) != null) {
+System.out.println("444444");
                                 if (addConsistentThirdNodeStr != null) {
                                     addConsistentNodeStr = addConsistentMainNodeStr + "," + addConsistentSubNodeStr + "," + addConsistentThirdNodeStr;
                                     if(!this.execModParam(imdstKeyValueClient, 
@@ -144,11 +146,11 @@ public class MainServlet extends HttpServlet {
                                                                 throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
                                     if(!this.execModParam(imdstKeyValueClient, 
                                                             ImdstDefine.Prop_SubKeyMapNodesInfo, 
-                                                            (String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo + "," + addConsistentSubNodeStr))) 
+                                                            (String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo) + "," + addConsistentSubNodeStr)) 
                                                                 throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
                                     if(!this.execModParam(imdstKeyValueClient, 
                                                             ImdstDefine.Prop_ThirdKeyMapNodesInfo, 
-                                                            (String)request.getParameter(ImdstDefine.Prop_ThirdKeyMapNodesInfo + "," + addConsistentMainNodeStr))) 
+                                                            (String)request.getParameter(ImdstDefine.Prop_ThirdKeyMapNodesInfo) + "," + addConsistentThirdNodeStr)) 
                                                                 throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
                                     if(!this.execModParam(imdstKeyValueClient, 
                                                             ImdstDefine.addNode4ConsistentHashMode, 
@@ -163,7 +165,7 @@ public class MainServlet extends HttpServlet {
                                                             throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
                                 if(!this.execModParam(imdstKeyValueClient, 
                                                         ImdstDefine.Prop_SubKeyMapNodesInfo, 
-                                                        (String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo + "," + addConsistentSubNodeStr))) 
+                                                        (String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo) + "," + addConsistentSubNodeStr)) 
                                                             throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
                                 if(!this.execModParam(imdstKeyValueClient, 
                                                         ImdstDefine.addNode4ConsistentHashMode, 
@@ -282,6 +284,7 @@ public class MainServlet extends HttpServlet {
     private String initPage(ArrayList settingList, ArrayList dataNodeList, ArrayList slaveDataNodeList, ArrayList thirdDataNodeList, String msg) {
         StringBuffer pageBuf = new StringBuffer();
         HashMap keyNodeSetting = (HashMap)settingList.get(0);
+        String keyNodeReadOnly = "";
         HashMap subKeyNodeSetting = (HashMap)settingList.get(1);
         String subKeyNodeReadOnly = "";
 
@@ -299,6 +302,11 @@ public class MainServlet extends HttpServlet {
             thirdKeyNodeReadOnly = "readonly";
         }
 
+        if (!((String)dispatchSetting.get("value")).equals("mod")) {
+            keyNodeReadOnly = "readonly";
+            subKeyNodeReadOnly = "readonly";
+            thirdKeyNodeReadOnly = "readonly";
+        }
 
         pageBuf.append("<html>");
         pageBuf.append("  <head>");
@@ -317,9 +325,9 @@ public class MainServlet extends HttpServlet {
         pageBuf.append("      <br />");
         pageBuf.append("      <hr />");
         pageBuf.append(msg);
-        pageBuf.append("      <table style='width:760px;' border=1>");
+        pageBuf.append("      <table style='width:1024px;' border=1>");
         pageBuf.append("        <tr>");
-        pageBuf.append("          <td colspan=2 align=center bgcolor='Silver' width=760px>");
+        pageBuf.append("          <td colspan=2 align=center bgcolor='Silver' width=1024px>");
         pageBuf.append("          Okuyama Setup Information");
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
@@ -329,36 +337,40 @@ public class MainServlet extends HttpServlet {
         pageBuf.append("    <td width=160px>");
         pageBuf.append("      <p>" + (String)keyNodeSetting.get("param") + "  </p>");
         pageBuf.append("    </td>");
-        pageBuf.append("    <td width=600px rowspan=4>");
-        pageBuf.append("      <table border=0 width=600px>");
+        pageBuf.append("    <td width=864px rowspan=4>");
+        pageBuf.append("      <table border=0 width=864px>");
         pageBuf.append("        <tr>");
         pageBuf.append("          <td>");
-        pageBuf.append("            <input type='text' name='" + (String)keyNodeSetting.get("param") + "' value='" + (String)keyNodeSetting.get("value") + "' size=50>");
-        if (!((String)dispatchSetting.get("param")).equals("mod")) {
-            pageBuf.append("            <input type='text' name='addMainDataNode' value=''>");
+        pageBuf.append("            <input type='text' name='" + (String)keyNodeSetting.get("param") + "' value='" + (String)keyNodeSetting.get("value") + "' size=50 " + keyNodeReadOnly + ">");
+        if (!((String)dispatchSetting.get("value")).equals("mod")) {
+            pageBuf.append("            <br>Add Main DataNode<input type='text' name='addMainDataNode' value='' size=15>");
         }
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
         pageBuf.append("        <tr>");
         pageBuf.append("          <td>");
-        pageBuf.append("            <input type='text' name='" + (String)subKeyNodeSetting.get("param") + "' value='" + (String)subKeyNodeSetting.get("value") + "' size=50" + subKeyNodeReadOnly + ">");
-        if (!((String)dispatchSetting.get("param")).equals("mod")) {
-            pageBuf.append("            <input type='text' name='addSubDataNode' value=''>");
+        pageBuf.append("            <input type='text' name='" + (String)subKeyNodeSetting.get("param") + "' value='" + (String)subKeyNodeSetting.get("value") + "' size=50 " + subKeyNodeReadOnly + ">");
+        if (!((String)dispatchSetting.get("value")).equals("mod")) {
+            pageBuf.append("            <br>Add Sub DataNode<input type='text' name='addSubDataNode' value='' size=15>");
         }
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
         pageBuf.append("        <tr>");
         pageBuf.append("          <td>");
-        pageBuf.append("            <input type='text' name='" + (String)thirdKeyNodeSetting.get("param") + "' value='" + (String)thirdKeyNodeSetting.get("value") + "' size=50" + thirdKeyNodeReadOnly + ">");
-        if (!((String)dispatchSetting.get("param")).equals("mod")) {
-            pageBuf.append("            <input type='text' name='addThirdDataNode' value=''>");
+        pageBuf.append("            <input type='text' name='" + (String)thirdKeyNodeSetting.get("param") + "' value='" + (String)thirdKeyNodeSetting.get("value") + "' size=50 " + thirdKeyNodeReadOnly + ">");
+        if (!((String)dispatchSetting.get("value")).equals("mod")) {
+            pageBuf.append("            <br>Add Third DataNode<input type='text' name='addThirdDataNode' value='' size=15>");
         }
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
         pageBuf.append("        <tr>");
         pageBuf.append("          <td>");
         pageBuf.append("            <input type='text' name='dummyrule' value='" + (String)ruleSetting.get("value") + "' size=15 disabled>");
-        pageBuf.append("            &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)keyNodeSetting.get("param") + "#" + (String)subKeyNodeSetting.get("param") + "#" + (String)thirdKeyNodeSetting.get("param") + "#" + (String)ruleSetting.get("param") + "\";'>");
+        if (((String)dispatchSetting.get("value")).equals("mod")) {
+            pageBuf.append("            &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)keyNodeSetting.get("param") + "#" + (String)subKeyNodeSetting.get("param") + "#" + (String)thirdKeyNodeSetting.get("param") + "#" + (String)ruleSetting.get("param") + "\";'>");
+        } else {
+            pageBuf.append("            &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)keyNodeSetting.get("param") + "#" + (String)subKeyNodeSetting.get("param") + "#" + (String)thirdKeyNodeSetting.get("param") + "#addMainDataNode#addSubDataNode#addThirdDataNode#" + (String)ruleSetting.get("param") + "\";'>");
+        }
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
         pageBuf.append("      </table>");
@@ -367,24 +379,33 @@ public class MainServlet extends HttpServlet {
         pageBuf.append("  <tr>");
         pageBuf.append("    <td width=160px>");
         pageBuf.append("      <p>" + (String)subKeyNodeSetting.get("param") + "  </p>");
+        if (!((String)dispatchSetting.get("value")).equals("mod")) {
+            pageBuf.append("      <br>");
+        }
         pageBuf.append("    </td>");
         pageBuf.append("  </tr>");
         pageBuf.append("  <tr>");
         pageBuf.append("    <td width=160px>");
         pageBuf.append("      <p>" + (String)thirdKeyNodeSetting.get("param") + "  </p>");
+        if (!((String)dispatchSetting.get("value")).equals("mod")) {
+            pageBuf.append("      <br>");
+        }
         pageBuf.append("    </td>");
         pageBuf.append("  </tr>");
         pageBuf.append("  <tr>");
         pageBuf.append("    <td width=160px>");
         pageBuf.append("      <p>" + (String)ruleSetting.get("param") + "  </p>");
+        if (!((String)dispatchSetting.get("value")).equals("mod")) {
+            pageBuf.append("      <br>");
+        }
         pageBuf.append("    </td>");
         pageBuf.append("  </tr>");
         pageBuf.append("  <tr>");
         pageBuf.append("    <td width=160px>");
         pageBuf.append("      <p>" + (String)dispatchSetting.get("param") + "  </p>");
         pageBuf.append("    </td>");
-        pageBuf.append("    <td width=600px>");
-        pageBuf.append("      <input type='text' name='" + (String)dispatchSetting.get("param") + "' value='" + (String)dispatchSetting.get("value") + "' size=5 disabled>");
+        pageBuf.append("    <td width=864px>");
+        pageBuf.append("      <input type='text' name='" + (String)dispatchSetting.get("param") + "' value='" + (String)dispatchSetting.get("value") + "' size=30 disabled>");
         pageBuf.append("    </td>");
         pageBuf.append("  </tr>");
 
@@ -397,7 +418,7 @@ public class MainServlet extends HttpServlet {
             pageBuf.append("    <td width=160px>");
             pageBuf.append("      <p>" + (String)setting.get("param") + "  </p>");
             pageBuf.append("    </td>");
-            pageBuf.append("    <td width=600px>");
+            pageBuf.append("    <td width=864px>");
             if (setting.get("readonly") == null) {
                 pageBuf.append("      <input type='text' name='" + (String)setting.get("param") + "' value='" + (String)setting.get("value") + "' size=50>");
                 pageBuf.append("      &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)setting.get("param") + "\";'>");
@@ -412,9 +433,9 @@ public class MainServlet extends HttpServlet {
         pageBuf.append("      <br>");
 
         if (dataNodeList.size() > 0) {
-            pageBuf.append("      <table style='width:760px;' border=1>");
+            pageBuf.append("      <table style='width:1024px;' border=1>");
             pageBuf.append("        <tr>");
-            pageBuf.append("          <td colspan=2 align=center bgcolor='Silver' width=760px>");
+            pageBuf.append("          <td colspan=2 align=center bgcolor='Silver' width=1024px>");
             pageBuf.append("            Okuyama DataNode Information");
             pageBuf.append("          </td>");
             pageBuf.append("        </tr>");
@@ -425,7 +446,7 @@ public class MainServlet extends HttpServlet {
                 pageBuf.append("    <td width=160px>");
                 pageBuf.append("      <p>" + (String)dataNode.get("name") + "  </p>");
                 pageBuf.append("    </td>");
-                pageBuf.append("    <td width=600px>");
+                pageBuf.append("    <td width=864px>");
 
                 String[] nodeDtList = ((String)dataNode.get("dt")).split(";");
                 for (int idx = 0; idx < nodeDtList.length; idx++)  {
@@ -443,9 +464,9 @@ public class MainServlet extends HttpServlet {
 
         pageBuf.append("      <br>");
         if (slaveDataNodeList.size() > 0) {
-            pageBuf.append("      <table style='width:760px;' border=1>");
+            pageBuf.append("      <table style='width:1024px;' border=1>");
             pageBuf.append("        <tr>");
-            pageBuf.append("          <td colspan=2 align=center bgcolor='Silver' width=760px>");
+            pageBuf.append("          <td colspan=2 align=center bgcolor='Silver' width=1024px>");
             pageBuf.append("            Okuyama SlaveDataNode Information");
             pageBuf.append("          </td>");
             pageBuf.append("        </tr>");
@@ -456,7 +477,7 @@ public class MainServlet extends HttpServlet {
                 pageBuf.append("    <td width=160px>");
                 pageBuf.append("      <p>" + (String)slaveDataNode.get("name") + "  </p>");
                 pageBuf.append("    </td>");
-                pageBuf.append("    <td width=600px>");
+                pageBuf.append("    <td width=864px>");
 
                 String[] nodeDtList = ((String)slaveDataNode.get("dt")).split(";");
                 for (int idx = 0; idx  < nodeDtList.length; idx++)  {
