@@ -17,16 +17,21 @@ import org.imdst.util.io.*;
 import org.imdst.util.io.KeyNodeConnector;
 
 /**
- * KeyNodeのデータを最適化するHelperクラス<br>
+ * DataNodeのデータ整合性維持を行う.<br>
+ * MainDataNodeと対になるSub、Thirdそれぞれのデータを比べ正しいデータに整合性をあわせる.<br>
+ * MainDataNodeから特定の単位でKey値を取得しそのデータを対になるSub、Third全てで比べる。
+ * 不整合があった場合は最も新しいデータで上書きする。
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
+public class DataConsistencyAdjustmentHelper extends AbstractMasterManagerHelper {
 
     // ノードの監視サイクル時間(ミリ秒)
-    private int checkCycle = 6000 * 3;
+    private int checkCycle = 5000;
 
+    // 一度に調べるデータ量
+    private int getDataSize = 2000;
 
     private BufferedReader br = null;
     private KeyNodeConnector keyNodeConnector = null;
@@ -37,10 +42,11 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
     private int nextData = 1;
 
     private HashMap connectMap = null;
+
     /**
      * Logger.<br>
      */
-    private static ILogger logger = LoggerFactory.createLogger(KeyNodeOptimizationHelper.class);
+    private static ILogger logger = LoggerFactory.createLogger(DataConsistencyAdjustmentHelper.class);
 
     // 初期化メソッド定義
     public void initHelper(String initValue) {
@@ -58,7 +64,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
     // Jobメイン処理定義
     public String executeHelper(String optionParam) throws BatchException {
-        logger.debug("KeyNodeOptimizationHelper - executeHelper - start");
+        logger.debug("DataConsistencyAdjustmentHelper - executeHelper - start");
         String ret = SUCCESS;
         String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
@@ -84,12 +90,12 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                 // 停止ファイル関係チェック
                 if (StatusUtil.getStatus() == 1) {
                     serverRunning = false;
-                    logger.info("KeyNodeOptimizationHelper - 状態異常です");
+                    logger.info("DataConsistencyAdjustmentHelper - 状態異常です");
                 }
 
                 if (StatusUtil.getStatus() == 2) {
                     serverRunning = false;
-                    logger.info("KeyNodeOptimizationHelper - 終了状態です");
+                    logger.info("DataConsistencyAdjustmentHelper - 終了状態です");
                 }
 
                 serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
@@ -97,21 +103,21 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                 serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
                 if (serverStopMarkerFile.exists()) {
                     serverRunning = false;
-                    logger.info("KeyNodeOptimizationHelper - Server停止ファイルが存在します");
+                    logger.info("DataConsistencyAdjustmentHelper - Server停止ファイルが存在します");
                     StatusUtil.setStatus(2);
                 }
-
-                // 移動依頼がある場合のみ実行
-                if (!super.isExecuteKeyNodeOptimization()) continue;
 
                 HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
                 ArrayList mainNodeList = (ArrayList)allNodeInfo.get("main");
                 ArrayList subNodeList = (ArrayList)allNodeInfo.get("sub");
                 ArrayList thirdNodeList = (ArrayList)allNodeInfo.get("third");
 
+                // Sub以上がある場合のみ実行
+                if (subNodeList == null) continue;
+
                 // MainのMasterNodeの場合のみ実行
                 if (StatusUtil.isMainMasterNode()) {
-                    super.setNowNodeDataOptimization(true);
+
                     // ノード数分チェック
                     for (int i = 0; i < mainNodeList.size(); i++) {
 
@@ -124,7 +130,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                         if (thirdNodeList != null) thirdNodeInfo = (String)thirdNodeList.get(i);
 
                         logger.info("************************************************************");
-                        logger.info(nodeInfo + " Optimization Start");
+                        logger.info(nodeInfo + " Adjustmen Start");
 
                         optimizeTargetKeys = null;
                         this.closeGetConnect();
@@ -188,19 +194,17 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
                 // データ移動依頼フラグを落とす
                 super.executeKeyNodeOptimization(false);
-                super.setNowNodeDataOptimization(false);
             } catch(Exception e) {
                 // 検索コネクションを切断
                 this.closeGetConnect();
-                logger.error("KeyNodeOptimizationHelper - executeHelper - Error", e);
+                logger.error("DataConsistencyAdjustmentHelper - executeHelper - Error", e);
             } finally {
                 try {
-                    super.setNowNodeDataOptimization(false);
                 } catch (Exception e2) {}
             }
         }
 
-        logger.debug("KeyNodeOptimizationHelper - executeHelper - end");
+        logger.debug("DataConsistencyAdjustmentHelper - executeHelper - end");
         return ret;
     }
 

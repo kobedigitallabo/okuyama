@@ -37,6 +37,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
     private static boolean executeKeyNodeOptimizationFlg = false;
 
+    private static boolean nowNodeDataOptimization = false;
 
     /**
      * ノードの生存を確認
@@ -936,6 +937,14 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         moveData4ConsistentHash = null;
     }
 
+
+    protected void setNowNodeDataOptimization(boolean flg) {
+        nowNodeDataOptimization = flg;
+    }
+
+    protected boolean getNowNodeDataOptimization() {
+        return nowNodeDataOptimization;
+    }
 
     /**
      *

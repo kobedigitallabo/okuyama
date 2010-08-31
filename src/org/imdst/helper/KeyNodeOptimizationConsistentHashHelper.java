@@ -152,6 +152,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                     if (moveTargetData != null) {
                         while (true) {
+                            super.setNowNodeDataOptimization(true);
                             try {
 
                                 // 全て初期化
@@ -534,10 +535,12 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                     // メモリ上から依頼を消す
                                     super.removeConsistentHashMoveData();
+                                    super.setNowNodeDataOptimization(false);
                                 }
 
                                 break;
                             } catch (Exception e) {
+                                super.setNowNodeDataOptimization(false);
                                 // もしエラーが発生した場合はリトライ
                                 logger.error("Data shift Error =[" + e.toString() + "]");
                                 e.printStackTrace();
