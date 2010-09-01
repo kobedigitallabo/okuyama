@@ -878,6 +878,7 @@ public class ImdstKeyValueClient {
      * @throws Exception
      */
     public boolean setValue(String keyStr, String value) throws Exception {
+System.out.println("Key=[" + keyStr + "], Value[" + value + "]");
         return this.setValue(keyStr, null, value);
     }
 

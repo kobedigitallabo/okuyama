@@ -18,6 +18,9 @@ import org.imdst.util.ImdstDefine;
 public class MainServlet extends HttpServlet {
     private StringBuffer pageBuf = null;
 
+    private boolean subNode = false;
+    private boolean thirdNode = false;
+
     public MainServlet() {
     }
 
@@ -108,15 +111,15 @@ public class MainServlet extends HttpServlet {
                                                     throw new Exception("Update Param Error Param=[" + (String)request.getParameter("updateparam") + "]");
 
                     } else if (updateParams[idx].equals("addMainDataNode")) {
-System.out.println("aaaaaaaaaa");
+
                         if ((String)request.getParameter("addMainDataNode") != null && !(((String)request.getParameter("addMainDataNode")).trim()).equals("")) 
                             addConsistentMainNodeStr = (String)request.getParameter("addMainDataNode");
                     } else if (updateParams[idx].equals("addSubDataNode")) {
-System.out.println("bbbbbbbbbb");
+
                         if ((String)request.getParameter("addSubDataNode") != null && !(((String)request.getParameter("addSubDataNode")).trim()).equals("")) 
                             addConsistentSubNodeStr = (String)request.getParameter("addSubDataNode");
                     } else if (updateParams[idx].equals("addThirdDataNode")) {
-System.out.println("cccccccccccc");
+
                         if ((String)request.getParameter("addThirdDataNode") != null && !(((String)request.getParameter("addThirdDataNode")).trim()).equals("")) 
                             addConsistentThirdNodeStr = (String)request.getParameter("addThirdDataNode");
                     } else {
@@ -131,13 +134,13 @@ System.out.println("cccccccccccc");
 
 
                 if (request.getParameter(ImdstDefine.Prop_KeyMapNodesInfo) != null && addConsistentMainNodeStr != null) {
-System.out.println("111111");
-                    if ((String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo) != null) {
-System.out.println("222222");
+
+                    if ((String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo) != null && !((String)request.getParameter(ImdstDefine.Prop_SubKeyMapNodesInfo)).equals("")) {
+
                         if (addConsistentSubNodeStr != null) {
-System.out.println("333333");
-                            if ((String)request.getParameter(ImdstDefine.Prop_ThirdKeyMapNodesInfo) != null) {
-System.out.println("444444");
+
+                            if ((String)request.getParameter(ImdstDefine.Prop_ThirdKeyMapNodesInfo) != null && !((String)request.getParameter(ImdstDefine.Prop_ThirdKeyMapNodesInfo)).equals("")) {
+
                                 if (addConsistentThirdNodeStr != null) {
                                     addConsistentNodeStr = addConsistentMainNodeStr + "," + addConsistentSubNodeStr + "," + addConsistentThirdNodeStr;
                                     if(!this.execModParam(imdstKeyValueClient, 
@@ -205,7 +208,7 @@ System.out.println("444444");
 
                 if (clientRet[0].equals("true")) {
                     if (idx == 0) {
-                        if (clientRet[1] != null && !clientRet[1].equals("")) {
+                        if (clientRet[1] != null && !clientRet[1].equals("") && clientRet[1].indexOf(":") != -1) {
                             dataNodeStr = clientRet[1];
                             String[] dataNodeInfos = dataNodeStr.split(",");
                             for (int dni = 0; dni < dataNodeInfos.length; dni++) {
@@ -220,7 +223,8 @@ System.out.println("444444");
                     }
 
                     if (idx == 1) {
-                        if (clientRet[1] != null && !clientRet[1].equals("")) {
+                        if (clientRet[1] != null && !clientRet[1].equals("") && clientRet[1].indexOf(":") != -1) {
+                            subNode = true;
                             slaveDataNodeStr = clientRet[1];
                             String[] slaveDataNodeInfos = slaveDataNodeStr.split(",");
                             for (int dni = 0; dni < slaveDataNodeInfos.length; dni++) {
@@ -235,7 +239,8 @@ System.out.println("444444");
                     }
 
                     if (idx == 2) {
-                        if (clientRet[1] != null && !clientRet[1].equals("")) {
+                        if (clientRet[1] != null && !clientRet[1].equals("") && clientRet[1].indexOf(":") != -1) {
+                            thirdNode = true;
                             thirdDataNodeStr = clientRet[1];
                             String[] thirdDataNodeInfos = thirdDataNodeStr.split(",");
                             for (int dni = 0; dni < thirdDataNodeInfos.length; dni++) {
@@ -285,21 +290,35 @@ System.out.println("444444");
         StringBuffer pageBuf = new StringBuffer();
         HashMap keyNodeSetting = (HashMap)settingList.get(0);
         String keyNodeReadOnly = "";
-        HashMap subKeyNodeSetting = (HashMap)settingList.get(1);
-        String subKeyNodeReadOnly = "";
 
-        HashMap thirdKeyNodeSetting = (HashMap)settingList.get(2);
+        HashMap subKeyNodeSetting = null;
+        String subKeyNodeReadOnly = "";
+        HashMap thirdKeyNodeSetting = null;
         String thirdKeyNodeReadOnly = "";
+
+        String postParameterKeys = "KeyMapNodesInfo";
+
+        if (subNode) {
+            subKeyNodeSetting = (HashMap)settingList.get(1);
+        }
+
+        if (thirdNode) {
+            thirdKeyNodeSetting = (HashMap)settingList.get(2);
+        }
 
         HashMap ruleSetting = (HashMap)settingList.get(3);
         HashMap dispatchSetting = (HashMap)settingList.get(4);
 
-        if (subKeyNodeSetting.get("value") == null || ((String)subKeyNodeSetting.get("value")).equals("")) {
+        if (subNode == false) {
             subKeyNodeReadOnly = "readonly";
+        } else {
+            postParameterKeys = postParameterKeys + "#" +"SubKeyMapNodesInfo";
         }
 
-        if (thirdKeyNodeSetting.get("value") == null || ((String)thirdKeyNodeSetting.get("value")).equals("")) {
+        if (thirdNode == false) {
             thirdKeyNodeReadOnly = "readonly";
+        } else {
+            postParameterKeys = postParameterKeys + "#" + "ThirdKeyMapNodesInfo";
         }
 
         if (!((String)dispatchSetting.get("value")).equals("mod")) {
@@ -336,6 +355,9 @@ System.out.println("444444");
         pageBuf.append("  <tr>");
         pageBuf.append("    <td width=160px>");
         pageBuf.append("      <p>" + (String)keyNodeSetting.get("param") + "  </p>");
+        if (!((String)dispatchSetting.get("value")).equals("mod")) {
+            pageBuf.append("      <br>");
+        }
         pageBuf.append("    </td>");
         pageBuf.append("    <td width=864px rowspan=4>");
         pageBuf.append("      <table border=0 width=864px>");
@@ -349,17 +371,25 @@ System.out.println("444444");
         pageBuf.append("        </tr>");
         pageBuf.append("        <tr>");
         pageBuf.append("          <td>");
-        pageBuf.append("            <input type='text' name='" + (String)subKeyNodeSetting.get("param") + "' value='" + (String)subKeyNodeSetting.get("value") + "' size=50 " + subKeyNodeReadOnly + ">");
-        if (!((String)dispatchSetting.get("value")).equals("mod")) {
-            pageBuf.append("            <br>Add Sub DataNode<input type='text' name='addSubDataNode' value='' size=15>");
+        if (subNode) {
+            pageBuf.append("            <input type='text' name='" + (String)subKeyNodeSetting.get("param") + "' value='" + (String)subKeyNodeSetting.get("value") + "' size=50 " + subKeyNodeReadOnly + ">");
+            if (!((String)dispatchSetting.get("value")).equals("mod")) {
+                pageBuf.append("            <br>Add Sub DataNode<input type='text' name='addSubDataNode' value='' size=15>");
+            }
+        } else {
+            pageBuf.append("&nbsp;<br>&nbsp;<br>");
         }
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
         pageBuf.append("        <tr>");
         pageBuf.append("          <td>");
-        pageBuf.append("            <input type='text' name='" + (String)thirdKeyNodeSetting.get("param") + "' value='" + (String)thirdKeyNodeSetting.get("value") + "' size=50 " + thirdKeyNodeReadOnly + ">");
-        if (!((String)dispatchSetting.get("value")).equals("mod")) {
-            pageBuf.append("            <br>Add Third DataNode<input type='text' name='addThirdDataNode' value='' size=15>");
+        if (thirdNode) {
+            pageBuf.append("            <input type='text' name='" + (String)thirdKeyNodeSetting.get("param") + "' value='" + (String)thirdKeyNodeSetting.get("value") + "' size=50 " + thirdKeyNodeReadOnly + ">");
+            if (!((String)dispatchSetting.get("value")).equals("mod")) {
+                pageBuf.append("            <br>Add Third DataNode<input type='text' name='addThirdDataNode' value='' size=15>");
+            }
+        } else {
+            pageBuf.append("&nbsp;<br>&nbsp;<br>");
         }
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
@@ -367,9 +397,9 @@ System.out.println("444444");
         pageBuf.append("          <td>");
         pageBuf.append("            <input type='text' name='dummyrule' value='" + (String)ruleSetting.get("value") + "' size=15 disabled>");
         if (((String)dispatchSetting.get("value")).equals("mod")) {
-            pageBuf.append("            &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)keyNodeSetting.get("param") + "#" + (String)subKeyNodeSetting.get("param") + "#" + (String)thirdKeyNodeSetting.get("param") + "#" + (String)ruleSetting.get("param") + "\";'>");
+            pageBuf.append("            &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + postParameterKeys + "#" + (String)ruleSetting.get("param") + "\";'>");
         } else {
-            pageBuf.append("            &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + (String)keyNodeSetting.get("param") + "#" + (String)subKeyNodeSetting.get("param") + "#" + (String)thirdKeyNodeSetting.get("param") + "#addMainDataNode#addSubDataNode#addThirdDataNode#" + (String)ruleSetting.get("param") + "\";'>");
+            pageBuf.append("            &nbsp;&nbsp;<input type='submit' value='UPDATE' onclick='document.main.execmethod.value=\"modparam\";document.main.updateparam.value=\"" + postParameterKeys + "#addMainDataNode#addSubDataNode#addThirdDataNode#" + (String)ruleSetting.get("param") + "\";'>");
         }
         pageBuf.append("          </td>");
         pageBuf.append("        </tr>");
@@ -378,17 +408,21 @@ System.out.println("444444");
         pageBuf.append("  </tr>");
         pageBuf.append("  <tr>");
         pageBuf.append("    <td width=160px>");
-        pageBuf.append("      <p>" + (String)subKeyNodeSetting.get("param") + "  </p>");
-        if (!((String)dispatchSetting.get("value")).equals("mod")) {
-            pageBuf.append("      <br>");
+        pageBuf.append("      <p>SubKeyMapNodesInfo</p>");
+        if (subNode) {
+            if (!((String)dispatchSetting.get("value")).equals("mod")) {
+                pageBuf.append("      <br>");
+            }
         }
         pageBuf.append("    </td>");
         pageBuf.append("  </tr>");
         pageBuf.append("  <tr>");
         pageBuf.append("    <td width=160px>");
-        pageBuf.append("      <p>" + (String)thirdKeyNodeSetting.get("param") + "  </p>");
-        if (!((String)dispatchSetting.get("value")).equals("mod")) {
-            pageBuf.append("      <br>");
+        pageBuf.append("      <p>ThirdKeyMapNodesInfo </p>");
+        if (thirdNode) {
+            if (!((String)dispatchSetting.get("value")).equals("mod")) {
+                pageBuf.append("      <br>");
+            }
         }
         pageBuf.append("    </td>");
         pageBuf.append("  </tr>");

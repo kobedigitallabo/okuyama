@@ -113,15 +113,9 @@ public class HttpGatewayServerHelper extends AbstractHelper {
                     }
                     
                     headerMap.put(parts[0].trim().toLowerCase(), dataBuf.toString().trim());
-                    //System.out.println(dataBuf.toString());
                 }
                 headerCounter++;
-                //System.out.println("" + inputLine + "");
             }
-
-            // ClientのBodyを表示
-            //System.out.println("body[" + body + "]");
-
 
             // GETか確認
             if (headerMap.get("get") != null) {

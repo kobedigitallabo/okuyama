@@ -312,6 +312,16 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                 // 全ての移動対象(移動元のデータ)のノードを処理
                                 // 対象データノード1ノードづつ処理
+                                if (mainIterator == null) {
+                                    logger.error("KeyNodeOptimizationConsistentHashHelper - [mainIterator == null] MainDataNode Down!! Please Check [" + addMainDataNodeInfo + "]");
+                                    if (toMainKeyNodeConnector != null) toMainKeyNodeConnector.close();
+                                    if (toSubKeyNodeConnector != null) toSubKeyNodeConnector.close();
+                                    if (toThirdKeyNodeConnector != null) toThirdKeyNodeConnector.close();
+
+                                    Thread.sleep(5000);
+                                    continue;
+                                }
+
                                 while(mainIterator.hasNext()) {
 
                                     // 移動データレンジ文字列
