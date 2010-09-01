@@ -51,7 +51,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private String[] transactionManagerInfo = null;
 
     // 更新時間
-    private long setTime = 0L;
+    private int setTime = 0;
 
     /**
      * Logger.<br>
@@ -157,6 +157,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // ロードバランシング指定
                     this.reverseAccess = ((Boolean)queueMap[ImdstDefine.paramBalance]).booleanValue();
+
+                    if (dataConsistencyMode == 1) {
+                        this.reverseAccess = true;
+                    }
 
                     // ソケット周り(いずれクラス化する)
                     pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
@@ -2977,7 +2981,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      */
     private void initSetTime() {
         // 現在の時間を取得(更新時間として使用)
-        this.setTime = System.nanoTime();
+        this.setTime = -1;
     }
 
 

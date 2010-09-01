@@ -69,11 +69,59 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
     ●BalanceRatio
         設定値) "7:3"=振り分ける割合(メインノード:レプリケーションノード)
-
+                ※上記の場合は7対3の割合
  
         記述例)
              BalanceRatio=7:3
 
+
+
+  ■通信部分を大幅見直し
+    クライアント<->MasterNode、MasterNode<->DataNode間の通信処理を改修
+    Xeon3430(2.4GHz)×1、メモリ4GB程度のマシン(CentOS5.4 64bit)で10000クライアントとの同時通信をテスト済み
+    (C10K問題に対応)
+    これに伴い以下の設定項目で通信部分のパラメータを変更しチューニング可能
+    MasterNode.propertiesの以下の設定項目で制御可能
+
+    ●MasterNodeMaxConnectParallelExecution
+        設定値) 数値=同時接続時に接続直後に行うSocketラップ処理の並列数
+
+        記述例)
+             MasterNodeMaxConnectParallelExecution=10
+
+
+    ●MasterNodeMaxConnectParallelQueue
+        設定値) 数値=MasterNodeMaxConnectParallelExecutionで設定した並列処理への引数が設定されるキュー数
+ 
+        記述例)
+             MasterNodeMaxConnectParallelQueue=5
+
+
+    ●MasterNodeMaxAcceptParallelExecution
+        設定値) 数値=クライアントからデータ転送が始っていないかを確認する。並列数
+
+        記述例)
+             MasterNodeMaxAcceptParallelExecution=15
+
+    ●MasterNodeMaxAcceptParallelQueue
+        設定値) 数値=MasterNodeMaxAcceptParallelExecutionで設定した並列処理への引数を設定するキュー数
+
+        記述例)
+             MasterNodeMaxAcceptParallelQueue=5
+
+
+    ●MasterNodeMaxWorkerParallelExecution
+        設定値) 数値=データ転送開始状態のSocket登録に対して処理する並列処理数。
+
+        記述例)
+             MasterNodeMaxWorkerParallelExecution=15
+
+
+    ●MasterNodeMaxWorkerParallelQueue
+        設定値) 数値=MasterNodeMaxWorkerParallelExecutionで設定した並列処理への引数を設定するキュー数
+
+        記述例)
+             MasterNodeMaxWorkerParallelQueue=5
 
 
 ========================================================================================================
@@ -255,15 +303,15 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     この変更が受け入れられない場合はsrc\org\imdst\helper\MasterManagerHelper.javaの2660行目、2661行目を
     以下のように変更し、compile.batを実行し再コンパイルを実行。
     --------------------------------------------------------------------
-	private int hashCodeCnv(String str) {
-		return new HashCodeBuilder(17,37).append(str).toHashCode();
-		//return str.hashCode();
-	}
+    private int hashCodeCnv(String str) {
+        return new HashCodeBuilder(17,37).append(str).toHashCode();
+        //return str.hashCode();
+    }
                ↓↓↓↓変更(コメントアウトを入れ替え)
-	private int hashCodeCnv(String str) {
-		//return new HashCodeBuilder(17,37).append(str).toHashCode();
-		return str.hashCode();
-	}
+    private int hashCodeCnv(String str) {
+        //return new HashCodeBuilder(17,37).append(str).toHashCode();
+        return str.hashCode();
+    }
     --------------------------------------------------------------------
 
 
@@ -384,7 +432,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
       ・戻り値:String配列
                String配列[0]:Lock成否 "true"=Lock成功 or "false"=Lock失敗
  
- 	 *ロック開放への引数と戻り値は以下である。
+     *ロック開放への引数と戻り値は以下である。
       ・クライアントのメソッド名:releaseLockData
       ・引数1:ロック対象Key値
  
@@ -435,7 +483,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
    │                                                                                                        │
    │ // 自身でロックしているので更新可能                                                                    │
    │ if (!imdstKeyValueClient.setValue(args[3], "LockDataValue")) {                                         │
-   │ 	System.out.println("登録失敗");                                                                      │
+   │   System.out.println("登録失敗");                                                                      │
    │ }                                                                                                      │
    │                                                                                                        │
    │ // 取得                                                                                                │
@@ -506,9 +554,9 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 [New - 機能追加]
 [[リリース Ver 0.5.1 - (2010/03/17)]]
   ■PHP用のクライアントを作成
-	PHPでMasterServerへアクセス出来るようにクライアントを作成。
-	Javaのコードを焼きなおしました。
-	バイトデータを登録(setByteValue)、取得(getByteValue)するメソッドのみ未実装。
+    PHPでMasterServerへアクセス出来るようにクライアントを作成。
+    Javaのコードを焼きなおしました。
+    バイトデータを登録(setByteValue)、取得(getByteValue)するメソッドのみ未実装。
     リリース物etc_client\OkuyamaClient.class.phpになります。
     サンプル実行コードetc_client\PhpTestSock.phpと、実行用batファイルetc_client\PhpAutoTest.batを同梱しました。
 
@@ -822,7 +870,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
                          ・設定ファイルはsrc\TransactionNode.properties
 
   クライアント:・マスタノードへの通信を行う実際のプログラムインターフェースです。
-	           ・マスターノードの情報を複数セットすることで自動分散や、マスターノードダウン時の
+               ・マスターノードの情報を複数セットすることで自動分散や、マスターノードダウン時の
                  別ノードへの自動再接続をおこないます。
                ・JavaとPHPそれぞれのクラインプログラムがあります。
                  使用方法は以下の項もしくはリリース物のサンプルプログラムTestSock.javaもしくは、

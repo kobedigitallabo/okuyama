@@ -387,6 +387,7 @@ public class KeyMapManager extends Thread {
      * @param boolean 移行データ指定
      */
     public void setKeyPair(String key, String keyNode, String transactionCode) throws BatchException {
+
         if (!blocking) {
             try {
                 //logger.debug("setKeyPair - synchronized - start");
@@ -400,17 +401,43 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-                    keyMapObjPut(key, keyNode);
 
+                    String data = null;
+                    if (keyNode.indexOf("-1") == -1) {
+
+                        data = keyNode;
+                    } else if (!containsKeyPair(key)) {
+
+                        String[] keyNoddes = keyNode.split("!");
+                        data = keyNoddes[0] + "!0";
+                    } else {
+
+                        String tmp = keyMapObjGet(key);
+                        String[] keyNoddes = keyNode.split("!");
+
+                        if (tmp != null) {
+
+                            String[] tmps = tmp.split("!");
+                            data = keyNoddes[0] + "!" + (Long.parseLong(tmps[1]) + 1);
+                        } else {
+
+                            data = keyNoddes[0] + "!0";
+                        }
+                    }
+
+
+                    keyMapObjPut(key, data);
+                    //keyMapObjPut(key,keyNode);
                     // データ操作履歴ファイルに追記
                     if (this.workFileMemory == false) 
-                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        //this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(data).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
 
                     // Diffモードでかつsync後は再度モードを確認後、addする
                     if (this.diffDataPoolingFlg) {
                         synchronized (diffSync) {
                             if (this.diffDataPoolingFlg) {
-                                this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
+                                this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  data);
                             }
                         }
                     }
@@ -473,17 +500,28 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-                    keyMapObjPut(key, keyNode);
+
+                    String data = null;
+                    if (keyNode.indexOf("-1") == -1) {
+
+                        data = keyNode;
+                    } else {
+
+                        String[] keyNoddes = keyNode.split("!");
+                        data = keyNoddes[0] + "!0";
+                    }
+
+                    keyMapObjPut(key, data);
                     ret = true;
 
                     // データ操作履歴ファイルに追記
                     if (this.workFileMemory == false) 
-                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(data).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
 
                     if (this.diffDataPoolingFlg) {
                         synchronized (diffSync) {
                             if (this.diffDataPoolingFlg) {
-                                this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  keyNode);
+                                this.diffDataPoolingList.add("+" + workFileSeq + key + workFileSeq +  data);
                             }
                         }
                     }
