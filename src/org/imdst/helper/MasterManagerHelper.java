@@ -42,6 +42,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // 0=弱一貫性(デフォルト)
     // 1=中一貫性(常に最後に更新されるノードのデータを取得)
     // 2=強一貫性(常に全てのノードのデータの更新時間を比べる)
+    // ※後ほどクライアント単位で切り替える可能性あり
     private int dataConsistencyMode = 0;
 
     // Transactionモードで起動するかを指定
@@ -373,6 +374,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParams[1] = "true";
                             retParams[2] = "";
                             break;
+                        case 999 :
+
+                            // okuyamaのバージョンを返す
+
+                            retParams = new String[3];
+                            retParams[0] = "999";
+                            retParams[1] = ImdstDefine.okuyamaVersion;
+                            retParams[2] = "";
+                            break;
                         default :
                             logger.info("MasterManagerHelper No Method =[" + clientParameterList[0] + "]");
                             break;
@@ -407,6 +417,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     queueParam[0] = queueMap;
                     super.addSmallSizeParameterQueue(addQueueNames, queueParam);
+                } catch (NumberFormatException e) {
+
+                    pw.println("-1,false,ERROR");
+                    pw.flush();
                 } catch (SocketException se) {
 
                     // クライアントとの接続が強制的に切れた場合は切断要求とみなす

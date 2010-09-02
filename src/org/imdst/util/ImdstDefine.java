@@ -9,6 +9,7 @@ package org.imdst.util;
  */
 public class ImdstDefine {
 
+    public static final String okuyamaVersion = "VERSION okuyama-0.8.0";
 
     /* -- KeyMapファイルに関係する定数 ----------                        */
     // KeyNodeのWorkファイルでのセパレータ
@@ -87,6 +88,9 @@ public class ImdstDefine {
     // memcacheモード時の命令コマンドのdelete命令文字
     public static final String memcacheExecuteMethodDelete = "delete";
 
+    // memcacheモード時の命令コマンドのversion命令文字
+    public static final String memcacheExecuteMethodVersion = "version";
+
     // memcacheモード時の命令コマンドのget命令文字
     public static final String memcacheExecuteMethodGet = "get";
 
@@ -96,7 +100,7 @@ public class ImdstDefine {
     // memcacheモード時の命令コマンドのset命令の成功結果文字
     public static final String memcacheMethodReturnSuccessSet = "STORED";
 
-    // memcacheモード時の命令コマンドのset命令の成功結果文字
+    // memcacheモード時の命令コマンドのサーバエラー文字列
     public static final String memcacheMethodRetrunServerError = "SERVER_ERROR";
 
     // memcacheモード時の命令コマンドのadd命令の登録エラー結果文字

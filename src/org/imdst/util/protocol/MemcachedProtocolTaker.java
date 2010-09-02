@@ -38,7 +38,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
 
     /**
      * memcached用のリクエストをパースし共通のプロトコルに変換.<br>
-     * 対応しているメソッドはset,get,deleteのみ.<br>
+     * 対応しているメソッドはset,get,delete,add,versionのみ.<br>
      *
      * @param br
      * @param pw
@@ -77,7 +77,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
 
     /**
      * memcached用のレスポンスを作成.<br>
-     * 対応しているメソッドはset,get,deleteのみ.<br>
+     * 対応しているメソッドははset,get,delete,add,versionのみ.<br>
      *
      * @param retParams
      * @return String
@@ -115,6 +115,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
 
     /**
      * memcache用にリクエスト文字を変換する.<br>
+     * set,get,delete,add,version<br>
      *
      * @param executeMethodStr
      * @param br
@@ -147,7 +148,8 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 // サイズチェック
                 if (Integer.parseInt(executeMethods[4]) > ImdstDefine.saveDataMaxSize) {
                     br.readLine();
-                    pw.println("SERVER_ERROR <Regis Max Byte Over>");
+                    pw.print("SERVER_ERROR <Regis Max Byte Over>");
+                    pw.print("\r\n");
                     pw.flush();
                     return retStr;
                 }
@@ -180,7 +182,8 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                     retStr = methodBuf.toString();
                 }  else {
 
-                    pw.println("CLIENT_ERROR bad data chunk");
+                    pw.print("CLIENT_ERROR bad data chunk");
+                    pw.print("\r\n");
                     pw.flush();
                     return retStr;
                 }
@@ -199,7 +202,8 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 // サイズチェック
                 if (Integer.parseInt(executeMethods[4]) > ImdstDefine.saveDataMaxSize) {
                     br.readLine();
-                    pw.println("SERVER_ERROR <Regis Max Byte Over>");
+                    pw.print("SERVER_ERROR <Regis Max Byte Over>");
+                    pw.print("\r\n");
                     pw.flush();
                     return retStr;
                 }
@@ -259,9 +263,25 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 methodBuf.append(ImdstDefine.keyHelperClientParamSep);
                 methodBuf.append("0"); // TransactionCode("0"固定)
                 retStr = methodBuf.toString();
-
+            } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodVersion)) {
+            
+                // version
+                // TODO:連結してまた分解って。。。後で考えます
+                methodBuf.append("999");
+                retStr = methodBuf.toString();
             } else {
+
                 // 存在しないプロトコルはokuyama用として処理する。
+                try {
+                    // 数値変換出来ない場合はエラー
+                    Integer.parseInt(executeMethods[0]);
+                } catch (NumberFormatException e) {
+                    pw.print("ERROR");
+                    pw.print("\r\n");
+                    pw.flush();
+                    return retStr;
+                }
+
                 retStr = executeMethodStr;
                 this.methodMatch = false;
             }
@@ -277,7 +297,10 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
     private String memcacheReturnCnv(String[] retParams) throws Exception{
         String retStr = null;
 
-        if (retParams[0].equals("1")) {
+        if (retParams[0] == null) {
+
+            retStr = ImdstDefine.memcacheMethodRetrunServerError;
+        } else if (retParams[0].equals("1")) {
 
             // Set
             // 返却値は<STORED> or <SERVER_ERROR>
@@ -341,7 +364,11 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
             } else {
                 retStr = ImdstDefine.memcacheMethodRetrunServerError;
             }
+        } else if (retParams[0].equals("999")) {
 
+            // version
+            // 返却値は"okuyama-?-?-?
+            retStr = retParams[1];
         } else {
             StringBuffer retParamBuf = new StringBuffer();
 
