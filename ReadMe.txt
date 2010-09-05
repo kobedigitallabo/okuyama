@@ -11,7 +11,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 機能改善]
-[[リリース Ver 0.8.0 - (2010/08/31)]]
+[[リリース Ver 0.8.0 - (2010/09/07)]]
   ■振り分けモードにConsistentHashを追加
     データ分散アルゴリズムを従来はModのみだったが、新たにConsistentHashを追加。
     ノード追加時の自動データ移行も実装
@@ -36,6 +36,8 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     していたが、新たにThirdKeyMapNodesInfoを設けた。
     ThirdKeyMapNodesInfoを記述すると、レプリケーションが行われ3ノードで1組のDataNodeとして機能する。
     3ノード全てが停止しなければ稼動可能である。
+	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+      get系のアクセスは正しく稼動している2ノードに限定される。
     MasterNode.propertiesの以下の設定項目で制御可能
 
     ●ThirdKeyMapNodesInfo
@@ -52,6 +54,8 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     ・中一貫性:必ず最後に保存されるレプリケーションノードから取得する
     ・強一貫性:メイン、レプリケーションの値を検証し、新しいデータを返す(片側が削除されていた場合はデータ有りが返る)
     MasterNode.propertiesの以下の設定項目で制御可能
+	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+      get系のアクセスは正しく稼動している2ノードに限定される。
 
     ●DataConsistencyMode
         設定値) "0"
@@ -66,6 +70,8 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     ロードバランス設定がtrueの場合に従来は交互にメインとレプリケーションノードにアクセスするように
     振り分けていたが、振り分ける割合を設定できるように変更
     MasterNode.propertiesの以下の設定項目で制御可能
+	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+      get系のアクセスは正しく稼動している2ノードに限定される。
 
     ●BalanceRatio
         設定値) "7:3"=振り分ける割合(メインノード:レプリケーションノード)
@@ -123,6 +129,25 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
         記述例)
              MasterNodeMaxWorkerParallelQueue=5
 
+
+    DataNode.propertiesの以下の設定項目で制御可能
+	●KeyNodeMaxConnectParallelExecution
+		MasterNodeMaxConnectParallelExecutionと同様
+
+	●KeyNodeMaxConnectParallelQueue=5
+		MasterNodeMaxConnectParallelQueueと同様
+
+	●KeyNodeMaxAcceptParallelExecution=20
+		MasterNodeMaxAcceptParallelExecutionと同様
+
+	●KeyNodeMaxAcceptParallelQueue=5
+		MasterNodeMaxAcceptParallelQueueと同様
+
+	●KeyNodeMaxWorkerParallelExecution=15
+		MasterNodeMaxWorkerParallelExecutionと同様
+
+	●KeyNodeMaxWorkerParallelQueue=5
+		MasterNodeMaxWorkerParallelQueueと同様
 
 ========================================================================================================
 ========================================================================================================

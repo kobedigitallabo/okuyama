@@ -1,3 +1,4 @@
+a
 ====== 分散Key-Valueストア 「okuyama」=====================================================
 Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ダウンロード頂きありがとうございます。
@@ -8,6 +9,147 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 
 ・改修履歴
+========================================================================================================
+[New - 機能改善]
+[[リリース Ver 0.8.0 - (2010/09/07)]]
+  ■振り分けモードにConsistentHashを追加
+    データ分散アルゴリズムを従来はModのみだったが、新たにConsistentHashを追加。
+    ノード追加時の自動データ移行も実装
+    execOkuyamaManager.batを起動しhttp://localhost:10088/okuyamamgrにアクセスし、"Add Main DataNode"に追加したい
+    ノードのIP:PORTを記述しUPDATEボタンを押下すると自動的にデータ移行が行われる
+    ※Subデータノード、Thirdデータノードも運用している場合は一度に"Add Sub DataNode"、"Add Third DataNode"も
+      IP:PORTを記述してUPDATEボタンを押下しないと更新に失敗する
+      つまり、MainDataNodeだけ増やすとかは出来ない。
+    ※MasterNodeの設定は全ノードModもしくはConsistentHashのどちらかに統一されている必要がある。
+      従来のModアルゴリズムで保存したデータはConsistentHashに移行は出来ない。
+    MasterNode.propertiesの以下の設定項目で制御可能
+
+    ●DistributionAlgorithm
+        設定値) "mod"=Modアルゴリズム
+                "consistenthash"=ConsistentHashアルゴリズム
+        記述例)
+             DistributionAlgorithm=mod
+
+
+  ■DataNodeのレプリケーション先を2ノードに変更
+    従来はKeyMapNodesInfoに対してSubKeyMapNodesInfoがレプリケーション先となり2ノードでデータをレプリケーション
+    していたが、新たにThirdKeyMapNodesInfoを設けた。
+    ThirdKeyMapNodesInfoを記述すると、レプリケーションが行われ3ノードで1組のDataNodeとして機能する。
+    3ノード全てが停止しなければ稼動可能である。
+	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+      get系のアクセスは正しく稼動している2ノードに限定される。
+    MasterNode.propertiesの以下の設定項目で制御可能
+
+    ●ThirdKeyMapNodesInfo
+        設定値) "IP:PORT"
+
+        記述例)
+             ThirdKeyMapNodesInfo=localhost:7553,localhost:7554
+
+
+  ■データ取得時の一貫性モードを追加
+    データ取得時にレプリケーション先の状態に合わせて取得データの一貫性を意識した取得が可能。
+    モードは3種類となる。
+    ・弱一貫性:ランダムにメイン、レプリケーション先のどこかから取得する(同じClient接続を使用している間は1ノードに固定される)
+    ・中一貫性:必ず最後に保存されるレプリケーションノードから取得する
+    ・強一貫性:メイン、レプリケーションの値を検証し、新しいデータを返す(片側が削除されていた場合はデータ有りが返る)
+    MasterNode.propertiesの以下の設定項目で制御可能
+	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+      get系のアクセスは正しく稼動している2ノードに限定される。
+
+    ●DataConsistencyMode
+        設定値) "0"
+                "1"
+                "2"
+ 
+        記述例)
+             DataConsistencyMode=1
+
+
+  ■ロードバランス時の振る分けの割合を設定可能に
+    ロードバランス設定がtrueの場合に従来は交互にメインとレプリケーションノードにアクセスするように
+    振り分けていたが、振り分ける割合を設定できるように変更
+    MasterNode.propertiesの以下の設定項目で制御可能
+	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+      get系のアクセスは正しく稼動している2ノードに限定される。
+
+    ●BalanceRatio
+        設定値) "7:3"=振り分ける割合(メインノード:レプリケーションノード)
+                ※上記の場合は7対3の割合
+ 
+        記述例)
+             BalanceRatio=7:3
+
+
+
+  ■通信部分を大幅見直し
+    クライアント<->MasterNode、MasterNode<->DataNode間の通信処理を改修
+    Xeon3430(2.4GHz)×1、メモリ4GB程度のマシン(CentOS5.4 64bit)で10000クライアントとの同時通信をテスト済み
+    (C10K問題に対応)
+    これに伴い以下の設定項目で通信部分のパラメータを変更しチューニング可能
+    MasterNode.propertiesの以下の設定項目で制御可能
+
+    ●MasterNodeMaxConnectParallelExecution
+        設定値) 数値=同時接続時に接続直後に行うSocketラップ処理の並列数
+
+        記述例)
+             MasterNodeMaxConnectParallelExecution=10
+
+
+    ●MasterNodeMaxConnectParallelQueue
+        設定値) 数値=MasterNodeMaxConnectParallelExecutionで設定した並列処理への引数が設定されるキュー数
+ 
+        記述例)
+             MasterNodeMaxConnectParallelQueue=5
+
+
+    ●MasterNodeMaxAcceptParallelExecution
+        設定値) 数値=クライアントからデータ転送が始っていないかを確認する。並列数
+
+        記述例)
+             MasterNodeMaxAcceptParallelExecution=15
+
+    ●MasterNodeMaxAcceptParallelQueue
+        設定値) 数値=MasterNodeMaxAcceptParallelExecutionで設定した並列処理への引数を設定するキュー数
+
+        記述例)
+             MasterNodeMaxAcceptParallelQueue=5
+
+
+    ●MasterNodeMaxWorkerParallelExecution
+        設定値) 数値=データ転送開始状態のSocket登録に対して処理する並列処理数。
+
+        記述例)
+             MasterNodeMaxWorkerParallelExecution=15
+
+
+    ●MasterNodeMaxWorkerParallelQueue
+        設定値) 数値=MasterNodeMaxWorkerParallelExecutionで設定した並列処理への引数を設定するキュー数
+
+        記述例)
+             MasterNodeMaxWorkerParallelQueue=5
+
+
+    DataNode.propertiesの以下の設定項目で制御可能
+	●KeyNodeMaxConnectParallelExecution
+		MasterNodeMaxConnectParallelExecutionと同様
+
+	●KeyNodeMaxConnectParallelQueue=5
+		MasterNodeMaxConnectParallelQueueと同様
+
+	●KeyNodeMaxAcceptParallelExecution=20
+		MasterNodeMaxAcceptParallelExecutionと同様
+
+	●KeyNodeMaxAcceptParallelQueue=5
+		MasterNodeMaxAcceptParallelQueueと同様
+
+	●KeyNodeMaxWorkerParallelExecution=15
+		MasterNodeMaxWorkerParallelExecutionと同様
+
+	●KeyNodeMaxWorkerParallelQueue=5
+		MasterNodeMaxWorkerParallelQueueと同様
+
+========================================================================================================
 ========================================================================================================
 [New - 機能改善]
 [[リリース Ver 0.7.0 - (2010/06/27)]]
@@ -186,15 +328,15 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     この変更が受け入れられない場合はsrc\org\imdst\helper\MasterManagerHelper.javaの2660行目、2661行目を
     以下のように変更し、compile.batを実行し再コンパイルを実行。
     --------------------------------------------------------------------
-	private int hashCodeCnv(String str) {
-		return new HashCodeBuilder(17,37).append(str).toHashCode();
-		//return str.hashCode();
-	}
+    private int hashCodeCnv(String str) {
+        return new HashCodeBuilder(17,37).append(str).toHashCode();
+        //return str.hashCode();
+    }
                ↓↓↓↓変更(コメントアウトを入れ替え)
-	private int hashCodeCnv(String str) {
-		//return new HashCodeBuilder(17,37).append(str).toHashCode();
-		return str.hashCode();
-	}
+    private int hashCodeCnv(String str) {
+        //return new HashCodeBuilder(17,37).append(str).toHashCode();
+        return str.hashCode();
+    }
     --------------------------------------------------------------------
 
 
@@ -315,7 +457,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
       ・戻り値:String配列
                String配列[0]:Lock成否 "true"=Lock成功 or "false"=Lock失敗
  
- 	 *ロック開放への引数と戻り値は以下である。
+     *ロック開放への引数と戻り値は以下である。
       ・クライアントのメソッド名:releaseLockData
       ・引数1:ロック対象Key値
  
@@ -366,7 +508,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
    │                                                                                                        │
    │ // 自身でロックしているので更新可能                                                                    │
    │ if (!imdstKeyValueClient.setValue(args[3], "LockDataValue")) {                                         │
-   │ 	System.out.println("登録失敗");                                                                      │
+   │   System.out.println("登録失敗");                                                                      │
    │ }                                                                                                      │
    │                                                                                                        │
    │ // 取得                                                                                                │
@@ -437,9 +579,9 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 [New - 機能追加]
 [[リリース Ver 0.5.1 - (2010/03/17)]]
   ■PHP用のクライアントを作成
-	PHPでMasterServerへアクセス出来るようにクライアントを作成。
-	Javaのコードを焼きなおしました。
-	バイトデータを登録(setByteValue)、取得(getByteValue)するメソッドのみ未実装。
+    PHPでMasterServerへアクセス出来るようにクライアントを作成。
+    Javaのコードを焼きなおしました。
+    バイトデータを登録(setByteValue)、取得(getByteValue)するメソッドのみ未実装。
     リリース物etc_client\OkuyamaClient.class.phpになります。
     サンプル実行コードetc_client\PhpTestSock.phpと、実行用batファイルetc_client\PhpAutoTest.batを同梱しました。
 
@@ -753,7 +895,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
                          ・設定ファイルはsrc\TransactionNode.properties
 
   クライアント:・マスタノードへの通信を行う実際のプログラムインターフェースです。
-	           ・マスターノードの情報を複数セットすることで自動分散や、マスターノードダウン時の
+               ・マスターノードの情報を複数セットすることで自動分散や、マスターノードダウン時の
                  別ノードへの自動再接続をおこないます。
                ・JavaとPHPそれぞれのクラインプログラムがあります。
                  使用方法は以下の項もしくはリリース物のサンプルプログラムTestSock.javaもしくは、
