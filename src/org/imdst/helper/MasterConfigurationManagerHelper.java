@@ -55,7 +55,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
     private String dispatchMode = ImdstDefine.dispatchModeMod;
 
     // 監視サイクル(秒)
-    private int checkCycle = 1000 * 1;
+    private int checkCycle = 1000 * 5;
 
     /**
      * Logger.<br>

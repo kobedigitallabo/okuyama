@@ -878,7 +878,6 @@ public class ImdstKeyValueClient {
      * @throws Exception
      */
     public boolean setValue(String keyStr, String value) throws Exception {
-System.out.println("Key=[" + keyStr + "], Value[" + value + "]");
         return this.setValue(keyStr, null, value);
     }
 
@@ -970,15 +969,13 @@ System.out.println("Key=[" + keyStr + "], Value[" + value + "]");
 
             // Value連結
             serverRequestBuf.append(value);
-//long start = System.nanoTime();
+
             // サーバ送信
             pw.println(serverRequestBuf.toString());
             pw.flush();
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-//long end = System.nanoTime();
-//System.out.println((end - start));
             serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
 
 
@@ -1482,15 +1479,12 @@ System.out.println("Key=[" + keyStr + "], Value[" + value + "]");
 
 
             // サーバ送信
-//long start = System.nanoTime();
-
             pw.println(serverRequestBuf.toString());
             pw.flush();
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-//long end = System.nanoTime();
-//System.out.println((end - start));
+
             serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
 
             // 処理の妥当性確認

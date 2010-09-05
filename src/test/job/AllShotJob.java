@@ -42,7 +42,7 @@ public class AllShotJob extends AbstractJob implements IJob {
         String ret = SUCCESS;
 
         String[] execMethods = null;
-        int count = 1000;
+        int count = 5000;
         HashMap retMap = new HashMap();
 
         try{
@@ -53,31 +53,34 @@ public class AllShotJob extends AbstractJob implements IJob {
             // クライアントインスタンスを作成
             ImdstKeyValueClient imdstKeyValueClient = null;
 
-            for (int t = 0; t < 2; t++) {
+            String startStr = super.getPropertiesValue(super.getJobName() + "start");
+            int start = Integer.parseInt(startStr);
+            count = count + start;
+            for (int t = 0; t < Integer.parseInt(execMethods[0]); t++) {
 
                 System.out.println("Test Count =[" + t + "]");
-                for (int i = 0; i < execMethods.length; i++) {
+                for (int i = 1; i < execMethods.length; i++) {
 
                     if (execMethods[i].equals("set")) 
-                        retMap.put("set", execSet(imdstKeyValueClient, count));
+                        retMap.put("set", execSet(imdstKeyValueClient, start, count));
 
                     if (execMethods[i].equals("get")) 
-                        retMap.put("get", execGet(imdstKeyValueClient, count));
+                        retMap.put("get", execGet(imdstKeyValueClient, start, count));
 
                     if (execMethods[i].equals("settag")) 
-                        retMap.put("settag", execTagSet(imdstKeyValueClient, count));
+                        retMap.put("settag", execTagSet(imdstKeyValueClient, start, count));
 
                     if (execMethods[i].equals("gettag")) 
-                        retMap.put("gettag", execTagGet(imdstKeyValueClient, count));
+                        retMap.put("gettag", execTagGet(imdstKeyValueClient, start, count));
 
                     if (execMethods[i].equals("remove")) 
-                        retMap.put("remove", execRemove(imdstKeyValueClient, 500));
+                        retMap.put("remove", execRemove(imdstKeyValueClient, start, 500));
 
                     if (execMethods[i].equals("script")) 
-                        retMap.put("script", execScript(imdstKeyValueClient, count));
+                        retMap.put("script", execScript(imdstKeyValueClient, start, count));
 
                     if (execMethods[i].equals("add")) 
-                        retMap.put("add", execAdd(imdstKeyValueClient, count));
+                        retMap.put("add", execAdd(imdstKeyValueClient, start, count));
                 }
 
                 System.out.println("ErrorMap=" + retMap.toString());
@@ -97,7 +100,7 @@ public class AllShotJob extends AbstractJob implements IJob {
     }
 
 
-    private boolean execSet(ImdstKeyValueClient client, int count) throws Exception {
+    private boolean execSet(ImdstKeyValueClient client, int start, int count) throws Exception {
         ImdstKeyValueClient imdstKeyValueClient = null;
         boolean errorFlg = false;
         try {
@@ -114,8 +117,8 @@ public class AllShotJob extends AbstractJob implements IJob {
                 imdstKeyValueClient.connect(masterNodeName, port);
             }
 
-            long start = new Date().getTime();
-            for (int i = 0; i < count; i++) {
+            long startTime = new Date().getTime();
+            for (int i = start; i < count; i++) {
                 // データ登録
 
                 if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
@@ -124,8 +127,8 @@ public class AllShotJob extends AbstractJob implements IJob {
                 }
                 if ((i % 10000) == 0) System.out.println(i);
             }
-            long end = new Date().getTime();
-            System.out.println("Set Method= " + (end - start) + " milli second");
+            long endTime = new Date().getTime();
+            System.out.println("Set Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
                 imdstKeyValueClient.close();
@@ -139,7 +142,7 @@ public class AllShotJob extends AbstractJob implements IJob {
     }
 
 
-    private boolean execGet(ImdstKeyValueClient client, int count) throws Exception {
+    private boolean execGet(ImdstKeyValueClient client, int start, int count) throws Exception {
         ImdstKeyValueClient imdstKeyValueClient = null;
         boolean errorFlg = false;
         try {
@@ -159,8 +162,8 @@ public class AllShotJob extends AbstractJob implements IJob {
 
             String[] ret = null;
 
-            long start = new Date().getTime();
-            for (int i = 0; i < count; i++) {
+            long startTime = new Date().getTime();
+            for (int i = start; i < count; i++) {
                 ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
 
                 if (ret[0].equals("true")) {
@@ -178,8 +181,8 @@ public class AllShotJob extends AbstractJob implements IJob {
                     errorFlg = true;
                 }
             }
-            long end = new Date().getTime();
-            System.out.println("Get Method= " + (end - start) + " milli second");
+            long endTime = new Date().getTime();
+            System.out.println("Get Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
                 imdstKeyValueClient.close();
@@ -193,7 +196,7 @@ public class AllShotJob extends AbstractJob implements IJob {
 
 
 
-    private boolean execTagSet(ImdstKeyValueClient client, int count) throws Exception {
+    private boolean execTagSet(ImdstKeyValueClient client, int start, int count) throws Exception {
         ImdstKeyValueClient imdstKeyValueClient = null;
         boolean errorFlg = false;
         try {
@@ -210,16 +213,16 @@ public class AllShotJob extends AbstractJob implements IJob {
                 imdstKeyValueClient.connect(masterNodeName, port);
             }
 
-            String[] tag1 = {"tag1"};
-            String[] tag2 = {"tag1","tag2"};
-            String[] tag3 = {"tag1","tag2","tag3"};
-            String[] tag4 = {"tag4"};
+            String[] tag1 = {start+"tag1"};
+            String[] tag2 = {start+"tag1",start+"tag2"};
+            String[] tag3 = {start+"tag1",start+"tag2",start+"tag3"};
+            String[] tag4 = {start+"tag4"};
             String[] setTag = null;
             int counter = 0;
 
-            long start = new Date().getTime();
+            long startTime = new Date().getTime();
 
-            for (int i = 0; i < count; i++) {
+            for (int i = start; i < count; i++) {
                 if (counter == 0) {
                     setTag = tag1;
                     counter++;
@@ -239,8 +242,8 @@ public class AllShotJob extends AbstractJob implements IJob {
                     errorFlg = true;
                 }
             }
-            long end = new Date().getTime();
-            System.out.println("Tag Set Method= " + (end - start) + " milli second");
+            long endTime = new Date().getTime();
+            System.out.println("Tag Set Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
                 imdstKeyValueClient.close();
@@ -253,7 +256,7 @@ public class AllShotJob extends AbstractJob implements IJob {
     }
 
 
-    private boolean execTagGet(ImdstKeyValueClient client, int count) throws Exception {
+    private boolean execTagGet(ImdstKeyValueClient client, int start, int count) throws Exception {
         ImdstKeyValueClient imdstKeyValueClient = null;
         boolean errorFlg = false;
         try {
@@ -271,21 +274,21 @@ public class AllShotJob extends AbstractJob implements IJob {
                 imdstKeyValueClient.connect(masterNodeName, port);
             }
 
-            String[] tag1 = {"tag1"};
-            String[] tag2 = {"tag1","tag2"};
-            String[] tag3 = {"tag1","tag2","tag3"};
-            String[] tag4 = {"tag4"};
+            String[] tag1 = {start+"tag1"};
+            String[] tag2 = {start+"tag1",start+"tag2"};
+            String[] tag3 = {start+"tag1",start+"tag2",start+"tag3"};
+            String[] tag4 = {start+"tag4"};
             String[] setTag = null;
 
             String[] keys = null;
-            long start = new Date().getTime();
-            Object[] ret = imdstKeyValueClient.getTagKeys("tag1");
+            long startTime = new Date().getTime();
+            Object[] ret = imdstKeyValueClient.getTagKeys(start+"tag1");
 
             if (ret[0].equals("true")) {
                 // データ有り
                 keys = (String[])ret[1];
 
-                for (int ii = 0; ii < keys.length; ii++) {
+                for (int ii = start; ii < keys.length; ii++) {
                     String[] getRet = imdstKeyValueClient.getValue(keys[ii]);
 
                     if (getRet[0].equals("true")) {
@@ -301,15 +304,15 @@ public class AllShotJob extends AbstractJob implements IJob {
                 }
 
             } else if (ret[0].equals("false")) {
-                System.out.println("tag1=データなし");
+                System.out.println(start+"tag1=データなし");
                 errorFlg = true;
             } else if (ret[0].equals("error")) {
-                System.out.println("tag1=Error[" + ret[1] + "]");
+                System.out.println(start+"tag1=Error[" + ret[1] + "]");
                 errorFlg = true;
             }
 
-            long end = new Date().getTime();
-            System.out.println("Tag Get Method= " + (end - start) + " milli second");
+            long endTime = new Date().getTime();
+            System.out.println("Tag Get Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
                 imdstKeyValueClient.close();
@@ -323,7 +326,7 @@ public class AllShotJob extends AbstractJob implements IJob {
 
 
 
-    private boolean execRemove(ImdstKeyValueClient client, int count) throws Exception {
+    private boolean execRemove(ImdstKeyValueClient client, int start, int count) throws Exception {
         ImdstKeyValueClient imdstKeyValueClient = null;
         boolean errorFlg = false;
         try {
@@ -343,8 +346,8 @@ public class AllShotJob extends AbstractJob implements IJob {
 
             String[] ret = null;
 
-            long start = new Date().getTime();
-            for (int i = 0; i < count;i++) {
+            long startTime = new Date().getTime();
+            for (int i = start; i < count;i++) {
                 ret = imdstKeyValueClient.removeValue("datasavekey_" + new Integer(i).toString());
                 if (ret[0].equals("true")) {
                     // データ有り
@@ -362,8 +365,8 @@ public class AllShotJob extends AbstractJob implements IJob {
                 }
 
             }
-            long end = new Date().getTime();
-            System.out.println("Remove Method= " + (end - start) + " milli second");
+            long endTime = new Date().getTime();
+            System.out.println("Remove Method= " + (endTime - startTime) + " milli second");
 
 
             if (client == null) {
@@ -378,7 +381,7 @@ public class AllShotJob extends AbstractJob implements IJob {
 
 
 
-    private boolean execScript(ImdstKeyValueClient client, int count) throws Exception {
+    private boolean execScript(ImdstKeyValueClient client, int start, int count) throws Exception {
         ImdstKeyValueClient imdstKeyValueClient = null;
         boolean errorFlg = false;
         try {
@@ -396,25 +399,25 @@ public class AllShotJob extends AbstractJob implements IJob {
                 imdstKeyValueClient.connect(masterNodeName, port);
             }
 
-            long start = new Date().getTime();
-            String[] ret = imdstKeyValueClient.getValueScript("datasavekey_600", "var dataValue; var retValue = dataValue.replace('data', 'dummy'); var execRet = '1';");
+            long startTime = new Date().getTime();
+            String[] ret = imdstKeyValueClient.getValueScript("datasavekey_" + (start + 600), "var dataValue; var retValue = dataValue.replace('data', 'dummy'); var execRet = '1';");
             if (ret[0].equals("true")) {
                 // データ有り
                 //System.out.println(ret[1]);
-                if (!ret[1].equals("savedummyvaluestr_600")) {
+                if (!ret[1].equals("savedummyvaluestr_" +  (start + 600))) {
                     System.out.println("データが合っていない" + ret[1]);
                     errorFlg = true;
                 }
             } else if (ret[0].equals("false")) {
-                System.out.println("データなし key=[" + "datasavekey_600]");
+                System.out.println("データなし key=[" + "datasavekey_" + (start + 600));
                 errorFlg = true;
             } else if (ret[0].equals("error")) {
-                System.out.println("Error key=[" + "datasavekey_600]");
+                System.out.println("Error key=[" + "datasavekey_" +  (start + 600));
                 errorFlg = true;
             }
 
-            long end = new Date().getTime();
-            System.out.println("GetScript Method= " + (end - start) + " milli second");
+            long endTime = new Date().getTime();
+            System.out.println("GetScript Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
                 imdstKeyValueClient.close();
@@ -427,7 +430,7 @@ public class AllShotJob extends AbstractJob implements IJob {
     }
 
 
-    private boolean execAdd(ImdstKeyValueClient client, int count) throws Exception {
+    private boolean execAdd(ImdstKeyValueClient client, int start, int count) throws Exception {
         ImdstKeyValueClient imdstKeyValueClient = null;
         boolean errorFlg = false;
         try {
@@ -445,8 +448,8 @@ public class AllShotJob extends AbstractJob implements IJob {
                 imdstKeyValueClient.connect(masterNodeName, port);
             }
 
-            long start = new Date().getTime();
-            String[] retParam = imdstKeyValueClient.setNewValue("Key_ABCDE", "AAAAAAAAABBBBBBBBBBBBCCCCCCCCCC");
+            long startTime = new Date().getTime();
+            String[] retParam = imdstKeyValueClient.setNewValue("Key_ABCDE" + start, "AAAAAAAAABBBBBBBBBBBBCCCCCCCCCC" + start);
 
             if(retParam[0].equals("false")) {
 
@@ -455,9 +458,9 @@ public class AllShotJob extends AbstractJob implements IJob {
             } else {
                 //System.out.println("処理成功");
             }
-            long end = new Date().getTime();
+            long endTime = new Date().getTime();
 
-            System.out.println("New Value Method= " + (end - start) + " milli second");
+            System.out.println("New Value Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
                 imdstKeyValueClient.close();
