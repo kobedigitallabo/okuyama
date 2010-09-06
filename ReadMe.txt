@@ -1,4 +1,3 @@
-a
 ====== 分散Key-Valueストア 「okuyama」=====================================================
 Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ダウンロード頂きありがとうございます。
@@ -15,15 +14,16 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   ■振り分けモードにConsistentHashを追加
     データ分散アルゴリズムを従来はModのみだったが、新たにConsistentHashを追加。
     ノード追加時の自動データ移行も実装
-    execOkuyamaManager.batを起動しhttp://localhost:10088/okuyamamgrにアクセスし、"Add Main DataNode"に追加したい
-    ノードのIP:PORTを記述しUPDATEボタンを押下すると自動的にデータ移行が行われる
+    ConsistentHashアルゴリズム時はexecOkuyamaManager.batを起動しhttp://localhost:10088/okuyamamgrにアクセスし、
+    "Add Main DataNode"に追加したいノードのIP:PORTを記述しUPDATEボタンを押下すると自動的にデータ移行が行われる
     ※Subデータノード、Thirdデータノードも運用している場合は一度に"Add Sub DataNode"、"Add Third DataNode"も
       IP:PORTを記述してUPDATEボタンを押下しないと更新に失敗する
       つまり、MainDataNodeだけ増やすとかは出来ない。
     ※MasterNodeの設定は全ノードModもしくはConsistentHashのどちらかに統一されている必要がある。
       従来のModアルゴリズムで保存したデータはConsistentHashに移行は出来ない。
-    MasterNode.propertiesの以下の設定項目で制御可能
+    ※Modアルゴリズム時は従来通りの各ノードテキストBoxの最後に追加したいノードの"IP:PORT"を記述しUPDATEボタンを押下する
 
+    MasterNode.propertiesの以下の設定項目で制御可能
     ●DistributionAlgorithm
         設定値) "mod"=Modアルゴリズム
                 "consistenthash"=ConsistentHashアルゴリズム
@@ -38,8 +38,8 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     3ノード全てが停止しなければ稼動可能である。
 	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
       get系のアクセスは正しく稼動している2ノードに限定される。
-    MasterNode.propertiesの以下の設定項目で制御可能
 
+    MasterNode.propertiesの以下の設定項目で制御可能
     ●ThirdKeyMapNodesInfo
         設定値) "IP:PORT"
 
@@ -53,10 +53,10 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     ・弱一貫性:ランダムにメイン、レプリケーション先のどこかから取得する(同じClient接続を使用している間は1ノードに固定される)
     ・中一貫性:必ず最後に保存されるレプリケーションノードから取得する
     ・強一貫性:メイン、レプリケーションの値を検証し、新しいデータを返す(片側が削除されていた場合はデータ有りが返る)
+
     MasterNode.propertiesの以下の設定項目で制御可能
 	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
       get系のアクセスは正しく稼動している2ノードに限定される。
-
     ●DataConsistencyMode
         設定値) "0"
                 "1"
@@ -69,26 +69,27 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   ■ロードバランス時の振る分けの割合を設定可能に
     ロードバランス設定がtrueの場合に従来は交互にメインとレプリケーションノードにアクセスするように
     振り分けていたが、振り分ける割合を設定できるように変更
+
     MasterNode.propertiesの以下の設定項目で制御可能
 	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
       get系のアクセスは正しく稼動している2ノードに限定される。
-
     ●BalanceRatio
         設定値) "7:3"=振り分ける割合(メインノード:レプリケーションノード)
                 ※上記の場合は7対3の割合
- 
+
         記述例)
              BalanceRatio=7:3
 
 
-
   ■通信部分を大幅見直し
     クライアント<->MasterNode、MasterNode<->DataNode間の通信処理を改修
-    Xeon3430(2.4GHz)×1、メモリ4GB程度のマシン(CentOS5.4 64bit)で10000クライアントとの同時通信をテスト済み
+    Xeon3430(2.4GHz)×1、メモリ4GB程度のマシン(CentOS5.4 64bit)で10秒程度に間に順次
+    10000クライアントまで接続し接続完了コネクションset,get処理を開始する同時接続テストで確認。
     (C10K問題に対応)
+	※クライアントは無操作の場合は60秒で自動的に切断される
     これに伴い以下の設定項目で通信部分のパラメータを変更しチューニング可能
-    MasterNode.propertiesの以下の設定項目で制御可能
 
+    MasterNode.propertiesの以下の設定項目で制御可能
     ●MasterNodeMaxConnectParallelExecution
         設定値) 数値=同時接続時に接続直後に行うSocketラップ処理の並列数
 
@@ -148,6 +149,13 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 	●KeyNodeMaxWorkerParallelQueue=5
 		MasterNodeMaxWorkerParallelQueueと同様
+
+
+  ■テストケースを追加
+    リリース物直下のexecTest.batを実行するとget、setのメソッドテストと、DataNode再起動のテストが実行される
+    このツールはWindowsにCygwinがインストールされ、CygwinのbinにPATHが通っている想定である。
+    特殊な環境ですいません。
+    リリース物内のclasses\Test.propertiesないのパスを適当な値に書き換えてください。
 
 ========================================================================================================
 ========================================================================================================

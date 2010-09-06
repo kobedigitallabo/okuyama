@@ -25,7 +25,7 @@ import org.imdst.util.StatusUtil;
 public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
 
     // 無操作上限時間
-    private long connetionTimeout = 30000;
+    private long connetionTimeout = 60000;
 
     private ArrayBlockingQueue connectCheckQueue = new ArrayBlockingQueue(5000);
 
@@ -38,6 +38,9 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
 
     // 初期化メソッド定義
     public void initHelper(String initValue) {
+        if (initValue != null && !initValue.trim().equals("")) {
+            this.connetionTimeout = Integer.parseInt(initValue);
+        }
         this.checkConnections = new CheckConnection[1];
         this.checkConnections[0] = new CheckConnection();
     }
@@ -168,40 +171,50 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                 try {
                     param = (Object[])connectCheckQueue.take();
                     clientMap = (Object[])param[0];
-                    br = (BufferedReader)clientMap[ImdstDefine.paramBr];
+
                     socket = (Socket)clientMap[ImdstDefine.paramSocket];
 
-                    int test = 0;
-                    br.mark(1);
+                    if (((Integer)clientMap[ImdstDefine.paramCheckCountMaster]).intValue() > 50) {
 
-                    // 無操作時間が上限に達していないかを確認
-                    long start = ((Long)clientMap[ImdstDefine.paramStart]).longValue();
-                    long last = ((Long)clientMap[ImdstDefine.paramLast]).longValue();
+                        clientMap[ImdstDefine.paramCheckCountMaster] = new Integer(0);
 
-                    if ((System.currentTimeMillis() - last) < connetionTimeout) {
+                        br = (BufferedReader)clientMap[ImdstDefine.paramBr];
 
-                        // 上限に達していない
-                        // 既にコネクションが切断されていないかを確認
-                        socket.setSoTimeout(1);
-                        test = br.read();
+                        int test = 0;
+                        br.mark(1);
 
-                        br.reset(); 
+                        // 無操作時間が上限に達していないかを確認
+                        long last = ((Long)clientMap[ImdstDefine.paramLast]).longValue();
+
+                        if ((System.currentTimeMillis() - last) < connetionTimeout) {
+
+                            // 上限に達していない
+                            // 既にコネクションが切断されていないかを確認
+                            socket.setSoTimeout(1);
+                            test = br.read();
+
+                            br.reset(); 
+                        } else {
+
+                            // 上限に達している
+                            test = -1;
+                        }
+
+                        // 無操作時間の上限もしくは、コネクション切断済み
+                        if (test == -1) {
+
+                            // クローズ
+                            br.close();
+                            socket.close();
+                            br = null;
+                            socket = null;
+                        }
                     } else {
 
-                        // 上限に達している
-                        test = -1;
+                        int checkCount = ((Integer)clientMap[ImdstDefine.paramCheckCountMaster]).intValue();
+                        checkCount++;
+                        clientMap[ImdstDefine.paramCheckCountMaster] = new Integer(checkCount);
                     }
-
-                    // 無操作時間の上限もしくは、コネクション切断済み
-                    if (test == -1) {
-
-                        // クローズ
-                        br.close();
-                        socket.close();
-                        br = null;
-                        socket = null;
-                    }
-
                 } catch (SocketTimeoutException se) {
                 } catch (Throwable te) {
                     try {

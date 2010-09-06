@@ -1422,7 +1422,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // 弱一貫性 or 中一貫性の場合はデータが取れ次第返却
                         // 一貫性データが付随した状態から通常データに変換する
-                        // 弱一貫性 or 中一貫の場合は時間は使用しない
                         if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
                             cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
                             retParams[2] = cnvConsistencyRet[0];

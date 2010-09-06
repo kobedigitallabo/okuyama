@@ -182,12 +182,14 @@ public class ImdstDefine {
 
     public static final String ConfigSaveNodePrefix = "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ ";
 
-    public static final int paramSocket  = 0;
-    public static final int paramPw      = 1;
-    public static final int paramBr      = 2;
-    public static final int paramStart   = 3;
-    public static final int paramLast    = 4;
-    public static final int paramBalance = 5;
+    public static final int paramSocket       = 0;
+    public static final int paramPw           = 1;
+    public static final int paramBr           = 2;
+    public static final int paramStart        = 3;
+    public static final int paramLast         = 4;
+    public static final int paramBalance      = 5;
+    public static final int paramCheckCount   = 5;
+    public static final int paramCheckCountMaster = 6;
 
     public static final int dispatchModeModInt = 0;
     public static final int dispatchModeConsistentHashInt = 1;

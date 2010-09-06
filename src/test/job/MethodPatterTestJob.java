@@ -21,10 +21,12 @@ import org.imdst.client.*;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class AllShotJob extends AbstractJob implements IJob {
+public class MethodPatterTestJob extends AbstractJob implements IJob {
 
     private String masterNodeName = "127.0.0.1";
     private int masterNodePort = 8888;
+
+    private int nowCount = 0;
 
     // 初期化メソッド定義
     public void initJob(String initValue) {
@@ -56,41 +58,42 @@ public class AllShotJob extends AbstractJob implements IJob {
             String startStr = super.getPropertiesValue(super.getJobName() + "start");
             int start = Integer.parseInt(startStr);
             count = count + start;
-            for (int t = 0; t < Integer.parseInt(execMethods[0]); t++) {
+            for (int cy = 0; cy < 2; cy++) {
+                for (int t = 0; t < Integer.parseInt(execMethods[0]); t++) {
+                    this.nowCount = t;
+                    System.out.println("Test Count =[" + t + "]");
+                    for (int i = 1; i < execMethods.length; i++) {
 
-                System.out.println("Test Count =[" + t + "]");
-                for (int i = 1; i < execMethods.length; i++) {
+                        if (execMethods[i].equals("set")) 
+                            retMap.put("set", execSet(imdstKeyValueClient, start, count));
 
-                    if (execMethods[i].equals("set")) 
-                        retMap.put("set", execSet(imdstKeyValueClient, start, count));
+                        if (execMethods[i].equals("get")) 
+                            retMap.put("get", execGet(imdstKeyValueClient, start, count));
 
-                    if (execMethods[i].equals("get")) 
-                        retMap.put("get", execGet(imdstKeyValueClient, start, count));
+                        if (execMethods[i].equals("settag")) 
+                            retMap.put("settag", execTagSet(imdstKeyValueClient, start, count));
 
-                    if (execMethods[i].equals("settag")) 
-                        retMap.put("settag", execTagSet(imdstKeyValueClient, start, count));
+                        if (execMethods[i].equals("gettag")) 
+                            retMap.put("gettag", execTagGet(imdstKeyValueClient, start, count));
 
-                    if (execMethods[i].equals("gettag")) 
-                        retMap.put("gettag", execTagGet(imdstKeyValueClient, start, count));
+                        if (execMethods[i].equals("remove")) 
+                            retMap.put("remove", execRemove(imdstKeyValueClient, start, 500));
 
-                    if (execMethods[i].equals("remove")) 
-                        retMap.put("remove", execRemove(imdstKeyValueClient, start, 500));
+                        if (execMethods[i].equals("script")) 
+                            retMap.put("script", execScript(imdstKeyValueClient, start, count));
 
-                    if (execMethods[i].equals("script")) 
-                        retMap.put("script", execScript(imdstKeyValueClient, start, count));
+                        if (execMethods[i].equals("add")) 
+                            retMap.put("add", execAdd(imdstKeyValueClient, start, count));
+                    }
 
-                    if (execMethods[i].equals("add")) 
-                        retMap.put("add", execAdd(imdstKeyValueClient, start, count));
+                    System.out.println("ErrorMap=" + retMap.toString());
+                    System.out.println("---------------------------------------------");
+                    // クライアントインスタンスを作成
+                    imdstKeyValueClient = new ImdstKeyValueClient();
+                    // マスタサーバに接続
+                    imdstKeyValueClient.connect(masterNodeName, port);
                 }
-
-                System.out.println("ErrorMap=" + retMap.toString());
-                System.out.println("---------------------------------------------");
-                // クライアントインスタンスを作成
-                imdstKeyValueClient = new ImdstKeyValueClient();
-                // マスタサーバに接続
-                imdstKeyValueClient.connect(masterNodeName, port);
             }
-
         } catch(Exception e) {
             System.out.println(retMap);
             throw new BatchException(e);
@@ -121,8 +124,8 @@ public class AllShotJob extends AbstractJob implements IJob {
             for (int i = start; i < count; i++) {
                 // データ登録
 
-                if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                    System.out.println("Set - Error=[" + "datasavekey_" + new Integer(i).toString() + ",  savedatavaluestr_" + new Integer(i).toString());
+                if (!imdstKeyValueClient.setValue(this.nowCount + "datasavekey_" + new Integer(i).toString(), this.nowCount + "savedatavaluestr_" + new Integer(i).toString())) {
+                    System.out.println("Set - Error=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + ", " + this.nowCount + "savedatavaluestr_" + new Integer(i).toString());
                     errorFlg = true;
                 }
                 if ((i % 10000) == 0) System.out.println(i);
@@ -164,20 +167,20 @@ public class AllShotJob extends AbstractJob implements IJob {
 
             long startTime = new Date().getTime();
             for (int i = start; i < count; i++) {
-                ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
+                ret = imdstKeyValueClient.getValue(this.nowCount + "datasavekey_" + new Integer(i).toString());
 
                 if (ret[0].equals("true")) {
                     // データ有り
                     //System.out.println(ret[1]);
-                    if (!ret[1].equals("savedatavaluestr_" + new Integer(i).toString())) {
-                        System.out.println("データが合っていない key=[" + "datasavekey_" + new Integer(i).toString() + "]  value=[" + ret[1] + "]");
+                    if (!ret[1].equals(this.nowCount + "savedatavaluestr_" + new Integer(i).toString())) {
+                        System.out.println("データが合っていない key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]  value=[" + ret[1] + "]");
                         errorFlg = true;
                     }
                 } else if (ret[0].equals("false")) {
-                    System.out.println("データなし key=[" + "datasavekey_" + new Integer(i).toString() + "]");
+                    System.out.println("データなし key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]");
                     errorFlg = true;
                 } else if (ret[0].equals("error")) {
-                    System.out.println("Error key=[" + "datasavekey_" + new Integer(i).toString() + "]" + ret[1]);
+                    System.out.println("Error key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]" + ret[1]);
                     errorFlg = true;
                 }
             }
@@ -213,10 +216,10 @@ public class AllShotJob extends AbstractJob implements IJob {
                 imdstKeyValueClient.connect(masterNodeName, port);
             }
 
-            String[] tag1 = {start+"tag1"};
-            String[] tag2 = {start+"tag1",start+"tag2"};
-            String[] tag3 = {start+"tag1",start+"tag2",start+"tag3"};
-            String[] tag4 = {start+"tag4"};
+            String[] tag1 = {start+"_" + this.nowCount + "_tag1"};
+            String[] tag2 = {start+"_" + this.nowCount + "_tag1",start+"_" + this.nowCount + "_tag2"};
+            String[] tag3 = {start+"_" + this.nowCount + "_tag1",start+"_" + this.nowCount + "_tag2",start+"_" + this.nowCount + "_tag3"};
+            String[] tag4 = {start+"_" + this.nowCount + "_tag4"};
             String[] setTag = null;
             int counter = 0;
 
@@ -237,8 +240,8 @@ public class AllShotJob extends AbstractJob implements IJob {
                     counter = 0;
                 }
 
-                if (!imdstKeyValueClient.setValue("tagsampledatakey_" + new Integer(i).toString(), setTag, "tagsamplesavedata_" + new Integer(i).toString())) {
-                    System.out.println("Tag Set - Error=[tagsampledatakey_" + new Integer(i).toString() + ",  tagsamplesavedata_" + new Integer(i).toString());
+                if (!imdstKeyValueClient.setValue(this.nowCount + "tagsampledatakey_" + new Integer(i).toString(), setTag, this.nowCount + "tagsamplesavedata_" + new Integer(i).toString())) {
+                    System.out.println("Tag Set - Error=[" + this.nowCount + "tagsampledatakey_" + new Integer(i).toString() + ", " + this.nowCount + "tagsamplesavedata_" + new Integer(i).toString());
                     errorFlg = true;
                 }
             }
@@ -274,15 +277,15 @@ public class AllShotJob extends AbstractJob implements IJob {
                 imdstKeyValueClient.connect(masterNodeName, port);
             }
 
-            String[] tag1 = {start+"tag1"};
-            String[] tag2 = {start+"tag1",start+"tag2"};
-            String[] tag3 = {start+"tag1",start+"tag2",start+"tag3"};
-            String[] tag4 = {start+"tag4"};
+            String[] tag1 = {start+"_" + this.nowCount + "_tag1"};
+            String[] tag2 = {start+"_" + this.nowCount + "_tag1",start+"_" + this.nowCount + "_tag2"};
+            String[] tag3 = {start+"_" + this.nowCount + "_tag1",start+"_" + this.nowCount + "_tag2",start+"_" + this.nowCount + "_tag3"};
+            String[] tag4 = {start+"_" + this.nowCount + "_tag4"};
             String[] setTag = null;
 
             String[] keys = null;
             long startTime = new Date().getTime();
-            Object[] ret = imdstKeyValueClient.getTagKeys(start+"tag1");
+            Object[] ret = imdstKeyValueClient.getTagKeys(start+"_" + this.nowCount + "_tag1");
 
             if (ret[0].equals("true")) {
                 // データ有り
@@ -308,6 +311,64 @@ public class AllShotJob extends AbstractJob implements IJob {
                 errorFlg = true;
             } else if (ret[0].equals("error")) {
                 System.out.println(start+"tag1=Error[" + ret[1] + "]");
+                errorFlg = true;
+            }
+
+            ret = imdstKeyValueClient.getTagKeys(start+"_" + this.nowCount + "_tag2");
+
+            if (ret[0].equals("true")) {
+                // データ有り
+                keys = (String[])ret[1];
+
+                for (int ii = start; ii < keys.length; ii++) {
+                    String[] getRet = imdstKeyValueClient.getValue(keys[ii]);
+
+                    if (getRet[0].equals("true")) {
+                        // データ有り
+                        //System.out.println(getRet[1]);
+                    } else if (getRet[0].equals("false")) {
+                        System.out.println("データなし key=[" + keys[ii] + "]");
+                        errorFlg = true;
+                    } else if (getRet[0].equals("error")) {
+                        System.out.println("Error key=[" + keys[ii] + "]");
+                        errorFlg = true;
+                    }
+                }
+
+            } else if (ret[0].equals("false")) {
+                System.out.println(start+"_tag2=データなし");
+                errorFlg = true;
+            } else if (ret[0].equals("error")) {
+                System.out.println(start+"tag2=Error[" + ret[1] + "]");
+                errorFlg = true;
+            }
+
+            ret = imdstKeyValueClient.getTagKeys(start+"_" + this.nowCount + "_tag3");
+
+            if (ret[0].equals("true")) {
+                // データ有り
+                keys = (String[])ret[1];
+
+                for (int ii = start; ii < keys.length; ii++) {
+                    String[] getRet = imdstKeyValueClient.getValue(keys[ii]);
+
+                    if (getRet[0].equals("true")) {
+                        // データ有り
+                        //System.out.println(getRet[1]);
+                    } else if (getRet[0].equals("false")) {
+                        System.out.println("データなし key=[" + keys[ii] + "]");
+                        errorFlg = true;
+                    } else if (getRet[0].equals("error")) {
+                        System.out.println("Error key=[" + keys[ii] + "]");
+                        errorFlg = true;
+                    }
+                }
+
+            } else if (ret[0].equals("false")) {
+                System.out.println(start+"_tag3=データなし");
+                errorFlg = true;
+            } else if (ret[0].equals("error")) {
+                System.out.println(start+"tag3=Error[" + ret[1] + "]");
                 errorFlg = true;
             }
 
@@ -348,19 +409,19 @@ public class AllShotJob extends AbstractJob implements IJob {
 
             long startTime = new Date().getTime();
             for (int i = start; i < count;i++) {
-                ret = imdstKeyValueClient.removeValue("datasavekey_" + new Integer(i).toString());
+                ret = imdstKeyValueClient.removeValue(this.nowCount + "datasavekey_" + new Integer(i).toString());
                 if (ret[0].equals("true")) {
                     // データ有り
                     //System.out.println(ret[1]);
-                    if (!ret[1].equals("savedatavaluestr_" + new Integer(i).toString())) {
-                        System.out.println("データが合っていない key=[" + "datasavekey_" + new Integer(i).toString() + "]  value=[" + ret[1] + "]");
+                    if (!ret[1].equals(this.nowCount + "savedatavaluestr_" + new Integer(i).toString())) {
+                        System.out.println("データが合っていない key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]  value=[" + ret[1] + "]");
                         errorFlg = true;
                     }
                 } else if (ret[0].equals("false")) {
-                    System.out.println("データなし key=[" + "datasavekey_" + new Integer(i).toString() + "]");
+                    System.out.println("データなし key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]");
                     errorFlg = true;
                 } else if (ret[0].equals("error")) {
-                    System.out.println("Error key=[" + "datasavekey_" + new Integer(i).toString() + "]" + ret[1]);
+                    System.out.println("Error key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]" + ret[1]);
                     errorFlg = true;
                 }
 
@@ -400,19 +461,19 @@ public class AllShotJob extends AbstractJob implements IJob {
             }
 
             long startTime = new Date().getTime();
-            String[] ret = imdstKeyValueClient.getValueScript("datasavekey_" + (start + 600), "var dataValue; var retValue = dataValue.replace('data', 'dummy'); var execRet = '1';");
+            String[] ret = imdstKeyValueClient.getValueScript(this.nowCount + "datasavekey_" + (start + 600), "var dataValue; var retValue = dataValue.replace('data', 'dummy'); var execRet = '1';");
             if (ret[0].equals("true")) {
                 // データ有り
                 //System.out.println(ret[1]);
-                if (!ret[1].equals("savedummyvaluestr_" +  (start + 600))) {
+                if (!ret[1].equals(this.nowCount + "savedummyvaluestr_" +  (start + 600))) {
                     System.out.println("データが合っていない" + ret[1]);
                     errorFlg = true;
                 }
             } else if (ret[0].equals("false")) {
-                System.out.println("データなし key=[" + "datasavekey_" + (start + 600));
+                System.out.println("データなし key=[" + this.nowCount + "datasavekey_" + (start + 600));
                 errorFlg = true;
             } else if (ret[0].equals("error")) {
-                System.out.println("Error key=[" + "datasavekey_" +  (start + 600));
+                System.out.println("Error key=[" + this.nowCount + "datasavekey_" +  (start + 600));
                 errorFlg = true;
             }
 
@@ -449,11 +510,11 @@ public class AllShotJob extends AbstractJob implements IJob {
             }
 
             long startTime = new Date().getTime();
-            String[] retParam = imdstKeyValueClient.setNewValue("Key_ABCDE" + start, "AAAAAAAAABBBBBBBBBBBBCCCCCCCCCC" + start);
+            String[] retParam = imdstKeyValueClient.setNewValue(this.nowCount + "Key_ABCDE" + start, this.nowCount + "AAAAAAAAABBBBBBBBBBBBCCCCCCCCCC" + start);
 
             if(retParam[0].equals("false")) {
 
-                System.out.println("Key=[Key_ABCDE] Error=[" + retParam[1] + "]");
+                System.out.println("Key=[" + this.nowCount + "Key_ABCDE] Error=[" + retParam[1] + "]");
                 errorFlg = true;
             } else {
                 //System.out.println("処理成功");
