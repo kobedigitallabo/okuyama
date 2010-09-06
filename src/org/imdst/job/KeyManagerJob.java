@@ -183,7 +183,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
             // 監視スレッド起動
             for (int i = 0; i < maxConnectParallelExecution; i++) {
-                queueIndex = (i+1) % this.multiQueue;
+                queueIndex = (i+1) % this.maxConnectParallelQueue;
 
                 Object[] queueParam = new Object[2];
                 queueParam[0] = "KeyManagerConnectHelper" + this.myPrefix + queueIndex;
@@ -192,7 +192,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             }
 
             for (int i = 0; i < maxAcceptParallelExecution; i++) {
-                queueIndex = (i+1) % this.multiQueue;
+                queueIndex = (i+1) % this.maxAcceptParallelQueue;
 
                 Object[] queueParam = new Object[2];
                 queueParam[0] = "KeyManagerAcceptHelper" + this.myPrefix + queueIndex;
@@ -201,7 +201,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             }
 
             for (int i = 0; i < maxWorkerParallelExecution; i++) {
-                queueIndex = (i+1) % this.multiQueue;
+                queueIndex = (i+1) % this.maxWorkerParallelQueue;
 
                 Object[] queueParam = new Object[3];
                 queueParam[0] = this.keyMapManager;
@@ -231,12 +231,12 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                     helperParam[0] = socket;
 
                     // アクセス済みのソケットをキューに貯める
-                    super.addSpecificationParameterQueue(keyManagerConnectHelperQueuePrefix + (accessCount % this.multiQueue), helperParam);
+                    super.addSpecificationParameterQueue(keyManagerConnectHelperQueuePrefix + (accessCount % this.maxConnectParallelQueue), helperParam);
 
 
                     // 各スレッドが減少していないかを確かめる
                     if (super.getActiveHelperCount("KeyManagerConnectHelper") < (maxConnectParallelExecution / 2)) {
-                        queueIndex = accessCount % this.multiQueue;
+                        queueIndex = accessCount % this.maxConnectParallelQueue;
 
                         Object[] queueParam = new Object[2];
                         queueParam[0] = "KeyManagerConnectHelper" + this.myPrefix + queueIndex;
@@ -245,7 +245,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                     }
 
                     if (super.getActiveHelperCount("KeyManagerAcceptHelper") < (maxAcceptParallelExecution / 2)) {
-                        queueIndex = accessCount % this.multiQueue;
+                        queueIndex = accessCount % this.maxAcceptParallelQueue;
 
                         Object[] queueParam = new Object[2];
                         queueParam[0] = "KeyManagerAcceptHelper" + this.myPrefix + queueIndex;
@@ -254,7 +254,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                     }
 
                     if (super.getActiveHelperCount("KeyManagerHelper") < (maxWorkerParallelExecution / 2)) {
-                        queueIndex = accessCount % this.multiQueue;
+                        queueIndex = accessCount % this.maxWorkerParallelQueue;
 
                         Object[] queueParam = new Object[3];
                         queueParam[0] = this.keyMapManager;

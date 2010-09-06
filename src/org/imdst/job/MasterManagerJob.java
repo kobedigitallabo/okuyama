@@ -307,7 +307,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                     // TODO:以下は別スレッドに切り出すべき
                     // 各スレッドが減少していないかを確かめる
                     if (super.getActiveHelperCount("MasterManagerConnectHelper") < (maxConnectParallelExecution / 2)) {
-                        queueIndex = (accessCount) % this.maxConnectParallelExecution;
+                        queueIndex = (accessCount) % this.maxConnectParallelQueue;
 
                         helperParams = new Object[2];
                         helperParams[0] = "MasterManagerConnectHelper" + queueIndex;
@@ -327,7 +327,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                     }
 
                     if (super.getActiveHelperCount("MasterManagerHelper") < (maxWorkerParallelExecution / 2)) {
-                        queueIndex = (accessCount) % this.maxWorkerParallelExecution;
+                        queueIndex = (accessCount) % this.maxWorkerParallelQueue;
 
                         helperParams = new Object[paramSize];
                         helperParams[0] = null;

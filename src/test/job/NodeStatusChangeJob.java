@@ -16,7 +16,8 @@ import org.imdst.util.JavaSystemApi;
 import org.imdst.client.*;
 
 /**
- * 登録、取得、Tag登録、Tag取得、削除、Script実行、一意登録、のテストを実行
+ * DataNodeの停止、起動のテストを実行.<br>
+ * このテストケースはWindows環境にCygwinをインストールし、PATHを設定した想定です.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -24,9 +25,12 @@ import org.imdst.client.*;
 public class NodeStatusChangeJob extends AbstractJob implements IJob {
 
     private int execCount = 10;
+    private String testScriptPath = "C:";
+
 
     // 初期化メソッド定義
     public void initJob(String initValue) {
+        // 実行回数を設定
         if(initValue != null && !initValue.equals("")) {
             execCount = Integer.parseInt(initValue);
         }
@@ -45,7 +49,10 @@ public class NodeStatusChangeJob extends AbstractJob implements IJob {
         String startCmd2 = null;
 
         try{
-
+            // パス初期化
+            if(optionParam != null && !optionParam.equals("")) {
+                testScriptPath = optionParam;
+            }
 
             Thread.sleep(20000);
 
@@ -68,14 +75,14 @@ public class NodeStatusChangeJob extends AbstractJob implements IJob {
         String result = null;
 
         String[] stop = new String[3];
-        stop[0] = "C:\\desktop\\tools\\java\\okuyama\\trunk\\execTestStopDataNode.bat";
-        stop[1] = "C:\\desktop\\tools\\java\\okuyama\\trunk\\execTestStopSlaveDataNode.bat";
-        stop[2] = "C:\\desktop\\tools\\java\\okuyama\\trunk\\execTestStopThirdDataNode.bat";
+        stop[0] = testScriptPath + "\\execTestStopDataNode.bat";
+        stop[1] = testScriptPath + "\\execTestStopSlaveDataNode.bat";
+        stop[2] = testScriptPath + "\\execTestStopThirdDataNode.bat";
 
         String[] start = new String[3];
-        start[0] = "C:\\desktop\\tools\\java\\okuyama\\trunk\\execTestDataNode.bat";
-        start[1] = "C:\\desktop\\tools\\java\\okuyama\\trunk\\execTestSlaveDataNode.bat";
-        start[2] = "C:\\desktop\\tools\\java\\okuyama\\trunk\\execTestThirdDataNode.bat";
+        start[0] = testScriptPath + "\\execTestDataNode.bat";
+        start[1] = testScriptPath + "\\execTestSlaveDataNode.bat";
+        start[2] = testScriptPath + "\\execTestThirdDataNode.bat";
 
         String killCmd = "taskkill /F /PID ";
         String stopCmd = "";
