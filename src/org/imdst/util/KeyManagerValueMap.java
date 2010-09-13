@@ -21,7 +21,7 @@ import org.imdst.util.StatusUtil;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class KeyManagerValueMap extends ConcurrentHashMap implements Cloneable, Serializable {
+public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Serializable {
 
     private boolean memoryMode = true;
 

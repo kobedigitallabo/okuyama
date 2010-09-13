@@ -41,6 +41,7 @@ public class KeyMapManager extends Thread {
     private Object poolKeyLock = new Object();
     private Object setKeyLock = new Object();
     private Object lockKeyLock = new Object();
+
     // set,remove系のシンクロオブジェクト
     private static final int parallelSize = 5000;
     private Integer[] parallelSyncObjs = new Integer[KeyMapManager.parallelSize];
@@ -83,6 +84,8 @@ public class KeyMapManager extends Thread {
     // workMap(トランザクションログ)ファイルをメモリーモードにするかの指定
     private boolean workFileMemory = false;
 
+    private Object lockWorkFileSync = new Object();
+
     // データのメモリーモードかファイルモードかの指定
     private boolean dataMemory = true;
 
@@ -100,6 +103,10 @@ public class KeyMapManager extends Thread {
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
     private int vacuumStartLimit = 20000;
 
+    // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
+    // 行数と1行のデータサイズをかけると不要なデータサイズとなる
+    // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
+    private int vacuumStartCompulsionLimit = 5000000;
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     private int vacuumExecAfterAccessTime = 30000;
@@ -302,11 +309,11 @@ public class KeyMapManager extends Thread {
                     this.bw.newLine();
                     this.bw.flush();
                 } catch (Exception e) {
+
                     logger.error("KeyMapManager - init - Error" + e);
                     blocking = true;
                     StatusUtil.setStatusAndMessage(1, "KeyMapManager - init - Error [" + e.getMessage() + "]");
                     throw new BatchException(e);
-
                 }
             }
         }
@@ -344,6 +351,7 @@ public class KeyMapManager extends Thread {
                 }
 
                 logger.info("VacuumCheck - Start");
+
                 //  Vacuum実行の確認
                 // データがメモリーではなくかつ、vacuum実行指定がtrueの場合
                 if (!dataMemory && vacuumExec == true) {
@@ -352,10 +360,12 @@ public class KeyMapManager extends Thread {
                         logger.info("VacuumCheck - Start - 2");
 
                         // 規定時間アクセスがない
-                        if ((System.currentTimeMillis() - this.lastAccess) > this.vacuumExecAfterAccessTime) {
-                            logger.info("Vacuum - Start");
-                            long vacuumStart = System.currentTimeMillis();
+                        if ((System.currentTimeMillis() - this.lastAccess) > this.vacuumExecAfterAccessTime ||
+                                (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartCompulsionLimit) {
 
+                            logger.info("Vacuum - Start Vacuum Data Count=[" + (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) + "]");
+
+                            long vacuumStart = System.currentTimeMillis();
                             synchronized(poolKeyLock) {
                                 this.keyMapObj.vacuumData();
                             }
@@ -365,15 +375,15 @@ public class KeyMapManager extends Thread {
                         }
                     }
                 }
-                logger.info("VacuumCheck - End");
 
+                logger.info("VacuumCheck - End");
             } catch (Exception e) {
+
                 e.printStackTrace();
                 logger.error("KeyMapManager - run - Error" + e);
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "KeyMapManager - run - Error [" + e.getMessage() + "]");
-                e.printStackTrace();
-            }   
+            }
         }
     }
 
@@ -427,11 +437,13 @@ public class KeyMapManager extends Thread {
 
 
                     keyMapObjPut(key, data);
-                    //keyMapObjPut(key,keyNode);
+
                     // データ操作履歴ファイルに追記
-                    if (this.workFileMemory == false) 
-                        //this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(keyNode).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
-                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(data).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                    if (this.workFileMemory == false) {
+                        synchronized(this.lockWorkFileSync) {
+                            this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(data).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        }
+                    }
 
                     // Diffモードでかつsync後は再度モードを確認後、addする
                     if (this.diffDataPoolingFlg) {
@@ -515,8 +527,11 @@ public class KeyMapManager extends Thread {
                     ret = true;
 
                     // データ操作履歴ファイルに追記
-                    if (this.workFileMemory == false) 
-                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(data).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                    if (this.workFileMemory == false) {
+                        synchronized(this.lockWorkFileSync) {
+                            this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(data).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        }
+                    }
 
                     if (this.diffDataPoolingFlg) {
                         synchronized (diffSync) {
@@ -580,10 +595,12 @@ public class KeyMapManager extends Thread {
 
 
                     // データ操作履歴ファイルに追記
-                    if (this.workFileMemory == false)
-                        // データ操作履歴ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                        this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
-
+                    if (this.workFileMemory == false) {
+                        synchronized(this.lockWorkFileSync) {
+                            // データ操作履歴ファイル再保存(登録と合わせるために4つに分割できるようにする)
+                            this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        }
+                    }
                     if (this.diffDataPoolingFlg) {
                         synchronized (diffSync) {
                             if (this.diffDataPoolingFlg) {
@@ -803,10 +820,11 @@ public class KeyMapManager extends Thread {
                 this.writeMapFileFlg = true;
 
                 if (workFileMemory == false) {
-
-                    // データ格納場所記述ファイル再保存
-                    this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(saveTransactionStr).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
-                    this.bw.flush();
+                    synchronized(this.lockWorkFileSync) {
+                        // データ格納場所記述ファイル再保存
+                        this.bw.write(new StringBuffer("+").append(workFileSeq).append(key).append(workFileSeq).append(saveTransactionStr).append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        this.bw.flush();
+                    }
                 }
 
                 if (this.diffDataPoolingFlg) {
@@ -855,9 +873,11 @@ public class KeyMapManager extends Thread {
                 this.writeMapFileFlg = true;
 
                 if (workFileMemory == false) {
-                    // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                    this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
-                    this.bw.flush();
+                    synchronized(this.lockWorkFileSync) {
+                        // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
+                        this.bw.write(new StringBuffer("-").append(workFileSeq).append(key).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                        this.bw.flush();
+                    }
                 }
 
                 if (this.diffDataPoolingFlg) {
@@ -935,10 +955,11 @@ public class KeyMapManager extends Thread {
                             this.writeMapFileFlg = true;
 
                             if (workFileMemory == false) {
-
-                                // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                                this.bw.write(new StringBuffer("-").append(workFileSeq).append(keyList[idx]).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
-                                this.bw.flush();
+                                synchronized(this.lockWorkFileSync) {
+                                    // データ格納場所記述ファイル再保存(登録と合わせるために4つに分割できるようにする)
+                                    this.bw.write(new StringBuffer("-").append(workFileSeq).append(keyList[idx]).append(workFileSeq).append(" ").append(workFileSeq).append(System.currentTimeMillis()).append(workFileSeq).append(workFileEndPoint).append("\n").toString());
+                                    this.bw.flush();
+                                }
                             }
 
                             if (this.diffDataPoolingFlg) {

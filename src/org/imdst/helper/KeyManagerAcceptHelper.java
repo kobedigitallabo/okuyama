@@ -175,7 +175,7 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
                     clientMap = (Object[])param[0];
                     socket = (Socket)clientMap[ImdstDefine.paramSocket];
 
-                    if (((Integer)clientMap[ImdstDefine.paramCheckCount]).intValue() > 50) {
+                    if (((Integer)clientMap[ImdstDefine.paramCheckCount]).intValue() > 10) {
 
                         clientMap[ImdstDefine.paramCheckCount] = new Integer(0);
 

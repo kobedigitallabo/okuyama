@@ -174,7 +174,7 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
 
                     socket = (Socket)clientMap[ImdstDefine.paramSocket];
 
-                    if (((Integer)clientMap[ImdstDefine.paramCheckCountMaster]).intValue() > 50) {
+                    if (((Integer)clientMap[ImdstDefine.paramCheckCountMaster]).intValue() > 10) {
 
                         clientMap[ImdstDefine.paramCheckCountMaster] = new Integer(0);
 
