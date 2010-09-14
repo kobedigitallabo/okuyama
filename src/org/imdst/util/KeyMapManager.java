@@ -87,8 +87,8 @@ public class KeyMapManager extends Thread {
     // トランザクションログを書き出す際に使用するロック
     private Object lockWorkFileSync = new Object();
 
-    // トランザクションログをローテーションする際のサイズ(5GB)
-    private static final long workFileChangeNewFileSize = 1024 * 1024 * 1024 * 5;
+    // トランザクションログをローテーションする際のサイズ(3GB)
+    private static final long workFileChangeNewFileSize = 1610612736;
     //private static final long workFileChangeNewFileSize = 1024;
 
     // トランザクションログをローテーションチェック頻度
