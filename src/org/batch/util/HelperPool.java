@@ -282,7 +282,6 @@ public class  HelperPool extends Thread {
         Object[] ret = null;
 
         try {
-
             ret = (Object[])((ArrayBlockingQueue)serviceParameterQueueMap.get(helperName)).take();
         } catch (Exception e) {
             logger.error("pollSpecificationParameterQueue - ERROR [" + helperName  +"]");

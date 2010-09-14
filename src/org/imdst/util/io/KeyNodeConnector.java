@@ -46,11 +46,22 @@ public class KeyNodeConnector {
     }
 
 
+    /**
+     * Connect処理.<br>
+     *
+     * throws Exception
+     */
     public void connect() throws Exception {
         connect(ImdstDefine.nodeConnectionOpenTimeout);
     }
 
 
+    /**
+     * Connect処理.<br>
+     *
+     * @param connectOpenTime
+     * throws Exception
+     */
     public void connect(int connectOpenTime) throws Exception {
         InetSocketAddress inetAddr = null;
 

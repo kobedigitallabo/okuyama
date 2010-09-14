@@ -28,7 +28,6 @@ import com.sun.mail.util.BASE64DecoderStream;
  */
 public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
-    private static ConcurrentHashMap keyNodeConnectPool = new ConcurrentHashMap(1024, 1000, 512);
 
     // プロトコルモード
     private String protocolMode = null;
@@ -1414,7 +1413,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
                     // 使用済みの接続を戻す
-                    this.addKeyNodeConnectionPool(keyNodeConnector);
+                    super.addKeyNodeCacheConnectionPool(keyNodeConnector);
 
 
                     // 一貫性のモードに合わせて処理を分岐
@@ -1620,7 +1619,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } 
 
                     // 使用済みの接続を戻す
-                    this.addKeyNodeConnectionPool(keyNodeConnector);
+                    super.addKeyNodeCacheConnectionPool(keyNodeConnector);
 
                     // 一貫性のモードに合わせて処理を分岐
                     if (this.dataConsistencyMode == 0) {
@@ -1852,7 +1851,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     // 使用済みの接続を戻す
-                    this.addKeyNodeConnectionPool(keyNodeConnector);
+                    super.addKeyNodeCacheConnectionPool(keyNodeConnector);
                 } catch (SocketException se) {
 
                     //se.printStackTrace();
@@ -1919,7 +1918,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         }
 
                         // 使用済みの接続を戻す
-                        this.addKeyNodeConnectionPool(slaveKeyNodeConnector);
+                        super.addKeyNodeCacheConnectionPool(slaveKeyNodeConnector);
                     } catch (SocketException se) {
                         //se.printStackTrace();
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 5, se);
@@ -2125,7 +2124,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     retParam = keyNodeConnector.readLine(sendStr);
 
                     // 使用済みの接続を戻す
-                    this.addKeyNodeConnectionPool(keyNodeConnector);
+                    super.addKeyNodeCacheConnectionPool(keyNodeConnector);
 
                     // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                     //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
@@ -2198,7 +2197,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParam = keyNodeConnector.readLine(sendStr);
 
                             // 使用済みの接続を戻す
-                            this.addKeyNodeConnectionPool(keyNodeConnector);
+                            super.addKeyNodeCacheConnectionPool(keyNodeConnector);
 
 
                             // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
@@ -2411,7 +2410,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         retParam = keyNodeConnector.readLine(sendStr);
 
                         // 使用済みの接続を戻す
-                        this.addKeyNodeConnectionPool(keyNodeConnector);
+                        super.addKeyNodeCacheConnectionPool(keyNodeConnector);
 
                         // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                         if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRemoveSuccessStr) == 0) {
@@ -2877,8 +2876,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             if (!retryFlg) {
                 // 既にKeyNodeに対するコネクションが確立出来ている場合は使いまわす
-                if (keyNodeConnectPool.containsKey(connectionFullName)) {
-                    if((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).poll()) != null) {
+                if (super.keyNodeConnectPool.containsKey(connectionFullName)) {
+                    if((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)super.keyNodeConnectPool.get(connectionFullName)).poll()) != null) {
                         if (!super.checkConnectionEffective(connectionFullName, keyNodeConnector.getConnetTime())) {
                             keyNodeConnector = null;
                         }
@@ -2887,10 +2886,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
                 // まだ接続が完了していない場合は接続処理続行
-                if (keyNodeConnector == null)
+                // TODO:ConnectionPoolは一時休止中なのでコメントアウト
+                /*if (keyNodeConnector == null)
                     // 新規接続
                     // 親クラスから既に接続済みの接続をもらう
                     keyNodeConnector = super.getActiveConnection(connectionFullName);
+                */
             }
 
             // まだ接続が完了していない場合は接続処理続行
@@ -2910,40 +2911,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } 
 
         return keyNodeConnector;
-    }
-
-
-    /**
-     * 使用済みの接続をPoolに戻す
-     *
-     *
-     */
-    private void addKeyNodeConnectionPool(KeyNodeConnector keyNodeConnector) {
-        String connectionFullName = null;
-        if (keyNodeConnector != null) {
-
-            connectionFullName = keyNodeConnector.getNodeFullName();
-
-            if (keyNodeConnectPool.containsKey(connectionFullName)) {
-
-                ((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).offer(keyNodeConnector);
-            } else {
-
-                synchronized(keyNodeConnectPool) {
-
-                    if (!keyNodeConnectPool.containsKey(connectionFullName)) {
-
-                        ArrayBlockingQueue connPoolQueue = new ArrayBlockingQueue(20000);
-                        connPoolQueue.offer(keyNodeConnector);
-                        keyNodeConnectPool.put(connectionFullName, connPoolQueue);
-                    } else {
-
-                        
-                        addKeyNodeConnectionPool(keyNodeConnector);
-                    }
-                }
-            }
-        }
     }
 
 

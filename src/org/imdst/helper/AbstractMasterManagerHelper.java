@@ -33,6 +33,8 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
     private static ConcurrentHashMap allConnectionMap = new ConcurrentHashMap(40, 30, 64);
 
+    protected static ConcurrentHashMap keyNodeConnectPool = new ConcurrentHashMap(1024, 1000, 512);
+
     private static HashMap moveData4ConsistentHash = null;
 
     private static boolean executeKeyNodeOptimizationFlg = false;
@@ -60,6 +62,11 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         //if (te != null) {
         //    te.printStackTrace();
         //}
+
+        // コネクションキャッシュが存在する場合は削除
+        if (keyNodeConnectPool.containsKey(nodeInfo)) {
+            ((ArrayBlockingQueue)keyNodeConnectPool.get(nodeInfo)).clear();
+        }
 
         // MainMasterNodeの場合のみ設定される
         if (StatusUtil.isMainMasterNode()) {
@@ -818,10 +825,12 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     protected String[] execNodePing(String nodeName, int port, ILogger logger, int deadCount) {
         String[] retStrs = new String[2];
         retStrs[0] = "true";
+        String connectionFullName = nodeName + ":" + port;
 
         KeyNodeConnector keyNodeConnector = null;
 
         String[] retParams = null;
+        boolean cacheConnectUse = false;
 
         for (int tryCount = 0; tryCount < deadCount; tryCount++) {
             retStrs = new String[2];
@@ -831,9 +840,28 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
             retParams = null;
 
             try {
-                // 接続
-                keyNodeConnector = new KeyNodeConnector(nodeName, port, nodeName+":"+port);
-                keyNodeConnector.connect(ImdstDefine.nodeConnectionOpenPingTimeout);
+
+                // 一回目のPingはCacheのコネクションを積極的に使う
+                if (tryCount == 0) {
+                    // キャッシュが存在する場合はそこから取得
+                    if (keyNodeConnectPool.containsKey(connectionFullName)) {
+                        if((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).poll()) != null) {
+                            if (!checkConnectionEffective(connectionFullName, keyNodeConnector.getConnetTime())) {
+                                keyNodeConnector = null;
+                            }
+                        }
+                    } 
+                }
+
+                // コネクションがなければ自身で接続
+                if (keyNodeConnector == null) {
+
+                    // 接続
+                    keyNodeConnector = new KeyNodeConnector(nodeName, port, connectionFullName);
+                    keyNodeConnector.connect(ImdstDefine.nodeConnectionOpenPingTimeout);
+                }
+
+                // タイムアウト設定
                 keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionPingTimeout);
 
                 // Key値でデータノード名を保存
@@ -866,8 +894,10 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 if (retStrs[0].equals("true")) {
                     try {
 
+                        // 正しく終了した場合のみコネクションをキャッシュに戻す
                         if (keyNodeConnector != null) {
-                            keyNodeConnector.close();
+                            keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+                            addKeyNodeCacheConnectionPool(keyNodeConnector);
                             keyNodeConnector = null;
                         }
                     } catch(Exception e1) {
@@ -891,13 +921,14 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 }
             }
         }
-        
         return retStrs;
     }
 
 
     /**
      * データノードとのコネクションをセットする.<br>
+     * ConnectionPoolHelperが使用する.<br>
+     *
      *
      */
     protected void setActiveConnection(String connectionName, KeyNodeConnector keyNodeConnector) {
@@ -912,6 +943,39 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
             connPoolCount.incrementAndGet();
         }
 
+    }
+
+
+    /**
+     * 使用済みの接続をPoolに戻す.<br>
+     * DataNodeとの接続キャッシュ用.<br>
+     *
+     */
+    protected void addKeyNodeCacheConnectionPool(KeyNodeConnector keyNodeConnector) {
+        String connectionFullName = null;
+        if (keyNodeConnector != null) {
+
+            connectionFullName = keyNodeConnector.getNodeFullName();
+
+            if (keyNodeConnectPool.containsKey(connectionFullName)) {
+
+                ((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).offer(keyNodeConnector);
+            } else {
+
+                synchronized(keyNodeConnectPool) {
+
+                    if (!keyNodeConnectPool.containsKey(connectionFullName)) {
+
+                        ArrayBlockingQueue connPoolQueue = new ArrayBlockingQueue(20000);
+                        connPoolQueue.offer(keyNodeConnector);
+                        keyNodeConnectPool.put(connectionFullName, connPoolQueue);
+                    } else {
+
+                        addKeyNodeCacheConnectionPool(keyNodeConnector);
+                    }
+                }
+            }
+        }
     }
 
 
@@ -946,8 +1010,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         return nowNodeDataOptimization;
     }
 
+
     /**
-     *
+     * ConnectionPoolが作りだしたコネクションを使用する.<br>
      *
      */
     protected KeyNodeConnector getActiveConnection(String connectionName) {
