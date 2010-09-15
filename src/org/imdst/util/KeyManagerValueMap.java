@@ -42,6 +42,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     private transient boolean readObjectFlg = false;
 
+    // キャッシュ
+    private ValueCacheMap valueCacheMap = null;
+
     // コンストラクタ
     public KeyManagerValueMap(int size) {
         super(size, new Double(size * 0.9).intValue(), 512);
@@ -56,6 +59,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             if (sync == null) {
                 sync = new Object();
             }
+
+            if (this.valueCacheMap == null) {
+                this.valueCacheMap = new ValueCacheMap(new Long((JavaSystemApi.getRuntimeFreeMem() / 10) / (ImdstDefine.saveDataMaxSize + ImdstDefine.saveKeyMaxSize)).intValue());
+            } else {
+                this.valueCacheMap.clear();
+            }
+
             readObjectFlg  = true;
             memoryMode = false;
 
@@ -150,7 +160,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 // Vacuum中はsyncを呼び出す
                 if (vacuumExecFlg) {
                     ret = syncGet(key);
-                } else {
+                } else if ((ret = this.valueCacheMap.get(key)) == null) {
+                    // キャッシュから取得できない場合はファイルから取得
                     int i = 0;
                     int line = 0;
                     Integer lineInteger = null;
@@ -184,6 +195,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     }
 
                     ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
+
+                    // キャッシュに登録
+                    this.valueCacheMap.put(key, ret);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -260,6 +274,10 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
             try {
 
+                // キャッシュから削除
+                if(this.valueCacheMap.containsKey(key))
+                    this.valueCacheMap.remove(key);
+
                 if (readObjectFlg == true) {
                     writeBuf.append((String)value);
 
@@ -317,6 +335,14 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 vacuumDiffDataList.add(diffObj);
             }
         }
+
+        // データファイルモード時はCacheをチェック
+        if (!memoryMode) {
+            // キャッシュから削除
+            if(this.valueCacheMap != null && this.valueCacheMap.containsKey(key))
+                this.valueCacheMap.remove(key);
+        }
+
         return super.remove(key);
     }
 
@@ -531,6 +557,14 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 File dataFile = new File(this.lineFile);
                 if(dataFile.exists()) {
                     dataFile.delete();
+                }
+
+                // データファイルモード時はCacheをチェック
+                // キャッシュ全削除
+                if (!memoryMode) {
+                    // キャッシュから削除
+                    if(this.valueCacheMap != null)
+                        this.valueCacheMap.clear();
                 }
             }
         } catch(Exception e3) {

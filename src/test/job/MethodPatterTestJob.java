@@ -58,14 +58,14 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             String startStr = super.getPropertiesValue(super.getJobName() + "start");
             int start = Integer.parseInt(startStr);
             count = count + start;
-            for (int cy = 0; cy < 2; cy++) {
+            for (int cy = 0; cy < 30; cy++) {
                 for (int t = 0; t < Integer.parseInt(execMethods[0]); t++) {
                     this.nowCount = t;
                     System.out.println("Test Count =[" + t + "]");
                     for (int i = 1; i < execMethods.length; i++) {
 
                         if (execMethods[i].equals("set")) 
-                            retMap.put("set", execSet(imdstKeyValueClient, start, count));
+                            retMap.put("set", execSet(imdstKeyValueClient, start, count * 20));
 
                         if (execMethods[i].equals("get")) 
                             retMap.put("get", execGet(imdstKeyValueClient, start, count));
@@ -124,8 +124,8 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             for (int i = start; i < count; i++) {
                 // データ登録
 
-                if (!imdstKeyValueClient.setValue(this.nowCount + "datasavekey_" + new Integer(i).toString(), this.nowCount + "savedatavaluestr_" + new Integer(i).toString())) {
-                    System.out.println("Set - Error=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + ", " + this.nowCount + "savedatavaluestr_" + new Integer(i).toString());
+                if (!imdstKeyValueClient.setValue(this.nowCount + "datasavekey_" + new Integer(i).toString(), this.nowCount + "testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + new Integer(i).toString())) {
+                    System.out.println("Set - Error=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + ", " + this.nowCount + "testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + new Integer(i).toString());
                     errorFlg = true;
                 }
                 if ((i % 10000) == 0) System.out.println(i);
@@ -172,7 +172,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 if (ret[0].equals("true")) {
                     // データ有り
                     //System.out.println(ret[1]);
-                    if (!ret[1].equals(this.nowCount + "savedatavaluestr_" + new Integer(i).toString())) {
+                    if (!ret[1].equals(this.nowCount + "testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + new Integer(i).toString())) {
                         System.out.println("データが合っていない key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]  value=[" + ret[1] + "]");
                         errorFlg = true;
                     }
@@ -413,7 +413,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 if (ret[0].equals("true")) {
                     // データ有り
                     //System.out.println(ret[1]);
-                    if (!ret[1].equals(this.nowCount + "savedatavaluestr_" + new Integer(i).toString())) {
+                    if (!ret[1].equals(this.nowCount + "testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + new Integer(i).toString())) {
                         System.out.println("データが合っていない key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]  value=[" + ret[1] + "]");
                         errorFlg = true;
                     }
