@@ -14,10 +14,10 @@ java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag3
 java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag4
 
 rem Å°SetByte
-java -cp ./;./lib/mail.jar;./classes TestSock 5 127.0.0.1 8888 1 C:\work\java\okuyama\trunk\document\okuyamaç\ê¨ê}.gif gif
+java -cp ./;./lib/mail.jar;./classes TestSock 5 127.0.0.1 8888 1 C:\test.jpg jpg
 
 rem Å°GetByte
-java -cp ./;./lib/mail.jar;./classes TestSock 6.1 127.0.0.1 8888 1 C:\work\java\okuyama\trunk\document\okuyamaç\ê¨ê}2.gif gif
+java -cp ./;./lib/mail.jar;./classes TestSock 6.1 127.0.0.1 8888 1 C:\test2.gif jpg
 
 rem Å°Remove
 java -cp ./;./lib/mail.jar;./classes TestSock 7 127.0.0.1 8888 100
@@ -41,26 +41,3 @@ java -cp ./;./lib/mail.jar;./classes TestSock 11 127.0.0.1 8888 key1 value222
 java -cp ./;./lib/mail.jar;./classes TestSock 2.1 127.0.0.1 8888 key1
 
 
-rem Å°ConsistentHashÇ≈ÉmÅ[Éhí«â¡
-java -cp ./;./lib/mail.jar;./classes TestSock 1 127.0.0.1 8888 1000
-java -cp ./;./lib/mail.jar;./classes TestSock 3 127.0.0.1 8888 300
-
-java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ KeyMapNodesInfo" "localhost:5553,localhost:5554,localhost:8553"
-java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ SubKeyMapNodesInfo" "localhost:5556,localhost:5557,localhost:8554"
-java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ ThirdKeyMapNodesInfo" "localhost:7553,localhost:7554,localhost:8555"
-java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ KeyMapNodesRule" "3,2"
-java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ addNode4ConsistentHashMode" "localhost:8553,localhost:8554,localhost:8555"
-
-java -cp ./;./lib/mail.jar;./classes TestSock 2 127.0.0.1 8888 1000
-java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag1
-java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag2
-java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag3
-java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag4
-
-java -cp ./;./lib/mail.jar;./classes TestSock 1 127.0.0.1 8888 3000
-java -cp ./;./lib/mail.jar;./classes TestSock 2 127.0.0.1 8888 3000
-java -cp ./;./lib/mail.jar;./classes TestSock 3 127.0.0.1 8888 500
-java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag1
-java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag2
-java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag3
-java -cp ./;./lib/mail.jar;./classes TestSock 4 127.0.0.1 8888 1 tag4
