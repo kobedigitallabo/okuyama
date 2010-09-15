@@ -285,6 +285,28 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 imdstKeyValueClient.close();
+            } else if (args[0].equals("2.4")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                String[] ret = null;
+
+                long start = new Date().getTime();
+                ret = imdstKeyValueClient.getValueScriptForUpdate(args[3], args[4]);
+                if (ret[0].equals("true")) {
+                    // データ有り
+                    System.out.println(ret[1]);
+                } else if (ret[0].equals("false")) {
+                    System.out.println("データなし");
+                } else if (ret[0].equals("error")) {
+                    System.out.println(ret[1]);
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                imdstKeyValueClient.close();
             } else if (args[0].equals("3")) {
 
                 int port = Integer.parseInt(args[2]);

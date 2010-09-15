@@ -272,6 +272,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // Key値でValueを取得する(Scriptを実行する)
                             retParams = this.getKeyValueScript(clientParameterList[1], clientParameterList[2]);
                             break;
+                        case 9 :
+
+                            // Key値でValueを取得する(Scriptを実行し、更新する可能性もある)
+                            retParams = this.getKeyValueScriptForUpdate(clientParameterList[1], clientParameterList[2]);
+                            break;
                         case 10 :
 
                             // データノードを指定することで現在の詳細を取得する
@@ -926,6 +931,152 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
     /**
+     * KeyでValueを取得する.<br>
+     * Scriptも同時に実行する.<br>
+     * Script実行後Valueを更新する可能性もある.<br>
+     * 処理フロー.<br>
+     * 1.DataDispatcherにKeyを使用してValueの保存先を問い合わせる<br>
+     * 2.KeyNodeに接続してValueを取得する<br>
+     * 3.結果文字列の配列を作成(成功時は処理番号"8"と"true"とValue、データが存在しない場合は処理番号"8"と"false"とValue、スクリプトエラー時は処理番号"8"と"error"とエラーメッセージ)<br>
+     *
+     *
+     * @param keyStr key値の文字列
+     * @param scriptStr 実行Scriptの文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getKeyValueScriptForUpdate(String keyStr, String scriptStr) throws BatchException {
+        //logger.debug("MasterManagerHelper - getKeyValueScriptForUpdate - start");
+        String[] retStrs = new String[3];
+
+        String[] keyNodeSaveRet = null;
+        String[] keyNodeInfo = null;
+
+        try {
+            if (!this.checkKeyLength(keyStr))  {
+                // 保存失敗
+                retStrs[0] = "9";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
+            // キー値を使用して取得先を決定
+            keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, false);
+
+            // 取得実行
+            // Main
+            try {
+                if (keyNodeInfo.length > 2) 
+                    keyNodeSaveRet = this.getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "8", keyStr, scriptStr);
+            } catch (Exception e1) {
+                retStrs[0] = "9";
+                retStrs[1] = "error";
+                retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e1.toString();
+            }
+
+            // Sub
+            try {
+                if (keyNodeInfo.length > 5) 
+                    keyNodeSaveRet = this.getKeyNodeValueScript(keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], null, null, null, "8", keyStr, scriptStr);
+            } catch (Exception e2) {
+                retStrs[0] = "9";
+                retStrs[1] = "error";
+                retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e2.toString();
+            }
+
+
+            // Third
+            try {
+                if (keyNodeInfo.length > 8)
+                    keyNodeSaveRet = this.getKeyNodeValueScript(keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], null, null, null,"8", keyStr, scriptStr);
+            } catch (Exception e3) {
+                retStrs[0] = "9";
+                retStrs[1] = "error";
+                retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e3.toString();
+            }
+
+
+            if (keyNodeSaveRet == null && retStrs != null) return retStrs;
+
+            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
+            // でそちらのルールでのデータ格納場所も調べる
+            if (keyNodeSaveRet[1].equals("false")) {
+
+                //System.out.println("過去ルールを探索 - getScript =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
+                // キー値を使用して取得先を決定
+                for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, false, i)) != null; i++) {
+
+                    // 取得実行
+                    // Main
+                    try {
+                        if (keyNodeInfo.length > 2) 
+                            keyNodeSaveRet = this.getKeyNodeValueScript(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "8", keyStr, scriptStr);
+                    } catch (Exception e1) {
+                        retStrs[0] = "9";
+                        retStrs[1] = "error";
+                        retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e1.toString();
+                    }
+
+                    // Sub
+                    try {
+                        if (keyNodeInfo.length > 5) 
+                            keyNodeSaveRet = this.getKeyNodeValueScript(keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], null, null, null, "8", keyStr, scriptStr);
+                    } catch (Exception e2) {
+                        retStrs[0] = "9";
+                        retStrs[1] = "error";
+                        retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e2.toString();
+                    }
+
+
+                    // Third
+                    try {
+                        if (keyNodeInfo.length > 8) 
+                            keyNodeSaveRet = this.getKeyNodeValueScript(keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], null, null, null,"8", keyStr, scriptStr);
+                    } catch (Exception e3) {
+                        retStrs[0] = "9";
+                        retStrs[1] = "error";
+                        retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e3.toString();
+                    }
+
+                    if (keyNodeSaveRet != null) {
+                        // 過去ルールからデータを発見
+                        if (keyNodeSaveRet[1].equals("true")) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+
+            if (keyNodeSaveRet == null && retStrs != null) return retStrs;
+
+            // 取得結果確認
+            if (keyNodeSaveRet[1].equals("false")) {
+
+                // 取得失敗(データなし)
+                retStrs[0] = "9";
+                retStrs[1] = "false";
+                retStrs[2] = "";
+            } else {
+
+                // trueもしくはerrorの可能性あり
+                retStrs[0] = "9";
+                retStrs[1] = keyNodeSaveRet[1];
+                retStrs[2] = keyNodeSaveRet[2];
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            retStrs[0] = "9";
+            retStrs[1] = "error";
+            retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e.toString();
+        }
+        //logger.debug("MasterManagerHelper - getKeyValueScriptForUpdate - end");
+        return retStrs;
+    }
+
+
+    /**
      * KeyでValueを削除する.<br>
      * 処理フロー.<br>
      * 1.DataDispatcherにKeyを使用してValueの保存先を問い合わせる<br>
@@ -1496,8 +1647,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
+
     /**
-     * KeyNodeからデータを取得する.<br>
+     * KeyNodeからデータを更新し、取得する.<br>
      * 
      * @param keyNodeName マスターデータノードの名前(IPなど)
      * @param keyNodePort マスターデータノードのアクセスポート番号

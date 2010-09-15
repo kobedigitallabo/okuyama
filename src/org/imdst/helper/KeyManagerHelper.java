@@ -552,16 +552,19 @@ public class KeyManagerHelper extends AbstractHelper {
                     retStrs[1] = "true";
                     retStrs[2] = "OK";
                 } else {
+
                     retStrs[0] = "1";
                     retStrs[1] = "false";
                     retStrs[2] = "NG:KeyMapManager - setDatanode - CheckError - NG";
                 }
             } else {
+
                 retStrs[0] = "1";
                 retStrs[1] = "false";
                 retStrs[2] = "NG:Max Data Size Over";
             }
         } catch (BatchException be) {
+
             logger.debug("KeyManagerHelper - setDatanode - Error = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]", be);
             //logger.debug("KeyManagerHelper - setDatanode - Error", be);
             retStrs[0] = "1";
@@ -582,25 +585,30 @@ public class KeyManagerHelper extends AbstractHelper {
             if (dataNodeStr.length() < setDatanodeMaxSize) {
                 if(!this.keyMapManager.checkError()) {
                     if(this.keyMapManager.setKeyPairOnlyOnce(key, dataNodeStr, transactionCode)) {
+
                         retStrs[0] = "6";
                         retStrs[1] = "true";
                         retStrs[2] = "OK";
                     } else {
+
                         retStrs[0] = "6";
                         retStrs[1] = "false";
                         retStrs[2] = ImdstDefine.keyNodeKeyNewRegistErrMsg;
                     }
                 } else {
+
                     retStrs[0] = "6";
                     retStrs[1] = "false";
                     retStrs[2] = "NG:KeyMapManager - setDatanodeOnlyOnce - CheckError - NG";
                 }
             } else {
+
                 retStrs[0] = "6";
                 retStrs[1] = "false";
                 retStrs[2] = "NG:Max Data Size Over";
             }
         } catch (BatchException be) {
+
             logger.debug("KeyManagerHelper - setDatanodeOnlyOnce - Error", be);
             retStrs[0] = "6";
             retStrs[1] = "false";
@@ -654,18 +662,24 @@ public class KeyManagerHelper extends AbstractHelper {
     // KeyでDataNode値を取得する
     // 実行後データが取得出来た場合はデータに対してScriptを実行する
     // 現在スクリプトはJavaScriptとなる
+    //
     // スクリプトには必ずdataValueという変数が定義されているものとして、該当変数に取得したValue値が格納
     // されてスクリプトが実行される。
-    // もどり値はScript内にexecRetという0 or 1で表す値とretValueという返却値が
+    // スクリプトには必ずdataKeyという変数が定義されているものとして、該当変数に取得に使用したKey値が格納
+    // されてスクリプトが実行される。
+    //
+    // もどり値はScript内にexecRetという0 or 1 or 2で表す値とretValueという返却値が
     // 定義されているものとする
     // スクリプト実行後、execRetの値で状態を判断し、retValueが返却されるかが決定される。
-    // execRet=1値を返す、execRet=0値を返さない
+    // execRet=1値を返す、execRet=0値を返さない、2=retValueの値で当該Valueを更新後返却
     // retValue=Value返却される値となる
     // 返却値の配列の2番目の値がtrueならスクリプト実行後結果あり、
     // falseならスクリプト実行後結果なし、errorならスクリプト実行エラー
     private String[] getDatanodeScriptExec(String key, String scriptStr) {
         //logger.debug("KeyManagerHelper - getDatanode - start");
+
         String[] retStrs = null;
+
         try {
             if(!this.keyMapManager.checkError()) {
                 if (this.keyMapManager.containsKeyPair(key)) {
@@ -678,12 +692,20 @@ public class KeyManagerHelper extends AbstractHelper {
                     String[] setTimeValues = null;
                     String setTimeStr = "";
                     String tmpValue = null;
+                    String updateValue = null;
+                    String targetKey = null;
+                    String flgStr = "";
 
                     // 取得した値からScriptを実行する部分だけ取り出し
                     if (workValueStr != null) {
 
                         // memcachedのプロトコルにより、フラグデータが格納されている可能性があるので左辺のみ取り出し
+
                         workValues = workValueStr.split(ImdstDefine.keyHelperClientParamSep);
+                        if (workValues.length > 1) {
+                            flgStr = ImdstDefine.keyHelperClientParamSep + ((String[])workValues[1].split(ImdstDefine.setTimeParamSep))[0];
+                        }
+
                         // データ保存日時が記録されている場合があるので左辺のみ取り出し
                         setTimeValues = workValues[0].split(ImdstDefine.setTimeParamSep);
                         tmpValue = setTimeValues[0];
@@ -698,7 +720,12 @@ public class KeyManagerHelper extends AbstractHelper {
                             ScriptEngineManager manager = new ScriptEngineManager();
                             ScriptEngine engine = manager.getEngineByName("JavaScript");
 
+
                             // 引数設定
+                            // Key値を設定
+                            engine.put("dataKey", new String(BASE64DecoderStream.decode(key.getBytes()), ImdstDefine.keyWorkFileEncoding));
+
+                            // Value値を設定
                             if (tmpValue == null) {
                                 engine.put("dataValue", "");
                             } else if (tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
@@ -713,6 +740,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                                 String execRet = (String)engine.get("execRet");
                                 if (execRet != null && execRet.equals("1")) {
+
                                     // データを返す
 
                                     // 最後に更新日付を結合する
@@ -720,10 +748,28 @@ public class KeyManagerHelper extends AbstractHelper {
 
                                     if (retValue != null && !retValue.equals("")) {
                                         retStrs[2] = new String(BASE64EncoderStream.encode(retValue.getBytes()),ImdstDefine.keyWorkFileEncoding) + setTimeStr;
-                                    } else { 
+                                    } else {
                                         retStrs[2] = ImdstDefine.imdstBlankStrData + setTimeStr;
                                     }
+                                } else if (execRet != null && execRet.equals("2")) {
+
+                                    // データを更新して、返す
+
+                                    // 最後に更新日付を結合する
+                                    String retValue = (String)engine.get("retValue");
+
+                                    if (retValue != null && !retValue.equals("")) {
+
+                                        retStrs[2] = new String(BASE64EncoderStream.encode(retValue.getBytes()),ImdstDefine.keyWorkFileEncoding) + flgStr + setTimeStr;
+                                    } else {
+
+                                        retStrs[2] = ImdstDefine.imdstBlankStrData + flgStr + setTimeStr;
+                                    }
+
+                                    // 値を更新
+                                    this.setDatanode(key, retStrs[2], "-1");
                                 } else {
+
                                     // データを返さない
                                     retStrs[1] = "false";
                                 }
