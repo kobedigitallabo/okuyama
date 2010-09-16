@@ -87,7 +87,7 @@ public class KeyMapManager extends Thread {
     // トランザクションログを書き出す際に使用するロック
     private Object lockWorkFileSync = new Object();
 
-    // トランザクションログをローテーションする際のサイズ(3GB)
+    // トランザクションログをローテーションする際のサイズ(1.8GB)
     private static final long workFileChangeNewFileSize = 1610612736;
     //private static final long workFileChangeNewFileSize = 1024;
 
@@ -109,7 +109,7 @@ public class KeyMapManager extends Thread {
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
-    private int vacuumStartLimit = 20000;
+    private int vacuumStartLimit = 200000;
 
     // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
