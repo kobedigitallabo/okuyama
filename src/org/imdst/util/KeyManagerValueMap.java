@@ -45,6 +45,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     // キャッシュ
     private ValueCacheMap valueCacheMap = null;
 
+    // 最大キャッシュサイズ
+    private int maxCacheSize = -1;
+
     // コンストラクタ
     public KeyManagerValueMap(int size) {
         super(size, new Double(size * 0.9).intValue(), 512);
@@ -61,7 +64,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             }
 
             if (this.valueCacheMap == null) {
-                this.valueCacheMap = new ValueCacheMap(new Long((JavaSystemApi.getRuntimeFreeMem() / 10) / (ImdstDefine.saveDataMaxSize + ImdstDefine.saveKeyMaxSize)).intValue());
+
+                this.maxCacheSize = new Long((JavaSystemApi.getRuntimeFreeMem() / 10) / (ImdstDefine.saveDataMaxSize + ImdstDefine.saveKeyMaxSize)).intValue();
+                this.valueCacheMap = new ValueCacheMap(this.maxCacheSize);
             } else {
                 this.valueCacheMap.clear();
             }
@@ -581,6 +586,18 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         return this.lineCount;
     }
 
+
+    public int getMaxCacheSize() {
+        return maxCacheSize;
+    }
+
+    public int getCacheSize() {
+        if(this.valueCacheMap != null) {
+            return this.valueCacheMap.size();
+        } else {
+            return -1;
+        }
+    }
 
     /**
      * データを変更した最終時間を記録する.<br>

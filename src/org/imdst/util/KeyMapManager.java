@@ -259,6 +259,10 @@ public class KeyMapManager extends Thread {
 
                     }
 
+                    // 最大キャッシュサイズ
+                    if (!dataMemory) {
+                        logger.info("Max Cache Size = [" + this.keyMapObj.getMaxCacheSize() + "]");
+                    }
 
                     // WorkKeyMapファイルが存在する場合は読み込み
                     // トランザクションファイルはサイズでローテーションされているので、0からのインデックス番号順に読み込む
@@ -380,6 +384,11 @@ public class KeyMapManager extends Thread {
                     if (!this.dataManege) {
                         this.autoLockRelease(System.currentTimeMillis());
                     }
+
+                    if (!dataMemory) {
+                        logger.info("Now Cache Size = [" + this.keyMapObj.getCacheSize() + "]");
+                    }
+
                     Thread.sleep(KeyMapManager.updateInterval);
                 }
 
