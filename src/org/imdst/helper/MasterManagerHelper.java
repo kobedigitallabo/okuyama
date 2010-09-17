@@ -141,6 +141,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 try {
 
                     // 結果格納用String
+                    retParams = null;
                     retParamStr = "";
 
                     // 切断確認

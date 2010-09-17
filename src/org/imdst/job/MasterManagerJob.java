@@ -230,17 +230,17 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
             // オリジナルのキュー領域を作成
             for (int i = 0; i < this.maxConnectParallelQueue; i++) {
-                super.createUniqueHelperParamQueue("MasterManagerConnectHelper" + i, 7000);
+                super.createUniqueHelperParamQueue("MasterManagerConnectHelper" + i, 10000);
                 this.maxConnectParallelQueueNames[i] = "MasterManagerConnectHelper" + i;
             }
 
             for (int i = 0; i < this.maxAcceptParallelQueue; i++) {
-                super.createUniqueHelperParamQueue("MasterManagerAcceptHelper" + i, 4000);
+                super.createUniqueHelperParamQueue("MasterManagerAcceptHelper" + i, 10000);
                 this.maxAcceptParallelQueueNames[i] = "MasterManagerAcceptHelper" + i;
             }
 
             for (int i = 0; i < this.maxWorkerParallelQueue; i++) {
-                super.createUniqueHelperParamQueue("MasterManagerHelper" + i, 4000);
+                super.createUniqueHelperParamQueue("MasterManagerHelper" + i, 10000);
                 this.maxWorkerParallelQueueNames[i] = "MasterManagerHelper" + i;
             }
 
@@ -253,7 +253,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 helperParams = new Object[2];
                 helperParams[0] = "MasterManagerConnectHelper" + queueIndex;
                 helperParams[1] = this.maxAcceptParallelQueueNames;
-                super.executeHelper("MasterManagerConnectHelper", helperParams);
+                super.executeHelper("MasterManagerConnectHelper", helperParams, true);
             }
 
             for (int i = 0; i < this.maxAcceptParallelExecution; i++) {
@@ -306,7 +306,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
                     // TODO:以下は別スレッドに切り出すべき
                     // 各スレッドが減少していないかを確かめる
-                    if (super.getActiveHelperCount("MasterManagerConnectHelper") < (maxConnectParallelExecution / 2)) {
+                    /*if (super.getActiveHelperCount("MasterManagerConnectHelper") < (maxConnectParallelExecution / 2)) {
                         queueIndex = (accessCount) % this.maxConnectParallelQueue;
 
                         helperParams = new Object[2];
@@ -342,7 +342,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                         super.executeHelper("MasterManagerHelper", helperParams);
                         this.nowBalanceIdx++;
                         if (this.balanceModes.length == this.nowBalanceIdx) this.nowBalanceIdx = 0;
-                    }
+                    }*/
                 } catch (Exception e) {
                     if (StatusUtil.getStatus() == 2) {
                         logger.info("MasterManagerJob - executeJob - ServerEnd");

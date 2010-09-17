@@ -145,6 +145,9 @@ public class KeyManagerHelper extends AbstractHelper {
                         this.closeClientConnect(pw, br, soc);
                     }
 
+                    // 結果クリア
+                    retParams = null;
+
                     // キューを待ち受ける
                     Object[] queueParam = super.pollSpecificationParameterQueue(pollQueueName);
 

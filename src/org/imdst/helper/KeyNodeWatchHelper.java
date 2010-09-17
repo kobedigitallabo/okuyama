@@ -403,15 +403,15 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 // 送信
                 pw.println(buf.toString());
                 pw.flush();
-                logger.info("Recover Step - 5");
+                logger.info("Recover Step - 5 Send Line Count=[" + lineCount + "]");
 
                 for (int i = 0; i < Integer.parseInt(lineCount); i++) {
                     // 値を書き出し
-                    logger.info("Recover Step - 6");
+                    logger.info("Recover Step - 6 [" + i + "]");
                     retParam = mbr.readLine();
                     pw.println(retParam);
                     pw.flush();
-                    logger.info("Recover Step - 7");
+                    logger.info("Recover Step - 7 [" + i + "]");
                 }
 
 

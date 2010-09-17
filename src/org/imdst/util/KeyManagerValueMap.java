@@ -586,6 +586,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         return this.lineCount;
     }
 
+    public int getCacheDataSize() {
+        if (this.valueCacheMap != null) {
+            return valueCacheMap.size();
+        } else {
+            return -1;
+        }
+    }
 
     public int getMaxCacheSize() {
         return maxCacheSize;

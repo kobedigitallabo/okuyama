@@ -59,6 +59,13 @@ abstract public class AbstractHelper  implements Runnable{
     // 使用回数
     private int useCount = 0;
 
+    // 再起動設定
+    private boolean reboot = false;
+
+    private String name = null;
+
+    private boolean threadEnd = false;
+
     /**
      * Helper同士で値やり取りを行う領域.<br>
      * 一度登録した値はHelperが終了するまで維持される.<br>
@@ -295,6 +302,8 @@ abstract public class AbstractHelper  implements Runnable{
             logger.error("AbstractHelperJob - run - Exception",e);
             // ステータスをエラーにする
             this.status = ERR;
+        } finally {
+            threadEnd = true;
         }
         logger.debug("Helper - run - end");
     }
@@ -423,4 +432,29 @@ abstract public class AbstractHelper  implements Runnable{
         return this.useCount;
     }
 
+
+    // 
+    public void setReboot(boolean reboot) {
+        this.reboot = reboot;
+    }
+
+    // 
+    public boolean getReboot() {
+        return this.reboot;
+    }
+
+
+    // 
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    // 
+    public String getName() {
+        return this.name;
+    }
+
+    public boolean getThreadEnd() {
+        return threadEnd;
+    }
 }

@@ -83,7 +83,6 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
                     logger.info("KeyManagerAcceptHelper - 終了状態です");
                 }
 
-
                 Object[] param = super.pollSpecificationParameterQueue(pollQueueName);
                 if (param == null || param.length < 1) continue;
 
@@ -93,6 +92,7 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
 
                 // 読み込みのデータがバッファに存在するかをチェック
                 if(br.ready()) {
+
                     // 読み込みのデータがバッファに存在する
                     clientMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
                     Object[] queueParam = new Object[1];

@@ -34,14 +34,14 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
 
     // Acceptコネクタがリードできるかを監視する処理並列数
-    private int maxAcceptParallelExecution = 15;
-    private long maxAcceptParallelQueue = 5;
+    private int maxAcceptParallelExecution = 4;
+    private long maxAcceptParallelQueue = 2;
     private String[] maxAcceptParallelQueueNames = null;
 
 
     // 実際のデータ処理並列数
-    private int maxWorkerParallelExecution = 15;
-    private int maxWorkerParallelQueue = 5;
+    private int maxWorkerParallelExecution = 4;
+    private int maxWorkerParallelQueue = 2;
     private String[] maxWorkerParallelQueueNames = null;
 
 
@@ -74,7 +74,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         }
 
         String queueSizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyNodeMaxConnectParallelQueue);
-        if (queueSizeStr != null && this.maxConnectParallelExecution > (Integer.parseInt(queueSizeStr) * 2)) {
+        if (queueSizeStr != null && this.maxConnectParallelExecution >= Integer.parseInt(queueSizeStr)) {
             this.maxConnectParallelQueue = Integer.parseInt(queueSizeStr);
         } else if (queueSizeStr != null) {
             this.maxConnectParallelQueue = this.maxConnectParallelExecution / 2;
@@ -89,7 +89,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         }
 
         queueSizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyNodeMaxAcceptParallelQueue);
-        if (queueSizeStr != null && this.maxAcceptParallelExecution > (Integer.parseInt(queueSizeStr) * 2)) {
+        if (queueSizeStr != null && this.maxAcceptParallelExecution >= Integer.parseInt(queueSizeStr)) {
             this.maxAcceptParallelQueue = Integer.parseInt(queueSizeStr);
         } else if (queueSizeStr != null) {
             this.maxAcceptParallelQueue = this.maxAcceptParallelExecution / 2;
@@ -104,7 +104,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         }
 
         queueSizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyNodeMaxWorkerParallelQueue);
-        if (queueSizeStr != null && this.maxWorkerParallelExecution > (Integer.parseInt(queueSizeStr) * 2)) {
+        if (queueSizeStr != null && this.maxWorkerParallelExecution >= Integer.parseInt(queueSizeStr)) {
             this.maxWorkerParallelQueue = Integer.parseInt(queueSizeStr);
         } else if (queueSizeStr != null) {
             this.maxWorkerParallelQueue = this.maxWorkerParallelExecution / 2;

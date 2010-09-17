@@ -36,10 +36,11 @@ public class  HelperPool extends Thread {
     private static ConcurrentHashMap helperStatusMap = new ConcurrentHashMap(1024, 1000, 512);
     private static ConcurrentHashMap executorServiceMap = new ConcurrentHashMap(1024, 1000, 512);
     private static ConcurrentHashMap serviceParameterQueueMap = new ConcurrentHashMap(1024, 1000, 512);
+    private static CopyOnWriteArrayList allExecuteHelperList = new CopyOnWriteArrayList();
 
 
     // Helperチェック間隔
-    private static int helperCheckTime = 10000;
+    private static int helperCheckTime = 5000;
 
     // HelperThread Join待機時間
     private static int helperThreadJoinTime = 5000;
@@ -64,13 +65,42 @@ public class  HelperPool extends Thread {
             // ExecutorService を使用するために変更. 2010/03/22
 
             while(this.poolRunning) {
+
                 Thread.sleep(helperCheckTime);
+                int size = allExecuteHelperList.size();
+
+                for (int i = 0; i < size; i++) {
+
+                    AbstractHelper helper = (AbstractHelper)allExecuteHelperList.get(size - 1 - i);
+
+                    if(helper.getThreadEnd()) {
+
+                        cleanEndHelper(helper.hashCode());
+
+                        allExecuteHelperList.remove(size - 1 - i);
+
+                        if(helper.getReboot()) {
+
+                            //System.out.println("Helper[" + helper.getName() + " Reboot Start");
+                            AbstractHelper newHelper = getHelper(helper.getName());
+                            newHelper.setParameters(helper.getParameters());
+                            newHelper.setReboot(true);
+                            returnHelper(newHelper.getName(), newHelper);
+                            allExecuteHelperList.add(newHelper);
+                            //System.out.println("Helper[" + helper.getName() + " Reboot Success");
+                        }
+
+                        ((ThreadPoolExecutor)executorServiceMap.get(helper.getName())).remove(helper);
+                    }
+                }
             }
             logger.info("HelperPool - 終了処理開始");
             // システムの停止が要求されているのでHelperを制終了
             for (int i = 0; i < helperNameList.size(); i++) {
                 ((ThreadPoolExecutor)executorServiceMap.get((String)helperNameList.get(i))).shutdown();
             }
+
+
             logger.info("HelperPool - 終了処理終了");
         } catch (Exception e) {
             e.printStackTrace();
@@ -113,6 +143,7 @@ public class  HelperPool extends Thread {
             helper = ClassUtility.createHelperInstance(helperConfigMap.getHelperClassName());
 
             // Jobに設定情報を格納
+            helper.setName(helperName);
             helper.setConfig(helperConfigMap);
             helper.initialize();
             helperStatusMap.put(new Integer(helper.hashCode()), helper.getStatus());
@@ -142,6 +173,7 @@ public class  HelperPool extends Thread {
         try {
             // ExecutorService を使用するために変更. 2010/03/22
             ((ThreadPoolExecutor)executorServiceMap.get(helperName)).execute(helper);
+            allExecuteHelperList.add(helper);
             //ex.execute(helper);
         } catch (Exception be) {
             logger.error("HelperPool - returnHelper - BatchException");

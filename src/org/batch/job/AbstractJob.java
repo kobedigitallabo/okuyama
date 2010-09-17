@@ -229,6 +229,7 @@ abstract public class AbstractJob extends Thread {
         }
     }
 
+
     /**
      * Helperクラスインスタンスを返す.<br>
      * Helperが存在しない場合はExceptionを返す.<br>
@@ -240,6 +241,21 @@ abstract public class AbstractJob extends Thread {
      * @throws BatchException
      **/
     protected int executeHelper(String helperName, Object[] helpreParams) throws BatchException {
+        return executeHelper(helperName, helpreParams, false);
+    }
+
+
+    /**
+     * Helperクラスインスタンスを返す.<br>
+     * Helperが存在しない場合はExceptionを返す.<br>
+     * 
+     * 
+     * @param helperName helperName名
+     * @param helpreParams helperパラメータ配列
+     * @return AbstractHelper Helperインスタンス
+     * @throws BatchException
+     **/
+    protected int executeHelper(String helperName, Object[] helpreParams, boolean reboot) throws BatchException {
         logger.debug("executeHelper - start");
         int ret = 0;
         AbstractHelper helper = null;
@@ -250,6 +266,7 @@ abstract public class AbstractJob extends Thread {
             }
 
             helper.setParameters(helpreParams);
+            helper.setReboot(reboot);
             // ExecutorService を使用するために変更
             //helper.start();
 

@@ -45,6 +45,7 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
         boolean serverRunning = true;
 
         try{
+            int i = 0;
             Object[] parameters = super.getParameters();
 
             // Queue名取得
@@ -67,6 +68,13 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                 // キューから取り出し
                 Object[] param = super.pollSpecificationParameterQueue(pollQueueName);
                 if (param == null || param.length < 1) continue;
+
+/*i++;
+System.out.println("QQQQQQQQQQ=[" + i + "]"); 
+if (i > 2) {
+    Object[] o = new Object[2];
+    System.out.println(o[3]);
+}*/
 
                 Socket socket = (Socket)param[0];
                 PrintWriter pw = new PrintWriter(
@@ -93,6 +101,7 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                 super.addSmallSizeParameterQueue(addQueueNames, queueParam);
             }
         } catch(Exception e) {
+            e.printStackTrace();
             logger.error("MasterManagerConnectHelper - executeHelper - Error", e);
             throw new BatchException(e);
         }
