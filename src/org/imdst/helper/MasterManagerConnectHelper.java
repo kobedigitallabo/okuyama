@@ -69,13 +69,6 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                 Object[] param = super.pollSpecificationParameterQueue(pollQueueName);
                 if (param == null || param.length < 1) continue;
 
-/*i++;
-System.out.println("QQQQQQQQQQ=[" + i + "]"); 
-if (i > 2) {
-    Object[] o = new Object[2];
-    System.out.println(o[3]);
-}*/
-
                 Socket socket = (Socket)param[0];
                 PrintWriter pw = new PrintWriter(
                                     new BufferedWriter(

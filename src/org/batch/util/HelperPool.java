@@ -40,7 +40,7 @@ public class  HelperPool extends Thread {
 
 
     // Helperチェック間隔
-    private static int helperCheckTime = 5000;
+    private static int helperCheckTime = 2500;
 
     // HelperThread Join待機時間
     private static int helperThreadJoinTime = 5000;
@@ -62,7 +62,6 @@ public class  HelperPool extends Thread {
     public void run () {
         logger.debug("HelperPool - run - start");
         try {
-            // ExecutorService を使用するために変更. 2010/03/22
 
             while(this.poolRunning) {
 
@@ -81,13 +80,13 @@ public class  HelperPool extends Thread {
 
                         if(helper.getReboot()) {
 
-                            //System.out.println("Helper[" + helper.getName() + " Reboot Start");
+                            logger.info("Helper[" + helper.getName() + " Reboot Start");
                             AbstractHelper newHelper = getHelper(helper.getName());
                             newHelper.setParameters(helper.getParameters());
                             newHelper.setReboot(true);
                             returnHelper(newHelper.getName(), newHelper);
                             allExecuteHelperList.add(newHelper);
-                            //System.out.println("Helper[" + helper.getName() + " Reboot Success");
+                            logger.info("Helper[" + helper.getName() + " Reboot Success");
                         }
 
                         ((ThreadPoolExecutor)executorServiceMap.get(helper.getName())).remove(helper);

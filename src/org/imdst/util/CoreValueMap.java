@@ -10,6 +10,9 @@ import org.batch.util.LoggerFactory;
 import org.batch.lang.BatchException;
 import org.imdst.util.StatusUtil;
 
+import com.sun.mail.util.BASE64DecoderStream;
+import com.sun.mail.util.BASE64EncoderStream;
+
 /**
  * ConcurrentHashMap拡張.<br>
  * メモリが足りない対応いれたい.<br>
@@ -21,9 +24,17 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
 
     private boolean fileWrite = false;
 
+    private ICoreValueConverter converter = null;
+
+
     // コンストラクタ
-    public CoreValueMap(int size, int upper, int multi) {
+    public CoreValueMap(int size, int upper, int multi, boolean memoryMode) {
         super(size, upper, multi);
+        if (memoryMode) {
+            converter = new MemoryModeCoreValueCnv();
+        } else {
+            converter = new FileModeCoreValueCnv();
+        }
     }
 
     /**
@@ -33,7 +44,7 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @param value
      */
     public Object put(Object key, Object value) {
-        return super.put(key, value);
+        return super.put(converter.convertPutKey(key), converter.convertPutValue(value));
     }
 
 
@@ -44,7 +55,7 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @return Object
      */
     public Object get(Object key) {
-        return super.get(key);
+        return converter.convertGetValue(super.get(converter.convertPutKey(key)));
     }
 
 
@@ -55,6 +66,6 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @return Object
      */
     public Object remove(Object key) {
-        return super.remove(key);
+        return converter.convertGetValue(super.get(converter.convertPutKey(key)));
     }
 }
