@@ -37,6 +37,7 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
         }
     }
 
+
     /**
      * set<br>
      *
@@ -44,7 +45,7 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @param value
      */
     public Object put(Object key, Object value) {
-        return super.put(converter.convertPutKey(key), converter.convertPutValue(value));
+        return super.put(converter.convertEncodeKey(key), converter.convertEncodeValue(value));
     }
 
 
@@ -55,7 +56,7 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @return Object
      */
     public Object get(Object key) {
-        return converter.convertGetValue(super.get(converter.convertPutKey(key)));
+        return converter.convertDecodeValue(super.get(converter.convertEncodeKey(key)));
     }
 
 
@@ -66,6 +67,6 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @return Object
      */
     public Object remove(Object key) {
-        return converter.convertGetValue(super.get(converter.convertPutKey(key)));
+        return converter.convertDecodeValue(super.get(converter.convertEncodeKey(key)));
     }
 }
