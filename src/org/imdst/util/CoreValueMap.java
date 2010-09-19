@@ -67,6 +67,28 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @return Object
      */
     public Object remove(Object key) {
-        return converter.convertDecodeValue(super.get(converter.convertEncodeKey(key)));
+        return converter.convertDecodeValue(super.remove(converter.convertEncodeKey(key)));
+    }
+
+
+    /**
+     * containsKey<br>
+     *
+     * @param key
+     * @return boolean
+     */
+    public boolean containsKey(Object key) {
+        return super.containsKey(converter.convertEncodeKey(key));
+    }
+
+
+    /**
+     * containsKey<br>
+     *
+     * @param key
+     * @return boolean
+     */
+    public Set entrySet() {
+        return new CoreValueMapSet(super.entrySet(), converter);
     }
 }

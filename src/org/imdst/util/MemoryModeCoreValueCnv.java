@@ -5,12 +5,12 @@ import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
 /**
- * ÅI•Û‘¶”}‘Ì‚ªMemory‚ÌConverter.<br>
- * Encoded—l:Key=BASE64‚ÅƒfƒR[ƒhŒãAƒoƒCƒg”z—ñ‚Å•Ô‚·
- *            Value=ƒoƒCƒg”z—ñ‚Å•Ô‚·
+ * æœ€çµ‚ä¿å­˜åª’ä½“ãŒMemoryæ™‚ã®Converter.<br>
+ * Encodeä»•æ§˜:Key=BASE64ã§ãƒ‡ã‚³ãƒ¼ãƒ‰å¾Œã€ãƒã‚¤ãƒˆé…åˆ—ã§è¿”ã™
+ *            Value=ãƒã‚¤ãƒˆé…åˆ—ã§è¿”ã™
  *
- * Decoded—l:Key=BASE64‚ÅƒGƒ“ƒR[ƒhŒãAString‚Å•Ô‚·
- *            Value=String‚Å•Ô‚·
+ * Decodeä»•æ§˜:Key=BASE64ã§ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰å¾Œã€Stringã§è¿”ã™
+ *            Value=Stringã§è¿”ã™
  *
  *
  * @author T.Okuyama
@@ -20,50 +20,54 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
 
 
     /**
-     * ˆø”‚ÌObject‚ÍBase64‚ÅƒGƒ“ƒR[ƒhŒã‚ÌString
-     * •Ô‹p’l‚ÍBase64‚ÅƒfƒR[ƒhŒã‚Ìbyte”z—ñ
+     * å¼•æ•°ã®Objectã¯Base64ã§ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰å¾Œã®String
+     * è¿”å´å€¤ã¯Base64ã§ãƒ‡ã‚³ãƒ¼ãƒ‰å¾Œã®CoreMapKey
      *
      */
     public Object convertEncodeKey(Object key) {
-        return decode(((String)key).getBytes());
+        if (key == null) return null;
+        return new CoreMapKey(decode(((String)key).getBytes()));
     }
 
     /**
-     * ˆø”‚ÌObject‚ÍBase64‚ÅƒGƒ“ƒR[ƒh‚³‚ê‚½•¶š‚Æƒƒ^î•ñ‚Ì˜AŒ‹•¶š—ñ
-     * •Ô‹p’l‚Íbyte”z—ñ
+     * å¼•æ•°ã®Objectã¯Base64ã§ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ã•ã‚ŒãŸæ–‡å­—ã¨ãƒ¡ã‚¿æƒ…å ±ã®é€£çµæ–‡å­—åˆ—
+     * è¿”å´å€¤ã¯byteé…åˆ—
      *
      */
     public Object convertEncodeValue(Object value) {
+        if (value == null) return null;
         return ((String)value).getBytes();
     }
 
 
 
     /**
-     * ˆø”‚ÌObject‚ÍBase64‚ÅƒGƒ“ƒR[ƒhŒã’¼Œã‚Ìbyte”z—ñ
-     * •Ô‹p’l‚ÍBase64‚ÅƒGƒ“ƒR[ƒhŒã‚Ì•¶š—ñ
+     * å¼•æ•°ã®Objectã¯CoreMapKey
+     * è¿”å´å€¤ã¯Base64ã§ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰å¾Œã®æ–‡å­—åˆ—
      */
     public Object convertDecodeKey(Object key) {
-        return new String(encode((byte[])key));
+        if (key == null) return null;
+        return new String(encode(((CoreMapKey)key).getDatas()));
     }
 
     /**
-     * ˆø”‚ÌObject‚ÍBase64‚ÅƒGƒ“ƒR[ƒh‚³‚ê‚½•¶š‚Æƒƒ^î•ñ‚Ì˜AŒ‹•¶š—ñ‚Ìbyte”z—ñ
-     * •Ô‹p’l‚Íbyte”z—ñ‚ğ•¶š—ñ‚É•ÏX‚µ‚½String
+     * å¼•æ•°ã®Objectã¯Base64ã§ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ã•ã‚ŒãŸæ–‡å­—ã¨ãƒ¡ã‚¿æƒ…å ±ã®é€£çµæ–‡å­—åˆ—ã®byteé…åˆ—
+     * è¿”å´å€¤ã¯byteé…åˆ—ã‚’æ–‡å­—åˆ—ã«å¤‰æ›´ã—ãŸString
      *
      */
     public Object convertDecodeValue(Object value) {
+        if (value == null) return null;
         return new String((byte[])value);
     }
 
 
 
     private byte[] encode(byte[] datas) {
-        return BASE64EncoderStream.encode(datas)
+        return BASE64EncoderStream.encode(datas);
     }
 
     private byte[] decode(byte[] datas) {
-        return BASE64DecoderStream.decode(datas)
+        return BASE64DecoderStream.decode(datas);
     }
 
 

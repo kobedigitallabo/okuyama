@@ -5,12 +5,12 @@ import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
 /**
- * �ŏI�ۑ��}�̂�File����Converter.<br>
- * Encode�d�l:Key=BASE64�Ńf�R�[�h��A�o�C�g�z��ŕԂ�
- *            Value=�Ȃɂ����Ȃ�
+ * 最終保存媒体がFile時のConverter.<br>
+ * Encode仕様:Key=BASE64でデコード後、バイト配列で返す
+ *            Value=なにもしない
  *
- * Decode�d�l:Key=BASE64�ŃG���R�[�h��AString�ŕԂ�
- *            Value=�Ȃɂ����Ȃ�
+ * Decode仕様:Key=BASE64でエンコード後、Stringで返す
+ *            Value=なにもしない
  *
  *
  * @author T.Okuyama
@@ -20,13 +20,19 @@ public class FileModeCoreValueCnv implements ICoreValueConverter {
 
 
     /**
+     * 引数のObjectはBase64でエンコード後のString
+     * 返却値はBase64でデコード後のCoreMapKey
      *
      */
     public Object convertEncodeKey(Object key) {
-        return decode(((String)key).getBytes());
+        if (key == null) return null;
+        return new CoreMapKey(decode(((String)key).getBytes()));
     }
 
+
     /**
+     * 引数のLong型の値
+     * 返却値は何もせずに返却
      *
      */
     public Object convertEncodeValue(Object value) {
@@ -36,13 +42,17 @@ public class FileModeCoreValueCnv implements ICoreValueConverter {
 
 
     /**
-     *
+     * 引数のObjectはCoreValue
+     * 返却値はBase64でエンコード後の文字列
      */
     public Object convertDecodeKey(Object key) {
-        return new String(encode((byte[])key));
+        if (key == null) return null;
+        return new String(encode(((CoreMapKey)key).getDatas()));
     }
 
     /**
+     * 引数のLong型の値
+     * 返却値は何もせずに返却
      *
      */
     public Object convertDecodeValue(Object value) {
@@ -50,13 +60,12 @@ public class FileModeCoreValueCnv implements ICoreValueConverter {
     }
 
 
-
     private byte[] encode(byte[] datas) {
-        return BASE64EncoderStream.encode(datas)
+        return BASE64EncoderStream.encode(datas);
     }
 
     private byte[] decode(byte[] datas) {
-        return BASE64DecoderStream.decode(datas)
+        return BASE64DecoderStream.decode(datas);
     }
 
 

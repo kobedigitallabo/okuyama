@@ -1,4 +1,4 @@
-package org.batch.job;
+package org.imdst.util;
 
 import org.batch.lang.BatchException;
 

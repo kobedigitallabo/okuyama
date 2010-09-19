@@ -49,9 +49,10 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private int maxCacheSize = -1;
 
     // コンストラクタ
-    public KeyManagerValueMap(int size) {
+    public KeyManagerValueMap(int size, boolean memoryMode) {
         // TODO:CoreValueMapにメモリーモードのフラグ渡す!!!!!!!!!!!!!!!!!!!!!!!!!!
-        super(size, new Double(size * 0.9).intValue(), 512);
+        super(size, new Double(size * 0.9).intValue(), 512, memoryMode);
+        this.memoryMode = memoryMode;
     }
 
     /**
@@ -73,7 +74,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             }
 
             readObjectFlg  = true;
-            memoryMode = false;
 
             this.fos = new FileOutputStream(new File(lineFile), true);
             this.osw = new OutputStreamWriter(this.fos, ImdstDefine.keyWorkFileEncoding);
@@ -105,7 +105,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     public Object getNoCnv(Object key) {
         Object ret = null;
-        if (memoryMode) {
+
+        if (this.memoryMode) {
             ret = super.get(key);
         } else {
             try {
@@ -158,7 +159,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      */
     public Object get(Object key) {
         Object ret = null;
-        if (memoryMode) {
+        if (this.memoryMode) {
             ret = super.get(key);
         } else {
             try {
@@ -272,7 +273,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      */
     public Object put(Object key, Object value) {
         Object ret = null;
-        if (memoryMode) {
+        if (this.memoryMode) {
             ret = super.put(key, value);
         } else {
             StringBuffer writeBuf = new StringBuffer();
@@ -343,7 +344,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         }
 
         // データファイルモード時はCacheをチェック
-        if (!memoryMode) {
+        if (!this.memoryMode) {
             // キャッシュから削除
             if(this.valueCacheMap != null && this.valueCacheMap.containsKey(key))
                 this.valueCacheMap.remove(key);
@@ -567,7 +568,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                 // データファイルモード時はCacheをチェック
                 // キャッシュ全削除
-                if (!memoryMode) {
+                if (!this.memoryMode) {
                     // キャッシュから削除
                     if(this.valueCacheMap != null)
                         this.valueCacheMap.clear();
@@ -622,5 +623,4 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     public long getKLastDataChangeTime() {
         return this.lastDataChangeTime;
     }
-
 }

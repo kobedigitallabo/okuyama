@@ -51,8 +51,6 @@ public class KeyMapManager extends Thread {
     private Object setTagLock = new Object();
     private Object getTagLock = new Object();
 
-    private String keyFilePath = null;
-    private String keyFileTmpPath = null;
     private String workKeyFilePath = null;
 
     private FileOutputStream fos = null;
@@ -70,7 +68,7 @@ public class KeyMapManager extends Thread {
     // 起動時にトランザクションログから復旧
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
     private static int updateInterval = 30000;
-    private static int intervalCount =  5;
+    private static int intervalCount =  20;
 
     // workMap(トランザクションログ)ファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
@@ -152,16 +150,10 @@ public class KeyMapManager extends Thread {
             this.workFileMemory = workFileMemory;
             this.dataMemory = dataMemory;
             this.mapSize = keySize;
-            this.keyFilePath = keyMapFilePath;
-            this.keyFileTmpPath = keyMapFilePath + ".tmp";
             this.workKeyFilePath = workKeyMapFilePath;
-
-            FileInputStream keyFilefis = null;
-            ObjectInputStream keyFileois = null;
 
             FileInputStream workKeyFilefis = null;
             InputStreamReader isr = null;
-            ObjectInputStream workKeyFileois = null;
 
             FileReader fr = null;
             BufferedReader br = null;
@@ -178,85 +170,16 @@ public class KeyMapManager extends Thread {
                 this.parallelSyncObjs[i] = new Integer(i);
             }
 
-            synchronized(poolKeyLock) {
+            synchronized(this.poolKeyLock) {
                 try {
-
-                    File keyFile = new File(this.keyFilePath);
-                    File tmpKeyFile = new File(this.keyFileTmpPath);
 
                     // Mapファイルを読み込む必要の有無
                     boolean mapFileRead = true;
 
-                    // tmpMapファイルがある場合はMapファイルへの変更中に前回エラーの可能性があるので読み込む
-                    if (tmpKeyFile.exists()) {
-
-                        logger.info("tmpKeyMapFile - Read - start");
-                        mapFileRead = false;
-                        keyFilefis = new FileInputStream(tmpKeyFile);
-                        keyFileois = new ObjectInputStream(keyFilefis);
-                        try {
-                            if (this.keyMapObj != null) this.keyMapObj.close();
-                            this.keyMapObj = (KeyManagerValueMap)keyFileois.readObject();
-                            if (!dataMemory) {
-                                this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
-                            }
-                            keyFileois.close();
-                            keyFilefis.close();
-
-                            // 古いKeyMapファイルを消しこみ
-                            File keyMapObjFile = new File(this.keyFilePath);
-                            if (keyMapObjFile.exists()) {
-                                keyMapObjFile.delete();
-                                keyMapObjFile = null;
-                            }
-
-                            // 一時KeyMapファイルをKeyMapファイル名に変更
-                            tmpKeyFile.renameTo(new File(this.keyFilePath));
-                            logger.info("tmpKeyMapFile - Read - end");
-                        } catch (Exception we) {
-
-                            logger.error("tmpKeyMapFile - Read - Error", we);
-                            // workKeyファイル読み込み失敗
-                            mapFileRead = true;
-                            keyFileois = null;
-                            keyFilefis = null;
-
-                            if (this.keyMapObj != null) this.keyMapObj.close();
-                            this.keyMapObj = null;
-                            // tmpKeyMapファイルを消しこみ
-                            tmpKeyFile.delete();
-                            logger.info("tmpKeyMapFile - Delete - End");
-                        }
-                    }
-
-                    // KeyMapファイルが存在する場合は読み込み
-                    if (mapFileRead = true && keyFile.exists()) {
-
-                        logger.info("KeyMapFile - Read - start");
-
-                        keyFilefis = new FileInputStream(keyFile);
-                        keyFileois = new ObjectInputStream(keyFilefis);
-
-                        if (this.keyMapObj != null) this.keyMapObj.close();
-                        this.keyMapObj = (KeyManagerValueMap)keyFileois.readObject();
-                        if (!dataMemory) {
-                            this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
-                        }
-
-                        keyFileois.close();
-                        keyFilefis.close();
-                        logger.info("KeyMapFile - Read - end");
-                    } else {
-
-                        logger.info("KeyMapFile - No Exists");
-                        // 存在しない場合はMapを作成
-
-                        if (this.keyMapObj != null) this.keyMapObj.close();
-                        this.keyMapObj = new KeyManagerValueMap(this.mapSize);
-                        if (!dataMemory) {
-                            this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
-                        }
-
+                    // KeyManagerValueMap作成
+                    this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory);
+                    if (!dataMemory) {
+                        this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
                     }
 
                     // 最大キャッシュサイズ
@@ -1029,12 +952,13 @@ public class KeyMapManager extends Thread {
                 try {
                     Object key = null;
 
-                    Set set = this.keyMapObj.keySet();
+                    Set set = this.keyMapObj.entrySet();
                     Iterator iterator = set.iterator();
 
                     String[] keyList = new String[this.keyMapObj.size()];
                     for (int idx = 0; idx < keyList.length; idx++) {
-                        keyList[idx] = (String)iterator.next();
+                        Map.Entry map = (Map.Entry)iterator.next();
+                        keyList[idx] = (String)map.getKey();
                     }
 
                     for (int idx = 0; idx < keyList.length; idx++) {
@@ -1247,6 +1171,7 @@ public class KeyMapManager extends Thread {
                     }
 
                     pw.println(allDataBuf.toString());
+                    allDataBuf = null;
                 }
                 //logger.debug("outputKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
@@ -1307,6 +1232,7 @@ public class KeyMapManager extends Thread {
         }
     }
 
+
     // 引数で渡されてストリームからの値でデータを作成する
     public void inputKeyMapObj2Stream(BufferedReader br, PrintWriter pw, int dataLineCount) throws BatchException {
         if (!blocking) {
@@ -1315,24 +1241,12 @@ public class KeyMapManager extends Thread {
                 String[] oneDatas = null;
                 boolean setDataExec = false;
                 logger.info("inputKeyMapObj2Stream - synchronized - start");
+
                 synchronized(this.poolKeyLock) {
                     // 事前に不要なファイルを削除
 
-                    // KeyMapファイルを消しこみ
-                    File keyMapObjFile = new File(this.keyFilePath);
-                    if (keyMapObjFile.exists()) {
-                        keyMapObjFile.delete();
-                        keyMapObjFile = null;
-                    }
-
-                    // TmpKeyMapファイルを消しこみ
-                    File keyMapTmpObjFile = new File(this.keyFileTmpPath);
-                    if (keyMapTmpObjFile.exists()) {
-                        keyMapTmpObjFile.delete();
-                        keyMapTmpObjFile = null;
-                    }
-
                     // WorkKeyMapファイルを消しこみ
+                    // トランザクションログファイル
                     File workKeyMapObjFile = new File(this.workKeyFilePath);
                     if (workKeyMapObjFile.exists()) {
                         if (this.bw != null) this.bw.close();
@@ -1348,8 +1262,9 @@ public class KeyMapManager extends Thread {
                         this.keyMapObj.deleteMapDataFile();
                     }
 
-
-                    this.keyMapObj = new KeyManagerValueMap(this.mapSize);
+                    // KeyManagerValueMapのインスタンスを再作成
+                    this.keyMapObj = null;
+                    this.keyMapObj = new KeyManagerValueMap(this.mapSize, dataMemory);
                     if (!dataMemory) {
                         this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
                     }
@@ -1367,6 +1282,7 @@ public class KeyMapManager extends Thread {
                         String allDataStr = br.readLine();
 
                         String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+                        allDataStr = null;
 
                         for (i = 0; i < allDataLines.length; i++) {
                             if (!allDataLines[i].trim().equals("")) {
@@ -1380,6 +1296,8 @@ public class KeyMapManager extends Thread {
                                 }
                             }
                         }
+
+                        allDataLines = null;
                     }
 
                     // 全てのデータを取り込んだタイミングで最終更新時間を変更
@@ -1420,6 +1338,7 @@ public class KeyMapManager extends Thread {
                     String allDataStr = br.readLine();
 
                     String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+                    allDataStr = null;
 
                     for (i = 0; i < allDataLines.length; i++) {
                         if (!allDataLines[i].trim().equals("")) {
@@ -1453,7 +1372,7 @@ public class KeyMapManager extends Thread {
                             }
                         }
                     }
-
+                    allDataLines = null;
 
                     // 全てのデータをトランザクションログモードがONの場合のみ書き出し
                     // ファイルストリームは既にinputKeyMapObj2Streamメソッド内で作成されている想定
@@ -1891,7 +1810,7 @@ public class KeyMapManager extends Thread {
                         // タグの場合は分解して
                         int startIdx = 15;
                         int endIdx = key.lastIndexOf(ImdstDefine.imdstTagEndStr);
-         
+
                         String checkKey = key.substring(startIdx, endIdx);
 
                         int lastIdx = checkKey.lastIndexOf("=");

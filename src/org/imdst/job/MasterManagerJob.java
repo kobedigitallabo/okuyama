@@ -261,7 +261,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 helperParams = new Object[2];
                 helperParams[0] = "MasterManagerAcceptHelper" + queueIndex;
                 helperParams[1] = this.maxWorkerParallelQueueNames;
-                super.executeHelper("MasterManagerAcceptHelper", helperParams);
+                super.executeHelper("MasterManagerAcceptHelper", helperParams, true);
             }
 
             for (int i = 0; i < this.maxWorkerParallelExecution; i++) {
@@ -276,7 +276,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 helperParams[5] = StatusUtil.getTransactionNode();
                 helperParams[6] = "MasterManagerHelper" + queueIndex;
                 helperParams[7] = this.maxAcceptParallelQueueNames;
-                super.executeHelper("MasterManagerHelper", helperParams);
+                super.executeHelper("MasterManagerHelper", helperParams, true);
             }
 
 

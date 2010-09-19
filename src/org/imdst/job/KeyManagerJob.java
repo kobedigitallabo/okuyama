@@ -188,7 +188,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                 Object[] queueParam = new Object[2];
                 queueParam[0] = "KeyManagerConnectHelper" + this.myPrefix + queueIndex;
                 queueParam[1] = this.maxAcceptParallelQueueNames;
-                super.executeHelper("KeyManagerConnectHelper", queueParam);
+                super.executeHelper("KeyManagerConnectHelper", queueParam, true);
             }
 
             for (int i = 0; i < maxAcceptParallelExecution; i++) {
@@ -197,7 +197,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                 Object[] queueParam = new Object[2];
                 queueParam[0] = "KeyManagerAcceptHelper" + this.myPrefix + queueIndex;
                 queueParam[1] = this.maxWorkerParallelQueueNames;
-                super.executeHelper("KeyManagerAcceptHelper", queueParam);
+                super.executeHelper("KeyManagerAcceptHelper", queueParam, true);
             }
 
             for (int i = 0; i < maxWorkerParallelExecution; i++) {
@@ -207,7 +207,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                 queueParam[0] = this.keyMapManager;
                 queueParam[1] = "KeyManagerHelper" + this.myPrefix + queueIndex;
                 queueParam[2] = this.maxAcceptParallelQueueNames;
-                super.executeHelper("KeyManagerHelper", queueParam);
+                super.executeHelper("KeyManagerHelper", queueParam, true);
             }
 
 
@@ -233,7 +233,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                     // アクセス済みのソケットをキューに貯める
                     super.addSpecificationParameterQueue(keyManagerConnectHelperQueuePrefix + (accessCount % this.maxConnectParallelQueue), helperParam);
 
-
+/*
                     // 各スレッドが減少していないかを確かめる
                     if (super.getActiveHelperCount("KeyManagerConnectHelper") < (maxConnectParallelExecution / 2)) {
                         queueIndex = accessCount % this.maxConnectParallelQueue;
@@ -262,6 +262,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                         queueParam[2] = this.maxAcceptParallelQueueNames;
                         super.executeHelper("KeyManagerHelper", queueParam);
                     }
+*/
                 } catch (Exception e) {
                     if (StatusUtil.getStatus() == 2) {
                         logger.info("KeyManagerJob - executeJob - ServerEnd");

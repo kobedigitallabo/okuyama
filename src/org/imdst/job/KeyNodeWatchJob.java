@@ -54,7 +54,7 @@ public class KeyNodeWatchJob extends AbstractJob implements IJob {
                 Thread.sleep(20000);
             }
 
-            int helperCode = super.executeHelper("KeyNodeWatchHelper", null);
+            int helperCode = super.executeHelper("KeyNodeWatchHelper", null, true);
 
             Object[] helperRet = null;
             while(helperRet == null) {
