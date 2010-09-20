@@ -59,9 +59,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      */
     protected void setDeadNode(String nodeInfo, int setPoint, Throwable te) {
 
-        //if (te != null) {
-        //    te.printStackTrace();
-        //}
+        /*if (te != null) {
+            te.printStackTrace();
+        }*/
 
         // コネクションキャッシュが存在する場合は削除
         if (keyNodeConnectPool.containsKey(nodeInfo)) {

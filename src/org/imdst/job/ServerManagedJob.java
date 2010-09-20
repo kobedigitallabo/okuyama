@@ -112,6 +112,12 @@ public class ServerManagedJob extends AbstractJob implements IJob {
         } catch(Exception e) {
             logger.error("ServerManagedJob - executeJob - Error", e);
             throw new BatchException(e);
+        } finally {
+            // 正常終了ではない
+            if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) {
+                logger.error("ServerManagedJob - executeJob - Error End Message=[" + StatusUtil.getStatusMessage() + "]");
+                System.exit(9);
+            }
         }
 
         logger.debug("ServerManagedJob - executeJob - end");

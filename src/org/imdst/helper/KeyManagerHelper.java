@@ -674,7 +674,7 @@ public class KeyManagerHelper extends AbstractHelper {
     // もどり値はScript内にexecRetという0 or 1 or 2で表す値とretValueという返却値が
     // 定義されているものとする
     // スクリプト実行後、execRetの値で状態を判断し、retValueが返却されるかが決定される。
-    // execRet=1値を返す、execRet=0値を返さない、2=retValueの値で当該Valueを更新後返却
+    // execRet=1値を返す、execRet=0値を返さない、2=retValueの値で当該Valueを更新後、値を返却
     // retValue=Value返却される値となる
     // 返却値の配列の2番目の値がtrueならスクリプト実行後結果あり、
     // falseならスクリプト実行後結果なし、errorならスクリプト実行エラー

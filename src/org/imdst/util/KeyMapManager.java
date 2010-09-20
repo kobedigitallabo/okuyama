@@ -720,6 +720,7 @@ public class KeyMapManager extends Thread {
                     }
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 logger.error("setTagPair - Error");
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "setTagPair - Error [" + e.getMessage() + "]");
@@ -794,7 +795,9 @@ public class KeyMapManager extends Thread {
     public boolean containsKeyPair(String key) {
         boolean ret = false;
         if (!blocking) {
-            ret =  this.keyMapObj.containsKey(key);
+            if (key != null) {
+                ret =  this.keyMapObj.containsKey(key);
+            }
         }
         return ret;
     }
@@ -1005,8 +1008,10 @@ public class KeyMapManager extends Thread {
      */
     private void keyMapObjPut(String key, String val) {
         if (val.length() < putValueMaxSize) {
-            this.keyMapObj.put(key, val);
-            this.keyMapObj.setKLastDataChangeTime(System.currentTimeMillis());
+            if (key != null && val != null) {
+                this.keyMapObj.put(key, val);
+                this.keyMapObj.setKLastDataChangeTime(System.currentTimeMillis());
+            }
         }
         this.lastAccess = System.currentTimeMillis();
     }
@@ -1021,7 +1026,9 @@ public class KeyMapManager extends Thread {
      */
     private void keyMapObjPutNoChange(String key, String val) {
         if (val.length() < putValueMaxSize) {
-            this.keyMapObj.put(key, val);
+            if (key != null && val != null) {
+                this.keyMapObj.put(key, val);
+            }
         }
         this.lastAccess = System.currentTimeMillis();
     }
@@ -1033,8 +1040,10 @@ public class KeyMapManager extends Thread {
      */
     private void keyMapObjPutSetTime(String key, String val, long execTime) {
         if (val.length() < putValueMaxSize) {
-            this.keyMapObj.put(key, val);
-            this.keyMapObj.setKLastDataChangeTime(execTime);
+            if (key != null && val != null) {
+                this.keyMapObj.put(key, val);
+                this.keyMapObj.setKLastDataChangeTime(execTime);
+            }
         }
         this.lastAccess = System.currentTimeMillis();
     }
@@ -1046,8 +1055,11 @@ public class KeyMapManager extends Thread {
      */
     private String keyMapObjGet(String key) {
         this.lastAccess = System.currentTimeMillis();
-        return (String)this.keyMapObj.get(key);
-
+        if (key != null) {
+            return (String)this.keyMapObj.get(key);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -1055,9 +1067,11 @@ public class KeyMapManager extends Thread {
      * 
      */
     private void keyMapObjRemove(String key) {
-        this.keyMapObj.remove(key);
-        this.keyMapObj.setKLastDataChangeTime(System.currentTimeMillis());
-        this.lastAccess = System.currentTimeMillis();
+        if (key != null) {
+            this.keyMapObj.remove(key);
+            this.keyMapObj.setKLastDataChangeTime(System.currentTimeMillis());
+            this.lastAccess = System.currentTimeMillis();
+        }
     }
 
     /**
@@ -1065,8 +1079,10 @@ public class KeyMapManager extends Thread {
      * 更新時間をセットしない
      */
     private void keyMapObjRemoveNoChange(String key) {
-        this.keyMapObj.remove(key);
-        this.lastAccess = System.currentTimeMillis();
+        if (key != null) {
+            this.keyMapObj.remove(key);
+            this.lastAccess = System.currentTimeMillis();
+        }
     }
 
 
@@ -1075,9 +1091,11 @@ public class KeyMapManager extends Thread {
      *  任意の更新時間をセットする.<br>
      */
     private void keyMapObjRemoveSetTime(String key, long execTime) {
-        this.keyMapObj.remove(key);
-        this.keyMapObj.setKLastDataChangeTime(execTime);
-        this.lastAccess = System.currentTimeMillis();
+        if (key != null) {
+            this.keyMapObj.remove(key);
+            this.keyMapObj.setKLastDataChangeTime(execTime);
+            this.lastAccess = System.currentTimeMillis();
+        }
     }
 
 
@@ -1243,68 +1261,70 @@ public class KeyMapManager extends Thread {
                 logger.info("inputKeyMapObj2Stream - synchronized - start");
 
                 synchronized(this.poolKeyLock) {
-                    // 事前に不要なファイルを削除
+                    synchronized(this.lockWorkFileSync) {
+                        // 事前に不要なファイルを削除
 
-                    // WorkKeyMapファイルを消しこみ
-                    // トランザクションログファイル
-                    File workKeyMapObjFile = new File(this.workKeyFilePath);
-                    if (workKeyMapObjFile.exists()) {
-                        if (this.bw != null) this.bw.close();
-                        if (this.osw != null) this.osw.close();
-                        if (this.fos != null) this.fos.close();
-                        workKeyMapObjFile.delete();
-                    }
-
-                    // Disk時はデータファイルを削除
-                    if (this.dataMemory) {
-                        if(this.keyMapObj != null) this.keyMapObj.close();
-                    } else {
-                        this.keyMapObj.deleteMapDataFile();
-                    }
-
-                    // KeyManagerValueMapのインスタンスを再作成
-                    this.keyMapObj = null;
-                    this.keyMapObj = new KeyManagerValueMap(this.mapSize, dataMemory);
-                    if (!dataMemory) {
-                        this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
-                    }
-
-                    // WorkKeyMapファイル用のストリームを作成
-                    this.fos = new FileOutputStream(new File(this.workKeyFilePath));
-                    this.osw = new OutputStreamWriter(fos , KeyMapManager.workMapFileEnc);
-                    this.bw = new BufferedWriter(osw);
-
-                    // 取り込み開始
-                    for (int idx = 0; idx < dataLineCount; idx++) {
-
-                        // 最終更新日付変えずに全てのデータを登録する
-                        // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
-                        String allDataStr = br.readLine();
-
-                        String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
-                        allDataStr = null;
-
-                        for (i = 0; i < allDataLines.length; i++) {
-                            if (!allDataLines[i].trim().equals("")) {
-                                oneDatas = allDataLines[i].split(KeyMapManager.workFileSeq);
-                                if (oneDatas.length == 2) {
-                                    setDataExec = true;
-                                    this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1]);
-                                } else if (oneDatas.length == 3) {
-                                    setDataExec = true;
-                                    this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1] + KeyMapManager.workFileSeq + oneDatas[2]);
-                                }
-                            }
+                        // WorkKeyMapファイルを消しこみ
+                        // トランザクションログファイル
+                        File workKeyMapObjFile = new File(this.workKeyFilePath);
+                        if (workKeyMapObjFile.exists()) {
+                            if (this.bw != null) this.bw.close();
+                            if (this.osw != null) this.osw.close();
+                            if (this.fos != null) this.fos.close();
+                            workKeyMapObjFile.delete();
                         }
 
-                        allDataLines = null;
-                    }
+                        // Disk時はデータファイルを削除
+                        if (this.dataMemory) {
+                            if(this.keyMapObj != null) this.keyMapObj.close();
+                        } else {
+                            this.keyMapObj.deleteMapDataFile();
+                        }
 
-                    // 全てのデータを取り込んだタイミングで最終更新時間を変更
-                    // 1件でも取り込んでいる場合のみ
-                    if (setDataExec == true) this.setLastDataChangeTime();
-                    pw.println("1");
-                    pw.flush();
+                        // KeyManagerValueMapのインスタンスを再作成
+                        this.keyMapObj = null;
+                        this.keyMapObj = new KeyManagerValueMap(this.mapSize, dataMemory);
+                        if (!dataMemory) {
+                            this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
+                        }
+
+                        // WorkKeyMapファイル用のストリームを作成
+                        this.fos = new FileOutputStream(new File(this.workKeyFilePath));
+                        this.osw = new OutputStreamWriter(fos , KeyMapManager.workMapFileEnc);
+                        this.bw = new BufferedWriter(osw);
+
+                        // 取り込み開始
+                        for (int idx = 0; idx < dataLineCount; idx++) {
+
+                            // 最終更新日付変えずに全てのデータを登録する
+                            // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
+                            String allDataStr = br.readLine();
+
+                            String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+                            allDataStr = null;
+
+                            for (i = 0; i < allDataLines.length; i++) {
+                                if (!allDataLines[i].trim().equals("")) {
+                                    oneDatas = allDataLines[i].split(KeyMapManager.workFileSeq);
+                                    if (oneDatas.length == 2) {
+                                        setDataExec = true;
+                                        this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1]);
+                                    } else if (oneDatas.length == 3) {
+                                        setDataExec = true;
+                                        this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1] + KeyMapManager.workFileSeq + oneDatas[2]);
+                                    }
+                                }
+                            }
+
+                            allDataLines = null;
+                        }
+
+                        // 全てのデータを取り込んだタイミングで最終更新時間を変更
+                        // 1件でも取り込んでいる場合のみ
+                        if (setDataExec == true) this.setLastDataChangeTime();
+                        pw.println("1");
+                        pw.flush();
+                    }
                 }
                 logger.info("inputKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
@@ -1313,9 +1333,9 @@ public class KeyMapManager extends Thread {
                     pw.flush();
                 } catch (Exception e2) {
                 }
-                logger.error("writeKeyMapObj2Stream - Error");
+                logger.error("inputKeyMapObj2Stream - Error");
                 blocking = true;
-                StatusUtil.setStatusAndMessage(1, "writeKeyMapObj2Stream - Error [" + e.getMessage() + "]");
+                StatusUtil.setStatusAndMessage(1, "inputKeyMapObj2Stream - Error [" + e.getMessage() + "]");
                 throw new BatchException(e);
             }
         }
@@ -1331,88 +1351,88 @@ public class KeyMapManager extends Thread {
                 String[] oneDatas = null;
                 logger.info("inputDiffKeyMapObj2Stream - synchronized - start");
                 synchronized(this.poolKeyLock) {
+                    synchronized(this.lockWorkFileSync) {
+                        // 最終更新日付変えずに全てのデータを登録する
+                        // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
+                        String allDataStr = br.readLine();
 
+                        String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+                        allDataStr = null;
 
-                    // 最終更新日付変えずに全てのデータを登録する
-                    // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
-                    String allDataStr = br.readLine();
+                        for (i = 0; i < allDataLines.length; i++) {
+                            if (!allDataLines[i].trim().equals("")) {
+                                oneDatas = allDataLines[i].split(KeyMapManager.workFileSeq);
 
-                    String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
-                    allDataStr = null;
+                                // 最後のデータのみ更新日を変更
+                                if (allDataLines.length == (i + 1)) {
 
-                    for (i = 0; i < allDataLines.length; i++) {
-                        if (!allDataLines[i].trim().equals("")) {
-                            oneDatas = allDataLines[i].split(KeyMapManager.workFileSeq);
+                                    if (oneDatas[0].equals("+")) {
 
-                            // 最後のデータのみ更新日を変更
-                            if (allDataLines.length == (i + 1)) {
+                                        if (oneDatas.length == 3) {
+                                            this.keyMapObjPut(oneDatas[1], oneDatas[2]);
+                                        } else if (oneDatas.length == 4) {
+                                            this.keyMapObjPut(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                        }
+                                    } else if (oneDatas[0].equals("-")) {
 
-                                if (oneDatas[0].equals("+")) {
-
-                                    if (oneDatas.length == 3) {
-                                        this.keyMapObjPut(oneDatas[1], oneDatas[2]);
-                                    } else if (oneDatas.length == 4) {
-                                        this.keyMapObjPut(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                        this.keyMapObjRemove(oneDatas[1]);
                                     }
-                                } else if (oneDatas[0].equals("-")) {
+                                } else {
+                                    if (oneDatas[0].equals("+")) {
 
-                                    this.keyMapObjRemove(oneDatas[1]);
-                                }
-                            } else {
-                                if (oneDatas[0].equals("+")) {
-
-                                    if (oneDatas.length == 3) {
-                                        this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2]);
-                                    } else if (oneDatas.length == 4) {
-                                        this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                        if (oneDatas.length == 3) {
+                                            this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2]);
+                                        } else if (oneDatas.length == 4) {
+                                            this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                        }
+                                    } else if (oneDatas[0].equals("-")) {
+                                        this.keyMapObjRemoveNoChange(oneDatas[1]);
                                     }
-                                } else if (oneDatas[0].equals("-")) {
-                                    this.keyMapObjRemoveNoChange(oneDatas[1]);
                                 }
                             }
                         }
-                    }
-                    allDataLines = null;
+                        allDataLines = null;
 
-                    // 全てのデータをトランザクションログモードがONの場合のみ書き出し
-                    // ファイルストリームは既にinputKeyMapObj2Streamメソッド内で作成されている想定
-                    if (this.workFileMemory == false) {
+                        // 全てのデータをトランザクションログモードがONの場合のみ書き出し
+                        // ファイルストリームは既にinputKeyMapObj2Streamメソッド内で作成されている想定
+                        if (this.workFileMemory == false) {
 
-                        // keyMapObjの全内容を1行文字列として書き出し
-                        Set entrySet = this.keyMapObj.entrySet();
-                        Iterator entryIte = entrySet.iterator(); 
+                            // keyMapObjの全内容を1行文字列として書き出し
+                            Set entrySet = this.keyMapObj.entrySet();
+                            Iterator entryIte = entrySet.iterator(); 
 
-                        long writeCurrentTime = this.lastAccess;
-                        String writeKey = null;
+                            long writeCurrentTime = this.lastAccess;
+                            String writeKey = null;
 
-                        while(entryIte.hasNext()) {
+                            while(entryIte.hasNext()) {
 
-                            Map.Entry obj = (Map.Entry)entryIte.next();
-                            writeKey = (String)obj.getKey();
+                                Map.Entry obj = (Map.Entry)entryIte.next();
+                                writeKey = (String)obj.getKey();
 
-                            this.bw.write(new StringBuffer("+").
-                                          append(KeyMapManager.workFileSeq).
-                                          append(writeKey).
-                                          append(KeyMapManager.workFileSeq).
-                                          append(this.keyMapObjGet(writeKey)).
-                                          append(KeyMapManager.workFileSeq).
-                                          append(writeCurrentTime).
-                                          append(KeyMapManager.workFileSeq).
-                                          append(KeyMapManager.workFileEndPoint).
-                                          append("\n").
-                                          toString());
+                                this.bw.write(new StringBuffer("+").
+                                              append(KeyMapManager.workFileSeq).
+                                              append(writeKey).
+                                              append(KeyMapManager.workFileSeq).
+                                              append(this.keyMapObjGet(writeKey)).
+                                              append(KeyMapManager.workFileSeq).
+                                              append(writeCurrentTime).
+                                              append(KeyMapManager.workFileSeq).
+                                              append(KeyMapManager.workFileEndPoint).
+                                              append("\n").
+                                              toString());
+                            }
+                            this.bw.flush();
                         }
-                        this.bw.flush();
+                        // 取り込み終了を送信
+                        pw.println("1");
+                        pw.flush();
                     }
-                    // 取り込み終了を送信
-                    pw.println("1");
-                    pw.flush();
                 }
-                logger.info("inputKeyMapObj2Stream - synchronized - end");
+                logger.info("inputDiffKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
-                logger.error("writeKeyMapObj2Stream - Error");
+                logger.error("inputDiffKeyMapObj2Stream - Error");
                 blocking = true;
-                StatusUtil.setStatusAndMessage(1, "writeKeyMapObj2Stream - Error [" + e.getMessage() + "]");
+                StatusUtil.setStatusAndMessage(1, "inputDiffKeyMapObj2Stream - Error [" + e.getMessage() + "]");
                 throw new BatchException(e);
             }
         }

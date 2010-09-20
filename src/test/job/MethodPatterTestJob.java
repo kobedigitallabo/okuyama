@@ -58,14 +58,14 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             String startStr = super.getPropertiesValue(super.getJobName() + "start");
             int start = Integer.parseInt(startStr);
             count = count + start;
-            for (int cy = 0; cy < 30; cy++) {
+            for (int cy = 0; cy < 1; cy++) {
                 for (int t = 0; t < Integer.parseInt(execMethods[0]); t++) {
                     this.nowCount = t;
                     System.out.println("Test Count =[" + t + "]");
                     for (int i = 1; i < execMethods.length; i++) {
 
                         if (execMethods[i].equals("set")) 
-                            retMap.put("set", execSet(imdstKeyValueClient, start, count * 20));
+                            retMap.put("set", execSet(imdstKeyValueClient, start, count));
 
                         if (execMethods[i].equals("get")) 
                             retMap.put("get", execGet(imdstKeyValueClient, start, count));

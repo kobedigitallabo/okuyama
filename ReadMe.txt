@@ -10,6 +10,64 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 機能改善]
+[[リリース Ver 0.8.1 - (2010/09/21)]]
+  ■トランザクションログファイルを一定サイズで自動的にローテーションするように変更
+    DataNode.propertiesの"memoryMode=false"としている場合に作成される、トランザクションログファイル
+    (データ操作履歴ファイル)が従来は永遠に追記されるため、いずれ肥大化し問題になるためサイズが1.8GBに
+    達した時点で自動的に新しいファイルを作成し旧ファイルはファイル名の末尾に数字を付加しリネームするように
+    変更。再起動時は末尾の数字が小さいもの(基本的には0から)から取り込んで最後に数字の付かないファイルを
+    読み込むように変更。
+
+
+
+  ■JavaScriptでデータ更新も行えるように変更
+    従来JavaScriptはValueへの値検索や、返却時の加工にしか使えなかったが、新たにJavaScriptでデータノードに実際に
+    保存されている値も更新出来るように機能拡張。
+    値を更新するには、JavaScript本文中の変数値"execRet"の値を2にする。
+    こうすることで最終的にJavaScript本文中の変数値"retValue"の値が実際にデータノードに再保存される。
+    また、新たに"dataKey"というJavaScript変数が追加され、これにはKey値が格納されてJavaScript内から参照出来るように
+    なった。
+    !!注意!!:値を更新する場合はImdstKeyValueClientのgetValueScriptForUpdateメソッドを使用すること。
+
+    JavaScript 例) 以下はKey値が"key1"の場合は文字列置換したValue値を更新後、クライアントへValueを返却し、"key1"ではない場合は更新せずに返却している。
+                  "var dataValue; var dataKey; var retValue = dataValue.replace('value', 'dummy'); if(dataKey == 'key1') {var execRet = '2'} else {var execRet = '1'}";
+
+    ●以下のテストコードで試せる
+    java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 key1 value1
+    java -cp ./;./classes;./lib\mail.jar TestSock 2.4 127.0.0.1 8888 key1 "var dataValue; var dataKey; var retValue = dataValue.replace('value', 'dummy'); if(dataKey == 'key1') {var execRet = '2'} else {var execRet = '1'}"
+    java -cp ./;./classes;./lib\mail.jar TestSock 2.1 127.0.0.1 8888 key1
+    ↑クライアントに返却されるValue値で更新されている
+
+    java -cp ./;./classes;./lib\mail.jar TestSock 1.1 127.0.0.1 8888 key2 value2
+    java -cp ./;./classes;./lib\mail.jar TestSock 2.4 127.0.0.1 8888 key2 "var dataValue; var dataKey; var retValue = dataValue.replace('value', 'dummy'); if(dataKey == 'key1') {var execRet = '2'} else {var execRet = '1'}"
+    java -cp ./;./classes;./lib\mail.jar TestSock 2.1 127.0.0.1 8888 key2
+    ↑クライアントに返却されるValue値で更新されていない
+
+
+
+  ■完全ファイルモード時にデータの一定量をメモリにキャッシュするように機能追加
+    完全ファイルモード(Keyがメモリ、Valueはデータファイル)時にデータファイルがメモリに乗らないサイズになった際に発生する
+    レスポンス低下を抑制するために、一定量(JVMに割り当てているメモリの10%に相当)をメモリにキャッシュする機能を追加。
+    このキャッシュ機構はLRUアルゴリズムを採用しており、利用頻度の高いデータほどキャッシュされるようになり、利用頻度の
+    低いデータは自動的にパージされる。
+    ※現在このキャッシュをOffにすることは出来ない。
+
+
+
+  ■データノードのメモリ活用方法を効率化し、従来よりも大量のデータをメモリ保持できるように修正
+    従来のKeyとValueのメモリ上での扱い方を変更、最適化しメモリ利用効率を向上した。
+    これにより従来よりも1.3～1.4倍程度のデータが扱えるように向上。
+
+
+
+  ■データノード内でのKey値探索方式に工夫を行い、取得効率を向上
+    特定のパターンでのKey値探索時の効率を向上。
+    Key値の先頭や、末尾をプレフィックス的に変更してデータを保存するような場合に性能向上が期待できる。
+
+
+========================================================================================================
+========================================================================================================
+[New - 機能改善]
 [[リリース Ver 0.8.0 - (2010/09/07)]]
   ■振り分けモードにConsistentHashを追加
     データ分散アルゴリズムを従来はModのみだったが、新たにConsistentHashを追加。

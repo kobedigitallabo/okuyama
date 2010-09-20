@@ -202,6 +202,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     }
 
                     ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
+                    buf = null;
 
                     // キャッシュに登録
                     this.valueCacheMap.put(key, ret);
@@ -252,6 +253,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 }
 
                 ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
+                buf = null;
+
             }
         } catch (Exception e) {
             e.printStackTrace();
