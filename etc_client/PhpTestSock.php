@@ -90,6 +90,17 @@
         print_r("There is no data");
         print_r("\r\n");
       }
+    } else if ($argv[1] === "2.4") {
+      // 指定のKey値でデータを取得
+
+      $ret = $client->getValueScriptForUpdate($argv[4], $argv[5]);
+      if ($ret[0] === "true") {
+        print_r($ret[1]);
+        print_r("\r\n");
+      } else if ($ret[0] === "false") {
+        print_r("There is no data");
+        print_r("\r\n");
+      }
     } else if ($argv[1] === "3") {
 
       // データを引数の回数分登録(Tagを登録)

@@ -1016,6 +1016,114 @@ class OkuyamaClient {
 
 
     /**
+     * マスタサーバからKeyでデータを取得する.<br>
+     * 取得データに対してJavaScriptを実行する.<br>
+     * 文字列エンコーディング指定あり.<br>
+     *
+     * @param keyStr
+     * @param scriptStr JavaScriptコード
+     * @param encoding
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
+     * @throws Exception
+     */
+    public function getValueScriptForUpdate($keyStr, $scriptStr, $encoding="UTF-8")  {
+        $ret = array(); 
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+
+        try {
+            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new Exception("The blank is not admitted on a key");
+            }
+
+            // Keyに対する無指定チェック
+            if ($scriptStr == null ||  $scriptStr === "") {
+                throw new Exception("The blank is not admitted on a Script");
+            }
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = $serverRequestBuf . "9";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($keyStr);
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+            // JavaScriptコード連結
+            $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($scriptStr);
+
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if ($serverRet[0] === "9") {
+                if ($serverRet[1] === "true") {
+
+                    // データ有り
+                    $ret[0] =$serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if ($serverRet[2] === $this->blankStr) {
+                        $ret[1] = "";
+                    } else {
+
+                        // Value文字列をBase64でデコード
+                        $ret[1] = $this->dataDecoding($serverRet[2], $encoding);
+                    }
+                } else if($serverRet[1] === "false") {
+
+                    // データなし
+                    $ret[0] = $serverRet[1];
+                    $ret[1] = null;
+                } else if($serverRet[1] === "error") {
+
+                    // エラー発生
+                    $ret[0] = $serverRet[1];
+                    $ret[1] = $serverRet[2];
+                }
+            } else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->getValueScriptForUpdate($keyStr, $encoding);
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new Exception("Execute Violation of validity");
+                }
+            }
+
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->getValueScriptForUpdate($keyStr, $encoding);
+                }
+            } else {
+                throw $e;
+            }
+        }
+        return $ret;
+    }
+
+
+    /**
      * マスタサーバからTagでKey値群を取得する.<br>
      *
      * @param tagStr

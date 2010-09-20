@@ -8,6 +8,8 @@ rem キー値をkey_aでvalueを取得
 php PhpTestSock.php 2.1 127.0.0.1 8888 key_a
 rem キー値をkey_aで取得したvalueに対してJavaScriptを実行
 php PhpTestSock.php 2.3 127.0.0.1 8888 key_a "var dataValue; var retValue = dataValue.replace('b', 'dummy'); var execRet = '1';"
+rem キー値をkey_aで取得したvalueに対してJavaScriptを実行
+php PhpTestSock.php 2.4 127.0.0.1 8888 key_a "var dataValue; var dataKey; var retValue = dataValue.replace('b', 'dummy'); if(dataKey == 'key_a') {var execRet = '2'} else {var execRet = '1'}"
 rem Tag値を自動で変えて、KeyとValueを10回登録
 php PhpTestSock.php 3 127.0.0.1 8888 10
 rem Tag値をtag1を指定して、tag1に属するKey値を取得
