@@ -9,6 +9,88 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 ・改修履歴
 ========================================================================================================
+[New -リリース不具合、antタスク作成]
+[[リリース Ver 0.8.2 - (2010/09/22)]]
+  ■Version-0.8.1にてlibフォルダにmemcached.jarを配置せずにリリースしてしまいました。
+    正しくlibフォルダにmemcached.jarを配置。
+    これによる影響は、testフォルダのテストプログラムです。
+
+
+  ■antタスクを作成
+    antタスクにて、compile、jarファイル作成、サーバ起動、テストコマンド実行等が実行できるように作成
+    いかがantコマンドへの引数とそれぞれの実行内容となる。
+    引数                      | 内容
+   ------------------------------------------------------------------------------------------------
+    compile                   | コンパイルを実行
+    jar                       | okuyamaのjarファイルを作成
+                              |
+    datanode                  | DataNodeServer起動
+    slavedatanode             | SlaveDataNodeServer起動
+    thirddatanode             | ThirdDataNodeServer起動
+    masternode                | MasterNodeServer起動
+    masternodelock            | MasterNodeServerをロック使用可能な状態で起動
+    slavemasternode           | SlaveMasterNodeServer起動
+    memcachedmasternode       | MemcachedプロトコルMasterNodeServer起動
+    transactionnode           | 分散ロック管理NodeServer起動
+    webmgr                    | Web管理コンソール用Webサーバ起動(ポート10088番)
+                              |
+    serverrun                 | datanode、slavedatanode、thirddatanode、masternode実行(本実行を行うとokuyamaの稼動テストは可能です)
+    serverrun-slave           | datanode、slavedatanode、thirddatanode、masternode、slavemasternode実行(MasterNodeを冗長化構成で起動します)
+    serverrun-memcached       | datanode、slavedatanode、thirddatanode、masternode、memcachedmasternode実行(MasterNodeをMemcachedプロトコル用のMasterNodeで冗長化構成にします)
+    serverrun-transaction     | datanode、slavedatanode、thirddatanode、masternodelock、transactionnode実行(トランザクション管理ノードも起動し分散ロックを使用可能な状態にします)
+    serverrun-webmgr          | datanode、slavedatanode、thirddatanode、masternode、webmgr実行(Web管理画面も合わせて起動します)
+                              |
+    testset                   | setコマンドを1000回実行する
+    set                       | 任意のKeyとValueを登録(ant set -Dkey=key123 -Dvalue=value123)
+    testget                   | getコマンドを1000回実行する(testsetで登録されたデータを取得する)
+    get                       | 任意のKeyでValueを取得(ant get -Dkey=key123)
+    testsettag                | Tagをセットするコマンドを500回実行する
+    testgettag                | TagからKeyとValueをGetするコマンドをtestsettagで登録したTagの種類全てに実行する(tag1、tag2、tag3、tag4の4種類)
+    testremove                | removeコマンドをtestsetで登録したKeyのうち500件に実行する
+    testadd                   | addコマンドをテストする(Key1=Value1という組み合わせで登録する)
+    testlock                  | ロック機構を使用してデータのロック、ロック中の登録、削除、ロック開放を実行する(serverrun-transactionを別コンソールで実行している場合のみ利用可能)
+
+    ●例1(2つのコンソールをbuild.xmlと同じ場所で開く)
+      コンソール1:ant serverrun
+      コンソール2:ant testset
+                  ant testget
+      ※上記でコンソール1でokuyamaのサーバ構成を起動し、コンソール2でsetコマンド実行し、完了後getコマンドを実行している。
+        実際には、コンソール1でokuyamaが起動完了まで環境によるが20秒から30秒ほどかかります。
+        そのため、30秒ほど経過後、コンソール2でのテスト実行してください。
+
+    ●例2(2つのコンソールをbuild.xmlと同じ場所で開く)
+      コンソール1:ant serverrun-transaction
+      コンソール2:ant testlock
+      ※上記でコンソール1でokuyamaのロック使用可能状態でサーバ構成を起動し、コンソール2でLock機能のテストを実行している
+        実際には、コンソール1でokuyamaが起動完了まで環境によるが20秒から30秒ほどかかります。
+        そのため、30秒ほど経過後、コンソール2でのテスト実行してください。
+
+    ●例3(2つのコンソールをbuild.xmlと同じ場所で開く)
+      コンソール1:ant serverrun-webmgr
+      コンソール2:ant testset
+                  ant set -Dkey=key123 -Dvalue=value123
+                  ant testget
+                  ant get -Dkey=key123
+                  ant testsettag
+                  ant testgettag
+                  ant testremove
+      ※上記でコンソール1でokuyamaのサーバ構成とWeb管理コンソールを起動し、コンソール2でsetコマンド実行し、任意のKey=key123,Value=value123を登録、
+        完了後getコマンドを実行、完了後任意のKey=key123でValueを取得、完了後Tagを使ってKeyとValueをset、完了後TagでKeyとValueを取得、完了後データを削除している。
+        実際には、コンソール1でokuyamaが起動完了まで環境によるが20秒から30秒ほどかかります。
+        そのため、30秒ほど経過後、コンソール2でのテスト実行してください。
+        一連の動作中同サーバの以下のURLにアクセスするとWeb画面で状況を確認できる
+        http://実行サーバIP:10088/okuyamamgr
+
+
+  ■SlaveDataNode.propertiesでのDataNode起動ポート番号を6553と6554に変更
+
+  ■直下のtestディレクトリ配下のファイルのJavaファイルの文字コードが一部Shift-JisだったためUTF-8に変更(同ディレクトリのclassファイルも修正後コンパイル済み)
+
+  ■次回リリース以降、直下の大半のbatファイルや、shファイルはexecutecommandディレクトリに移動します。
+
+
+========================================================================================================
+========================================================================================================
 [New - 機能改善]
 [[リリース Ver 0.8.1 - (2010/09/21)]]
   ■トランザクションログファイルを一定サイズで自動的にローテーションするように変更
@@ -94,7 +176,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     していたが、新たにThirdKeyMapNodesInfoを設けた。
     ThirdKeyMapNodesInfoを記述すると、レプリケーションが行われ3ノードで1組のDataNodeとして機能する。
     3ノード全てが停止しなければ稼動可能である。
-	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+    ※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
       get系のアクセスは正しく稼動している2ノードに限定される。
 
     MasterNode.propertiesの以下の設定項目で制御可能
@@ -113,7 +195,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     ・強一貫性:メイン、レプリケーションの値を検証し、新しいデータを返す(片側が削除されていた場合はデータ有りが返る)
 
     MasterNode.propertiesの以下の設定項目で制御可能
-	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+    ※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
       get系のアクセスは正しく稼動している2ノードに限定される。
     ●DataConsistencyMode
         設定値) "0"
@@ -129,7 +211,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     振り分けていたが、振り分ける割合を設定できるように変更
 
     MasterNode.propertiesの以下の設定項目で制御可能
-	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+    ※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
       get系のアクセスは正しく稼動している2ノードに限定される。
     ●BalanceRatio
         設定値) "7:3"=振り分ける割合(メインノード:レプリケーションノード)
@@ -144,7 +226,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     Xeon3430(2.4GHz)×1、メモリ4GB程度のマシン(CentOS5.4 64bit)で10秒程度に間に順次
     10000クライアントまで接続し接続完了コネクションset,get処理を開始する同時接続テストで確認。
     (C10K問題に対応)
-	※クライアントは無操作の場合は60秒で自動的に切断される
+    ※クライアントは無操作の場合は60秒で自動的に切断される
     これに伴い以下の設定項目で通信部分のパラメータを変更しチューニング可能
 
     MasterNode.propertiesの以下の設定項目で制御可能
@@ -190,23 +272,23 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 
     DataNode.propertiesの以下の設定項目で制御可能
-	●KeyNodeMaxConnectParallelExecution
-		MasterNodeMaxConnectParallelExecutionと同様
+    ●KeyNodeMaxConnectParallelExecution
+        MasterNodeMaxConnectParallelExecutionと同様
 
-	●KeyNodeMaxConnectParallelQueue=5
-		MasterNodeMaxConnectParallelQueueと同様
+    ●KeyNodeMaxConnectParallelQueue=5
+        MasterNodeMaxConnectParallelQueueと同様
 
-	●KeyNodeMaxAcceptParallelExecution=20
-		MasterNodeMaxAcceptParallelExecutionと同様
+    ●KeyNodeMaxAcceptParallelExecution=20
+        MasterNodeMaxAcceptParallelExecutionと同様
 
-	●KeyNodeMaxAcceptParallelQueue=5
-		MasterNodeMaxAcceptParallelQueueと同様
+    ●KeyNodeMaxAcceptParallelQueue=5
+        MasterNodeMaxAcceptParallelQueueと同様
 
-	●KeyNodeMaxWorkerParallelExecution=15
-		MasterNodeMaxWorkerParallelExecutionと同様
+    ●KeyNodeMaxWorkerParallelExecution=15
+        MasterNodeMaxWorkerParallelExecutionと同様
 
-	●KeyNodeMaxWorkerParallelQueue=5
-		MasterNodeMaxWorkerParallelQueueと同様
+    ●KeyNodeMaxWorkerParallelQueue=5
+        MasterNodeMaxWorkerParallelQueueと同様
 
 
   ■テストケースを追加

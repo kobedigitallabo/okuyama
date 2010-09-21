@@ -19,21 +19,75 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   ■antタスクを作成
     antタスクにて、compile、jarファイル作成、サーバ起動、テストコマンド実行等が実行できるように作成
     いかがantコマンドへの引数とそれぞれの実行内容となる。
-    引数                       内容
-    compile                    コンパイルを実行
-    jar                        okuyamaのjarファイルを作成
-    datanode                   DataNodeServer実行
-    slavedatanode              SlaveDataNodeServer実行
-    thirddatanode              ThirdDataNodeServer実行
-    masternode                 MasterNodeServer実行
-    slavemasternode            SlaveMasterNodeServer実行
-    memcachedmasternode        MemcachedプロトコルMasterNodeServer実行
-    transactionnode            分散ロック管理NodeServer実行
-    webmgr                     Web管理コンソール用Webサーバ実行(ポート10088番)
-    serverrun                  datanode、slavedatanode、thirddatanode、masternode実行
-    serverrun-slave            datanode、slavedatanode、thirddatanode、masternode、slavemasternode実行
-    serverrun-memcached        datanode、slavedatanode、thirddatanode、masternode、memcachedmasternode実行
-    serverrun-transaction      datanode、slavedatanode、thirddatanode、masternode、memcachedmasternode実行
+    引数                      | 内容
+   ------------------------------------------------------------------------------------------------
+    compile                   | コンパイルを実行
+    jar                       | okuyamaのjarファイルを作成
+                              |
+    datanode                  | DataNodeServer起動
+    slavedatanode             | SlaveDataNodeServer起動
+    thirddatanode             | ThirdDataNodeServer起動
+    masternode                | MasterNodeServer起動
+    masternodelock            | MasterNodeServerをロック使用可能な状態で起動
+    slavemasternode           | SlaveMasterNodeServer起動
+    memcachedmasternode       | MemcachedプロトコルMasterNodeServer起動
+    transactionnode           | 分散ロック管理NodeServer起動
+    webmgr                    | Web管理コンソール用Webサーバ起動(ポート10088番)
+                              |
+    serverrun                 | datanode、slavedatanode、thirddatanode、masternode実行(本実行を行うとokuyamaの稼動テストは可能です)
+    serverrun-slave           | datanode、slavedatanode、thirddatanode、masternode、slavemasternode実行(MasterNodeを冗長化構成で起動します)
+    serverrun-memcached       | datanode、slavedatanode、thirddatanode、masternode、memcachedmasternode実行(MasterNodeをMemcachedプロトコル用のMasterNodeで冗長化構成にします)
+    serverrun-transaction     | datanode、slavedatanode、thirddatanode、masternodelock、transactionnode実行(トランザクション管理ノードも起動し分散ロックを使用可能な状態にします)
+    serverrun-webmgr          | datanode、slavedatanode、thirddatanode、masternode、webmgr実行(Web管理画面も合わせて起動します)
+                              |
+    testset                   | setコマンドを1000回実行する
+    set                       | 任意のKeyとValueを登録(ant set -Dkey=key123 -Dvalue=value123)
+    testget                   | getコマンドを1000回実行する(testsetで登録されたデータを取得する)
+    get                       | 任意のKeyでValueを取得(ant get -Dkey=key123)
+    testsettag                | Tagをセットするコマンドを500回実行する
+    testgettag                | TagからKeyとValueをGetするコマンドをtestsettagで登録したTagの種類全てに実行する(tag1、tag2、tag3、tag4の4種類)
+    testremove                | removeコマンドをtestsetで登録したKeyのうち500件に実行する
+    testadd                   | addコマンドをテストする(Key1=Value1という組み合わせで登録する)
+    testlock                  | ロック機構を使用してデータのロック、ロック中の登録、削除、ロック開放を実行する(serverrun-transactionを別コンソールで実行している場合のみ利用可能)
+
+    ●例1(2つのコンソールをbuild.xmlと同じ場所で開く)
+      コンソール1:ant serverrun
+      コンソール2:ant testset
+                  ant testget
+      ※上記でコンソール1でokuyamaのサーバ構成を起動し、コンソール2でsetコマンド実行し、完了後getコマンドを実行している。
+        実際には、コンソール1でokuyamaが起動完了まで環境によるが20秒から30秒ほどかかります。
+        そのため、30秒ほど経過後、コンソール2でのテスト実行してください。
+
+    ●例2(2つのコンソールをbuild.xmlと同じ場所で開く)
+      コンソール1:ant serverrun-transaction
+      コンソール2:ant testlock
+      ※上記でコンソール1でokuyamaのロック使用可能状態でサーバ構成を起動し、コンソール2でLock機能のテストを実行している
+        実際には、コンソール1でokuyamaが起動完了まで環境によるが20秒から30秒ほどかかります。
+        そのため、30秒ほど経過後、コンソール2でのテスト実行してください。
+
+    ●例3(2つのコンソールをbuild.xmlと同じ場所で開く)
+      コンソール1:ant serverrun-webmgr
+      コンソール2:ant testset
+                  ant set -Dkey=key123 -Dvalue=value123
+                  ant testget
+                  ant get -Dkey=key123
+                  ant testsettag
+                  ant testgettag
+                  ant testremove
+      ※上記でコンソール1でokuyamaのサーバ構成とWeb管理コンソールを起動し、コンソール2でsetコマンド実行し、任意のKey=key123,Value=value123を登録、
+        完了後getコマンドを実行、完了後任意のKey=key123でValueを取得、完了後Tagを使ってKeyとValueをset、完了後TagでKeyとValueを取得、完了後データを削除している。
+        実際には、コンソール1でokuyamaが起動完了まで環境によるが20秒から30秒ほどかかります。
+        そのため、30秒ほど経過後、コンソール2でのテスト実行してください。
+        一連の動作中同サーバの以下のURLにアクセスするとWeb画面で状況を確認できる
+        http://実行サーバIP:10088/okuyamamgr
+
+
+  ■SlaveDataNode.propertiesでのDataNode起動ポート番号を6553と6554に変更
+
+  ■直下のtestディレクトリ配下のファイルのJavaファイルの文字コードが一部Shift-JisだったためUTF-8に変更(同ディレクトリのclassファイルも修正後コンパイル済み)
+
+  ■次回リリース以降、直下の大半のbatファイルや、shファイルはexecutecommandディレクトリに移動します。
+
 
 ========================================================================================================
 ========================================================================================================
