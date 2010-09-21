@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project ROOT  -->
+<project name="okuyama" default="package" basedir=".">
+	<property name="project.title"   value="okuyama" />
+	<property name="doc.dir"         value="doc" />
+	<property name="src.dir"         value="src" />
+	<property name="build.dir"       value="classes" />
+
+
+	<!-- Use Project Lib  -->
+	<path id="project.class.path">
+		<pathelement path = "classes"/>
+		<pathelement path = "lib/commons-codec-1.4.jar"/>
+		<pathelement path = "lib/javamail-1.4.1.jar"/>
+		<pathelement path = "lib/jetty-6.1.0.jar"/>
+		<pathelement path = "lib/jetty-util-6.1.0.jar"/>
+		<pathelement path = "lib/log4j-1.2.14.jar"/>
+		<pathelement path = "lib/memcached.jar"/>
+		<pathelement path = "lib/servlet-api-2.5.jar"/>
+	</path>
+
+	<!-- clean Task  -->
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete dir="okuyama.jar" />
+	</target>
+
+	<!-- setup Task  -->
+	<target name="setup">
+		<mkdir dir="${build.dir}"/>
+	</target>
+
+	<!-- compile task  -->
+	<target name="compile" depends="clean, setup">
+		<javac debug="yes" srcdir="${src.dir}" destdir="${build.dir}" encoding="UTF-8" deprecation="true">
+			<classpath refid="project.class.path"/>
+		</javac>
+		<copy todir="${build.dir}">
+			<fileset dir="${src.dir}"
+				includes="*.properties"
+			/>
+		</copy>
+	</target>
+
+	<!-- jar make task  -->
+	<target name="jar" depends="compile">
+		<jar compress="yes" jarfile="okuyama.jar" basedir="${build.dir}"/>
+	</target>
+
+
+	<target name="datanode">
+		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
+			<arg value="/Main.properties"/>
+			<arg value="/DataNode.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+	<target name="slavedatanode">
+		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
+			<arg value="/Main.properties"/>
+			<arg value="/SlaveDataNode.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+	<target name="thirddatanode">
+		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
+			<arg value="/Main.properties"/>
+			<arg value="/ThirdDataNode.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+	<target name="masternode">
+		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
+			<arg value="/Main.properties"/>
+			<arg value="/MasterNode.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+	<target name="slavemasternode">
+		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
+			<arg value="/Main.properties"/>
+			<arg value="/MasterNode2.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+	<target name="memcachedmasternode">
+		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
+			<arg value="/Main.properties"/>
+			<arg value="/MasterNodeMemcached.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+	<target name="transactionnode">
+		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
+			<arg value="/Main.properties"/>
+			<arg value="/TransactionNode.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+	<target name="webmgr">
+		<java classname="org.imdst.manager.OkuyamaManagerServer" fork="true" maxmemory="128m">
+			<arg value="10088"/>
+			<arg value="localhost:8888"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+
+
+	<target name="serverrun" depends="compile">
+		<parallel>
+			<ant target='datanode' />
+			<ant target='slavedatanode' />
+			<ant target='thirddatanode' />
+			<sequential>
+				<sleep seconds="10" />
+				<ant target='masternode' />
+			</sequential>
+		</parallel>
+	</target>
+
+	<target name="serverrun-slave" depends="compile">
+		<parallel>
+			<ant target='datanode' />
+			<ant target='slavedatanode' />
+			<ant target='thirddatanode' />
+			<sequential>
+				<sleep seconds="10" />
+				<ant target='masternode' />
+			</sequential>
+			<sequential>
+				<sleep seconds="10" />
+				<ant target='slavemasternode' />
+			</sequential>
+		</parallel>
+	</target>
+
+	<target name="serverrun-memcached" depends="compile">
+		<parallel>
+			<ant target='datanode' />
+			<ant target='slavedatanode' />
+			<ant target='thirddatanode' />
+			<sequential>
+				<sleep seconds="10" />
+				<ant target='masternode' />
+			</sequential>
+			<sequential>
+				<sleep seconds="10" />
+				<ant target='memcachedmasternode' />
+			</sequential>
+		</parallel>
+	</target>
+
+	<target name="serverrun-transaction" depends="compile">
+		<parallel>
+			<ant target='datanode' />
+			<ant target='slavedatanode' />
+			<ant target='thirddatanode' />
+			<sequential>
+				<sleep seconds="10" />
+				<ant target='masternode' />
+			</sequential>
+			<ant target='transactionnode' />
+		</parallel>
+	</target>
+
+	<target name="serverrun-webmgr" depends="compile">
+		<parallel>
+			<ant target='datanode' />
+			<ant target='slavedatanode' />
+			<ant target='thirddatanode' />
+			<sequential>
+				<sleep seconds="10" />
+				<ant target='masternode' />
+			</sequential>
+			<ant target='webmgr' />
+		</parallel>
+	</target>
+
+</project>
+
