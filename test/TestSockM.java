@@ -17,10 +17,10 @@ public class TestSockM {
         me.exec(args);
     }
 
-    // ˆø”‚Í
-    // Àsƒ^ƒCƒv 1:“o˜^ 2:æ“¾
+    // å¼•æ•°ã¯
+    // å®Ÿè¡Œã‚¿ã‚¤ãƒ— 1:ç™»éŒ² 2:å–å¾—
     // IP:Port
-    // “¯ƒXƒŒƒbƒh”
+    // åŒæ™‚ã‚¹ãƒ¬ãƒƒãƒ‰æ•°
     public void exec (String[] args) {
         try {
             long total = 0;

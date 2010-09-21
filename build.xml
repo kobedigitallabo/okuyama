@@ -9,6 +9,7 @@
 
 	<!-- Use Project Lib  -->
 	<path id="project.class.path">
+		<pathelement path = "."/>
 		<pathelement path = "classes"/>
 		<pathelement path = "lib/commons-codec-1.4.jar"/>
 		<pathelement path = "lib/javamail-1.4.1.jar"/>
@@ -48,6 +49,8 @@
 	</target>
 
 
+
+	<!-- DataNodeServer Execute task -->
 	<target name="datanode">
 		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
@@ -56,6 +59,8 @@
 		</java>
 	</target>
 
+
+	<!-- SlaveDataNodeServer Execute task -->
 	<target name="slavedatanode">
 		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
@@ -64,6 +69,8 @@
 		</java>
 	</target>
 
+
+	<!-- ThirdDataNodeServer Execute task -->
 	<target name="thirddatanode">
 		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
@@ -72,6 +79,8 @@
 		</java>
 	</target>
 
+
+	<!-- MasterNodeServer Execute task -->
 	<target name="masternode">
 		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
@@ -80,6 +89,8 @@
 		</java>
 	</target>
 
+
+	<!-- SlaveMasterNodeServer Execute task -->
 	<target name="slavemasternode">
 		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
@@ -88,6 +99,8 @@
 		</java>
 	</target>
 
+
+	<!-- MemcachedProtocolMasterNodeServer Execute task -->
 	<target name="memcachedmasternode">
 		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
@@ -96,6 +109,8 @@
 		</java>
 	</target>
 
+
+	<!-- TransactionNodeServer(LockServer) Execute task -->
 	<target name="transactionnode">
 		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
@@ -104,6 +119,8 @@
 		</java>
 	</target>
 
+
+	<!-- OkuyamaWebManagerServer(Web Appl) Execute task -->
 	<target name="webmgr">
 		<java classname="org.imdst.manager.OkuyamaManagerServer" fork="true" maxmemory="128m">
 			<arg value="10088"/>
@@ -113,51 +130,157 @@
 	</target>
 
 
+	<!-- Set Command Test Execute task -->
+	<target name="testset">
+		<java classname="TestSock">
+			<arg value="1"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="1000"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
 
+
+	<!-- Get Command Test Execute task -->
+	<target name="testget">
+		<java classname="TestSock">
+			<arg value="2"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="1000"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+
+	<!-- TagSet Command Test Execute task -->
+	<target name="testsettag">
+		<java classname="TestSock">
+			<arg value="3"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="500"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+
+	<!-- TagGet Command Test Execute task -->
+	<target name="testgettag">
+		<java classname="TestSock">
+			<arg value="4"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="1"/>
+			<arg value="tag1"/>
+			<classpath refid="project.class.path"/>
+		</java>
+		<java classname="TestSock">
+			<arg value="4"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="1"/>
+			<arg value="tag2"/>
+			<classpath refid="project.class.path"/>
+		</java>
+		<java classname="TestSock">
+			<arg value="4"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="1"/>
+			<arg value="tag3"/>
+			<classpath refid="project.class.path"/>
+		</java>
+		<java classname="TestSock">
+			<arg value="4"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="1"/>
+			<arg value="tag4"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+
+	<!-- Remove Command Test Execute task -->
+	<target name="testremove">
+		<java classname="TestSock">
+			<arg value="7"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="500"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+
+	<!-- Add Command Test Execute task -->
+	<target name="testadd">
+		<java classname="TestSock">
+			<arg value="11"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="key1"/>
+			<arg value="value1"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+
+
+
+	<!-- DataNode,SlaveDataNode,ThirdDataNode,MasterNode Execute task -->
 	<target name="serverrun" depends="compile">
 		<parallel>
 			<ant target='datanode' />
 			<ant target='slavedatanode' />
 			<ant target='thirddatanode' />
 			<sequential>
-				<sleep seconds="10" />
+				<sleep seconds="12" />
 				<ant target='masternode' />
 			</sequential>
 		</parallel>
 	</target>
 
+
+	<!-- DataNode,SlaveDataNode,ThirdDataNode,MasterNode,SlaveMasterNode Execute task -->
 	<target name="serverrun-slave" depends="compile">
 		<parallel>
 			<ant target='datanode' />
 			<ant target='slavedatanode' />
 			<ant target='thirddatanode' />
 			<sequential>
-				<sleep seconds="10" />
+				<sleep seconds="12" />
 				<ant target='masternode' />
 			</sequential>
 			<sequential>
-				<sleep seconds="10" />
+				<sleep seconds="12" />
 				<ant target='slavemasternode' />
 			</sequential>
 		</parallel>
 	</target>
 
+
+	<!-- DataNode,SlaveDataNode,ThirdDataNode,MemcachedProtocolMasterNode Execute task -->
 	<target name="serverrun-memcached" depends="compile">
 		<parallel>
 			<ant target='datanode' />
 			<ant target='slavedatanode' />
 			<ant target='thirddatanode' />
 			<sequential>
-				<sleep seconds="10" />
+				<sleep seconds="12" />
 				<ant target='masternode' />
 			</sequential>
 			<sequential>
-				<sleep seconds="10" />
+				<sleep seconds="12" />
 				<ant target='memcachedmasternode' />
 			</sequential>
 		</parallel>
 	</target>
 
+
+	<!-- DataNode,SlaveDataNode,ThirdDataNode,TransactionNode Execute task -->
 	<target name="serverrun-transaction" depends="compile">
 		<parallel>
 			<ant target='datanode' />
@@ -171,13 +294,15 @@
 		</parallel>
 	</target>
 
+
+	<!-- DataNode,SlaveDataNode,ThirdDataNode,WebManager Execute task -->
 	<target name="serverrun-webmgr" depends="compile">
 		<parallel>
 			<ant target='datanode' />
 			<ant target='slavedatanode' />
 			<ant target='thirddatanode' />
 			<sequential>
-				<sleep seconds="10" />
+				<sleep seconds="15" />
 				<ant target='masternode' />
 			</sequential>
 			<ant target='webmgr' />
@@ -185,4 +310,3 @@
 	</target>
 
 </project>
-

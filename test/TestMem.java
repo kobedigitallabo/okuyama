@@ -20,7 +20,7 @@ public class TestMem extends Thread {
         try {
 
             if (TestSockMem.args[0].equals("1")) {
-                // "DataSaveKey_threadNo_0`DataSaveKey‚¢‚¯‚é‚Æ‚±‚Ü‚Å"“o˜^
+                // "DataSaveKey_threadNo_0ï½DataSaveKeyã„ã‘ã‚‹ã¨ã“ã¾ã§"ç™»éŒ²
                 int counter = 1;
 
 
@@ -45,7 +45,7 @@ public class TestMem extends Thread {
 
             } else if (TestSockMem.args[0].equals("2")) {
 
-                // "DataSaveKey0`w’è‚µ‚½’l‚Ü‚Å"‚Åƒ‰ƒ“ƒ_ƒ€‚Éæ“¾(•W€o—Í‚È‚µ)
+                // "DataSaveKey0ï½æŒ‡å®šã—ãŸå€¤ã¾ã§"ã§ãƒ©ãƒ³ãƒ€ãƒ ã«å–å¾—(æ¨™æº–å‡ºåŠ›ãªã—)
                 int counter = 1;
 
                 MemCachedClient mc = new MemCachedClient();
@@ -55,7 +55,7 @@ public class TestMem extends Thread {
                 mc.get( new Integer(999999).toString());
 
                 String key = "DataSaveKey";
-                //RandomƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‰»
+                //Randomã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹åŒ–
                 Random rnd = new Random();
 
 
@@ -71,7 +71,7 @@ public class TestMem extends Thread {
 
             } else if (TestSockMem.args[0].equals("3")) {
 
-                // "DataSaveKey0`w’è‚µ‚½’l‚Ü‚Å"‚Åƒ‰ƒ“ƒ_ƒ€‚Éæ“¾(•W€o—Í‚ ‚è)
+                // "DataSaveKey0ï½æŒ‡å®šã—ãŸå€¤ã¾ã§"ã§ãƒ©ãƒ³ãƒ€ãƒ ã«å–å¾—(æ¨™æº–å‡ºåŠ›ã‚ã‚Š)
                 int counter = 1;
 
                 MemCachedClient mc = new MemCachedClient();
@@ -81,7 +81,7 @@ public class TestMem extends Thread {
                 mc.get( new Integer(999999).toString());
 
                 String key = "DataSaveKey";
-                //RandomƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‰»
+                //Randomã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹åŒ–
                 Random rnd = new Random();
 
 
@@ -95,7 +95,7 @@ public class TestMem extends Thread {
                 }
             } else if (TestSockMem.args[0].equals("4")) {
 
-                // "DataSaveKey0`1ƒXƒŒƒbƒh100000Œ"‚Ü‚Å“o˜^
+                // "DataSaveKey0ï½1ã‚¹ãƒ¬ãƒƒãƒ‰100000ä»¶"ã¾ã§ç™»éŒ²
                 int counter = 1;
 
 

@@ -60,7 +60,7 @@ public class Test extends Thread {
                 imdstKeyValueClient.getValue("Key4");
 
                 String key = "DataSaveKey";
-                //RandomƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‰»
+                //Randomã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹åŒ–
                 Random rnd = new Random();
 
 
@@ -88,7 +88,7 @@ public class Test extends Thread {
                 imdstKeyValueClient.getValue("Key4");
 
                 String key = "DataSaveKey";
-                //RandomƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‰»
+                //Randomã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹åŒ–
                 Random rnd = new Random();
 
 
@@ -140,7 +140,7 @@ public class Test extends Thread {
 
                 System.out.println("Connect End ThreadNo[" + this.threadNo + "]");
 
-                //RandomƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‰»
+                //Randomã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹åŒ–
                 Random rnd = new Random();
 
                 String key = "DataSaveKey";

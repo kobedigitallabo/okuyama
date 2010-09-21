@@ -18,10 +18,10 @@ public class TestSock {
         me.exec(args);
     }
 
-    // ˆø”‚Í
-    // Àsƒ^ƒCƒv 1:“o˜^ 2:æ“¾
+    // å¼•æ•°ã¯
+    // å®Ÿè¡Œã‚¿ã‚¤ãƒ— 1:ç™»éŒ² 2:å–å¾—
     // IP:Port
-    // “¯ƒXƒŒƒbƒh”
+    // åŒæ™‚ã‚¹ãƒ¬ãƒƒãƒ‰æ•°
     public void exec (String[] args) {
         try {
             long total = 0;
@@ -33,7 +33,7 @@ public class TestSock {
 
             for (int i= 0; i < threadCount; i++) {
                 if (args[0].equals("5")) {
-                    // ˆø”‚Í 5 "IP:Port" ƒXƒŒƒbƒh” Ú‘±”
+                    // å¼•æ•°ã¯ 5 "IP:Port" ã‚¹ãƒ¬ãƒƒãƒ‰æ•° æ¥ç¶šæ•°
                     m = new Test();
                     socketCount = Integer.parseInt(args[3]);
                     m.setMaxPrefix(socketCount / threadCount);
@@ -67,7 +67,7 @@ public class TestSock {
                 String pre = "  --";
                 for(int i = 1; i < 7; i++) {
                     Thread.sleep(9990);
-                    System.out.println(pre + " " + (i * 10) + "•b");
+                    System.out.println(pre + " " + (i * 10) + "ç§’");
                     pre = pre + "--";
                 }
 
@@ -75,7 +75,7 @@ public class TestSock {
                 String pre = "  --";
                 for(int i = 1; i < 7; i++) {
                     Thread.sleep(9990);
-                    System.out.println(pre + " " + (i * 10) + "•b");
+                    System.out.println(pre + " " + (i * 10) + "ç§’");
                     pre = pre + "--";
                 }
             } else if (args[0].equals("print")) {
@@ -119,14 +119,14 @@ public class TestSock {
             for (int i= 0; i < list.length; i++) {
 
                 m = (Test)list[i];
-                System.out.println("ThreadNo." + (i+1) + " = " + m.getExecCounter() + "Œ");
+                System.out.println("ThreadNo." + (i+1) + " = " + m.getExecCounter() + "ä»¶");
                 total = total + m.getExecCounter();
             }
 
 
             double one = total / threadCount;
             System.out.println("");
-            System.out.println("‡Œvˆ—Œ” = " + total + "Œ");
+            System.out.println("åˆè¨ˆå‡¦ç†ä»¶æ•° = " + total + "ä»¶");
             //System.out.println("1 Thread Avg Query Count = " + one);
             //System.out.println("QPS = " + (total / 60));
 

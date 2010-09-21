@@ -19,10 +19,10 @@ public class TestSockMem {
         me.exec(args);
     }
 
-    // ˆø”‚Í
-    // Àsƒ^ƒCƒv 1:“o˜^ 2:æ“¾
+    // å¼•æ•°ã¯
+    // å®Ÿè¡Œã‚¿ã‚¤ãƒ— 1:ç™»éŒ² 2:å–å¾—
     // IP:Port
-    // “¯ƒXƒŒƒbƒh”
+    // åŒæ™‚ã‚¹ãƒ¬ãƒƒãƒ‰æ•°
     public void exec (String[] args) {
         try {
             long total = 0;
@@ -67,7 +67,7 @@ public class TestSockMem {
                 String pre = "  --";
                 for(int i = 1; i < 7; i++) {
                     Thread.sleep(9990);
-                    System.out.println(pre + " " + (i * 10) + "•b");
+                    System.out.println(pre + " " + (i * 10) + "ç§’");
                     pre = pre + "--";
                 }
 
@@ -75,7 +75,7 @@ public class TestSockMem {
                 String pre = "  --";
                 for(int i = 1; i < 7; i++) {
                     Thread.sleep(9990);
-                    System.out.println(pre + " " + (i * 10) + "•b");
+                    System.out.println(pre + " " + (i * 10) + "ç§’");
                     pre = pre + "--";
                 }
             } else if (args[0].equals("3")) {
@@ -103,14 +103,14 @@ public class TestSockMem {
             for (int i= 0; i < list.length; i++) {
 
                 m = (TestMem)list[i];
-                System.out.println("ThreadNo." + (i+1) + " = " + m.getExecCounter() + "Œ");
+                System.out.println("ThreadNo." + (i+1) + " = " + m.getExecCounter() + "ä»¶");
                 total = total + m.getExecCounter();
             }
 
 
             double one = total / threadCount;
             System.out.println("");
-            System.out.println("‡Œvˆ—Œ” = " + total + "Œ");
+            System.out.println("åˆè¨ˆå‡¦ç†ä»¶æ•° = " + total + "ä»¶");
             //System.out.println("1 Thread Avg Query Count = " + one);
             //System.out.println("QPS = " + (total / 60));
             System.exit(1);
