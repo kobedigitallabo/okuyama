@@ -9,6 +9,34 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 ・改修履歴
 ========================================================================================================
+[New -リリース不具合、antタスク作成]
+[[リリース Ver 0.8.2 - (2010/09/22)]]
+  ■Version-0.8.1にてlibフォルダにmemcached.jarを配置せずにリリースしてしまいました。
+    正しくlibフォルダにmemcached.jarを配置。
+    これによる影響は、testフォルダのテストプログラムです。
+
+
+  ■antタスクを作成
+    antタスクにて、compile、jarファイル作成、サーバ起動、テストコマンド実行等が実行できるように作成
+    いかがantコマンドへの引数とそれぞれの実行内容となる。
+    引数                       内容
+    compile                    コンパイルを実行
+    jar                        okuyamaのjarファイルを作成
+    datanode                   DataNodeServer実行
+    slavedatanode              SlaveDataNodeServer実行
+    thirddatanode              ThirdDataNodeServer実行
+    masternode                 MasterNodeServer実行
+    slavemasternode            SlaveMasterNodeServer実行
+    memcachedmasternode        MemcachedプロトコルMasterNodeServer実行
+    transactionnode            分散ロック管理NodeServer実行
+    webmgr                     Web管理コンソール用Webサーバ実行(ポート10088番)
+    serverrun                  datanode、slavedatanode、thirddatanode、masternode実行
+    serverrun-slave            datanode、slavedatanode、thirddatanode、masternode、slavemasternode実行
+    serverrun-memcached        datanode、slavedatanode、thirddatanode、masternode、memcachedmasternode実行
+    serverrun-transaction      datanode、slavedatanode、thirddatanode、masternode、memcachedmasternode実行
+
+========================================================================================================
+========================================================================================================
 [New - 機能改善]
 [[リリース Ver 0.8.1 - (2010/09/21)]]
   ■トランザクションログファイルを一定サイズで自動的にローテーションするように変更
@@ -94,7 +122,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     していたが、新たにThirdKeyMapNodesInfoを設けた。
     ThirdKeyMapNodesInfoを記述すると、レプリケーションが行われ3ノードで1組のDataNodeとして機能する。
     3ノード全てが停止しなければ稼動可能である。
-	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+    ※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
       get系のアクセスは正しく稼動している2ノードに限定される。
 
     MasterNode.propertiesの以下の設定項目で制御可能
@@ -113,7 +141,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     ・強一貫性:メイン、レプリケーションの値を検証し、新しいデータを返す(片側が削除されていた場合はデータ有りが返る)
 
     MasterNode.propertiesの以下の設定項目で制御可能
-	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+    ※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
       get系のアクセスは正しく稼動している2ノードに限定される。
     ●DataConsistencyMode
         設定値) "0"
@@ -129,7 +157,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     振り分けていたが、振り分ける割合を設定できるように変更
 
     MasterNode.propertiesの以下の設定項目で制御可能
-	※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
+    ※3つ目のノードに対するget系のアクセスはMain、Subどちらかのノードが停止しない限りは行わない。
       get系のアクセスは正しく稼動している2ノードに限定される。
     ●BalanceRatio
         設定値) "7:3"=振り分ける割合(メインノード:レプリケーションノード)
@@ -144,7 +172,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     Xeon3430(2.4GHz)×1、メモリ4GB程度のマシン(CentOS5.4 64bit)で10秒程度に間に順次
     10000クライアントまで接続し接続完了コネクションset,get処理を開始する同時接続テストで確認。
     (C10K問題に対応)
-	※クライアントは無操作の場合は60秒で自動的に切断される
+    ※クライアントは無操作の場合は60秒で自動的に切断される
     これに伴い以下の設定項目で通信部分のパラメータを変更しチューニング可能
 
     MasterNode.propertiesの以下の設定項目で制御可能
@@ -190,23 +218,23 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 
     DataNode.propertiesの以下の設定項目で制御可能
-	●KeyNodeMaxConnectParallelExecution
-		MasterNodeMaxConnectParallelExecutionと同様
+    ●KeyNodeMaxConnectParallelExecution
+        MasterNodeMaxConnectParallelExecutionと同様
 
-	●KeyNodeMaxConnectParallelQueue=5
-		MasterNodeMaxConnectParallelQueueと同様
+    ●KeyNodeMaxConnectParallelQueue=5
+        MasterNodeMaxConnectParallelQueueと同様
 
-	●KeyNodeMaxAcceptParallelExecution=20
-		MasterNodeMaxAcceptParallelExecutionと同様
+    ●KeyNodeMaxAcceptParallelExecution=20
+        MasterNodeMaxAcceptParallelExecutionと同様
 
-	●KeyNodeMaxAcceptParallelQueue=5
-		MasterNodeMaxAcceptParallelQueueと同様
+    ●KeyNodeMaxAcceptParallelQueue=5
+        MasterNodeMaxAcceptParallelQueueと同様
 
-	●KeyNodeMaxWorkerParallelExecution=15
-		MasterNodeMaxWorkerParallelExecutionと同様
+    ●KeyNodeMaxWorkerParallelExecution=15
+        MasterNodeMaxWorkerParallelExecutionと同様
 
-	●KeyNodeMaxWorkerParallelQueue=5
-		MasterNodeMaxWorkerParallelQueueと同様
+    ●KeyNodeMaxWorkerParallelQueue=5
+        MasterNodeMaxWorkerParallelQueueと同様
 
 
   ■テストケースを追加
