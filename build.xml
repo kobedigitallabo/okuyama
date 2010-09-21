@@ -90,6 +90,16 @@
 	</target>
 
 
+	<!-- MasterNodeServerForLock Execute task -->
+	<target name="masternodelock">
+		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
+			<arg value="/Main.properties"/>
+			<arg value="/MasterNodeForLock.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+
 	<!-- SlaveMasterNodeServer Execute task -->
 	<target name="slavemasternode">
 		<java classname="org.batch.JavaMain" fork="true" maxmemory="128m">
@@ -141,6 +151,18 @@
 		</java>
 	</target>
 
+	<target name="set">
+		<java classname="TestSock">
+			<arg value="1.1"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="${key}"/>
+			<arg value="${value}"/>
+			<classpath refid="project.class.path"/>
+		</java>
+        <echo>Set Command End</echo>
+	</target>
+
 
 	<!-- Get Command Test Execute task -->
 	<target name="testget">
@@ -151,6 +173,18 @@
 			<arg value="1000"/>
 			<classpath refid="project.class.path"/>
 		</java>
+
+	</target>
+
+	<target name="get">
+		<java classname="TestSock">
+			<arg value="2.1"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="${key}"/>
+			<classpath refid="project.class.path"/>
+		</java>
+        <echo>Get Command End</echo>
 	</target>
 
 
@@ -228,6 +262,18 @@
 	</target>
 
 
+	<!-- Lock Command Test Execute task -->
+	<target name="testlock">
+		<java classname="TestSock">
+			<arg value="10"/>
+			<arg value="127.0.0.1"/>
+			<arg value="8888"/>
+			<arg value="key1"/>
+			<arg value="10"/>
+			<arg value="5"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
 
 
 	<!-- DataNode,SlaveDataNode,ThirdDataNode,MasterNode Execute task -->
@@ -287,8 +333,8 @@
 			<ant target='slavedatanode' />
 			<ant target='thirddatanode' />
 			<sequential>
-				<sleep seconds="10" />
-				<ant target='masternode' />
+				<sleep seconds="12" />
+				<ant target='masternodelock' />
 			</sequential>
 			<ant target='transactionnode' />
 		</parallel>
@@ -302,7 +348,7 @@
 			<ant target='slavedatanode' />
 			<ant target='thirddatanode' />
 			<sequential>
-				<sleep seconds="15" />
+				<sleep seconds="12" />
 				<ant target='masternode' />
 			</sequential>
 			<ant target='webmgr' />
