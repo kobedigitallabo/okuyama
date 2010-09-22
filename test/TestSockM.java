@@ -3,8 +3,8 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
-import org.imdst.client.ImdstKeyValueClient;
-import org.batch.lang.BatchException;
+import org.okuyama.imdst.client.ImdstKeyValueClient;
+import org.okuyama.base.lang.BatchException;
 
 
 public class TestSockM {
