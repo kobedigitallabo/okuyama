@@ -78,7 +78,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.fos = new FileOutputStream(new File(lineFile), true);
             this.osw = new OutputStreamWriter(this.fos, ImdstDefine.keyWorkFileEncoding);
             this.bw = new BufferedWriter (osw);
-            this.raf = new RandomAccessFile(new File(lineFile) , "rw");
+            this.raf = new RandomAccessFile(new File(lineFile) , "rwd");
 
             FileInputStream fis = new FileInputStream(new File(lineFile));
             InputStreamReader isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
@@ -135,8 +135,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             return get(key);
                         }
                     }
-                    raf.seek(seekPoint);
-                    raf.read(buf,0,oneDataLength);
+                    this.raf.seek(seekPoint);
+                    this.raf.read(buf,0,oneDataLength);
                 }
 
                 ret = new String(buf, ImdstDefine.keyWorkFileEncoding);
@@ -150,6 +150,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         return ret;
     }
 
+
     /**
      * getをオーバーライド.<br>
      * MemoryモードとFileモードで取得方法が異なる.<br>
@@ -158,6 +159,19 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * @return Object 返却値(全てStringとなる)
      */
     public Object get(Object key) {
+        return this.get(key, true);
+    }
+
+
+    /**
+     * getをオーバーライド.<br>
+     * MemoryモードとFileモードで取得方法が異なる.<br>
+     *
+     * @param key 登録kye値(全てStringとなる)
+     * @param cachePut キャッシュに対するPutの要否
+     * @return Object 返却値(全てStringとなる)
+     */
+    public Object get(Object key, boolean cachePut) {
         Object ret = null;
         if (this.memoryMode) {
             ret = super.get(key);
@@ -190,8 +204,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                     synchronized (sync) {
                         if (raf != null) {
-                            raf.seek(seekPoint);
-                            raf.read(buf,0,oneDataLength);
+                            this.raf.seek(seekPoint);
+                            this.raf.read(buf,0,oneDataLength);
                         } else {
                             return null;
                         }
@@ -205,7 +219,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     buf = null;
 
                     // キャッシュに登録
-                    this.valueCacheMap.put(key, ret);
+                    if (cachePut) this.valueCacheMap.put(key, ret);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -245,8 +259,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 // seek計算
                 seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
 
-                raf.seek(seekPoint);
-                raf.read(buf,0,oneDataLength);
+                this.raf.seek(seekPoint);
+                this.raf.read(buf,0,oneDataLength);
 
                 for (; i < buf.length; i++) {
                     if (buf[i] == 38) break;
@@ -384,13 +398,15 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             }
 
                             this.bw.write(writeBuf.toString());
+
                             this.bw.flush();
                             this.lineCount++;
                             super.put(key, new Integer(lineCount));
                             this.nowKeySize = super.size();
                         }
                     } else {
-                        // すでにファイル上に存在する
+
+                        // すでにファイルに存在する
                         line = lineInteger.intValue();
 
                         // seek計算
@@ -400,12 +416,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             if (vacuumExecFlg) {
                                 // Vacuum差分にデータを登録
                                 Object[] diffObj = {"1", key, value};
-                                vacuumDiffDataList.add(diffObj);
+                                this.vacuumDiffDataList.add(diffObj);
                             }
 
-                            if (raf != null) {
-                                raf.seek(seekPoint);
-                                raf.write(writeBuf.toString().getBytes(),0,oneDataLength);
+                            // Seek位置からデータをストア
+                            if (this.raf != null) {
+                                this.raf.seek(seekPoint);
+                                this.raf.write(writeBuf.toString().getBytes(),0,oneDataLength);
                             }
                         }
                     }

@@ -68,7 +68,7 @@ public class KeyMapManager extends Thread {
     // 起動時にトランザクションログから復旧
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
     private static int updateInterval = 30000;
-    private static int intervalCount =  2;
+    private static int intervalCount =  20;
 
     // workMap(トランザクションログ)ファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
@@ -107,12 +107,12 @@ public class KeyMapManager extends Thread {
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
-    private int vacuumStartLimit = 10000;
+    private int vacuumStartLimit = 1000000;
 
     // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
-    private int vacuumStartCompulsionLimit = 10000;
+    private int vacuumStartCompulsionLimit = 2000000;
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     private int vacuumExecAfterAccessTime = 30000;
@@ -443,7 +443,7 @@ public class KeyMapManager extends Thread {
                         data = keyNoddes[0] + "!0";
                     } else {
 
-                        String tmp = keyMapObjGet(key);
+                        String tmp = keyMapObjGet(key, false);
                         String[] keyNoddes = keyNode.split("!");
 
                         if (tmp != null) {
@@ -585,6 +585,7 @@ public class KeyMapManager extends Thread {
         return ret;
     }
 
+
     // キーを指定することでノードを削除する
     public String removeKeyPair(String key, String transactionCode) throws BatchException {
         String ret = null;
@@ -593,7 +594,7 @@ public class KeyMapManager extends Thread {
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
 
-                    ret =  (String)keyMapObjGet(key);
+                    ret =  (String)keyMapObjGet(key, false);
 
                     // 削除を記録
                     if (this.moveAdjustmentDataMap != null) {
@@ -1052,11 +1053,27 @@ public class KeyMapManager extends Thread {
     /**
      * keyMapObjに対するアクセスメソッド.<br>
      * get<br>
+     *
+     * @param key キー値
+     * @return String
      */
     private String keyMapObjGet(String key) {
+        return this.keyMapObjGet(key, true);
+    }
+
+
+    /**
+     * keyMapObjに対するアクセスメソッド.<br>
+     * get<br>
+     *
+     * @param key キー値
+     * @param cachePut キャッシュへの登録要否
+     * @return String
+     */
+    private String keyMapObjGet(String key, boolean cachePut) {
         this.lastAccess = System.currentTimeMillis();
         if (key != null) {
-            return (String)this.keyMapObj.get(key);
+            return (String)this.keyMapObj.get(key, cachePut);
         } else {
             return null;
         }
@@ -1177,7 +1194,7 @@ public class KeyMapManager extends Thread {
                         allDataBuf.append(allDataSep);
                         allDataBuf.append(key);
                         allDataBuf.append(KeyMapManager.workFileSeq);
-                        allDataBuf.append(this.keyMapObjGet(key));
+                        allDataBuf.append(this.keyMapObjGet(key, false));
                         allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
 
                         counter++;
@@ -1413,7 +1430,7 @@ public class KeyMapManager extends Thread {
                                               append(KeyMapManager.workFileSeq).
                                               append(writeKey).
                                               append(KeyMapManager.workFileSeq).
-                                              append(this.keyMapObjGet(writeKey)).
+                                              append(this.keyMapObjGet(writeKey, false)).
                                               append(KeyMapManager.workFileSeq).
                                               append(writeCurrentTime).
                                               append(KeyMapManager.workFileSeq).
@@ -1519,7 +1536,7 @@ public class KeyMapManager extends Thread {
 
                     // 送信すべきデータのみ送る
                     if (sendFlg) {
-                        String data = this.keyMapObjGet(key);
+                        String data = this.keyMapObjGet(key, false);
                         if (data != null) {
                             if (tagFlg) {
 
@@ -1638,7 +1655,7 @@ public class KeyMapManager extends Thread {
                     // 送信すべきデータのみ送る
                     if (sendFlg) {
 
-                        String data = this.keyMapObjGet(key);
+                        String data = this.keyMapObjGet(key, false);
                         if (data != null) {
 
                             if (tagFlg) {
@@ -1973,10 +1990,10 @@ public class KeyMapManager extends Thread {
 
                 key = key.substring(0, lastIdx+1);
 
-                System.out.println("Tag=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(tag) + "]");
+                System.out.println("Tag=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(tag, false) + "]");
 
             } else {
-                System.out.println("Key=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(key) + "]");
+                System.out.println("Key=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(key, false) + "]");
             }
         }
         System.out.println("-------------------------------------- Dump End --------------------------------------");
