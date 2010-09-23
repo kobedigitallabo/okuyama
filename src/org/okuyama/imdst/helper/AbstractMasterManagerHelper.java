@@ -861,11 +861,19 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
                     // 接続
                     keyNodeConnector = new KeyNodeConnector(nodeName, port, connectionFullName);
-                    keyNodeConnector.connect(ImdstDefine.nodeConnectionOpenPingTimeout);
+                    if (tryCount > 0) {
+                        keyNodeConnector.connect(ImdstDefine.nodeConnectionOpenPingTimeout * 5);
+                    } else {
+                        keyNodeConnector.connect(ImdstDefine.nodeConnectionOpenPingTimeout);
+                    }
                 }
 
                 // タイムアウト設定
-                keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionPingTimeout);
+                if (tryCount > 0) {
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionPingTimeout * 5);
+                } else {
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionPingTimeout);
+                }
 
                 // Key値でデータノード名を保存
                 StringBuffer buf = new StringBuffer();

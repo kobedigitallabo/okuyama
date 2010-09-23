@@ -233,7 +233,7 @@ public class ImdstDefine {
     //public static final int nodeConnectionOpenTimeout = 10000;
 
     // Node間のコネクションReadタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionTimeout = 4000;
+    public static final int nodeConnectionTimeout = 7000;
     //public static final int nodeConnectionTimeout = 15000;
 
     public static final int nodeConnectionTimeout4RecoverMode = 60000 * 5;

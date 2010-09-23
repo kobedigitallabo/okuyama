@@ -63,7 +63,16 @@ public class TestSock {
             startFlg = true;
 
             System.out.println("  ------- Start -------");
-            if (args[0].equals("set")) {
+            if (args[0].equals("setmore")) {
+                for(int i = 1; i < 1000; i++) {
+                    Thread.sleep(5000);
+                    System.out.println("-- " + (i * 5) + "秒");
+                    for (int ii= 0; ii < list.length; ii++) {
+                        m = (Test)list[ii];
+                        System.out.println(m.getExecCounter());
+                    }
+                } 
+            } else if (args[0].equals("set")) {
                 String pre = "  --";
                 for(int i = 1; i < 7; i++) {
                     Thread.sleep(9990);

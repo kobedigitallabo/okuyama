@@ -68,7 +68,7 @@ public class KeyMapManager extends Thread {
     // 起動時にトランザクションログから復旧
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
     private static int updateInterval = 30000;
-    private static int intervalCount =  20;
+    private static int intervalCount =  2;
 
     // workMap(トランザクションログ)ファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
@@ -107,12 +107,12 @@ public class KeyMapManager extends Thread {
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
-    private int vacuumStartLimit = 200000;
+    private int vacuumStartLimit = 10000;
 
     // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
-    private int vacuumStartCompulsionLimit = 1000000;
+    private int vacuumStartCompulsionLimit = 10000;
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     private int vacuumExecAfterAccessTime = 30000;

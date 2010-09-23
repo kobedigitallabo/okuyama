@@ -78,7 +78,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.fos = new FileOutputStream(new File(lineFile), true);
             this.osw = new OutputStreamWriter(this.fos, ImdstDefine.keyWorkFileEncoding);
             this.bw = new BufferedWriter (osw);
-            this.raf = new RandomAccessFile(new File(lineFile) , "r");
+            this.raf = new RandomAccessFile(new File(lineFile) , "rw");
 
             FileInputStream fis = new FileInputStream(new File(lineFile));
             InputStreamReader isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
@@ -274,7 +274,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * @param value 登録value値(全てStringとなる)
      * @return Object 返却値(Fileモード時は返却値は常にnull)
      */
-    public Object put(Object key, Object value) {
+/*    public Object put(Object key, Object value) {
         Object ret = null;
         if (this.memoryMode) {
             ret = super.put(key, value);
@@ -327,7 +327,100 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             }
         }
         return ret;
+    }*/
+
+
+    /**
+     * putをオーバーライド.<br>
+     * MemoryモードとFileモードで保存方法が異なる.<br>
+     *
+     * @param key 登録kye値(全てStringとなる)
+     * @param value 登録value値(全てStringとなる)
+     * @return Object 返却値(Fileモード時は返却値は常にnull)
+     */
+    public Object put(Object key, Object value) {
+        Object ret = null;
+        if (this.memoryMode) {
+            ret = super.put(key, value);
+        } else {
+            StringBuffer writeBuf = new StringBuffer();
+            int valueSize = (value.toString()).length();
+
+            try {
+
+                // キャッシュから削除
+                if(this.valueCacheMap.containsKey(key))
+                    this.valueCacheMap.remove(key);
+
+                if (readObjectFlg == true) {
+
+                    int line = 0;
+                    Integer lineInteger = null;
+                    long seekPoint = 0L;
+
+                    writeBuf.append((String)value);
+
+                    // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
+                    // 足りない文字列は固定の"&"で補う(38)
+                    byte[] appendDatas = new byte[oneDataLength - valueSize];
+
+                    for (int i = 0; i < appendDatas.length; i++) {
+                        appendDatas[i] = 38;
+                    }
+
+                    writeBuf.append(new String(appendDatas));
+                    writeBuf.append("\n");
+
+
+                    if ((lineInteger = (Integer)super.get(key)) == null) {
+
+                        // 書き込む行を決定
+                        synchronized (sync) {
+
+                            if (vacuumExecFlg) {
+                                // Vacuum差分にデータを登録
+                                Object[] diffObj = {"1", key, value};
+                                vacuumDiffDataList.add(diffObj);
+                            }
+
+                            this.bw.write(writeBuf.toString());
+                            this.bw.flush();
+                            this.lineCount++;
+                            super.put(key, new Integer(lineCount));
+                            this.nowKeySize = super.size();
+                        }
+                    } else {
+                        // すでにファイル上に存在する
+                        line = lineInteger.intValue();
+
+                        // seek計算
+                        seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
+
+                        synchronized (sync) {
+                            if (vacuumExecFlg) {
+                                // Vacuum差分にデータを登録
+                                Object[] diffObj = {"1", key, value};
+                                vacuumDiffDataList.add(diffObj);
+                            }
+
+                            if (raf != null) {
+                                raf.seek(seekPoint);
+                                raf.write(writeBuf.toString().getBytes(),0,oneDataLength);
+                            }
+                        }
+                    }
+                } else {
+                    super.put(key, value);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                // 致命的
+                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - put - Error [" + e.getMessage() + "]");
+            }
+        }
+        return ret;
     }
+
 
 
     /**

@@ -101,23 +101,20 @@ public class KeyNodeConnector {
             if (ret == null) throw new IOException("readLine Ret = null");
             retry = false;
         } catch (Exception e) {
-            if (e instanceof SocketException || e instanceof IOException) {
-                if (this.retryConnectMode == true && this.retry == false) {
-                    this.retry = true;
-                    try {
-                        if (this.socket != null) socket.close();
-                        this.connect();
 
-                        // リトライフラグが有効でかつ、送信文字が指定されている場合は再送後、取得
-                        if (retryStr != null) {
-                            this.println(retryStr);
-                            this.flush();
-                        }
-                        ret = this.readLine();
-                    } catch(Exception ee) {
-                        throw e;
+            if (this.retryConnectMode == true && this.retry == false) {
+                this.retry = true;
+                try {
+                    if (this.socket != null && this.socket.isClosed() != true) socket.close();
+                    this.connect();
+
+                    // リトライフラグが有効でかつ、送信文字が指定されている場合は再送後、取得
+                    if (retryStr != null) {
+                        this.println(retryStr);
+                        this.flush();
                     }
-                } else {
+                    ret = this.readLine();
+                } catch(Exception ee) {
                     throw e;
                 }
             } else {
@@ -144,17 +141,14 @@ public class KeyNodeConnector {
             this.pw.println(str);
             this.retry = false;
         } catch (Exception e) {
-            if (e instanceof SocketException || e instanceof IOException) {
-                if (this.retryConnectMode == true && this.retry == false) {
-                    this.retry = true;
-                    try {
-                        if (this.socket != null) socket.close();
-                        this.connect();
-                        this.println(str);
-                    } catch(Exception ee) {
-                        throw e;
-                    }
-                } else {
+
+            if (this.retryConnectMode == true && this.retry == false) {
+                this.retry = true;
+                try {
+                    if (this.socket != null && this.socket.isClosed() != true) socket.close();
+                    this.connect();
+                    this.println(str);
+                } catch(Exception ee) {
                     throw e;
                 }
             } else {

@@ -45,7 +45,29 @@ public class Test extends Thread {
                     }
                     this.execCounter++;
                 }
+            } else if (TestSock.args[0].equals("setmore")) {
+                int counter = 1;
 
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+
+                String[] infos = TestSock.args[1].split(",");
+                imdstKeyValueClient.setConnectionInfos(infos);
+
+                imdstKeyValueClient.autoConnect();
+                imdstKeyValueClient.setValue("Key1", "Value1");
+
+                Random rnd = new Random();
+
+                String key = "DataSaveKey_" + threadNo + "_";
+                String value= "Value012345678901234567890123456789_" + threadNo + "_";
+                while(true &&  TestSock.startFlg){
+                    for (int i = 0; i < 5000000; i++) {
+                        if(!imdstKeyValueClient.setValue(key + i, value + i)) {
+                            System.out.println("Error");
+                        }
+                        this.execCounter++;
+                    }
+                }
             } else if (TestSock.args[0].equals("get")) {
                 int counter = 1;
 
