@@ -3,15 +3,15 @@ package test.job;
 import java.io.*;
 import java.net.*;
 
-import org.okuyama.base.lang.BatchException;
-import org.okuyama.base.job.AbstractJob;
-import org.okuyama.base.job.AbstractHelper;
-import org.okuyama.base.job.IJob;
-import org.okuyama.base.util.ILogger;
-import org.okuyama.base.util.LoggerFactory;
-import org.okuyama.imdst.util.KeyMapManager;
-import org.okuyama.imdst.util.StatusUtil;
-import org.okuyama.imdst.util.JavaSystemApi;
+import okuyama.base.lang.BatchException;
+import okuyama.base.job.AbstractJob;
+import okuyama.base.job.AbstractHelper;
+import okuyama.base.job.IJob;
+import okuyama.base.util.ILogger;
+import okuyama.base.util.LoggerFactory;
+import okuyama.imdst.util.KeyMapManager;
+import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.JavaSystemApi;
 
 /**
  * Serverのリソース全般を管理する.<br>
