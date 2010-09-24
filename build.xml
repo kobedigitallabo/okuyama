@@ -52,7 +52,7 @@
 
 	<!-- DataNodeServer Execute task -->
 	<target name="datanode">
-		<java classname="org.okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/DataNode.properties"/>
 			<classpath refid="project.class.path"/>
@@ -62,7 +62,7 @@
 
 	<!-- SlaveDataNodeServer Execute task -->
 	<target name="slavedatanode">
-		<java classname="org.okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/SlaveDataNode.properties"/>
 			<classpath refid="project.class.path"/>
@@ -72,7 +72,7 @@
 
 	<!-- ThirdDataNodeServer Execute task -->
 	<target name="thirddatanode">
-		<java classname="org.okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/ThirdDataNode.properties"/>
 			<classpath refid="project.class.path"/>
@@ -82,7 +82,7 @@
 
 	<!-- MasterNodeServer Execute task -->
 	<target name="masternode">
-		<java classname="org.okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/MasterNode.properties"/>
 			<classpath refid="project.class.path"/>
@@ -92,7 +92,7 @@
 
 	<!-- MasterNodeServerForLock Execute task -->
 	<target name="masternodelock">
-		<java classname="org.okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/MasterNodeForLock.properties"/>
 			<classpath refid="project.class.path"/>
@@ -102,7 +102,7 @@
 
 	<!-- SlaveMasterNodeServer Execute task -->
 	<target name="slavemasternode">
-		<java classname="org.okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/MasterNode2.properties"/>
 			<classpath refid="project.class.path"/>
@@ -112,7 +112,7 @@
 
 	<!-- MemcachedProtocolMasterNodeServer Execute task -->
 	<target name="memcachedmasternode">
-		<java classname="org.okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/MasterNodeMemcached.properties"/>
 			<classpath refid="project.class.path"/>
@@ -122,7 +122,7 @@
 
 	<!-- TransactionNodeServer(LockServer) Execute task -->
 	<target name="transactionnode">
-		<java classname="org.okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/TransactionNode.properties"/>
 			<classpath refid="project.class.path"/>
@@ -132,7 +132,7 @@
 
 	<!-- OkuyamaWebManagerServer(Web Appl) Execute task -->
 	<target name="webmgr">
-		<java classname="org.imdst.manager.OkuyamaManagerServer" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.imdst.manager.OkuyamaManagerServer" fork="true" maxmemory="128m">
 			<arg value="10088"/>
 			<arg value="localhost:8888"/>
 			<classpath refid="project.class.path"/>

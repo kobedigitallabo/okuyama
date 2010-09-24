@@ -4,8 +4,8 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
-import org.okuyama.imdst.client.ImdstKeyValueClient;
-import org.okuyama.base.lang.BatchException;
+import okuyama.imdst.client.ImdstKeyValueClient;
+import okuyama.base.lang.BatchException;
 
 public class MTest extends Thread {
     private boolean endFlg = false;

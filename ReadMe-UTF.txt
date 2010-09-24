@@ -1072,7 +1072,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   また、クライアントとマスタノード間の通信は試験的にBase64にてエンコーディングした文字列を使用しています。
 
 
-
+[インストール方法]
 [起動方法]
  ※Windows環境
 
@@ -1080,7 +1080,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
               1台のマシン上で稼動するようなサンプル設定ファイルが同梱されています。
               それぞれのノード台数
               マスタノード:1台
-              データノード:2台(2インスタンス×2(マスター、スレーブ))
+              データノード:2台(2インスタンス×3(マスター、スレーブ、サード))
 
             2.各ノードの使用ポートは以下となります。
               マスタノード:8888
@@ -1126,7 +1126,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
         2.メモリ上限を256MBとしています
 
  3.SlaveDataNode起動
-   簡易的なスレーブ用DataNode起動用バッチファイルを用意しています。
+   簡易的なスレーブ用SlaveDataNode起動用バッチファイルを用意しています。
    本ファイルと同一ディレクトリにある、execSlaveDataNode.batを実行してください。
    2つのデータノードが同時に起動します。
    設定ファイルはclasses\SlaveDataNode.propertiesを参照しています。
@@ -1134,6 +1134,18 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
    ※ServerStopファイルが存在するとサーバはDataNodeは起動しません。
    前提:1.java.exeにPATHが通っている
         2.メモリ上限を256MBとしています
+
+
+ 3.ThirdDataNode起動
+   簡易的なスレーブ用ThirdDataNode起動用バッチファイルを用意しています。
+   本ファイルと同一ディレクトリにある、execThirdDataNode.batを実行してください。
+   2つのデータノードが同時に起動します。
+   設定ファイルはclasses\SlaveDataNode.propertiesを参照しています。
+   停止方法はCtrl+Cをプロンプトで実行
+   ※ServerStopファイルが存在するとサーバはDataNodeは起動しません。
+   前提:1.java.exeにPATHが通っている
+        2.メモリ上限を256MBとしています
+
 
  4.TransactionNode起動
    簡易的な分散Lock用TransactionNode起動用バッチファイルを用意しています。
