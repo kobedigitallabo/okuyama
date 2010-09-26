@@ -45,6 +45,68 @@ public class Test extends Thread {
                     }
                     this.execCounter++;
                 }
+            } else if (TestSock.args[0].equals("getloop")) {
+                int counter = 1;
+
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+
+                String[] infos = TestSock.args[1].split(",");
+                imdstKeyValueClient.setConnectionInfos(infos);
+
+                imdstKeyValueClient.autoConnect();
+                imdstKeyValueClient.setValue("Key1", "Value1");
+
+                Random rnd = new Random();
+
+                String key = "DataSaveKey_20100101115959999_" + threadNo + "_";
+                int match = 0;
+                int noMatch = 0;
+
+                while(true &&  TestSock.startFlg){
+
+                    String[] ret = imdstKeyValueClient.getValue(key + rnd.nextInt(25000));
+                    if (!ret[0].equals("true")) {
+                        //System.out.println("Data Not Found");
+                        noMatch++;
+                    } else {
+                       //System.out.println("Data Match");
+                       match++;
+                    }
+
+                    if ((match % 2500) == 0) System.out.println("match=[" + match + "]");
+                    if ((this.execCounter % 200) == 0) Thread.sleep(50);
+                    if ((this.execCounter % 500) == 0) Thread.sleep(100);
+                    if ((this.execCounter % 1000) == 0) Thread.sleep(500);
+
+                    this.execCounter++;
+                }
+
+            } else if (TestSock.args[0].equals("setloop")) {
+                int counter = 1;
+
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+
+                String[] infos = TestSock.args[1].split(",");
+                imdstKeyValueClient.setConnectionInfos(infos);
+
+                imdstKeyValueClient.autoConnect();
+                imdstKeyValueClient.setValue("Key1", "Value1");
+
+                Random rnd = new Random();
+
+                String key = "DataSaveKey_20100101115959999_" + threadNo + "_";
+                String value= "Value012345678901234567890123456789_,Value012345678901234567890123456789_,Value012345678901234567890123456789_" + threadNo + "_";
+                while(true &&  TestSock.startFlg){
+                    int rndInt = rnd.nextInt(25000);
+                    if(!imdstKeyValueClient.setValue(key + rndInt, value + rndInt)) {
+                        System.out.println("Error");
+                    }
+
+                    if ((this.execCounter % 200) == 0) Thread.sleep(50);
+                    if ((this.execCounter % 300) == 0) Thread.sleep(100);
+                    if ((this.execCounter % 500) == 0) Thread.sleep(500);
+                    this.execCounter++;
+                }
             } else if (TestSock.args[0].equals("setmore")) {
                 int counter = 1;
 

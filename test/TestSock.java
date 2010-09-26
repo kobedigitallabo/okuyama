@@ -63,7 +63,26 @@ public class TestSock {
             startFlg = true;
 
             System.out.println("  ------- Start -------");
-            if (args[0].equals("setmore")) {
+            if (args[0].equals("getloop")) {
+                for(int i = 1; i < 1000; i++) {
+                    Thread.sleep(5000);
+                    System.out.println("-- " + (i * 5) + "秒");
+                    for (int ii= 0; ii < list.length; ii++) {
+                        m = (Test)list[ii];
+                        System.out.println(m.getExecCounter());
+                    }
+                } 
+
+            } else if (args[0].equals("setloop")) {
+                for(int i = 1; i < 1000; i++) {
+                    Thread.sleep(5000);
+                    System.out.println("-- " + (i * 5) + "秒");
+                    for (int ii= 0; ii < list.length; ii++) {
+                        m = (Test)list[ii];
+                        System.out.println(m.getExecCounter());
+                    }
+                } 
+            } else if (args[0].equals("setmore")) {
                 for(int i = 1; i < 1000; i++) {
                     Thread.sleep(5000);
                     System.out.println("-- " + (i * 5) + "秒");
