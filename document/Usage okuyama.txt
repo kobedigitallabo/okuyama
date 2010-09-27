@@ -51,17 +51,16 @@ Try is a windows environment.
     C:\okuyama-0.8.2>ant set -Dkey=ExampleKey -Dvalue=ExampleValue
 
     The output is as follows
-  ┌─────────────────────────────────┐
-  │C:\okuyama-0.8.2>ant set -Dkey=ExampleKey -Dvalue=ExampleValue    │
-  │Buildfile: build.xml                                              │
-  │                                                                  │
-  │set:                                                              │
-  │ [java] 0milli second                                             │
-  │ [echo] Set Command End                                           │
-  │                                                                  │
-  │BUILD SUCCESSFUL                                                  │
-  │Total time: 0 seconds                                             │
-  └─────────────────────────────────┘
+
+      C:\okuyama-0.8.2>ant set -Dkey=ExampleKey -Dvalue=ExampleValue
+      Buildfile: build.xml
+      
+      set:
+      [java] 0milli second
+      [echo] Set Command End
+      
+      BUILD SUCCESSFUL
+      Total time: 0 seconds
 
 
  2.You can get registered with the following command
@@ -69,34 +68,29 @@ Try is a windows environment.
     C:\okuyama-0.8.2>ant get -Dkey=ExampleKey
 
     The output is as follows
-  ┌─────────────────────────────────┐
-  │C:\okuyama-0.8.2>ant get -Dkey=ExampleKey                         │
-  │Buildfile: build.xml                                              │
-  │                                                                  │
-  │get:                                                              │
-  │ [java] ExampleValue                                              │
-  │ [java] 0milli second                                             │
-  │ [echo] Get Command End                                           │
-  │                                                                  │
-  │BUILD SUCCESSFUL                                                  │
-  │Total time: 0 seconds                                             │
-  └─────────────────────────────────┘
+
+      C:\okuyama-0.8.2>ant get -Dkey=ExampleKey
+      Buildfile: build.xml
+
+      get:
+      [java] ExampleValue
+      [java] 0milli second
+      [echo] Get Command End
+
+      BUILD SUCCESSFUL
+      Total time: 0 seconds
 
 
  3.You can automatically register the value of 1000 with the following command
    Example
     C:\okuyama-0.8.2>ant testset
+    Buildfile: build.xml
 
-  ┌─────────────────────────────────┐
-  │C:\okuyama-0.8.2>ant testset                                      │
-  │Buildfile: build.xml                                              │
-  │                                                                  │
-  │testset:                                                          │
-  │     [java] 2413milli second                                      │
-  │                                                                  │
-  │BUILD SUCCESSFUL                                                  │
-  │Total time: 3 seconds                                             │
-  └─────────────────────────────────┘
+    testset:
+      [java] 2413milli second
+
+    BUILD SUCCESSFUL
+    Total time: 3 seconds
 
 
  4.Gets the value of 1,000 previously registered with the following command
