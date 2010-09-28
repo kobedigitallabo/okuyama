@@ -3,31 +3,36 @@ import java.io.*;
 
 import java.util.concurrent.locks.*;
 import java.util.*;
-
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class Main extends Thread {
 
     public volatile int name = -1;
 
-    public static int dataSize = 1000000;
+    public static int dataSize = 2000000;
 
-
-    public static FileHashMap fileHashMap = null;
+    public static FileHashMap[] fileHashMaps = null;
 
     public static void main(String[] args) {
-        fileHashMap = new FileHashMap();
+        fileHashMaps = new FileHashMap[2];
+        String[] dirs1 = {"C:/work/java/okuyama/trunk/work/data/data1/","C:/work/java/okuyama/trunk/work/data/data2/","C:/work/java/okuyama/trunk/work/data/data3/","C:/work/java/okuyama/trunk/work/data/data4/","C:/work/java/okuyama/trunk/work/data/data5/","C:/work/java/okuyama/trunk/work/data/data6/","C:/work/java/okuyama/trunk/work/data/data7/","C:/work/java/okuyama/trunk/work/data/data8/"};
+        String[] dirs2 = {"X:/data/data1/","X:/data/data2/","X:/data/data3/","X:/data/data4/","X:/data/data5/","X:/data/data6/","X:/data/data7/","X:/data/data8/"};
+        fileHashMaps[0] = new FileHashMap(dirs1);
+        fileHashMaps[1] = new FileHashMap(dirs2);
 
         Main[] me = new Main[Integer.parseInt(args[0])];
 
 
         try {
             long start2 = System.nanoTime();
-            fileHashMap.put("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_20100101235959999_1_177999", "123");
+
+
+            fileHashMaps[getHashCode("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201_0_848558") % fileHashMaps.length].put("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201_0_848558", "123");
             long end2 = System.nanoTime();
             System.out.println((end2 - start2));
 
             start2 = System.nanoTime();
-            fileHashMap.get("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_20100101235959999_1_177999");
+            fileHashMaps[getHashCode("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201_0_177999") % fileHashMaps.length].get("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201_0_177999");
             end2 = System.nanoTime();
             System.out.println((end2 - start2));
 
@@ -51,26 +56,49 @@ public class Main extends Thread {
         this.name = setName;
     }
 
+
+    public static int getHashCode(String key) {
+        int index = key.hashCode();
+        if (index < 0) {
+            index = index - index - index;
+        }
+
+        return index;
+    } 
+
+
     public void run() {
         exec();
     }
 
     public void exec() {
-
+// getHashCode() % fileHashMaps.length
         long start1 = 0L;
         long end1 = 0L;
         Random rdn = new Random();
+
         long start = System.currentTimeMillis();
         for (int i = 0; i < dataSize; i++) {
-            fileHashMap.get("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_20100101235959999_" + this.name + "_" + i);
-            //fileHashMap.get("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_20100101235959999_" + this.name + "_" + rdn.nextInt(10000));
+
+            String rndKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(2000000);
+            String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
+            if ((i % 10000) == 0) {
+                if (var == null) break;
+                long end2 = System.currentTimeMillis();
+                System.out.println(i + "=" + (end2 - start1) + "[" + var + "]");
+                start1 = System.currentTimeMillis();
+            }
         }
         long end = System.currentTimeMillis();
         System.out.println("Data Read Time = [" + (end - start) + "]");
 
+        System.out.println("getCacheSize-1[" + fileHashMaps[0].getCacheSize() + "]");
+        System.out.println("getCacheSize-2[" + fileHashMaps[1].getCacheSize() + "]");
         start = System.currentTimeMillis();
+        start1 = System.currentTimeMillis();
         for (int i = 0; i < dataSize; i++) {
-            fileHashMap.put("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_20100101235959999_" + this.name + "_" + i, new Integer(i).toString());
+            String putKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + this.name + "_" + i;
+            fileHashMaps[getHashCode(putKey) % fileHashMaps.length].put(putKey, new Integer(i).toString() + "_" + bigIdx);
             if ((i % 10000) == 0) {
                 end1 = System.currentTimeMillis();
                 System.out.println(i + "=" + (end1 - start1));
@@ -80,18 +108,35 @@ public class Main extends Thread {
         end = System.currentTimeMillis();
         System.out.println((end - start));
         System.out.println("Data Write Time = [" + (end - start) + "]");
+        System.out.println("getCacheSize-1[" + fileHashMaps[0].getCacheSize() + "]");
+        System.out.println("getCacheSize-2[" + fileHashMaps[1].getCacheSize() + "]");
+        System.out.println("------------------ END-1 -------------------");
+
 
         start = System.currentTimeMillis();
-        for (int i = 0; i < dataSize; i++) {
+        for (int i = dataSize; i < dataSize * 2; i++) {
 
-            fileHashMap.get("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_20100101235959999_" + this.name + "_" + rdn.nextInt(dataSize));
+            String rndKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(2000000);
+            String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
+            if ((i % 10000) == 0) {
+                if (var == null) break;
+                long end2 = System.currentTimeMillis();
+                System.out.println(i + "=" + (end2 - start1) + "[" + var + "]");
+                start1 = System.currentTimeMillis();
+            }
         }
         end = System.currentTimeMillis();
         System.out.println("Data Read Time = [" + (end - start) + "]");
 
+        System.out.println("getCacheSize-1[" + fileHashMaps[0].getCacheSize() + "]");
+        System.out.println("getCacheSize-2[" + fileHashMaps[1].getCacheSize() + "]");
+
         start = System.currentTimeMillis();
-        for (int i = 0; i < dataSize; i++) {
-            fileHashMap.put("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_20100101235959999_" + this.name + "_" + rdn.nextInt(dataSize), new Integer(i).toString());
+        start1 = System.currentTimeMillis();
+
+        for (int i = dataSize; i < dataSize * 2; i++) {
+            String putKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + this.name + "_" + i;
+            fileHashMaps[getHashCode(putKey) % fileHashMaps.length].put(putKey, new Integer(i).toString() + "_" + i);
             if ((i % 10000) == 0) {
                 end1 = System.currentTimeMillis();
                 System.out.println(i + "=" + (end1 - start1));
@@ -101,33 +146,78 @@ public class Main extends Thread {
         end = System.currentTimeMillis();
         System.out.println((end - start));
         System.out.println("Data Write Time = [" + (end - start) + "]");
-        System.out.println("----------------------------------------");
+        System.out.println("getCacheSize-1[" + fileHashMaps[0].getCacheSize() + "]");
+        System.out.println("getCacheSize-2[" + fileHashMaps[1].getCacheSize() + "]");
+        System.out.println("------------------ END-2 -------------------");
+
+
+        start = System.currentTimeMillis();
+        for (int i = dataSize * 2; i < dataSize * 3; i++) {
+
+            String rndKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(4000000);
+            String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
+            if ((i % 10000) == 0) {
+                if (var == null) break;
+                long end2 = System.currentTimeMillis();
+                System.out.println(i + "=" + (end2 - start1) + "[" + var + "]");
+                start1 = System.currentTimeMillis();
+            }
+        }
+        end = System.currentTimeMillis();
+        System.out.println("Data Read Time = [" + (end - start) + "]");
+
+        System.out.println("getCacheSize-1[" + fileHashMaps[0].getCacheSize() + "]");
+        System.out.println("getCacheSize-2[" + fileHashMaps[1].getCacheSize() + "]");
+
+        start = System.currentTimeMillis();
+        start1 = System.currentTimeMillis();
+
+        for (int i = dataSize * 2; i < dataSize * 3; i++) {
+            String putKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + this.name + "_" + i;
+            fileHashMaps[getHashCode(putKey) % fileHashMaps.length].put(putKey, new Integer(i).toString() + "_" + i);
+            if ((i % 10000) == 0) {
+                end1 = System.currentTimeMillis();
+                System.out.println(i + "=" + (end1 - start1));
+                start1 = System.currentTimeMillis();
+            }
+        }
+        end = System.currentTimeMillis();
+        System.out.println((end - start));
+        System.out.println("Data Write Time = [" + (end - start) + "]");
+        System.out.println("getCacheSize-1[" + fileHashMaps[0].getCacheSize() + "]");
+        System.out.println("getCacheSize-2[" + fileHashMaps[1].getCacheSize() + "]");
+
+        System.out.println("------------------ END-3 -------------------");
+
 
     }
 }
 
-class FileHashMap {
-    String[] baseFileDirs = {"C:/desktop/tools/java/okuyama/trunk/work/data/data1/","C:/desktop/tools/java/okuyama/trunk/work/data/data2/","C:/desktop/tools/java/okuyama/trunk/work/data/data3/","C:/desktop/tools/java/okuyama/trunk/work/data/data4/","C:/desktop/tools/java/okuyama/trunk/work/data/data5/","C:/desktop/tools/java/okuyama/trunk/work/data/data6/","C:/desktop/tools/java/okuyama/trunk/work/data/data7/","C:/desktop/tools/java/okuyama/trunk/work/data/data8/"};
+class FileHashMap extends Thread {
+
+    String[] baseFileDirs = {"./data/data1/","./data/data2/"};
     String[] fileDirs = null;
 
-    ValueCacheMap valueCacheMap = new ValueCacheMap(1024);
+    ArrayBlockingQueue writeQueue = new ArrayBlockingQueue(1024);
+    ValueCacheMap valueCacheMap = new ValueCacheMap(768);
 
-    int keyDataLength = 128;
+    int keyDataLength = 64;
 
-    int oneDataLength = 20;
+    int oneDataLength = 11;
 
     int lineDataSizeNoRt =  keyDataLength + oneDataLength;
     
     int lineDataSize =  keyDataLength + oneDataLength;
 
     // 一度に取得するデータサイズ
-    int getDataSize = lineDataSize * 55;
+    int getDataSize = lineDataSize * 108;
 
-    int accessCount = 512;
+    int accessCount = 2048;
 
     Object[] fileAccessList = new Object[accessCount];
 
-    public FileHashMap() {
+    public FileHashMap(String[] dirs) {
+        this.baseFileDirs = dirs;
         try {
             fileDirs = new String[baseFileDirs.length * 10];
             int counter = 0;
@@ -153,7 +243,25 @@ class FileHashMap {
                 accessors[2] = wr;
                 fileAccessList[i] = accessors;
             }
+            this.start();
             System.out.println("Start OK");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void run() {
+        try {
+            while(true) {
+
+                WriteContener writeContener = (WriteContener)writeQueue.take();
+
+                synchronized (writeContener.raf) {
+                    writeContener.raf.seek(writeContener.seekPoint);
+                    writeContener.raf.write(writeContener.writeDatas, 0, lineDataSize);
+                    writeContener = null;
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -161,8 +269,6 @@ class FileHashMap {
 
     public void put(String key, String value) {
         try {
-
-
             int index = key.hashCode();
             if (index < 0) {
                 index = index - index - index;
@@ -178,15 +284,16 @@ class FileHashMap {
             buf.append(this.fillCharacter(value, oneDataLength));
 
             synchronized (raf) {
-                long dataLineNo = this.getLinePoint(key);
 
+                long dataLineNo = this.getLinePoint(key);
                 if (dataLineNo == -1) {
                     wr.write(buf.toString());
                     wr.flush();
                     byte[] keyStrBytes = buf.toString().getBytes();
 
-                    byte[] lineBufs = (byte[])valueCacheMap.get(new Integer(index % accessCount));
-                    int nowSize = ((Integer)valueCacheMap.get((index % accessCount) + "size")).intValue();
+                    CacheContener cacheContener = (CacheContener)valueCacheMap.get(new Integer(index % accessCount));
+                    byte[] lineBufs = cacheContener.datas;
+                    int nowSize = cacheContener.size;
 
                     if ((nowSize + lineDataSize) >= lineBufs.length) {
 
@@ -204,16 +311,19 @@ class FileHashMap {
                         lineBufs[cpIdx] = keyStrBytes[keyIdx];
                         keyIdx++;
                     }
-                    valueCacheMap.put(new Integer(index % accessCount), lineBufs);
-                    valueCacheMap.put((index % accessCount) + "size", nowSize + lineDataSize);
+
+                    cacheContener.datas = lineBufs;
+                    cacheContener.size = nowSize + lineDataSize;
+                    valueCacheMap.put(new Integer(index % accessCount), cacheContener);
                 } else {
 
-                    raf.seek(dataLineNo * lineDataSize);
-                    raf.write(buf.toString().getBytes(), 0, lineDataSize);
 
+                    //raf.seek(dataLineNo * lineDataSize);
+                    //raf.write(buf.toString().getBytes(), 0, lineDataSize);
                     byte[] keyStrBytes = buf.toString().getBytes();
 
-                    byte[] lineBufs = (byte[])valueCacheMap.get(new Integer(index % accessCount));
+                    CacheContener cacheContener = (CacheContener)valueCacheMap.get(new Integer(index % accessCount));
+                    byte[] lineBufs = cacheContener.datas;
                     int keyIdx = 0;
 
                     for(int cpIdx = new Long(dataLineNo * lineDataSize).intValue(); cpIdx < ((dataLineNo * lineDataSize) + lineDataSize); cpIdx++) {
@@ -221,10 +331,16 @@ class FileHashMap {
                         lineBufs[cpIdx] = keyStrBytes[keyIdx];
                         keyIdx++;
                     }
-                    //valueCacheMap.put(new Integer(index % accessCount), lineBufs);
+                    valueCacheMap.put(new Integer(index % accessCount), cacheContener);
+                    // Queue Register
+                    WriteContener writeContener = new WriteContener();
+                    writeContener.raf = raf;
+                    writeContener.seekPoint = dataLineNo * lineDataSize;
+                    writeContener.writeDatas = keyStrBytes;
+
+                    writeQueue.put(writeContener);
                 }
             }
-
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -263,21 +379,26 @@ class FileHashMap {
 
             raf.seek(0);
             int readLen = -1;
-            lineBufs = (byte[])valueCacheMap.get(new Integer(index % accessCount));
+            CacheContener cacheContener = (CacheContener)valueCacheMap.get(new Integer(index % accessCount));
 
-            if (lineBufs == null) {
+
+            if (cacheContener == null) {
 
                 int size = new Long(((File)accessors[0]).length() * 2).intValue();
                 if (size < this.getDataSize) size = this.getDataSize;
                 lineBufs = new byte[size];
                 readLen = raf.read(lineBufs);
-                valueCacheMap.put(new Integer(index % accessCount), lineBufs);
-                int bufSize = readLen;
 
+                int bufSize = readLen;
                 if (readLen == -1 || readLen == 0) bufSize = 0;
-                valueCacheMap.put((index % accessCount) + "size", new Integer(bufSize));
+
+                cacheContener = new CacheContener();
+                cacheContener.datas = lineBufs;
+                cacheContener.size = bufSize;
+                valueCacheMap.put(new Integer(index % accessCount), cacheContener);
             } else {
-                readLen = ((Integer)valueCacheMap.get((index % accessCount) + "size")).intValue();
+                lineBufs = cacheContener.datas;
+                readLen = cacheContener.size;
             }
                             
             if(readLen != -1) {
@@ -350,23 +471,28 @@ class FileHashMap {
             synchronized (raf) {
                 raf.seek(0);
                 int readLen = -1;
-                lineBufs = (byte[])valueCacheMap.get(new Integer(index % accessCount));
+                CacheContener cacheContener = (CacheContener)valueCacheMap.get(new Integer(index % accessCount));
 
-                if (lineBufs == null) {
+
+                if (cacheContener == null) {
 
                     int size = new Long(((File)accessors[0]).length() * 2).intValue();
                     if (size < this.getDataSize) size = this.getDataSize;
                     lineBufs = new byte[size];
                     readLen = raf.read(lineBufs);
-                    valueCacheMap.put(new Integer(index % accessCount), lineBufs);
 
                     int bufSize = readLen;
 
                     if (readLen == -1 || readLen == 0) bufSize = 0;
 
-                    valueCacheMap.put((index % accessCount) + "size", new Integer(bufSize));
+                    cacheContener = new CacheContener();
+                    cacheContener.datas = lineBufs;
+                    cacheContener.size = bufSize;
+                    valueCacheMap.put(new Integer(index % accessCount), cacheContener);
                 } else {
-                    readLen = ((Integer)valueCacheMap.get((index % accessCount) + "size")).intValue();
+
+                    lineBufs = cacheContener.datas;
+                    readLen = cacheContener.size;
                 }
 
                 if(readLen != -1) {
@@ -438,6 +564,22 @@ class FileHashMap {
         writeBuf.append(new String(appendDatas));
         return writeBuf.toString();
     }
+
+    public int getCacheSize() {
+        return valueCacheMap.getSize();
+    }
+
+    class CacheContener {
+        public byte[] datas = null;
+        public int size = -1;
+    }
+
+    class WriteContener {
+        public RandomAccessFile raf = null;
+        public long seekPoint = -1;
+        public byte[] writeDatas = null;
+    }
+
 }
 
 
@@ -547,5 +689,9 @@ class ValueCacheMap extends LinkedHashMap {
      */
     protected boolean removeEldestEntry(Map.Entry eldest) {
         return size() > maxCacheSize;
+    }
+
+    public int getSize() {
+        return size();
     }
 }
