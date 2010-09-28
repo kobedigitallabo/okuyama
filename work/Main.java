@@ -15,8 +15,8 @@ public class Main extends Thread {
 
     public static void main(String[] args) {
         fileHashMaps = new FileHashMap[2];
-        String[] dirs1 = {"C:/work/java/okuyama/trunk/work/data/data1/","C:/work/java/okuyama/trunk/work/data/data2/","C:/work/java/okuyama/trunk/work/data/data3/","C:/work/java/okuyama/trunk/work/data/data4/","C:/work/java/okuyama/trunk/work/data/data5/","C:/work/java/okuyama/trunk/work/data/data6/","C:/work/java/okuyama/trunk/work/data/data7/","C:/work/java/okuyama/trunk/work/data/data8/"};
-        String[] dirs2 = {"X:/data/data1/","X:/data/data2/","X:/data/data3/","X:/data/data4/","X:/data/data5/","X:/data/data6/","X:/data/data7/","X:/data/data8/"};
+        String[] dirs1 = {"/usr/local/okuyama/work1/data1/","/usr/local/okuyama/work1/data2/","/usr/local/okuyama/work1/data3/","/usr/local/okuyama/work1/data4/","/usr/local/okuyama/work1/data5/","/usr/local/okuyama/work1/data6/","/usr/local/okuyama/work1/data7/","/usr/local/okuyama/work1/data8/"};
+        String[] dirs2 = {"/usr/local/okuyama/work2/data1/","/usr/local/okuyama/work2/data2/","/usr/local/okuyama/work2/data3/","/usr/local/okuyama/work2/data4/","/usr/local/okuyama/work2/data5/","/usr/local/okuyama/work2/data6/","/usr/local/okuyama/work2/data7/","/usr/local/okuyama/work2/data8/"};
         fileHashMaps[0] = new FileHashMap(dirs1);
         fileHashMaps[1] = new FileHashMap(dirs2);
 
@@ -27,12 +27,12 @@ public class Main extends Thread {
             long start2 = System.nanoTime();
 
 
-            fileHashMaps[getHashCode("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201_0_848558") % fileHashMaps.length].put("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201_0_848558", "123");
+            fileHashMaps[getHashCode("keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201_0_848558") % fileHashMaps.length].put("keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201_0_848558", "123");
             long end2 = System.nanoTime();
             System.out.println((end2 - start2));
 
             start2 = System.nanoTime();
-            fileHashMaps[getHashCode("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201_0_177999") % fileHashMaps.length].get("keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201_0_177999");
+            fileHashMaps[getHashCode("keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201_0_177999") % fileHashMaps.length].get("keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201_0_177999");
             end2 = System.nanoTime();
             System.out.println((end2 - start2));
 
@@ -80,7 +80,7 @@ public class Main extends Thread {
         long start = System.currentTimeMillis();
         for (int i = 0; i < dataSize; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(2000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(2000000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
@@ -97,8 +97,8 @@ public class Main extends Thread {
         start = System.currentTimeMillis();
         start1 = System.currentTimeMillis();
         for (int i = 0; i < dataSize; i++) {
-            String putKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + this.name + "_" + i;
-            fileHashMaps[getHashCode(putKey) % fileHashMaps.length].put(putKey, new Integer(i).toString() + "_" + bigIdx);
+            String putKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + this.name + "_" + i;
+            fileHashMaps[getHashCode(putKey) % fileHashMaps.length].put(putKey, new Integer(i).toString() + "_" + "1");
             if ((i % 10000) == 0) {
                 end1 = System.currentTimeMillis();
                 System.out.println(i + "=" + (end1 - start1));
@@ -116,7 +116,7 @@ public class Main extends Thread {
         start = System.currentTimeMillis();
         for (int i = dataSize; i < dataSize * 2; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(2000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(2000000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
@@ -135,8 +135,8 @@ public class Main extends Thread {
         start1 = System.currentTimeMillis();
 
         for (int i = dataSize; i < dataSize * 2; i++) {
-            String putKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + this.name + "_" + i;
-            fileHashMaps[getHashCode(putKey) % fileHashMaps.length].put(putKey, new Integer(i).toString() + "_" + i);
+            String putKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + this.name + "_" + i;
+            fileHashMaps[getHashCode(putKey) % fileHashMaps.length].put(putKey, new Integer(i).toString() + "_" + "2");
             if ((i % 10000) == 0) {
                 end1 = System.currentTimeMillis();
                 System.out.println(i + "=" + (end1 - start1));
@@ -154,7 +154,7 @@ public class Main extends Thread {
         start = System.currentTimeMillis();
         for (int i = dataSize * 2; i < dataSize * 3; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(4000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(4000000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
@@ -173,8 +173,8 @@ public class Main extends Thread {
         start1 = System.currentTimeMillis();
 
         for (int i = dataSize * 2; i < dataSize * 3; i++) {
-            String putKey = "keyAbCddEfGhIjK`;:p;:pp;:ppo8547asdf7822kuioZj_201" + this.name + "_" + i;
-            fileHashMaps[getHashCode(putKey) % fileHashMaps.length].put(putKey, new Integer(i).toString() + "_" + i);
+            String putKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + this.name + "_" + i;
+            fileHashMaps[getHashCode(putKey) % fileHashMaps.length].put(putKey, new Integer(i).toString() + "_" + "3");
             if ((i % 10000) == 0) {
                 end1 = System.currentTimeMillis();
                 System.out.println(i + "=" + (end1 - start1));
@@ -198,8 +198,8 @@ class FileHashMap extends Thread {
     String[] baseFileDirs = {"./data/data1/","./data/data2/"};
     String[] fileDirs = null;
 
-    ArrayBlockingQueue writeQueue = new ArrayBlockingQueue(1024);
-    ValueCacheMap valueCacheMap = new ValueCacheMap(768);
+    ArrayBlockingQueue writeQueue = new ArrayBlockingQueue(1024 * 6);
+    ValueCacheMap valueCacheMap = new ValueCacheMap(512);
 
     int keyDataLength = 64;
 
@@ -212,7 +212,7 @@ class FileHashMap extends Thread {
     // 一度に取得するデータサイズ
     int getDataSize = lineDataSize * 108;
 
-    int accessCount = 2048;
+    int accessCount = 1024 * 10;
 
     Object[] fileAccessList = new Object[accessCount];
 
