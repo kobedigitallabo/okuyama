@@ -9,7 +9,7 @@ public class Main extends Thread {
 
     public volatile int name = -1;
 
-    public static int dataSize = 2000000;
+    public static int dataSize = 10000000;
 
     public static FileHashMap[] fileHashMaps = null;
 
@@ -64,7 +64,7 @@ public class Main extends Thread {
         }
 
         return index;
-    } 
+    }
 
 
     public void run() {
@@ -78,9 +78,9 @@ public class Main extends Thread {
         Random rdn = new Random();
 
         long start = System.currentTimeMillis();
-        for (int i = 0; i < dataSize; i++) {
+        for (int i = 0; i < dataSize / 5; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(2000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(10000000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
@@ -116,7 +116,7 @@ public class Main extends Thread {
         start = System.currentTimeMillis();
         for (int i = dataSize; i < dataSize * 2; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(2000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(10000000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
@@ -154,7 +154,7 @@ public class Main extends Thread {
         start = System.currentTimeMillis();
         for (int i = dataSize * 2; i < dataSize * 3; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(4000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(20000000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
@@ -198,21 +198,21 @@ class FileHashMap extends Thread {
     String[] baseFileDirs = {"./data/data1/","./data/data2/"};
     String[] fileDirs = null;
 
-    ArrayBlockingQueue writeQueue = new ArrayBlockingQueue(1024 * 6);
-    ValueCacheMap valueCacheMap = new ValueCacheMap(512);
+    ArrayBlockingQueue writeQueue = new ArrayBlockingQueue(10);
+    ValueCacheMap valueCacheMap = new ValueCacheMap(128);
 
     int keyDataLength = 64;
 
     int oneDataLength = 11;
 
     int lineDataSizeNoRt =  keyDataLength + oneDataLength;
-    
+
     int lineDataSize =  keyDataLength + oneDataLength;
 
     // 一度に取得するデータサイズ
     int getDataSize = lineDataSize * 108;
 
-    int accessCount = 1024 * 10;
+    int accessCount = 1024 * 8;
 
     Object[] fileAccessList = new Object[accessCount];
 
@@ -230,7 +230,7 @@ class FileHashMap extends Thread {
                     counter++;
                 }
             }
-        
+
             for (int i = 0; i < accessCount; i++) {
                 File file = new File(fileDirs[i % fileDirs.length] + i + ".data");
 
@@ -332,13 +332,17 @@ class FileHashMap extends Thread {
                         keyIdx++;
                     }
                     valueCacheMap.put(new Integer(index % accessCount), cacheContener);
+
+
+                    raf.seek(dataLineNo * lineDataSize);
+                    raf.write(keyStrBytes, 0, lineDataSize);
                     // Queue Register
-                    WriteContener writeContener = new WriteContener();
+                    /*WriteContener writeContener = new WriteContener();
                     writeContener.raf = raf;
                     writeContener.seekPoint = dataLineNo * lineDataSize;
                     writeContener.writeDatas = keyStrBytes;
 
-                    writeQueue.put(writeContener);
+                    writeQueue.put(writeContener);*/
                 }
             }
 
@@ -400,7 +404,7 @@ class FileHashMap extends Thread {
                 lineBufs = cacheContener.datas;
                 readLen = cacheContener.size;
             }
-                            
+
             if(readLen != -1) {
 
                 matchFlg = true;
@@ -614,10 +618,10 @@ class ValueCacheMap extends LinkedHashMap {
      */
     public Object put(Object key, Object value) {
         w.lock();
-        try { 
+        try {
             return super.put(key, value);
         } finally {
-            w.unlock(); 
+            w.unlock();
         }
     }
 
@@ -630,10 +634,10 @@ class ValueCacheMap extends LinkedHashMap {
      */
     public boolean containsKey(Object key) {
         r.lock();
-        try { 
+        try {
             return super.containsKey(key);
-        } finally { 
-            r.unlock(); 
+        } finally {
+            r.unlock();
         }
     }
 
@@ -646,10 +650,10 @@ class ValueCacheMap extends LinkedHashMap {
      */
     public Object get(Object key) {
         r.lock();
-        try { 
-            return super.get(key); 
-        } finally { 
-            r.unlock(); 
+        try {
+            return super.get(key);
+        } finally {
+            r.unlock();
         }
     }
 
@@ -665,7 +669,7 @@ class ValueCacheMap extends LinkedHashMap {
         try {
             return super.remove(key);
         } finally {
-            w.unlock(); 
+            w.unlock();
         }
     }
 
@@ -676,10 +680,10 @@ class ValueCacheMap extends LinkedHashMap {
      */
     public void clear() {
         w.lock();
-        try { 
+        try {
             super.clear();
         } finally {
-            w.unlock(); 
+            w.unlock();
         }
     }
 
