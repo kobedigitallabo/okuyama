@@ -80,7 +80,7 @@ public class Main2 extends Thread {
         long start = System.currentTimeMillis();
         for (int i = 0; i < dataSize; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + this.name + "_" + rdn.nextInt(1000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + this.name + "_" + rdn.nextInt(6000000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
