@@ -5,18 +5,22 @@ import java.util.concurrent.locks.*;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 public class Main2 extends Thread {
 
     public volatile int name = -1;
 
-    public static int dataSize = 2000000;
+    public static int dataSize = 100000;
 
     public static FileHashMap[] fileHashMaps = null;
 
     public static void main(String[] args) {
         fileHashMaps = new FileHashMap[2];
-        String[] dirs1 = {"/usr/local/okuyama/work1/data1/","/usr/local/okuyama/work1/data2/","/usr/local/okuyama/work1/data3/","/usr/local/okuyama/work1/data4/","/usr/local/okuyama/work1/data5/","/usr/local/okuyama/work1/data6/","/usr/local/okuyama/work1/data7/","/usr/local/okuyama/work1/data8/"};
-        String[] dirs2 = {"/usr/local/okuyama/work2/data1/","/usr/local/okuyama/work2/data2/","/usr/local/okuyama/work2/data3/","/usr/local/okuyama/work2/data4/","/usr/local/okuyama/work2/data5/","/usr/local/okuyama/work2/data6/","/usr/local/okuyama/work2/data7/","/usr/local/okuyama/work2/data8/"};
+
+        String[] dirs1 = {"C:/desktop/tools/java/okuyama/trunk/work/data/data1/","C:/desktop/tools/java/okuyama/trunk/work/data/data2/","C:/desktop/tools/java/okuyama/trunk/work/data/data3/","C:/desktop/tools/java/okuyama/trunk/work/data/data4/","C:/desktop/tools/java/okuyama/trunk/work/data/data5/","C:/desktop/tools/java/okuyama/trunk/work/data/data6/","C:/desktop/tools/java/okuyama/trunk/work/data/data7/","C:/desktop/tools/java/okuyama/trunk/work/data/data8/"};
+        String[] dirs2 = {"K:/work/data/data1/","K:/work/data/data2/","K:/work/data/data3/","K:/work/data/data4/","K:/work/data/data5/","K:/work/data/data6/","K:/work/data/data7/","K:/work/data/data8/"};
+
         fileHashMaps[0] = new FileHashMap(dirs1);
         fileHashMaps[1] = new FileHashMap(dirs2);
 
@@ -25,6 +29,8 @@ public class Main2 extends Thread {
 
         try {
             long start2 = System.nanoTime();
+
+            
 
 
             fileHashMaps[getHashCode("keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201_0_848558") % fileHashMaps.length].put("keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201_0_848558", "123");
@@ -58,7 +64,10 @@ public class Main2 extends Thread {
 
 
     public static int getHashCode(String key) {
-        int index = key.hashCode();
+        
+        int index = new String(DigestUtils.sha(key.getBytes())).hashCode();
+        
+        //int index = key.hashCode();
         if (index < 0) {
             index = index - index - index;
         }
@@ -72,7 +81,7 @@ public class Main2 extends Thread {
     }
 
     public void exec() {
-// getHashCode() % fileHashMaps.length
+
         long start1 = 0L;
         long end1 = 0L;
         Random rdn = new Random();
@@ -80,7 +89,7 @@ public class Main2 extends Thread {
         long start = System.currentTimeMillis();
         for (int i = 0; i < dataSize; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + this.name + "_" + rdn.nextInt(6000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + this.name + "_" + rdn.nextInt(200000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
@@ -114,9 +123,9 @@ public class Main2 extends Thread {
 
 
         start = System.currentTimeMillis();
-        for (int i = dataSize; i < dataSize * 2; i++) {
+        for (int i = dataSize; i < dataSize / 4; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(2000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(1000000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
@@ -152,9 +161,9 @@ public class Main2 extends Thread {
 
 
         start = System.currentTimeMillis();
-        for (int i = dataSize * 2; i < dataSize * 3; i++) {
+        for (int i = 0; i < dataSize / 4; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(4000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(2000000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
@@ -198,7 +207,7 @@ class FileHashMap extends Thread {
     String[] baseFileDirs = {"./data/data1/","./data/data2/","./data/data3/","./data/data4/","./data/data5/","./data/data6/","./data/data7/","./data/data8/"};
     String[] fileDirs = null;
 
-    ValueCacheMap valueCacheMap = new ValueCacheMap(256);
+    ValueCacheMap valueCacheMap = new ValueCacheMap(512);
 
     int keyDataLength = 64;
 
@@ -209,19 +218,19 @@ class FileHashMap extends Thread {
     int lineDataSize =  keyDataLength + oneDataLength;
 
     // 一度に取得するデータサイズ
-    int getDataSize = lineDataSize * 101;
+    int getDataSize = lineDataSize * 101 * 4;
 
-    int accessCount = 1024 * 64;
+    int accessCount = 512;
 
-    Object[] fileAccessList = new Object[accessCount];
+    File[] fileAccessList = new File[accessCount];
 
     public FileHashMap(String[] dirs) {
         this.baseFileDirs = dirs;
         try {
-            fileDirs = new String[baseFileDirs.length * 50];
+            fileDirs = new String[baseFileDirs.length * 5];
             int counter = 0;
             for (int idx = 0; idx < baseFileDirs.length; idx++) {
-                for (int idx2 = 0; idx2 < 50; idx2++) {
+                for (int idx2 = 0; idx2 < 5; idx2++) {
 
                     fileDirs[counter] = baseFileDirs[idx] + idx2 + "/";
                     File dir = new File(fileDirs[counter]);
@@ -253,7 +262,7 @@ class FileHashMap extends Thread {
                 index = index - index - index;
             }
 
-            File file = (File)fileAccessList[index % accessCount];
+            File file = fileAccessList[index % accessCount];
 
             StringBuffer buf = new StringBuffer(this.fillCharacter(key, keyDataLength));
             buf.append(this.fillCharacter(value, oneDataLength));
@@ -359,7 +368,7 @@ class FileHashMap extends Thread {
 
 
     public String get(String key) {
-        String tmpValue = null;
+        byte[] tmpBytes = null;
 
         String ret = null;
         byte[] keyBytes = key.getBytes();
@@ -380,7 +389,7 @@ class FileHashMap extends Thread {
                 index = index - index - index;
             }
 
-            File file = (File)fileAccessList[index % accessCount];
+            File file = fileAccessList[index % accessCount];
 
 
             synchronized (file) {
@@ -427,9 +436,12 @@ class FileHashMap extends Thread {
                             matchFlg = false;
                         }
 
-                        // マッチした場合のみ文字列化
+                        // マッチした場合のみ配列化
                         if (matchFlg) {
-                            tmpValue = new String(lineBufs, assist, lineDataSizeNoRt);
+                            tmpBytes = new byte[lineDataSizeNoRt];
+                            for (int i = 0; i < lineDataSizeNoRt; i++) {
+                                tmpBytes[i] = lineBufs[assist + i];
+                            }
                             break;
                         }
                     }
@@ -437,23 +449,22 @@ class FileHashMap extends Thread {
                 }
             }
 
-            if (tmpValue != null) {
-                byte[] workBytes = tmpValue.getBytes();
-
-                if (workBytes[keyDataLength] != 38) {
+            if (tmpBytes != null) {
+                if (tmpBytes[keyDataLength] != 38) {
                     int i = keyDataLength;
                     int counter = 0;
-                    for (; i < workBytes.length; i++) {
-                        if (workBytes[i] == 38) break;
+                    for (; i < tmpBytes.length; i++) {
+                        if (tmpBytes[i] == 38) break;
                         counter++;
                     }
 
-                    ret = new String(workBytes, keyDataLength, counter, "UTF-8");
+                    ret = new String(tmpBytes, keyDataLength, counter, "UTF-8");
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return ret;
     }
 
