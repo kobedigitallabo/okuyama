@@ -80,7 +80,7 @@ public class Main extends Thread {
         long start = System.currentTimeMillis();
         for (int i = 0; i < dataSize / 5; i++) {
 
-            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(10000000);
+            String rndKey = "keyAbCddEfGhIjK`;:8547asdf7822kuioZj_201" + "0" + "_" + rdn.nextInt(30000000);
             String var = fileHashMaps[getHashCode(rndKey) % fileHashMaps.length].get(rndKey);
             if ((i % 10000) == 0) {
                 if (var == null) break;
@@ -199,6 +199,10 @@ class FileHashMap extends Thread {
     String[] fileDirs = null;
 
     ArrayBlockingQueue writeQueue = new ArrayBlockingQueue(10);
+
+    // 割り当てるメモリ量を超えないようにする
+    // たとえば1ファイルが1MBだとすると1MB(1024 * 1024) / (64 + 11)byte * 8192 = 格納件数になる
+    // 均等にKeyが分散した場合は1億件以上管理出来る
     ValueCacheMap valueCacheMap = new ValueCacheMap(128);
 
     int keyDataLength = 64;
@@ -212,6 +216,7 @@ class FileHashMap extends Thread {
     // 一度に取得するデータサイズ
     int getDataSize = lineDataSize * 108;
 
+    // ファイル数 ファイルストリーム数になる(1ストリームあたり25KBになる)
     int accessCount = 1024 * 8;
 
     Object[] fileAccessList = new Object[accessCount];
@@ -245,6 +250,13 @@ class FileHashMap extends Thread {
             }
             this.start();
             System.out.println("Start OK");
+
+
+            Runtime runtime = Runtime.getRuntime();
+System.out.println("--------------------");
+            System.out.println((runtime.totalMemory() / 1000) + "KB");
+            System.out.println((runtime.freeMemory() / 1000) + "KB");
+System.out.println("--------------------");
         } catch (Exception e) {
             e.printStackTrace();
         }
