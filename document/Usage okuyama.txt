@@ -1,5 +1,3 @@
-Try is a windows environment.
-
 [How to install]
  1.Install The JDK1.6
 
