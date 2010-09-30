@@ -7,11 +7,87 @@ import java.util.*;
 import org.apache.commons.codec.digest.DigestUtils;
 
 /**
+ * To manage files using a key-value.<br>
+ * A small amount of memory usage, so File.<br>
+ * Memory capacity can be managed independently of the number of data.<br>
+ *
+ * Inside, you are using a CoreFileBaseDataMap.<br>
+ * This class is passed as an argument in one directory CoreFileBaseDataMap assigned.<br>
+ * The specified directory should be different disk performance can be improved.<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ */
+public class FileBaseDataMap {
+
+    CoreFileBaseDataMap[] coreFileBaseDataMaps = null;
+
+    int numberOfCoreMap = 0;
+
+    int innerCacheSizeTotal = 1024;
+
+    /**
+     * Mapを構築.<br>
+     * 
+     * @param baseDirs Mapを構築するのに使用するディレクトリ
+     */
+    public FileBaseDataMap(String[] baseDirs) {
+
+        numberOfCoreMap = baseDirs.length;
+        coreFileBaseDataMaps = new CoreFileBaseDataMap[baseDirs.length];
+        int oneCacheSizePer = innerCacheSizeTotal / numberOfCoreMap;
+
+        for (int idx = 0; idx < baseDirs.length; idx++) {
+            String[] dir = {baseDirs[idx]};
+            coreFileBaseDataMaps[idx] = new CoreFileBaseDataMap(dir, oneCacheSizePer);
+        }
+    }
+
+
+    /**
+     * put.<br>
+     * 
+     * @param key
+     * @param value
+     */
+    public void put(String key, String value) {
+        int hashCode = CoreFileBaseDataMap.createHashCode(key);
+
+        coreFileBaseDataMaps[hashCode % numberOfCoreMap].put(key, value, hashCode);
+    }
+
+
+    /**
+     * get.<br>
+     * 
+     * @param key
+     */
+    public String get(String key) {
+        int hashCode = CoreFileBaseDataMap.createHashCode(key);
+
+        return coreFileBaseDataMaps[hashCode % numberOfCoreMap].get(key, hashCode);
+    }
+
+
+    /**
+     * remove.<br>
+     * 
+     * @param key
+     */
+    public String remove(String key) {
+        int hashCode = CoreFileBaseDataMap.createHashCode(key);
+
+        return coreFileBaseDataMaps[hashCode % numberOfCoreMap].remove(key, hashCode);
+    }
+}
+
+
+/**
  * Fileベースでデータを管理する.<br>
  * ディスクベースなのでメモリをあまり利用しないので大量のデータを管理できる.<br>
  *
  */
-public class FileBaseDataMap {
+class CoreFileBaseDataMap {
 
     // データファイル作成ディレクトリ(ベース)
     private String[] baseFileDirs = null;
@@ -32,24 +108,24 @@ public class FileBaseDataMap {
     private int getDataSize = lineDataSize * 56;
 
     // データファイルの数
-    //private int numberOfDataFiles = 1024 * 10;
-    private int numberOfDataFiles = 256;
+    private int numberOfDataFiles = 1024 * 10;
+    //private int numberOfDataFiles = 512;
 
 
     // データファイルを格納するディレクトリ分散係数
-    private int dataDirsFactor = 2;
-    //private int dataDirsFactor = 20;
+    //private int dataDirsFactor = 10;
+    private int dataDirsFactor = 20;
 
     // Fileオブジェクト格納用
     private File[] dataFileList = new File[numberOfDataFiles];
 
     // アクセススピード向上の為に、Openしたファイルストリームを一定数キャッシュする
-    //private InnerCache innerCache = new InnerCache(1024);
-    private InnerCache innerCache = new InnerCache(256);
+    private InnerCache innerCache = null;
 
 
-    public FileBaseDataMap(String[] dirs) {
+    public CoreFileBaseDataMap(String[] dirs, int innerCacheSize) {
         this.baseFileDirs = dirs;
+        innerCache = new InnerCache(innerCacheSize);
         try {
             fileDirs = new String[baseFileDirs.length * dataDirsFactor];
             int counter = 0;
@@ -80,14 +156,12 @@ public class FileBaseDataMap {
      * 
      * @param key
      * @param value
+     * @param hashCode This is a key value hash code
      */
-    public void put(String key, String value) {
+    public void put(String key, String value, int hashCode) {
         try {
 
-            // Create HashCode 
-            int index = createHashCode(key);
-
-            File file = dataFileList[index % numberOfDataFiles];
+            File file = dataFileList[hashCode % numberOfDataFiles];
 
             StringBuffer buf = new StringBuffer(this.fillCharacter(key, keyDataLength));
             buf.append(this.fillCharacter(value, oneDataLength));
@@ -196,8 +270,9 @@ public class FileBaseDataMap {
      * 指定のキー値でvalueを取得する.<br>
      *
      * @param key 
+     * @param hashCode This is a key value hash code
      */
-    public String get(String key) {
+    public String get(String key, int hashCode) {
         byte[] tmpBytes = null;
 
         String ret = null;
@@ -215,10 +290,7 @@ public class FileBaseDataMap {
 
         try {
 
-            // Create HashCode
-            int index = createHashCode(key);
-
-            File file = dataFileList[index % numberOfDataFiles];
+            File file = dataFileList[hashCode % numberOfDataFiles];
 
             synchronized (innerCache.syncObj) {
                 CacheContainer accessor = (CacheContainer)innerCache.get(file.getAbsolutePath());
@@ -299,12 +371,14 @@ public class FileBaseDataMap {
 
 
     /**
+     * remove
      *
-     *
+     * @param key 
+     * @param hashCode
      */
-    public String remove(String key) {
-        String ret = this.get(key);
-        if(ret != null) this.put(key, "&&&&&&&&&&&&&&&&");
+    public String remove(String key, int hashCode) {
+        String ret = this.get(key, hashCode);
+        if(ret != null) this.put(key, "&&&&&&&&&&&&&&&&", hashCode);
         return ret;
     }
 
@@ -338,15 +412,15 @@ public class FileBaseDataMap {
     }
 
 
-    public int createHashCode(String key) {
+    protected static int createHashCode(String key) {
         
-        int index = new String(DigestUtils.sha(key.getBytes())).hashCode();
+        int hashCode = new String(DigestUtils.sha(key.getBytes())).hashCode();
 
-        if (index < 0) {
-            index = index - index - index;
+        if (hashCode < 0) {
+            hashCode = hashCode - hashCode - hashCode;
         }
 
-        return index;
+        return hashCode;
     } 
 }
 
