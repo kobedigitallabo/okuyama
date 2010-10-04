@@ -21,12 +21,12 @@ public class AllFileModeCoreValueCnv implements ICoreValueConverter {
 
 
     /**
-     * 引数のLong型の値
-     * 返却値は何もせずに返却
+     * 引数のInteger型の値
+     * Stringに変換して返す
      *
      */
     public Object convertEncodeValue(Object value) {
-        return value;
+        return value.toString();
     }
 
 
@@ -36,15 +36,17 @@ public class AllFileModeCoreValueCnv implements ICoreValueConverter {
      * 返却値はBase64でエンコード後の文字列
      */
     public Object convertDecodeKey(Object key) {
+        if (key == null) return null;
         return key;
     }
 
     /**
-     * 引数のLong型の値
-     * 返却値は何もせずに返却
+     * 引数のString型の値
+     * Integerに変換して返却
      *
      */
     public Object convertDecodeValue(Object value) {
-        return value;
+        if (value == null) return null;
+        return new Integer((String)value);
     }
 }

@@ -22,15 +22,17 @@ import org.apache.commons.codec.digest.DigestUtils;
  */
 public class FileBaseDataMap extends AbstractMap {
 
-    CoreFileBaseKeyMap[] coreFileBaseKeyMaps = null;
+    private CoreFileBaseKeyMap[] coreFileBaseKeyMaps = null;
 
-    String[] dirs = null;
+    private String[] dirs = null;
 
-    int numberOfCoreMap = 0;
+    private int numberOfCoreMap = 0;
 
     // Using a single cache 25 KB per
-    int innerCacheSizeTotal = 1024 * 4;
+    private int innerCacheSizeTotal = 1024 * 4;
 
+    // Sync Object
+    private Object[] syncObjs = null;
 
     /**
      * コンストラクタ.<br>
@@ -44,10 +46,13 @@ public class FileBaseDataMap extends AbstractMap {
         this.dirs = baseDirs;
         this.numberOfCoreMap = baseDirs.length;
         this.coreFileBaseKeyMaps = new CoreFileBaseKeyMap[baseDirs.length];
+        this.syncObjs = new Object[baseDirs.length];
         int oneCacheSizePer = innerCacheSizeTotal / numberOfCoreMap;
         int oneMapSizePer = numberOfKeyData / numberOfCoreMap;
 
+
         for (int idx = 0; idx < baseDirs.length; idx++) {
+            syncObjs[idx] = new Object();
             String[] dir = {baseDirs[idx]};
             this.coreFileBaseKeyMaps[idx] = new CoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer);
         }
@@ -63,7 +68,9 @@ public class FileBaseDataMap extends AbstractMap {
     public Object put(Object key, Object value) {
         int hashCode = CoreFileBaseKeyMap.createHashCode((String)key);
 
-        this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].put((String)key, ((Long)value).toString(), hashCode);
+        synchronized (this.syncObjs[hashCode % this.numberOfCoreMap]) { 
+            this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].put((String)key, (String)value, hashCode);
+        }
         return null;
     }
 
@@ -74,9 +81,13 @@ public class FileBaseDataMap extends AbstractMap {
      * @param key
      */
     public Object get(Object key) {
+        Object ret = null;
         int hashCode = CoreFileBaseKeyMap.createHashCode((String)key);
 
-        return this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].get((String)key, hashCode);
+        synchronized (this.syncObjs[hashCode % this.numberOfCoreMap]) { 
+            ret = this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].get((String)key, hashCode);
+        }
+        return ret;
     }
 
 
@@ -86,9 +97,13 @@ public class FileBaseDataMap extends AbstractMap {
      * @param key
      */
     public Object remove(Object key) {
+        Object ret = null;
         int hashCode = CoreFileBaseKeyMap.createHashCode((String)key);
 
-        return this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].remove((String)key, hashCode);
+        synchronized (this.syncObjs[hashCode % this.numberOfCoreMap]) { 
+            ret = this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].remove((String)key, hashCode);
+        }
+        return ret;
     }
 
 
@@ -101,8 +116,10 @@ public class FileBaseDataMap extends AbstractMap {
         boolean ret = true;
         int hashCode = CoreFileBaseKeyMap.createHashCode((String)key);
 
-        if (this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].get((String)key, hashCode) == null) {
-            ret = false;
+        synchronized (this.syncObjs[hashCode % this.numberOfCoreMap]) { 
+            if (this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].get((String)key, hashCode) == null) {
+                ret = false;
+            }
         }
         return ret;
     }
@@ -134,8 +151,11 @@ public class FileBaseDataMap extends AbstractMap {
      */
     public void clear() {
         for (int i = 0; i < this.coreFileBaseKeyMaps.length; i++) {
-            this.coreFileBaseKeyMaps[i].clear();
-            this.coreFileBaseKeyMaps[i].init();
+
+            synchronized (this.syncObjs[i]) { 
+                this.coreFileBaseKeyMaps[i].clear();
+                this.coreFileBaseKeyMaps[i].init();
+            }
         }
     }
 
@@ -213,7 +233,7 @@ class CoreFileBaseKeyMap {
     private int keyDataLength = ImdstDefine.saveKeyMaxSize;
 
     // The Maximun Length Value
-    private int oneDataLength = 16;
+    private int oneDataLength = 10;
 
     // The total length of the Key and Value
     private int lineDataSize =  keyDataLength + oneDataLength;
@@ -222,13 +242,10 @@ class CoreFileBaseKeyMap {
     private int getDataSize = lineDataSize * (8192 / lineDataSize);
 
     // The number of data files created
-    private int numberOfDataFiles = 1024 * 10;
-    //private int numberOfDataFiles = 512;
-
+    private int numberOfDataFiles = 1024;
 
     // データファイルを格納するディレクトリ分散係数
-    //private int dataDirsFactor = 10;
-    private int dataDirsFactor = 20;
+    private int dataDirsFactor = 50;
 
     // Fileオブジェクト格納用
     private File[] dataFileList = null;
@@ -240,6 +257,9 @@ class CoreFileBaseKeyMap {
     protected AtomicInteger totalSize = null;
 
     private int innerCacheSize = 128;
+
+    // 1ファイルに対してどの程度のキー数を保存するかの目安
+    private int numberOfOneFileKey = 500;
 
     /**
      * コンストラクタ.<br>
@@ -254,7 +274,7 @@ class CoreFileBaseKeyMap {
         try {
             this.baseFileDirs = dirs;
             this.innerCacheSize = innerCacheSize;
-            this.numberOfDataFiles = numberOfKeyData / 100;
+            this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
 
             this.init();
         } catch (Exception e) {
@@ -293,7 +313,8 @@ class CoreFileBaseKeyMap {
 
             for (int i = 0; i < numberOfDataFiles; i++) {
 
-                File file = new File(fileDirs[i % fileDirs.length] + i + ".data");
+                // Keyファイルのディレクトリ範囲ないで適当に記録ファイルを分散させる
+                File file = new File(this.fileDirs[i % this.fileDirs.length] + i + ".data");
 
                 file.delete();
                 dataFileList[i] = file;
@@ -332,53 +353,80 @@ class CoreFileBaseKeyMap {
             StringBuffer buf = new StringBuffer(this.fillCharacter(key, keyDataLength));
             buf.append(this.fillCharacter(value, oneDataLength));
 
-            synchronized (innerCache.syncObj) {
 
-                CacheContainer accessor = (CacheContainer)innerCache.get(file.getAbsolutePath());
-                RandomAccessFile raf = null;
-                BufferedWriter wr = null;
+            CacheContainer accessor = (CacheContainer)innerCache.get(file.getAbsolutePath());
+            RandomAccessFile raf = null;
+            BufferedWriter wr = null;
 
-                if (accessor == null || accessor.isClosed == true) {
+            if (accessor == null || accessor.isClosed == true) {
 
-                    raf = new RandomAccessFile(file, "rwd");
-                    wr = new BufferedWriter(new FileWriter(file, true));
-                    accessor = new CacheContainer();
-                    accessor.raf = raf;
-                    accessor.wr = wr;
-                    accessor.file = file;
-                    innerCache.put(file.getAbsolutePath(), accessor);
-                } else {
+                raf = new RandomAccessFile(file, "rwd");
+                wr = new BufferedWriter(new FileWriter(file, true));
+                accessor = new CacheContainer();
+                accessor.raf = raf;
+                accessor.wr = wr;
+                accessor.file = file;
+                innerCache.put(file.getAbsolutePath(), accessor);
+            } else {
 
-                    raf = accessor.raf;
-                    wr = accessor.wr;
-                }
+                raf = accessor.raf;
+                wr = accessor.wr;
+            }
 
-                long dataLineNo = this.getLinePoint(key, raf);
 
-                if (dataLineNo == -1) {
+            // KeyData Write File
+            for (int tryIdx = 0; tryIdx < 2; tryIdx++) {
+                try {
+                    // Key値の場所を特定する
+                    long dataLineNo = this.getLinePoint(key, raf);
 
-                    wr.write(buf.toString());
-                    wr.flush();
+                    if (dataLineNo == -1) {
 
-                    // The size of an increment
-                    this.totalSize.getAndIncrement();
-                } else {
+                        wr.write(buf.toString());
+                        wr.flush();
 
-                    // 過去に存在したデータなら1増分
-                    if (this.get(key, hashCode) == null) this.totalSize.getAndIncrement();
+                        // The size of an increment
+                        this.totalSize.getAndIncrement();
+                    } else {
 
-                    raf.seek(dataLineNo * (lineDataSize));
-                    raf.write(buf.toString().getBytes(), 0, lineDataSize);
+                        // 過去に存在したデータなら1増分
+                        boolean increMentFlg = false;
+                        if (this.get(key, hashCode) == null) increMentFlg = true;
+
+                        raf.seek(dataLineNo * (lineDataSize));
+                        raf.write(buf.toString().getBytes(), 0, lineDataSize);
+                        if (increMentFlg) this.totalSize.getAndIncrement();
+                    }
+                    break;
+                } catch (IOException ie) {
+
+                    // IOExceptionの場合は1回のみファイルをサイド開く
+                    if (tryIdx == 1) throw ie;
+                    try {
+
+                        if (raf != null) raf.close();
+                        if (wr != null) wr.close();
+
+                        raf = new RandomAccessFile(file, "rwd");
+                        wr = new BufferedWriter(new FileWriter(file, true));
+                        accessor = new CacheContainer();
+                        accessor.raf = raf;
+                        accessor.wr = wr;
+                        accessor.file = file;
+                        innerCache.put(file.getAbsolutePath(), accessor);
+                    } catch (Exception e) {
+                        throw e;
+                    }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception e2) {
+            e2.printStackTrace();
         }
     }
 
 
     // 指定のキー値が指定のファイル内でどこにあるかを調べる
-    private long getLinePoint(String key, RandomAccessFile raf) {
+    private long getLinePoint(String key, RandomAccessFile raf) throws Exception {
 
         long line = -1;
         long lineCount = 0L;
@@ -431,8 +479,10 @@ class CoreFileBaseKeyMap {
                 if (matchFlg) break;
             }
 
+        } catch (IOException ie) {
+            throw ie;
         } catch (Exception e) {
-            e.printStackTrace();
+            throw e;
         }
         return line;
     }
@@ -466,69 +516,96 @@ class CoreFileBaseKeyMap {
 
             File file = dataFileList[hashCode % numberOfDataFiles];
 
-            synchronized (innerCache.syncObj) {
-                CacheContainer accessor = (CacheContainer)innerCache.get(file.getAbsolutePath());
-                RandomAccessFile raf = null;
-                BufferedWriter wr = null;
 
-                if (accessor == null || accessor.isClosed) {
+            CacheContainer accessor = (CacheContainer)innerCache.get(file.getAbsolutePath());
+            RandomAccessFile raf = null;
+            BufferedWriter wr = null;
 
-                    raf = new RandomAccessFile(file, "rwd");
-                    wr = new BufferedWriter(new FileWriter(file, true));
-                    accessor = new CacheContainer();
-                    accessor.raf = raf;
-                    accessor.wr = wr;
-                    accessor.file = file;
-                    innerCache.put(file.getAbsolutePath(), accessor);
-                } else {
+            if (accessor == null || accessor.isClosed) {
 
-                    raf = accessor.raf;
-                }
+                raf = new RandomAccessFile(file, "rwd");
+                wr = new BufferedWriter(new FileWriter(file, true));
+                accessor = new CacheContainer();
+                accessor.raf = raf;
+                accessor.wr = wr;
+                accessor.file = file;
+                innerCache.put(file.getAbsolutePath(), accessor);
+            } else {
 
-                raf.seek(0);
-                int readLen = -1;
-                while((readLen = raf.read(lineBufs)) != -1) {
+                raf = accessor.raf;
+            }
 
-                    matchFlg = true;
 
-                    int loop = readLen / lineDataSize;
+            for (int tryIdx = 0; tryIdx < 2; tryIdx++) {
 
-                    for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
-
-                        int assist = (lineDataSize * loopIdx);
+                try {
+                    raf.seek(0);
+                    int readLen = -1;
+                    while((readLen = raf.read(lineBufs)) != -1) {
 
                         matchFlg = true;
 
-                        if (equalKeyBytes[equalKeyBytes.length - 1] == lineBufs[assist + (equalKeyBytes.length - 1)]) {
+                        int loop = readLen / lineDataSize;
 
-                            for (int i = 0; i < equalKeyBytes.length; i++) {
+                        for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
 
-                                if (equalKeyBytes[i] != lineBufs[assist + i]) {
-                                    matchFlg = false;
-                                    break;
+                            int assist = (lineDataSize * loopIdx);
+
+                            matchFlg = true;
+
+                            if (equalKeyBytes[equalKeyBytes.length - 1] == lineBufs[assist + (equalKeyBytes.length - 1)]) {
+
+                                for (int i = 0; i < equalKeyBytes.length; i++) {
+
+                                    if (equalKeyBytes[i] != lineBufs[assist + i]) {
+                                        matchFlg = false;
+                                        break;
+                                    }
                                 }
+                            } else {
+
+                                matchFlg = false;
                             }
-                        } else {
 
-                            matchFlg = false;
-                        }
+                            // マッチした場合のみ配列化
+                            if (matchFlg) {
 
-                        // マッチした場合のみ配列化
-                        if (matchFlg) {
+                                tmpBytes = new byte[lineDataSize];
 
-                            tmpBytes = new byte[lineDataSize];
+                                for (int i = 0; i < lineDataSize; i++) {
 
-                            for (int i = 0; i < lineDataSize; i++) {
-
-                                tmpBytes[i] = lineBufs[assist + i];
+                                    tmpBytes[i] = lineBufs[assist + i];
+                                }
+                                break;
                             }
-                            break;
                         }
+                        if (matchFlg) break;
                     }
-                    if (matchFlg) break;
+                    break;
+                } catch (IOException ie) {
+
+                    // IOExceptionの場合は1回のみファイルをサイド開く
+                    if (tryIdx == 1) throw ie;
+
+                    try {
+                        if (raf != null) raf.close();
+                        if (wr != null) wr.close();
+
+                        raf = new RandomAccessFile(file, "rwd");
+                        wr = new BufferedWriter(new FileWriter(file, true));
+                        accessor = new CacheContainer();
+                        accessor.raf = raf;
+                        accessor.wr = wr;
+                        accessor.file = file;
+                        innerCache.put(file.getAbsolutePath(), accessor);
+                    } catch (Exception e) {
+                        throw e;
+                    }
                 }
             }
 
+
+            // 取得データを文字列化
             if (tmpBytes != null) {
 
                 if (tmpBytes[keyDataLength] != 38) {
@@ -562,16 +639,14 @@ class CoreFileBaseKeyMap {
      */
     public String remove(String key, int hashCode) {
         String ret = null;
-        synchronized (innerCache.syncObj) {
 
-            ret = this.get(key, hashCode);
-            if(ret != null) {
+        ret = this.get(key, hashCode);
+        if(ret != null) {
 
-                this.put(key, "&&&&&&&&&&&&&&&&", hashCode);
+            this.put(key, "&&&&&&&&&&&&&&&&", hashCode);
 
-                // The size of an decrement
-                this.totalSize.getAndDecrement();
-            }
+            // The size of an decrement
+            this.totalSize.getAndDecrement();
         }
         return ret;
     }
@@ -873,20 +948,17 @@ class InnerCache extends LinkedHashMap {
                 try {
                     if (accessor != null) {
 
-                        synchronized (syncObj) {
-
-                            if (accessor.raf != null) {
-                                accessor.raf.close();
-                                accessor.raf = null;
-                            }
-
-                            if (accessor.wr != null) {
-                                accessor.wr.close();
-                                accessor.wr = null;
-                            }
-                            accessor.isClosed = true;
-                            obj.setValue(accessor);
+                        if (accessor.raf != null) {
+                            accessor.raf.close();
+                            accessor.raf = null;
                         }
+
+                        if (accessor.wr != null) {
+                            accessor.wr.close();
+                            accessor.wr = null;
+                        }
+                        accessor.isClosed = true;
+                        obj.setValue(accessor);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -909,20 +981,17 @@ class InnerCache extends LinkedHashMap {
             try {
                 if (accessor != null) {
 
-                    synchronized (syncObj) {
-
-                        if (accessor.raf != null) {
-                            accessor.raf.close();
-                            accessor.raf = null;
-                        }
-
-                        if (accessor.wr != null) {
-                            accessor.wr.close();
-                            accessor.wr = null;
-                        }
-                        accessor.isClosed = true;
-                        eldest.setValue(accessor);
+                    if (accessor.raf != null) {
+                        accessor.raf.close();
+                        accessor.raf = null;
                     }
+
+                    if (accessor.wr != null) {
+                        accessor.wr.close();
+                        accessor.wr = null;
+                    }
+                    accessor.isClosed = true;
+                    eldest.setValue(accessor);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

@@ -223,7 +223,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
             keyStoreForFileStr = super.getPropertiesValue(super.getJobName() + ".keyMemory");
             if (keyStoreForFileStr != null || !keyStoreForFileStr.equals("")) {
-                if (keyStoreForFileStr.equals("true")) {
+                if (keyStoreForFileStr.equals("false")) {
                     keyStoreForFileFlg = true;
                 }
             }

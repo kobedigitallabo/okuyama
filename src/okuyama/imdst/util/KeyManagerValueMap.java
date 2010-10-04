@@ -52,6 +52,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     public KeyManagerValueMap(int size, boolean memoryMode) {
 
         super(size, new Double(size * 0.9).intValue(), 512, memoryMode);
+
         this.memoryMode = memoryMode;
     }
 
