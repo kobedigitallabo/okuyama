@@ -59,7 +59,7 @@ public class CoreValueMapEntry implements Map.Entry {
     }
 
     /**
-     * hashCode<br>
+     * setValue<br>
      *
      */
     public Object setValue(Object o) {

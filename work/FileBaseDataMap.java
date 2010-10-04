@@ -21,12 +21,12 @@ import org.apache.commons.codec.digest.DigestUtils;
  */
 public class FileBaseDataMap {
 
-    CoreFileBaseKeyMap[] coreFileBaseKeyMaps = null;
+    private CoreFileBaseKeyMap[] coreFileBaseKeyMaps = null;
 
-    int numberOfCoreMap = 0;
+    private int numberOfCoreMap = 0;
 
     // Using a single cache 25 KB per
-    int innerCacheSizeTotal = 1024 * 4;
+    private int innerCacheSizeTotal = 1024 * 4;
 
 
     public FileBaseDataMap(String[] baseDirs) {
@@ -50,6 +50,10 @@ public class FileBaseDataMap {
      */
     public void put(String key, String value) {
         int hashCode = CoreFileBaseKeyMap.createHashCode(key);
+
+        synchronized(coreFileBaseKeyMaps[hashCode % numberOfCoreMap]) {
+            
+        }
 
         coreFileBaseKeyMaps[hashCode % numberOfCoreMap].put(key, value, hashCode);
     }
@@ -197,7 +201,7 @@ class CoreFileBaseDataMap {
  * Managing Key.<br>
  * Inner Class.<br>
  */
-class CoreFileBaseKeyMap {
+class CoreFileBaseKeyMap extends AbstractMap {
 
     // Create a data directory(Base directory)
     private String[] baseFileDirs = null;
@@ -328,7 +332,7 @@ class CoreFileBaseKeyMap {
 
 
     // 指定のキー値が指定のファイル内でどこにあるかを調べる
-    private long getLinePoint(String key, RandomAccessFile raf) {
+    public long getLinePoint(String key, RandomAccessFile raf) {
 
         long line = -1;
         long lineCount = 0L;

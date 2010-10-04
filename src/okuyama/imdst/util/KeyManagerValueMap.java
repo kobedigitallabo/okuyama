@@ -50,9 +50,16 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     // コンストラクタ
     public KeyManagerValueMap(int size, boolean memoryMode) {
-        // TODO:CoreValueMapにメモリーモードのフラグ渡す!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         super(size, new Double(size * 0.9).intValue(), 512, memoryMode);
         this.memoryMode = memoryMode;
+    }
+
+    // コンストラクタ
+    public KeyManagerValueMap(String[] dirs, int numberOfDataSize) {
+
+        super(dirs, numberOfDataSize);
+        this.memoryMode = false;
     }
 
     /**

@@ -20,21 +20,34 @@ import com.sun.mail.util.BASE64EncoderStream;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serializable {
+public class CoreValueMap extends AbstractMap implements Cloneable, Serializable {
 
     private boolean fileWrite = false;
 
     private ICoreValueConverter converter = null;
 
+    private AbstractMap mainMap = null;
 
     // コンストラクタ
     public CoreValueMap(int size, int upper, int multi, boolean memoryMode) {
-        super(size, upper, multi);
+
         if (memoryMode) {
+
+            mainMap  = new ConcurrentHashMap(size, upper, multi);
             converter = new MemoryModeCoreValueCnv();
         } else {
-            converter = new FileModeCoreValueCnv();
+
+            mainMap  = new ConcurrentHashMap(size, upper, multi);
+            converter = new PartialFileModeCoreValueCnv();
         }
+    }
+
+
+    // コンストラクタ
+    public CoreValueMap(String[] dirs, int numberOfDataSize) {
+
+        mainMap  = new FileBaseDataMap(dirs, numberOfDataSize);
+        converter = new PartialFileModeCoreValueCnv();
     }
 
 
@@ -45,7 +58,7 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @param value
      */
     public Object put(Object key, Object value) {
-        return super.put(converter.convertEncodeKey(key), converter.convertEncodeValue(value));
+        return mainMap.put(converter.convertEncodeKey(key), converter.convertEncodeValue(value));
     }
 
 
@@ -56,7 +69,7 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @return Object
      */
     public Object get(Object key) {
-        return converter.convertDecodeValue(super.get(converter.convertEncodeKey(key)));
+        return converter.convertDecodeValue(mainMap.get(converter.convertEncodeKey(key)));
     }
 
 
@@ -67,7 +80,7 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @return Object
      */
     public Object remove(Object key) {
-        return converter.convertDecodeValue(super.remove(converter.convertEncodeKey(key)));
+        return converter.convertDecodeValue(mainMap.remove(converter.convertEncodeKey(key)));
     }
 
 
@@ -78,17 +91,37 @@ public class CoreValueMap extends ConcurrentHashMap implements Cloneable, Serial
      * @return boolean
      */
     public boolean containsKey(Object key) {
-        return super.containsKey(converter.convertEncodeKey(key));
+        return mainMap.containsKey(converter.convertEncodeKey(key));
     }
 
 
     /**
-     * containsKey<br>
+     * clear<br>
      *
-     * @param key
-     * @return boolean
+     */
+    public void clear() {
+        this.mainMap.clear();
+    }
+
+
+    /**
+     * size.<br>
+     *
+     * @param
+     * @return int
+     * @throws
+     */
+    public int size() {
+        return this.mainMap.size();
+    }
+    
+    
+    /**
+     * entrySet<br>
+     *
+     * @return Set
      */
     public Set entrySet() {
-        return new CoreValueMapSet(super.entrySet(), converter);
+        return new CoreValueMapSet(mainMap.entrySet(), converter);
     }
 }

@@ -13,8 +13,9 @@ import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.StatusUtil;
 
+
 /**
- * keyとValueの関係を管理するJob、自身でポートを上げて待ち受ける<br>
+ * keyとValueの関係を管理するJob、自身でポートを上げて待ち受ける.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -25,6 +26,16 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
     // ポート番号
     private int portNo = 5554;
+
+
+    private String keySizeStr = null;
+    private int keySize = 500000;
+
+    private boolean workFileMemoryMode = false;
+    private String workFileMemoryModeStr = null;
+
+    private boolean dataMemoryMode = true;
+    private String dataMemoryModeStr = null;
 
 
     // Accept後のコネクター作成までの処理並列数
@@ -58,8 +69,13 @@ public class KeyManagerJob extends AbstractJob implements IJob {
      */
     private static ILogger logger = LoggerFactory.createLogger(KeyManagerJob.class);
 
+
     /**
-     * 初期化メソッド定義
+     * 初期化メソッド定義.<br>
+     * 
+     * @param initValue
+     * @return 
+     * @throws 
      */
     public void initJob(String initValue) {
         logger.debug("KeyManagerJob - initJob - start");
@@ -116,54 +132,143 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         logger.debug("KeyManagerJob - initJob - end");
     }
 
-    /** 
-     * Jobメイン処理定義
+
+    /**
+     * Jobメイン処理定義.<br>
+     *
+     * @param
+     * @return 
+     * @throws 
      */
     public String executeJob(String optionParam) throws BatchException {
         logger.debug("KeyManagerJob - executeJob - start");
 
         String ret = SUCCESS;
 
-        String[] keyMapFiles = null;
-
-        String keySizeStr = null;
-        int keySize = 500000;
-
-        boolean workFileMemoryMode = false;
-        String workFileMemoryModeStr = null;
-
-        boolean dataMemoryMode = true;
-        String dataMemoryModeStr = null;
-
         Socket socket = null;
 
         String keyManagerConnectHelperQueuePrefix = "KeyManagerConnectHelper" + this.myPrefix;
-        long queueIndex = 0L;
-
 
         long accessCount = 0L;
 
+
         try{
 
-            // Option値を分解
+            // KeyMapManagerの設定値を初期化
+            this.initDataPersistentConfig(optionParam);
+
+            // オリジナルのキュー領域を作成
+            this.initHelperTaskQueue();
+
+            // サーバソケットの生成
+            this.serverSocket = new ServerSocket(this.portNo);
+            // 共有領域にServerソケットのポインタを格納
+            super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
+
+
+            // 処理開始
+            logger.info("DataNodeServer-Accept-Start");
+
+            while (true) {
+                if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;
+                try {
+
+                    // クライアントからの接続待ち
+                    accessCount++;
+                    socket = serverSocket.accept();
+
+                    Object[] helperParam = new Object[1];
+                    helperParam[0] = socket;
+
+                    // アクセス済みのソケットをキューに貯める
+                    super.addSpecificationParameterQueue(keyManagerConnectHelperQueuePrefix + (accessCount % this.maxConnectParallelQueue), helperParam);
+
+                } catch (Exception e) {
+                    if (StatusUtil.getStatus() == 2) {
+                        logger.info("KeyManagerJob - executeJob - ServerEnd");
+                        break;
+                    }
+                    logger.error(e);
+                }
+            }
+        } catch(Exception e) {
+            logger.error("KeyManagerJob - executeJob - Error", e);
+            throw new BatchException(e);
+        }
+
+        //logger.debug("KeyManagerJob - executeJob - end");
+        return ret;
+    }
+
+
+    /**
+     * データ永続化用のKeyMapManagerを初期化.<br>
+     *
+     * @param optionParam
+     * @return 
+     * @throws 
+     */
+    private void initDataPersistentConfig(String optionParam) {
+        String[] keyMapFiles = null;
+        String keyStoreForFileStr = null;
+        boolean keyStoreForFileFlg = false;
+        String keyStoreDirsStr = null;
+        String[] keyStoreDirs = null;
+        try {
             keyMapFiles = optionParam.split(",");
 
             // KeyMapManagerの設定値を取得
-            workFileMemoryModeStr = super.getPropertiesValue(super.getJobName() + ".memoryMode");
-            dataMemoryModeStr = super.getPropertiesValue(super.getJobName() + ".dataMemory");
-            keySizeStr = super.getPropertiesValue(super.getJobName() + ".keySize");
+            this.workFileMemoryModeStr = super.getPropertiesValue(super.getJobName() + ".memoryMode");
+            this.dataMemoryModeStr = super.getPropertiesValue(super.getJobName() + ".dataMemory");
+
+            keyStoreForFileStr = super.getPropertiesValue(super.getJobName() + ".keyMemory");
+            if (keyStoreForFileStr != null || !keyStoreForFileStr.equals("")) {
+                if (keyStoreForFileStr.equals("true")) {
+                    keyStoreForFileFlg = true;
+                }
+            }
+
+            keyStoreDirsStr = super.getPropertiesValue(super.getJobName() + ".keyStoreDirs");
+            if (keyStoreDirsStr != null) keyStoreDirs = keyStoreDirsStr.split(",");
+
+            this.keySizeStr = super.getPropertiesValue(super.getJobName() + ".keySize");
 
             // workファイルを保持するか判断
             if (workFileMemoryModeStr != null && workFileMemoryModeStr.equals("true")) workFileMemoryMode = true;
             // データをメモリに持つか判断
             if (dataMemoryModeStr != null && dataMemoryModeStr.equals("false")) dataMemoryMode = false;
+
+            // データ保持予測件数
             if (keySizeStr != null) keySize = Integer.parseInt(keySizeStr);
 
-            this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode);
+            // KeyMapManager初期化
+            if (keyStoreForFileFlg) {
+
+                // Key is FileStoreMode
+                this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode, keyStoreDirs);
+            } else {
+
+                // Key is MemoryStoreMode
+                this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode);
+            }
             this.keyMapManager.start();
+        } catch(Exception e) {
+                e.printStackTrace();
+        }
+    }
 
 
-            // オリジナルのキュー領域を作成
+    /**
+     * Helper用のQueue領域を生成する.<br>
+     *
+     * @param
+     * @return 
+     * @throws 
+     */
+    private void initHelperTaskQueue() {
+        long queueIndex = 0L;
+        try {
+            
             for (int i = 0; i < this.maxConnectParallelQueue; i++) {
                 super.createUniqueHelperParamQueue("KeyManagerConnectHelper" + this.myPrefix + i, 7000);
                 this.maxConnectParallelQueueNames[i] = "KeyManagerConnectHelper" + this.myPrefix + i;
@@ -209,76 +314,8 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                 queueParam[2] = this.maxAcceptParallelQueueNames;
                 super.executeHelper("KeyManagerHelper", queueParam, true);
             }
-
-
-            // サーバソケットの生成
-            this.serverSocket = new ServerSocket(this.portNo);
-            // 共有領域にServerソケットのポインタを格納
-            super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
-
-            // 処理開始
-            logger.info("DataNodeServer-Accept-Start");
-
-            while (true) {
-                if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;
-                try {
-
-                    // クライアントからの接続待ち
-                    accessCount++;
-                    socket = serverSocket.accept();
-
-                    Object[] helperParam = new Object[1];
-                    helperParam[0] = socket;
-
-                    // アクセス済みのソケットをキューに貯める
-                    super.addSpecificationParameterQueue(keyManagerConnectHelperQueuePrefix + (accessCount % this.maxConnectParallelQueue), helperParam);
-
-/*
-                    // 各スレッドが減少していないかを確かめる
-                    if (super.getActiveHelperCount("KeyManagerConnectHelper") < (maxConnectParallelExecution / 2)) {
-                        queueIndex = accessCount % this.maxConnectParallelQueue;
-
-                        Object[] queueParam = new Object[2];
-                        queueParam[0] = "KeyManagerConnectHelper" + this.myPrefix + queueIndex;
-                        queueParam[1] = this.maxAcceptParallelQueueNames;
-                        super.executeHelper("KeyManagerConnectHelper", queueParam);
-                    }
-
-                    if (super.getActiveHelperCount("KeyManagerAcceptHelper") < (maxAcceptParallelExecution / 2)) {
-                        queueIndex = accessCount % this.maxAcceptParallelQueue;
-
-                        Object[] queueParam = new Object[2];
-                        queueParam[0] = "KeyManagerAcceptHelper" + this.myPrefix + queueIndex;
-                        queueParam[1] = this.maxWorkerParallelQueueNames;
-                        super.executeHelper("KeyManagerAcceptHelper", queueParam);
-                    }
-
-                    if (super.getActiveHelperCount("KeyManagerHelper") < (maxWorkerParallelExecution / 2)) {
-                        queueIndex = accessCount % this.maxWorkerParallelQueue;
-
-                        Object[] queueParam = new Object[3];
-                        queueParam[0] = this.keyMapManager;
-                        queueParam[1] = "KeyManagerHelper" + this.myPrefix + queueIndex;
-                        queueParam[2] = this.maxAcceptParallelQueueNames;
-                        super.executeHelper("KeyManagerHelper", queueParam);
-                    }
-*/
-                } catch (Exception e) {
-                    if (StatusUtil.getStatus() == 2) {
-                        logger.info("KeyManagerJob - executeJob - ServerEnd");
-                        break;
-                    }
-                    logger.error(e);
-                }
-            }
         } catch(Exception e) {
-            logger.error("KeyManagerJob - executeJob - Error", e);
-            throw new BatchException(e);
+                e.printStackTrace();
         }
-
-        //logger.debug("KeyManagerJob - executeJob - end");
-        return ret;
     }
-
-
 }

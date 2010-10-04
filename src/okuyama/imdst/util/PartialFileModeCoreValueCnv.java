@@ -12,7 +12,7 @@ package okuyama.imdst.util;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class FileModeCoreValueCnv implements ICoreValueConverter {
+public class PartialFileModeCoreValueCnv implements ICoreValueConverter {
 
 
     /**

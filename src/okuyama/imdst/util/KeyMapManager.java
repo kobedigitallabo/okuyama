@@ -53,6 +53,9 @@ public class KeyMapManager extends Thread {
 
     private String workKeyFilePath = null;
 
+    // Keyをファイル保存にした場合の保存ファイルディレクトリ群
+    private String[] keyFileDirs = null;
+
     private FileOutputStream fos = null;
     private OutputStreamWriter osw = null;
     private BufferedWriter bw = null;
@@ -94,6 +97,9 @@ public class KeyMapManager extends Thread {
 
     // データのメモリーモードかファイルモードかの指定
     private boolean dataMemory = true;
+
+    // データのKeyおよびValueの完全ファイルモードのフラグ
+    private boolean allDataForFile = false;
 
     // Diskモード(ファイルモード)で稼動している場合のデータファイル名
     private String diskModeRestoreFile = null;
@@ -137,13 +143,20 @@ public class KeyMapManager extends Thread {
     // 初期化メソッド
     // Transactionを管理する場合に呼び出す
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, boolean dataManage) throws BatchException {
-        this(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory);
+        this(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
         this.dataManege = dataManage;
     }
 
 
     // 初期化メソッド
+    // Key値はメモリを使用する場合に使用
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory) throws BatchException {
+        this(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
+    }
+
+
+    // 初期化メソッド
+    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, String[] dirs) throws BatchException {
         logger.debug("init - start");
         if (!initFlg) {
             initFlg = true;
@@ -159,6 +172,12 @@ public class KeyMapManager extends Thread {
             BufferedReader br = null;
             String line = null;
             String[] workSplitStrs = null;
+
+            if (dirs != null) {
+                this.dataMemory = false;
+                this.allDataForFile = true;
+                this.keyFileDirs = dirs;
+            }
 
             // Diskモード時のファイルパス作成
             if (!this.dataMemory) {
@@ -177,7 +196,13 @@ public class KeyMapManager extends Thread {
                     boolean mapFileRead = true;
 
                     // KeyManagerValueMap作成
-                    this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory);
+                    if (!this.allDataForFile) {
+                        this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory);
+                    } else {
+                        this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize);
+                    }
+
+
                     if (!dataMemory) {
                         this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
                     }
@@ -1275,6 +1300,7 @@ public class KeyMapManager extends Thread {
                         }
 
                         // Disk時はデータファイルを削除
+                        this.keyMapObj.clear();
                         if (this.dataMemory) {
                             if(this.keyMapObj != null) this.keyMapObj.close();
                         } else {
@@ -1283,10 +1309,15 @@ public class KeyMapManager extends Thread {
 
                         // KeyManagerValueMapのインスタンスを再作成
                         this.keyMapObj = null;
-                        this.keyMapObj = new KeyManagerValueMap(this.mapSize, dataMemory);
-                        if (!dataMemory) {
-                            this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
+                        if (!this.allDataForFile) {
+                            this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory);
+                        } else {
+                            this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize);
                         }
+
+                        if (!dataMemory) 
+                            this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
+
 
                         // WorkKeyMapファイル用のストリームを作成
                         this.fos = new FileOutputStream(new File(this.workKeyFilePath));

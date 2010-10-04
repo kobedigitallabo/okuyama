@@ -3,6 +3,7 @@ package okuyama.imdst.util;
 import java.io.*;
 import java.util.concurrent.locks.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -15,31 +16,40 @@ import org.apache.commons.codec.digest.DigestUtils;
  * This class is passed as an argument in one directory CoreFileBaseDataMap assigned.<br>
  * The specified directory should be different disk performance can be improved.<br>
  *
+ * TODO:Iterator部分の実装がまだ。164行目から!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class FileBaseDataMap {
+public class FileBaseDataMap extends AbstractMap {
 
-    CoreFileBaseDataMap[] coreFileBaseDataMaps = null;
+    CoreFileBaseKeyMap[] coreFileBaseKeyMaps = null;
+
+    String[] dirs = null;
 
     int numberOfCoreMap = 0;
 
-    int innerCacheSizeTotal = 1024;
+    // Using a single cache 25 KB per
+    int innerCacheSizeTotal = 1024 * 4;
+
 
     /**
-     * Mapを構築.<br>
-     * 
-     * @param baseDirs Mapを構築するのに使用するディレクトリ
+     * コンストラクタ.<br>
+     *
+     * @param baseDirs
+     * @param numberOfKeyData
+     * @return 
+     * @throws
      */
-    public FileBaseDataMap(String[] baseDirs) {
-
-        numberOfCoreMap = baseDirs.length;
-        coreFileBaseDataMaps = new CoreFileBaseDataMap[baseDirs.length];
+    public FileBaseDataMap(String[] baseDirs, int numberOfKeyData) {
+        this.dirs = baseDirs;
+        this.numberOfCoreMap = baseDirs.length;
+        this.coreFileBaseKeyMaps = new CoreFileBaseKeyMap[baseDirs.length];
         int oneCacheSizePer = innerCacheSizeTotal / numberOfCoreMap;
+        int oneMapSizePer = numberOfKeyData / numberOfCoreMap;
 
         for (int idx = 0; idx < baseDirs.length; idx++) {
             String[] dir = {baseDirs[idx]};
-            coreFileBaseDataMaps[idx] = new CoreFileBaseDataMap(dir, oneCacheSizePer);
+            this.coreFileBaseKeyMaps[idx] = new CoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer);
         }
     }
 
@@ -50,10 +60,11 @@ public class FileBaseDataMap {
      * @param key
      * @param value
      */
-    public void put(String key, String value) {
-        int hashCode = CoreFileBaseDataMap.createHashCode(key);
+    public Object put(Object key, Object value) {
+        int hashCode = CoreFileBaseKeyMap.createHashCode((String)key);
 
-        coreFileBaseDataMaps[hashCode % numberOfCoreMap].put(key, value, hashCode);
+        this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].put((String)key, ((Long)value).toString(), hashCode);
+        return null;
     }
 
 
@@ -62,10 +73,10 @@ public class FileBaseDataMap {
      * 
      * @param key
      */
-    public String get(String key) {
-        int hashCode = CoreFileBaseDataMap.createHashCode(key);
+    public Object get(Object key) {
+        int hashCode = CoreFileBaseKeyMap.createHashCode((String)key);
 
-        return coreFileBaseDataMaps[hashCode % numberOfCoreMap].get(key, hashCode);
+        return this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].get((String)key, hashCode);
     }
 
 
@@ -74,40 +85,143 @@ public class FileBaseDataMap {
      * 
      * @param key
      */
-    public String remove(String key) {
-        int hashCode = CoreFileBaseDataMap.createHashCode(key);
+    public Object remove(Object key) {
+        int hashCode = CoreFileBaseKeyMap.createHashCode((String)key);
 
-        return coreFileBaseDataMaps[hashCode % numberOfCoreMap].remove(key, hashCode);
+        return this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].remove((String)key, hashCode);
+    }
+
+
+    /**
+     * containsKey.<br>
+     *
+     * @param key 
+     */
+    public boolean containsKey(Object key) {
+        boolean ret = true;
+        int hashCode = CoreFileBaseKeyMap.createHashCode((String)key);
+
+        if (this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].get((String)key, hashCode) == null) {
+            ret = false;
+        }
+        return ret;
+    }
+
+
+    /**
+     * size.<br>
+     *
+     * @param
+     * @return 
+     * @throws
+     */
+    public int size() {
+        int ret = 0;
+
+        for (int idx = 0; idx < this.coreFileBaseKeyMaps.length; idx++) {
+            ret = ret + this.coreFileBaseKeyMaps[idx].totalSize.intValue();
+        }
+        return ret;
+    }
+
+
+    /**
+     * clear.<br>
+     *
+     * @param
+     * @return 
+     * @throws
+     */
+    public void clear() {
+        for (int i = 0; i < this.coreFileBaseKeyMaps.length; i++) {
+            this.coreFileBaseKeyMaps[i].clear();
+            this.coreFileBaseKeyMaps[i].init();
+        }
+    }
+
+
+    /**
+     * entrySet.<br>
+     *
+     * @param
+     * @return 
+     * @throws
+     */
+    public Set entrySet() {
+        Set ret = new FileBaseDataMapSet(this);
+        return ret;
+    }
+
+
+    /**
+     * イテレータを初期化.<br>
+     * スレッドセーフではない.<br>
+     *
+     * @param
+     * @return 
+     * @throws
+     */
+    public void setIteratorInit() {
+    
+    }
+
+
+    /**
+     * イテレータの次の値の存在確認.<br>
+     * スレッドセーフではない.<br>
+     *
+     * @param
+     * @return boolean 
+     * @throws
+     */
+    public boolean hasIteratorNext() {
+        boolean ret = true;
+        return ret;
+    }
+
+
+    /**
+     *
+     *
+     * @param
+     * @return 
+     * @throws
+     */
+    public Object nextIteratorKey() {
+        Object ret = null;
+        return ret;
     }
 }
 
 
+
 /**
- * Fileベースでデータを管理する.<br>
- * ディスクベースなのでメモリをあまり利用しないので大量のデータを管理できる.<br>
+ * Managing Key.<br>
+ * Inner Class.<br>
+ *
  *
  */
-class CoreFileBaseDataMap {
+class CoreFileBaseKeyMap {
 
-    // データファイル作成ディレクトリ(ベース)
+    // Create a data directory(Base directory)
     private String[] baseFileDirs = null;
 
-    // データファイル作成ディレクトリ
+    // Data File Name
     private String[] fileDirs = null;
 
-    // Key値の最大長
-    private int keyDataLength = 129;
+    // The Maximum Length Key
+    private int keyDataLength = ImdstDefine.saveKeyMaxSize;
 
-    // Valueの最大長
+    // The Maximun Length Value
     private int oneDataLength = 16;
 
-    // Key + Value の長さ
+    // The total length of the Key and Value
     private int lineDataSize =  keyDataLength + oneDataLength;
 
-    // 一度に取得するデータサイズ(byteサイズ)
-    private int getDataSize = lineDataSize * 56;
+    // The length of the data read from the file stream at a time(In bytes)
+    private int getDataSize = lineDataSize * (8192 / lineDataSize);
 
-    // データファイルの数
+    // The number of data files created
     private int numberOfDataFiles = 1024 * 10;
     //private int numberOfDataFiles = 512;
 
@@ -117,19 +231,57 @@ class CoreFileBaseDataMap {
     private int dataDirsFactor = 20;
 
     // Fileオブジェクト格納用
-    private File[] dataFileList = new File[numberOfDataFiles];
+    private File[] dataFileList = null;
 
     // アクセススピード向上の為に、Openしたファイルストリームを一定数キャッシュする
     private InnerCache innerCache = null;
 
+    // Total Size
+    protected AtomicInteger totalSize = null;
 
-    public CoreFileBaseDataMap(String[] dirs, int innerCacheSize) {
-        this.baseFileDirs = dirs;
-        innerCache = new InnerCache(innerCacheSize);
+    private int innerCacheSize = 128;
+
+    /**
+     * コンストラクタ.<br>
+     *
+     * @param dirs
+     * @param innerCacheSize
+     * @param numberOfKeyData
+     * @return 
+     * @throws
+     */
+    public CoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData) {
         try {
-            fileDirs = new String[baseFileDirs.length * dataDirsFactor];
+            this.baseFileDirs = dirs;
+            this.innerCacheSize = innerCacheSize;
+            this.numberOfDataFiles = numberOfKeyData / 100;
+
+            this.init();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * 初期化
+     *
+     * @param dirs
+     * @param innerCacheSize
+     * @param numberOfKeyData
+     * @return 
+     * @throws
+     */
+    public void init() {
+
+        this.innerCache = new InnerCache(this.innerCacheSize);
+        this.totalSize = new AtomicInteger(0);
+        this.dataFileList = new File[numberOfDataFiles];
+
+        try {
+            this.fileDirs = new String[this.baseFileDirs.length * this.dataDirsFactor];
             int counter = 0;
-            for (int idx = 0; idx < baseFileDirs.length; idx++) {
+            for (int idx = 0; idx < this.baseFileDirs.length; idx++) {
                 for (int idx2 = 0; idx2 < dataDirsFactor; idx2++) {
 
                     fileDirs[counter] = baseFileDirs[idx] + idx2 + "/";
@@ -140,8 +292,10 @@ class CoreFileBaseDataMap {
             }
 
             for (int i = 0; i < numberOfDataFiles; i++) {
+
                 File file = new File(fileDirs[i % fileDirs.length] + i + ".data");
 
+                file.delete();
                 dataFileList[i] = file;
             }
 
@@ -152,7 +306,19 @@ class CoreFileBaseDataMap {
 
 
     /**
-     * putメソッド.<br>
+     * clearメソッド.<br>
+     *
+     * @param
+     * @return 
+     * @throws
+     */
+    public void clear() {
+        if (this.innerCache != null) this.innerCache.clear();
+    }
+
+
+    /**
+     * put Method.<br>
      * 
      * @param key
      * @param value
@@ -193,7 +359,13 @@ class CoreFileBaseDataMap {
 
                     wr.write(buf.toString());
                     wr.flush();
+
+                    // The size of an increment
+                    this.totalSize.getAndIncrement();
                 } else {
+
+                    // 過去に存在したデータなら1増分
+                    if (this.get(key, hashCode) == null) this.totalSize.getAndIncrement();
 
                     raf.seek(dataLineNo * (lineDataSize));
                     raf.write(buf.toString().getBytes(), 0, lineDataSize);
@@ -271,6 +443,8 @@ class CoreFileBaseDataMap {
      *
      * @param key 
      * @param hashCode This is a key value hash code
+     * @return 
+     * @throws
      */
     public String get(String key, int hashCode) {
         byte[] tmpBytes = null;
@@ -324,6 +498,7 @@ class CoreFileBaseDataMap {
                         int assist = (lineDataSize * loopIdx);
 
                         matchFlg = true;
+
                         if (equalKeyBytes[equalKeyBytes.length - 1] == lineBufs[assist + (equalKeyBytes.length - 1)]) {
 
                             for (int i = 0; i < equalKeyBytes.length; i++) {
@@ -334,13 +509,17 @@ class CoreFileBaseDataMap {
                                 }
                             }
                         } else {
+
                             matchFlg = false;
                         }
 
                         // マッチした場合のみ配列化
                         if (matchFlg) {
+
                             tmpBytes = new byte[lineDataSize];
+
                             for (int i = 0; i < lineDataSize; i++) {
+
                                 tmpBytes[i] = lineBufs[assist + i];
                             }
                             break;
@@ -351,10 +530,14 @@ class CoreFileBaseDataMap {
             }
 
             if (tmpBytes != null) {
+
                 if (tmpBytes[keyDataLength] != 38) {
+
                     int i = keyDataLength;
                     int counter = 0;
+
                     for (; i < tmpBytes.length; i++) {
+
                         if (tmpBytes[i] == 38) break;
                         counter++;
                     }
@@ -363,6 +546,7 @@ class CoreFileBaseDataMap {
                 }
             }
         } catch (Exception e) {
+
             e.printStackTrace();
         }
 
@@ -377,8 +561,18 @@ class CoreFileBaseDataMap {
      * @param hashCode
      */
     public String remove(String key, int hashCode) {
-        String ret = this.get(key, hashCode);
-        if(ret != null) this.put(key, "&&&&&&&&&&&&&&&&", hashCode);
+        String ret = null;
+        synchronized (innerCache.syncObj) {
+
+            ret = this.get(key, hashCode);
+            if(ret != null) {
+
+                this.put(key, "&&&&&&&&&&&&&&&&", hashCode);
+
+                // The size of an decrement
+                this.totalSize.getAndDecrement();
+            }
+        }
         return ret;
     }
 
@@ -434,6 +628,137 @@ class CacheContainer {
     public File file = null;
     public boolean isClosed = false;
 }
+
+
+class FileBaseDataMapEntry implements Map.Entry {
+
+    private Object key = null;
+    private Object value = null;
+    private FileBaseDataMap fileBaseDataMap = null;
+
+    // コンストラクタ
+    public FileBaseDataMapEntry(Object key, Object value, FileBaseDataMap fileBaseDataMap) {
+        this.key = key;
+        this.value = value;
+        this.fileBaseDataMap = fileBaseDataMap;
+    }
+
+
+    /**
+     * equals<br>
+     *
+     */
+    public boolean equals(Object o) {
+        return this.key.equals(o);
+    }
+
+
+    /**
+     * getKey<br>
+     *
+     */
+    public Object getKey() {
+        return this.key;
+    }
+
+
+    /**
+     * getValue<br>
+     *
+     */
+    public Object getValue() {
+        return this.value;
+    }
+
+    /**
+     * hashCode<br>
+     *
+     */
+    public int hashCode() {
+        return this.key.hashCode();
+    }
+
+    /**
+     * setValue<br>
+     *
+     */
+    public Object setValue(Object o) {
+        return this.fileBaseDataMap.put(this.key, o);
+    }
+}
+
+
+class FileBaseDataMapSet extends AbstractSet implements Set {
+
+    private FileBaseDataMap fileBaseDataMap = null;
+
+    // コンストラクタ
+    public FileBaseDataMapSet(FileBaseDataMap fileBaseDataMap) {
+        this.fileBaseDataMap = fileBaseDataMap;
+    }
+
+
+    public int size() {
+        return this.fileBaseDataMap.size();
+    }
+
+
+    public Iterator iterator() {
+        return new FileBaseDataMapIterator(this.fileBaseDataMap);
+    }
+}
+
+
+class FileBaseDataMapIterator implements Iterator {
+
+    private FileBaseDataMap fileBaseDataMap = null;
+
+    private Object nowPositionKey = null;
+
+
+    // コンストラクタ
+    public FileBaseDataMapIterator(FileBaseDataMap fileBaseDataMap) {
+        this.fileBaseDataMap = fileBaseDataMap;
+        this.fileBaseDataMap.setIteratorInit();
+    }
+
+
+    /**
+     * hasNext<br>
+     *
+     */
+    public boolean hasNext() {
+        return this.fileBaseDataMap.hasIteratorNext();
+    }
+
+
+    /**
+     * next<br>
+     *
+     */
+    public Map.Entry next() {
+
+        Object key = null;
+        Object value = null;
+
+        while((key = this.fileBaseDataMap.nextIteratorKey()) == null) {};
+        this.nowPositionKey = key;
+        value = this.fileBaseDataMap.get(key);
+
+        Map.Entry fileBaseDataMapEntry = new FileBaseDataMapEntry(key, value, this.fileBaseDataMap);
+        return fileBaseDataMapEntry;
+    }
+
+
+    /**
+     * remove<br>
+     *
+     */
+    public void remove() {
+        this.fileBaseDataMap.remove(this.nowPositionKey);
+    }
+}
+
 
 
 /**
@@ -536,6 +861,37 @@ class InnerCache extends LinkedHashMap {
     public void clear() {
         w.lock();
         try { 
+
+            Set workEntrySet = this.entrySet();
+            Iterator workEntryIte = workEntrySet.iterator();
+            String workKey = null;
+
+            while(workEntryIte.hasNext()) {
+                Map.Entry obj = (Map.Entry)workEntryIte.next();
+
+                CacheContainer accessor= (CacheContainer)obj.getValue();
+                try {
+                    if (accessor != null) {
+
+                        synchronized (syncObj) {
+
+                            if (accessor.raf != null) {
+                                accessor.raf.close();
+                                accessor.raf = null;
+                            }
+
+                            if (accessor.wr != null) {
+                                accessor.wr.close();
+                                accessor.wr = null;
+                            }
+                            accessor.isClosed = true;
+                            obj.setValue(accessor);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             super.clear();
         } finally {
             w.unlock(); 
