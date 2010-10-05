@@ -34,6 +34,11 @@ public class FileBaseDataMap extends AbstractMap {
     // Sync Object
     private Object[] syncObjs = null;
 
+    private int iteratorIndex = 0;
+
+    private List iteratorNowDataList = null;
+    private int iteratorNowDataListIdx = 0;
+
     /**
      * コンストラクタ.<br>
      *
@@ -181,8 +186,24 @@ public class FileBaseDataMap extends AbstractMap {
      * @return 
      * @throws
      */
-    public void setIteratorInit() {
-    
+    public void iteratorInit() {
+
+        this.iteratorIndex = 0;
+        this.iteratorNowDataList = new ArrayList();
+        this.iteratorNowDataListIdx = 0;
+
+        for (int i = 0; i < this.coreFileBaseKeyMaps.length; i++) {
+
+            this.coreFileBaseKeyMaps[i].startKeyIteration();
+        }
+
+        if (this.iteratorIndex < this.coreFileBaseKeyMaps.length) {
+            while (true) {
+                this.iteratorNowDataList = this.coreFileBaseKeyMaps[this.iteratorIndex].getAllOneFileInKeys();
+                if(this.iteratorNowDataList == null) break;
+                if(this.iteratorNowDataList.size() > 0) break;
+            }
+        }
     }
 
 
@@ -195,8 +216,9 @@ public class FileBaseDataMap extends AbstractMap {
      * @throws
      */
     public boolean hasIteratorNext() {
-        boolean ret = true;
-        return ret;
+        if(this.iteratorNowDataList == null) return false;
+        if(this.iteratorNowDataList.size() > this.iteratorNowDataListIdx) return true;
+        return false;
     }
 
 
@@ -209,6 +231,46 @@ public class FileBaseDataMap extends AbstractMap {
      */
     public Object nextIteratorKey() {
         Object ret = null;
+
+        ret = (String)this.iteratorNowDataList.get(this.iteratorNowDataListIdx);
+        this.iteratorNowDataListIdx++;
+
+        if (this.iteratorNowDataList.size() == this.iteratorNowDataListIdx) {
+
+            if (this.iteratorIndex < this.coreFileBaseKeyMaps.length) {
+
+                while (true) {
+
+                    this.iteratorNowDataList = this.coreFileBaseKeyMaps[this.iteratorIndex].getAllOneFileInKeys();
+                    this.iteratorNowDataListIdx = 0;
+
+                    if (this.iteratorNowDataList == null && this.iteratorIndex < this.coreFileBaseKeyMaps.length) {
+
+                        this.iteratorIndex++;
+                        if (this.iteratorIndex == this.coreFileBaseKeyMaps.length) break;
+                        continue;
+                    }
+
+                    if (this.iteratorNowDataList == null) {
+
+                        this.iteratorNowDataList = null;
+                        this.iteratorNowDataListIdx = 0;
+                        this.iteratorIndex++;
+                    }
+
+                    if (this.iteratorNowDataList.size() > 0) {
+
+                        this.iteratorNowDataListIdx = 0;
+                        break;
+                    }
+                }
+            } else {
+
+                this.iteratorNowDataList = null;
+                this.iteratorNowDataListIdx = 0;
+            }
+        }
+
         return ret;
     }
 }
@@ -230,10 +292,10 @@ class CoreFileBaseKeyMap {
     private String[] fileDirs = null;
 
     // The Maximum Length Key
-    private int keyDataLength = ImdstDefine.saveKeyMaxSize;
+    private int keyDataLength = ImdstDefine.saveKeyMaxSize + 1;
 
     // The Maximun Length Value
-    private int oneDataLength = 10;
+    private int oneDataLength = 11;
 
     // The total length of the Key and Value
     private int lineDataSize =  keyDataLength + oneDataLength;
@@ -260,6 +322,13 @@ class CoreFileBaseKeyMap {
 
     // 1ファイルに対してどの程度のキー数を保存するかの目安
     private int numberOfOneFileKey = 500;
+
+    // 全キー取得時の現在ファイルのインデックス
+    private int nowIterationFileIndex = 0;
+
+    // 全キー取得時の現在のファイル内でのFPの位置
+    private long nowIterationFpPosition = 0;
+
 
     /**
      * コンストラクタ.<br>
@@ -643,7 +712,7 @@ class CoreFileBaseKeyMap {
         ret = this.get(key, hashCode);
         if(ret != null) {
 
-            this.put(key, "&&&&&&&&&&&&&&&&", hashCode);
+            this.put(key, "&&&&&&&&&&&", hashCode);
 
             // The size of an decrement
             this.totalSize.getAndDecrement();
@@ -690,7 +759,78 @@ class CoreFileBaseKeyMap {
         }
 
         return hashCode;
-    } 
+    }
+
+
+    /**
+     * キー値を連続して取得する準備を行う.<br>
+     *
+     * @param
+     * @return 
+     * @throws
+     */
+    public void startKeyIteration() {
+        this.nowIterationFileIndex =  0;
+        this.nowIterationFpPosition =  0L;
+    }
+
+
+    /**
+     * 自身が保持するキー値を返す.<br>
+     * 最終的にキー値を全て返すとnullを返す.<br>
+     *
+     * @param
+     * @return 
+     * @throws
+     */
+    public List getAllOneFileInKeys() {
+
+        List keys = null;
+        byte[] datas = null;
+        StringBuffer keysBuf = null;
+
+        try {
+            if (this.nowIterationFileIndex < this.dataFileList.length) {
+
+                keys = new ArrayList();
+                datas = new byte[new Long(this.dataFileList[this.nowIterationFileIndex].length()).intValue()];
+
+                RandomAccessFile raf = new RandomAccessFile(this.dataFileList[this.nowIterationFileIndex], "rwd");
+
+                raf.seek(0);
+                int readLen = -1;
+                readLen = raf.read(datas);
+
+                if (readLen > 0) {
+
+                    int loop = readLen / lineDataSize;
+
+                    for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
+
+                        int assist = (lineDataSize * loopIdx);
+                        keysBuf = new StringBuffer();
+
+                        int idx = 0;
+
+                        while (true) {
+
+                            if (datas[assist + idx] != 38) {
+                                keysBuf.append(new String(datas, assist + idx, 1));
+                            } else {
+                                break;
+                            }
+                            idx++;
+                        }
+                        keys.add(keysBuf.toString());
+                    }
+                }
+            }
+            this.nowIterationFileIndex++;
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return keys;
+    }
 }
 
 
@@ -794,7 +934,7 @@ class FileBaseDataMapIterator implements Iterator {
     // コンストラクタ
     public FileBaseDataMapIterator(FileBaseDataMap fileBaseDataMap) {
         this.fileBaseDataMap = fileBaseDataMap;
-        this.fileBaseDataMap.setIteratorInit();
+        this.fileBaseDataMap.iteratorInit();
     }
 
 

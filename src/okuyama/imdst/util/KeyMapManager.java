@@ -203,7 +203,11 @@ public class KeyMapManager extends Thread {
                     }
 
 
+                    // Valueをファイルに保持する場合は初期化
+                    // ファイルが既に存在する場合は削除する
                     if (!dataMemory) {
+                        File dataFile = new File(this.diskModeRestoreFile);
+                        if (dataFile.exists()) dataFile.delete();
                         this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
                     }
 
@@ -1246,9 +1250,22 @@ public class KeyMapManager extends Thread {
                             allDataBuf.append(allDataSep);
                             allDataBuf.append(this.diffDataPoolingList.get(i));
                             allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+
+                            if (i > 0 && (i % 10) == 0) {
+
+                                pw.print(allDataBuf.toString());
+                                pw.flush();
+                                allDataBuf = new StringBuffer();
+                            }
                         }
 
-                        pw.println(allDataBuf.toString());
+                        String lastSendData = allDataBuf.toString();
+                        if (!lastSendData.equals("")) {
+                            pw.print(lastSendData);
+                            pw.flush();
+                        }
+
+                        pw.print("\n");
                         pw.flush();
                         this.diffDataPoolingList = null;
                         allDataBuf = null;

@@ -117,7 +117,7 @@ System.out.println("==========================================");
                 matchFlg = false;
             }
 
-            // ƒ}ƒbƒ`‚µ‚½ê‡‚Ì‚İ•¶š—ñ‰»
+            // ãƒãƒƒãƒã—ãŸå ´åˆã®ã¿æ–‡å­—åˆ—åŒ–
             if (matchFlg) {
                 //tmpValue = new String(matchData, assist, 120);
                 //System.out.println(lineCount);
@@ -141,13 +141,13 @@ class ValueCacheMap extends LinkedHashMap {
 
     private int maxCacheSize = 5;
 
-    // ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+    // ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
     public ValueCacheMap() {
         super(1024, 0.75f, true);
     }
 
 
-    // ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+    // ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
     public ValueCacheMap(int maxCacheCapacity) {
         super(maxCacheCapacity, 0.75f, true);
         maxCacheSize = maxCacheCapacity;
@@ -233,7 +233,7 @@ class ValueCacheMap extends LinkedHashMap {
 
 
     /**
-     * íœw•WÀ‘•.<br>
+     * å‰Šé™¤æŒ‡æ¨™å®Ÿè£….<br>
      */
     protected boolean removeEldestEntry(Map.Entry eldest) {
         return size() > maxCacheSize;
