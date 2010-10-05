@@ -16,7 +16,6 @@ import org.apache.commons.codec.digest.DigestUtils;
  * This class is passed as an argument in one directory CoreFileBaseDataMap assigned.<br>
  * The specified directory should be different disk performance can be improved.<br>
  *
- * TODO:Iterator部分の実装がまだ。164行目から!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
@@ -38,6 +37,7 @@ public class FileBaseDataMap extends AbstractMap {
 
     private List iteratorNowDataList = null;
     private int iteratorNowDataListIdx = 0;
+
 
     /**
      * コンストラクタ.<br>
@@ -788,6 +788,7 @@ class CoreFileBaseKeyMap {
         List keys = null;
         byte[] datas = null;
         StringBuffer keysBuf = null;
+        RandomAccessFile raf = null;
 
         try {
             if (this.nowIterationFileIndex < this.dataFileList.length) {
@@ -795,7 +796,7 @@ class CoreFileBaseKeyMap {
                 keys = new ArrayList();
                 datas = new byte[new Long(this.dataFileList[this.nowIterationFileIndex].length()).intValue()];
 
-                RandomAccessFile raf = new RandomAccessFile(this.dataFileList[this.nowIterationFileIndex], "rwd");
+                raf = new RandomAccessFile(this.dataFileList[this.nowIterationFileIndex], "rwd");
 
                 raf.seek(0);
                 int readLen = -1;
@@ -822,12 +823,24 @@ class CoreFileBaseKeyMap {
                             idx++;
                         }
                         keys.add(keysBuf.toString());
+                        keysBuf = null;
                     }
                 }
             }
             this.nowIterationFileIndex++;
         } catch(Exception e) {
+
             e.printStackTrace();
+        } finally {
+
+            try {
+                if(raf != null) raf.close();
+
+                raf = null;
+                datas = null;
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
         }
         return keys;
     }
