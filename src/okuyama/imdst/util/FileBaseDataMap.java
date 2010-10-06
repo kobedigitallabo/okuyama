@@ -447,9 +447,9 @@ class CoreFileBaseKeyMap {
             for (int tryIdx = 0; tryIdx < 2; tryIdx++) {
                 try {
                     // Key値の場所を特定する
-                    long dataLineNo = this.getLinePoint(key, raf);
+                    long[] dataLineNoRet = this.getLinePoint(key, raf);
 
-                    if (dataLineNo == -1) {
+                    if (dataLineNoRet[0] == -1) {
 
                         wr.write(buf.toString());
                         wr.flush();
@@ -460,16 +460,17 @@ class CoreFileBaseKeyMap {
 
                         // 過去に存在したデータなら1増分
                         boolean increMentFlg = false;
-                        if (this.get(key, hashCode) == null) increMentFlg = true;
+                        if (dataLineNoRet[1] == -1) increMentFlg = true;
+                        //if (this.get(key, hashCode) == null) increMentFlg = true;
 
-                        raf.seek(dataLineNo * (lineDataSize));
+                        raf.seek(dataLineNoRet[0] * (lineDataSize));
                         raf.write(buf.toString().getBytes(), 0, lineDataSize);
                         if (increMentFlg) this.totalSize.getAndIncrement();
                     }
                     break;
                 } catch (IOException ie) {
 
-                    // IOExceptionの場合は1回のみファイルをサイド開く
+                    // IOExceptionの場合は1回のみファイルを再度開く
                     if (tryIdx == 1) throw ie;
                     try {
 
@@ -495,8 +496,8 @@ class CoreFileBaseKeyMap {
 
 
     // 指定のキー値が指定のファイル内でどこにあるかを調べる
-    private long getLinePoint(String key, RandomAccessFile raf) throws Exception {
-
+    private long[] getLinePoint(String key, RandomAccessFile raf) throws Exception {
+        long[] ret = {-1, 0};
         long line = -1;
         long lineCount = 0L;
 
@@ -540,9 +541,13 @@ class CoreFileBaseKeyMap {
 
                     // マッチした場合のみ返す
                     if (matchFlg) {
+
                         line = lineCount;
+                        // 削除データか確かめる
+                        if (lineBufs[assist + keyDataLength] == 38) ret[1] = -1;
                         break;
                     }
+
                     lineCount++;
                 }
                 if (matchFlg) break;
@@ -553,8 +558,10 @@ class CoreFileBaseKeyMap {
         } catch (Exception e) {
             throw e;
         }
-        return line;
+        ret[0] = line;
+        return ret;
     }
+
 
 
     /**
