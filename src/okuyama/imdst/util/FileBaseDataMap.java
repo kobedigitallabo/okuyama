@@ -28,7 +28,7 @@ public class FileBaseDataMap extends AbstractMap {
     private int numberOfCoreMap = 0;
 
     // Using a single cache 25 KB per
-    private int innerCacheSizeTotal = 1024 * 4;
+    private int innerCacheSizeTotal = 1024 * 8;
 
     // Sync Object
     private Object[] syncObjs = null;
@@ -446,6 +446,7 @@ class CoreFileBaseKeyMap {
             // KeyData Write File
             for (int tryIdx = 0; tryIdx < 2; tryIdx++) {
                 try {
+
                     // Key値の場所を特定する
                     long[] dataLineNoRet = this.getLinePoint(key, raf);
 
@@ -464,9 +465,12 @@ class CoreFileBaseKeyMap {
                         //if (this.get(key, hashCode) == null) increMentFlg = true;
 
                         raf.seek(dataLineNoRet[0] * (lineDataSize));
+
                         raf.write(buf.toString().getBytes(), 0, lineDataSize);
+
                         if (increMentFlg) this.totalSize.getAndIncrement();
                     }
+
                     break;
                 } catch (IOException ie) {
 
