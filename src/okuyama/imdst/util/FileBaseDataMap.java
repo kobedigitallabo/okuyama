@@ -28,7 +28,7 @@ public class FileBaseDataMap extends AbstractMap {
     private int numberOfCoreMap = 0;
 
     // Using a single cache 25 KB per
-    private int innerCacheSizeTotal = 1024 * 8;
+    private int innerCacheSizeTotal = 1024;
 
     // Sync Object
     private Object[] syncObjs = null;
@@ -52,6 +52,14 @@ public class FileBaseDataMap extends AbstractMap {
         this.numberOfCoreMap = baseDirs.length;
         this.coreFileBaseKeyMaps = new CoreFileBaseKeyMap[baseDirs.length];
         this.syncObjs = new Object[baseDirs.length];
+
+        // 最大メモリの30%をキャッシュに割り当てる
+        long maxMem = JavaSystemApi.getRuntimeMaxMem("K");
+        // メモリの上限値をKBで取得してそれの30%を割り出す
+        long cacheMem = new Double(maxMem * 0.3).longValue();
+        // 30%のメモリ量に幾つのキャッシュが乗るか調べる(1キャッシュ25KB)
+        this.innerCacheSizeTotal = new Long(cacheMem).intValue() / 25;
+
         int oneCacheSizePer = innerCacheSizeTotal / numberOfCoreMap;
         int oneMapSizePer = numberOfKeyData / numberOfCoreMap;
 
@@ -321,7 +329,7 @@ class CoreFileBaseKeyMap {
     private int innerCacheSize = 128;
 
     // 1ファイルに対してどの程度のキー数を保存するかの目安
-    private int numberOfOneFileKey = 500;
+    private int numberOfOneFileKey = 250;
 
     // 全キー取得時の現在ファイルのインデックス
     private int nowIterationFileIndex = 0;

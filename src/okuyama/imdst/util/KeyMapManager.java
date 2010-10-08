@@ -1218,6 +1218,7 @@ public class KeyMapManager extends Thread {
                     }
 
                     pw.println(allDataBuf.toString());
+                    pw.flush();
                     allDataBuf = null;
                 }
                 //logger.debug("outputKeyMapObj2Stream - synchronized - end");
@@ -1404,42 +1405,46 @@ public class KeyMapManager extends Thread {
                         // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
                         String allDataStr = br.readLine();
 
-                        String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
-                        allDataStr = null;
+                        if (allDataStr != null && !allDataStr.trim().equals("")) {
 
-                        for (i = 0; i < allDataLines.length; i++) {
-                            if (!allDataLines[i].trim().equals("")) {
-                                oneDatas = allDataLines[i].split(KeyMapManager.workFileSeq);
+                            String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+                            allDataStr = null;
 
-                                // 最後のデータのみ更新日を変更
-                                if (allDataLines.length == (i + 1)) {
+                            for (i = 0; i < allDataLines.length; i++) {
+                                if (!allDataLines[i].trim().equals("")) {
+                                    oneDatas = allDataLines[i].split(KeyMapManager.workFileSeq);
 
-                                    if (oneDatas[0].equals("+")) {
+                                    // 最後のデータのみ更新日を変更
+                                    if (allDataLines.length == (i + 1)) {
 
-                                        if (oneDatas.length == 3) {
-                                            this.keyMapObjPut(oneDatas[1], oneDatas[2]);
-                                        } else if (oneDatas.length == 4) {
-                                            this.keyMapObjPut(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                        if (oneDatas[0].equals("+")) {
+
+                                            if (oneDatas.length == 3) {
+                                                this.keyMapObjPut(oneDatas[1], oneDatas[2]);
+                                            } else if (oneDatas.length == 4) {
+                                                this.keyMapObjPut(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                            }
+                                        } else if (oneDatas[0].equals("-")) {
+
+                                            this.keyMapObjRemove(oneDatas[1]);
                                         }
-                                    } else if (oneDatas[0].equals("-")) {
+                                    } else {
+                                        if (oneDatas[0].equals("+")) {
 
-                                        this.keyMapObjRemove(oneDatas[1]);
-                                    }
-                                } else {
-                                    if (oneDatas[0].equals("+")) {
-
-                                        if (oneDatas.length == 3) {
-                                            this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2]);
-                                        } else if (oneDatas.length == 4) {
-                                            this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                            if (oneDatas.length == 3) {
+                                                this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2]);
+                                            } else if (oneDatas.length == 4) {
+                                                this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                            }
+                                        } else if (oneDatas[0].equals("-")) {
+                                            this.keyMapObjRemoveNoChange(oneDatas[1]);
                                         }
-                                    } else if (oneDatas[0].equals("-")) {
-                                        this.keyMapObjRemoveNoChange(oneDatas[1]);
                                     }
                                 }
                             }
+                            allDataLines = null;
                         }
-                        allDataLines = null;
+
 
                         // 全てのデータをトランザクションログモードがONの場合のみ書き出し
                         // ファイルストリームは既にinputKeyMapObj2Streamメソッド内で作成されている想定
