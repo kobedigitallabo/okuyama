@@ -36,11 +36,22 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
      */
     private static ILogger logger = LoggerFactory.createLogger(KeyNodeWatchHelper.class);
 
-    // 初期化メソッド定義
+    /**
+     * 初期化メソッド定義.<br>
+     *
+     * @param initValue
+     */
     public void initHelper(String initValue) {
     }
 
-    // Jobメイン処理定義
+
+    /**
+     * Jobメイン処理定義.<br>
+     *
+     * @param optionParam
+     * @return String 
+     * @throw BatchException
+     */
     public String executeHelper(String optionParam) throws BatchException {
         logger.debug("KeyNodeWatchHelper - executeHelper - start");
         String ret = SUCCESS;
@@ -324,258 +335,128 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             InputStreamReader misr = new InputStreamReader(msocket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding);
             mbr = new BufferedReader(misr);
 
-
-            // TODO:ここでそれぞれのノードの最終更新時間を見て新しいほうのデータで上書き
-            //      するが微妙かも
-            // コピー元予定から最終更新時刻取得
+            // データコピー開始
             StringBuffer buf = new StringBuffer();
-            // 処理番号11
-            buf.append("11");
-            buf.append(ImdstDefine.keyHelperClientParamSep);
-            buf.append("true");
+
+
+            logger.info("Recover Step - 1");
+
+            // もともと生存していたノードを差分モードOnにする
+            buf = new StringBuffer();
+            // 処理番号22
+            buf.append("22").append(ImdstDefine.keyHelperClientParamSep).append("true");
             // 送信
             mpw.println(buf.toString());
             mpw.flush();
-            // データ取得
-            retParam = mbr.readLine();
-            String[] updateDate = retParam.split(ImdstDefine.keyHelperClientParamSep);
+            String diffModeOn = mbr.readLine();
 
-            long masterDate = new Long(updateDate[2]).longValue();
+            logger.info("Recover Step - 2");
 
-
-            // コピー先予定から最終更新時刻取得
+            // コピー元からデータ読み込み
             buf = new StringBuffer();
-            // 処理番号11
-            buf.append("11");
+            // 処理番号20
+            buf.append("20");
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append("true");
+
+            // 送信
+            mpw.println(buf.toString());
+            mpw.flush();
+            logger.info("Recover Step - 3");
+
+            // データ行数取得
+            // 1行にメモリに乗るのに十分余裕のあるサイズが送られてくる
+            lineCount = mbr.readLine();
+            logger.info("Recover Step - 4");
+
+            // 取得したデータをコピー先に書き出し
+            // 処理番号21
+            buf = new StringBuffer();
+            buf.append("21");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append(lineCount);
             // 送信
             pw.println(buf.toString());
             pw.flush();
-            // データ取得
-            retParam = br.readLine();
-            updateDate = retParam.split(ImdstDefine.keyHelperClientParamSep);
+            logger.info("Recover Step - 5 Send Line Count=[" + lineCount + "]");
 
-            long nodeDate = new Long(updateDate[2]).longValue();
-
-
-            // どちらが新しいか比べる
-            if (noDataCheck == true || masterDate >= nodeDate) {
-
-                // 予定どうり
-                logger.info("Data Recover Actually [" + masterNodeInfo + " => " + nodeInfo + "]");
-                logger.info("Recover Step - 1");
-
-                // もともと生存していたノードを差分モードOnにする
-                buf = new StringBuffer();
-                // 処理番号22
-                buf.append("22").append(ImdstDefine.keyHelperClientParamSep).append("true");
-                // 送信
-                mpw.println(buf.toString());
-                mpw.flush();
-                String diffModeOn = mbr.readLine();
-
-                logger.info("Recover Step - 2");
-
-                // コピー元からデータ読み込み
-                buf = new StringBuffer();
-                // 処理番号20
-                buf.append("20");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append("true");
-
-                // 送信
-                mpw.println(buf.toString());
-                mpw.flush();
-                logger.info("Recover Step - 3");
-
-                // データ行数取得
-                // 1行にメモリに乗るのに十分余裕のあるサイズが送られてくる
-                lineCount = mbr.readLine();
-                logger.info("Recover Step - 4");
-
-                // 取得したデータをコピー先に書き出し
-                // 処理番号21
-                buf = new StringBuffer();
-                buf.append("21");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(lineCount);
-                // 送信
-                pw.println(buf.toString());
+            for (int i = 0; i < Integer.parseInt(lineCount); i++) {
+                // 値を書き出し
+                logger.info("Recover Step - 6 [" + i + "]");
+                retParam = mbr.readLine();
+                pw.println(retParam);
                 pw.flush();
-                logger.info("Recover Step - 5 Send Line Count=[" + lineCount + "]");
-
-                for (int i = 0; i < Integer.parseInt(lineCount); i++) {
-                    // 値を書き出し
-                    logger.info("Recover Step - 6 [" + i + "]");
-                    retParam = mbr.readLine();
-                    pw.println(retParam);
-                    pw.flush();
-                    logger.info("Recover Step - 7 [" + i + "]");
-                }
+                logger.info("Recover Step - 7 [" + i + "]");
+            }
 
 
-                // 送信結果を受信
-                if((sendRet = br.readLine()) != null) {
-                    logger.info("Recover Step - 8");
-                    if(!sendRet.equals("1")) throw new Exception("send Data Error Ret=[" + sendRet + "]");
-                } else {
-                    logger.info("Recover Step - 9");
-                    throw new Exception("send Data Error Ret=[" + sendRet + "]");
-                }
+            // 送信結果を受信
+            if((sendRet = br.readLine()) != null) {
+                logger.info("Recover Step - 8");
+                if(!sendRet.equals("1")) throw new Exception("send Data Error Ret=[" + sendRet + "]");
+            } else {
+                logger.info("Recover Step - 9");
+                throw new Exception("send Data Error Ret=[" + sendRet + "]");
+            }
 
-                logger.info("Recover Step - 10");
-                // 停止完了後差分データを取得
-                // この瞬間登録、削除は一時的に停止する。
-                buf = new StringBuffer();
-                // 処理番号24
-                buf.append("24");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append("true");
+            logger.info("Recover Step - 10");
+            // 停止完了後差分データを取得
+            // この瞬間登録、削除は一時的に停止する。
+            buf = new StringBuffer();
+            // 処理番号24
+            buf.append("24");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append("true");
 
-                // 送信
-                mpw.println(buf.toString());
-                mpw.flush();
+            // 送信
+            mpw.println(buf.toString());
+            mpw.flush();
 
-                logger.info("Recover Step - 11");
-                // 差分データを送る
-                buf = new StringBuffer();
-                buf.append("25");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                pw.println(buf.toString());
-                pw.flush();
+            logger.info("Recover Step - 11");
+            // 差分データを送る
+            buf = new StringBuffer();
+            buf.append("25");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            pw.println(buf.toString());
+            pw.flush();
 
-                // データを送信
-                pw.println(mbr.readLine());
-                pw.flush();
+            // データを送信
+            pw.println(mbr.readLine());
+            pw.flush();
 
-                logger.info("Recover Step - 12");
-                // 取り込み完了を確認
-                if((diffDataInputRet = br.readLine()) != null) {
+            logger.info("Recover Step - 12");
+            // 取り込み完了を確認
+            if((diffDataInputRet = br.readLine()) != null) {
 
-                    logger.info("Recover Step - 13");
-                    if(!diffDataInputRet.equals("1")) throw new Exception("Diff Data Input Error Ret=[" + diffDataInputRet + "]");
-                } else {
-
-                    logger.info("Recover Step - 14");
-                    throw new Exception("Diff Data Input Error Ret=[" + diffDataInputRet + "]");
-                }
-
-                logger.info("Recover Step - 15");
-
-                // リカバー完了を全MasterNodeへ送信
-                super.setRecoverNode(false, "");
-                super.setArriveNode(nodeInfo);
-
-
-                // 差分読み込み中のノードの差分データ反映完了を送信
-                mpw.println("1");
-                mpw.flush();
-                if((diffModeOffRet = mbr.readLine()) != null) {
-
-                    logger.info("Recover Step - 16");
-                    if (!diffModeOffRet.equals("1")) throw new Exception("Diff Mode Off Error Ret=[" + diffModeOffRet + "]");
-                } else {
-
-                    logger.info("Recover Step - 17");
-                    throw new Exception("Diff Mode Off Error Ret=[" + diffModeOffRet + "]");
-                }
-
-                logger.info("Recover Step - 18");
+                logger.info("Recover Step - 13");
+                if(!diffDataInputRet.equals("1")) throw new Exception("Diff Data Input Error Ret=[" + diffDataInputRet + "]");
             } else {
 
-                // 当初の予定から逆転
-                logger.info("Data Recover Actually [" + nodeInfo + " => " + masterNodeInfo + "]");
-
-                // もともと生存していたノードを差分モードOnにする
-                buf = new StringBuffer();
-                // 処理番号22
-                buf.append("22").append(ImdstDefine.keyHelperClientParamSep).append("true");
-                // 送信
-                pw.println(buf.toString());
-                pw.flush();
-                String diffModeOn = br.readLine();
-
-                // コピー元からデータ読み込み
-                buf = new StringBuffer();
-                // 処理番号20
-                buf.append("20");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append("true");
-
-                // 送信
-                pw.println(buf.toString());
-                pw.flush();
-
-                // データ行数取得
-                // 1行にメモリに乗るのに十分余裕のあるサイズが送られてくる
-                lineCount = br.readLine();
-
-                // 取得したデータをコピー先に書き出し
-                // 処理番号21
-                buf = new StringBuffer();
-                buf.append("21");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append(lineCount);
-                // 送信
-                mpw.println(buf.toString());
-                mpw.flush();
-
-                for (int i = 0; i < Integer.parseInt(lineCount); i++) {
-                    // 値を書き出し
-                    retParam = br.readLine();
-                    mpw.println(retParam);
-                    mpw.flush();
-                }
-
-                // 送信結果を受信
-                if((sendRet = mbr.readLine()) != null) {
-                    if(!sendRet.equals("1")) throw new Exception("send Data Error Ret=[" + sendRet + "]");
-                } else {
-                    throw new Exception("send Data Error Ret=[" + sendRet + "]");
-                }
-
-                // 停止完了後差分データを取得
-                // この瞬間が登録、削除は一時的に停止する。
-                buf = new StringBuffer();
-                // 処理番号24
-                buf.append("24");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                buf.append("true");
-
-                // 送信
-                pw.println(buf.toString());
-                pw.flush();
-
-                // 差分データを送る
-                buf = new StringBuffer();
-                buf.append("25");
-                buf.append(ImdstDefine.keyHelperClientParamSep);
-                mpw.println(buf.toString());
-                mpw.flush();
-                // データを送信
-                mpw.println(br.readLine());
-                mpw.flush();
-                // 取り込み完了を確認
-                if((diffDataInputRet = mbr.readLine()) != null) {
-                    if(!diffDataInputRet.equals("1")) throw new Exception("Diff Data Input Error Ret=[" + diffDataInputRet + "]");
-                } else {
-                    throw new Exception("Diff Data Input Error Ret=[" + diffDataInputRet + "]");
-                }
-
-                // リカバー完了を全MasterNodeへ送信
-                super.setRecoverNode(false, "");
-                super.setArriveNode(nodeInfo);
-
-                // 差分読み込み中のノードの差分データ反映完了を送信
-                pw.println("1");
-                pw.flush();
-                if((diffModeOffRet = br.readLine()) != null) {
-                    if (!diffModeOffRet.equals("1")) throw new Exception("Diff Mode Off Error Ret=[" + diffModeOffRet + "]");
-                } else {
-                    throw new Exception("Diff Mode Off Error Ret=[" + diffModeOffRet + "]");
-                }
+                logger.info("Recover Step - 14");
+                throw new Exception("Diff Data Input Error Ret=[" + diffDataInputRet + "]");
             }
+
+            logger.info("Recover Step - 15");
+
+            // リカバー完了を全MasterNodeへ送信
+            super.setRecoverNode(false, "");
+            super.setArriveNode(nodeInfo);
+
+
+            // 差分読み込み中のノードの差分データ反映完了を送信
+            mpw.println("1");
+            mpw.flush();
+            if((diffModeOffRet = mbr.readLine()) != null) {
+
+                logger.info("Recover Step - 16");
+                if (!diffModeOffRet.equals("1")) throw new Exception("Diff Mode Off Error Ret=[" + diffModeOffRet + "]");
+            } else {
+
+                logger.info("Recover Step - 17");
+                throw new Exception("Diff Mode Off Error Ret=[" + diffModeOffRet + "]");
+            }
+
+            logger.info("Recover Step - 18");
         } catch (Exception e) {
 
             logger.error(e);
@@ -613,5 +494,4 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
         }
         return ret;
     }
-
 }
