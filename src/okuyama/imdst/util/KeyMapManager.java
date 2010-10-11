@@ -338,7 +338,9 @@ public class KeyMapManager extends Thread {
                     }
 
                     if (!dataMemory) {
-                        logger.info("Now Cache Size = [" + this.keyMapObj.getCacheSize() + "]");
+                        synchronized(this.poolKeyLock) {
+                            logger.info("Now Cache Size = [" + this.keyMapObj.getCacheSize() + "]");
+                        }
                     }
 
                     Thread.sleep(KeyMapManager.updateInterval);
@@ -407,22 +409,22 @@ public class KeyMapManager extends Thread {
                 // データがメモリーではなくかつ、vacuum実行指定がtrueの場合
                 if (!dataMemory && vacuumExec == true) {
                     logger.info("vacuumCheck - Start - 1");
-                    if ((this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartLimit) {
-                        logger.info("VacuumCheck - Start - 2");
+                    synchronized(this.poolKeyLock) {
+                        if ((this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartLimit) {
+                            logger.info("VacuumCheck - Start - 2");
 
-                        // 規定時間アクセスがない
-                        if ((System.currentTimeMillis() - this.lastAccess) > this.vacuumExecAfterAccessTime ||
-                                (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartCompulsionLimit) {
+                            // 規定時間アクセスがない
+                            if ((System.currentTimeMillis() - this.lastAccess) > this.vacuumExecAfterAccessTime ||
+                                    (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartCompulsionLimit) {
 
-                            logger.info("Vacuum - Start Vacuum Data Count=[" + (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) + "]");
+                                logger.info("Vacuum - Start Vacuum Data Count=[" + (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) + "]");
 
-                            long vacuumStart = System.currentTimeMillis();
-                            synchronized(this.poolKeyLock) {
+                                long vacuumStart = System.currentTimeMillis();
                                 this.keyMapObj.vacuumData();
-                            }
 
-                            long vacuumEnd = System.currentTimeMillis();
-                            logger.info("Vacuum - End - VacuumTime [" + (vacuumEnd - vacuumStart) +"] Milli Second");
+                                long vacuumEnd = System.currentTimeMillis();
+                                logger.info("Vacuum - End - VacuumTime [" + (vacuumEnd - vacuumStart) +"] Milli Second");
+                            }
                         }
                     }
                 }

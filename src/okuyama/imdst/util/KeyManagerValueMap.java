@@ -110,7 +110,14 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         }
     }
 
-
+    /**
+     * データを無加工で取り出す.<br>
+     * 無加工とは、valueをファイルで保持する場合はpadding文字列をが付加されているが、それを削除せずに返す.<br>
+     *
+     * @param key
+     * @return Object
+     * @throw
+     */
     public Object getNoCnv(Object key) {
         Object ret = null;
 

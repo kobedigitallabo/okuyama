@@ -56,7 +56,7 @@ public class FileBaseDataMap extends AbstractMap {
         // 最大メモリの30%をキャッシュに割り当てる
         long maxMem = JavaSystemApi.getRuntimeMaxMem("K");
         // メモリの上限値をKBで取得してそれの30%を割り出す
-        long cacheMem = new Double(maxMem * 0.3).longValue();
+        long cacheMem = new Double(maxMem * 0.40).longValue();
         // 30%のメモリ量に幾つのキャッシュが乗るか調べる(1キャッシュ25KB)
         this.innerCacheSizeTotal = new Long(cacheMem).intValue() / 25;
 
@@ -315,7 +315,7 @@ class CoreFileBaseKeyMap {
     private int numberOfDataFiles = 1024;
 
     // データファイルを格納するディレクトリ分散係数
-    private int dataDirsFactor = 50;
+    private int dataDirsFactor = 20;
 
     // Fileオブジェクト格納用
     private File[] dataFileList = null;
@@ -329,7 +329,7 @@ class CoreFileBaseKeyMap {
     private int innerCacheSize = 128;
 
     // 1ファイルに対してどの程度のキー数を保存するかの目安
-    private int numberOfOneFileKey = 250;
+    private int numberOfOneFileKey = 7000;
 
     // 全キー取得時の現在ファイルのインデックス
     private int nowIterationFileIndex = 0;
