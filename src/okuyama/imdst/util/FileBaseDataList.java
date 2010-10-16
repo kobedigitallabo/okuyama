@@ -24,6 +24,8 @@ public class FileBaseDataList extends AbstractList {
 
     private BufferedWriter wr = null;
 
+	private static int paddingSymbol = 64;
+
     // Total Size
     private AtomicInteger totalSize = null;
 
@@ -56,14 +58,14 @@ public class FileBaseDataList extends AbstractList {
      * @throws
      */
     public FileBaseDataList(String dataFile, int size) {
-        this.oneDataLength = size;
+		this.oneDataLength = size;
         this.dataFileDir = dataFile;
         this.dataFile = new File(dataFile);
         this.init();
     }
 
 
-    private boolean init() {
+    public boolean init() {
         boolean ret = false;
         try {
 
@@ -142,7 +144,7 @@ public class FileBaseDataList extends AbstractList {
 
                     for (int i= 0; i < this.oneDataLength; i++) {
 
-                        if (readDatas[i] == 38) break;
+                        if (readDatas[i] == FileBaseDataList.paddingSymbol) break;
                         counter++;
                     }
 
@@ -203,7 +205,20 @@ public class FileBaseDataList extends AbstractList {
      * @throws
      */
     public void clear() {
-        this.init();
+		try {
+            if(this.raf != null) {
+				this.raf.close();
+				this.raf = null;
+			}
+
+            if(this.wr != null) {
+				this.wr.close();
+				this.wr = null;
+			}
+
+            if (this.dataFile.exists()) this.dataFile.delete();
+		} catch(Exception e) {
+		}
     }
 
 
@@ -214,21 +229,6 @@ public class FileBaseDataList extends AbstractList {
      * @param fixSize
      */
     private String fillCharacter(String data, int fixSize) {
-//        return SystemUtil.fillCharacter(data, fixSize);
-        StringBuffer writeBuf = new StringBuffer(data);
-
-        int valueSize = data.length();
-
-        // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
-        // 足りない文字列は固定の"&"で補う(38)
-        byte[] appendDatas = new byte[fixSize - valueSize];
-
-        for (int i = 0; i < appendDatas.length; i++) {
-            appendDatas[i] = 38;
-        }
-
-        writeBuf.append(new String(appendDatas));
-        return writeBuf.toString();
-        
+        return SystemUtil.fillCharacter(data, fixSize, FileBaseDataList.paddingSymbol);
     }
 }

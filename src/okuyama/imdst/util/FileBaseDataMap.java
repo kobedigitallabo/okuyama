@@ -38,6 +38,7 @@ public class FileBaseDataMap extends AbstractMap {
     private List iteratorNowDataList = null;
     private int iteratorNowDataListIdx = 0;
 
+	protected static int paddingSymbol = 38;
 
     /**
      * コンストラクタ.<br>
@@ -48,16 +49,29 @@ public class FileBaseDataMap extends AbstractMap {
      * @throws
      */
     public FileBaseDataMap(String[] baseDirs, int numberOfKeyData) {
+		this(baseDirs, numberOfKeyData, 0.40);
+    }
+
+
+    /**
+     * コンストラクタ.<br>
+     *
+     * @param baseDirs
+     * @param numberOfKeyData
+     * @return 
+     * @throws
+     */
+    public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent) {
         this.dirs = baseDirs;
         this.numberOfCoreMap = baseDirs.length;
         this.coreFileBaseKeyMaps = new CoreFileBaseKeyMap[baseDirs.length];
         this.syncObjs = new Object[baseDirs.length];
 
-        // 最大メモリの40%をキャッシュに割り当てる
+        // 最大メモリから指定値をキャッシュに割り当てる
         long maxMem = JavaSystemApi.getRuntimeMaxMem("K");
-        // メモリの上限値をKBで取得してそれの40%を割り出す
-        long cacheMem = new Double(maxMem * 0.40).longValue();
-        // 30%のメモリ量に幾つのキャッシュが乗るか調べる(1キャッシュ25KB)
+        // メモリの上限値をKBで取得してそれの指定した割合から割り出す
+        long cacheMem = new Double(maxMem * cacheMemPercent).longValue();
+        // 指定メモリ量に幾つのキャッシュが乗るか調べる(1キャッシュ25KB)
         this.innerCacheSizeTotal = new Long(cacheMem).intValue() / 25;
 
         int oneCacheSizePer = innerCacheSizeTotal / numberOfCoreMap;
@@ -168,6 +182,23 @@ public class FileBaseDataMap extends AbstractMap {
             synchronized (this.syncObjs[i]) { 
                 this.coreFileBaseKeyMaps[i].clear();
                 this.coreFileBaseKeyMaps[i].init();
+            }
+        }
+    }
+
+
+    /**
+     * finishClear.<br>
+     *
+     * @param
+     * @return 
+     * @throws
+     */
+    public void finishClear() {
+        for (int i = 0; i < this.coreFileBaseKeyMaps.length; i++) {
+
+            synchronized (this.syncObjs[i]) { 
+                this.coreFileBaseKeyMaps[i].clear();
             }
         }
     }
@@ -351,6 +382,7 @@ class CoreFileBaseKeyMap {
         try {
             this.baseFileDirs = dirs;
             this.innerCacheSize = innerCacheSize;
+			if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;
             this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
 
             this.init();
@@ -523,7 +555,7 @@ class CoreFileBaseKeyMap {
             equalKeyBytes[idx] = keyBytes[idx];
         }
 
-        equalKeyBytes[equalKeyBytes.length - 1] = 38;
+        equalKeyBytes[equalKeyBytes.length - 1] = new Integer(FileBaseDataMap.paddingSymbol).byteValue();
 
         try {
 
@@ -556,7 +588,7 @@ class CoreFileBaseKeyMap {
 
                         line = lineCount;
                         // 削除データか確かめる
-                        if (lineBufs[assist + keyDataLength] == 38) ret[1] = -1;
+                        if (lineBufs[assist + keyDataLength] == FileBaseDataMap.paddingSymbol) ret[1] = -1;
                         break;
                     }
 
@@ -598,7 +630,7 @@ class CoreFileBaseKeyMap {
             equalKeyBytes[idx] = keyBytes[idx];
         }
 
-        equalKeyBytes[equalKeyBytes.length - 1] = 38;
+        equalKeyBytes[equalKeyBytes.length - 1] = new Integer(FileBaseDataMap.paddingSymbol).byteValue();
 
         try {
 
@@ -696,14 +728,14 @@ class CoreFileBaseKeyMap {
             // 取得データを文字列化
             if (tmpBytes != null) {
 
-                if (tmpBytes[keyDataLength] != 38) {
+                if (tmpBytes[keyDataLength] != FileBaseDataMap.paddingSymbol) {
 
                     int i = keyDataLength;
                     int counter = 0;
 
                     for (; i < tmpBytes.length; i++) {
 
-                        if (tmpBytes[i] == 38) break;
+                        if (tmpBytes[i] == FileBaseDataMap.paddingSymbol) break;
                         counter++;
                     }
 
@@ -743,17 +775,17 @@ class CoreFileBaseKeyMap {
 
     /**
      * 指定の文字を指定の桁数で特定文字列で埋める.<br>
+	 * 足りない文字列は固定の"&"で補う(38).<br>
      *
      * @param data
      * @param fixSize
      */
     private String fillCharacter(String data, int fixSize) {
-        StringBuffer writeBuf = new StringBuffer(data);
+    	return SystemUtil.fillCharacter(data, fixSize, FileBaseDataMap.paddingSymbol);
+/*        StringBuffer writeBuf = new StringBuffer(data);
 
         int valueSize = data.length();
 
-        // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
-        // 足りない文字列は固定の"&"で補う(38)
         byte[] appendDatas = new byte[fixSize - valueSize];
 
         for (int i = 0; i < appendDatas.length; i++) {
@@ -762,6 +794,7 @@ class CoreFileBaseKeyMap {
 
         writeBuf.append(new String(appendDatas));
         return writeBuf.toString();
+*/        
     }
 
     public int getCacheSize() {
@@ -834,7 +867,7 @@ class CoreFileBaseKeyMap {
 
                         while (true) {
 
-                            if (datas[assist + idx] != 38) {
+                            if (datas[assist + idx] != FileBaseDataMap.paddingSymbol) {
                                 keysBuf.append(new String(datas, assist + idx, 1));
                             } else {
                                 break;

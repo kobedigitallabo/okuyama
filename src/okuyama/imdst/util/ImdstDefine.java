@@ -228,7 +228,8 @@ public class ImdstDefine {
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
     public static final int nodeConnectionOpenShortTimeout = 2000;
-    //public static final int nodeConnectionOpenShortTimeout = 3000;
+
+    public static final int nodeConnectiontReadShortTimeout = 2000;
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)

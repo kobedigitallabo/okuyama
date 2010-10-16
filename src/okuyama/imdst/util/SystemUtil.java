@@ -36,7 +36,6 @@ public class SystemUtil {
         int valueSize = data.length();
 
         // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
-        // 足りない文字列は固定の"&"で補う(38)
         byte[] appendDatas = new byte[fixSize - valueSize];
 
         for (int i = 0; i < appendDatas.length; i++) {

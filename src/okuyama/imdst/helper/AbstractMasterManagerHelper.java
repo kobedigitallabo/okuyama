@@ -208,13 +208,13 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                         String[] slaveNodeDt = slaveList[i].split(":");
                         InetSocketAddress inetAddr = new InetSocketAddress(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
                         socket = new Socket();
-                        socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenTimeout);
-                        socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+                        socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenShortTimeout);
+                        socket.setSoTimeout(ImdstDefine.nodeConnectiontReadShortTimeout);
 
                         pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
-                                                                                                        ImdstDefine.keyHelperClientParamEncoding)));
+                                                                                       ImdstDefine.keyHelperClientParamEncoding)));
                         br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
-                                                                                        ImdstDefine.keyHelperClientParamEncoding));
+                                                                      ImdstDefine.keyHelperClientParamEncoding));
 
                         // 文字列バッファ初期化
                         StringBuffer serverRequestBuf = new StringBuffer();

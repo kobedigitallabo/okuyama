@@ -90,7 +90,6 @@ public class KeyMapManager extends Thread {
 
     // トランザクションログをローテーションする際のサイズ(1.8GB)
     private static final long workFileChangeNewFileSize = 1610612736;
-    //private static final long workFileChangeNewFileSize = 1024;
 
     // トランザクションログをローテーションチェック頻度
     private static final int workFileChangeCheckLimit = 2;
@@ -113,12 +112,12 @@ public class KeyMapManager extends Thread {
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
-    private int vacuumStartLimit = 10000;
+    private int vacuumStartLimit = 100000;
 
     // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
-    private int vacuumStartCompulsionLimit = 10000;
+    private int vacuumStartCompulsionLimit = 1000000;
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     private int vacuumExecAfterAccessTime = 30000;
@@ -131,7 +130,7 @@ public class KeyMapManager extends Thread {
 
     // ノード復旧中のデータを一時的に蓄積する設定
     private boolean diffDataPoolingFlg = false;
-    private CopyOnWriteArrayList diffDataPoolingList = null;
+    private List diffDataPoolingList = null;
     private Object diffSync = new Object();
 
     // ノード間でのデータ移動時に削除として蓄積するMap
@@ -410,6 +409,7 @@ public class KeyMapManager extends Thread {
                 if (!dataMemory && vacuumExec == true) {
                     logger.info("vacuumCheck - Start - 1");
                     synchronized(this.poolKeyLock) {
+					    logger.info("VacuumCheck - DifferenceCount = [" + (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) + "]");
                         if ((this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartLimit) {
                             logger.info("VacuumCheck - Start - 2");
 
