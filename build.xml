@@ -303,6 +303,16 @@
 	</target>
 
 
+	<!-- DataNode,SlaveDataNode,ThirdDataNode Execute task -->
+	<target name="datanodesrun" depends="compile">
+		<parallel>
+			<ant target='datanode' />
+			<ant target='slavedatanode' />
+			<ant target='thirddatanode' />
+		</parallel>
+	</target>
+
+
 	<!-- DataNode,SlaveDataNode,ThirdDataNode,MasterNode,SlaveMasterNode Execute task -->
 	<target name="serverrun-slave" depends="compile">
 		<parallel>
