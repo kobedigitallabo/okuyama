@@ -19,6 +19,7 @@ import okuyama.imdst.util.protocol.*;
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
+
 /**
  * Key情報を格納するHelper.<br>
  * 本helperはKeyManagerJobから呼び出されることを想定している.<br>
@@ -27,42 +28,7 @@ import com.sun.mail.util.BASE64EncoderStream;
  * 接続済みソケットインスタンス、keyMapManagerインスタンス<br>
  * クライアントからの引数は1行文字列で送られてくる。<br>
  * 処理番号<セパレート文字>メソッド固有パラメータ_1<セパレート文字>メソッド固有パラメータ_2<br>
- * クライアントへの返却値は1行文字列で返される。<br>
- *<br>
- * <br>
- * 実装メソッド.<br>
- *<br>
- * ■Keyとデータノード設定メソッド.<br>
- * ●パラメータ<br>
- * 1.処理番号 = 1<br>
- * 2.キー値<br>
- * 3.データノード<br>
- * ○戻り値<br>
- * 1.処理番号<セパレート文字>格納有無("true or false")<セパレート文字>NGの場合はエラー文字列<br>
- *<br>
- *<br>
- * ■Keyでデータノードを取得するメソッド.<br>
- * ●パラメータ<br>
- * 1.処理番号 = 2<br>
- * 2.キー値<br>
- * ○戻り値<br>
- * 1.処理番号<セパレート文字>取得有無("true or false")<セパレート文字>取得出来た場合データノード名<br>
- *<br>
- *<br>
- * ■Tagにキーを追加するメソッド.<br>
- * ●パラメータ<br>
- * 1.処理番号 = 3<br>
- * 2.キー値<br>
- * 3.Tag<br>
- * ○戻り値<br>
- * 1.処理番号<セパレート文字>格納有無("true or false")<セパレート文字>NGの場合はエラー文字列<br>
- *<br>
- * ■TagでKeyを取得するメソッド.<br>
- * ●パラメータ<br>
- * 1.処理番号 = 4<br>
- * 2.Tag<br>
- * ○戻り値<br>
- * 1.処理番号<セパレート文字>取得有無("true or false")<セパレート文字>取得出来た場合キー一覧(内部セパレータは",")<br>
+ * クライアントへの返却値は1行文字列で返される.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -81,6 +47,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
     // 保存可能なデータの最大サイズ
     private static int setDatanodeMaxSize = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
+
 
     /**
      * Logger.<br>
@@ -366,6 +333,30 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(keyMapManager.getLastDataChangeTime());
                             break;
+
+                        case 13 :
+
+                            // Key値とDataNode名を格納する
+                            requestHashCode = clientParameterList[1];
+                            transactionCode = clientParameterList[2];
+                            requestDataNode = clientParameterList[3];
+
+                            // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
+                            if (clientParameterList.length > 4) {
+                                requestDataNode = requestDataNode + 
+                                    ImdstDefine.keyHelperClientParamSep + 
+                                        clientParameterList[4];
+                            }
+
+                            // メソッド呼び出し
+                            retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+                            break;
+
                         case 20 :
 
                             // KeyMapManager Direct Connection
@@ -758,7 +749,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                                     // データを更新して、返す
 
-                                    // 最後に更新日付を結合する
+                                    // 最後に更新日付を結合する 
                                     String retValue = (String)engine.get("retValue");
 
                                     if (retValue != null && !retValue.equals("")) {
@@ -875,6 +866,44 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[1] = "false";
         }
         //logger.debug("KeyManagerHelper - removeDatanode - end");
+        return retStrs;
+    }
+
+
+    // Value値の演算を行う
+    private String[] calcValue(String key, String calcValue, String transactionCode) {
+        //logger.debug("KeyManagerHelper - calcValue - start = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
+        String[] retStrs = new String[3];
+        try {
+
+            if (dataNodeStr.length() < setDatanodeMaxSize) {
+                if(!this.keyMapManager.checkError()) {
+
+                    this.keyMapManager.setKeyPair(key, dataNodeStr, transactionCode);
+                    retStrs[0] = "1";
+                    retStrs[1] = "true";
+                    retStrs[2] = "OK";
+                } else {
+
+                    retStrs[0] = "1";
+                    retStrs[1] = "false";
+                    retStrs[2] = "NG:KeyMapManager - setDatanode - CheckError - NG";
+                }
+            } else {
+
+                retStrs[0] = "1";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:Max Data Size Over";
+            }
+        } catch (BatchException be) {
+
+            logger.debug("KeyManagerHelper - setDatanode - Error = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]", be);
+            //logger.debug("KeyManagerHelper - setDatanode - Error", be);
+            retStrs[0] = "1";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - setDatanode - Exception - " + be.toString();
+        }
+        //logger.debug("KeyManagerHelper - setDatanode - end = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
         return retStrs;
     }
 

@@ -53,9 +53,9 @@ public class FileBaseDataMap extends AbstractMap {
         this.coreFileBaseKeyMaps = new CoreFileBaseKeyMap[baseDirs.length];
         this.syncObjs = new Object[baseDirs.length];
 
-        // 最大メモリの30%をキャッシュに割り当てる
+        // 最大メモリの40%をキャッシュに割り当てる
         long maxMem = JavaSystemApi.getRuntimeMaxMem("K");
-        // メモリの上限値をKBで取得してそれの30%を割り出す
+        // メモリの上限値をKBで取得してそれの40%を割り出す
         long cacheMem = new Double(maxMem * 0.40).longValue();
         // 30%のメモリ量に幾つのキャッシュが乗るか調べる(1キャッシュ25KB)
         this.innerCacheSizeTotal = new Long(cacheMem).intValue() / 25;
@@ -309,7 +309,7 @@ class CoreFileBaseKeyMap {
     private int lineDataSize =  keyDataLength + oneDataLength;
 
     // The length of the data read from the file stream at a time(In bytes)
-    private int getDataSize = lineDataSize * (8192 / lineDataSize);
+    private int getDataSize = lineDataSize * (8192 / lineDataSize) * 5;
 
     // The number of data files created
     private int numberOfDataFiles = 1024;

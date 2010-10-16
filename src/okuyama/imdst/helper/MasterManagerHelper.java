@@ -296,6 +296,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParams[1] = "true";
                             retParams[2] = "";
                             break;
+                        case 13 :
+
+                            // 値の加算
+                            retParams = this.incrValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
+                            break;
+                        case 14 :
+
+                            // 値の減算
+                            retParams = this.decrValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
+                            break;
                         case 30 :
 
                             // 各キーノードへデータロック依頼
@@ -1167,6 +1177,137 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
     /**
+     * 既に登録されている値に減算処理を行う.<br>
+     * 処理フロー.<br>
+     * 1.データノードに減算処理を依頼.<br>
+     * 2.正しく処理を完了した場合は加算後の値が帰ってくるのでその値を使用して後続ノードに値を登録<br>
+     *
+     * @param keyStr key値の文字列
+     * @param decrValue 減算値
+     * @param transactionCode 
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    protected String[] decrValue(String keyStr, String decrValue, String transactionCode) throws BatchException {
+        //logger.debug("MasterManagerHelper - decrValue - start");
+        String[] retStrs = new String[3];
+
+        try {
+
+            retStrs = incrValue(keyStr, "-" + decrValue, transactionCode);
+        } catch (BatchException be) {
+
+            logger.info("MasterManagerHelper - decrValue - Error", be);
+        } catch (Exception e) {
+
+            logger.info("MasterManagerHelper - decrValue - Error", e);
+            retStrs[0] = "14";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:MasterManagerHelper - decrValue - Exception - " + e.toString();
+        }
+        //logger.debug("MasterManagerHelper - decrValue - end");
+        return retStrs;
+    }
+
+
+    /**
+     * 既に登録されている値に加算処理を行う.<br>
+     * 処理フロー.<br>
+     * 1.データノードに加算処理を依頼.<br>
+     * 2.正しく処理を完了した場合は加算後の値が帰ってくるのでその値を使用して後続ノードに値を登録<br>
+     *
+     * @param keyStr key値の文字列
+     * @param incrValue 加算値
+     * @param transactionCode 
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    protected String[] incrValue(String keyStr, String incrValue, String transactionCode) throws BatchException {
+        //logger.debug("MasterManagerHelper - incrValue - start");
+        String[] retStrs = new String[3];
+
+        int idx = 0;
+        String[] calcRet = null;
+        String[] calcFixValue = null;
+
+
+        try {
+
+            // Key値チェック
+            if (!this.checkKeyLength(keyStr))  {
+                // 保存失敗
+                retStrs[0] = "13";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
+            // キー値とデータを保存
+            // 保存先問い合わせ
+            String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, false);
+
+            // 成功するまで演算を行う
+            for (idx = 0; idx < keyNodeInfo.length; idx=idx+3)  {
+
+                calcRet = null;
+                registCalcRet = null;
+                calcRet = this.calcKeyValue(keyNodeInfo[idx], keyNodeInfo[idx + 1], keyNodeInfo[idx + 2], keyStr, incrValue, transactionCode);
+                // 1つのノードで演算に成功した場合はそこでbreak
+                if (calcRet != null && calcRet[1].equals("true")) {
+
+                    calcFixValue = new String[2];
+                    calcFixValue[0] = keyStr;
+                    calcFixValue[1] = calcRet[2];
+                    break;
+                }
+            }
+
+
+            // 演算結果を残りのノードへ保存
+            try {
+                if (calcFixValue != null)  {
+
+                    if (keyNodeInfo.length == 6 && idx < 3) {
+                        keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], null, null, null, "1", calcFixValue, transactionCode);
+                    }
+
+                    if (keyNodeInfo.length == 9 && idx < 3) {
+                        keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "1", calcFixValue, transactionCode);
+                    } else if (keyNodeInfo.length == 9 && idx < 6) {
+                        keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], null, null, null, "1", calcFixValue, transactionCode);
+                    }
+                }
+            } catch (Exception e) {
+                // 無視
+            }
+
+            // 保存結果確認はしない
+            if (calcFixValue != null)  {
+                // 保存失敗
+                retStrs[0] = "13";
+                retStrs[1] = "true";
+                retStrs[2] = calcRet[2];
+
+            } else {
+
+                retStrs[0] = "13";
+                retStrs[1] = "false";
+                retStrs[2] = "NG";
+            }
+        } catch (BatchException be) {
+            logger.info("MasterManagerHelper - incrValue - Error", be);
+        } catch (Exception e) {
+            logger.info("MasterManagerHelper - incrValue - Error", e);
+            retStrs[0] = "13";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:MasterManagerHelper - incrValue - Exception - " + e.toString();
+        }
+        //logger.debug("MasterManagerHelper - incrValue - end");
+        return retStrs;
+    }
+
+
+    /**
      * Key値を指定してデータのロックを取得する.<br>
      * 処理フロー.<br>
      * 1.DataDispatcherに依頼してKeyの保存先を問い合わせる.<br>
@@ -1954,7 +2095,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append(values[1]);                               // Value値
             buf.append(ImdstDefine.setTimeParamSep);
-            buf.append(setTime);                                 // 保存時間
+            buf.append(setTime);                                 // 保存バージョン
             sendStr = buf.toString();
 
             // KeyNodeとの接続を確立
@@ -2266,7 +2407,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(values[1]);                               // Value値
                     buf.append(ImdstDefine.setTimeParamSep);
-                    buf.append(setTime);                                 // 保存時間
+                    buf.append(setTime);                                 // 保存バージョン
                     sendStr = buf.toString();
 
                     // 送信
@@ -2339,7 +2480,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(values[1]);                               // Value値
                             buf.append(ImdstDefine.setTimeParamSep);
-                            buf.append(setTime);                                 // 保存時間
+                            buf.append(setTime);                                 // 保存バージョン
                             sendStr = buf.toString();
 
                             // 送信
@@ -2619,6 +2760,144 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     retParams[2] = cnvConsistencyRet[0];
                 }
             }
+        }
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeに対してデータインクリメント、デクリメントを行う.<br>
+     * 結果を返却する.<br>
+     *
+     * @param keyNodeName ノードフルネームの名前(IPなど)
+     * @param keyNodePort ノードフルネームのアクセスポート番号
+     * @param keyNodeFullName ノードフルネーム
+     * @param key キー値
+     * @param calcValue 演算値
+     * @param transactionCode トランザクションコード
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] calcKeyValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String key, String calcValue, String transactionCode) throws BatchException {
+        KeyNodeConnector keyNodeConnector = null;
+        KeyNodeConnector slaveKeyNodeConnector = null;
+
+        String nodeName = keyNodeName;
+        String nodePort = keyNodePort;
+        String nodeFullName = keyNodeFullName;
+
+        String[] retParams = null;
+
+        int counter = 0;
+
+        String tmpSaveHost = null;
+        String[] tmpSaveData = null;
+        String retParam = null;
+
+        boolean mainNodeSave = false;
+
+        StringBuffer buf = new StringBuffer();
+        String sendStr = null;
+
+        try {
+
+            // TransactionModeの状態に合わせてLock状態を確かめる
+            if (transactionMode) {
+                while (true) {
+
+                    // TransactionMode時
+                    // TransactionManagerに処理を依頼
+                    String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], values[0]);
+
+                    // 取得結果確認
+                    if (keyNodeLockRet[1].equals("true")) {
+
+                        if (keyNodeLockRet[2].equals(transactionCode)) break;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            // 送信パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
+            buf.append("13");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append(this.stringCnv(key));                     // Key値
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append(transactionCode);                         // Transaction値
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+            buf.append(calcValue);                               // Value値
+            buf.append(ImdstDefine.setTimeParamSep);
+            buf.append(setTime);                                 // 保存バージョン
+            sendStr = buf.toString();
+
+            // KeyNodeとの接続を確立
+            keyNodeConnector = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+
+            // DataNodeに送信
+            if (keyNodeConnector != null) {
+                // 接続結果と、現在の保存先状況で処理を分岐
+                try {
+
+
+                    // 送信
+                    keyNodeConnector.println(sendStr);
+                    keyNodeConnector.flush();
+
+                    // 返却値取得
+                    retParam = keyNodeConnector.readLine(sendStr);
+
+
+                    // Key値でValueを保存
+                    // 特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                    if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyCalcSuccessStr) == 0) {
+
+                        mainNodeSave = true;
+                    } else {
+
+                        // 論理的に登録失敗
+                        super.setDeadNode(nodeName + ":" + nodePort, 3, null);
+                        logger.error("calcValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
+                    }
+
+                    // 使用済みの接続を戻す
+                    super.addKeyNodeCacheConnectionPool(keyNodeConnector);
+                } catch (SocketException se) {
+
+                    //se.printStackTrace();
+                    super.setDeadNode(nodeName + ":" + nodePort, 5, se);
+                    logger.debug(se);
+                } catch (IOException ie) {
+
+                    //ie.printStackTrace();
+                    super.setDeadNode(nodeName + ":" + nodePort, 6, ie);
+                    logger.debug(ie);
+                } catch (Exception ee) {
+
+                    //ee.printStackTrace();
+                    super.setDeadNode(nodeName + ":" + nodePort, 7, ee);
+                    logger.debug(ee);
+                }
+
+            }
+
+            // ノードへの保存状況を確認
+            if (mainNodeSave == false) {
+                retParam == null;
+            }
+
+        } catch (Exception e) {
+            retParam == null;
+        } finally {
+
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            // 返却地値をパースする
+            if (retParam != null) {
+                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+            } 
         }
 
         return retParams;
