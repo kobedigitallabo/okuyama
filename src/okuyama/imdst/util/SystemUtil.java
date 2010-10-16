@@ -40,7 +40,7 @@ public class SystemUtil {
         byte[] appendDatas = new byte[fixSize - valueSize];
 
         for (int i = 0; i < appendDatas.length; i++) {
-            appendDatas[i] = fillByte;
+            appendDatas[i] = new Integer(fillByte).byteValue();
         }
 
         writeBuf.append(new String(appendDatas));

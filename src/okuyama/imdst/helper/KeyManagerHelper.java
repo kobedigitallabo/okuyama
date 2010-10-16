@@ -874,9 +874,9 @@ public class KeyManagerHelper extends AbstractHelper {
     private String[] calcValue(String key, String calcValue, String transactionCode) {
         //logger.debug("KeyManagerHelper - calcValue - start = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
         String[] retStrs = new String[3];
-        try {
+/*        try {
 
-            if (dataNodeStr.length() < setDatanodeMaxSize) {
+            if (key.length() < setDatanodeMaxSize) {
                 if(!this.keyMapManager.checkError()) {
 
                     this.keyMapManager.setKeyPair(key, dataNodeStr, transactionCode);
@@ -895,15 +895,16 @@ public class KeyManagerHelper extends AbstractHelper {
                 retStrs[1] = "false";
                 retStrs[2] = "NG:Max Data Size Over";
             }
+
         } catch (BatchException be) {
 
-            logger.debug("KeyManagerHelper - setDatanode - Error = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]", be);
-            //logger.debug("KeyManagerHelper - setDatanode - Error", be);
+            logger.debug("KeyManagerHelper - calcValue - Error = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]", be);
             retStrs[0] = "1";
             retStrs[1] = "false";
-            retStrs[2] = "NG:KeyManagerHelper - setDatanode - Exception - " + be.toString();
+            retStrs[2] = "NG:KeyManagerHelper - calcValue - Exception - " + be.toString();
         }
-        //logger.debug("KeyManagerHelper - setDatanode - end = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
+*/
+        //logger.debug("KeyManagerHelper - calcValue - end = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
         return retStrs;
     }
 

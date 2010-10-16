@@ -1250,8 +1250,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             for (idx = 0; idx < keyNodeInfo.length; idx=idx+3)  {
 
                 calcRet = null;
-                registCalcRet = null;
                 calcRet = this.calcKeyValue(keyNodeInfo[idx], keyNodeInfo[idx + 1], keyNodeInfo[idx + 2], keyStr, incrValue, transactionCode);
+
                 // 1つのノードで演算に成功した場合はそこでbreak
                 if (calcRet != null && calcRet[1].equals("true")) {
 
@@ -1266,7 +1266,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 演算結果を残りのノードへ保存
             try {
                 if (calcFixValue != null)  {
-
+                    String[] keyNodeSaveRet = null;
                     if (keyNodeInfo.length == 6 && idx < 3) {
                         keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], null, null, null, "1", calcFixValue, transactionCode);
                     }
@@ -2808,7 +2808,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // TransactionMode時
                     // TransactionManagerに処理を依頼
-                    String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], values[0]);
+                    String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], key);
 
                     // 取得結果確認
                     if (keyNodeLockRet[1].equals("true")) {
@@ -2884,11 +2884,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // ノードへの保存状況を確認
             if (mainNodeSave == false) {
-                retParam == null;
+                retParam = null;
             }
 
         } catch (Exception e) {
-            retParam == null;
+            retParam = null;
         } finally {
 
             // ノードの使用終了をマーク

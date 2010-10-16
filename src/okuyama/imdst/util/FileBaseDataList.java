@@ -1,4 +1,4 @@
-//package okuyama.imdst.util;
+package okuyama.imdst.util;
 
 import java.io.*;
 import java.util.concurrent.locks.*;
@@ -27,8 +27,8 @@ public class FileBaseDataList extends AbstractList {
     // Total Size
     private AtomicInteger totalSize = null;
 
-//    private int oneDataLength = 1 + ImdstDefine.saveKeyMaxSize + ImdstDefine.saveDataMaxSize;
-    private int oneDataLength = 1 + 170 + 2560;
+    private int oneDataLength = 15 + ImdstDefine.saveKeyMaxSize + ImdstDefine.saveDataMaxSize;
+//    private int oneDataLength = 1 + 170 + 2560;
 
     private List tmpList = null;
 
@@ -42,6 +42,21 @@ public class FileBaseDataList extends AbstractList {
      * @throws
      */
     public FileBaseDataList(String dataFile) {
+        this.dataFileDir = dataFile;
+        this.dataFile = new File(dataFile);
+        this.init();
+    }
+
+
+    /**
+     * コンストラクタ.<br>
+     *
+     * @param dataFile
+     * @return 
+     * @throws
+     */
+    public FileBaseDataList(String dataFile, int size) {
+        this.oneDataLength = size;
         this.dataFileDir = dataFile;
         this.dataFile = new File(dataFile);
         this.init();
