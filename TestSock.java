@@ -19,7 +19,7 @@ public class TestSock {
                 System.out.println("{キー値を自動で繰り返し数分変動させて取得}                        コマンド引数{args[0]=2.22, args[1]=\"マスタノードサーバIP:マスタノードサーバPort番号,スレーブマスタノードサーバIP:スレーブマスタノードサーバPort番号\", args[2]=Key値}");
                 System.out.println("{キー値を指定してスクリプト実行し取得}                            コマンド引数{args[0]=2.3, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得Key値, args[4]=実行スクリプトコード}");
                 System.out.println("{Tagを4パターンで自動的に変動させてキー値は自動変動で登録}        コマンド引数{args[0]=3, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=登録件数}");
-                System.out.println("{指定したTagで関連するキー値を指定回数取得}                       コマンド引数{args[0]=4, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数, args[4]=指定Tag値 (tag1 or tag2 or tag3 or tag4)}");
+                System.out.println("{指定したTagで関連するキー値を指定回数取得}                       コマンド引数{args[0]=4, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数, args[4]=指定Tag値 (tag1 or tag2 or tag3 or tag4)}, args[5]=Key値として存在しない値の取得有無 true=tag値として登録された過去があればkey値は返す false=Key値が存在しなければ返さない");
                 System.out.println("{指定したファイルをバイナリデータとして指定したキー値で保存する}  コマンド引数{args[0]=5, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=登録回数, args[4]=ファイルパス, args[5]=キー値}");
                 System.out.println("{指定したキー値でバイナリデータを取得してファイル化する}          コマンド引数{args[0]=6, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=取得回数, args[4]=作成ファイルパス, args[5]=キー値}");
                 System.out.println("{キー値を自動で繰り返し数分変動させて削除}                        コマンド引数{args[0]=7, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=削除回数}");
@@ -362,14 +362,18 @@ public class TestSock {
 
                 imdstKeyValueClient.close();
             } else if (args[0].equals("4")) {
+
                 int port = Integer.parseInt(args[2]);
                 // ImdstKeyValueClientを使用してデータを取得(Tagでの取得)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
                 String[] keys = null;
+				boolean noExistsData = true;
+				if (args.length > 5) noExistsData = new Boolean(args[5]).booleanValue();
+
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]); i++) {
-                    Object[] ret = imdstKeyValueClient.getTagKeys(args[4]);
+                    Object[] ret = imdstKeyValueClient.getTagKeys(args[4], noExistsData);
                     if (ret[0].equals("true")) {
                         // データ有り
                         keys = (String[])ret[1];
@@ -485,6 +489,29 @@ public class TestSock {
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     ret = imdstKeyValueClient.removeValue("datasavekey_" + new Integer(i).toString());
+                    if (ret[0].equals("true")) {
+                        // データ有り
+                        System.out.println(ret[1]);
+                    } else if (ret[0].equals("false")) {
+                        System.out.println("データなし");
+                    } else if (ret[0].equals("error")) {
+                        System.out.println(ret[1]);
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                imdstKeyValueClient.close();
+            } else if (args[0].equals("7.1")) {
+                int port = Integer.parseInt(args[2]);
+                // ImdstKeyValueClientを使用してTag用のテストKey値データを削除
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                String[] ret = null;
+
+                long start = new Date().getTime();
+                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                    ret = imdstKeyValueClient.removeValue("tagsampledatakey_" + new Integer(i).toString());
                     if (ret[0].equals("true")) {
                         // データ有り
                         System.out.println(ret[1]);
