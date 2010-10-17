@@ -135,7 +135,14 @@
 
       // ƒf[ƒ^‚ðˆø”‚Ì‰ñ”•ªŽæ“¾(Tag‚ÅŽæ“¾)
       $counter = 0;
-      var_dump($client->getTagKeys($argv[4]));
+      if ($argv[5] === "true") {
+        var_dump($client->getTagKeys($argv[4], true));
+      } else if($argv[5] === "false") {
+        var_dump($client->getTagKeys($argv[4], false));
+      } else {
+        var_dump($client->getTagKeys($argv[4]));
+      }
+
 
     } else if ($argv[1] === "7") {
 

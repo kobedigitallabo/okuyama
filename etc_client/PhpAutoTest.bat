@@ -12,8 +12,10 @@ rem キー値をkey_aで取得したvalueに対してJavaScriptを実行
 php PhpTestSock.php 2.4 127.0.0.1 8888 key_a "var dataValue; var dataKey; var retValue = dataValue.replace('b', 'dummy'); if(dataKey == 'key_a') {var execRet = '2'} else {var execRet = '1'}"
 rem Tag値を自動で変えて、KeyとValueを10回登録
 php PhpTestSock.php 3 127.0.0.1 8888 10
-rem Tag値をtag1を指定して、tag1に属するKey値を取得
-php PhpTestSock.php 4 127.0.0.1 8888 tag1
+rem Tag値をtag1を指定して、tag1に属するKey値を取得(Key値存在指定有り(true))
+php PhpTestSock.php 4 127.0.0.1 8888 tag1 true
+rem Tag値をtag1を指定して、tag1に属するKey値を取得(Key値存在指定有り(false))
+php PhpTestSock.php 4 127.0.0.1 8888 tag1 false
 rem キー値をkey_aでValueを削除
 php PhpTestSock.php 8 127.0.0.1 8888 key_a
 rem 分散ロックを使用する

@@ -1127,10 +1127,11 @@ class OkuyamaClient {
      * マスタサーバからTagでKey値群を取得する.<br>
      *
      * @param tagStr
+     * @param noExistsData Keyが存在しない場合の取得指定 true=過去にtagを登録した場合はKey値は返す false=現時Keyが存在しなければ返却しない
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
      * @throws Exception
      */
-    public function getTagKeys($tagStr) {
+    public function getTagKeys($tagStr, $noExistsData=true) {
         $ret = array(); 
         $serverRetStr = null;
         $serverRet = null;
@@ -1158,6 +1159,16 @@ class OkuyamaClient {
 
             // tag連結(Keyはデータ送信時には必ず文字列が必要)
             $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($tagStr);
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // 存在指定
+            if ($noExistsData === true) {
+                $serverRequestBuf = $serverRequestBuf . "true";
+            } else {
+                $serverRequestBuf = $serverRequestBuf . "false";
+            }
 
 
             // サーバ送信
