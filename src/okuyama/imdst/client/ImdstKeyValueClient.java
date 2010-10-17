@@ -2425,10 +2425,24 @@ public class ImdstKeyValueClient {
      * マスタサーバからTagでKey値群を取得する.<br>
      *
      * @param tagStr
+
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
      * @throws Exception
      */
     public Object[] getTagKeys(String tagStr) throws Exception {
+		return this.getTagKeys(tagStr, true);
+	}
+
+
+    /**
+     * マスタサーバからTagでKey値群を取得する.<br>
+     *
+     * @param tagStr
+	 * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
+     * @throws Exception
+     */
+    public Object[] getTagKeys(String tagStr, boolean noExistsData) throws Exception {
         Object[] ret = new Object[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -2454,8 +2468,15 @@ public class ImdstKeyValueClient {
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
 
 
-            // tag連結(Keyはデータ送信時には必ず文字列が必要)
+            // tag値連結(Keyはデータ送信時には必ず文字列が必要)
             serverRequestBuf.append(new String(this.dataEncoding(tagStr.getBytes())));
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
+			// 存在データ取得指定連結
+            serverRequestBuf.append(new Boolean(noExistsData).toString());
+
+
 
 
             // サーバ送信

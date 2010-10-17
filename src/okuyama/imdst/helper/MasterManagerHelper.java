@@ -244,7 +244,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         case 3 :
 
                             // Tag値でキー値群を取得する
-                            retParams = this.getTagKeys(clientParameterList[1]);
+							boolean noExistsData = true;
+							if (clientParameterList.length > 2) {
+
+								noExistsData = new Boolean(clientParameterList[2]).booleanValue();
+							}
+                            retParams = this.getTagKeys(clientParameterList[1], noExistsData);
                             break;
                         case 4 :
 
@@ -755,8 +760,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * 2.KeyNodeに接続してValueを取得する<br>
      * 3.結果文字列の配列を作成(成功時は処理番号"2"と"true"とValue、失敗時は処理番号"2"と"false"とValue)<br>
      *
-     * TODD:過去ルールで取得出来た情報はここで反映<br>
-     *      一時的なものとして後で別サービス化する.<br>
      *
      * @param keyStr key値の文字列
      * @return String[] 結果
@@ -782,11 +785,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // 取得実行
             if (keyNodeInfo.length == 3) {
-                keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "2", keyStr);
+                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "2", keyStr);
             } else if (keyNodeInfo.length == 6) {
-                keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
+                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
             } else if (keyNodeInfo.length == 9) {
-                keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
+                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
             }
 
 
@@ -801,11 +804,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // 取得実行
                     if (keyNodeInfo.length == 3) {
-                        keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "2", keyStr);
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "2", keyStr);
                     } else if (keyNodeInfo.length == 6) {
-                        keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
                     } else if (keyNodeInfo.length == 9) {
-                        keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
                     }
 
 
@@ -1266,7 +1269,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 演算結果を残りのノードへ保存
             try {
                 if (calcFixValue != null)  {
-                    String[] keyNodeSaveRet = null;
+					String[] keyNodeSaveRet = null;
                     if (keyNodeInfo.length == 6 && idx < 3) {
                         keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], null, null, null, "1", calcFixValue, transactionCode);
                     }
@@ -1472,10 +1475,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * 3.結果文字列の配列を作成(成功時は処理番号"2"と"true"とKey値群、失敗時は処理番号"2"と"false"とKey値群)<br>
      *
      * @param tagStr tag値の文字列
+	 * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] getTagKeys(String tagStr) throws BatchException {
+    private String[] getTagKeys(String tagStr, boolean noExistsData) throws BatchException {
         //logger.debug("MasterManagerHelper - getTagKeys - start");
         String[] retStrs = new String[3];
 
@@ -1497,11 +1501,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // 取得実行
             if (keyNodeInfo.length == 3) {
-                keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
+                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
             } else if (keyNodeInfo.length == 6) {
-                keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
+                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
             } else if (keyNodeInfo.length == 9) {
-                keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
+                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
             }
 
 
@@ -1515,11 +1519,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // キー値を使用して取得先を決定
                     // 取得実行
                     if (keyNodeInfo.length == 3) {
-                        keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
                     } else if (keyNodeInfo.length == 6) {
-                        keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
                     } else if (keyNodeInfo.length == 9) {
-                        keyNodeSaveRet = getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
                     }
 
                     if (keyNodeSaveRet[1].equals("true")) break;
@@ -1536,9 +1540,47 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             } else {
 
                 // データ有り
-                retStrs[0] = keyNodeSaveRet[0];
-                retStrs[1] = "true";
-                retStrs[2] = keyNodeSaveRet[2];
+				if (noExistsData) {
+
+	                retStrs[0] = keyNodeSaveRet[0];
+	                retStrs[1] = "true";
+	                retStrs[2] = keyNodeSaveRet[2];
+				} else {
+
+	                retStrs[0] = keyNodeSaveRet[0];
+	                retStrs[1] = "true";
+
+					String[] splitList = keyNodeSaveRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
+					keyNodeSaveRet[2] = null;
+
+					if (splitList.length > 0) {
+
+						StringBuffer retBuf = new StringBuffer();
+						String retSep = "";
+
+						for (int idx = 0; idx < splitList.length; idx++) {
+
+							String[] retKey = this.getKeyValue(splitList[idx]);
+							if (retKey[1].equals("true")) {
+
+								retBuf.append(retSep);
+								retBuf.append(splitList[idx]);
+								retSep = ImdstDefine.imdstTagKeyAppendSep;
+							}
+						}
+
+						retStrs[2] = retBuf.toString();
+						if (retStrs[2].length() == 0) {
+
+			                retStrs[1] = "false";
+						}
+					} else {
+
+		                retStrs[1] = "false";
+		                retStrs[2] = "";
+					}
+				}
+
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getTagKeys - Error", be);
@@ -1657,7 +1699,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     nowUse = 2;
                 }
 
-                // ノード書き出し処理
+                // ノード取得処理
                 try {
                     StringBuffer sendData = new StringBuffer();
                     String sendStr = null;
@@ -1704,10 +1746,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     }
 
-
                     // 使用済みの接続を戻す
                     super.addKeyNodeCacheConnectionPool(keyNodeConnector);
 
+					// Tag取得の場合は値が取れ次第終了
+					if (type.equals("4")) {
+                        if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
+                            cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
+                            retParams[2] = cnvConsistencyRet[0];
+                        }
+                        break;
+					}
 
                     // 一貫性のモードに合わせて処理を分岐
                     if (this.dataConsistencyMode < 2) {
@@ -1771,8 +1820,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
             }
 
-            // 強一貫性の場合は処理
-            if (this.dataConsistencyMode == 2) {
+            // 強一貫性且つKey－Value取得の場合は処理
+            if (type.equals("2") && this.dataConsistencyMode == 2) {
                 retParams = this.strongConsistencyDataConvert(retParams, mainNodeRetParam, subNodeRetParam, type);
             }
         } catch (Exception e) {
