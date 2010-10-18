@@ -889,7 +889,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 keyNodeConnector.flush();
 
                 // 返却値取得
-                String retParam = keyNodeConnector.readLine();
+                String retParam = keyNodeConnector.readLineWithReady();
 
                 retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
 

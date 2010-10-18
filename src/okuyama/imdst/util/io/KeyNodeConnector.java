@@ -88,14 +88,31 @@ public class KeyNodeConnector {
     }
 
     public String readLine() throws Exception {
-        return this.readLine(null);
+        return this.readLine(null, false);
+    }
+
+    public String readLineWithReady() throws Exception {
+        return this.readLine(null, true);
     }
 
 
     public String readLine(String retryStr) throws Exception {
+        return this.readLine(retryStr, false);
+    }
+
+    public String readLineWithReady(String retryStr) throws Exception {
+        return this.readLine(retryStr, true);
+    }
+
+
+    private String readLine(String retryStr, boolean isReady) throws Exception {
 
         String ret = null;
         try {
+
+            if (isReady) {
+                if(!this.br.ready()) Thread.sleep(500);
+            }
 
             ret = this.br.readLine();
             if (ret == null) throw new IOException("readLine Ret = null");
