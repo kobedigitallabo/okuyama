@@ -4,7 +4,9 @@ package okuyama.imdst.util;
 import java.util.*;
 
 /**
- * CoreValueMap専用のKeyコンテナ.<br>
+ * CoreValueMap専用のKey値格納用コンテナ.<br>
+ * byteの配列に変換し、メモリ効率を向上させるために使用.<br>
+ * hashCodeメソッドとequalsメソッドを独自実装する.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)

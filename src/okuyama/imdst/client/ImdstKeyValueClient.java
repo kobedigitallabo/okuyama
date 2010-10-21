@@ -922,8 +922,6 @@ public class ImdstKeyValueClient {
 
                 // ValueをBase64でエンコード
                 value = new String(this.dataEncoding(value.getBytes()));
-
-
             }
 
             // 文字列バッファ初期化
@@ -2475,8 +2473,6 @@ public class ImdstKeyValueClient {
 
 			// 存在データ取得指定連結
             serverRequestBuf.append(new Boolean(noExistsData).toString());
-
-
 
 
             // サーバ送信

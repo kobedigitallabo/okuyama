@@ -14,7 +14,7 @@ import okuyama.imdst.util.StatusUtil;
  * KeyとValueを管理する独自Mapクラス.<br>
  * メモリモードとファイルモードで動きが異なる.<br>
  * メモリモード:KeyとValueを親クラスであるHashMapで管理する.<br>
- * ファイルモード:Keyは親クラスのHashMapに、Valueはファイルに記録する<br>
+ * ファイルモード:Keyは親クラスのMapに、Valueはファイルに記録する<br>
  *                KeyとValueが格納させている行数を記録している.<br>
  *                行数から、ファイル内からValueを取り出す.<br>
  *

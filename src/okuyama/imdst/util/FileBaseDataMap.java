@@ -40,6 +40,7 @@ public class FileBaseDataMap extends AbstractMap {
 
 	protected static int paddingSymbol = 38;
 
+
     /**
      * コンストラクタ.<br>
      *
@@ -58,10 +59,26 @@ public class FileBaseDataMap extends AbstractMap {
      *
      * @param baseDirs
      * @param numberOfKeyData
+     * @param cacheMemPercent
      * @return 
      * @throws
      */
     public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent) {
+		this(baseDirs, numberOfKeyData, cacheMemPercent, 0);
+    }
+
+
+    /**
+     * コンストラクタ.<br>
+     *
+     * @param baseDirs
+     * @param numberOfKeyData
+     * @param cacheMemPercent
+     * @param numberOfValueLength
+     * @return 
+     * @throws
+     */
+    public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent, int numberOfValueLength) {
         this.dirs = baseDirs;
         this.numberOfCoreMap = baseDirs.length;
         this.coreFileBaseKeyMaps = new CoreFileBaseKeyMap[baseDirs.length];
@@ -81,9 +98,13 @@ public class FileBaseDataMap extends AbstractMap {
         for (int idx = 0; idx < baseDirs.length; idx++) {
             syncObjs[idx] = new Object();
             String[] dir = {baseDirs[idx]};
-            this.coreFileBaseKeyMaps[idx] = new CoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer);
+			if (numberOfValueLength > 0) {
+	            this.coreFileBaseKeyMaps[idx] = new CoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, numberOfValueLength);
+			} else {
+	            this.coreFileBaseKeyMaps[idx] = new CoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer);
+			}
         }
-    }
+	}
 
 
     /**
@@ -331,7 +352,7 @@ class CoreFileBaseKeyMap {
     private String[] fileDirs = null;
 
     // The Maximum Length Key
-    private int keyDataLength = ImdstDefine.saveKeyMaxSize + 1;
+    private int keyDataLength = new Double(ImdstDefine.saveKeyMaxSize * 1.33).intValue() + 1;
 
     // The Maximun Length Value
     private int oneDataLength = 11;
@@ -390,6 +411,35 @@ class CoreFileBaseKeyMap {
             e.printStackTrace();
         }
     }
+
+
+    /**
+     * コンストラクタ.<br>
+     * Keyサイズ指定有り.<br>
+	 *
+     * @param dirs
+     * @param innerCacheSize
+     * @param numberOfKeyData
+	 * @param numberOfValueSize
+     * @return 
+     * @throws
+     */
+    public CoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData, int numberOfValueSize) {
+        try {
+			this.oneDataLength = numberOfValueSize;
+		    this.lineDataSize =  this.keyDataLength + this.oneDataLength;
+            this.baseFileDirs = dirs;
+            this.innerCacheSize = innerCacheSize;
+			if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;
+            this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
+
+            this.init();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
 
     /**
