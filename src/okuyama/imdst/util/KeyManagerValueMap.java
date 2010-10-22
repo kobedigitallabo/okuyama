@@ -48,8 +48,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     // キャッシュ
     private ValueCacheMap valueCacheMap = null;
 
-    // 最大キャッシュサイズ
-    private int maxCacheSize = -1;
 
     // コンストラクタ
     public KeyManagerValueMap(int size, boolean memoryMode) {
@@ -72,27 +70,18 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      */
     public void initNoMemoryModeSetting(String lineFile) {
         try {
-            if (sync == null) {
+            if (sync == null) 
                 sync = new Object();
-            }
-
-            if (this.valueCacheMap == null) {
-
-                this.maxCacheSize = new Long((JavaSystemApi.getRuntimeFreeMem() / 10) / (ImdstDefine.saveDataMaxSize + ImdstDefine.saveKeyMaxSize)).intValue();
-                this.valueCacheMap = new ValueCacheMap(this.maxCacheSize);
-            } else {
-                this.valueCacheMap.clear();
-            }
 
             readObjectFlg  = true;
 
-			this.tmpVacuumeLineFile = lineFile + ".vacuumtmp";
-			this.tmpVacuumeCopyMapDirs = new String[5];
-			this.tmpVacuumeCopyMapDirs[0] = lineFile + ".cpmapdir1/";
-			this.tmpVacuumeCopyMapDirs[1] = lineFile + ".cpmapdir2/";
-			this.tmpVacuumeCopyMapDirs[2] = lineFile + ".cpmapdir3/";
-			this.tmpVacuumeCopyMapDirs[3] = lineFile + ".cpmapdir4/";
-			this.tmpVacuumeCopyMapDirs[4] = lineFile + ".cpmapdir5/";
+            this.tmpVacuumeLineFile = lineFile + ".vacuumtmp";
+            this.tmpVacuumeCopyMapDirs = new String[5];
+            this.tmpVacuumeCopyMapDirs[0] = lineFile + ".cpmapdir1/";
+            this.tmpVacuumeCopyMapDirs[1] = lineFile + ".cpmapdir2/";
+            this.tmpVacuumeCopyMapDirs[2] = lineFile + ".cpmapdir3/";
+            this.tmpVacuumeCopyMapDirs[3] = lineFile + ".cpmapdir4/";
+            this.tmpVacuumeCopyMapDirs[4] = lineFile + ".cpmapdir5/";
 
 
 
@@ -195,8 +184,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 // Vacuum中はsyncを呼び出す
                 if (vacuumExecFlg) {
                     ret = syncGet(key);
-                } else if ((ret = this.valueCacheMap.get(key)) == null) {
-                    // キャッシュから取得できない場合はファイルから取得
+                } else {
+
                     int i = 0;
                     int line = 0;
                     Integer lineInteger = null;
@@ -231,9 +220,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                     ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
                     buf = null;
-
-                    // キャッシュに登録
-                    this.valueCacheMap.put(key, ret);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -312,10 +298,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
             try {
 
-                // キャッシュから削除
-                if(this.valueCacheMap.containsKey(key))
-                    this.valueCacheMap.remove(key);
-
                 if (readObjectFlg == true) {
 
                     int line = 0;
@@ -373,6 +355,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             }
                         }
                     }
+
                 } else {
                     super.put(key, value);
                 }
@@ -395,31 +378,17 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * @return Object 返却値
      */
     public Object remove(Object key) {
-		Object ret = null;
-
-        // データファイルモード時はCacheをチェック
-        if (!this.memoryMode) {
-            // キャッシュから削除
-            if(this.valueCacheMap != null && this.valueCacheMap.containsKey(key))
-                this.valueCacheMap.remove(key);
-        }
+        Object ret = null;
 
         synchronized (sync) {
-			ret = super.remove(key);
-			this.nowKeySize = super.size();
+            ret = super.remove(key);
+            this.nowKeySize = super.size();
 
             if (vacuumExecFlg) {
 
                 Object diffObj[] = {"2", (String)key};
                 this.vacuumDiffDataList.add(diffObj);
             }
-        }
-
-        // データファイルモード時はCacheをチェック
-        if (!this.memoryMode) {
-            // キャッシュから削除
-            if(this.valueCacheMap != null && this.valueCacheMap.containsKey(key))
-                this.valueCacheMap.remove(key);
         }
 
         return ret;
@@ -459,7 +428,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         BufferedWriter tmpBw = null;
         RandomAccessFile raf = null;
         Map vacuumWorkMap = null;
-		boolean userMap = false;
+        boolean userMap = false;
         String dataStr = null;
         Set entrySet = null;
         Iterator entryIte = null;
@@ -469,22 +438,22 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         synchronized (sync) {
 
-			if (this.vacuumDiffDataList != null) {
-				this.vacuumDiffDataList.clear();
-				this.vacuumDiffDataList = null;
-			}
+            if (this.vacuumDiffDataList != null) {
+                this.vacuumDiffDataList.clear();
+                this.vacuumDiffDataList = null;
+            }
 
             this.vacuumDiffDataList = new FileBaseDataList(this.tmpVacuumeLineFile);
             vacuumExecFlg = true;
         }
 
         //vacuumWorkMap = new ConcurrentHashMap(super.size());
-		if (JavaSystemApi.getUseMemoryPercent() > 40) {
-			userMap = true;
-			vacuumWorkMap = new FileBaseDataMap(this.tmpVacuumeCopyMapDirs, super.size(), 0.20);
-		} else {
-			vacuumWorkMap = new HashMap(super.size());
-		}
+        if (JavaSystemApi.getUseMemoryPercent() > 40) {
+            userMap = true;
+            vacuumWorkMap = new FileBaseDataMap(this.tmpVacuumeCopyMapDirs, super.size(), 0.20);
+        } else {
+            vacuumWorkMap = new HashMap(super.size());
+        }
 
         try {
 
@@ -587,13 +556,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             }
                         }
 
-						this.vacuumDiffDataList.clear();
-	                    this.vacuumDiffDataList = null;
+                        this.vacuumDiffDataList.clear();
+                        this.vacuumDiffDataList = null;
 
-						if (userMap) {
-	                        ((FileBaseDataMap)vacuumWorkMap).finishClear();
-						}
-						vacuumWorkMap = null;
+                        if (userMap) {
+                            ((FileBaseDataMap)vacuumWorkMap).finishClear();
+                        }
+                        vacuumWorkMap = null;
 
                         // Vacuum終了をマーク
                         vacuumExecFlg = false;
@@ -663,14 +632,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 if(dataFile.exists()) {
                     dataFile.delete();
                 }
-
-                // データファイルモード時はCacheをチェック
-                // キャッシュ全削除
-                if (!this.memoryMode) {
-                    // キャッシュから削除
-                    if(this.valueCacheMap != null)
-                        this.valueCacheMap.clear();
-                }
             }
         } catch(Exception e3) {
             e3.printStackTrace();
@@ -678,33 +639,30 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         }
     }
 
+
+    /**
+     * getKeySize.<br>
+     *
+     * @param
+     * @return int
+     * @throws
+     */
     public int getKeySize() {
         return this.nowKeySize;
     }
 
+
+    /**
+     * getAllDataCount.<br>
+     *
+     * @param
+     * @return int
+     * @throws
+     */
     public int getAllDataCount() {
         return this.lineCount;
     }
 
-    public int getCacheDataSize() {
-        if (this.valueCacheMap != null) {
-            return valueCacheMap.size();
-        } else {
-            return -1;
-        }
-    }
-
-    public int getMaxCacheSize() {
-        return maxCacheSize;
-    }
-
-    public int getCacheSize() {
-        if(this.valueCacheMap != null) {
-            return this.valueCacheMap.size();
-        } else {
-            return -1;
-        }
-    }
 
     /**
      * データを変更した最終時間を記録する.<br>

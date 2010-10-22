@@ -25,7 +25,7 @@ import okuyama.imdst.util.JavaSystemApi;
 public class ServerManagedJob extends AbstractJob implements IJob {
 
     // 停止ファイルの監視サイクル時間(ミリ秒)
-    private int checkCycle = 5000;
+    private int checkCycle = 2000;
 
     /**
      * Logger.<br>

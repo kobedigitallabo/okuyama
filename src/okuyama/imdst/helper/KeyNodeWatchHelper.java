@@ -68,6 +68,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             while (serverRunning) {
                 try{
+                    HashMap rebootNodeMap = new HashMap(128);
                     HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
                     this.mainNodeList = (ArrayList)allNodeInfo.get("main");
                     this.subNodeList = (ArrayList)allNodeInfo.get("sub");
@@ -142,6 +143,9 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 // ノードが復旧
                                 logger.info("Node Name [" + nodeInfo +"] Reboot");
 
+                                // ノード復旧を記録
+                                rebootNodeMap.put(nodeInfo, null);
+
                                 // Subノードが存在する場合はデータ復元、存在しない場合はそのまま起動
                                 if (subNodeList != null && (subNodeList.get(i) != null)) {
 
@@ -162,8 +166,12 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                         // リカバー成功
                                         // 該当ノードの復帰を登録
                                         logger.info(nodeInfo + " - Recover Success");
+
+                                        // 復旧処理ノードから記録を消す
+                                        rebootNodeMap.remove(nodeInfo);
                                         StatusUtil.setNodeStatusDt(nodeInfo, "Recover Success");
                                     } else {
+                                        // リカバー失敗
                                         logger.info(nodeInfo + " - Recover Miss");
                                         // リカバー終了を伝える
                                         super.setRecoverNode(false, "");
@@ -173,6 +181,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                     logger.info(nodeInfo + " - Recover End");
                                 } else {
                                     // ノードの復旧を記録
+                                    // 復旧処理ノードから記録を消す
+                                    rebootNodeMap.remove(nodeInfo);
                                     super.setArriveNode(nodeInfo);
                                 }
                             } else {
@@ -205,6 +215,9 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                     // 停止中に登録予定であったデータを登録する
                                     logger.info("Node Name [" + subNodeInfo +"] Reboot");
 
+                                    // ノード復旧を記録
+                                    rebootNodeMap.put(subNodeInfo, null);
+
                                     // 復旧前に現在稼働中のMasterNodeに再度停止ノードと、リカバー開始を伝える
                                     super.setDeadNode(subNodeInfo, 1, null);
                                     super.setRecoverNode(true, nodeInfo);
@@ -217,9 +230,13 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                         // リカバー成功
                                         // 該当ノードの復帰を登録
                                         logger.info(subNodeInfo + " - Recover Success");
+
+                                        // 復旧処理ノードから記録を消す
+                                        rebootNodeMap.remove(subNodeInfo);
                                         StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Success");
                                     } else {
 
+                                        // リカバー失敗
                                         logger.info(subNodeInfo + " - Recover Miss");
                                         // リカバー終了を伝える
                                         super.setRecoverNode(false, "");
@@ -237,6 +254,24 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             }
                         }
                     }
+
+
+                    // リブートされたが遂になるノードが存在せずにリカバリーに失敗したノードを復旧扱いとする
+                    Set rebootNodeMapSet = rebootNodeMap.entrySet();
+                    Iterator rebootNodeMapIte = rebootNodeMapSet.iterator();
+
+                    while(rebootNodeMapIte.hasNext()) {
+
+                        Map.Entry obj = (Map.Entry)rebootNodeMapIte.next();
+                        String nodeInfo = (String)obj.getKey();
+                        if (nodeInfo != null) {
+                            // リカバー完了を全MasterNodeへ送信
+                            super.setArriveNode(nodeInfo);
+                            logger.info("Node Name [" + nodeInfo +"] Reboot Register");
+                        }
+                    }
+
+
                 } catch(Exception e) {
                     logger.error("KeyNodeWatchHelper - executeHelper - Error", e);
                 }

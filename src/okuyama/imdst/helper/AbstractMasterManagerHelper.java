@@ -343,6 +343,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                     serverRequestBuf.append(nodeInfo);
                                     sendCheckStr = "96";
                                 } else {
+
                                     // リカバー終了
                                     serverRequestBuf.append("97");
                                     serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);

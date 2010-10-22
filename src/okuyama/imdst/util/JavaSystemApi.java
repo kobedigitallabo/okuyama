@@ -11,6 +11,8 @@ import okuyama.base.util.LoggerFactory;
  */
 public class JavaSystemApi {
 
+    private static int cacheUseMemoryPercent = 2;
+
     /**
      * Logger.<br>
      */
@@ -99,6 +101,7 @@ public class JavaSystemApi {
         return (runtime.freeMemory() / formatSize);
     }
 
+
     // 現在使用しているメモリのパーセンテージを返す
     public static int getUseMemoryPercent() {
         double useMem = (getRuntimeTotalMem() - getRuntimeFreeMem());
@@ -107,7 +110,12 @@ public class JavaSystemApi {
         usePercent = usePercent * percentSize;
         Double useMemSize = new Double(usePercent);
 
-        return useMemSize.intValue();
+        cacheUseMemoryPercent = useMemSize.intValue();
+        return cacheUseMemoryPercent;
+    }
+
+    public static int getUseMemoryPercentCache() {
+        return cacheUseMemoryPercent;
     }
 
     // CPUの数を返す

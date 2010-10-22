@@ -18,11 +18,15 @@ public class ValueCacheMap extends LinkedHashMap {
     private final Lock r = rwl.readLock();
     private final Lock w = rwl.writeLock();
 
-    private int maxCacheSize = 1024;
+    private static int upperCacheMemSize = 60;
+
+    private int maxCacheSize = 8192;
+
+    private boolean putCall = false;
 
     // コンストラクタ
     public ValueCacheMap() {
-        super(1024, 0.75f, true);
+        super(8192, 0.75f, true);
     }
 
 
@@ -98,6 +102,59 @@ public class ValueCacheMap extends LinkedHashMap {
 
 
     /**
+     * removeTransfer<br>
+     *
+     */
+    public void removeTransfer() {
+        w.lock();
+        try {
+            int nowJvmUseMem = JavaSystemApi.getUseMemoryPercentCache();
+            if (nowJvmUseMem > upperCacheMemSize) {
+                super.put(null, null);
+                super.remove(null);
+            }
+        } finally {
+            w.unlock(); 
+        }
+    }
+
+
+    /**
+     * removeTransfer<br>
+     *
+     */
+    public void maintenanceRemoveTransfer() {
+        boolean execFlg = true;
+        int counter = 0;
+        while(execFlg) {
+
+            w.lock();
+            
+            try {
+                if (counter != 1000) {
+
+                    int nowJvmUseMem = JavaSystemApi.getUseMemoryPercentCache();
+                    if (nowJvmUseMem > upperCacheMemSize) {
+
+                        super.put(null, null);
+                        super.remove(null);
+                    } else {
+
+                        execFlg = false;
+                    }
+                } else {
+
+                    execFlg = false;
+                }
+                counter++;
+            } finally {
+                w.unlock(); 
+            }
+        }
+    }
+
+
+    /**
      * clear<br>
      *
      */
@@ -115,6 +172,8 @@ public class ValueCacheMap extends LinkedHashMap {
      * 削除指標実装.<br>
      */
     protected boolean removeEldestEntry(Map.Entry eldest) {
-        return size() > maxCacheSize;
+
+        int nowJvmUseMem = JavaSystemApi.getUseMemoryPercentCache();
+        return nowJvmUseMem > upperCacheMemSize;
     }
 }

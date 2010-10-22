@@ -70,8 +70,8 @@ public class KeyMapManager extends Thread {
 
     // 起動時にトランザクションログから復旧
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
-    private static int updateInterval = 30000;
-    private static int intervalCount =  2;
+    private static int updateInterval = 1500;
+    private static int intervalCount =  40;
 
     // workMap(トランザクションログ)ファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
@@ -210,10 +210,6 @@ public class KeyMapManager extends Thread {
                         this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
                     }
 
-                    // 最大キャッシュサイズ
-                    if (!dataMemory) {
-                        logger.info("Max Cache Size = [" + this.keyMapObj.getMaxCacheSize() + "]");
-                    }
 
                     // WorkKeyMapファイルが存在する場合は読み込み
                     // トランザクションファイルはサイズでローテーションされているので、0からのインデックス番号順に読み込む
@@ -323,8 +319,9 @@ public class KeyMapManager extends Thread {
 
             try {
 
-                // 1サイクル30秒の停止を規定回数行う(途中で停止要求があった場合は無条件で処理実行)
+                // 1サイクル1.5秒の停止を規定回数行う(途中で停止要求があった場合は無条件で処理実行)
                 for (int count = 0; count < KeyMapManager.intervalCount; count++) {
+
 
                     // システム停止要求を監視
                     if (StatusUtil.getStatus() != 0) {
@@ -334,12 +331,6 @@ public class KeyMapManager extends Thread {
 
                     if (!this.dataManege) {
                         this.autoLockRelease(System.currentTimeMillis());
-                    }
-
-                    if (!dataMemory) {
-                        synchronized(this.poolKeyLock) {
-                            logger.info("Now Cache Size = [" + this.keyMapObj.getCacheSize() + "]");
-                        }
                     }
 
                     Thread.sleep(KeyMapManager.updateInterval);
@@ -409,7 +400,7 @@ public class KeyMapManager extends Thread {
                 if (!dataMemory && vacuumExec == true) {
                     logger.info("vacuumCheck - Start - 1");
                     synchronized(this.poolKeyLock) {
-					    logger.info("VacuumCheck - DifferenceCount = [" + (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) + "]");
+                        logger.info("VacuumCheck - DifferenceCount = [" + (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) + "]");
                         if ((this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartLimit) {
                             logger.info("VacuumCheck - Start - 2");
 
