@@ -33,7 +33,7 @@ public class  HelperPool extends Thread {
     private static ConcurrentHashMap configMap = new ConcurrentHashMap(1024, 1000, 512);
     private static ConcurrentHashMap helperMap = new ConcurrentHashMap(1024, 1000, 512);
     private static ConcurrentHashMap helperReturnParamMap = new ConcurrentHashMap(1024, 1000, 512);
-    private static ConcurrentHashMap helperStatusMap = new ConcurrentHashMap(1024, 1000, 512);
+    private static ConcurrentHashMap helperStatusMap = new ConcurrentHashMap(8192, 1000, 512);
     private static ConcurrentHashMap executorServiceMap = new ConcurrentHashMap(1024, 1000, 512);
     private static ConcurrentHashMap serviceParameterQueueMap = new ConcurrentHashMap(1024, 1000, 512);
     private static CopyOnWriteArrayList allExecuteHelperList = new CopyOnWriteArrayList();
@@ -346,7 +346,7 @@ public class  HelperPool extends Thread {
     public static void cleanEndHelper(int helperHashCode) {
 
         if (helperStatusMap.containsKey(new Integer(helperHashCode))) {
-            helperStatusMap.remove(new Integer(helperHashCode));
+            helperStatusMap.put(new Integer(helperHashCode), BatchDefine.JOB_STATUS_END);
         }
 
         if (helperReturnParamMap.containsKey(new Integer(helperHashCode))) {

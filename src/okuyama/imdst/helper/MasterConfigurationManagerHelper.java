@@ -133,158 +133,162 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                     StatusUtil.setStatus(2);
                 }
 
-                // 設定情報を設定ファイルから常に取得するモードとデータノードから取得する設定で処理分岐
-                if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
-                        super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
+				try {
+	                // 設定情報を設定ファイルから常に取得するモードとデータノードから取得する設定で処理分岐
+	                if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
+	                        super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
 
-                    // ファイルモード
-                    // 設定ファイルの変更をチェック
-                    if (super.isJobFileChange()) {
-                        // 変更あり
-                        logger.info("MasterNode Config File Change");
-                        super.reloadJobFileParameter(reloadKeys);
-                        this.parseAllNodesInfo();
-                    } else {
-                        // 変更なし
-                        logger.info("MasterNode Config File No Change");
-                    }
-                } else {
+	                    // ファイルモード
+	                    // 設定ファイルの変更をチェック
+	                    if (super.isJobFileChange()) {
+	                        // 変更あり
+	                        logger.info("MasterNode Config File Change");
+	                        super.reloadJobFileParameter(reloadKeys);
+	                        this.parseAllNodesInfo();
+	                    } else {
+	                        // 変更なし
+	                        logger.info("MasterNode Config File No Change");
+	                    }
+	                } else {
 
-                    // DataNode
-                    parseAllNodesInfo4Node();
-                }
+	                    // DataNode
+	                    parseAllNodesInfo4Node();
+	                }
 
 
-                // 自身がチェックしなければいけないMasterNodeに対して生存確認を行う
-                boolean arrivalFlg = false;
-                String[] checkMasterNodes = null;
-                String[] checkMasterNodeInfo = null;
-                ImdstKeyValueClient imdstKeyValueClient = null;
-                String checkMasterNodeStr = StatusUtil.getCheckTargetMasterNodes();
+	                // 自身がチェックしなければいけないMasterNodeに対して生存確認を行う
+	                boolean arrivalFlg = false;
+	                String[] checkMasterNodes = null;
+	                String[] checkMasterNodeInfo = null;
+	                ImdstKeyValueClient imdstKeyValueClient = null;
+	                String checkMasterNodeStr = StatusUtil.getCheckTargetMasterNodes();
 
-                if (checkMasterNodeStr != null && !checkMasterNodeStr.trim().equals("")) {
+	                if (checkMasterNodeStr != null && !checkMasterNodeStr.trim().equals("")) {
 
-                    checkMasterNodes = checkMasterNodeStr.split(",");
+	                    checkMasterNodes = checkMasterNodeStr.split(",");
 
-                    arrivalFlg = false;
-                    for (int idx = 0; idx < checkMasterNodes.length; idx++) {
+	                    arrivalFlg = false;
+	                    for (int idx = 0; idx < checkMasterNodes.length; idx++) {
 
-                        
-                        try {
-                            checkMasterNodeInfo = checkMasterNodes[idx].split(":");
+	                        
+	                        try {
+	                            checkMasterNodeInfo = checkMasterNodes[idx].split(":");
 
-                            String node = checkMasterNodeInfo[0];
-                            String port = checkMasterNodeInfo[1];
+	                            String node = checkMasterNodeInfo[0];
+	                            String port = checkMasterNodeInfo[1];
 
-                            imdstKeyValueClient = new ImdstKeyValueClient();
-                            imdstKeyValueClient.connect(node, Integer.parseInt(port));
+	                            imdstKeyValueClient = new ImdstKeyValueClient();
+	                            imdstKeyValueClient.connect(node, Integer.parseInt(port));
 
-                            if(imdstKeyValueClient.arrivalMasterNode()) {
-                                arrivalFlg = true;
-                            }
-                        } catch(Exception e) {
-                            logger.info("Master Node = [" + checkMasterNodes[idx] +  "] Check Error");
-                        } finally {
-                            if (imdstKeyValueClient != null) {
-                                imdstKeyValueClient.close();
-                                imdstKeyValueClient = null;
-                            }
-                        }
-                    }
+	                            if(imdstKeyValueClient.arrivalMasterNode()) {
+	                                arrivalFlg = true;
+	                            }
+	                        } catch(Exception e) {
+	                            logger.info("Master Node = [" + checkMasterNodes[idx] +  "] Check Error");
+	                        } finally {
+	                            if (imdstKeyValueClient != null) {
+	                                imdstKeyValueClient.close();
+	                                imdstKeyValueClient = null;
+	                            }
+	                        }
+	                    }
 
-                    if (!arrivalFlg) {
+	                    if (!arrivalFlg) {
 
-                        if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
-                                super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
+	                        if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
+	                                super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
 
-                            // ファイルモード
-                            // 自身がメインマスターノード
-                            StatusUtil.setMainMasterNode(true);
-                        } else {
+	                            // ファイルモード
+	                            // 自身がメインマスターノード
+	                            StatusUtil.setMainMasterNode(true);
+	                        } else {
 
-                            // Nodeモード
-                            // 自身がメインマスターノード
-                            // メインマスターノードの項目に自身の情報を登録
-                            // そうすることで自動的に設定は変わる
-                            String myInfo = StatusUtil.getMyNodeInfo();
-                            String[] myInfos = myInfo.split(":");
-                            String node = myInfos[0];
-                            String port = myInfos[1];
+	                            // Nodeモード
+	                            // 自身がメインマスターノード
+	                            // メインマスターノードの項目に自身の情報を登録
+	                            // そうすることで自動的に設定は変わる
+	                            String myInfo = StatusUtil.getMyNodeInfo();
+	                            String[] myInfos = myInfo.split(":");
+	                            String node = myInfos[0];
+	                            String port = myInfos[1];
 
-                            try {
+	                            try {
 
-                                // ノードに登録
-                                imdstKeyValueClient = new ImdstKeyValueClient();
-                                imdstKeyValueClient.connect(node, Integer.parseInt(port));
-                                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
-                            } catch(Exception e) {
-                                logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
-                            } finally {
-                                if (imdstKeyValueClient != null) {
-                                    imdstKeyValueClient.close();
-                                    imdstKeyValueClient = null;
-                                }
-                            }
-                        }
-                    } else {
+	                                // ノードに登録
+	                                imdstKeyValueClient = new ImdstKeyValueClient();
+	                                imdstKeyValueClient.connect(node, Integer.parseInt(port));
+	                                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
+	                            } catch(Exception e) {
+	                                logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
+	                            } finally {
+	                                if (imdstKeyValueClient != null) {
+	                                    imdstKeyValueClient.close();
+	                                    imdstKeyValueClient = null;
+	                                }
+	                            }
+	                        }
+	                    } else {
 
-                        if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
-                                super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
+	                        if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
+	                                super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
 
-                            // ファイルモード
-                            // 自身がメインマスターノードではない
-                            StatusUtil.setMainMasterNode(false);
-                        } else {
+	                            // ファイルモード
+	                            // 自身がメインマスターノードではない
+	                            StatusUtil.setMainMasterNode(false);
+	                        } else {
 
-                            // Nodeモード
-                            // 自身がメインマスターノードではない
-                            StatusUtil.setMainMasterNode(false);
-                        }
-                    }
-                } else {
+	                            // Nodeモード
+	                            // 自身がメインマスターノードではない
+	                            StatusUtil.setMainMasterNode(false);
+	                        }
+	                    }
+	                } else {
 
-                    // 調べるMasterNodeがない場合は自身がMainMasterNode
-                    if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
-                            super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
+	                    // 調べるMasterNodeがない場合は自身がMainMasterNode
+	                    if (super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode) != null &&
+	                            super.getPropertiesValue(ImdstDefine.Prop_SystemConfigMode).equals(ImdstDefine.configModeFile)) {
 
-                        // ファイルモード
-                        // 自身がメインマスターノード
-                        StatusUtil.setMainMasterNode(true);
-                    } else {
+	                        // ファイルモード
+	                        // 自身がメインマスターノード
+	                        StatusUtil.setMainMasterNode(true);
+	                    } else {
 
-                        // Nodeモード
-                        // 自身がメインマスターノード
-                        // メインマスターノードの項目に自身の情報を登録
-                        // そうすることで自動的に設定は変わる
-                        String myInfo = StatusUtil.getMyNodeInfo();
-                        String[] myInfos = myInfo.split(":");
-                        String node = myInfos[0];
-                        String port = myInfos[1];
+	                        // Nodeモード
+	                        // 自身がメインマスターノード
+	                        // メインマスターノードの項目に自身の情報を登録
+	                        // そうすることで自動的に設定は変わる
+	                        String myInfo = StatusUtil.getMyNodeInfo();
+	                        String[] myInfos = myInfo.split(":");
+	                        String node = myInfos[0];
+	                        String port = myInfos[1];
 
-                        try {
+	                        try {
 
-                            // ノードに登録
-                            imdstKeyValueClient = new ImdstKeyValueClient();
-                            imdstKeyValueClient.connect(node, Integer.parseInt(port));
-                            imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
-                        } catch(Exception e) {
-                            logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
-                        } finally {
-                            if (imdstKeyValueClient != null) {
-                                imdstKeyValueClient.close();
-                                imdstKeyValueClient = null;
-                            }
-                        }
-                    }
-                }
+	                            // ノードに登録
+	                            imdstKeyValueClient = new ImdstKeyValueClient();
+	                            imdstKeyValueClient.connect(node, Integer.parseInt(port));
+	                            imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
+	                        } catch(Exception e) {
+	                            logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
+	                        } finally {
+	                            if (imdstKeyValueClient != null) {
+	                                imdstKeyValueClient.close();
+	                                imdstKeyValueClient = null;
+	                            }
+	                        }
+	                    }
+	                }
+				} catch (Exception innerE) {
+		            logger.error("MasterConfigurationManagerHelper - executeHelper - Inner Error", innerE);
+				}
                 Thread.sleep(this.checkCycle);
             }
         } catch(Exception e) {
-            logger.error("MasterConfigurationManagerHelper - executeJob - Error", e);
+            logger.error("MasterConfigurationManagerHelper - executeHelper - Error", e);
             throw new BatchException(e);
         }
 
-        //logger.debug("MasterConfigurationManagerHelper - executeJob - end");
+        //logger.debug("MasterConfigurationManagerHelper - executeHelper - end");
         return ret;
     }
 
@@ -601,6 +605,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             }
 
         } catch (Exception e) {
+
             logger.error(e);
         } finally {
             try {

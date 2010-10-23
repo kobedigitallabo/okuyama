@@ -270,13 +270,13 @@ abstract public class AbstractHelper  implements Runnable{
 
         try {
 
-            logger.debug("Helper - [" + helperConfigMap.getHelperName() + "] - 1111111111");
+
             // 初期化メソッド呼び出し
             initHelper(this.helperConfigMap.getHelperInit());
-            logger.debug("Helper - [" + helperConfigMap.getHelperName() + "] - 2222222222");
+
             // 実行メインメソッド呼び出し
             retStatus = executeHelper(this.helperConfigMap.getHelperOption());
-            logger.debug("Helper - [" + helperConfigMap.getHelperName() + "] - 3333333333");
+
             // 実行結果確認
             if (retStatus != null) {
 

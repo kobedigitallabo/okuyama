@@ -72,13 +72,21 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
         String ret = SUCCESS;
         
         try{
+			int counter = 0;
+			int maxCount = 100;
 
-            int helperCode = super.executeHelper("MasterConfigurationManagerHelper", null);
+			while (true) {
+	            int helperCode = super.executeHelper("MasterConfigurationManagerHelper", null);
 
-            Object[] helperRet = null;
-            while(helperRet == null) {
-                 helperRet = super.waitGetHelperReturnParam(helperCode, 10);
-            }
+	            Object[] helperRet = null;
+	            while(helperRet == null) {
+	                 helperRet = super.waitGetHelperReturnParam(helperCode, 10);
+	            }
+				logger.error("MasterConfigurationManager End");
+				if (maxCount == counter) break;
+				counter++;
+			}
+
         } catch(Exception e) {
             logger.error("MasterConfigurationManagerJob - executeJob - Error", e);
             throw new BatchException(e);

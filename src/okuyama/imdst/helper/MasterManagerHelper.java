@@ -211,9 +211,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // パラメータ分解
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
-                    // 更新時間初期化
-                    this.initSetTime();
-
                     // 本体処理開始
                     // 処理番号で処理を分岐
                     switch (Integer.parseInt(clientParameterList[0])) {
@@ -1826,6 +1823,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (Exception e) {
             //e.printStackTrace();
+			logger.error("ErrorKey=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
             throw new BatchException(e);
         } finally {
             // ノードの使用終了をマーク
@@ -3435,15 +3433,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
     }
 
-
-    /**
-     * 更新時間を自身に蓄積.<br>
-     *
-     */
-    private void initSetTime() {
-        // 現在の時間を取得(更新時間として使用)
-        this.setTime = -1;
-    }
 
 
     /**
