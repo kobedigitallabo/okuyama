@@ -228,26 +228,33 @@ public class KeyNodeConnector {
     }
 
     public void close() {
-        try {
 
+        try {
             if (pw != null) {
                 pw.println(ImdstDefine.imdstConnectExitRequest);
                 pw.flush();
                 pw.close();
                 pw = null;
             }
+        } catch (Exception e) {
+            // 無視
+        }
 
+        try {
             if (br != null) {
                 br.close();
                 pw = null;
             }
+        } catch (Exception e2) {
+            // 無視
+        }
 
+		try {
             if (socket != null) {
                 socket.close();
                 socket = null;
             }
-
-        } catch (Exception e) {
+        } catch (Exception e3) {
             // 無視
         }
     }

@@ -65,6 +65,11 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
         // コネクションキャッシュが存在する場合は削除
         if (keyNodeConnectPool.containsKey(nodeInfo)) {
+			KeyNodeConnector keyNodeConnector = null;
+            while ((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(nodeInfo)).poll()) != null) {
+				keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
             ((ArrayBlockingQueue)keyNodeConnectPool.get(nodeInfo)).clear();
         }
 
@@ -184,6 +189,17 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      */
     protected void setArriveNode(String nodeInfo) {
         StatusUtil.setArriveNode(nodeInfo);
+
+        // コネクションキャッシュが存在する場合は削除
+        if (keyNodeConnectPool.containsKey(nodeInfo)) {
+
+			KeyNodeConnector keyNodeConnector = null;
+            while((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(nodeInfo)).poll()) != null) {
+				keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
+            ((ArrayBlockingQueue)keyNodeConnectPool.get(nodeInfo)).clear();
+		}
 
         // MainのMasterNodeの場合のみ実行
         // SlaveのMasterNodeにもノードの復帰登録を依頼

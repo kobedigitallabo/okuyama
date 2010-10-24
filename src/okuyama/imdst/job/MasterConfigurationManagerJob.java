@@ -85,6 +85,7 @@ public class MasterConfigurationManagerJob extends AbstractJob implements IJob {
 				logger.error("MasterConfigurationManager End");
 				if (maxCount == counter) break;
 				counter++;
+				Thread.sleep(5000);
 			}
 
         } catch(Exception e) {
