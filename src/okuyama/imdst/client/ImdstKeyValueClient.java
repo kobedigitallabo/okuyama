@@ -348,7 +348,7 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
 
             // 文字列バッファ初期化
@@ -383,9 +383,12 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
 
+        } catch (ImdstClientException ice) {
+
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -440,7 +443,7 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
 
             // 文字列バッファ初期化
@@ -473,9 +476,11 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
+        } catch (ImdstClientException ice) {
 
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -545,15 +550,15 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             if (this.transactionCode == null || this.transactionCode.equals("") || this.transactionCode.equals("0")) 
-                throw new Exception("No Start Transaction!!");
+                throw new ImdstClientException("No Start Transaction!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.equals("")) {
-                throw new Exception("The blank is not admitted on a key");
+                throw new ImdstClientException("The blank is not admitted on a key");
             }
 
             // 文字列バッファ初期化
@@ -612,8 +617,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -668,15 +675,15 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             if (this.transactionCode == null || this.transactionCode.equals("") || this.transactionCode.equals("0")) 
-                throw new Exception("No Start Transaction!!");
+                throw new ImdstClientException("No Start Transaction!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.equals("")) {
-                throw new Exception("The blank is not admitted on a key");
+                throw new ImdstClientException("The blank is not admitted on a key");
             }
 
             // 文字列バッファ初期化
@@ -726,8 +733,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -797,8 +806,10 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
-
+            if (this.socket == null) {
+                // 処理失敗(メッセージ格納)
+                throw new ImdstClientException("No ServerConnect!!");
+            }
 
             // 文字列バッファ初期化
             serverRequestBuf = new StringBuffer();
@@ -827,9 +838,10 @@ public class ImdstKeyValueClient {
                 }
             } else {
 
-                    ret = false;
+                ret = false;
             }
-
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -899,20 +911,20 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
         try {
             // Byte Lenghtチェック
-            if (keyStr.getBytes().length > maxValueSize) throw new Exception("Save Key Max Size " + maxValueSize + " Byte");
+            if (keyStr.getBytes().length > maxValueSize) throw new ImdstClientException("Save Key Max Size " + maxValueSize + " Byte");
             if (tagStrs != null) {
                 for (int i = 0; i < tagStrs.length; i++) {
-                    if (tagStrs[i].getBytes().length > maxValueSize) throw new Exception("Tag Max Size " + maxValueSize + " Byte");
+                    if (tagStrs[i].getBytes().length > maxValueSize) throw new ImdstClientException("Tag Max Size " + maxValueSize + " Byte");
                 }
             }
-            if (value.getBytes().length > maxValueSize) throw new Exception("Save Value Max Size " + maxValueSize + " Byte");
+            if (value.getBytes().length > maxValueSize) throw new ImdstClientException("Save Value Max Size " + maxValueSize + " Byte");
 
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.equals("")) {
-                throw new Exception("The blank is not admitted on a key");
+                throw new ImdstClientException("The blank is not admitted on a key");
             }
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
@@ -983,16 +995,19 @@ public class ImdstKeyValueClient {
 
                     // 処理成功
                     ret = true;
-                } else{
+                } else if (serverRet[1].equals("error")){
 
                     // 処理失敗(メッセージ格納)
-                    throw new Exception(serverRet[2]);
+                    throw new ImdstClientException(serverRet[2]);
                 }
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity [" + serverRetStr + "]");
+                throw new ImdstClientException("Execute Violation of validity [" + serverRetStr + "]");
             }
+
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -1068,20 +1083,20 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
         try {
             // Byte Lenghtチェック
-            if (keyStr.getBytes().length > maxValueSize) throw new Exception("Save Key Max Size " + maxValueSize + " Byte");
+            if (keyStr.getBytes().length > maxValueSize) throw new ImdstClientException("Save Key Max Size " + maxValueSize + " Byte");
             if (tagStrs != null) {
                 for (int i = 0; i < tagStrs.length; i++) {
-                    if (tagStrs[i].getBytes().length > maxValueSize) throw new Exception("Tag Max Size " + maxValueSize + " Byte");
+                    if (tagStrs[i].getBytes().length > maxValueSize) throw new ImdstClientException("Tag Max Size " + maxValueSize + " Byte");
                 }
             }
-            if (value.getBytes().length > maxValueSize) throw new Exception("Save Value Max Size " + maxValueSize + " Byte");
+            if (value.getBytes().length > maxValueSize) throw new ImdstClientException("Save Value Max Size " + maxValueSize + " Byte");
 
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.equals("")) {
-                throw new Exception("The blank is not admitted on a key");
+                throw new ImdstClientException("The blank is not admitted on a key");
             }
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
@@ -1164,8 +1179,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity [" + serverRetStr + "]");
+                throw new ImdstClientException("Execute Violation of validity [" + serverRetStr + "]");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -1255,10 +1272,10 @@ public class ImdstKeyValueClient {
         try {
 
             // Byte Lenghtチェック
-            if (keyStr.getBytes().length > maxValueSize) throw new Exception("Save Key Max Size " + maxValueSize + " Byte");
+            if (keyStr.getBytes().length > maxValueSize) throw new ImdstClientException("Save Key Max Size " + maxValueSize + " Byte");
             if (tagStrs != null) {
                 for (int i = 0; i < tagStrs.length; i++) {
-                    if (tagStrs[i].getBytes().length > maxValueSize) throw new Exception("Tag Max Size " + maxValueSize + " Byte");
+                    if (tagStrs[i].getBytes().length > maxValueSize) throw new ImdstClientException("Tag Max Size " + maxValueSize + " Byte");
                 }
             }
 
@@ -1289,7 +1306,7 @@ public class ImdstKeyValueClient {
                 tmpKey = keyStr.hashCode() + "_" + i;
 
                 // ノードにバイナリデータ保存
-                if(!this.sendByteData(tmpKey, workData)) throw new Exception("Byte Data Save Node Error");
+                if(!this.sendByteData(tmpKey, workData)) throw new ImdstClientException("Byte Data Save Node Error");
             }
 
             firstKey = keyStr.hashCode() + "_" + 0;
@@ -1379,13 +1396,15 @@ public class ImdstKeyValueClient {
                 } else{
 
                     // 処理失敗(メッセージ格納)
-                    throw new Exception(serverRet[2]);
+                    throw new ImdstClientException(serverRet[2]);
                 }
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity [" + serverRetStr + "]");
+                throw new ImdstClientException("Execute Violation of validity [" + serverRetStr + "]");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -1454,12 +1473,12 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.equals("")) {
-                throw new Exception("The blank is not admitted on a key");
+                throw new ImdstClientException("The blank is not admitted on a key");
             }
 
             // 文字列バッファ初期化
@@ -1518,8 +1537,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -1575,12 +1596,12 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.equals("")) {
-                throw new Exception("The blank is not admitted on a key");
+                throw new ImdstClientException("The blank is not admitted on a key");
             }
 
             // 文字列バッファ初期化
@@ -1634,8 +1655,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -1709,18 +1732,18 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.equals("")) {
-                throw new Exception("The blank is not admitted on a key");
+                throw new ImdstClientException("The blank is not admitted on a key");
             } 
 
             // Scriptチェック
             if (scriptStr == null ||  scriptStr.equals("")) {
                 scriptStr = ImdstKeyValueClient.blankStr;
-                throw new Exception("The blank is not admitted on a Script");
+                throw new ImdstClientException("The blank is not admitted on a Script");
             } 
 
             // 文字列バッファ初期化
@@ -1782,8 +1805,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -1859,18 +1884,18 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.equals("")) {
-                throw new Exception("The blank is not admitted on a key");
+                throw new ImdstClientException("The blank is not admitted on a key");
             } 
 
             // Scriptチェック
             if (scriptStr == null ||  scriptStr.equals("")) {
                 scriptStr = ImdstKeyValueClient.blankStr;
-                throw new Exception("The blank is not admitted on a Script");
+                throw new ImdstClientException("The blank is not admitted on a Script");
             } 
 
             // 文字列バッファ初期化
@@ -1932,8 +1957,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -1998,12 +2025,12 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.equals("")) {
-                throw new Exception("The blank is not admitted on a key");
+                throw new ImdstClientException("The blank is not admitted on a key");
             }
 
             // 文字列バッファ初期化
@@ -2064,8 +2091,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -2317,12 +2346,12 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.equals("")) {
-                throw new Exception("The blank is not admitted on a key");
+                throw new ImdstClientException("The blank is not admitted on a key");
             }
 
             // 文字列バッファ初期化
@@ -2379,8 +2408,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -2428,15 +2459,15 @@ public class ImdstKeyValueClient {
      * @throws Exception
      */
     public Object[] getTagKeys(String tagStr) throws Exception {
-		return this.getTagKeys(tagStr, true);
-	}
+        return this.getTagKeys(tagStr, true);
+    }
 
 
     /**
      * マスタサーバからTagでKey値群を取得する.<br>
      *
      * @param tagStr
-	 * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
+     * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
      * @throws Exception
      */
@@ -2448,12 +2479,12 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if (tagStr == null ||  tagStr.equals("")) {
-                throw new Exception("The blank is not admitted on a tag");
+                throw new ImdstClientException("The blank is not admitted on a tag");
             }
 
             // 文字列バッファ初期化
@@ -2471,7 +2502,7 @@ public class ImdstKeyValueClient {
             // セパレータ連結
             serverRequestBuf.append(ImdstKeyValueClient.sepStr);
 
-			// 存在データ取得指定連結
+            // 存在データ取得指定連結
             serverRequestBuf.append(new Boolean(noExistsData).toString());
 
 
@@ -2520,8 +2551,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity [" + serverRet[0] + "]");
+                throw new ImdstClientException("Execute Violation of validity [" + serverRet[0] + "]");
             }
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -2574,7 +2607,7 @@ public class ImdstKeyValueClient {
         StringBuffer serverRequestBuf = null;
 
         try {
-            if (this.socket == null) throw new Exception("No ServerConnect!!");
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
 
             // 文字列バッファ初期化
@@ -2611,9 +2644,10 @@ public class ImdstKeyValueClient {
             } else {
 
                 // 妥当性違反
-                throw new Exception("Execute Violation of validity");
+                throw new ImdstClientException("Execute Violation of validity");
             }
-
+        } catch (ImdstClientException ice) {
+            throw ice;
         } catch (ConnectException ce) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
@@ -2840,4 +2874,15 @@ public class ImdstKeyValueClient {
         }
         return null;
     }
+
+    class ImdstClientException extends Exception {
+        public ImdstClientException(String msg) {
+            super(msg);
+        }
+
+        public ImdstClientException(String msg, Throwable t) {
+            super(msg, t);
+        }
+    }
 }
+

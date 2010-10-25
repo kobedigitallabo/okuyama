@@ -34,8 +34,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private IProtocolTaker porotocolTaker = null;
     private boolean isProtocolOkuyama = true;
 
-	private String myPollQueue = "";
-	private long requestFromTime = 0L;
+    private String myPollQueue = "";
+    private long requestFromTime = 0L;
 
     // DataNode逆アクセス指定(アクセスバランシング)
     private boolean reverseAccess = false;
@@ -136,7 +136,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // Queue名取得
             pollQueueName = (String)parameters[6];
-			this.myPollQueue = (String)parameters[6];
+            this.myPollQueue = (String)parameters[6];
             addQueueNames = (String[])parameters[7];
 
 
@@ -157,7 +157,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // Queueから処理取得
                     Object[] queueParam = super.pollSpecificationParameterQueue(pollQueueName);
-					this.requestFromTime = System.nanoTime();
+                    this.requestFromTime = System.nanoTime();
 
                     // Queueからのパラメータ
                     Object[] queueMap = (Object[])queueParam[0];
@@ -247,11 +247,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         case 3 :
 
                             // Tag値でキー値群を取得する
-							boolean noExistsData = true;
-							if (clientParameterList.length > 2) {
+                            boolean noExistsData = true;
+                            if (clientParameterList.length > 2) {
 
-								noExistsData = new Boolean(clientParameterList[2]).booleanValue();
-							}
+                                noExistsData = new Boolean(clientParameterList[2]).booleanValue();
+                            }
                             retParams = this.getTagKeys(clientParameterList[1], noExistsData);
                             break;
                         case 4 :
@@ -373,7 +373,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         case 95 :
 
                             // 渡されたKeyNodeの障害停止をマーク
-							retParams = this.deadKeyNode(clientParameterList[1]);
+                            retParams = this.deadKeyNode(clientParameterList[1]);
                             break;
                         case 96 :
 
@@ -1281,7 +1281,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 演算結果を残りのノードへ保存
             try {
                 if (calcFixValue != null)  {
-					String[] keyNodeSaveRet = null;
+                    String[] keyNodeSaveRet = null;
                     if (keyNodeInfo.length == 6 && idx < 3) {
                         keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], null, null, null, "1", calcFixValue, transactionCode);
                     }
@@ -1487,7 +1487,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * 3.結果文字列の配列を作成(成功時は処理番号"2"と"true"とKey値群、失敗時は処理番号"2"と"false"とKey値群)<br>
      *
      * @param tagStr tag値の文字列
-	 * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
+     * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
      * @return String[] 結果
      * @throws BatchException
      */
@@ -1552,46 +1552,46 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             } else {
 
                 // データ有り
-				if (noExistsData) {
+                if (noExistsData) {
 
-	                retStrs[0] = keyNodeSaveRet[0];
-	                retStrs[1] = "true";
-	                retStrs[2] = keyNodeSaveRet[2];
-				} else {
+                    retStrs[0] = keyNodeSaveRet[0];
+                    retStrs[1] = "true";
+                    retStrs[2] = keyNodeSaveRet[2];
+                } else {
 
-	                retStrs[0] = keyNodeSaveRet[0];
-	                retStrs[1] = "true";
+                    retStrs[0] = keyNodeSaveRet[0];
+                    retStrs[1] = "true";
 
-					String[] splitList = keyNodeSaveRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
-					keyNodeSaveRet[2] = null;
+                    String[] splitList = keyNodeSaveRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
+                    keyNodeSaveRet[2] = null;
 
-					if (splitList.length > 0) {
+                    if (splitList.length > 0) {
 
-						StringBuffer retBuf = new StringBuffer();
-						String retSep = "";
+                        StringBuffer retBuf = new StringBuffer();
+                        String retSep = "";
 
-						for (int idx = 0; idx < splitList.length; idx++) {
+                        for (int idx = 0; idx < splitList.length; idx++) {
 
-							String[] retKey = this.getKeyValue(splitList[idx]);
-							if (retKey[1].equals("true")) {
+                            String[] retKey = this.getKeyValue(splitList[idx]);
+                            if (retKey[1].equals("true")) {
 
-								retBuf.append(retSep);
-								retBuf.append(splitList[idx]);
-								retSep = ImdstDefine.imdstTagKeyAppendSep;
-							}
-						}
+                                retBuf.append(retSep);
+                                retBuf.append(splitList[idx]);
+                                retSep = ImdstDefine.imdstTagKeyAppendSep;
+                            }
+                        }
 
-						retStrs[2] = retBuf.toString();
-						if (retStrs[2].length() == 0) {
+                        retStrs[2] = retBuf.toString();
+                        if (retStrs[2].length() == 0) {
 
-			                retStrs[1] = "false";
-						}
-					} else {
+                            retStrs[1] = "false";
+                        }
+                    } else {
 
-		                retStrs[1] = "false";
-		                retStrs[2] = "";
-					}
-				}
+                        retStrs[1] = "false";
+                        retStrs[2] = "";
+                    }
+                }
 
             }
         } catch (BatchException be) {
@@ -1761,14 +1761,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 使用済みの接続を戻す
                     super.addKeyNodeCacheConnectionPool(keyNodeConnector);
 
-					// Tag取得の場合は値が取れ次第終了
-					if (type.equals("4")) {
+                    // Tag取得の場合は値が取れ次第終了
+                    if (type.equals("4")) {
                         if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
                             cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
                             retParams[2] = cnvConsistencyRet[0];
                         }
                         break;
-					}
+                    }
 
                     // 一貫性のモードに合わせて処理を分岐
                     if (this.dataConsistencyMode < 2) {
@@ -1794,18 +1794,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     //tSe.printStackTrace();
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     se = tSe;
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                 } catch(IOException tIe) {
                     //tIe.printStackTrace();
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     ie = tIe;
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                 }
 
                 // 既にスレーブの接続を使用している場合は、もう一度だけメインノードに接続を試みる
@@ -1846,12 +1846,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (Exception e) {
             //e.printStackTrace();
-			logger.error("PollQueue =[" + this.myPollQueue + "] RequestTime=[" + requestFromTime + "] ErrorKey=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
+            logger.error("PollQueue =[" + this.myPollQueue + "] RequestTime=[" + requestFromTime + "] ErrorKey=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
 
-			if (keyNodeConnector != null) {
-				keyNodeConnector.close();
-				keyNodeConnector = null;
-			}
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
             throw new BatchException(e);
         } finally {
             // ノードの使用終了をマーク
@@ -2021,17 +2021,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 } catch(SocketException tSe) {
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     se = tSe;
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                 } catch(IOException tIe) {
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
                     ie = tIe;
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                 }
 
                 // 既にスレーブの接続を使用している場合は、もう一度だけメインノードに接続を試みる
@@ -2058,10 +2058,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
             }
         } catch (Exception e) {
-			if (keyNodeConnector != null) {
-				keyNodeConnector.close();
-				keyNodeConnector = null;
-			}
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
             throw new BatchException(e);
         } finally {
             // ノードの使用終了をマーク
@@ -2117,6 +2117,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         
         return ret;
     }
+
 
     /**
      * KeyNodeに対してデータを保存する.<br>
@@ -2235,29 +2236,29 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 } catch (SocketException se) {
 
                     //se.printStackTrace();
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                     super.setDeadNode(nodeName + ":" + nodePort, 5, se);
                     logger.error(se);
                 } catch (IOException ie) {
 
                     //ie.printStackTrace();
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                     super.setDeadNode(nodeName + ":" + nodePort, 6, ie);
                     logger.error(ie);
                 } catch (Exception ee) {
 
                     //ee.printStackTrace();
                     super.setDeadNode(nodeName + ":" + nodePort, 7, ee);
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                     logger.error(ee);
                 }
 
@@ -2313,26 +2314,26 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         super.addKeyNodeCacheConnectionPool(slaveKeyNodeConnector);
                     } catch (SocketException se) {
                         //se.printStackTrace();
-						if (keyNodeConnector != null) {
-							keyNodeConnector.close();
-							keyNodeConnector = null;
-						}
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 5, se);
                         logger.debug(se);
                     } catch (IOException ie) {
                         //ie.printStackTrace();
-						if (keyNodeConnector != null) {
-							keyNodeConnector.close();
-							keyNodeConnector = null;
-						}
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 6, ie);
                         logger.debug(ie);
                     } catch (Exception ee) {
                         //ee.printStackTrace();
-						if (keyNodeConnector != null) {
-							keyNodeConnector.close();
-							keyNodeConnector = null;
-						}
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 7, ee);
                         logger.debug(ee);
                     }
@@ -2348,16 +2349,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         } catch (BatchException be) {
             //be.printStackTrace();
-			if (keyNodeConnector != null) {
-				keyNodeConnector.close();
-				keyNodeConnector = null;
-			}
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
             throw be;
         } catch (Exception e) {
-			if (keyNodeConnector != null) {
-				keyNodeConnector.close();
-				keyNodeConnector = null;
-			}
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
             throw new BatchException(e);
         } finally {
             // ノードの使用終了をマーク
@@ -2550,25 +2551,25 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
                 } catch (SocketException se) {
                     mainNodeNetworkError = true;
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                     super.setDeadNode(keyNodeName + ":" + keyNodePort, 8, se);
                     logger.debug(se);
                 } catch (IOException ie) {
                     mainNodeNetworkError = true;
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                     super.setDeadNode(keyNodeName + ":" + keyNodePort, 9, ie);
                     logger.debug(ie);
                 } catch (Exception ee) {
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                     super.setDeadNode(keyNodeName + ":" + keyNodePort, 10, ee);
                     logger.debug(ee);
                 }
@@ -2636,25 +2637,25 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             }
                         } catch (SocketException se) {
                             subNodeNetworkError = true;
-							if (keyNodeConnector != null) {
-								keyNodeConnector.close();
-								keyNodeConnector = null;
-							}
+                            if (keyNodeConnector != null) {
+                                keyNodeConnector.close();
+                                keyNodeConnector = null;
+                            }
                             super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 11, se);
                             logger.debug(se);
                         } catch (IOException ie) {
                             subNodeNetworkError = true;
-							if (keyNodeConnector != null) {
-								keyNodeConnector.close();
-								keyNodeConnector = null;
-							}
+                            if (keyNodeConnector != null) {
+                                keyNodeConnector.close();
+                                keyNodeConnector = null;
+                            }
                             super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 12, ie);
                             logger.debug(ie);
                         } catch (Exception ee) {
-							if (keyNodeConnector != null) {
-								keyNodeConnector.close();
-								keyNodeConnector = null;
-							}
+                            if (keyNodeConnector != null) {
+                                keyNodeConnector.close();
+                                keyNodeConnector = null;
+                            }
                             super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 13, ee);
                             logger.debug(ee);
                         }
@@ -2708,16 +2709,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
             }
         } catch (BatchException be) {
-			if (keyNodeConnector != null) {
-				keyNodeConnector.close();
-				keyNodeConnector = null;
-			}
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
             throw be;
         } catch (Exception e) {
-			if (keyNodeConnector != null) {
-				keyNodeConnector.close();
-				keyNodeConnector = null;
-			}
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
             throw new BatchException(e);
         } finally {
             // ノードの使用終了をマーク
@@ -2865,26 +2866,26 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         }
                     } catch (SocketException se) {
 
-						if (keyNodeConnector != null) {
-							keyNodeConnector.close();
-							keyNodeConnector = null;
-						}
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
                         super.setDeadNode(nodeName + ":" + nodePort, 15, se);
                         logger.debug(se);
                     } catch (IOException ie) {
 
-						if (keyNodeConnector != null) {
-							keyNodeConnector.close();
-							keyNodeConnector = null;
-						}
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
                         super.setDeadNode(nodeName + ":" + nodePort, 16, ie);
                         logger.debug(ie);
                     } catch (Exception ee) {
 
-						if (keyNodeConnector != null) {
-							keyNodeConnector.close();
-							keyNodeConnector = null;
-						}
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
                         super.setDeadNode(nodeName + ":" + nodePort, 17, ee);
                         logger.debug(ee);
                     }
@@ -2901,17 +2902,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         } catch (BatchException be) {
 
-			if (keyNodeConnector != null) {
-				keyNodeConnector.close();
-				keyNodeConnector = null;
-			}
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
             throw be;
         } catch (Exception e) {
 
-			if (keyNodeConnector != null) {
-				keyNodeConnector.close();
-				keyNodeConnector = null;
-			}
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
             throw new BatchException(e);
         } finally {
             // ノードの使用終了をマーク
@@ -3035,28 +3036,28 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 } catch (SocketException se) {
 
                     //se.printStackTrace();
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                     super.setDeadNode(nodeName + ":" + nodePort, 5, se);
                     logger.debug(se);
                 } catch (IOException ie) {
 
                     //ie.printStackTrace();
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                     super.setDeadNode(nodeName + ":" + nodePort, 6, ie);
                     logger.debug(ie);
                 } catch (Exception ee) {
 
                     //ee.printStackTrace();
-					if (keyNodeConnector != null) {
-						keyNodeConnector.close();
-						keyNodeConnector = null;
-					}
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
                     super.setDeadNode(nodeName + ":" + nodePort, 7, ee);
                     logger.debug(ee);
                 }
@@ -3070,10 +3071,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         } catch (Exception e) {
 
-			if (keyNodeConnector != null) {
-				keyNodeConnector.close();
-				keyNodeConnector = null;
-			}
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
             retParam = null;
         } finally {
 
@@ -3451,7 +3452,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             StatusUtil.setDeadNode(keyNodeFullName);
-			super.setDeadNode(keyNodeFullName, 9, null);
+            super.setDeadNode(keyNodeFullName, 9, null);
         } catch (Exception e) {
 
             logger.error(e);
@@ -3460,7 +3461,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             retParams[0] = "95";
             retParams[1] = "true";
             retParams[2] = "";
-		}
+        }
 
         return retParams;
     }
@@ -3550,10 +3551,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (Exception e) {
             logger.error(connectionFullName + " " + e);
 
-			if(keyNodeConnector != null) {
-				keyNodeConnector.close();
-	            keyNodeConnector = null;
-			}
+            if(keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
 
 
             // 一度接続不慮が発生した場合はこのSESSIONでは接続しない設定とする
