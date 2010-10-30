@@ -197,7 +197,7 @@ class OkuyamaClient {
 
         try {
             // エラーチェック
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // 文字列バッファ初期化
             $serverRequestBuf = "";
@@ -234,10 +234,12 @@ class OkuyamaClient {
                 } else {
                 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
 
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -269,7 +271,7 @@ class OkuyamaClient {
 
         try {
             // エラーチェック
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // 文字列バッファ初期化
             $serverRequestBuf = "";
@@ -305,10 +307,11 @@ class OkuyamaClient {
                 } else {
                 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
-
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -365,17 +368,17 @@ class OkuyamaClient {
         $serverRequestBuf = null;
         try {
 
-            if ($this->transactionCode === "" || $this->transactionCode === "0") throw new Exception("No Start Transaction!!");
+            if ($this->transactionCode === "" || $this->transactionCode === "0") throw new OkuyamaClientException("No Start Transaction!!");
 
             // Byte Lenghtチェック
-            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxValueSize . " Byte");
 
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if ($keyStr == null ||  $keyStr === "") {
-                throw new Exception("The blank is not admitted on a key");
+                throw new OkuyamaClientException("The blank is not admitted on a key");
             }
 
 
@@ -436,9 +439,11 @@ class OkuyamaClient {
                 } else {
                 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -469,17 +474,17 @@ class OkuyamaClient {
         $serverRequestBuf = null;
         try {
 
-            if ($this->transactionCode === "" || $this->transactionCode === "0") throw new Exception("No Start Transaction!!");
+            if ($this->transactionCode === "" || $this->transactionCode === "0") throw new OkuyamaClientException("No Start Transaction!!");
 
             // Byte Lenghtチェック
-            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxValueSize . " Byte");
 
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if ($keyStr == null ||  $keyStr === "") {
-                throw new Exception("The blank is not admitted on a key");
+                throw new OkuyamaClientException("The blank is not admitted on a key");
             }
 
 
@@ -530,9 +535,11 @@ class OkuyamaClient {
                 } else {
                 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -564,20 +571,20 @@ class OkuyamaClient {
         $serverRequestBuf = null;
         try {
             // Byte Lenghtチェック
-            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxValueSize . " Byte");
             if ($tagStrs != null) {
                 for ($i = 0; $i < count($tagStrs); $i++) {
-                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxValueSize) throw new Exception("Tag Max Size " . $this->maxValueSize . " Byte");
+                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxValueSize) throw new OkuyamaClientException("Tag Max Size " . $this->maxValueSize . " Byte");
                 }
             }
-            if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new Exception("Save Value Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new OkuyamaClientException("Save Value Max Size " . $this->maxValueSize . " Byte");
 
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if ($keyStr == null ||  $keyStr === "") {
-                throw new Exception("The blank is not admitted on a key");
+                throw new OkuyamaClientException("The blank is not admitted on a key");
             }
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
@@ -652,7 +659,7 @@ class OkuyamaClient {
                 } else{
 
                     // 処理失敗(メッセージ格納)
-                    throw new Exception($serverRet[2]);
+                    throw new OkuyamaClientException($serverRet[2]);
                 }
             }  else {
                 if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
@@ -662,9 +669,11 @@ class OkuyamaClient {
                 } else {
                 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -697,20 +706,20 @@ class OkuyamaClient {
         $serverRequestBuf = null;
         try {
             // Byte Lenghtチェック
-            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new Exception("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxValueSize . " Byte");
             if ($tagStrs != null) {
                 for ($i = 0; $i < count($tagStrs); $i++) {
-                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxValueSize) throw new Exception("Tag Max Size " . $this->maxValueSize . " Byte");
+                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxValueSize) throw new OkuyamaClientException("Tag Max Size " . $this->maxValueSize . " Byte");
                 }
             }
-            if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new Exception("Save Value Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new OkuyamaClientException("Save Value Max Size " . $this->maxValueSize . " Byte");
 
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if ($keyStr == null ||  $keyStr === "") {
-                throw new Exception("The blank is not admitted on a key");
+                throw new OkuyamaClientException("The blank is not admitted on a key");
             }
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
@@ -796,9 +805,11 @@ class OkuyamaClient {
                 } else {
                 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -830,12 +841,12 @@ class OkuyamaClient {
         $serverRequestBuf = null;
 
         try {
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if ($keyStr == null ||  $keyStr === "") {
-                throw new Exception("The blank is not admitted on a key");
+                throw new OkuyamaClientException("The blank is not admitted on a key");
             }
 
             // 文字列バッファ初期化
@@ -891,10 +902,11 @@ class OkuyamaClient {
                 } else {
 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
-
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -926,17 +938,17 @@ class OkuyamaClient {
         $serverRequestBuf = null;
 
         try {
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if ($keyStr == null ||  $keyStr === "") {
-                throw new Exception("The blank is not admitted on a key");
+                throw new OkuyamaClientException("The blank is not admitted on a key");
             }
 
             // Keyに対する無指定チェック
             if ($scriptStr == null ||  $scriptStr === "") {
-                throw new Exception("The blank is not admitted on a Script");
+                throw new OkuyamaClientException("The blank is not admitted on a Script");
             }
 
             // 文字列バッファ初期化
@@ -998,10 +1010,11 @@ class OkuyamaClient {
                 } else {
                 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
-
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -1034,17 +1047,17 @@ class OkuyamaClient {
         $serverRequestBuf = null;
 
         try {
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if ($keyStr == null ||  $keyStr === "") {
-                throw new Exception("The blank is not admitted on a key");
+                throw new OkuyamaClientException("The blank is not admitted on a key");
             }
 
             // Keyに対する無指定チェック
             if ($scriptStr == null ||  $scriptStr === "") {
-                throw new Exception("The blank is not admitted on a Script");
+                throw new OkuyamaClientException("The blank is not admitted on a Script");
             }
 
             // 文字列バッファ初期化
@@ -1106,10 +1119,11 @@ class OkuyamaClient {
                 } else {
                 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
-
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -1139,12 +1153,12 @@ class OkuyamaClient {
         $serverRequestBuf = null;
 
         try {
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if ($tagStr == null ||  $tagStr === "") {
-                throw new Exception("The blank is not admitted on a tag");
+                throw new OkuyamaClientException("The blank is not admitted on a tag");
             }
 
             // 文字列バッファ初期化
@@ -1223,9 +1237,11 @@ class OkuyamaClient {
                 } else {
 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -1255,12 +1271,12 @@ class OkuyamaClient {
         $serverRequestBuf = null;
 
         try {
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if ($keyStr == null ||  $keyStr === "") {
-                throw new Exception("The blank is not admitted on a key");
+                throw new OkuyamaClientException("The blank is not admitted on a key");
             }
 
             // 文字列バッファ初期化
@@ -1319,10 +1335,11 @@ class OkuyamaClient {
                 } else {
                 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
-
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -1398,12 +1415,12 @@ class OkuyamaClient {
         $serverRequestBuf = null;
 
         try {
-            if ($this->socket == null) throw new Exception("No ServerConnect!!");
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
             // Keyに対する無指定チェック
             if ($keyStr == null ||  $keyStr === "") {
-                throw new Exception("The blank is not admitted on a key");
+                throw new OkuyamaClientException("The blank is not admitted on a key");
             }
 
             // 文字列バッファ初期化
@@ -1459,10 +1476,11 @@ class OkuyamaClient {
                 } else {
                 
                     // 妥当性違反
-                    throw new Exception("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity");
                 }
             }
-
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
@@ -1493,6 +1511,13 @@ class OkuyamaClient {
     // BASE64でデコードする
     private function dataDecoding($val){
         return base64_decode($val);
+    }
+
+}
+
+class OkuyamaClientException extends Exception {
+    public function __construct($msg) {
+        parent::__construct($msg);
     }
 }
 ?>
