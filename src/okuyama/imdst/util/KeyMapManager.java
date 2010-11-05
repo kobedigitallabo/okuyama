@@ -46,10 +46,13 @@ public class KeyMapManager extends Thread {
     private static final int parallelSize = 5000;
     private Integer[] parallelSyncObjs = new Integer[KeyMapManager.parallelSize];
 
+	// tagsetのシンクロオブジェクト
+    private static final int tagSetParallelSize = 5000;
+    private Integer[] tagSetParallelSyncObjs = new Integer[KeyMapManager.tagSetParallelSize];
+
 
     // Tag系の書き込み、取得
     private Object setTagLock = new Object();
-    private Object getTagLock = new Object();
 
     private String workKeyFilePath = null;
 
@@ -187,6 +190,12 @@ public class KeyMapManager extends Thread {
             for (int i = 0; i < KeyMapManager.parallelSize; i++) {
                 this.parallelSyncObjs[i] = new Integer(i);
             }
+
+            // tagsetのシンクロオブジェクト初期化
+            for (int i = 0; i < KeyMapManager.tagSetParallelSize; i++) {
+                this.tagSetParallelSyncObjs[i] = new Integer(i+KeyMapManager.tagSetParallelSize);
+            }
+
 
             synchronized(this.poolKeyLock) {
                 try {
@@ -669,15 +678,16 @@ public class KeyMapManager extends Thread {
         if (!blocking) {
 
             try {
-                synchronized(this.setTagLock) {
+                String keyStrs = null;
+                int counter = 0;
+                boolean appendFlg = true;
+                String tagCnv = null;
+                String lastTagCnv = null;
+                int dataPutCounter = 0;
+                boolean firsrtRegist = true;
 
-                    String keyStrs = null;
-                    int counter = 0;
-                    boolean appendFlg = true;
-                    String tagCnv = null;
-                    String lastTagCnv = null;
-                    int dataPutCounter = 0;
-                    boolean firsrtRegist = true;
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.tagSetParallelSyncObjs[((tag.hashCode() << 1) >>> 1) % KeyMapManager.tagSetParallelSize]) {
 
                     while (true) {
 
