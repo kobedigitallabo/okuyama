@@ -9,6 +9,45 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 ・改修履歴
 ========================================================================================================
+[New - 新ストレージモードを追加、不具合対応、package構成変更、TagからKeyを取得する際に存在しないkeyか返さないOption引数を追加]
+[[リリース Ver 0.8.3 - (2010/11/5)]]
+  ■ストレージモードに完全ディスクモードを追加
+    このモードを使用することで、少ないメモリのサーバでもディスクの上限までデータを管理することができる。
+    DataNode.propertiesに新たにパラメータが追加された
+
+    DataNode.propertiesファイル内
+    ---------------------------------------
+    KeyManagerJob1.dataMemory=false
+    KeyManagerJob1.keyMemory=false
+    KeyManagerJob1.keyStoreDirs=./keymapfile/THdata1/,./keymapfile/THdata2/
+    ----------------------------------------
+
+    ※上記の状態で完全ディスクモードになる
+      keyStoreDirsは保存するディレクトリになる。場所指定はカンマ区切りで定義する。
+      指定ディレクトリをそれぞれ別々のディスクにするとレスポンスが向上する。
+
+
+  ■パッケージ構造は大幅に変更
+    前回まで使用していたパッケージ名は既にURLが別の方が取得済みでしたので、変更。
+    従来のパッケージ構造から
+    okuyama.imdst
+    okuyama.base
+    に変更
+    申し訳ありませんが、この変更によりImdstKeyValueClientのimport文の変更が必要になります。
+    以下となります
+      import okuyama.imdst.client.ImdstKeyValueClient
+
+
+  ■TagからKeyを取得する際にすでに削除されたKey値を返さないOption引数を追加
+    ImdstKeyValueClientのgetTagKeysメソッドの第2引数にfalseを指定する
+    
+    使用例)
+      imdstKeyValueClient.getTagKeys("Tag", false);
+
+    ※PHPクライアントも同様です。
+
+
+========================================================================================================
 [New -リリース不具合、antタスク作成]
 [[リリース Ver 0.8.2 - (2010/09/22)]]
   ■Version-0.8.1にてlibフォルダにmemcached.jarを配置せずにリリースしてしまいました。
