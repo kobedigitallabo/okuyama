@@ -3,8 +3,8 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
-import okuyama.imdst.client.ImdstKeyValueClient;
-import okuyama.base.lang.BatchException;
+import org.imdst.client.ImdstKeyValueClient;
+import org.batch.lang.BatchException;
 import com.danga.MemCached.*;
 
 
@@ -26,8 +26,8 @@ public class TestSockMem {
     public void exec (String[] args) {
         try {
             long total = 0;
-            Object  [] list = new Object[Integer.parseInt(args[1])];
-            int threadCount = Integer.parseInt(args[1]);
+            Object  [] list = new Object[Integer.parseInt(args[2])];
+            int threadCount = Integer.parseInt(args[2]);
             TestMem m = null;
             int count = 0;
             for (int i= 0; i < threadCount; i++) {
@@ -52,7 +52,7 @@ public class TestSockMem {
                 list[i] = m;
             }
 
-            String[] serverlist = { "192.168.2.116:11211","192.168.2.185:11211"};
+            String[] serverlist = { args[1]};
 
             // initialize the pool for memcache servers
             SockIOPool pool = SockIOPool.getInstance();

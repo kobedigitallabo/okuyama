@@ -64,7 +64,7 @@ public class TestSock {
 
             System.out.println("  ------- Start -------");
             if (args[0].equals("getloop")) {
-                for(int i = 1; i < 1000; i++) {
+                for(int i = 1; i < 100000; i++) {
                     Thread.sleep(5000);
                     System.out.println("-- " + (i * 5) + "秒");
                     for (int ii= 0; ii < list.length; ii++) {
@@ -74,7 +74,7 @@ public class TestSock {
                 } 
 
             } else if (args[0].equals("setloop")) {
-                for(int i = 1; i < 1000; i++) {
+                for(int i = 1; i < 100000; i++) {
                     Thread.sleep(5000);
                     System.out.println("-- " + (i * 5) + "秒");
                     for (int ii= 0; ii < list.length; ii++) {
@@ -83,8 +83,8 @@ public class TestSock {
                     }
                 } 
             } else if (args[0].equals("setmore")) {
-                for(int i = 1; i < 1000; i++) {
-                    Thread.sleep(5000);
+                for(int i = 1; i < 86400; i++) {
+                    Thread.sleep(6000);
                     System.out.println("-- " + (i * 5) + "秒");
                     for (int ii= 0; ii < list.length; ii++) {
                         m = (Test)list[ii];
