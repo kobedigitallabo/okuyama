@@ -9,7 +9,30 @@ public class Test2 {
 
     public static void main(String[] args) {
         try {
-            String[] dirs = {"./data/data1/","./data/data2/","./data/data3/","./data/data4/"};
+            List fileBaseDataList  = new FileBaseDataList("./data/tmpDataList.txt");
+long start = System.nanoTime();
+
+            for (int i = 0; i < 1234; i++) {
+                Object[] vals = {new Integer(1), "key" + i};
+                fileBaseDataList.add(vals);
+            }
+long end = System.nanoTime();
+System.out.println((end - start) / 1000);
+
+long start2 = System.nanoTime();
+            Random rnd = new Random();
+
+            for (int i = 0; i < fileBaseDataList.size(); i++) {
+                int idx = rnd.nextInt(1234);
+                Object[] objs  = (Object[])fileBaseDataList.get(idx);
+                
+                System.out.println(idx + "=" + (Integer)objs[0]);
+                System.out.println(idx + "=" + objs[1]);
+            }
+long end2 = System.nanoTime();
+System.out.println((end2 - start2) / 1000);
+
+/*            String[] dirs = {"./data/data1/","./data/data2/","./data/data3/","./data/data4/"};
             FileBaseDataMap fileBaseDataMap = new FileBaseDataMap(dirs, 4000);
 long start = System.nanoTime();
 long start2 = 0L;
@@ -75,6 +98,7 @@ System.out.println(varIdx);
 
 
             System.out.println(fileBaseDataMap.size());
+*/
         } catch (Exception e) {
             e.printStackTrace();
         } 
