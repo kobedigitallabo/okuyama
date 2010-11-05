@@ -127,20 +127,6 @@ public class KeyManagerHelper extends AbstractHelper {
                     closeFlg = false;
 
 
-                    // 停止ファイル関係チェック
-                    if (StatusUtil.getStatus() == 1) {
-                        serverRunning = false;
-                        logger.info("KeyManagerHelper - 状態異常です");
-                        continue;
-                    }
-
-                    if (StatusUtil.getStatus() == 2) {
-                        serverRunning = false;
-                        logger.info("KeyManagerHelper - 終了状態です");
-                        continue;
-                    }
-
-
                     // プロトコルに合わせて処理を分岐
                     if (this.porotocolTaker != null) {
 
@@ -167,9 +153,9 @@ public class KeyManagerHelper extends AbstractHelper {
                             }
                         }
                     } else {
+
                         // okuyamaプロトコル
                         clientParametersStr = br.readLine();
-
                     }
 
 
@@ -183,7 +169,6 @@ public class KeyManagerHelper extends AbstractHelper {
                         closeFlg = true;
                         continue;
                     }
-
 
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 

@@ -9,7 +9,7 @@ package okuyama.imdst.util;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.8.2";
+    public static final String okuyamaVersion = "VERSION okuyama-0.8.3";
 
     /* -- KeyMapファイルに関係する定数 ----------                        */
     // KeyNodeのWorkファイルでのセパレータ
@@ -217,13 +217,13 @@ public class ImdstDefine {
     public static final int saveKeyMaxSize = 486;
 
     // ノードのDeadとする際のPing実行回数
-    public static final int defaultDeadPingCount = 2;
+    public static final int defaultDeadPingCount = 3;
 
     // クライアントのコネクションオープンタイムアウト時間(ミリ秒)
     public static final int clientConnectionOpenTimeout = 5000;
 
     // クライアントのコネクションタイムアウト時間(ミリ秒)
-    public static final int clientConnectionTimeout = 60000 * 5;
+    public static final int clientConnectionTimeout = 60000 * 2;
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
@@ -233,11 +233,11 @@ public class ImdstDefine {
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenTimeout = 3000;
+    public static final int nodeConnectionOpenTimeout = 4000;
     //public static final int nodeConnectionOpenTimeout = 10000;
 
     // Node間のコネクションReadタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionTimeout = 7000;
+    public static final int nodeConnectionTimeout = 8000;
     //public static final int nodeConnectionTimeout = 15000;
 
     public static final int nodeConnectionTimeout4RecoverMode = 60000 * 5;

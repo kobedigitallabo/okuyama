@@ -35,7 +35,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private boolean isProtocolOkuyama = true;
 
     private String myPollQueue = "";
-    private long requestFromTime = 0L;
 
     // DataNode逆アクセス指定(アクセスバランシング)
     private boolean reverseAccess = false;
@@ -154,10 +153,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // Taker初期化
                     this.porotocolTaker.init();
 
-
                     // Queueから処理取得
                     Object[] queueParam = super.pollSpecificationParameterQueue(pollQueueName);
-                    this.requestFromTime = System.nanoTime();
+
 
                     // Queueからのパラメータ
                     Object[] queueMap = (Object[])queueParam[0];
@@ -165,9 +163,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // ロードバランシング指定
                     this.reverseAccess = ((Boolean)queueMap[ImdstDefine.paramBalance]).booleanValue();
 
-                    if (dataConsistencyMode == 1) {
-                        this.reverseAccess = true;
-                    }
+                    // 一貫性レベル設定
+                    if (dataConsistencyMode == 1) this.reverseAccess = true;
 
                     // ソケット周り(いずれクラス化する)
                     pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
@@ -175,19 +172,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     socket = (Socket)queueMap[ImdstDefine.paramSocket];
                     socket.setSoTimeout(0);
                     closeFlg = false;
-
-                    // 停止ファイル関係チェック
-                    if (StatusUtil.getStatus() == 1) {
-                        serverRunning = false;
-                        logger.info("MasterManagerHelper - 状態異常です");
-                        continue;
-                    }
-
-                    if (StatusUtil.getStatus() == 2) {
-                        serverRunning = false;
-                        logger.info("MasterManagerHelper - 終了状態です");
-                        continue;
-                    }
 
 
                     // クライアントからの要求を取得
@@ -514,14 +498,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         // Tagは指定なしの場合はクライアントから規定文字列で送られてくるのでここでTagなしの扱いとする
         // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
-        if (tagStr.equals(ImdstDefine.imdstBlankStrData)) {
-            tagStr = null;
-        }
+        if (tagStr.equals(ImdstDefine.imdstBlankStrData)) tagStr = null;
 
         try {
 
             // Key値チェック
-            if (!this.checkKeyLength(keyStr))  {
+            if (!this.checkKeyLength(keyStr)) {
                 // 保存失敗
                 retStrs[0] = "1";
                 retStrs[1] = "false";
@@ -594,18 +576,19 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
             // 保存結果確認
-            if (keyNodeSaveRet[1].equals("false")) {
-                // 保存失敗
-                retStrs[0] = "1";
-                retStrs[1] = "false";
-                retStrs[2] = keyNodeSaveRet[2];
-
-            } else if(keyNodeSaveRet[1].equals("true")) {
+            if (keyNodeSaveRet[1].equals("true")) {
 
                 retStrs[0] = "1";
                 retStrs[1] = "true";
                 retStrs[2] = "OK";
+            } else if (keyNodeSaveRet[1].equals("false")) {
+
+                // 保存失敗
+                retStrs[0] = "1";
+                retStrs[1] = "false";
+                retStrs[2] = keyNodeSaveRet[2];
             } else {
+
                 throw new BatchException("Key Data Save Error");
             }
         } catch (BatchException be) {
@@ -650,9 +633,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         // Tagは指定なしの場合はクライアントから規定文字列で送られてくるのでここでTagなしの扱いとする
         // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
-        if (tagStr.equals(ImdstDefine.imdstBlankStrData)) {
-            tagStr = null;
-        }
+        if (tagStr.equals(ImdstDefine.imdstBlankStrData)) tagStr = null;
 
         try {
             // Key値チェック
@@ -835,13 +816,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[0] = keyNodeSaveRet[0];
                 retStrs[1] = "false";
                 retStrs[2] = "";
-                
             } else {
 
                 retStrs[0] = keyNodeSaveRet[0];
                 retStrs[1] = "true";
                 retStrs[2] = keyNodeSaveRet[2];
             }
+
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getKeyValue - Error", be);
 
@@ -938,6 +919,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[2] = "";
                 
             } else {
+
                 // trueもしくはerrorの可能性あり
                 retStrs[0] = keyNodeSaveRet[0];
                 retStrs[1] = keyNodeSaveRet[1];
@@ -1846,7 +1828,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (Exception e) {
             //e.printStackTrace();
-            logger.error("PollQueue =[" + this.myPollQueue + "] RequestTime=[" + requestFromTime + "] ErrorKey=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
+            logger.error("PollQueue =[" + this.myPollQueue + "] RequestTime=[" + new Date() + "] ErrorKey=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
 
             if (keyNodeConnector != null) {
                 keyNodeConnector.close();
@@ -3032,6 +3014,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     // 使用済みの接続を戻す
+
                     super.addKeyNodeCacheConnectionPool(keyNodeConnector);
                 } catch (SocketException se) {
 
