@@ -46,7 +46,7 @@ public class KeyMapManager extends Thread {
     private static final int parallelSize = 5000;
     private Integer[] parallelSyncObjs = new Integer[KeyMapManager.parallelSize];
 
-	// tagsetのシンクロオブジェクト
+    // tagsetのシンクロオブジェクト
     private static final int tagSetParallelSize = 5000;
     private Integer[] tagSetParallelSyncObjs = new Integer[KeyMapManager.tagSetParallelSize];
 
@@ -91,8 +91,8 @@ public class KeyMapManager extends Thread {
     // トランザクションログを書き出す際に使用するロック
     private Object lockWorkFileSync = new Object();
 
-    // トランザクションログをローテーションする際のサイズ(1.8GB)
-    private static final long workFileChangeNewFileSize = 1610612736;
+    // トランザクションログをローテーションする際のサイズ
+    private static final long workFileChangeNewFileSize = ImdstDefine.workFileChangeNewFileSize;
 
     // トランザクションログをローテーションチェック頻度
     private static final int workFileChangeCheckLimit = 2;
@@ -112,18 +112,19 @@ public class KeyMapManager extends Thread {
     // データファイルのバキューム実行指定
     private boolean vacuumExec = true;
 
-    // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う
+    // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う候補となる
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
-    private int vacuumStartLimit = 100000;
+    private int vacuumStartLimit = ImdstDefine.vacuumStartLimit;
 
     // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
-    private int vacuumStartCompulsionLimit = 1000000;
+    private int vacuumStartCompulsionLimit = ImdstDefine.vacuumStartCompulsionLimit;
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
-    private int vacuumExecAfterAccessTime = 30000;
+    private int vacuumExecAfterAccessTime = ImdstDefine.vacuumExecAfterAccessTime;
+
 
     // データを管理するか、Transaction情報を管理するかを決定
     private boolean dataManege = true;

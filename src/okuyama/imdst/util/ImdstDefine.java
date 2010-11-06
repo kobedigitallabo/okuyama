@@ -253,4 +253,21 @@ public class ImdstDefine {
     public static final int recoverConnectionTimeout = 60000 * 60;
 
 
+    // ---- KeyMapManager系 ----
+    // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う候補となる
+    // 行数と1行のデータサイズをかけると不要なデータサイズとなる
+    public static final int vacuumStartLimit = 100000;
+
+
+    // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
+    // 行数と1行のデータサイズをかけると不要なデータサイズとなる
+    // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
+    public static final int vacuumStartCompulsionLimit = 1000000;
+
+
+    // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
+    public static final int vacuumExecAfterAccessTime = 30000;
+
+    // トランザクションログをローテーションする際のサイズ(1.8GB)
+    public static final long workFileChangeNewFileSize = 1610612736;
 }
