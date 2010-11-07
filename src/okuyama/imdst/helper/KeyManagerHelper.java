@@ -74,8 +74,7 @@ public class KeyManagerHelper extends AbstractHelper {
         BufferedReader br = null;
 
         String[] retParams = null;
-        StringBuffer retParamBuf = null;
-
+        StringBuffer retParamBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
 
         try{
 
@@ -111,6 +110,9 @@ public class KeyManagerHelper extends AbstractHelper {
                     if (closeFlg) {
                         this.closeClientConnect(pw, br, soc);
                     }
+
+                    // 結果文字列バッファ初期化
+                    retParamBuf.delete(0, Integer.MAX_VALUE);
 
                     // 結果クリア
                     retParams = null;
@@ -170,11 +172,11 @@ public class KeyManagerHelper extends AbstractHelper {
                         continue;
                     }
 
+                    // クライアントからのパラメータ分解
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
-                    // 処理番号を取り出し
-                    retParamBuf = new StringBuffer();
 
+                    // 処理番号を取り出し
                     if(clientParameterList[0] == null ||  clientParameterList[0].equals("")) clientParameterList[0] = "-1";
                     switch (Integer.parseInt(clientParameterList[0])) {
 
@@ -348,28 +350,30 @@ public class KeyManagerHelper extends AbstractHelper {
                             // KeyMapObjectを読み込んで渡す
                             this.keyMapManager.outputKeyMapObj2Stream(pw);
                             pw.flush();
-                            retParamBuf = null;
+
+                            //retParamBuf = null;
                             break;
                         case 21 :
 
                             // KeyMapManager Direct Connection
                             // KeyMapObjectを読み込んで書き出す
                             this.keyMapManager.inputKeyMapObj2Stream(br, pw, Integer.parseInt(clientParameterList[1]));
-                            retParamBuf = null;
+
+                            //retParamBuf = null;
                             break;
                         case 22 :
 
                             // KeyManagerの差分取得モードをONにする
                             // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
                             this.keyMapManager.diffDataMode(true, pw);
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
                         case 23 :
 
                             // KeyManagerの差分取得モードをOFFにする
                             // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
                             this.keyMapManager.diffDataModeOff();
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
                         case 24 :
 
@@ -377,14 +381,14 @@ public class KeyManagerHelper extends AbstractHelper {
                             // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
                             this.keyMapManager.outputDiffKeyMapObj2Stream(pw, br);
                             pw.flush();
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
                         case 25 :
 
                             // KeyMapManagerに差分データを登録する
                             // !! MasterManagerでDataNodeの一時停止状態になってから呼び出される前提 !!
                             this.keyMapManager.inputDiffKeyMapObj2Stream(br, pw);
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
                         case 26 :
 
@@ -392,7 +396,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             // KeyMapObjectから自身が管理するべてきではないデータのKey値を返す
                             this.keyMapManager.outputNoMatchKeyMapKey2Stream(pw, Integer.parseInt(clientParameterList[2]), clientParameterList[3]);
                             pw.flush();
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
                         case 27 :
 
@@ -400,7 +404,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             // ConsistentHash時のデータ移動(抽出)
                             this.keyMapManager.outputConsistentHashMoveData2Stream(pw, clientParameterList[2]);
                             pw.flush();
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
                         case 28 :
 
@@ -408,7 +412,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             // ConsistentHash時のデータ移動(登録)
                             this.keyMapManager.inputConsistentHashMoveData2Stream(pw, br);
                             pw.flush();
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
                         case 29 :
 
@@ -416,7 +420,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             // ConsistentHash時のデータ移動(削除)
                             this.keyMapManager.removeConsistentHashMoveData2Stream(pw, clientParameterList[2]);
                             pw.flush();
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
                         case 30 :
 
@@ -424,7 +428,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             // Mod時のデータ移動(登録)
                             this.keyMapManager.inputNoMatchKeyMapKey2Stream(pw, br);
                             pw.flush();
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
 
                         case 31 :
@@ -433,13 +437,13 @@ public class KeyManagerHelper extends AbstractHelper {
                             // Mod時のデータ移動(登録)
                             this.keyMapManager.removeModMoveData2Stream(pw, br);
                             pw.flush();
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
                         case 100 :
 
                             // KeyMapManager Dump
                             this.keyMapManager.dump();
-                            retParamBuf = null;
+                            //retParamBuf = null;
                             break;
 
                         default :
@@ -449,7 +453,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     }
 
 
-                    if (retParamBuf != null) {
+                    if (retParamBuf.length() > 0) {
                         // プロトコルに合わせて処理を分岐
                         if (this.porotocolTaker != null) {
 
@@ -471,9 +475,9 @@ public class KeyManagerHelper extends AbstractHelper {
                 } catch (SocketException se) {
                     closeFlg = true;
                 } catch (ArrayIndexOutOfBoundsException aie) {
-                    logger.error("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
+                    logger.error("KeyManagerHelper No Method_1 =[" + clientParameterList[0] + "]");
                 } catch (NumberFormatException nfe) {
-                    logger.error("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
+                    logger.error("KeyManagerHelper No Method_2 =[" + clientParameterList[0] + "]");
                 }
             }
 

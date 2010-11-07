@@ -494,7 +494,7 @@ public class KeyMapManager extends Thread {
                     // データ操作履歴ファイルに追記
                     if (this.workFileMemory == false) {
                         synchronized(this.lockWorkFileSync) {
-                            this.bw.write(new StringBuffer("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(System.currentTimeMillis()).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                            this.bw.write(new StringBuffer(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(System.currentTimeMillis()).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
                             this.bw.flush();
                         }
                     }
@@ -580,7 +580,7 @@ public class KeyMapManager extends Thread {
                     // データ操作履歴ファイルに追記
                     if (this.workFileMemory == false) {
                         synchronized(this.lockWorkFileSync) {
-                            this.bw.write(new StringBuffer("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(System.currentTimeMillis()).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                            this.bw.write(new StringBuffer(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(System.currentTimeMillis()).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
                             this.bw.flush();
                         }
                     }
@@ -647,7 +647,7 @@ public class KeyMapManager extends Thread {
                     if (this.workFileMemory == false) {
                         synchronized(this.lockWorkFileSync) {
                             // データ操作履歴ファイル再保存(登録と合わせるために4つに分割できるようにする)
-                            this.bw.write(new StringBuffer("-").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(System.currentTimeMillis()).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                            this.bw.write(new StringBuffer(ImdstDefine.stringBufferSmall_2Size).append("-").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(System.currentTimeMillis()).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
                             this.bw.flush();
                         }
                     }
@@ -769,7 +769,7 @@ public class KeyMapManager extends Thread {
         String[] setTimeSplitWork = null;
 
         boolean isMatch = false;
-        StringBuffer tmpBuf = new StringBuffer();
+        StringBuffer tmpBuf = new StringBuffer(ImdstDefine.stringBufferLarge_2Size);
         String tmpStr = null;
         String tmpSep = "";
         String lastSetTime = "";
@@ -1177,7 +1177,7 @@ public class KeyMapManager extends Thread {
                 synchronized(poolKeyLock) {
                     logger.info("outputKeyMapObj2Stream - synchronized - start");
                     String allDataSep = "";
-                    StringBuffer allDataBuf = new StringBuffer();
+                    StringBuffer allDataBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
 
                     // keyMapObjの全内容を1行文字列として書き出し
                     Set entrySet = this.keyMapObj.entrySet();
@@ -1216,7 +1216,7 @@ public class KeyMapManager extends Thread {
                         counter++;
                         if (counter > (maxLineCount - 1)) {
                             pw.println(allDataBuf.toString());
-                            allDataBuf = new StringBuffer();
+                            allDataBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
                             counter = 0;
                         }
                     }
@@ -1246,7 +1246,7 @@ public class KeyMapManager extends Thread {
                     synchronized(diffSync) {
                         logger.info("outputDiffKeyMapObj2Stream - synchronized - start");
                         String allDataSep = "";
-                        StringBuffer allDataBuf = new StringBuffer();
+                        StringBuffer allDataBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
 
                         // 差分データの全内容を1行文字列として書き出し
 
@@ -1260,7 +1260,7 @@ public class KeyMapManager extends Thread {
 
                                 pw.print(allDataBuf.toString());
                                 pw.flush();
-                                allDataBuf = new StringBuffer();
+                                allDataBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
                             }
                         }
 
@@ -1466,7 +1466,8 @@ public class KeyMapManager extends Thread {
                                 Map.Entry obj = (Map.Entry)entryIte.next();
                                 writeKey = (String)obj.getKey();
 
-                                this.bw.write(new StringBuffer("+").
+                                this.bw.write(new StringBuffer(ImdstDefine.stringBufferMiddleSize).
+                                              append("+").
                                               append(KeyMapManager.workFileSeq).
                                               append(writeKey).
                                               append(KeyMapManager.workFileSeq).
@@ -1513,7 +1514,7 @@ public class KeyMapManager extends Thread {
 
 
                 String allDataSep = "";
-                StringBuffer allDataBuf = new StringBuffer();
+                StringBuffer allDataBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
 
                 // keyMapObjの全内容を1行文字列として書き出し
                 Set entrySet = this.keyMapObj.entrySet();
@@ -1614,7 +1615,7 @@ public class KeyMapManager extends Thread {
 
                     if (counter > (maxLineCount - 1)) {
                         pw.println(allDataBuf.toString());
-                        allDataBuf = new StringBuffer();
+                        allDataBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
                         counter = 0;
                         allDataSep = "";
                     }
@@ -1637,7 +1638,7 @@ public class KeyMapManager extends Thread {
             try {
 
                 String allDataSep = "";
-                StringBuffer allDataBuf = new StringBuffer();
+                StringBuffer allDataBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
                 int counter = 0;
 
                 // レンジデータ作成
@@ -1740,7 +1741,7 @@ public class KeyMapManager extends Thread {
 
                         pw.println(allDataBuf.toString());
                         pw.flush();
-                        allDataBuf = new StringBuffer();
+                        allDataBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
                         counter = 0;
                         allDataSep = "";
                     }

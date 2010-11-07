@@ -17,7 +17,10 @@ import okuyama.imdst.util.ImdstDefine;
 public class OkuyamaProtocolTaker implements IProtocolTaker {
 
     private int nextExec = 0;
+
     private boolean methodMatch = true;
+
+    private StringBuffer retParamBuf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
 
 
     /**
@@ -105,21 +108,22 @@ public class OkuyamaProtocolTaker implements IProtocolTaker {
      * @throw Exception
      */
     public String takeResponseLine(String[] retParams) throws Exception {
-        StringBuffer retParamBuf = new StringBuffer();
+        if (this.retParamBuf.length() > 0)
+            this.retParamBuf.delete(0, Integer.MAX_VALUE);
 
         if (retParams != null && retParams.length > 1) {
-            retParamBuf.append(retParams[0]);
-            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-            retParamBuf.append(retParams[1]);
-            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+            this.retParamBuf.append(retParams[0]);
+            this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+            this.retParamBuf.append(retParams[1]);
+            this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
 
             // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
             if (retParams[2] != null) {
-                retParamBuf.append(((String[])retParams[2].split(ImdstDefine.keyHelperClientParamSep))[0]);
+                this.retParamBuf.append(((String[])retParams[2].split(ImdstDefine.keyHelperClientParamSep))[0]);
             }
             this.nextExec = 1;
         }
-        return retParamBuf.toString();
+        return this.retParamBuf.toString();
     }
 
 

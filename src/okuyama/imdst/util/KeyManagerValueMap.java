@@ -57,12 +57,14 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         this.memoryMode = memoryMode;
     }
 
+
     // コンストラクタ
     public KeyManagerValueMap(String[] dirs, int numberOfDataSize) {
 
         super(dirs, numberOfDataSize);
         this.memoryMode = false;
     }
+
 
     /**
      * 本メソッドは使用前に必ず呼び出す<br>
@@ -293,7 +295,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         if (this.memoryMode) {
             ret = super.put(key, value);
         } else {
-            StringBuffer writeBuf = new StringBuffer();
+            StringBuffer writeBuf = new StringBuffer(oneDataLength + 2);
             int valueSize = (value.toString()).length();
 
             try {

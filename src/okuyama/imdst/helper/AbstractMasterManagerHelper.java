@@ -65,9 +65,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
         // コネクションキャッシュが存在する場合は削除
         if (keyNodeConnectPool.containsKey(nodeInfo)) {
-			KeyNodeConnector keyNodeConnector = null;
+            KeyNodeConnector keyNodeConnector = null;
             while ((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(nodeInfo)).poll()) != null) {
-				keyNodeConnector.close();
+                keyNodeConnector.close();
                 keyNodeConnector = null;
             }
             ((ArrayBlockingQueue)keyNodeConnectPool.get(nodeInfo)).clear();
@@ -193,13 +193,13 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         // コネクションキャッシュが存在する場合は削除
         if (keyNodeConnectPool.containsKey(nodeInfo)) {
 
-			KeyNodeConnector keyNodeConnector = null;
+            KeyNodeConnector keyNodeConnector = null;
             while((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(nodeInfo)).poll()) != null) {
-				keyNodeConnector.close();
+                keyNodeConnector.close();
                 keyNodeConnector = null;
             }
             ((ArrayBlockingQueue)keyNodeConnectPool.get(nodeInfo)).clear();
-		}
+        }
 
         // MainのMasterNodeの場合のみ実行
         // SlaveのMasterNodeにもノードの復帰登録を依頼
@@ -893,7 +893,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 }
 
                 // Key値でデータノード名を保存
-                StringBuffer buf = new StringBuffer();
+                StringBuffer buf = new StringBuffer(25);
                 // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
                 buf.append("10");
                 buf.append(ImdstDefine.keyHelperClientParamSep);

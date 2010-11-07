@@ -52,16 +52,22 @@ public class ImdstKeyValueClient {
 
     private static final String byteDataKeysSep = ":#:";
 
-
     // バイナリデータ分割保存サイズ
     private int saveSize = ImdstDefine.saveDataMaxSize;
-
 
     // 保存できる最大長
     private int maxValueSize = ImdstDefine.saveDataMaxSize;
 
     // byteデータ送信時に圧縮を行うかを決定
     private boolean compressMode = false;
+
+
+    // setメソッド用リクエストBuffer
+    private StringBuffer setValueServerReqBuf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
+
+    // getメソッド用リクエストBuffer
+    private StringBuffer getValueServerReqBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+
 
     /**
      * コンストラクタ
@@ -908,7 +914,9 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        // 文字列バッファ初期化
+        setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
         try {
             // Byte Lenghtチェック
             if (keyStr.getBytes().length > maxValueSize) throw new ImdstClientException("Save Key Max Size " + maxValueSize + " Byte");
@@ -936,20 +944,17 @@ public class ImdstKeyValueClient {
                 value = new String(this.dataEncoding(value.getBytes()));
             }
 
-            // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
-
 
             // 処理番号連結
-            serverRequestBuf.append("1");
+            setValueServerReqBuf.append("1");
             // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            setValueServerReqBuf.append(ImdstKeyValueClient.sepStr);
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
             // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            setValueServerReqBuf.append(ImdstKeyValueClient.sepStr);
 
 
             // Tag連結
@@ -957,31 +962,31 @@ public class ImdstKeyValueClient {
             if (tagStrs == null || tagStrs.length < 1) {
 
                 // ブランク規定文字列を連結
-                serverRequestBuf.append(ImdstKeyValueClient.blankStr);
+                setValueServerReqBuf.append(ImdstKeyValueClient.blankStr);
             } else {
 
                 // Tag数分連結
-                serverRequestBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
+                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
                 for (int i = 1; i < tagStrs.length; i++) {
-                    serverRequestBuf.append(tagKeySep);
-                    serverRequestBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
+                    setValueServerReqBuf.append(tagKeySep);
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
                 }
             }
 
             // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            setValueServerReqBuf.append(ImdstKeyValueClient.sepStr);
 
             // TransactionCode連結
-            serverRequestBuf.append(this.transactionCode);
+            setValueServerReqBuf.append(this.transactionCode);
 
             // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            setValueServerReqBuf.append(ImdstKeyValueClient.sepStr);
 
             // Value連結
-            serverRequestBuf.append(value);
+            setValueServerReqBuf.append(value);
 
             // サーバ送信
-            pw.println(serverRequestBuf.toString());
+            pw.println(setValueServerReqBuf.toString());
             pw.flush();
 
             // サーバから結果受け取り
@@ -1080,7 +1085,9 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        // 文字列バッファ初期化
+        setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
         try {
             // Byte Lenghtチェック
             if (keyStr.getBytes().length > maxValueSize) throw new ImdstClientException("Save Key Max Size " + maxValueSize + " Byte");
@@ -1110,20 +1117,17 @@ public class ImdstKeyValueClient {
 
             }
 
-            // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
-
 
             // 処理番号連結
-            serverRequestBuf.append("6");
+            setValueServerReqBuf.append("6");
             // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            setValueServerReqBuf.append(ImdstKeyValueClient.sepStr);
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
             // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            setValueServerReqBuf.append(ImdstKeyValueClient.sepStr);
 
 
             // Tag連結
@@ -1131,31 +1135,31 @@ public class ImdstKeyValueClient {
             if (tagStrs == null || tagStrs.length < 1) {
 
                 // ブランク規定文字列を連結
-                serverRequestBuf.append(ImdstKeyValueClient.blankStr);
+                setValueServerReqBuf.append(ImdstKeyValueClient.blankStr);
             } else {
 
                 // Tag数分連結
-                serverRequestBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
+                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
                 for (int i = 1; i < tagStrs.length; i++) {
-                    serverRequestBuf.append(tagKeySep);
-                    serverRequestBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
+                    setValueServerReqBuf.append(tagKeySep);
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
                 }
             }
 
             // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            setValueServerReqBuf.append(ImdstKeyValueClient.sepStr);
 
             // TransactionCode連結
-            serverRequestBuf.append(this.transactionCode);
+            setValueServerReqBuf.append(this.transactionCode);
 
             // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            setValueServerReqBuf.append(ImdstKeyValueClient.sepStr);
 
             // Value連結
-            serverRequestBuf.append(value);
+            setValueServerReqBuf.append(value);
 
             // サーバ送信
-            pw.println(serverRequestBuf.toString());
+            pw.println(setValueServerReqBuf.toString());
             pw.flush();
 
             // サーバから結果受け取り
@@ -1260,7 +1264,7 @@ public class ImdstKeyValueClient {
         int counter = 0;
         int tmpKeyIndex = 0;
         String tmpKey = null;
-        StringBuffer saveKeys = new StringBuffer();
+        StringBuffer saveKeys = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
         String sep = "";
 
         String[] tmpKeys = null;
@@ -1342,7 +1346,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
         String value = null;
-        StringBuffer serverRequestBuf = new StringBuffer();
+        StringBuffer serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
 
         String saveStr = null;
 
@@ -1470,7 +1474,8 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
@@ -1481,22 +1486,19 @@ public class ImdstKeyValueClient {
                 throw new ImdstClientException("The blank is not admitted on a key");
             }
 
-            // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
-
 
             // 処理番号連結
-            serverRequestBuf.append("2");
+            getValueServerReqBuf.append("2");
             // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+            getValueServerReqBuf.append(ImdstKeyValueClient.sepStr);
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            getValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
 
 
             // サーバ送信
-            pw.println(serverRequestBuf.toString());
+            pw.println(getValueServerReqBuf.toString());
             pw.flush();
 
             // サーバから結果受け取り
@@ -1605,7 +1607,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferSmall_2Size);
 
 
             // 処理番号連結
@@ -1747,7 +1749,7 @@ public class ImdstKeyValueClient {
             } 
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
 
 
             // 処理番号連結
@@ -1899,7 +1901,7 @@ public class ImdstKeyValueClient {
             } 
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
 
 
             // 処理番号連結
@@ -2034,7 +2036,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
 
 
             // 処理番号連結
@@ -2355,7 +2357,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
 
 
             // 処理番号連結
@@ -2488,7 +2490,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
 
 
             // 処理番号連結
@@ -2611,7 +2613,7 @@ public class ImdstKeyValueClient {
 
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
 
 
             // 処理番号連結

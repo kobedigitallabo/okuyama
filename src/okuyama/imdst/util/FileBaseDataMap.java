@@ -38,7 +38,7 @@ public class FileBaseDataMap extends AbstractMap {
     private List iteratorNowDataList = null;
     private int iteratorNowDataListIdx = 0;
 
-	protected static int paddingSymbol = 38;
+    protected static int paddingSymbol = 38;
 
 
     /**
@@ -50,7 +50,7 @@ public class FileBaseDataMap extends AbstractMap {
      * @throws
      */
     public FileBaseDataMap(String[] baseDirs, int numberOfKeyData) {
-		this(baseDirs, numberOfKeyData, 0.40);
+        this(baseDirs, numberOfKeyData, 0.40);
     }
 
 
@@ -64,7 +64,7 @@ public class FileBaseDataMap extends AbstractMap {
      * @throws
      */
     public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent) {
-		this(baseDirs, numberOfKeyData, cacheMemPercent, 0);
+        this(baseDirs, numberOfKeyData, cacheMemPercent, 0);
     }
 
 
@@ -98,13 +98,13 @@ public class FileBaseDataMap extends AbstractMap {
         for (int idx = 0; idx < baseDirs.length; idx++) {
             syncObjs[idx] = new Object();
             String[] dir = {baseDirs[idx]};
-			if (numberOfValueLength > 0) {
-	            this.coreFileBaseKeyMaps[idx] = new CoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, numberOfValueLength);
-			} else {
-	            this.coreFileBaseKeyMaps[idx] = new CoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer);
-			}
+            if (numberOfValueLength > 0) {
+                this.coreFileBaseKeyMaps[idx] = new CoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, numberOfValueLength);
+            } else {
+                this.coreFileBaseKeyMaps[idx] = new CoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer);
+            }
         }
-	}
+    }
 
 
     /**
@@ -403,7 +403,7 @@ class CoreFileBaseKeyMap {
         try {
             this.baseFileDirs = dirs;
             this.innerCacheSize = innerCacheSize;
-			if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;
+            if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;
             this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
 
             this.init();
@@ -416,21 +416,21 @@ class CoreFileBaseKeyMap {
     /**
      * コンストラクタ.<br>
      * Keyサイズ指定有り.<br>
-	 *
+     *
      * @param dirs
      * @param innerCacheSize
      * @param numberOfKeyData
-	 * @param numberOfValueSize
+     * @param numberOfValueSize
      * @return 
      * @throws
      */
     public CoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData, int numberOfValueSize) {
         try {
-			this.oneDataLength = numberOfValueSize;
-		    this.lineDataSize =  this.keyDataLength + this.oneDataLength;
+            this.oneDataLength = numberOfValueSize;
+            this.lineDataSize =  this.keyDataLength + this.oneDataLength;
             this.baseFileDirs = dirs;
             this.innerCacheSize = innerCacheSize;
-			if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;
+            if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;
             this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
 
             this.init();
@@ -509,7 +509,9 @@ class CoreFileBaseKeyMap {
 
             File file = dataFileList[hashCode % numberOfDataFiles];
 
-            StringBuffer buf = new StringBuffer(this.fillCharacter(key, keyDataLength));
+            StringBuffer buf = new StringBuffer(this.lineDataSize);
+
+            buf.append(this.fillCharacter(key, keyDataLength));
             buf.append(this.fillCharacter(value, oneDataLength));
 
 
@@ -825,13 +827,13 @@ class CoreFileBaseKeyMap {
 
     /**
      * 指定の文字を指定の桁数で特定文字列で埋める.<br>
-	 * 足りない文字列は固定の"&"で補う(38).<br>
+     * 足りない文字列は固定の"&"で補う(38).<br>
      *
      * @param data
      * @param fixSize
      */
     private String fillCharacter(String data, int fixSize) {
-    	return SystemUtil.fillCharacter(data, fixSize, FileBaseDataMap.paddingSymbol);
+        return SystemUtil.fillCharacter(data, fixSize, FileBaseDataMap.paddingSymbol);
 /*        StringBuffer writeBuf = new StringBuffer(data);
 
         int valueSize = data.length();
@@ -911,7 +913,7 @@ class CoreFileBaseKeyMap {
                     for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
 
                         int assist = (lineDataSize * loopIdx);
-                        keysBuf = new StringBuffer();
+                        keysBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
 
                         int idx = 0;
 

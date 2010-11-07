@@ -15,6 +15,8 @@ public class CoreMapKey  {
 
     byte[] datas = null;
 
+    int retHashCode = -1;
+
     public CoreMapKey(byte[] datas) {
         this.datas = datas;
     }
@@ -46,15 +48,21 @@ public class CoreMapKey  {
         return true;
     }
 
+
     public byte[] getDatas() {
         return datas;
     }
 
+
     public int hashCode() {
-        int ret = 1;
-        for (int i = 0; i <  datas.length; i++) {
-            ret = ret * 31 + datas[i];
+        if (this.retHashCode == -1) {
+            int ret = 1;
+            for (int i = 0; i <  datas.length; i++) {
+                ret = ret * 31 + datas[i];
+            }
+            this.retHashCode = ret;
         }
-        return ret;
+
+        return this.retHashCode;
     }
 }

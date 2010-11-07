@@ -65,217 +65,235 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
         String[] pingRet = null;
 
+        HashMap rebootNodeMap = new HashMap(128);
 
-            while (serverRunning) {
-                try{
-                    HashMap rebootNodeMap = new HashMap(128);
-                    HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
-                    this.mainNodeList = (ArrayList)allNodeInfo.get("main");
-                    this.subNodeList = (ArrayList)allNodeInfo.get("sub");
-                    this.thirdNodeList = (ArrayList)allNodeInfo.get("third");
+        while (serverRunning) {
+            try{
+                HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
+                this.mainNodeList = (ArrayList)allNodeInfo.get("main");
+                this.subNodeList = (ArrayList)allNodeInfo.get("sub");
+                this.thirdNodeList = (ArrayList)allNodeInfo.get("third");
 
-                    // サードノードが存在する場合はマージする
-                    if (this.thirdNodeList != null && this.thirdNodeList.size() > 0) {
-                        ArrayList newMainNodeList = new ArrayList();
-                        ArrayList newSubNodeList = new ArrayList();
+                // サードノードが存在する場合はマージする
+                if (this.thirdNodeList != null && this.thirdNodeList.size() > 0) {
+                    ArrayList newMainNodeList = new ArrayList();
+                    ArrayList newSubNodeList = new ArrayList();
 
-                        for (int i = 0; i < this.mainNodeList.size(); i++) {
-                            newMainNodeList.add(this.mainNodeList.get(i));
-                            newSubNodeList.add(this.subNodeList.get(i));
-                        }
-                        for (int i = 0; i < this.mainNodeList.size(); i++) {
-                            newMainNodeList.add(this.mainNodeList.get(i));
-                            newSubNodeList.add(this.thirdNodeList.get(i));
-                            newMainNodeList.add(this.subNodeList.get(i));
-                            newSubNodeList.add(this.thirdNodeList.get(i));
-                        }
-                        this.mainNodeList = newMainNodeList;
-                        this.subNodeList = newSubNodeList;
+                    for (int i = 0; i < this.mainNodeList.size(); i++) {
+                        newMainNodeList.add(this.mainNodeList.get(i));
+                        newSubNodeList.add(this.subNodeList.get(i));
+                    }
+                    for (int i = 0; i < this.mainNodeList.size(); i++) {
+                        newMainNodeList.add(this.mainNodeList.get(i));
+                        newSubNodeList.add(this.thirdNodeList.get(i));
+                        newMainNodeList.add(this.subNodeList.get(i));
+                        newSubNodeList.add(this.thirdNodeList.get(i));
+                    }
+                    this.mainNodeList = newMainNodeList;
+                    this.subNodeList = newSubNodeList;
+                }
+
+
+                // ノード数分チェック
+                for (int i = 0; i < mainNodeList.size(); i++) {
+                    Thread.sleep(checkCycle);
+
+
+                    // 停止ファイル関係チェック
+                    if (StatusUtil.getStatus() == 1) {
+                        serverRunning = false;
+                        logger.info("KeyNodeWatchHelper - 状態異常です");
                     }
 
+                    if (StatusUtil.getStatus() == 2) {
+                        serverRunning = false;
+                        logger.info("KeyNodeWatchHelper - 終了状態です");
+                    }
 
-                    // ノード数分チェック
-                    for (int i = 0; i < mainNodeList.size(); i++) {
-                        Thread.sleep(checkCycle);
+                    serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
 
+                    serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
+                    if (serverStopMarkerFile.exists()) {
+                        serverRunning = false;
+                        logger.info("KeyNodeWatchHelper - Server停止ファイルが存在します");
+                        StatusUtil.setStatus(2);
+                    }
 
-                        // 停止ファイル関係チェック
-                        if (StatusUtil.getStatus() == 1) {
-                            serverRunning = false;
-                            logger.info("KeyNodeWatchHelper - 状態異常です");
+                    // MainのMasterNodeの場合のみ実行
+                    if (StatusUtil.isMainMasterNode()) {
+
+                        // ノードチェック(メイン)
+                        String nodeInfo = (String)mainNodeList.get(i);
+
+                        String[] nodeDt = nodeInfo.split(":");
+
+                        logger.info("************************************************************");
+                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
+
+                        pingRet = this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue(), logger);
+                        if (pingRet[1] != null) this.nodeStatusStr = pingRet[1];
+
+                        if(pingRet[0].equals("false")) {
+                            // ノードダウン
+                            logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Dead");
+                            super.setDeadNode(nodeInfo, 1, null);
+                            StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "Node Check Dead");
+                        } else if (!super.isNodeArrival(nodeInfo)) {
+
+                            // ノードが復旧
+                            logger.info("Node Name [" + nodeInfo +"] Reboot");
+
+                            // ノード復旧処理を記録
+                            if (rebootNodeMap.containsKey(nodeInfo)) {
+                                Integer recoverCount = (Integer)rebootNodeMap.get(nodeInfo);
+                                int recoverCountInt = recoverCount.intValue();
+                                recoverCountInt++;
+                                rebootNodeMap.put(nodeInfo, new Integer(recoverCountInt));
+                            } else {
+                                rebootNodeMap.put(nodeInfo, new Integer(1));
+                            }
+
+                            // Subノードが存在する場合はデータ復元、存在しない場合はそのまま起動
+                            if (subNodeList != null && (subNodeList.get(i) != null)) {
+
+                                // 停止していたノードが復帰した場合
+                                // 停止中に登録予定であったデータを登録する
+                                logger.info("Node Name [" + nodeInfo +"] Use Wait 1-1 Start");
+
+                                // 復旧前に現在稼働中のMasterNodeに再度停止ノードと、リカバー開始を伝える
+                                super.setDeadNode(nodeInfo, 1, null);
+                                super.setRecoverNode(true, (String)subNodeList.get(i));
+
+                                logger.info(nodeInfo + " - Recover Start");
+                                StatusUtil.setNodeStatusDt(nodeInfo, "Recover Start");
+
+                                // 復旧開始
+                                if(nodeDataRecover(nodeInfo, (String)subNodeList.get(i), logger)) {
+
+                                    // リカバー成功
+                                    // 該当ノードの復帰を登録
+                                    logger.info(nodeInfo + " - Recover Success");
+
+                                    // 復旧処理ノードから記録を消す
+                                    rebootNodeMap.remove(nodeInfo);
+                                    StatusUtil.setNodeStatusDt(nodeInfo, "Recover Success");
+                                } else {
+                                    // リカバー失敗
+                                    logger.info(nodeInfo + " - Recover Miss");
+                                    // リカバー終了を伝える
+                                    super.setRecoverNode(false, "");
+                                    StatusUtil.setNodeStatusDt(nodeInfo, "Recover Miss");
+                                }
+
+                                logger.info(nodeInfo + " - Recover End");
+                            } else {
+                                // ノードの復旧を記録
+                                // 復旧処理ノードから記録を消す
+                                rebootNodeMap.remove(nodeInfo);
+                                super.setArriveNode(nodeInfo);
+                            }
+                        } else {
+                            logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
+                            logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
+                            StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "[" + this.nodeStatusStr + "]");
                         }
+                        logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
 
-                        if (StatusUtil.getStatus() == 2) {
-                            serverRunning = false;
-                            logger.info("KeyNodeWatchHelper - 終了状態です");
-                        }
 
-                        serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
+                        logger.info("------------------------------------------------------------");
+                        // ノードチェック(Sub)
+                        if (subNodeList != null && i < subNodeList.size()) {
+                            String subNodeInfo = (String)subNodeList.get(i);
+                            String[] subNodeDt = subNodeInfo.split(":");
 
-                        serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
-                        if (serverStopMarkerFile.exists()) {
-                            serverRunning = false;
-                            logger.info("KeyNodeWatchHelper - Server停止ファイルが存在します");
-                            StatusUtil.setStatus(2);
-                        }
+                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Start");
 
-                        // MainのMasterNodeの場合のみ実行
-                        if (StatusUtil.isMainMasterNode()) {
-
-                            // ノードチェック(メイン)
-                            String nodeInfo = (String)mainNodeList.get(i);
-
-                            String[] nodeDt = nodeInfo.split(":");
-
-                            logger.info("************************************************************");
-                            logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
-
-                            pingRet = this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue(), logger);
+                            pingRet = super.execNodePing(subNodeDt[0], new Integer(subNodeDt[1]).intValue(), logger);
                             if (pingRet[1] != null) this.nodeStatusStr = pingRet[1];
 
                             if(pingRet[0].equals("false")) {
                                 // ノードダウン
-                                logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Dead");
-                                super.setDeadNode(nodeInfo, 1, null);
-                                StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "Node Check Dead");
-                            } else if (!super.isNodeArrival(nodeInfo)) {
+                                logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Dead");
+                                super.setDeadNode(subNodeInfo, 2 ,null);
+                                StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "SubNode Check Dead");
+                            } else if (!super.isNodeArrival(subNodeInfo)) {
 
-                                // ノードが復旧
-                                logger.info("Node Name [" + nodeInfo +"] Reboot");
+                                // 停止していたノードが復帰した場合
+                                // 停止中に登録予定であったデータを登録する
+                                logger.info("Node Name [" + subNodeInfo +"] Reboot");
 
-                                // ノード復旧を記録
-                                rebootNodeMap.put(nodeInfo, null);
-
-                                // Subノードが存在する場合はデータ復元、存在しない場合はそのまま起動
-                                if (subNodeList != null && (subNodeList.get(i) != null)) {
-
-                                    // 停止していたノードが復帰した場合
-                                    // 停止中に登録予定であったデータを登録する
-                                    logger.info("Node Name [" + nodeInfo +"] Use Wait 1-1 Start");
-
-                                    // 復旧前に現在稼働中のMasterNodeに再度停止ノードと、リカバー開始を伝える
-                                    super.setDeadNode(nodeInfo, 1, null);
-                                    super.setRecoverNode(true, (String)subNodeList.get(i));
-
-                                    logger.info(nodeInfo + " - Recover Start");
-                                    StatusUtil.setNodeStatusDt(nodeInfo, "Recover Start");
-
-                                    // 復旧開始
-                                    if(nodeDataRecover(nodeInfo, (String)subNodeList.get(i), logger)) {
-
-                                        // リカバー成功
-                                        // 該当ノードの復帰を登録
-                                        logger.info(nodeInfo + " - Recover Success");
-
-                                        // 復旧処理ノードから記録を消す
-                                        rebootNodeMap.remove(nodeInfo);
-                                        StatusUtil.setNodeStatusDt(nodeInfo, "Recover Success");
-                                    } else {
-                                        // リカバー失敗
-                                        logger.info(nodeInfo + " - Recover Miss");
-                                        // リカバー終了を伝える
-                                        super.setRecoverNode(false, "");
-                                        StatusUtil.setNodeStatusDt(nodeInfo, "Recover Miss");
-                                    }
-
-                                    logger.info(nodeInfo + " - Recover End");
+                                // ノード復旧処理を記録
+                                if (rebootNodeMap.containsKey(subNodeInfo)) {
+                                    Integer recoverCount = (Integer)rebootNodeMap.get(subNodeInfo);
+                                    int recoverCountInt = recoverCount.intValue();
+                                    recoverCountInt++;
+                                    rebootNodeMap.put(subNodeInfo, new Integer(recoverCountInt));
                                 } else {
-                                    // ノードの復旧を記録
+                                    rebootNodeMap.put(subNodeInfo, new Integer(1));
+                                }
+
+                                // 復旧前に現在稼働中のMasterNodeに再度停止ノードと、リカバー開始を伝える
+                                super.setDeadNode(subNodeInfo, 1, null);
+                                super.setRecoverNode(true, nodeInfo);
+
+                                logger.info(subNodeInfo + " - Recover Start");
+                                StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Start");
+                                // 復旧開始
+                                if(nodeDataRecover(subNodeInfo, nodeInfo, logger)) {
+
+                                    // リカバー成功
+                                    // 該当ノードの復帰を登録
+                                    logger.info(subNodeInfo + " - Recover Success");
+
                                     // 復旧処理ノードから記録を消す
-                                    rebootNodeMap.remove(nodeInfo);
-                                    super.setArriveNode(nodeInfo);
-                                }
-                            } else {
-                                logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
-                                logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
-                                StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "[" + this.nodeStatusStr + "]");
-                            }
-                            logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
-
-
-                            logger.info("------------------------------------------------------------");
-                            // ノードチェック(Sub)
-                            if (subNodeList != null && i < subNodeList.size()) {
-                                String subNodeInfo = (String)subNodeList.get(i);
-                                String[] subNodeDt = subNodeInfo.split(":");
-
-                                logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Start");
-
-                                pingRet = super.execNodePing(subNodeDt[0], new Integer(subNodeDt[1]).intValue(), logger);
-                                if (pingRet[1] != null) this.nodeStatusStr = pingRet[1];
-
-                                if(pingRet[0].equals("false")) {
-                                    // ノードダウン
-                                    logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Dead");
-                                    super.setDeadNode(subNodeInfo, 2 ,null);
-                                    StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "SubNode Check Dead");
-                                } else if (!super.isNodeArrival(subNodeInfo)) {
-
-                                    // 停止していたノードが復帰した場合
-                                    // 停止中に登録予定であったデータを登録する
-                                    logger.info("Node Name [" + subNodeInfo +"] Reboot");
-
-                                    // ノード復旧を記録
-                                    rebootNodeMap.put(subNodeInfo, null);
-
-                                    // 復旧前に現在稼働中のMasterNodeに再度停止ノードと、リカバー開始を伝える
-                                    super.setDeadNode(subNodeInfo, 1, null);
-                                    super.setRecoverNode(true, nodeInfo);
-
-                                    logger.info(subNodeInfo + " - Recover Start");
-                                    StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Start");
-                                    // 復旧開始
-                                    if(nodeDataRecover(subNodeInfo, nodeInfo, logger)) {
-
-                                        // リカバー成功
-                                        // 該当ノードの復帰を登録
-                                        logger.info(subNodeInfo + " - Recover Success");
-
-                                        // 復旧処理ノードから記録を消す
-                                        rebootNodeMap.remove(subNodeInfo);
-                                        StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Success");
-                                    } else {
-
-                                        // リカバー失敗
-                                        logger.info(subNodeInfo + " - Recover Miss");
-                                        // リカバー終了を伝える
-                                        super.setRecoverNode(false, "");
-                                        StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Miss");
-                                    }
-
-                                    logger.info(subNodeInfo + " - Recover End");
+                                    rebootNodeMap.remove(subNodeInfo);
+                                    StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Success");
                                 } else {
-                                    logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Arrival");
-                                    logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
-                                    StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "[" + this.nodeStatusStr + "]");
+
+                                    // リカバー失敗
+                                    logger.info(subNodeInfo + " - Recover Miss");
+                                    // リカバー終了を伝える
+                                    super.setRecoverNode(false, "");
+                                    StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Miss");
                                 }
-                                logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
-                                logger.info("************************************************************");
+
+                                logger.info(subNodeInfo + " - Recover End");
+                            } else {
+                                logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Arrival");
+                                logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
+                                StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "[" + this.nodeStatusStr + "]");
                             }
+                            logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
+                            logger.info("************************************************************");
                         }
                     }
-
-
-                    // リブートされたが遂になるノードが存在せずにリカバリーに失敗したノードを復旧扱いとする
-                    Set rebootNodeMapSet = rebootNodeMap.entrySet();
-                    Iterator rebootNodeMapIte = rebootNodeMapSet.iterator();
-
-                    while(rebootNodeMapIte.hasNext()) {
-
-                        Map.Entry obj = (Map.Entry)rebootNodeMapIte.next();
-                        String nodeInfo = (String)obj.getKey();
-                        if (nodeInfo != null) {
-                            // リカバー完了を全MasterNodeへ送信
-                            super.setArriveNode(nodeInfo);
-                            logger.info("Node Name [" + nodeInfo +"] Reboot Register");
-                        }
-                    }
-
-
-                } catch(Exception e) {
-                    logger.error("KeyNodeWatchHelper - executeHelper - Error", e);
                 }
+
+
+                // リブートされたが遂になるノードが存在せずにリカバリーに失敗したノードを復旧扱いとする
+                Set rebootNodeMapSet = rebootNodeMap.entrySet();
+                Iterator rebootNodeMapIte = rebootNodeMapSet.iterator();
+
+                while(rebootNodeMapIte.hasNext()) {
+
+                    Map.Entry obj = (Map.Entry)rebootNodeMapIte.next();
+                    String nodeInfo = (String)obj.getKey();
+                    Integer recoverTryCount = (Integer)obj.getValue();
+
+                    if (nodeInfo != null && recoverTryCount.intValue() > 3) {
+                        // リカバー完了を全MasterNodeへ送信
+                        super.setArriveNode(nodeInfo);
+                        rebootNodeMapIte.remove();
+
+                        logger.info("Node Name [" + nodeInfo +"] Reboot Register");
+                    }
+                }
+
+
+            } catch(Exception e) {
+                logger.error("KeyNodeWatchHelper - executeHelper - Error", e);
             }
+        }
 
         logger.debug("KeyNodeWatchHelper - executeHelper - end");
         return ret;

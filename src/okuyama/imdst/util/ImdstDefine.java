@@ -9,7 +9,7 @@ package okuyama.imdst.util;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.8.3";
+    public static final String okuyamaVersion = "VERSION okuyama-0.8.4";
 
     /* -- KeyMapファイルに関係する定数 ----------                        */
     // KeyNodeのWorkファイルでのセパレータ
@@ -215,6 +215,20 @@ public class ImdstDefine {
 
     // Key,Tagの最大長
     public static final int saveKeyMaxSize = 486;
+
+
+    public static final int stringBufferSmallSize = 128;
+
+    public static final int stringBufferSmall_2Size = 160;
+
+    public static final int stringBufferMiddleSize = 512;
+
+    public static final int stringBufferLargeSize = 1024;
+
+    public static final int stringBufferLarge_2Size = 2048;
+
+    public static final int stringBufferLarge_3Size = 8192;
+
 
     // ノードのDeadとする際のPing実行回数
     public static final int defaultDeadPingCount = 3;
