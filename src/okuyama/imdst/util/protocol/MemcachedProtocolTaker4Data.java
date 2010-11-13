@@ -51,7 +51,7 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
         this.nextExec = 1;
 
         // memcache時に使用するのは取り合えずは命令部分と、データ部分のみ
-        StringBuffer methodBuf = new StringBuffer();
+        StringBuffer methodBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
 
         String executeMethodStr = br.readLine();
 
@@ -132,7 +132,7 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
             executeMethodStr = executeMethodStr.trim();
             String[] executeMethods = executeMethodStr.split(ImdstDefine.memcacheExecuteMethodSep);
             this.requestSplit = executeMethods;
-            StringBuffer methodBuf = new StringBuffer();
+            StringBuffer methodBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
 
             // memcacheの処理方法で分岐
             if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodSet)) {
@@ -149,7 +149,8 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
                 // サイズチェック
                 if (Integer.parseInt(executeMethods[4]) > ImdstDefine.saveDataMaxSize) {
                     br.readLine();
-                    pw.println("SERVER_ERROR <Regis Max Byte Over>");
+                    pw.print("SERVER_ERROR <Regis Max Byte Over>");
+                    pw.print("\r\n");
                     pw.flush();
                     return retStr;
                 }
@@ -180,7 +181,8 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
                     retStr = methodBuf.toString();
                 }  else {
 
-                    pw.println("CLIENT_ERROR bad data chunk");
+                    pw.print("CLIENT_ERROR bad data chunk");
+                    pw.print("\r\n");
                     pw.flush();
                     return retStr;
                 }
@@ -199,7 +201,8 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
                 // サイズチェック
                 if (Integer.parseInt(executeMethods[4]) > ImdstDefine.saveDataMaxSize) {
                     br.readLine();
-                    pw.println("SERVER_ERROR <Regis Max Byte Over>");
+                    pw.print("SERVER_ERROR <Regis Max Byte Over>");
+                    pw.print("\r\n");
                     pw.flush();
                     return retStr;
                 }
@@ -260,6 +263,16 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
 
             } else {
                 // 存在しないプロトコルはokuyama用として処理する。
+                try {
+                    // 数値変換出来ない場合はエラー
+                    Integer.parseInt(executeMethods[0]);
+                } catch (NumberFormatException e) {
+                    pw.print("ERROR");
+                    pw.print("\r\n");
+                    pw.flush();
+                    return retStr;
+                }
+
                 retStr = executeMethodStr;
                 this.methodMatch = false;
             }
@@ -275,7 +288,10 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
     private String memcacheReturnCnv(String[] retParams) throws Exception{
         String retStr = null;
 
-        if (retParams[0].equals("1")) {
+        if (retParams[0] == null) {
+
+            retStr = ImdstDefine.memcacheMethodRetrunServerError;
+        } else if (retParams[0].equals("1")) {
 
             // Set
             // 返却値は<STORED> or <SERVER_ERROR>
@@ -298,7 +314,7 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
 
             // Get
             // 返却値は"VALUE キー値 hashcode byteサイズ \r\n 値 \r\n END
-            StringBuffer retBuf = new StringBuffer();
+            StringBuffer retBuf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
             String[] valueSplit = null;
             byte[] valueByte = null;
 
@@ -339,9 +355,13 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
             } else {
                 retStr = ImdstDefine.memcacheMethodRetrunServerError;
             }
+        } else if (retParams[0].equals("999")) {
 
+            // version
+            // 返却値は"okuyama-?-?-?
+            retStr = ImdstDefine.okuyamaVersion;
         } else {
-            StringBuffer retParamBuf = new StringBuffer();
+            StringBuffer retParamBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
 
             // 存在しないメソッドはokuyama用として処理する
             retParamBuf.append(retParams[0]);
