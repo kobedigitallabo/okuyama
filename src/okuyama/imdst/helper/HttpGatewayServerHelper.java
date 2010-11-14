@@ -72,7 +72,7 @@ public class HttpGatewayServerHelper extends AbstractHelper {
             int headerCounter = 0;
 
             while ((inputLine = in.readLine()) != null) {
-                StringBuffer dataBuf = new StringBuffer();
+                StringBuilder dataBuf = new StringBuilder(1024);
                 if (inputLine.trim().equals("")) {
 
                     counter++;

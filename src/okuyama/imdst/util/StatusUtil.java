@@ -35,7 +35,6 @@ public class StatusUtil {
 
     // ノードの最新の状態詳細を管理
     private static ConcurrentHashMap nodeStatusDtMap = new ConcurrentHashMap(50, 40, 300);
-    
 
     private static String nowMemoryStatus = null;
 
@@ -70,6 +69,14 @@ public class StatusUtil {
     private static String distributionAlgorithm = null;
 
 
+	// IsolationMode
+	private static boolean isolationMode = false;
+
+	// IsolationModePrefix
+	private static String isolationPrefixStr = null;
+
+	private static Map isolationCnvExclusionMap = null;
+
     /**
      * ノード使用状態の枠を初期化
      */
@@ -81,6 +88,32 @@ public class StatusUtil {
             }
         }
     }
+
+
+	/**
+	 * Isolationモードを初期化する
+	 */
+	public static void initIsolationMode(boolean mode, String prefix) {
+		isolationMode = mode;
+		isolationPrefixStr = "#" + prefix;
+		if (isolationMode) {
+			isolationCnvExclusionMap = new HashMap(30);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIGFkZE5vZGU0Q29uc2lzdGVudEhhc2hNb2Rl", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIE1haW5NYXN0ZXJOb2RlSW5mbw==", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIEtleU1hcE5vZGVzSW5mbw==", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIFN1YktleU1hcE5vZGVzSW5mbw==", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIFRoaXJkS2V5TWFwTm9kZXNJbmZv", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIEtleU1hcE5vZGVzUnVsZQ==", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIExvYWRCYWxhbmNlTW9kZQ==", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIFRyYW5zYWN0aW9uTW9kZQ==", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIFRyYW5zYWN0aW9uTWFuYWdlckluZm8=", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIE1haW5NYXN0ZXJOb2RlTW9kZQ==", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIFNsYXZlTWFzdGVyTm9kZXM=", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIE1haW5NYXN0ZXJOb2RlSW5mbw==", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIEFsbE1hc3Rlck5vZGVJbmZv", null);
+			isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIERpc3RyaWJ1dGlvbkFsZ29yaXRobQ==", null);
+		}
+	}
 
 
     /**
@@ -394,6 +427,36 @@ public class StatusUtil {
         }
         return transactionInfo;
     }
+
+
+	/**
+	 * Isolationモードを返す
+	 */
+	public static boolean getIsolationMode() {
+		return isolationMode;
+	}
+
+
+	/**
+	 * Isolationモードを返す
+	 */
+	public static boolean isIsolationEncodeTarget(String str) {
+
+		if (str.length() > 121) {
+			if (isolationCnvExclusionMap.containsKey(str)) return false;
+			return true;
+		} else {
+			return true;
+		}
+	}
+
+
+	/**
+	 * Isolation用の文字列を返す
+	 */
+	public static String getIsolationPrefix() {
+		return isolationPrefixStr;
+	}
 
 
     // 振り分けアルゴリズムを設定

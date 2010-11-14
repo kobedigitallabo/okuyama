@@ -282,7 +282,7 @@ public class KeyNodeConnector {
 
 
     public String connectorDump() {
-        StringBuffer dump = new StringBuffer();
+        StringBuilder dump = new StringBuilder(1024 * 1024);
         dump.append(nodeName);
         dump.append(" / ");
         dump.append(nodePort);

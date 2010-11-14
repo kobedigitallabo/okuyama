@@ -20,7 +20,7 @@ public class OkuyamaProtocolTaker implements IProtocolTaker {
 
     private boolean methodMatch = true;
 
-    private StringBuffer retParamBuf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
+    private StringBuilder retParamBuf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
 
 
     /**

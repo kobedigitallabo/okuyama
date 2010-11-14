@@ -74,7 +74,7 @@ public class KeyManagerHelper extends AbstractHelper {
         BufferedReader br = null;
 
         String[] retParams = null;
-        StringBuffer retParamBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+        StringBuilder retParamBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
         try{
 
@@ -706,7 +706,11 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             // 引数設定
                             // Key値を設定
-                            engine.put("dataKey", new String(BASE64DecoderStream.decode(key.getBytes()), ImdstDefine.keyWorkFileEncoding));
+							if(key.indexOf("#") == 0) {
+	                            engine.put("dataKey", new String(BASE64DecoderStream.decode(key.substring(6).getBytes()), ImdstDefine.keyWorkFileEncoding));
+							} else {
+							    engine.put("dataKey", new String(BASE64DecoderStream.decode(key.getBytes()), ImdstDefine.keyWorkFileEncoding));
+							}
 
                             // Value値を設定
                             if (tmpValue == null) {

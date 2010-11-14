@@ -50,7 +50,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
         this.nextExec = 1;
 
         // memcache時に使用するのは取り合えずは命令部分と、データ部分のみ
-        StringBuffer methodBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+        StringBuilder methodBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
         String executeMethodStr = br.readLine();
 
@@ -131,7 +131,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
             executeMethodStr = executeMethodStr.trim();
             String[] executeMethods = executeMethodStr.split(ImdstDefine.memcacheExecuteMethodSep);
             this.requestSplit = executeMethods;
-            StringBuffer methodBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+            StringBuilder methodBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
             // memcacheの処理方法で分岐
             if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodSet)) {
@@ -323,7 +323,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
 
             // Get
             // 返却値は"VALUE キー値 hashcode byteサイズ \r\n 値 \r\n END
-            StringBuffer retBuf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
+            StringBuilder retBuf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
             String[] valueSplit = null;
             byte[] valueByte = null;
 
@@ -370,7 +370,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
             // 返却値は"okuyama-?-?-?
             retStr = retParams[1];
         } else {
-            StringBuffer retParamBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+            StringBuilder retParamBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
             // 存在しないメソッドはokuyama用として処理する
             retParamBuf.append(retParams[0]);

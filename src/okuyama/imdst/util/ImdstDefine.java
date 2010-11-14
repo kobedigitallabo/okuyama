@@ -155,6 +155,8 @@ public class ImdstDefine {
     public static final String Prop_KeyNodeMaxWorkerParallelExecution = "KeyNodeMaxWorkerParallelExecution";
     public static final String Prop_KeyNodeMaxWorkerParallelQueue = "KeyNodeMaxWorkerParallelQueue";
     public static final String Prop_DataConsistencyMode = "DataConsistencyMode";
+    public static final String Prop_IsolationMode = "IsolationMode";
+    public static final String Prop_IsolationPrefix = "IsolationPrefix";
 
 
     /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */

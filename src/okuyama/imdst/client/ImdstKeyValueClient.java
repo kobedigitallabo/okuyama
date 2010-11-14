@@ -63,10 +63,10 @@ public class ImdstKeyValueClient {
 
 
     // setメソッド用リクエストBuffer
-    private StringBuffer setValueServerReqBuf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
+    private StringBuilder setValueServerReqBuf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
 
     // getメソッド用リクエストBuffer
-    private StringBuffer getValueServerReqBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+    private StringBuilder getValueServerReqBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
 
     /**
@@ -351,14 +351,14 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuilder();
 
 
             // 処理番号連結
@@ -446,14 +446,14 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuilder();
 
 
             // 処理番号連結
@@ -553,7 +553,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
@@ -568,7 +568,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuilder();
 
 
             // 処理番号連結
@@ -678,7 +678,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
@@ -693,7 +693,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuilder();
 
 
             // 処理番号連結
@@ -809,7 +809,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) {
@@ -818,7 +818,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer();
+            serverRequestBuf = new StringBuilder();
 
 
             // 処理番号連結
@@ -1264,7 +1264,7 @@ public class ImdstKeyValueClient {
         int counter = 0;
         int tmpKeyIndex = 0;
         String tmpKey = null;
-        StringBuffer saveKeys = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
+        StringBuilder saveKeys = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
         String sep = "";
 
         String[] tmpKeys = null;
@@ -1346,7 +1346,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
         String value = null;
-        StringBuffer serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
+        StringBuilder serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
 
         String saveStr = null;
 
@@ -1595,7 +1595,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
@@ -1607,7 +1607,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferSmall_2Size);
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmall_2Size);
 
 
             // 処理番号連結
@@ -1731,7 +1731,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
@@ -1749,7 +1749,7 @@ public class ImdstKeyValueClient {
             } 
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
 
 
             // 処理番号連結
@@ -1883,7 +1883,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
@@ -1901,7 +1901,7 @@ public class ImdstKeyValueClient {
             } 
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
 
 
             // 処理番号連結
@@ -2024,7 +2024,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
@@ -2036,7 +2036,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
 
             // 処理番号連結
@@ -2345,7 +2345,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
@@ -2357,7 +2357,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
 
             // 処理番号連結
@@ -2478,7 +2478,7 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
@@ -2490,7 +2490,7 @@ public class ImdstKeyValueClient {
             }
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
 
             // 処理番号連結
@@ -2606,14 +2606,14 @@ public class ImdstKeyValueClient {
         String serverRetStr = null;
         String[] serverRet = null;
 
-        StringBuffer serverRequestBuf = null;
+        StringBuilder serverRequestBuf = null;
 
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
 
             // 処理番号連結

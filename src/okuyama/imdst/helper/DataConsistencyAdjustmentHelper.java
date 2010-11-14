@@ -222,7 +222,7 @@ public class DataConsistencyAdjustmentHelper extends AbstractMasterManagerHelper
      *
      */
     private void searchTargetData(String nodeName, int nodePort, int dataNodeMatchNo) throws BatchException {
-        StringBuffer buf = null;
+        StringBuilder buf = null;
 
         try {
 
@@ -239,7 +239,7 @@ public class DataConsistencyAdjustmentHelper extends AbstractMasterManagerHelper
             this.keyNodeConnector.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             // コピー元からデータ読み込み
-            buf = new StringBuffer();
+            buf = new StringBuilder();
             // 処理番号20
             buf.append("26");
             buf.append(ImdstDefine.keyHelperClientParamSep);

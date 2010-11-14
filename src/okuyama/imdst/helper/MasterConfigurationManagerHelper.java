@@ -691,7 +691,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                     if (allMasterNodeInfoStr != null) {
 
                         String[] allMasterNodeInfos = allMasterNodeInfoStr.trim().split(",");
-                        StringBuffer slaveMasterNodeInfoBuf = new StringBuffer();
+                        StringBuilder slaveMasterNodeInfoBuf = new StringBuilder();
                         String sep  = "";
 
 
@@ -843,7 +843,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                     if (allMasterNodeInfoStr != null) {
 
                         String[] allMasterNodeInfos = allMasterNodeInfoStr.trim().split(",");
-                        StringBuffer slaveMasterNodeInfoBuf = new StringBuffer();
+                        StringBuilder slaveMasterNodeInfoBuf = new StringBuilder();
                         String sep  = "";
 
 

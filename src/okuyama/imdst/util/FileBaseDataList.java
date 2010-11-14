@@ -94,10 +94,10 @@ public class FileBaseDataList extends AbstractList {
     public boolean add(Object value) {
         boolean ret = true;
         try {
-            StringBuffer writeStrBuf = null;
+            StringBuilder writeStrBuf = null;
 
             if (value instanceof Object[]) {
-                writeStrBuf = new StringBuffer("ObjectsClass");
+                writeStrBuf = new StringBuilder("ObjectsClass");
                 Object[] objectValues = (Object[])value;
 
                 for (int idx = 0; idx < objectValues.length; idx++) {
@@ -105,7 +105,7 @@ public class FileBaseDataList extends AbstractList {
                     writeStrBuf.append("ObjectsClass");
                 }
             }  else if (value instanceof String) {
-                writeStrBuf = new StringBuffer("StringClass");
+                writeStrBuf = new StringBuilder("StringClass");
                 writeStrBuf.append((String)value);
             }
 

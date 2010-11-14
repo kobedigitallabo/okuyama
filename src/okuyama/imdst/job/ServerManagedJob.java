@@ -74,7 +74,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                     StatusUtil.setStatus(2);
                 }
 
-                StringBuffer memBuf = new StringBuffer();
+                StringBuilder memBuf = new StringBuilder();
                 memBuf.append("JVM MaxMemory Size =[" + JavaSystemApi.getRuntimeMaxMem("M") + "];");
                 memBuf.append("JVM TotalMemory Size =[" + JavaSystemApi.getRuntimeTotalMem("M") + "]; ");
                 memBuf.append("JVM FreeMemory Size =[" + JavaSystemApi.getRuntimeFreeMem("M") + "]; ");

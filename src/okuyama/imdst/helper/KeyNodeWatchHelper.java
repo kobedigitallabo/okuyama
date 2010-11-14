@@ -389,13 +389,13 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             mbr = new BufferedReader(misr);
 
             // データコピー開始
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
 
 
             logger.info("Recover Step - 1");
 
             // もともと生存していたノードを差分モードOnにする
-            buf = new StringBuffer();
+            buf = new StringBuilder();
             // 処理番号22
             buf.append("22").append(ImdstDefine.keyHelperClientParamSep).append("true");
             // 送信
@@ -406,7 +406,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             logger.info("Recover Step - 2");
 
             // コピー元からデータ読み込み
-            buf = new StringBuffer();
+            buf = new StringBuilder();
             // 処理番号20
             buf.append("20");
             buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -424,7 +424,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             // 取得したデータをコピー先に書き出し
             // 処理番号21
-            buf = new StringBuffer();
+            buf = new StringBuilder();
             buf.append("21");
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append(lineCount);
@@ -455,7 +455,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             logger.info("Recover Step - 10");
             // 停止完了後差分データを取得
             // この瞬間登録、削除は一時的に停止する。
-            buf = new StringBuffer();
+            buf = new StringBuilder();
             // 処理番号24
             buf.append("24");
             buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -467,7 +467,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             logger.info("Recover Step - 11");
             // 差分データを送る
-            buf = new StringBuffer();
+            buf = new StringBuilder();
             buf.append("25");
             buf.append(ImdstDefine.keyHelperClientParamSep);
             pw.println(buf.toString());

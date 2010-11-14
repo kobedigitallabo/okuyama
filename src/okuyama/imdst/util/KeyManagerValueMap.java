@@ -295,7 +295,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         if (this.memoryMode) {
             ret = super.put(key, value);
         } else {
-            StringBuffer writeBuf = new StringBuffer(oneDataLength + 2);
+            StringBuilder writeBuf = new StringBuilder(oneDataLength + 2);
             int valueSize = (value.toString()).length();
 
             try {

@@ -13,7 +13,6 @@ import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.io.KeyNodeConnector;
-import okuyama.imdst.client.ImdstKeyValueClient;
 
 /**
  * KeyNodeのデータを最適化するHelperクラス.<br>
@@ -62,7 +61,6 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
         boolean serverRunning = true;
 
-        ImdstKeyValueClient imdstKeyValueClient = null;
 
         HashMap moveTargetData = null;
 
@@ -142,7 +140,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                     moveTargetData = super.getConsistentHashMoveData();
                     Thread.sleep(checkCycle);
 
-                    StringBuffer sendRequestBuf = new StringBuffer();
+                    StringBuilder sendRequestBuf = new StringBuilder();
 
                     // 送信リクエスト文字列作成
                     // 処理番号28
@@ -588,7 +586,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
      * @throw BatchException
      */
     private void getTargetData(int target, String nodeName, int nodePort, String rangStr) throws BatchException {
-        StringBuffer buf = null;
+        StringBuilder buf = null;
         KeyNodeConnector keyNodeConnector = null;
 
         try {
@@ -598,7 +596,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
             keyNodeConnector.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             // 移動元からデータ読み込み
-            buf = new StringBuffer();
+            buf = new StringBuilder();
             // 処理番号27
             buf.append("27");
             buf.append(ImdstDefine.keyHelperClientParamSep);
@@ -690,7 +688,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
      * @throw BatchException
      */
     private boolean removeTargetData(String nodeName, int nodePort, String rangStr) throws BatchException {
-        StringBuffer buf = null;
+        StringBuilder buf = null;
         KeyNodeConnector keyNodeConnector = null;
         String removeRet = null;
 
@@ -701,7 +699,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
             keyNodeConnector.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             // 移動元からデータ削除
-            buf = new StringBuffer();
+            buf = new StringBuilder();
             // 処理番号29
             buf.append("29");
             buf.append(ImdstDefine.keyHelperClientParamSep);

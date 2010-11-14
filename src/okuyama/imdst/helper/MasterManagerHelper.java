@@ -52,20 +52,34 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // トランザクションの使用
     private String[] transactionManagerInfo = null;
 
+
     // 更新時間
     private short setTime = 0;
 
     // get用文字列Buffer
-    private StringBuffer getSendData = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+    private StringBuilder getSendData = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
     // set用文字列Buffer
-    private StringBuffer setSendData = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
+    private StringBuilder setSendData = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
+
+	// Isolationモード
+	private boolean isolationMode = false;
+
+	// Isolationモード
+	private short isolationPrefixLength = 0;
+
+	// Isolation用
+    private StringBuilder isolationBuffer = null;
+
+	// クライアントからのinitメソッド用返却パラメータ
+	private String[] initReturnParam = {"0", "true", new Integer(ImdstDefine.saveDataMaxSize).toString()};
 
 
     /**
      * Logger.<br>
      */
     private static ILogger logger = LoggerFactory.createLogger(MasterManagerHelper.class);
+
 
     // 初期化メソッド定義
     public void initHelper(String initValue) {
@@ -76,6 +90,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         if (consistencyModeStr != null && !consistencyModeStr.trim().equals("")) {
             dataConsistencyMode = Short.parseShort(consistencyModeStr);
         }
+
+		// Isolationモードの設定
+		if (StatusUtil.getIsolationMode()) {
+			this.isolationMode = true;
+			String isolationPrefixStr = StatusUtil.getIsolationPrefix();
+			this.isolationPrefixLength = new Integer(isolationPrefixStr.length()).shortValue();
+		    this.isolationBuffer = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+		}
     }
 
 
@@ -471,13 +493,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      */
     private String[] initClient() throws BatchException {
         //logger.debug("MasterManagerHelper - initClient - start");
-        String[] retStrs = new String[3];
-
-        retStrs[0] = "0";
-        retStrs[1] = "true";
-        retStrs[2] = new Integer(ImdstDefine.saveDataMaxSize).toString();
-        //logger.debug("MasterManagerHelper - initClient - end");
-        return retStrs;
+        return this.initReturnParam;
     }
 
 
@@ -509,6 +525,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
+			// Isolation変換実行
+			keyStr = this.encodeIsolationConvert(keyStr);
+			tagStr = this.encodeIsolationConvert(tagStr);
+
+
             // Key値チェック
             if (!this.checkKeyLength(keyStr)) {
                 // 保存失敗
@@ -517,6 +538,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[2] = "Key Length Error";
                 return retStrs;
             }
+
 
             // Tag値を保存
             if (tagStr != null && !tagStr.equals("")) {
@@ -643,6 +665,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         if (tagStr.equals(ImdstDefine.imdstBlankStrData)) tagStr = null;
 
         try {
+
+			// Isolation変換実行
+			keyStr = this.encodeIsolationConvert(keyStr);
+			tagStr = this.encodeIsolationConvert(tagStr);
+
             // Key値チェック
             if (!this.checkKeyLength(keyStr))  {
                 // 保存失敗
@@ -768,6 +795,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] keyNodeInfo = null;
 
         try {
+
+			// Isolation変換実行
+			keyStr = this.encodeIsolationConvert(keyStr);
+
             if (!this.checkKeyLength(keyStr))  {
                 // 保存失敗
                 retStrs[0] = "2";
@@ -870,6 +901,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] keyNodeInfo = null;
 
         try {
+			// Isolation変換実行
+			keyStr = this.encodeIsolationConvert(keyStr);
+
             if (!this.checkKeyLength(keyStr))  {
                 // 保存失敗
                 retStrs[0] = "8";
@@ -968,6 +1002,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] keyNodeInfo = null;
 
         try {
+
+			// Isolation変換実行
+			keyStr = this.encodeIsolationConvert(keyStr);
+
             if (!this.checkKeyLength(keyStr))  {
                 // 保存失敗
                 retStrs[0] = "9";
@@ -1111,6 +1149,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         String[] oldKeyNodeRemoveRet = null;
         try {
+
+			// Isolation変換実行
+			keyStr = this.encodeIsolationConvert(keyStr);
+
             // Key値チェック
             if (!this.checkKeyLength(keyStr))  {
                 retStrs[0] = "5";
@@ -1197,8 +1239,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] retStrs = new String[3];
 
         try {
+			// Isolation変換はしない
+			// incrValueに処理を移譲しているだけなので
 
-            retStrs = incrValue(keyStr, "-" + decrValue, transactionCode);
+            retStrs = this.incrValue(keyStr, "-" + decrValue, transactionCode);
         } catch (BatchException be) {
 
             logger.info("MasterManagerHelper - decrValue - Error", be);
@@ -1234,8 +1278,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] calcRet = null;
         String[] calcFixValue = null;
 
-
         try {
+
+			// Isolation変換実行
+			keyStr = this.encodeIsolationConvert(keyStr);
 
             // Key値チェック
             if (!this.checkKeyLength(keyStr))  {
@@ -1333,6 +1379,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
+			// Isolation変換実行
+			keyStr = this.encodeIsolationConvert(keyStr);
+
             if (!transactionMode) {
                 retStrs = new String[2];
                 retStrs[0] = "30";
@@ -1398,6 +1447,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] keyNodeReleaseRet = null;
 
         try {
+
+			// Isolation変換実行
+			keyStr = this.encodeIsolationConvert(keyStr);
 
             if (!transactionMode) {
                 retStrs = new String[2];
@@ -1487,6 +1539,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] keyNodeSaveRet = null;
 
         try {
+			// Isolation変換実行
+			tagStr = this.encodeIsolationConvert(tagStr);
 
             // Key値チェック
             if (!this.checkKeyLength(tagStr))  {
@@ -1545,7 +1599,28 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     retStrs[0] = keyNodeSaveRet[0];
                     retStrs[1] = "true";
-                    retStrs[2] = keyNodeSaveRet[2];
+
+					if (!this.isolationMode) {
+
+	                    retStrs[2] = keyNodeSaveRet[2];
+					} else {
+
+	                    String[] splitList = keyNodeSaveRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
+	                    if (splitList.length > 0) {
+
+	                        StringBuilder retBuf = new StringBuilder(ImdstDefine.stringBufferLargeSize);
+	                        String retSep = "";
+
+	                        for (int idx = 0; idx < splitList.length; idx++) {
+
+                                retBuf.append(retSep);
+                                retBuf.append(this.decodeIsolationConvert(splitList[idx]));
+                                retSep = ImdstDefine.imdstTagKeyAppendSep;
+	                        }
+
+	                        retStrs[2] = retBuf.toString();
+	                    }
+					}
                 } else {
 
                     retStrs[0] = keyNodeSaveRet[0];
@@ -1556,16 +1631,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     if (splitList.length > 0) {
 
-                        StringBuffer retBuf = new StringBuffer(ImdstDefine.stringBufferLargeSize);
+                        StringBuilder retBuf = new StringBuilder(ImdstDefine.stringBufferLargeSize);
                         String retSep = "";
 
                         for (int idx = 0; idx < splitList.length; idx++) {
 
-                            String[] retKey = this.getKeyValue(splitList[idx]);
+							String decodeIsokationCnvKey = this.decodeIsolationConvert(splitList[idx]);
+                            String[] retKey = this.getKeyValue(decodeIsokationCnvKey);
                             if (retKey[1].equals("true")) {
 
                                 retBuf.append(retSep);
-                                retBuf.append(splitList[idx]);
+                                retBuf.append(decodeIsokationCnvKey);
                                 retSep = ImdstDefine.imdstTagKeyAppendSep;
                             }
                         }
@@ -1837,7 +1913,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (Exception e) {
             //e.printStackTrace();
-            logger.error("PollQueue =[" + this.myPollQueue + "] RequestTime=[" + new Date() + "] ErrorKey=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
+            logger.error("PollQueue =[" + this.myPollQueue + "] RequestTime=[" + new Date() + "] ErrorKey=[" + new String(BASE64DecoderStream.decode(this.decodeIsolationConvert(key).getBytes())) + "]");
 
             if (keyNodeConnector != null) {
                 keyNodeConnector.close();
@@ -1956,7 +2032,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     if (type.equals("8")) {
 
                         // Key値でValueを取得
-                        StringBuffer buf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
+                        StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
                         String sendStr = null;
                         // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
                         buf.append("8");
@@ -2487,7 +2563,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 旧ルールが存在する場合はまず確認
             // TODO:このやり方ではノード追加後の移行中に完全性が崩れる可能性がある
             if (DataDispatcher.hasOldRule()) {
-                String[] checkRet = this.getKeyValue(values[0]);
+				String decodeIsokationCnvKey = this.decodeIsolationConvert(values[0]);
+                String[] checkRet = this.getKeyValue(decodeIsokationCnvKey);
                 if (checkRet[0].equals("true")) {
                     // 旧ノードにデータあり
                     retParams = new String[3];
@@ -2507,7 +2584,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 try {
 
                     // Key値でデータノード名を保存
-                    StringBuffer buf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
+                    StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
                     String sendStr = null;
                     // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
                     buf.append("6");                                     // Type
@@ -2591,7 +2668,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         try {
 
                             // Key値でデータノード名を保存
-                            StringBuffer buf = new StringBuffer(ImdstDefine.stringBufferMiddleSize);
+                            StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
                             String sendStr = null;
 
                             // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
@@ -2827,7 +2904,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     try {
 
                         // Key値でデータノード名を保存
-                        StringBuffer buf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+                        StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
                         String sendStr = null;
                         // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
                         buf.append("5");
@@ -2960,7 +3037,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         boolean mainNodeSave = false;
 
-        StringBuffer buf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+        StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
         String sendStr = null;
 
         try {
@@ -3122,7 +3199,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 try {
 
                     // Key値でLockを取得
-                    StringBuffer buf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+                    StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
                     buf.append("30");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(this.stringCnv(key));                // Key値
@@ -3220,7 +3297,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 try {
 
                     // Key値でLockを取得
-                    StringBuffer buf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+                    StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
                     buf.append("31");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(this.stringCnv(key));                  // Key値
@@ -3314,7 +3391,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 try {
 
                     // Key値でLockを取得
-                    StringBuffer buf = new StringBuffer(ImdstDefine.stringBufferSmallSize);
+                    StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
                     buf.append("32");
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(this.stringCnv(key));               // Key値
@@ -3726,6 +3803,44 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
         return retParams;
     }
+
+
+	// IsolationMode用
+	private String encodeIsolationConvert(String str) {
+
+		if (this.isolationMode) {
+
+			this.isolationBuffer.delete(0, Integer.MAX_VALUE);
+
+			if (str != null && StatusUtil.isIsolationEncodeTarget(str)) {
+				this.isolationBuffer.append(StatusUtil.getIsolationPrefix());
+				this.isolationBuffer.append(str);
+				return this.isolationBuffer.toString();
+			} else {
+				return str;
+			}
+		} else {
+			return str;
+		}
+	}
+
+
+	// IsolationMode用
+	private String decodeIsolationConvert(String str) {
+
+		if (this.isolationMode) {
+
+
+			if (str != null) {
+				
+				return str.substring(this.isolationPrefixLength);
+			} else {
+				return str;
+			}
+		} else {
+			return str;
+		}
+	}
 
 
     // 文字列変換メソッド

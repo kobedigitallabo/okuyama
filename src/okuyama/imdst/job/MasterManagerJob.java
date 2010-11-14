@@ -16,6 +16,8 @@ import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
 
+import com.sun.mail.util.BASE64EncoderStream;
+
 /**
  * MasterNode、自身でポートを上げて待ち受ける<br>
  * クライアントからの要求をHelperに依頼する.<br>
@@ -149,6 +151,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             }
         }
 
+
         logger.debug("MasterManagerJob - initJob - end");
     }
 
@@ -220,6 +223,21 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             if (loadBalanceStr != null) {
                 loadBalance = new Boolean(loadBalanceStr).booleanValue();
             }
+
+	        // データ個別保持のモード設定
+	        String userIsolationMode = (String)super.getPropertiesValue(ImdstDefine.Prop_IsolationMode);
+
+			if (userIsolationMode != null && userIsolationMode.equals("true")) {
+				// IsolationMode
+		        String isolationPrefix = super.getPropertiesValue(ImdstDefine.Prop_IsolationPrefix);
+				if (isolationPrefix != null && isolationPrefix.trim().length() == 5) {
+
+					StatusUtil.initIsolationMode(true, isolationPrefix);
+				} else {
+
+					return ERROR;
+				}
+			}
 
 
             // サーバソケットの生成

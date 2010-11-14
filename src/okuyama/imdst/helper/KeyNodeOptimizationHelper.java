@@ -12,7 +12,6 @@ import okuyama.base.util.LoggerFactory;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
-import okuyama.imdst.client.ImdstKeyValueClient;
 import okuyama.imdst.util.io.*;
 import okuyama.imdst.util.io.KeyNodeConnector;
 
@@ -65,7 +64,6 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
         boolean serverRunning = true;
 
-        ImdstKeyValueClient imdstKeyValueClient = null;
 
         String[] optimizeTargetKeys = null;
         String myInfo = null;
@@ -218,7 +216,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
      *
      */
     private void searchTargetData(String nodeName, int nodePort, int dataNodeMatchNo) throws BatchException {
-        StringBuffer buf = null;
+        StringBuilder buf = null;
 
         try {
 
@@ -235,7 +233,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             this.keyNodeConnector.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             // コピー元からデータ読み込み
-            buf = new StringBuffer();
+            buf = new StringBuilder();
             // 処理番号20
             buf.append("26");
             buf.append(ImdstDefine.keyHelperClientParamSep);

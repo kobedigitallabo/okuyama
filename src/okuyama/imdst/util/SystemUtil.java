@@ -12,6 +12,7 @@ import okuyama.base.util.LoggerFactory;
 public class SystemUtil {
 
 
+
     /**
      * 指定の文字を指定の桁数で特定文字列で埋める.<br>
      *
@@ -31,7 +32,7 @@ public class SystemUtil {
      * @param fixByte
      */
     public static String fillCharacter(String data, int fixSize, int fillByte) {
-        StringBuffer writeBuf = new StringBuffer(data);
+        StringBuilder writeBuf = new StringBuilder(data);
 
         int valueSize = data.length();
 
@@ -45,6 +46,4 @@ public class SystemUtil {
         writeBuf.append(new String(appendDatas));
         return writeBuf.toString();
     }
-
-
 }

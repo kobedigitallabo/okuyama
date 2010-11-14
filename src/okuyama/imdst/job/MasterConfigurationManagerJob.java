@@ -15,7 +15,6 @@ import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
 
-import okuyama.imdst.client.ImdstKeyValueClient;
 
 /**
  * MasterNodeの設定関係を管理するJob<br>

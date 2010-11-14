@@ -16,7 +16,7 @@ import okuyama.imdst.util.ImdstDefine;
 
 
 public class MainServlet extends HttpServlet {
-    private StringBuffer pageBuf = null;
+    private StringBuilder pageBuf = null;
 
     private boolean subNode = false;
     private boolean thirdNode = false;
@@ -287,7 +287,7 @@ public class MainServlet extends HttpServlet {
     }
 
     private String initPage(ArrayList settingList, ArrayList dataNodeList, ArrayList slaveDataNodeList, ArrayList thirdDataNodeList, String msg) {
-        StringBuffer pageBuf = new StringBuffer();
+        StringBuilder pageBuf = new StringBuilder();
         HashMap keyNodeSetting = (HashMap)settingList.get(0);
         String keyNodeReadOnly = "";
 

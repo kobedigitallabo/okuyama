@@ -112,7 +112,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                                                                                 ImdstDefine.keyHelperClientParamEncoding));
 
                                 // 文字列バッファ初期化
-                                StringBuffer serverRequestBuf = new StringBuffer();
+                                StringBuilder serverRequestBuf = new StringBuilder();
 
                                 // 処理番号連結
                                 serverRequestBuf.append("95");
@@ -233,7 +233,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                                                       ImdstDefine.keyHelperClientParamEncoding));
 
                         // 文字列バッファ初期化
-                        StringBuffer serverRequestBuf = new StringBuffer();
+                        StringBuilder serverRequestBuf = new StringBuilder();
 
                         // 処理番号連結
                         serverRequestBuf.append("92");
@@ -347,7 +347,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                                                                                 ImdstDefine.keyHelperClientParamEncoding));
 
                                 // 文字列バッファ初期化
-                                StringBuffer serverRequestBuf = new StringBuffer();
+                                StringBuilder serverRequestBuf = new StringBuilder();
 
                                 
                                 // 処理番号連結
@@ -479,7 +479,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                                                                                 ImdstDefine.keyHelperClientParamEncoding));
 
                                 // 文字列バッファ初期化
-                                StringBuffer serverRequestBuf = new StringBuffer();
+                                StringBuilder serverRequestBuf = new StringBuilder();
 
                                 
                                 // 処理番号連結
@@ -509,7 +509,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                 }
 
                                 // 文字列バッファ初期化
-                                serverRequestBuf = new StringBuffer();
+                                serverRequestBuf = new StringBuilder();
 
                                 // 処理番号連結
                                 serverRequestBuf.append("92");
@@ -637,7 +637,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                                                                         ImdstDefine.keyHelperClientParamEncoding));
 
                         // 文字列バッファ初期化
-                        StringBuffer serverRequestBuf = new StringBuffer();
+                        StringBuilder serverRequestBuf = new StringBuilder();
 
                         // 処理番号連結
                         serverRequestBuf.append("90");
@@ -743,7 +743,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                                                                         ImdstDefine.keyHelperClientParamEncoding));
 
                         // 文字列バッファ初期化
-                        StringBuffer serverRequestBuf = new StringBuffer();
+                        StringBuilder serverRequestBuf = new StringBuilder();
 
                         // 処理番号連結
                         serverRequestBuf.append("91");
@@ -893,7 +893,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 }
 
                 // Key値でデータノード名を保存
-                StringBuffer buf = new StringBuffer(25);
+                StringBuilder buf = new StringBuilder(25);
                 // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
                 buf.append("10");
                 buf.append(ImdstDefine.keyHelperClientParamSep);

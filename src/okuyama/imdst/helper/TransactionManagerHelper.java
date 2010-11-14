@@ -54,7 +54,7 @@ public class TransactionManagerHelper extends AbstractHelper {
 
         try{
             String[] retParams = null;
-            StringBuffer retParamBuf = null;
+            StringBuilder retParamBuf = null;
 
             Object[] parameters = super.getParameters();
 
@@ -98,7 +98,7 @@ public class TransactionManagerHelper extends AbstractHelper {
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
                     // 処理番号を取り出し
-                    retParamBuf = new StringBuffer();
+                    retParamBuf = new StringBuilder();
 
                     if(clientParameterList[0].equals("30")) {
 

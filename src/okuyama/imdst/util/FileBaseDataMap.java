@@ -509,7 +509,7 @@ class CoreFileBaseKeyMap {
 
             File file = dataFileList[hashCode % numberOfDataFiles];
 
-            StringBuffer buf = new StringBuffer(this.lineDataSize);
+            StringBuilder buf = new StringBuilder(this.lineDataSize);
 
             buf.append(this.fillCharacter(key, keyDataLength));
             buf.append(this.fillCharacter(value, oneDataLength));
@@ -834,7 +834,7 @@ class CoreFileBaseKeyMap {
      */
     private String fillCharacter(String data, int fixSize) {
         return SystemUtil.fillCharacter(data, fixSize, FileBaseDataMap.paddingSymbol);
-/*        StringBuffer writeBuf = new StringBuffer(data);
+/*        StringBuilder writeBuf = new StringBuilder(data);
 
         int valueSize = data.length();
 
@@ -891,7 +891,7 @@ class CoreFileBaseKeyMap {
 
         List keys = null;
         byte[] datas = null;
-        StringBuffer keysBuf = null;
+        StringBuilder keysBuf = null;
         RandomAccessFile raf = null;
 
         try {
@@ -913,7 +913,7 @@ class CoreFileBaseKeyMap {
                     for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
 
                         int assist = (lineDataSize * loopIdx);
-                        keysBuf = new StringBuffer(ImdstDefine.stringBufferLarge_3Size);
+                        keysBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
 
                         int idx = 0;
 
