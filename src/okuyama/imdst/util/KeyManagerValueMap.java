@@ -50,9 +50,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
 
     // コンストラクタ
-    public KeyManagerValueMap(int size, boolean memoryMode) {
+    public KeyManagerValueMap(int size, boolean memoryMode, String[] virtualStoreDirs) {
 
-        super(size, new Double(size * 0.9).intValue(), 512, memoryMode);
+        super(size, new Double(size * 0.9).intValue(), 512, memoryMode, virtualStoreDirs);
 
         this.memoryMode = memoryMode;
     }
@@ -86,7 +86,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.tmpVacuumeCopyMapDirs[4] = lineFile + ".cpmapdir5/";
 
 
-
             this.fos = new FileOutputStream(new File(lineFile), true);
             this.osw = new OutputStreamWriter(this.fos, ImdstDefine.keyWorkFileEncoding);
             this.bw = new BufferedWriter (osw);
@@ -113,6 +112,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - init - Error [" + e.getMessage() + "]");
         }
     }
+
 
     /**
      * データを無加工で取り出す.<br>

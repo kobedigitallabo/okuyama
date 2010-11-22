@@ -214,24 +214,30 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         boolean keyStoreForFileFlg = false;
         String keyStoreDirsStr = null;
         String[] keyStoreDirs = null;
+
+        String memoryLimitSize = null;
+        int memoryLimitSizeInt = -1;
+        String virtualStorageDirsStr = null;
+        String[] virtualStorageDirs = null;
+
         try {
             keyMapFiles = optionParam.split(",");
 
             // KeyMapManagerの設定値を取得
-            this.workFileMemoryModeStr = super.getPropertiesValue(super.getJobName() + ".memoryMode");
-            this.dataMemoryModeStr = super.getPropertiesValue(super.getJobName() + ".dataMemory");
+            this.workFileMemoryModeStr = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_MemoryMode);
+            this.dataMemoryModeStr = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_DataMemory);
 
-            keyStoreForFileStr = super.getPropertiesValue(super.getJobName() + ".keyMemory");
+            keyStoreForFileStr = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_KeyMemory);
             if (keyStoreForFileStr != null || !keyStoreForFileStr.equals("")) {
                 if (keyStoreForFileStr.equals("false")) {
                     keyStoreForFileFlg = true;
                 }
             }
 
-            keyStoreDirsStr = super.getPropertiesValue(super.getJobName() + ".keyStoreDirs");
+            keyStoreDirsStr = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_KeyStoreDirs);
             if (keyStoreDirsStr != null) keyStoreDirs = keyStoreDirsStr.split(",");
 
-            this.keySizeStr = super.getPropertiesValue(super.getJobName() + ".keySize");
+            this.keySizeStr = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_KeySize);
 
             // workファイルを保持するか判断
             if (workFileMemoryModeStr != null && workFileMemoryModeStr.equals("true")) workFileMemoryMode = true;
@@ -241,6 +247,20 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             // データ保持予測件数
             if (keySizeStr != null) keySize = Integer.parseInt(keySizeStr);
 
+            // 仮想ストレージ設定
+            // トランザクションログを記録しかつ、Valueがメモリの場合のみ設定可能
+            if (workFileMemoryMode == false && dataMemoryMode == false && keyStoreForFileFlg == false) {
+                memoryLimitSize = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_MemoryLimitSize);
+                if (memoryLimitSize != null && !memoryLimitSize.trim().equals("") && new Integer(memoryLimitSize).intValue() > 0) {
+
+                    virtualStorageDirsStr = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_VirtualStoreDirs);
+                    if (virtualStorageDirsStr != null && !virtualStorageDirsStr.trim().equals("")) {
+                        memoryLimitSizeInt = new Integer(memoryLimitSize).intValue();
+                        virtualStorageDirs = virtualStorageDirsStr.split(",");
+                    }
+                }
+            }
+
             // KeyMapManager初期化
             if (keyStoreForFileFlg) {
 
@@ -249,7 +269,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             } else {
 
                 // Key is MemoryStoreMode
-                this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode);
+                this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode, memoryLimitSizeInt, virtualStorageDirs);
             }
             this.keyMapManager.start();
         } catch(Exception e) {

@@ -6,6 +6,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import com.sun.mail.util.BASE64DecoderStream;
+;
 
 /**
  * To manage files using a key-value.<br>
@@ -1075,7 +1077,10 @@ class FileBaseDataMapIterator implements Iterator {
 
         while((key = this.fileBaseDataMap.nextIteratorKey()) == null) {};
         this.nowPositionKey = key;
+
         value = this.fileBaseDataMap.get(key);
+
+        if (value == null) return null;
 
         Map.Entry fileBaseDataMapEntry = new FileBaseDataMapEntry(key, value, this.fileBaseDataMap);
         return fileBaseDataMapEntry;

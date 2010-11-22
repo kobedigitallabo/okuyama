@@ -28,8 +28,17 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
     private AbstractMap mainMap = null;
 
+    // メモリ救済用
+    // メモリ領域が枯渇した場合に使用する仮想領域
+    private boolean urgentSaveMode = false;
+    private AbstractMap urgentSaveMap = null;
+    private ICoreValueConverter urgentSaveMapConverter = null;
+    private String[] virtualStoreDirs = null;
+    private Object syncObj = new Object();
+
+
     // コンストラクタ
-    public CoreValueMap(int size, int upper, int multi, boolean memoryMode) {
+    public CoreValueMap(int size, int upper, int multi, boolean memoryMode, String[] virtualStoreDirs) {
 
         if (memoryMode) {
 
@@ -40,6 +49,8 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             mainMap  = new ConcurrentHashMap(size, upper, multi);
             converter = new PartialFileModeCoreValueCnv();
         }
+
+        this.virtualStoreDirs = virtualStoreDirs;
     }
 
 
@@ -58,7 +69,22 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      * @param value
      */
     public Object put(Object key, Object value) {
-        return mainMap.put(converter.convertEncodeKey(key), converter.convertEncodeValue(value));
+
+        // 仮想ストレージモードが起動しているかを確認
+        if (!this.isUrgentSaveMode()) {
+            return mainMap.put(converter.convertEncodeKey(key), converter.convertEncodeValue(value));
+        } else {
+            // 仮想ストレージモードへ移行している
+            if (mainMap.containsKey(converter.convertEncodeKey(key))) {
+
+                // 既存ストレージ
+                return mainMap.put(converter.convertEncodeKey(key), converter.convertEncodeValue(value));
+            } else {
+
+                // 仮想ストレージ
+                return urgentSaveMap.put(urgentSaveMapConverter.convertEncodeKey(key), urgentSaveMapConverter.convertEncodeValue(value));
+            }
+        }
     }
 
 
@@ -69,7 +95,23 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      * @return Object
      */
     public Object get(Object key) {
-        return converter.convertDecodeValue(mainMap.get(converter.convertEncodeKey(key)));
+
+        // 仮想ストレージモードが起動しているかを確認
+        if (!this.isUrgentSaveMode()) {
+            return converter.convertDecodeValue(mainMap.get(converter.convertEncodeKey(key)));
+        } else {
+
+            // 仮想ストレージモードへ移行している
+            if (mainMap.containsKey(converter.convertEncodeKey(key))) {
+
+                // 既存ストレージ
+                return converter.convertDecodeValue(mainMap.get(converter.convertEncodeKey(key)));
+            } else {
+
+                // 仮想ストレージ
+                return urgentSaveMapConverter.convertDecodeValue(urgentSaveMap.get(urgentSaveMapConverter.convertEncodeKey(key)));
+            }
+        }
     }
 
 
@@ -80,7 +122,21 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      * @return Object
      */
     public Object remove(Object key) {
-        return converter.convertDecodeValue(mainMap.remove(converter.convertEncodeKey(key)));
+        // 仮想ストレージモードが起動しているかを確認
+        if (!this.isUrgentSaveMode()) {
+            return converter.convertDecodeValue(mainMap.remove(converter.convertEncodeKey(key)));
+        } else {
+            // 仮想ストレージモードへ移行している
+            if (mainMap.containsKey(converter.convertEncodeKey(key))) {
+
+                // 既存ストレージ
+                return converter.convertDecodeValue(mainMap.remove(converter.convertEncodeKey(key)));
+            } else {
+
+                // 仮想ストレージ
+                return urgentSaveMapConverter.convertDecodeValue(urgentSaveMap.remove(urgentSaveMapConverter.convertEncodeKey(key)));
+            }
+        }
     }
 
 
@@ -91,7 +147,17 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      * @return boolean
      */
     public boolean containsKey(Object key) {
-        return mainMap.containsKey(converter.convertEncodeKey(key));
+        // 仮想ストレージモードが起動しているかを確認
+        if (!this.isUrgentSaveMode()) {
+            return mainMap.containsKey(converter.convertEncodeKey(key));
+        } else {
+            // 仮想ストレージモードへ移行している
+            if (mainMap.containsKey(converter.convertEncodeKey(key))) {
+                return true;
+            } else {
+                return urgentSaveMap.containsKey(urgentSaveMapConverter.convertEncodeKey(key));
+            }
+        }
     }
 
 
@@ -101,6 +167,10 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      */
     public void clear() {
         this.mainMap.clear();
+
+        // 仮想ストレージモードが起動しているかを確認
+        if (this.isUrgentSaveMode()) 
+            urgentSaveMap.clear();
     }
 
 
@@ -112,7 +182,15 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      * @throws
      */
     public int size() {
-        return this.mainMap.size();
+
+        // 仮想ストレージモードが起動しているかを確認
+        if (!this.isUrgentSaveMode()) {
+            return this.mainMap.size();
+        } else {
+            int retSize = this.mainMap.size();
+            retSize = retSize + urgentSaveMap.size();
+            return retSize;
+        }
     }
     
     
@@ -122,6 +200,34 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      * @return Set
      */
     public Set entrySet() {
-        return new CoreValueMapSet(mainMap.entrySet(), converter);
+
+        // 仮想ストレージモードが起動しているかを確認
+        if (!this.isUrgentSaveMode()) {
+            return new CoreValueMapSet(mainMap.entrySet(), converter);
+        } else {
+            return new CoreValueMapSet(mainMap.entrySet(), urgentSaveMap.entrySet(), converter, urgentSaveMapConverter);
+        }
+    }
+
+
+    /**
+     * isUseMemoryLimitOver
+     */
+    private boolean isUrgentSaveMode() {
+        if (this.virtualStoreDirs == null) return false;
+        if (this.urgentSaveMode) return true;
+        if (!StatusUtil.isUseMemoryLimitOver()) return false;
+
+        if (this.urgentSaveMap != null) return true;
+
+        synchronized (this.syncObj) {
+
+            if (this.urgentSaveMap != null) return true;
+
+            this.urgentSaveMapConverter = new AllFileModeCoreValueCnv();
+            this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 1000000);
+            this.urgentSaveMode = true;
+        }
+        return true;
     }
 }

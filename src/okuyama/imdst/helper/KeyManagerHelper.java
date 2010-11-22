@@ -706,11 +706,11 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             // 引数設定
                             // Key値を設定
-							if(key.indexOf("#") == 0) {
-	                            engine.put("dataKey", new String(BASE64DecoderStream.decode(key.substring(6).getBytes()), ImdstDefine.keyWorkFileEncoding));
-							} else {
-							    engine.put("dataKey", new String(BASE64DecoderStream.decode(key.getBytes()), ImdstDefine.keyWorkFileEncoding));
-							}
+                            if(key.indexOf("#") == 0) {
+                                engine.put("dataKey", new String(BASE64DecoderStream.decode(key.substring(6).getBytes()), ImdstDefine.keyWorkFileEncoding));
+                            } else {
+                                engine.put("dataKey", new String(BASE64DecoderStream.decode(key.getBytes()), ImdstDefine.keyWorkFileEncoding));
+                            }
 
                             // Value値を設定
                             if (tmpValue == null) {

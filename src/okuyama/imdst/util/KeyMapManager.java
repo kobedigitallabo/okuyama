@@ -141,12 +141,14 @@ public class KeyMapManager extends Thread {
     private ConcurrentHashMap moveAdjustmentDataMap = null;
     private Object moveAdjustmentSync = new Object();
 
-
+    // 仮想ストレージモード設定
+    private int memoryLimitSize = -1;
+    private String[] virtualStorageDirs = null;
 
     // 初期化メソッド
     // Transactionを管理する場合に呼び出す
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, boolean dataManage) throws BatchException {
-        this(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
+        this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
         this.dataManege = dataManage;
     }
 
@@ -154,12 +156,27 @@ public class KeyMapManager extends Thread {
     // 初期化メソッド
     // Key値はメモリを使用する場合に使用
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory) throws BatchException {
-        this(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
+        this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
+    }
+
+    // 初期化メソッド
+    // Key値はメモリを使用する場合に使用
+    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, int memoryLimitSize, String[] virtualStorageDirs) throws BatchException {
+        this.memoryLimitSize = memoryLimitSize;
+        this.virtualStorageDirs = virtualStorageDirs;
+        this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
     }
 
 
     // 初期化メソッド
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, String[] dirs) throws BatchException {
+        this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, dirs);
+    }
+
+    /**
+     * 初期化処理
+     */
+    private void init(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, String[] dirs) throws BatchException {
         logger.debug("init - start");
         if (!initFlg) {
             initFlg = true;
@@ -206,7 +223,7 @@ public class KeyMapManager extends Thread {
 
                     // KeyManagerValueMap作成
                     if (!this.allDataForFile) {
-                        this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory);
+                        this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs);
                     } else {
                         this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize);
                     }
@@ -310,8 +327,6 @@ public class KeyMapManager extends Thread {
         logger.debug("init - end");
     }
 
-
-
     /**
      * 定期的にトランザクションログファイルのローテーション及び、Vacuum処理を行う.<br>
      * システム停止要求を監視して停止依頼があった場合は自身を終了する.<br>
@@ -341,6 +356,13 @@ public class KeyMapManager extends Thread {
 
                     if (!this.dataManege) {
                         this.autoLockRelease(System.currentTimeMillis());
+                    }
+
+                    // メモリの限界値をチェック
+                    if(this.memoryLimitSize > 0) {
+                        if (JavaSystemApi.getUseMemoryPercentCache() > this.memoryLimitSize) 
+                            // 限界値を超えている
+                            StatusUtil.useMemoryLimitOver();
                     }
 
                     Thread.sleep(KeyMapManager.updateInterval);
@@ -1202,6 +1224,7 @@ public class KeyMapManager extends Thread {
                     int counter = 0;
                     while(entryIte.hasNext()) {
                         Map.Entry obj = (Map.Entry)entryIte.next();
+                        if (obj == null) continue;
                         String key = null;
 
                         key = (String)obj.getKey();
@@ -1227,6 +1250,7 @@ public class KeyMapManager extends Thread {
                 }
                 //logger.debug("outputKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
+                e.printStackTrace();
                 logger.error("outputKeyMapObj2Stream - Error =[" + e.getMessage() + "]");
                 //blocking = true;
                 //StatusUtil.setStatusAndMessage(1, "outputKeyMapObj2Stream - Error [" + e.getMessage() + "]");
@@ -1332,7 +1356,7 @@ public class KeyMapManager extends Thread {
                         // KeyManagerValueMapのインスタンスを再作成
                         this.keyMapObj = null;
                         if (!this.allDataForFile) {
-                            this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory);
+                            this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs);
                         } else {
                             this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize);
                         }
@@ -1464,6 +1488,7 @@ public class KeyMapManager extends Thread {
                             while(entryIte.hasNext()) {
 
                                 Map.Entry obj = (Map.Entry)entryIte.next();
+                                if (obj == null) continue;
                                 writeKey = (String)obj.getKey();
 
                                 this.bw.write(new StringBuilder(ImdstDefine.stringBufferMiddleSize).
@@ -1536,6 +1561,7 @@ public class KeyMapManager extends Thread {
                 int counter = 0;
                 while(entryIte.hasNext()) {
                     Map.Entry obj = (Map.Entry)entryIte.next();
+                    if (obj == null) continue;
                     String key = null;
                     String sendTagKey = null;
                     boolean sendFlg = true;
@@ -1624,6 +1650,7 @@ public class KeyMapManager extends Thread {
                 pw.println("-1");
                 pw.flush();
             } catch (Exception e) {
+                e.printStackTrace();
                 logger.error("outputNoMatchKeyMapKey2Stream - Error =[" + e.getMessage() + "]");
             }
         }
@@ -1665,6 +1692,7 @@ public class KeyMapManager extends Thread {
                 // キー値を1件づつレンジに含まれているか確認
                 while(entryIte.hasNext()) {
                     Map.Entry obj = (Map.Entry)entryIte.next();
+                    if (obj == null) continue;
                     String key = null;
                     String sendTagKey = null;
                     boolean sendFlg = false;
@@ -1847,6 +1875,7 @@ public class KeyMapManager extends Thread {
                     // キー値を1件づつレンジに含まれているか確認
                     while(entryIte.hasNext()) {
                         Map.Entry obj = (Map.Entry)entryIte.next();
+                        if (obj == null) continue;
                         String key = null;
 
                         // キー値を取り出し
@@ -1879,6 +1908,7 @@ public class KeyMapManager extends Thread {
                 // キー値を1件づつレンジに含まれているか確認
                 while(entryIte.hasNext()) {
                     Map.Entry obj = (Map.Entry)entryIte.next();
+                    if (obj == null) continue;
                     String key = null;
 
                     // キー値を取り出し
@@ -2015,6 +2045,7 @@ public class KeyMapManager extends Thread {
         // キー値を1件づつレンジに含まれているか確認
         while(entryIte.hasNext()) {
             Map.Entry obj = (Map.Entry)entryIte.next();
+            if (obj == null) continue;
             String key = null;
 
             // キー値を取り出し

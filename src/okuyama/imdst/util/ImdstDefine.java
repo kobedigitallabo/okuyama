@@ -157,6 +157,13 @@ public class ImdstDefine {
     public static final String Prop_DataConsistencyMode = "DataConsistencyMode";
     public static final String Prop_IsolationMode = "IsolationMode";
     public static final String Prop_IsolationPrefix = "IsolationPrefix";
+    public static final String Prop_MemoryMode = ".memoryMode";
+    public static final String Prop_DataMemory = ".dataMemory";
+    public static final String Prop_KeyMemory = ".keyMemory";
+    public static final String Prop_KeySize = ".keySize";
+    public static final String Prop_MemoryLimitSize = ".memoryLimitSize";
+    public static final String Prop_VirtualStoreDirs = ".virtualStoreDirs";
+    public static final String Prop_KeyStoreDirs = ".keyStoreDirs";
 
 
     /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */
