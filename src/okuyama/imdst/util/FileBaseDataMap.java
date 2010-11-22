@@ -116,6 +116,7 @@ public class FileBaseDataMap extends AbstractMap {
      * @param value
      */
     public Object put(Object key, Object value) {
+
         int hashCode = CoreFileBaseKeyMap.createHashCode((String)key);
 
         synchronized (this.syncObjs[hashCode % this.numberOfCoreMap]) { 
@@ -131,6 +132,7 @@ public class FileBaseDataMap extends AbstractMap {
      * @param key
      */
     public Object get(Object key) {
+
         Object ret = null;
         int hashCode = CoreFileBaseKeyMap.createHashCode((String)key);
 
@@ -392,6 +394,7 @@ class CoreFileBaseKeyMap {
     private long nowIterationFpPosition = 0;
 
 
+
     /**
      * コンストラクタ.<br>
      *
@@ -417,7 +420,7 @@ class CoreFileBaseKeyMap {
 
     /**
      * コンストラクタ.<br>
-     * Keyサイズ指定有り.<br>
+     * Valueサイズ指定有り.<br>
      *
      * @param dirs
      * @param innerCacheSize
@@ -426,10 +429,16 @@ class CoreFileBaseKeyMap {
      * @return 
      * @throws
      */
+
     public CoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData, int numberOfValueSize) {
         try {
             this.oneDataLength = numberOfValueSize;
             this.lineDataSize =  this.keyDataLength + this.oneDataLength;
+			if (8192 > this.lineDataSize) {
+				this.getDataSize = this.lineDataSize * (8192 / this.lineDataSize) * 5;
+			} else {
+				this.getDataSize = this.lineDataSize * 1 * 2;
+			}
             this.baseFileDirs = dirs;
             this.innerCacheSize = innerCacheSize;
             if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;

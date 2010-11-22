@@ -47,6 +47,11 @@ public class AllFileModeCoreValueCnv implements ICoreValueConverter {
      */
     public Object convertDecodeValue(Object value) {
         if (value == null) return null;
-        return new Integer((String)value);
+		try {
+			Integer ret = new Integer((String)value);
+	        return ret;
+		} catch(NumberFormatException nfe) {
+			return (String)value;
+		}
     }
 }

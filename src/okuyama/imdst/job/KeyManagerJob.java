@@ -249,7 +249,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
             // 仮想ストレージ設定
             // トランザクションログを記録しかつ、Valueがメモリの場合のみ設定可能
-            if (workFileMemoryMode == false && dataMemoryMode == false && keyStoreForFileFlg == false) {
+            if (workFileMemoryMode == false && keyStoreForFileFlg == false) {
                 memoryLimitSize = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_MemoryLimitSize);
                 if (memoryLimitSize != null && !memoryLimitSize.trim().equals("") && new Integer(memoryLimitSize).intValue() > 0) {
 
