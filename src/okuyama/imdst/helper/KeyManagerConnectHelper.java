@@ -54,16 +54,6 @@ public class KeyManagerConnectHelper extends AbstractHelper {
 
             while (serverRunning) {
 
-                // 停止ファイル関係チェック
-                if (StatusUtil.getStatus() == 1) {
-                    serverRunning = false;
-                    logger.info("KeyManagerConnectHelper - 状態異常です");
-                }
-
-                if (StatusUtil.getStatus() == 2) {
-                    serverRunning = false;
-                    logger.info("KeyManagerConnectHelper - 終了状態です");
-                }
                 Object[] param = super.pollSpecificationParameterQueue(pollQueueName);
 
                 if (param == null || param.length < 1) continue;

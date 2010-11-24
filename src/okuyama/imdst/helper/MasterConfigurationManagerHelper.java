@@ -200,6 +200,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
                                 // ファイルモード
                                 // 自身がメインマスターノード
+
                                 StatusUtil.setMainMasterNode(true);
                             } else {
 
@@ -222,6 +223,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                                     logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
 
                                     // エラーが発生した場合は例外としノードに設定せずに自身の設定を変更
+
                                     StatusUtil.setMainMasterNode(true);
                                     mainMasterNodeModeStr = StatusUtil.getMyNodeInfo();
                                 } finally {
@@ -273,6 +275,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                                 imdstKeyValueClient.connect(node, Integer.parseInt(port));
                                 imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
                             } catch(Exception e) {
+
                                 logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
 
                                 // エラーが発生した場合は例外としノードに設定せずに自身の設定を変更
@@ -840,6 +843,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
                     // 自身がメインマスターノード
                     StatusUtil.setMainMasterNode(true);
+
                     if (allMasterNodeInfoStr != null) {
 
                         String[] allMasterNodeInfos = allMasterNodeInfoStr.trim().split(",");

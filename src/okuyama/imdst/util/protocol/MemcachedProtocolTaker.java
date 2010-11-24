@@ -274,8 +274,10 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 // 存在しないプロトコルはokuyama用として処理する。
                 try {
                     // 数値変換出来ない場合はエラー
-                    Integer.parseInt(executeMethods[0]);
+                    String[] checkOkuyamaMethods = executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
+                    Integer.parseInt(checkOkuyamaMethods[0]);
                 } catch (NumberFormatException e) {
+
                     pw.print("ERROR");
                     pw.print("\r\n");
                     pw.flush();

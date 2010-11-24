@@ -54,17 +54,6 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
 
             while (serverRunning) {
 
-                // 停止ファイル関係チェック
-                if (StatusUtil.getStatus() == 1) {
-                    serverRunning = false;
-                    logger.info("MasterManagerConnectHelper - 状態異常です");
-                }
-
-                if (StatusUtil.getStatus() == 2) {
-                    serverRunning = false;
-                    logger.info("MasterManagerConnectHelper - 終了状態です");
-                }
-
                 // キューから取り出し
                 Object[] param = super.pollSpecificationParameterQueue(pollQueueName);
                 if (param == null || param.length < 1) continue;

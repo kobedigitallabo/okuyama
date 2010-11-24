@@ -26,7 +26,7 @@ import okuyama.imdst.util.StatusUtil;
 public class KeyManagerAcceptHelper extends AbstractHelper {
 
     // 無操作上限時間 -1は切断なし
-    private long connetionTimeout = 60000 * 5;
+    private long connetionTimeout = 60000 * 30;
 
     private String queuePrefix = null;
 
@@ -42,7 +42,10 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
     // 初期化メソッド定義
     public void initHelper(String initValue) {
         if (initValue != null && !initValue.trim().equals("")) {
-            this.connetionTimeout = Integer.parseInt(initValue);
+
+            int workCloseTimeInt = Integer.parseInt(initValue);
+            long workCloseTimeLong = workCloseTimeInt * 1000;
+            this.connetionTimeout = workCloseTimeLong;
         }
         this.checkConnections = new CheckConnection[1];
         this.checkConnections[0] = new CheckConnection();
@@ -71,17 +74,6 @@ public class KeyManagerAcceptHelper extends AbstractHelper {
             this.checkConnections[0].start();
 
             while (serverRunning) {
-
-                // 停止ファイル関係チェック
-                if (StatusUtil.getStatus() == 1) {
-                    serverRunning = false;
-                    logger.info("KeyManagerAcceptHelper - 状態異常です");
-                }
-
-                if (StatusUtil.getStatus() == 2) {
-                    serverRunning = false;
-                    logger.info("KeyManagerAcceptHelper - 終了状態です");
-                }
 
                 Object[] param = super.pollSpecificationParameterQueue(pollQueueName);
                 if (param == null || param.length < 1) continue;

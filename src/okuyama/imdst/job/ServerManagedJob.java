@@ -27,6 +27,8 @@ public class ServerManagedJob extends AbstractJob implements IJob {
     // 停止ファイルの監視サイクル時間(ミリ秒)
     private int checkCycle = 2000;
 
+    private int memoryLimitSize = 90;
+
     /**
      * Logger.<br>
      */
@@ -35,6 +37,9 @@ public class ServerManagedJob extends AbstractJob implements IJob {
     // 初期化メソッド定義
     public void initJob(String initValue) {
         logger.debug("ServerManagedJob - initJob - start");
+        if (initValue != null && !initValue.equals("")) {
+            this.memoryLimitSize = Integer.parseInt(initValue);
+        }
         logger.debug("ServerManagedJob - initJob - end");
     }
 
@@ -51,8 +56,15 @@ public class ServerManagedJob extends AbstractJob implements IJob {
         ServerSocket serverSocket = null;
 
         try{
+            int counter = 0;
             while (serverRunning) {
-                Thread.sleep(checkCycle);
+
+                if (counter < 10) {
+                    Thread.sleep(100);
+                    counter++;
+                } else {
+                    Thread.sleep(checkCycle);
+                }
 
                 // 停止ファイル関係チェック
                 if (StatusUtil.getStatus() == 1) {
@@ -88,6 +100,11 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                     logger.info("JVM FreeMemory Size =[" + JavaSystemApi.getRuntimeFreeMem("M") + "]");
                     logger.info("JVM Use Memory Percent=[" + JavaSystemApi.getUseMemoryPercent() + "]");
                 }
+
+                if (JavaSystemApi.getUseMemoryPercentCache() > this.memoryLimitSize) 
+                    // 限界値を超えている
+                    StatusUtil.useMemoryLimitOver();
+
                 // GC発行
                 JavaSystemApi.autoGc();
             }

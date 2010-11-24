@@ -157,6 +157,7 @@ public class ImdstDefine {
     public static final String Prop_DataConsistencyMode = "DataConsistencyMode";
     public static final String Prop_IsolationMode = "IsolationMode";
     public static final String Prop_IsolationPrefix = "IsolationPrefix";
+    public static final String Prop_ConnectionAutoCloseTime = "connectionAutoCloseTime";
     public static final String Prop_MemoryMode = ".memoryMode";
     public static final String Prop_DataMemory = ".dataMemory";
     public static final String Prop_KeyMemory = ".keyMemory";
