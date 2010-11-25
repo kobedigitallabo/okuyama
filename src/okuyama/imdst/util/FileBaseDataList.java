@@ -119,8 +119,11 @@ public class FileBaseDataList extends AbstractList {
 
 		        // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
 		        int valueSize = writeStr.length();
-		        for (int i = 0; i < (oneDataLength - writeStr.length()); i++) {
-					this.wr.write("&");
+				byte[] fillByte = new byte[1];
+				fillByte[0] = new Integer(paddingSymbol).byteValue();
+		        for (int i = 0; i < (oneDataLength - valueSize); i++) {
+				
+					this.wr.write(new String(fillByte));
 					if ((i % 1024) == 0) this.wr.flush();
 				}
 	            this.wr.flush();
