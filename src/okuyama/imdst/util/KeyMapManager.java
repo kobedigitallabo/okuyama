@@ -119,10 +119,12 @@ public class KeyMapManager extends Thread {
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
     private int vacuumStartLimit = ImdstDefine.vacuumStartLimit;
 
+
     // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
     private int vacuumStartCompulsionLimit = ImdstDefine.vacuumStartCompulsionLimit;
+
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     private int vacuumExecAfterAccessTime = ImdstDefine.vacuumExecAfterAccessTime;
@@ -726,6 +728,7 @@ public class KeyMapManager extends Thread {
                         if (this.containsKeyPair(tagCnv)) {
                             firsrtRegist = false;
                             keyStrs = this.getKeyPair(tagCnv);
+
                             String[] workStrs = keyStrs.split(ImdstDefine.setTimeParamSep);
                             keyStrs = workStrs[0];
 

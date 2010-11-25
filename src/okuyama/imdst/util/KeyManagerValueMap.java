@@ -10,6 +10,8 @@ import okuyama.base.util.LoggerFactory;
 import okuyama.base.lang.BatchException;
 import okuyama.imdst.util.StatusUtil;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 /**
  * KeyとValueを管理する独自Mapクラス.<br>
  * メモリモードとファイルモードで動きが異なる.<br>
@@ -38,13 +40,17 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private String[] tmpVacuumeCopyMapDirs = null;
 
     private int lineCount = 0;
-    private int oneDataLength = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
-    private int seekOneDataLength = (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1);
+    private int oneDataLength = ImdstDefine.dataFileWriteMaxSize;
+    private int seekOneDataLength = ImdstDefine.dataFileWriteMaxSize + 1;
+    //private int oneDataLength = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
+    //private int seekOneDataLength = (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1);
     private long lastDataChangeTime = 0L;
     private int nowKeySize = 0;
 
     private transient boolean readObjectFlg = false;
 
+    private int overSizeDataParallelSize = 2000;
+    private Object[] overSizeDataParallelSyncs = new Object[overSizeDataParallelSize];
     // キャッシュ
     private ValueCacheMap valueCacheMap = null;
 
@@ -85,6 +91,16 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.tmpVacuumeCopyMapDirs[3] = lineFile + ".cpmapdir4/";
             this.tmpVacuumeCopyMapDirs[4] = lineFile + ".cpmapdir5/";
 
+            // サイズオーバーのValueを格納するディレクトリを作成
+            for (int dirIdx = -19; dirIdx < 20; dirIdx++) {
+                File overDataFileDir = new File(lineFile + "_/" + dirIdx);
+                overDataFileDir.mkdirs();
+            }
+
+            // サイズオーバーファイルへのパラレルアクセス並列数
+            for (int overSizeParallelIdx = 0; overSizeParallelIdx < this.overSizeDataParallelSize; overSizeParallelIdx++) {
+                this.overSizeDataParallelSyncs[overSizeParallelIdx] = new Object();
+            }
 
             this.fos = new FileOutputStream(new File(lineFile), true);
             this.osw = new OutputStreamWriter(this.fos, ImdstDefine.keyWorkFileEncoding);
@@ -140,7 +156,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 } else {
                     return null;
                 }
-                
 
                 // seek計算
                 long seekPoint = new Long(seekOneDataLength).longValue() * new Long((line - 1)).longValue();
@@ -216,11 +231,34 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         }
                     }
 
-                    for (; i < buf.length; i++) {
-                        if (buf[i] == 38) break;
-                    }
+                    if (buf[buf.length - 1] != 38 && buf[buf.length - 2] != 33 && buf[buf.length - 1] != 48) {
 
-                    ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
+                        // データ長が8192を超えている
+                        // その場合はキー名でファイルが存在するはず
+                        synchronized(this.overSizeDataParallelSyncs[((key.toString().hashCode() << 1) >>> 1) % this.overSizeDataParallelSize]) {
+                            File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
+
+                            if (overDataFile.exists()) {
+                                FileInputStream fis = new FileInputStream(overDataFile);
+                                InputStreamReader isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
+                                BufferedReader br = new BufferedReader(isr);
+
+                                StringBuilder retTmpBuf = new StringBuilder(oneDataLength);
+                                retTmpBuf.append(new String(buf, 0, oneDataLength, ImdstDefine.keyWorkFileEncoding));
+                                retTmpBuf.append(br.readLine());
+
+                                ret = retTmpBuf.toString();
+                            } else { 
+                                return null;
+                            }
+                        }
+                    } else {
+
+                        for (; i < buf.length; i++) {
+                            if (buf[i] == 38) break;
+                        }
+                        ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
+                    }
                     buf = null;
                 }
             } catch (Exception e) {
@@ -265,13 +303,33 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 raf.seek(seekPoint);
                 raf.read(buf,0,oneDataLength);
 
-                for (; i < buf.length; i++) {
-                    if (buf[i] == 38) break;
+
+                if (buf[buf.length - 1] != 38 && buf[buf.length - 2] != 33 && buf[buf.length - 1] != 48) {
+
+                    // データ長が8192を超えている
+                    // その場合はキー名でファイルが存在するはず
+                    synchronized(this.overSizeDataParallelSyncs[((key.toString().hashCode() << 1) >>> 1) % this.overSizeDataParallelSize]) {
+
+                        File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
+                        FileInputStream fis = new FileInputStream(overDataFile);
+                        InputStreamReader isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
+                        BufferedReader br = new BufferedReader(isr);
+                        StringBuilder retTmpBuf = new StringBuilder(oneDataLength);
+
+                        retTmpBuf.append(new String(buf, 0, oneDataLength, ImdstDefine.keyWorkFileEncoding));
+                        retTmpBuf.append(br.readLine());
+
+                        ret = retTmpBuf.toString();
+                    }
+                } else {
+
+                    for (; i < buf.length; i++) {
+                        if (buf[i] == 38) break;
+                    }
+                    ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
                 }
 
-                ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
                 buf = null;
-
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -296,6 +354,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         if (this.memoryMode) {
             ret = super.put(key, value);
         } else {
+
             StringBuilder writeBuf = new StringBuilder(oneDataLength + 2);
             int valueSize = (value.toString()).length();
 
@@ -306,8 +365,16 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     int line = 0;
                     Integer lineInteger = null;
                     long seekPoint = 0L;
+                    boolean overSizeFlg = false;
 
-                    writeBuf.append((String)value);
+
+                    if (((String)value).length() > this.oneDataLength) {
+                        writeBuf.append(((String)value).substring(0, (this.oneDataLength)));
+                        overSizeFlg = true;
+                        valueSize = this.oneDataLength;
+                    } else {
+                        writeBuf.append((String)value);
+                    }
 
                     // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
                     // 足りない文字列は固定の"&"で補う(38)
@@ -359,6 +426,22 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         }
                     }
 
+                    // サイズオーバーの場合
+                    if (overSizeFlg) {
+
+                        // データ長が8192を超えている
+                        // その場合はキー名でファイルが存在するはず
+                        synchronized(this.overSizeDataParallelSyncs[((key.toString().hashCode() << 1) >>> 1) % this.overSizeDataParallelSize]) {
+
+                            File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
+                            overDataFile.delete();
+
+                            BufferedWriter overBw = new BufferedWriter (new OutputStreamWriter(new FileOutputStream(overDataFile), ImdstDefine.keyWorkFileEncoding));
+                            overBw.write(((String)value).substring(this.oneDataLength, ((String)value).length()));
+                            overBw.flush();
+                            overBw.close();
+                        }
+                    }
                 } else {
                     super.put(key, value);
                 }
