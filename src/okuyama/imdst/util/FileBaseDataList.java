@@ -109,11 +109,22 @@ public class FileBaseDataList extends AbstractList {
                 writeStrBuf.append((String)value);
             }
 
-            synchronized (sync) {
-                this.wr.write(this.fillCharacter(writeStrBuf.toString(), oneDataLength));
-            }
 
-            wr.flush();
+			String writeStr = writeStrBuf.toString();
+
+            synchronized (sync) {
+
+                this.wr.write(writeStr);
+	            this.wr.flush();
+
+		        // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
+		        int valueSize = writeStr.length();
+		        for (int i = 0; i < (oneDataLength - writeStr.length()); i++) {
+					this.wr.write("&");
+					if ((i % 1024) == 0) this.wr.flush();
+				}
+	            this.wr.flush();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

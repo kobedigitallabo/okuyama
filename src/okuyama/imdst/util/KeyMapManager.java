@@ -1233,7 +1233,7 @@ public class KeyMapManager extends Thread {
 
                     int printLineCount = 0;
                     // 一度に送信するデータ量を算出。空きメモリの50%を使用する
-                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.5) / (ImdstDefine.saveDataMaxSize / 20)).intValue();
+                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.5) / (ImdstDefine.saveDataMaxSize / 50)).intValue();
 
                     if (entrySet.size() > 0) {
                         if(maxLineCount == 0) maxLineCount = 1;
@@ -1607,7 +1607,7 @@ public class KeyMapManager extends Thread {
 
                 int printLineCount = 0;
                 // 一度に送信するデータ量を算出。空きメモリの10%を使用する
-                int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / ((ImdstDefine.saveKeyMaxSize * 1.38 + ImdstDefine.saveDataMaxSize * 1.38) / 20)).intValue();
+                int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / ((ImdstDefine.saveKeyMaxSize * 1.38 + ImdstDefine.saveDataMaxSize * 1.38) / 50)).intValue();
 
                 //int maxLineCount = 500;
                 if (entrySet.size() > 0) {
@@ -1739,7 +1739,7 @@ public class KeyMapManager extends Thread {
                 int printLineCount = 0;
 
                 // 一度に送信するデータ量を算出。空きメモリの10%を使用する
-                int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / ((ImdstDefine.saveKeyMaxSize * 1.38 + ImdstDefine.saveDataMaxSize * 1.38) / 20)).intValue();
+                int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / ((ImdstDefine.saveKeyMaxSize * 1.38 + ImdstDefine.saveDataMaxSize * 1.38) / 50)).intValue();
                 //int maxLineCount = 500;
                 if (entrySet.size() > 0) {
                     if (maxLineCount == 0) maxLineCount = 1;

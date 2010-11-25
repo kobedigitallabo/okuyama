@@ -295,6 +295,7 @@ public class ImdstDefine {
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     public static final int vacuumExecAfterAccessTime = 30000;
 
+
     // トランザクションログをローテーションする際のサイズ(1.8GB)
     public static final long workFileChangeNewFileSize = 1610612736;
 }
