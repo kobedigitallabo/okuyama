@@ -42,8 +42,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private int lineCount = 0;
     private int oneDataLength = ImdstDefine.dataFileWriteMaxSize;
     private int seekOneDataLength = ImdstDefine.dataFileWriteMaxSize + 1;
-    //private int oneDataLength = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
-    //private int seekOneDataLength = (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1);
     private long lastDataChangeTime = 0L;
     private int nowKeySize = 0;
 
