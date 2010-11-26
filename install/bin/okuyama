@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if [ $1 = "start" ]; then
+    if  [ "$2" = "-server" ]; then
+        $JAVA_HOME/bin/java -classpath $OKUYAMA_HOME:$OKUYAMA_HOME/bin/okuyama-server-ver0.8.4.jar:$OKUYAMA_HOME/lib/log4j-1.2.14.jar:$OKUYAMA_HOME/lib/javamail-1.4.1.jar:$OKUYAMA_HOME/lib/commons-codec-1.4.jar -server -Xss1024k  -Xmx1024m -Xms1024m okuyama.base.JavaMain $OKUYAMA_HOME/conf/Main.properties $3 &
+    else 
+        su - okuyama -c "$JAVA_HOME/bin/java -classpath $OKUYAMA_HOME:$OKUYAMA_HOME/bin/okuyama-server-ver0.8.4.jar:$OKUYAMA_HOME/lib/log4j-1.2.14.jar:$OKUYAMA_HOME/lib/javamail-1.4.1.jar:$OKUYAMA_HOME/lib/commons-codec-1.4.jar -server -Xss1024k  -Xmx1024m -Xms1024m okuyama.base.JavaMain $OKUYAMA_HOME/conf/Main.properties $2"
+    fi
+
+elif [ $1 = "stop" ]; then
+    telnet 127.0.0.1 $2
+fi
+
