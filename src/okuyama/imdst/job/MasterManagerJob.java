@@ -27,8 +27,10 @@ import com.sun.mail.util.BASE64EncoderStream;
  */
 public class MasterManagerJob extends AbstractJob implements IJob {
 
-    // デフォルト起動ポート
+    // デフォルト起動設定
+    private String bindIpAddress = null;
     private int portNo = 8888;
+    private int backLog = 50;
 
     // Accept後のコネクター作成までの処理並列数
     private int maxConnectParallelExecution = 10;
@@ -75,8 +77,33 @@ public class MasterManagerJob extends AbstractJob implements IJob {
      */
     public void initJob(String initValue) {
         logger.debug("MasterManagerJob - initJob - start");
+        logger.info("okuyama MasterNode Initialization Start ...");
+        System.out.println("okuyama MasterNode Initialization Start ...");
 
-        this.portNo = Integer.parseInt(initValue);
+        if (initValue.indexOf(":") != -1) {
+
+            String[] splitInitVal = initValue.split(":");
+            this.bindIpAddress = splitInitVal[0];
+
+            if (splitInitVal[1].indexOf("&") != -1) {
+
+                splitInitVal = splitInitVal[1].split("&");
+                this.portNo = Integer.parseInt(splitInitVal[0]);
+                this.backLog = Integer.parseInt(splitInitVal[1]);
+            } else {
+
+                this.portNo = Integer.parseInt(splitInitVal[1]);
+            }
+        } else if (initValue.indexOf("&") != -1){
+
+            String[] splitInitVal = initValue.split("&");
+            this.portNo = Integer.parseInt(splitInitVal[0]);
+            this.backLog = Integer.parseInt(splitInitVal[1]);
+        } else {
+
+            this.portNo = Integer.parseInt(initValue);
+        }
+
 
         String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_MasterNodeMaxConnectParallelExecution);
         if (sizeStr != null && Integer.parseInt(sizeStr) > this.maxConnectParallelExecution) {
@@ -224,24 +251,33 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 loadBalance = new Boolean(loadBalanceStr).booleanValue();
             }
 
-	        // データ個別保持のモード設定
-	        String userIsolationMode = (String)super.getPropertiesValue(ImdstDefine.Prop_IsolationMode);
+            // データ個別保持のモード設定
+            String userIsolationMode = (String)super.getPropertiesValue(ImdstDefine.Prop_IsolationMode);
 
-			if (userIsolationMode != null && userIsolationMode.equals("true")) {
-				// IsolationMode
-		        String isolationPrefix = super.getPropertiesValue(ImdstDefine.Prop_IsolationPrefix);
-				if (isolationPrefix != null && isolationPrefix.trim().length() == 5) {
+            if (userIsolationMode != null && userIsolationMode.equals("true")) {
+                // IsolationMode
+                String isolationPrefix = super.getPropertiesValue(ImdstDefine.Prop_IsolationPrefix);
+                if (isolationPrefix != null && isolationPrefix.trim().length() == 5) {
 
-					StatusUtil.initIsolationMode(true, isolationPrefix);
-				} else {
+                    StatusUtil.initIsolationMode(true, isolationPrefix);
+                } else {
 
-					return ERROR;
-				}
-			}
+                    return ERROR;
+                }
+            }
 
 
             // サーバソケットの生成
-            this.serverSocket = new ServerSocket(this.portNo);
+            InetSocketAddress bindAddress = null;
+            if (this.bindIpAddress == null) {
+                bindAddress = new InetSocketAddress(this.portNo); 
+            } else {
+                bindAddress = new InetSocketAddress(this.bindIpAddress, this.portNo);
+            }
+
+            this.serverSocket = new ServerSocket();
+            this.serverSocket.bind(bindAddress, this.backLog);
+            
             // 共有領域にServerソケットのポインタを格納
             super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
 
@@ -299,7 +335,14 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
 
             // 処理開始
-            logger.info("MasterNodeServer-Accept-Start");
+            logger.info("okuyama MasterNode Initialization End ...");
+            System.out.println("okuyama MasterNode Initialization End ...");
+
+            logger.info("okuyama MasterNode start ...");
+            logger.info("listening on " + bindAddress);
+            System.out.println("okuyama MasterNode start");
+            System.out.println("listening on " + bindAddress);
+
 
             // メイン処理開始
             while (true) {

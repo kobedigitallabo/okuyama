@@ -448,7 +448,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                         default :
 
-                            logger.info("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
+                            logger.debug("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
                             break;
                     }
 

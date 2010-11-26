@@ -376,7 +376,7 @@ public class KeyMapManager extends Thread {
 
 
                 // トランザクションログのサイズをチェック
-                logger.info("Transaction Log Size Check - Start");
+                logger.debug("Transaction Log Size Check - Start");
 
                 if (this.workFileMemory == false) {
 
@@ -395,7 +395,7 @@ public class KeyMapManager extends Thread {
                             synchronized(this.poolKeyLock) {
                                 synchronized(this.lockWorkFileSync) {
 
-                                    logger.info("Transaction Log File Change - Start");
+                                    logger.debug("Transaction Log File Change - Start");
                                     this.fos.close();
                                     this.fos = null;
                                     this.osw.close();
@@ -421,14 +421,14 @@ public class KeyMapManager extends Thread {
                                     this.bw = new BufferedWriter(osw);
                                     this.bw.newLine();
                                     this.bw.flush();
-                                    logger.info("Transaction Log File Change - End");
+                                    logger.debug("Transaction Log File Change - End");
                                 }
                             }
                         }
                         sizeCheckCounter = 0;
                     }
                 }
-                logger.info("Transaction Log Size Check - End");
+                logger.debug("Transaction Log Size Check - End");
 
 
                 //  Vacuum実行の確認
@@ -436,11 +436,11 @@ public class KeyMapManager extends Thread {
 
                 // データがメモリーではなくかつ、vacuum実行指定がtrueの場合
                 if (!dataMemory && vacuumExec == true) {
-                    logger.info("vacuumCheck - Start - 1");
+                    logger.debug("vacuumCheck - Start - 1");
                     synchronized(this.poolKeyLock) {
-                        logger.info("VacuumCheck - DifferenceCount = [" + (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) + "]");
+                        logger.debug("VacuumCheck - DifferenceCount = [" + (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) + "]");
                         if ((this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) > this.vacuumStartLimit) {
-                            logger.info("VacuumCheck - Start - 2");
+                            logger.debug("VacuumCheck - Start - 2");
 
                             // 規定時間アクセスがない
                             if ((System.currentTimeMillis() - this.lastAccess) > this.vacuumExecAfterAccessTime ||
@@ -1279,13 +1279,9 @@ public class KeyMapManager extends Thread {
                     pw.flush();
                     allDataBuf = null;
                 }
-                //logger.debug("outputKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("outputKeyMapObj2Stream - Error =[" + e.getMessage() + "]");
-                //blocking = true;
-                //StatusUtil.setStatusAndMessage(1, "outputKeyMapObj2Stream - Error [" + e.getMessage() + "]");
-                //throw new BatchException(e);
             }
         }
     }

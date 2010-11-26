@@ -3,6 +3,7 @@ package okuyama.base.parameter.config;
 import java.io.InputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.FileInputStream;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
@@ -21,6 +22,7 @@ import okuyama.base.util.ClassUtility;
  */
 public class BatchConfig {
 
+    private String configFile = null;
     // Logger
     private ILogger logger = LoggerFactory.createLogger(BatchConfig.class);
 
@@ -35,7 +37,20 @@ public class BatchConfig {
      */
     public BatchConfig(String fileName) throws BatchException {
         this.configTable = new Hashtable();
-        this.initConfig(BatchConfig.class.getResourceAsStream(fileName));
+
+        this.configFile = fileName;
+        File jobConfigFile = new File(fileName);
+        if (jobConfigFile.exists()) {
+
+            try {
+                this.initConfig(new FileInputStream(fileName));
+            } catch (Exception e) {
+                throw new BatchException(e);
+            }
+        } else {
+
+            this.initConfig(JobConfig.class.getResourceAsStream(fileName));
+        }
     }
 
     /**
@@ -79,7 +94,7 @@ public class BatchConfig {
                 }
             } catch (IOException ie) {
                 // 無視
-                logger.error("initConfig - ファイルストリームのcloseに失敗");
+                logger.error("initConfig - File Stream Close Error");
             }
         }
         logger.debug("BatchConfig - initConfig - end");

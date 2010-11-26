@@ -82,12 +82,12 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
                 // 停止ファイル関係チェック
                 if (StatusUtil.getStatus() == 1) {
                     serverRunning = false;
-                    logger.info("ConnectionPoolHelper - 状態異常です");
+                    logger.info("ConnectionPoolHelper - Status Error");
                 }
 
                 if (StatusUtil.getStatus() == 2) {
                     serverRunning = false;
-                    logger.info("ConnectionPoolHelper - 終了状態です");
+                    logger.info("ConnectionPoolHelper - End Status");
                 }
 
                 serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
@@ -95,7 +95,7 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
                 serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
                 if (serverStopMarkerFile.exists()) {
                     serverRunning = false;
-                    logger.info("ConnectionPoolHelper - Server停止ファイルが存在します");
+                    logger.info("ConnectionPoolHelper - Server End File Exists");
                     StatusUtil.setStatus(2);
                 }
 
@@ -153,7 +153,6 @@ public class ConnectionPoolHelper extends AbstractMasterManagerHelper {
             logger.info("Connection Pool Error = [" + nodeInfo + "]");
             keyNodeConnector = null;
         }
-        logger.info("Connection Pool Error = [" + nodeInfo + "]");
         return keyNodeConnector;
     }
 

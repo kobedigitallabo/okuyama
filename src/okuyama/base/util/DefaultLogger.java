@@ -1,7 +1,12 @@
 package okuyama.base.util;
 
+import java.io.*;
+
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.RollingFileAppender;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.Level;
 
 /**
  * 標準ログクラス.<br>
@@ -15,10 +20,36 @@ public class DefaultLogger implements ILogger {
     Logger logger = null;
 
     public DefaultLogger(Class clazz) {
-        this.logger = Logger.getLogger(clazz);
 
         //設定ファイルを読み込む
-        PropertyConfigurator.configure("log4j.properties");
+        if (new File("log4j.properties").exists()) {
+
+            this.logger = Logger.getLogger(clazz);
+            PropertyConfigurator.configure("log4j.properties");
+        } else if (DefaultLogger.class.getResource("/log4j.properties") != null) {
+
+            this.logger = Logger.getLogger(clazz);
+            PropertyConfigurator.configure(DefaultLogger.class.getResource("/log4j.properties"));
+        } else {
+
+            RollingFileAppender rollingFileAppender = null;
+
+            this.logger = Logger.getLogger(clazz);
+            this.logger.setLevel(Level.ERROR);
+
+            PatternLayout layout = new PatternLayout("%d %5p %c{1} - %m%n");
+
+            try{
+
+                rollingFileAppender = new RollingFileAppender(layout, "okuyama_default.log");
+                rollingFileAppender.setMaxFileSize("128MB");
+            }catch(Exception e){
+                e.printStackTrace();
+                System.exit(1);
+            }
+
+            this.logger.addAppender(rollingFileAppender);
+        }
     }
 
     public DefaultLogger(Class clazz, String configFile) {

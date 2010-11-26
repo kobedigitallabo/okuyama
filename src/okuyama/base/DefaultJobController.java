@@ -2,7 +2,8 @@ package okuyama.base;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.io.File;
+import java.io.*;
+import java.net.*;
 
 import okuyama.base.lang.BatchException;
 import okuyama.base.lang.BatchDefine;
@@ -81,13 +82,15 @@ public class DefaultJobController implements IJobController {
     private JobEndWaitWorker jobEndWaitWorker = null;
 
 
+
+
     /**
      * コントローラ実行メソッド.<br>
      * 
      * @throw BatchException
      */
     public void execute() throws BatchException {
-        logger.info("execute - start");
+        logger.debug("execute - start");
         BatchConfig batchConfig = null;
         JobConfig jobConfig = null;
 
@@ -104,7 +107,7 @@ public class DefaultJobController implements IJobController {
             logger.error("execute - error", be);
             throw be;
         }
-        logger.info("execute - end");
+        logger.debug("execute - end");
     }
 
 
@@ -123,9 +126,10 @@ public class DefaultJobController implements IJobController {
             this.loopTimewait = Integer.parseInt(batchConfig.getBatchParam(BatchDefine.BATCH_CONFIG_LOOPTIMEWAIT));
             this.normalEndFile = batchConfig.getBatchParam(BatchDefine.BATCH_CONFIG_NORMALENDFILE);
             this.endFile = batchConfig.getBatchParam(BatchDefine.BATCH_CONFIG_ENDFILE);
+
             // 設定ファイル確認
             if (this.endFile == null || this.normalEndFile == null ) 
-                throw new BatchException("バッチ設定(終了ファイル指定)エラー");
+                throw new BatchException("Batch ConfigFile Error EndFil Error");
 
 
             // 必須ではない設定情報を設定
@@ -139,7 +143,7 @@ public class DefaultJobController implements IJobController {
                 if (reloopCheck.equals("true") || reloopCheck.equals("false")) {
                     this.reloop = new Boolean(reloopCheck).booleanValue();
                 } else {
-                    throw new BatchException("バッチ設定(reloop指定)エラー [true] or [false]のみ許可");
+                    throw new BatchException("Batch ConfigFile Error reloop Param");
                 }
             }
 
@@ -151,9 +155,13 @@ public class DefaultJobController implements IJobController {
             this.errProcessClass = batchConfig.getBatchParam(BatchDefine.BATCH_CONFIG_ERRORPROCESS);
             this.errProcessOption = batchConfig.getBatchParam(BatchDefine.BATCH_CONFIG_ERRORPROCESSOPTION);
 
+
         } catch(BatchException be) {
             logger.error("initConfigSet - error", be);
             throw be;
+        } catch(Exception e) {
+            logger.error("initConfigSet - error", e);
+            throw new BatchException(e);
         }
         logger.debug("initConfigSet - end");
     }
@@ -167,7 +175,7 @@ public class DefaultJobController implements IJobController {
      * @throws BatchException
      */
     private void executeJob(JobConfig jobConfig) throws BatchException {
-        logger.info("executeJob - start");
+        logger.debug("executeJob - start");
 
         // Job
         AbstractJob job = null; 
@@ -266,7 +274,7 @@ public class DefaultJobController implements IJobController {
                     // 標準終了ファイル確認
                     if (this.checkNormalBatchEnd()) break;
 
-                    logger.info("Job実行監視 - start");
+                    logger.debug("Job Watch - start");
 
                     // 全てのJob完了フラグを初期化
                     allEnd = true;
@@ -281,7 +289,7 @@ public class DefaultJobController implements IJobController {
                         // JobConfig情報取り出し
                         jobConfigMap = jobConfig.getJobConfig(this.jobNameList[jobIndex]);
 
-                        logger.info("Job実行状態確認 Job名[" + jobConfigMap.getJobName() + "]");
+                        logger.debug("Job Status Check Job Name[" + jobConfigMap.getJobName() + "]");
 
                         // 実行状態に合わせて処理を変更
                         if(job.getStatus().equals(BatchDefine.JOB_STATUS_WAIT)) {
@@ -318,14 +326,14 @@ public class DefaultJobController implements IJobController {
                             // reloopがfalseの場合は直ちに終了
                             // 両方とも後続ジョブを行わない
                             if (this.reloop) {
-                                logger.error("Jobがエラーステータスで終了 Job名[" + jobConfigMap.getJobName() + "]");
+                                logger.error("Job Status Error End Job Name[" + jobConfigMap.getJobName() + "]");
                                 this.runJobEndWait();
                                 // ErrorProcess実行
                                 this.executeErrorProcess();
                                 jobErrorEnd = true;
                                 break;
                             } else {
-                                throw new BatchException("Jobがエラーステータスで終了 Job名[" + jobConfigMap.getJobName() + "]");
+                                throw new BatchException("Job Status Error End JobName[" + jobConfigMap.getJobName() + "]");
                             }
 
                         } else if (job.getStatus().equals(BatchDefine.JOB_STATUS_RUN)) {
@@ -346,19 +354,19 @@ public class DefaultJobController implements IJobController {
                     }
 
                     // 現在のJobステータスを出力
-                    logger.info("現在の全Jobステータス:" + this.allJobStatusTable);
-                    logger.info("Job実行監視 - end");
+                    logger.debug("Now All Job Status :" + this.allJobStatusTable);
+                    logger.debug("Job Watch - end");
                     // Jobがエラーで終了しているか確認
                     
                     if (jobErrorEnd) {
-                        logger.info("Job実行監視 - Jobがエラーで終了");
+                        logger.info("Job Watch - Job Error");
                         
                         break;
                     }
 
                     // 全てのJobが終了しているか確認
                     if (allEnd){
-                        logger.info("Job実行監視 - 全Job終了");
+                        logger.info("Job Watch - All Job End");
                         break;
                     }
 
@@ -370,7 +378,7 @@ public class DefaultJobController implements IJobController {
                         // 監視回数到達
                         if(maxLoop == loopCnt) {
 
-                            logger.error("Job実行監視上限回数到達!!");
+                            logger.error("Job WatchLimitCount Over!!");
                             // reloopの設定がtrueの場合は上限でもバッチは終了せずに現在実行中のJobの終了を待つ、reloopがfalseの場合は直ちに終了
                             if (this.reloop) {
                                 this.runJobEndWait();
@@ -378,13 +386,13 @@ public class DefaultJobController implements IJobController {
                                 this.executeErrorProcess();
                                 break;
                             } else {
-                                throw new BatchException("Exception - Job実行監視上限回数到達!!");
+                                throw new BatchException("Exception - Job WatchLimitCount Over!!");
                             }
                         }
                     }
 
                     // 一時停止
-                    logger.info("Job実行監視 - sleep");
+                    logger.debug("Job Watch - sleep");
                     Thread.sleep(loopTimewait);
                 }
 
@@ -393,7 +401,7 @@ public class DefaultJobController implements IJobController {
                 helperPool.join(60000);
                 helperPool = null;
 
-                logger.info("Job実行監視 - finish");
+                logger.debug("Job Watch - finish");
 
                 // PostProcess実行
                 postProcessRet = this.executeProcess(2);
@@ -411,7 +419,7 @@ public class DefaultJobController implements IJobController {
             throw new BatchException(e);
         }
 
-        logger.info("executeJob - end");
+        logger.debug("executeJob - end");
     }
 
 
@@ -514,7 +522,7 @@ public class DefaultJobController implements IJobController {
             if (file.exists()) {
                 ret = false;
                 Thread.sleep(startChkTimewait);
-                logger.info("checkBatchEnd - 開始NGファイルが存在します");
+                logger.info("checkBatchEnd - Start NGFile Exists");
             }
         } catch (Exception e) {
             logger.error("checkBatchStart - error", e);
@@ -538,7 +546,7 @@ public class DefaultJobController implements IJobController {
             File file = new File(new File(this.endFile).getAbsolutePath());
             if (file.exists()) {
                 ret = true;
-                logger.info("checkBatchEnd - 終了ファイルが存在します");
+                logger.info("checkBatchEnd - End File Exists");
             }
         } catch (Exception e) {
             logger.error("checkBatchEnd - error", e);
@@ -587,14 +595,14 @@ public class DefaultJobController implements IJobController {
                     // 終了待機スレッド確認
                     // エラーになっていないか?
                     if (this.jobEndWaitWorker.getStatus().equals(BatchDefine.JOB_END_WAIT_WORKER_ERR)) 
-                        throw new BatchException("JobEndWaitWorkerでエラー発生");
+                        throw new BatchException("JobEndWaitWorker Error");
                     // 終了していないか?
                     if (this.jobEndWaitWorker.getStatus().equals(BatchDefine.JOB_END_WAIT_WORKER_END)) break;
 
                     // 強制終了ファイル確認
                     if (this.checkBatchEnd()) break;
 
-                    logger.info("runJobEndWait - 稼働中Job終了待ち");
+                    logger.debug("runJobEndWait - run Job Wait");
                     Thread.sleep(BatchDefine.JOB_END_WAIT_WORKER_TIMER);
                 }
             }
@@ -626,7 +634,7 @@ public class DefaultJobController implements IJobController {
         try {
             File file = new File(new File(this.normalEndFile).getAbsolutePath());
             if (file.exists()) {
-                logger.info("checkNormalBatchEnd - 標準終了ファイルが存在します");
+                logger.debug("checkNormalBatchEnd - Normal End File Exists");
 
                 ret = true;
 
@@ -655,14 +663,14 @@ public class DefaultJobController implements IJobController {
                         // 終了待機スレッド確認
                         // エラーになっていないか?
                         if (this.jobEndWaitWorker.getStatus().equals(BatchDefine.JOB_END_WAIT_WORKER_ERR)) 
-                            throw new BatchException("JobEndWaitWorkerでエラー発生");
+                            throw new BatchException("JobEndWaitWorker - Error");
                         // 終了していないか?
                         if (this.jobEndWaitWorker.getStatus().equals(BatchDefine.JOB_END_WAIT_WORKER_END)) break;
 
                         // 強制終了ファイル確認
                         if (this.checkBatchEnd()) break;
 
-                        logger.info("checkNormalBatchEnd - 稼働中Job終了待ち");
+                        logger.info("checkNormalBatchEnd - Run Job Wait");
                         Thread.sleep(BatchDefine.JOB_END_WAIT_WORKER_TIMER);
                     }
                 }
@@ -702,7 +710,7 @@ public class DefaultJobController implements IJobController {
                     // 1件でも終了していない場合は実行しない
                     if (!dependJobStatus.equals(BatchDefine.JOB_STATUS_END)) checkFlg = false;
                 } else {
-                    throw new BatchException("依存関係設定エラー:" + jobConfigMap.getJobName());
+                    throw new BatchException("Depend Config Error:" + jobConfigMap.getJobName());
                 }
             }
         } catch(BatchException be) {
@@ -713,3 +721,5 @@ public class DefaultJobController implements IJobController {
         return checkFlg;
     }
 }
+
+

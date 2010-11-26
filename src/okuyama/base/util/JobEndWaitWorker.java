@@ -34,9 +34,9 @@ public class  JobEndWaitWorker extends Thread {
 
             for (int i = 0; i < this.jobs.size(); i++) {
                 job = (AbstractJob)this.jobs.get(i);
-                logger.info("[" + job.getJobName() + "] : 終了待ち開始");
+                logger.debug("[" + job.getJobName() + "] : End Wait Start");
                 job.join();
-                logger.info("[" + job.getJobName() + "] : 終了待ち終了");
+                logger.debug("[" + job.getJobName() + "] : End Wait End");
             }
 
             this.status = BatchDefine.JOB_END_WAIT_WORKER_END;

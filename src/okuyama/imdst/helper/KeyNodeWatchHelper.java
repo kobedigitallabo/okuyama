@@ -55,7 +55,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
     public String executeHelper(String optionParam) throws BatchException {
         logger.debug("KeyNodeWatchHelper - executeHelper - start");
         String ret = SUCCESS;
-        String serverStopMarkerFileName = null;
+
         File serverStopMarkerFile = null;
 
         boolean serverRunning = true;
@@ -97,27 +97,6 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 // ノード数分チェック
                 for (int i = 0; i < mainNodeList.size(); i++) {
                     Thread.sleep(checkCycle);
-
-
-                    // 停止ファイル関係チェック
-                    if (StatusUtil.getStatus() == 1) {
-                        serverRunning = false;
-                        logger.info("KeyNodeWatchHelper - 状態異常です");
-                    }
-
-                    if (StatusUtil.getStatus() == 2) {
-                        serverRunning = false;
-                        logger.info("KeyNodeWatchHelper - 終了状態です");
-                    }
-
-                    serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
-
-                    serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
-                    if (serverStopMarkerFile.exists()) {
-                        serverRunning = false;
-                        logger.info("KeyNodeWatchHelper - Server停止ファイルが存在します");
-                        StatusUtil.setStatus(2);
-                    }
 
                     // MainのMasterNodeの場合のみ実行
                     if (StatusUtil.isMainMasterNode()) {

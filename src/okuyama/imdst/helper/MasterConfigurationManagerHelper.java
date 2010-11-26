@@ -74,8 +74,6 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         logger.debug("MasterConfigurationManagerHelper - executeHelper - start");
         String ret = SUCCESS;
 
-
-        String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
 
         boolean serverRunning = true;
@@ -112,26 +110,6 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             this.parseAllNodesInfo();
 
             while (serverRunning) {
-
-                // 停止ファイル関係チェック
-                if (StatusUtil.getStatus() == 1) {
-                    serverRunning = false;
-                    logger.info("MasterConfigurationManagerHelper - 状態異常です Msg = [" + StatusUtil.getStatusMessage() + "]");
-                }
-
-                if (StatusUtil.getStatus() == 2) {
-                    serverRunning = false;
-                    logger.info("MasterConfigurationManagerHelper - 終了状態です");
-                }
-
-                serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
-
-                serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
-                if (serverStopMarkerFile.exists()) {
-                    serverRunning = false;
-                    logger.info("MasterConfigurationManagerHelper - Server停止ファイルが存在します");
-                    StatusUtil.setStatus(2);
-                }
 
                 try {
                     // 設定情報を設定ファイルから常に取得するモードとデータノードから取得する設定で処理分岐
@@ -299,7 +277,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             throw new BatchException(e);
         }
 
-        //logger.debug("MasterConfigurationManagerHelper - executeHelper - end");
+        logger.debug("MasterConfigurationManagerHelper - executeHelper - end");
         return ret;
     }
 

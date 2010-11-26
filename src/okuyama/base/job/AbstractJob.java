@@ -108,7 +108,7 @@ abstract public class AbstractJob extends Thread {
      * 
      */
     public void run() {
-        logger.debug("実行開始");
+        logger.debug("Execution - Start");
 
         String retStatus = null;
 
@@ -134,21 +134,21 @@ abstract public class AbstractJob extends Thread {
                     this.status = retStatus;
                 } else {
                     // 不明
-                    throw new BatchException("Job終了方法が不正:必ずSUCCESSかERRORを返す必要あり");
+                    throw new BatchException("Job End Return Value Error");
                 }
             } else {
-                throw new BatchException("Job終了方法が不正:必ずSUCCESSかERRORを返す必要あり");
+                throw new BatchException("Job End Return Value Error");
             }
         } catch (BatchException be) {
-            logger.error("AbstractJob - 例外発生",be);
+            logger.error("AbstractJob - Error",be);
             // ステータスをエラーにする
             this.status = ERR;
         } catch (Exception e) {
-            logger.error("AbstractJob - 例外発生",e);
+            logger.error("AbstractJob - Error",e);
             // ステータスをエラーにする
             this.status = ERR;
         }
-        logger.debug("実行終了");
+        logger.debug("Execution End");
     }
 
     /**

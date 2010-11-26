@@ -24,22 +24,28 @@ public class JavaMain {
      * @param args [0]=バッチ用設定ファイル名, [1]=Job用設定ファイル名
      */
     public static void main(String[] args) {
-        logger.info("main - start");
+        logger.info("JavaMain - start");
         try {
 
             if (args == null || args.length < 2) {
-                throw new BatchException("設定ファイルが引数として渡されませんでした");
+                if (args == null) {
+                    System.err.println("Error : JavaMain The argument is illega [Main.properties, Node.properties]");
+                    throw new BatchException("JavaMain Configure File Not Found");
+                } else {
+                    System.err.println("Error : JavaMain The argument is illega [Node.properties]");
+                    throw new BatchException("JavaMain Configure File Not Found");
+                }
             }
 
             JavaMain me = new JavaMain();
             me.exec(args[0],args[1]);
 
         } catch (BatchException be) {
-            logger.error("main - error", be);
-            System.exit(9);
+            logger.error("JavaMain - error", be);
+            System.exit(1);
         }
 
-        logger.info("main - end");
+        logger.info("JavaMain - end");
     }
 
     /**
@@ -50,7 +56,7 @@ public class JavaMain {
      * @throws BatchException
      */
     public void exec(String batchConfPath, String jobConfPath) throws BatchException {
-        logger.info("exec - start");
+        logger.debug("JavaMain - exec - start");
         String controllerClassName = null;
 
         try {
@@ -65,12 +71,16 @@ public class JavaMain {
             // 実行
             jobController.execute();
         } catch (BatchException be) {
-            logger.info("exec - error1");
+            logger.info("JavaMain - exec - error1");
             throw be;
         } catch (Exception e) {
-            logger.info("exec - error2");
+            logger.info("JavaMain - exec - error2");
             throw new BatchException(e);
         }
-        logger.info("exec - end");
+        logger.debug("JavaMain - exec - end");
+    }
+
+    public static void shutdownMainProccess() {
+        System.exit(0);
     }
 }

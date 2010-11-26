@@ -288,10 +288,10 @@ abstract public class AbstractHelper  implements Runnable{
                     this.status = retStatus;
                 } else {
                     // 不明
-                    throw new BatchException("Job終了方法が不正:必ずSUCCESSかERRORを返す必要あり");
+                    throw new BatchException("Helper End Erro Return Value");
                 }
             } else {
-                throw new BatchException("Job終了方法が不正:必ずSUCCESSかERRORを返す必要あり");
+                throw new BatchException("Helper End Erro Return Value");
             }
         } catch (BatchException be) {
             logger.error("AbstractHelperJob - run - BatchException ",be);

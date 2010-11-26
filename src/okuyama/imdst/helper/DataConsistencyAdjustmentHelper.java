@@ -66,7 +66,6 @@ public class DataConsistencyAdjustmentHelper extends AbstractMasterManagerHelper
     public String executeHelper(String optionParam) throws BatchException {
         logger.debug("DataConsistencyAdjustmentHelper - executeHelper - start");
         String ret = SUCCESS;
-        String serverStopMarkerFileName = null;
         File serverStopMarkerFile = null;
 
         boolean serverRunning = true;
@@ -87,25 +86,6 @@ public class DataConsistencyAdjustmentHelper extends AbstractMasterManagerHelper
         while (serverRunning) {
             try {
                 Thread.sleep(checkCycle);
-                // 停止ファイル関係チェック
-                if (StatusUtil.getStatus() == 1) {
-                    serverRunning = false;
-                    logger.info("DataConsistencyAdjustmentHelper - 状態異常です");
-                }
-
-                if (StatusUtil.getStatus() == 2) {
-                    serverRunning = false;
-                    logger.info("DataConsistencyAdjustmentHelper - 終了状態です");
-                }
-
-                serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
-
-                serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
-                if (serverStopMarkerFile.exists()) {
-                    serverRunning = false;
-                    logger.info("DataConsistencyAdjustmentHelper - Server停止ファイルが存在します");
-                    StatusUtil.setStatus(2);
-                }
 
                 HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
                 ArrayList mainNodeList = (ArrayList)allNodeInfo.get("main");

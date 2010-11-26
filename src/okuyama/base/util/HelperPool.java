@@ -80,27 +80,27 @@ public class  HelperPool extends Thread {
 
                         if(helper.getReboot()) {
 
-                            logger.info("Helper[" + helper.getName() + " Reboot Start");
+                            logger.debug("Helper[" + helper.getName() + " Reboot Start");
                             AbstractHelper newHelper = getHelper(helper.getName());
                             newHelper.setParameters(helper.getParameters());
                             newHelper.setReboot(true);
                             returnHelper(newHelper.getName(), newHelper);
                             allExecuteHelperList.add(newHelper);
-                            logger.info("Helper[" + helper.getName() + " Reboot Success");
+                            logger.debug("Helper[" + helper.getName() + " Reboot Success");
                         }
 
                         ((ThreadPoolExecutor)executorServiceMap.get(helper.getName())).remove(helper);
                     }
                 }
             }
-            logger.info("HelperPool - 終了処理開始");
+            logger.debug("HelperPool - End Process Start");
             // システムの停止が要求されているのでHelperを制終了
             for (int i = 0; i < helperNameList.size(); i++) {
                 ((ThreadPoolExecutor)executorServiceMap.get((String)helperNameList.get(i))).shutdown();
             }
 
 
-            logger.info("HelperPool - 終了処理終了");
+            logger.debug("HelperPool - End Process End");
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("HelperPool - run - Error", e);
@@ -136,7 +136,7 @@ public class  HelperPool extends Thread {
 
         try {
             if (!helperMap.containsKey(helperName)) 
-                throw new BatchException("Helper [" + helperName + "]は存在しません");
+                throw new BatchException("Helper [" + helperName + "] Not Found");
 
             HelperConfigMap helperConfigMap = (HelperConfigMap)configMap.get(helperName);
             helper = ClassUtility.createHelperInstance(helperConfigMap.getHelperClassName());
@@ -166,19 +166,15 @@ public class  HelperPool extends Thread {
      * @throw  BatchException
      */
     public static void returnHelper(String helperName, AbstractHelper helper) throws BatchException {
-        //logger.debug("HelperPool - returnHelper - start");
-        //logger.debug("HelperPool - returnHelper - helperName = [" + helperName + "]");
 
         try {
             // ExecutorService を使用するために変更. 2010/03/22
             ((ThreadPoolExecutor)executorServiceMap.get(helperName)).execute(helper);
             allExecuteHelperList.add(helper);
-            //ex.execute(helper);
         } catch (Exception be) {
             logger.error("HelperPool - returnHelper - BatchException");
             throw new BatchException(be);
         }
-        //logger.debug("HelperPool - returnHelper - end");
     }
 
     public static int getActiveHelperInstanceCount(String helperName) {
@@ -191,15 +187,12 @@ public class  HelperPool extends Thread {
      * @param HelperConfigMap helperConfigMap プールしたHelperの設定ファイル
      */
     public static void managedHelperConfig(HelperConfigMap helperConfigMap) throws BatchException {
-        //logger.debug("HelperPool - poolingHelper - start");
-        //logger.debug("HelperPool - poolingHelper - heplerConfig = " + helperConfigMap);
 
         helperNameList.add(helperConfigMap.getHelperName());
         configMap.put(helperConfigMap.getHelperName(),helperConfigMap);
         helperMap.put(helperConfigMap.getHelperName(),new ArrayList());
         executorServiceMap.put(helperConfigMap.getHelperName(), Executors.newCachedThreadPool());
         serviceParameterQueueMap.put(helperConfigMap.getHelperName(), new ArrayBlockingQueue(20000));
-        //logger.debug("HelperPool - poolingHelper - end");
     }
 
 

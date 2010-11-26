@@ -79,6 +79,7 @@ public class BatchDefine {
     public static final String BATCH_CONFIG_DATABASEUSER = "databaseuser";
     public static final String BATCH_CONFIG_DATABASEPASS = "databasepass";
     public static final String BATCH_CONFIG_COMMIT = "commit";
+    public static final String BATCH_CONFIG_STATUSSERVER = "statusserver";
 
     public static final String COMMIT_TYPE_SYSTEM = "system";
     public static final String COMMIT_TYPE_AUTO = "auto";

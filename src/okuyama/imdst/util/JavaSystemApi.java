@@ -48,9 +48,8 @@ public class JavaSystemApi {
      * gcの実行
      */
     private static void gc() {
-        logger.info("JavaSystemApi - GC実行開始");
+        logger.info("JavaSystemApi - GC Execute Request");
         System.gc();
-        logger.info("JavaSystemApi - GC実行終了");
     }
 
     public static long getRuntimeMaxMem() {

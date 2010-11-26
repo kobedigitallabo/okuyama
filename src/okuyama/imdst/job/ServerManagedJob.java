@@ -47,7 +47,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
     public String executeJob(String optionParam) throws BatchException {
         logger.debug("ServerManagedJob - executeJob - start");
         String ret = SUCCESS;
-        String serverStopMarkerFileName = null;
+
         File serverStopMarkerFile = null;
 
         boolean serverRunning = true;
@@ -57,6 +57,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
 
         try{
             int counter = 0;
+            super.executeHelper("ServerControllerHelper", null, true);
             while (serverRunning) {
 
                 if (counter < 10) {
@@ -64,26 +65,6 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                     counter++;
                 } else {
                     Thread.sleep(checkCycle);
-                }
-
-                // 停止ファイル関係チェック
-                if (StatusUtil.getStatus() == 1) {
-                    serverRunning = false;
-                    logger.info("ServerManagedJob - 状態異常です Msg = [" + StatusUtil.getStatusMessage() + "]");
-                }
-
-                if (StatusUtil.getStatus() == 2) {
-                    serverRunning = false;
-                    logger.info("ServerManagedJob - 終了状態です");
-                }
-
-                serverStopMarkerFileName = super.getPropertiesValue("ServerStopFile");
-
-                serverStopMarkerFile = new File(new File(serverStopMarkerFileName).getAbsolutePath());
-                if (serverStopMarkerFile.exists()) {
-                    serverRunning = false;
-                    logger.info("ServerManagedJob - Server停止ファイルが存在します");
-                    StatusUtil.setStatus(2);
                 }
 
                 StringBuilder memBuf = new StringBuilder();

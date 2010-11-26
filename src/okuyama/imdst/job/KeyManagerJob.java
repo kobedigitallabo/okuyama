@@ -24,9 +24,10 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
     private String myPrefix = null;
 
-    // ポート番号
-    private int portNo = 5554;
-
+    // デフォルト起動設定
+    private String bindIpAddress = null;
+    private int portNo = 5553;
+    private int backLog = 50;
 
     private String keySizeStr = null;
     private int keySize = 500000;
@@ -79,10 +80,34 @@ public class KeyManagerJob extends AbstractJob implements IJob {
      */
     public void initJob(String initValue) {
         logger.debug("KeyManagerJob - initJob - start");
+        logger.info("okuyama DataNode Initialization Start ...");
+        System.out.println("okuyama DataNode Initialization Start ...");
+
+        if (initValue.indexOf(":") != -1) {
+
+            String[] splitInitVal = initValue.split(":");
+            this.bindIpAddress = splitInitVal[0];
+
+            if (splitInitVal[1].indexOf("&") != -1) {
+
+                splitInitVal = splitInitVal[1].split("&");
+                this.portNo = Integer.parseInt(splitInitVal[0]);
+                this.backLog = Integer.parseInt(splitInitVal[1]);
+            } else {
+
+                this.portNo = Integer.parseInt(splitInitVal[1]);
+            }
+        } else if (initValue.indexOf("&") != -1){
+
+            String[] splitInitVal = initValue.split("&");
+            this.portNo = Integer.parseInt(splitInitVal[0]);
+            this.backLog = Integer.parseInt(splitInitVal[1]);
+        } else {
+
+            this.portNo = Integer.parseInt(initValue);
+        }
 
         this.myPrefix = super.getJobName();
-
-        this.portNo = Integer.parseInt(initValue);
 
         String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyNodeMaxConnectParallelExecution);
         if (sizeStr != null && Integer.parseInt(sizeStr) > maxConnectParallelExecution) {
@@ -161,13 +186,28 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             this.initHelperTaskQueue();
 
             // サーバソケットの生成
-            this.serverSocket = new ServerSocket(this.portNo);
+            InetSocketAddress bindAddress= null;
+            if (this.bindIpAddress == null) {
+                bindAddress= new InetSocketAddress(this.portNo);
+            } else {
+                bindAddress= new InetSocketAddress(this.bindIpAddress, this.portNo);
+            }
+
+            this.serverSocket = new ServerSocket();
+            this.serverSocket.bind(bindAddress, this.backLog);
+
             // 共有領域にServerソケットのポインタを格納
             super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
 
 
             // 処理開始
-            logger.info("DataNodeServer-Accept-Start");
+            logger.info("okuyama DataNode Initialization End ...");
+            System.out.println("okuyama DataNode Initialization End ...");
+
+            logger.info("okuyama DataNode start ...");
+            logger.info("listening on " + bindAddress);
+            System.out.println("okuyama DataNode start");
+            System.out.println("listening on " + bindAddress);
 
             while (true) {
                 if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;

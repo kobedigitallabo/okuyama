@@ -849,9 +849,6 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         String[] retParams = null;
         boolean cacheConnectUse = false;
 
-        //System.out.println("---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---");
-        //System.out.println(keyNodeConnectPool);
-
         for (int tryCount = 0; tryCount < deadCount; tryCount++) {
             retStrs = new String[2];
             retStrs[0] = "true";

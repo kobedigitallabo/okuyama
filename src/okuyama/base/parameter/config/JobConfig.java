@@ -2,6 +2,7 @@ package okuyama.base.parameter.config;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Hashtable;
@@ -37,7 +38,11 @@ public class JobConfig {
 
     private String configFileName = null;
 
+    private File configFile = null;
+
     private long fileModifiedTime = 0L;
+
+
     /**
      * 設定ファイル名を渡すことにより、生成.<br>
      * コンストラクタ<br>
@@ -50,8 +55,22 @@ public class JobConfig {
         this.helperMap = new LinkedHashMap();
         this.userPrivateValuesMap = new Hashtable();
         this.configFileName = fileName;
-        this.initConfig(JobConfig.class.getResourceAsStream(fileName));
+
+        this.configFile = new File(fileName);
+        try {
+            if (this.configFile.exists()) {
+
+                this.initConfig(new FileInputStream(this.configFile));
+            } else {
+
+                this.configFile = new File(JobConfig.class.getResource(this.configFileName).toURI());
+                this.initConfig(new FileInputStream(this.configFile));
+            }
+        } catch (Exception e) {
+            throw new BatchException(e);
+        }
     }
+
 
     /**
      * 設定ファイルを解析し、自身に蓄える.<br>
@@ -95,14 +114,14 @@ public class JobConfig {
         HelperConfigMap helperConfigMap = null;
 
         try {
-            logger.debug("initConfig - 開始");
+            logger.debug("initConfig - Start");
             prop = new Properties();
             prop.load(is);
 
             // 対象job一覧取得
             jobs = prop.getProperty(BatchDefine.JOB_CONFIG_JOBLIST_KEY);
 
-            logger.debug("対象JOBLISTの全定義:[" + jobs + "]");
+            logger.debug("JOBLIST:[" + jobs + "]");
 
             // 対象JobListを分解
             jobList = jobs.split(BatchDefine.JOB_CONFIG_JOBLIST_SEP);
@@ -118,20 +137,20 @@ public class JobConfig {
                 dbgroupList = null;
                 commitValue = null;
 
-                logger.debug("Job情報分析対象Job:[" + jobList[index] + "]");
+                logger.debug("Job Parse Job:[" + jobList[index] + "]");
                 // 対象Job名を使用して、情報を取り出す
                 jobClass = (String)prop.remove(jobList[index] + BatchDefine.JOB_CONFIG_JOIN_SEP + BatchDefine.JOB_CONFIG_CLASS_KEY);
 
                 // ルールの有無を調べる
                 if (jobClass == null) {
 
-                    logger.error("Job用のクラス定義無し");
-                    logger.error("適応Job名:[" + jobList[index] + "]");
-                    throw new BatchException("設定ファイル定義間違い");
+                    logger.error("Job Class Configure Not Found");
+                    logger.error("Error Job Name:[" + jobList[index] + "]");
+                    throw new BatchException("Job Class Configure Error");
                 } else {
 
-                    logger.debug("Job用クラス定義有り");
-                    logger.debug("適応Job用クラス名:[" + jobClass + "]");
+                    logger.debug("Job Class Configure Exists");
+                    logger.debug("Job Class Name:[" + jobClass + "]");
 
                     // Option値取得(NULLの可能性もある)
                     optionValue = (String)prop.remove(jobList[index] + BatchDefine.JOB_CONFIG_JOIN_SEP + BatchDefine.JOB_CONFIG_OPTION_KEY);
@@ -167,13 +186,13 @@ public class JobConfig {
                     // 値を保存
                     jobConfigMap = new JobConfigMap(jobList[index], jobClass, initValue, optionValue, dependList, dbgroupList, commitValue);
 
-                    logger.info("Job名" + jobList[index] + 
-                                ", Class名[" + jobClass  + "]" + 
-                                ", Init値[" +  initValue + "]" + 
-                                ", Option値[" +  optionValue + "]" + 
-                                ", Depend値[" +  dependValue + "]" +
-                                ", Dbgroup値[" +  dbgroupValue + "]" + 
-                                ", Commit値[" +  commitValue + "]");
+                    logger.info("Job Name" + jobList[index] + 
+                                ", Class Name[" + jobClass  + "]" + 
+                                ", Init  Name[" +  initValue + "]" + 
+                                ", Option  Name[" +  optionValue + "]" + 
+                                ", Depend  Name[" +  dependValue + "]" +
+                                ", Dbgroup  Name[" +  dbgroupValue + "]" + 
+                                ", Commit  Name[" +  commitValue + "]");
                     
 
                     // キー(Job名)値と、詳細情報
@@ -186,7 +205,7 @@ public class JobConfig {
             // 対象Helper一覧取得
             helpers = prop.getProperty(BatchDefine.JOB_CONFIG_HELPERLIST_KEY);
 
-            logger.debug("対象HELPERLISTの全定義:[" + helpers + "]");
+            logger.debug("HelperList:[" + helpers + "]");
 
             if (helpers != null && !helpers.equals("")) {
                 // 対象JobListを分解
@@ -202,20 +221,17 @@ public class JobConfig {
                     helperCommitValue = null;
 
 
-                    logger.debug("Helper情報分析対象Helper:[" + helperList[index] + "]");
+                    logger.debug("Helper Parse List:[" + helperList[index] + "]");
                     // 対象Job名を使用して、情報を取り出す
                     helperClass = (String)prop.remove(helperList[index] + BatchDefine.JOB_CONFIG_JOIN_SEP + BatchDefine.JOB_CONFIG_HELPER_CLASS_KEY);
 
                     // ルールの有無を調べる
                     if (helperClass == null) {
 
-                        logger.error("Helper用のクラス定義無し");
-                        logger.error("適応Helper名:[" + helperList[index] + "]");
-                        throw new BatchException("設定ファイル定義間違い");
+                        logger.error("Helper Class Not Found");
+                        logger.error("Target Helper :[" + helperList[index] + "]");
+                        throw new BatchException("ConfigureError");
                     } else {
-
-                        logger.debug("Helper用クラス定義有り");
-                        logger.debug("適応Helper用クラス名:[" + helperClass + "]");
 
                         // Option値取得(NULLの可能性もある)
                         optionValue = (String)prop.remove(helperList[index] + BatchDefine.JOB_CONFIG_JOIN_SEP + BatchDefine.JOB_CONFIG_OPTION_KEY);
@@ -232,8 +248,8 @@ public class JobConfig {
                                 // 数値変換
                                 helperLimitSize = Integer.parseInt(helperLimitSizeStr);
                             } catch (NumberFormatException nfe) {
-                                logger.error("適応Helper名:[" + helperList[index] + "]");
-                                throw new BatchException("設定ファイル[ Helper Limit ]定義間違い[" + helperLimitSizeStr + "]");
+                                logger.error("[" + helperList[index] + "]");
+                                throw new BatchException("Cofigure File[ Helper Limit ] Error[" + helperLimitSizeStr + "]");
                             }
                         }
 
@@ -246,8 +262,8 @@ public class JobConfig {
                                 // 数値変換
                                 helperMaxUse = Integer.parseInt(helperMaxUseStr);
                             } catch (NumberFormatException nfe) {
-                                logger.error("適応Helper名:[" + helperList[index] + "]");
-                                throw new BatchException("設定ファイル[ Helper Max Use ]定義間違い[" + helperMaxUseStr + "]");
+                                logger.error("Helper Name:[" + helperList[index] + "]");
+                                throw new BatchException("Helper[ Helper Max Use ]Configure Error[" + helperMaxUseStr + "]");
                             }
                         }
 
@@ -271,14 +287,14 @@ public class JobConfig {
                     // 値を保存
                     helperConfigMap = new HelperConfigMap(helperList[index], helperClass, initValue, optionValue, helperLimitSize, helperMaxUse, helperDbgroupList, helperCommitValue);
 
-                    logger.info("Helper名" + helperList[index] + 
-                                ", Class名[" + helperClass  + "]" + 
-                                ", Init値[" +  initValue + "]" + 
-                                ", Option値[" +  optionValue + "]" +
-                                ", Limit値[" +  helperLimitSizeStr + "]" +
-                                ", MaxUse値[" +  helperMaxUseStr + "]" + 
-                                ", Dbgroup値[" +  helperDbgroupValue + "]" + 
-                                ", Commit値[" +  helperCommitValue + "]");
+                    logger.info("Helper Name" + helperList[index] + 
+                                ", Class Name[" + helperClass  + "]" + 
+                                ", Init Parameter[" +  initValue + "]" + 
+                                ", Option Parameter[" +  optionValue + "]" +
+                                ", Limit Parameter[" +  helperLimitSizeStr + "]" +
+                                ", MaxUse Parameter[" +  helperMaxUseStr + "]" + 
+                                ", Dbgroup Parameter[" +  helperDbgroupValue + "]" + 
+                                ", Commit Parameter[" +  helperCommitValue + "]");
 
                     // キー(Job名)値と、詳細情報
                     this.helperMap.put(helperList[index], helperConfigMap);
@@ -295,9 +311,9 @@ public class JobConfig {
                     this.userPrivateValuesMap.put(key, prop.get(key));
                 }
             }
-            this.fileModifiedTime = new File(JobConfig.class.getResource(this.configFileName).toURI()).lastModified();
+            this.fileModifiedTime = this.configFile.lastModified();
         } catch (Exception e) {
-            logger.error("initConfig - エラー");
+            logger.error("initConfig - Error");
             throw new BatchException(e);
         } finally {
             try {
@@ -306,10 +322,10 @@ public class JobConfig {
                 }
             } catch (IOException ie) {
                 // 無視
-                logger.error("initConfig - ファイルストリームのCLOSEに失敗");
+                logger.error("initConfig - File Stream Close Error");
             }
         }
-        logger.debug("initConfig - 終了");
+        logger.debug("initConfig - End");
     }
 
     /**
@@ -414,8 +430,8 @@ public class JobConfig {
     public boolean isChangePropertiesFile() throws BatchException {
         boolean ret = false;
         try {
-            File file = new File(JobConfig.class.getResource(this.configFileName).toURI());
-            if(this.fileModifiedTime != file.lastModified()) ret = true;
+
+            if(this.fileModifiedTime != this.configFile.lastModified()) ret = true;
         } catch(Exception e) {
             // エラー
             logger.error("isChangePropertiesFile - Error" + e);
@@ -433,8 +449,8 @@ public class JobConfig {
         InputStream is = null;
 
         try {
-            this.fileModifiedTime = new File(JobConfig.class.getResource(this.configFileName).toURI()).lastModified();
-            is = JobConfig.class.getResourceAsStream(this.configFileName);
+            this.fileModifiedTime = this.configFile.lastModified();
+            is = new FileInputStream(this.configFile);
 
             Properties prop = new Properties();
             prop.load(is);
@@ -446,7 +462,7 @@ public class JobConfig {
                 }
             }
         } catch (Exception e) {
-            logger.error("reloadUserParam - エラー");
+            logger.error("reloadUserParam - Error");
             throw new BatchException(e);
         } finally {
             try {
@@ -455,7 +471,7 @@ public class JobConfig {
                 }
             } catch (IOException ie) {
                 // 無視
-                logger.error("reloadUserParam - ファイルストリームのCLOSEに失敗");
+                logger.error("reloadUserParam - File Stream Close Error");
             }
         }
     }
