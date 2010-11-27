@@ -1,5 +1,8 @@
 okuyamaサーバインストールパッケージ
 ※Linux環境を想定
+※事前に展開したトップディレクトリにてantタスクにて"jar"を実行する
+  okuyama-version.jarがbinディレクトリ配下に作成されます
+  $ant jar
 
 本ファイル配下のディレクトリ、ファイルをすべてをサーバに配置する
 環境変数OKUYAMA_HOMEを配置ディレクトリとして設定する
@@ -13,7 +16,6 @@ DataNode.propertiesのファイルパス指定を変更する(本ファイルは
 3.起動用設定ファイル
 
 okuyama start -server /home/okuyama/okuyama/conf/MasterNode.properties
-
 
 
 停止時引数
