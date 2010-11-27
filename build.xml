@@ -5,6 +5,8 @@
 	<property name="doc.dir"         value="doc" />
 	<property name="src.dir"         value="src" />
 	<property name="build.dir"       value="classes" />
+	<property name="install.dir"     value="install" />
+    <property name="version"         value="0.8.4" />
 
 
 	<!-- Use Project Lib  -->
@@ -45,7 +47,10 @@
 
 	<!-- jar make task  -->
 	<target name="jar" depends="compile">
-		<jar compress="yes" jarfile="okuyama.jar" basedir="${build.dir}"/>
+		<jar compress="yes" jarfile="okuyama-${version}.jar" basedir="${build.dir}" includes="**/*.class" />
+		<copy todir="${install.dir}/bin">
+			<fileset dir="./" includes="okuyama*.jar" />
+		</copy>
 	</target>
 
 
@@ -296,7 +301,7 @@
 			<ant target='slavedatanode' />
 			<ant target='thirddatanode' />
 			<sequential>
-				<sleep seconds="12" />
+				<sleep seconds="3" />
 				<ant target='masternode' />
 			</sequential>
 		</parallel>
