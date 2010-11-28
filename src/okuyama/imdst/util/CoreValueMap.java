@@ -73,18 +73,18 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      */
     public Object put(Object key, Object value) {
 
-        // 仮想ストレージモードが起動しているかを確認
+        // メモリファイル共有Mapモードが起動しているかを確認
         if (!this.isUrgentSaveMode()) {
             return mainMap.put(converter.convertEncodeKey(key), converter.convertEncodeValue(value));
         } else {
-            // 仮想ストレージモードへ移行している
+            // メモリファイル共有Mapモードへ移行している
             if (mainMap.containsKey(converter.convertEncodeKey(key))) {
 
                 // 既存ストレージ
                 return mainMap.put(converter.convertEncodeKey(key), converter.convertEncodeValue(value));
             } else {
 
-                // 仮想ストレージ
+                // メモリファイル共有Map
                 return urgentSaveMap.put(urgentSaveMapConverter.convertEncodeKey(key), urgentSaveMapConverter.convertEncodeValue(value));
             }
         }
@@ -99,19 +99,19 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      */
     public Object get(Object key) {
 
-        // 仮想ストレージモードが起動しているかを確認
+        // メモリファイル共有Mapモードが起動しているかを確認
         if (!this.isUrgentSaveMode()) {
             return converter.convertDecodeValue(mainMap.get(converter.convertEncodeKey(key)));
         } else {
 
-            // 仮想ストレージモードへ移行している
+            // メモリファイル共有Mapモードへ移行している
             if (mainMap.containsKey(converter.convertEncodeKey(key))) {
 
                 // 既存ストレージ
                 return converter.convertDecodeValue(mainMap.get(converter.convertEncodeKey(key)));
             } else {
 
-                // 仮想ストレージ
+                // メモリファイル共有Map
                 return urgentSaveMapConverter.convertDecodeValue(urgentSaveMap.get(urgentSaveMapConverter.convertEncodeKey(key)));
             }
         }
@@ -125,18 +125,18 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      * @return Object
      */
     public Object remove(Object key) {
-        // 仮想ストレージモードが起動しているかを確認
+        // メモリファイル共有Mapモードが起動しているかを確認
         if (!this.isUrgentSaveMode()) {
             return converter.convertDecodeValue(mainMap.remove(converter.convertEncodeKey(key)));
         } else {
-            // 仮想ストレージモードへ移行している
+            // メモリファイル共有Mapモードへ移行している
             if (mainMap.containsKey(converter.convertEncodeKey(key))) {
 
                 // 既存ストレージ
                 return converter.convertDecodeValue(mainMap.remove(converter.convertEncodeKey(key)));
             } else {
 
-                // 仮想ストレージ
+                // メモリファイル共有Map
                 return urgentSaveMapConverter.convertDecodeValue(urgentSaveMap.remove(urgentSaveMapConverter.convertEncodeKey(key)));
             }
         }
@@ -151,12 +151,12 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      */
     public boolean containsKey(Object key) {
 
-        // 仮想ストレージモードが起動しているかを確認
+        // メモリファイル共有Mapモードが起動しているかを確認
         if (!this.isUrgentSaveMode()) {
             return mainMap.containsKey(converter.convertEncodeKey(key));
         } else {
 
-            // 仮想ストレージモードへ移行している
+            // メモリファイル共有Mapモードへ移行している
             if (mainMap.containsKey(converter.convertEncodeKey(key))) {
                 return true;
             } else {
@@ -174,7 +174,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
     public void clear() {
         this.mainMap.clear();
 
-        // 仮想ストレージモードが起動しているかを確認
+        // メモリファイル共有Mapモードが起動しているかを確認
         if (this.isUrgentSaveMode()) 
             urgentSaveMap.clear();
     }
@@ -189,7 +189,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      */
     public int size() {
 
-        // 仮想ストレージモードが起動しているかを確認
+        // メモリファイル共有Mapモードが起動しているかを確認
         if (!this.isUrgentSaveMode()) {
             return this.mainMap.size();
         } else {
@@ -207,7 +207,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      */
     public Set entrySet() {
 
-        // 仮想ストレージモードが起動しているかを確認
+        // メモリファイル共有Mapモードが起動しているかを確認
         if (!this.isUrgentSaveMode()) {
             return new CoreValueMapSet(mainMap.entrySet(), converter);
         } else {
