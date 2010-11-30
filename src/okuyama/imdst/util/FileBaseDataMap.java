@@ -1165,7 +1165,7 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
     private int numberOfDataFiles = 1024;
 
     // データファイルを格納するディレクトリ分散係数
-    private int dataDirsFactor = 20;
+    private int dataDirsFactor = 40;
 
     // Fileオブジェクト格納用
     private File[] dataFileList = null;
@@ -1233,6 +1233,7 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
             } else {
 //              this.getDataSize = this.lineDataSize * 1 * 2;
                 this.getDataSize = this.lineDataSize;
+                this.numberOfOneFileKey = 100;
             }
 
             this.baseFileDirs = dirs;
@@ -1354,6 +1355,8 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
 
                         wr.write(buf.toString());
                         wr.flush();
+                        wr.write(value);
+                        wr.flush();
 
                         // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
                         int valueSize = value.length();
@@ -1387,7 +1390,9 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
                         //if (this.get(key, hashCode) == null) increMentFlg = true;
 
                         raf.seek(dataLineNoRet[0] * (lineDataSize));
-                       raf.write(buf.toString().getBytes(), 0, keyDataLength);
+                        raf.write(buf.toString().getBytes(), 0, keyDataLength);
+                        raf.write(value.getBytes());
+
 
                         // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
                         int valueSize = value.length();
@@ -1730,6 +1735,7 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
             if (this.nowIterationFileIndex < this.dataFileList.length) {
 
                 keys = new ArrayList();
+
                 datas = new byte[new Long(this.dataFileList[this.nowIterationFileIndex].length()).intValue()];
 
                 raf = new RandomAccessFile(this.dataFileList[this.nowIterationFileIndex], "rwd");

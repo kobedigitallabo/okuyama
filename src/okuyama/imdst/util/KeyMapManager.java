@@ -353,7 +353,6 @@ public class KeyMapManager extends Thread {
                 // 1サイクル1.5秒の停止を規定回数行う(途中で停止要求があった場合は無条件で処理実行)
                 for (int count = 0; count < KeyMapManager.intervalCount; count++) {
 
-
                     // システム停止要求を監視
                     if (StatusUtil.getStatus() != 0) {
                         logger.info ("KeyMapManager - run - System Shutdown 2");
@@ -479,9 +478,9 @@ public class KeyMapManager extends Thread {
      * @param boolean 移行データ指定
      */
     public void setKeyPair(String key, String keyNode, String transactionCode) throws BatchException {
-
         if (!blocking) {
             try {
+
                 //logger.debug("setKeyPair - synchronized - start");
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((keyNode.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
@@ -516,7 +515,7 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-
+                    // 登録
                     keyMapObjPut(key, data);
 
                     // データ操作履歴ファイルに追記
@@ -1189,6 +1188,7 @@ public class KeyMapManager extends Thread {
         }
     }
 
+
     public void diffDataMode(boolean flg) {
         synchronized (diffSync) {
 
@@ -1206,17 +1206,18 @@ public class KeyMapManager extends Thread {
         }
     }
 
+
     // 強制的に差分モードをOffにする
     public void diffDataModeOff() {
+        synchronized (diffSync) {
+            if (this.diffDataPoolingListForFileBase != null) {
+                this.diffDataPoolingListForFileBase.clear();
+                this.diffDataPoolingListForFileBase = null;
+            }
 
-        if (this.diffDataPoolingListForFileBase != null) {
-            this.diffDataPoolingListForFileBase.clear();
-            this.diffDataPoolingListForFileBase = null;
+            this.diffDataPoolingFlg = false;
         }
-
-        this.diffDataPoolingFlg = false;
     }
-
 
 
     // 引数で渡されてストリームに対しkeyMapObjを書き出す
@@ -1233,7 +1234,7 @@ public class KeyMapManager extends Thread {
 
                     int printLineCount = 0;
                     // 一度に送信するデータ量を算出。空きメモリの50%を使用する
-                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.5) / (ImdstDefine.saveDataMaxSize / 50)).intValue();
+                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.5) / (ImdstDefine.saveDataMaxSize / 100)).intValue();
 
                     if (entrySet.size() > 0) {
                         if(maxLineCount == 0) maxLineCount = 1;
@@ -1300,7 +1301,6 @@ public class KeyMapManager extends Thread {
                         StringBuilder allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
 
                         // 差分データの全内容を1行文字列として書き出し
-
                         for (int i = 0; i < this.diffDataPoolingListForFileBase.size(); i++) {
 
                             allDataBuf.append(allDataSep);
@@ -1309,19 +1309,21 @@ public class KeyMapManager extends Thread {
 
                             if (i > 0 && (i % 10) == 0) {
 
-                                pw.print(allDataBuf.toString());
+                                pw.println(allDataBuf.toString());
                                 pw.flush();
+                                allDataBuf = null;
                                 allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
+                                allDataSep = "";
                             }
                         }
 
                         String lastSendData = allDataBuf.toString();
                         if (!lastSendData.equals("")) {
-                            pw.print(lastSendData);
+                            pw.println(lastSendData);
                             pw.flush();
                         }
 
-                        pw.print("\n");
+                        pw.println("-1");
                         pw.flush();
 
                         if (this.diffDataPoolingListForFileBase != null) {
@@ -1336,6 +1338,7 @@ public class KeyMapManager extends Thread {
                         if (outputRet == null || !outputRet.equals("1")) {
                             throw new Exception("outputDiffKeyMapObj2Stream - Error Ret=[" + outputRet + "]");
                         }
+
                         // 終了受信を送信
                         pw.println("1");
                         pw.flush();
@@ -1480,83 +1483,87 @@ public class KeyMapManager extends Thread {
 
                         // 最終更新日付変えずに全てのデータを登録する
                         // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
-                        String allDataStr = br.readLine();
+                        String allDataStr = null;
+                        while((allDataStr = br.readLine()) != null) {
 
-                        if (allDataStr != null && !allDataStr.trim().equals("")) {
+                            if (allDataStr.trim().equals("-1")) break;
+                            if (allDataStr != null && !allDataStr.trim().equals("")) {
 
-                            String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
-                            allDataStr = null;
+                                String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
+                                allDataStr = null;
 
-                            for (i = 0; i < allDataLines.length; i++) {
-                                if (!allDataLines[i].trim().equals("")) {
-                                    oneDatas = allDataLines[i].split(KeyMapManager.workFileSeq);
+                                for (i = 0; i < allDataLines.length; i++) {
+                                    if (!allDataLines[i].trim().equals("")) {
+                                        oneDatas = allDataLines[i].split(KeyMapManager.workFileSeq);
 
-                                    // 最後のデータのみ更新日を変更
-                                    if (allDataLines.length == (i + 1)) {
+                                        // 最後のデータのみ更新日を変更
+                                        if (allDataLines.length == (i + 1)) {
 
-                                        if (oneDatas[0].equals("+")) {
+                                            if (oneDatas[0].equals("+")) {
 
-                                            if (oneDatas.length == 3) {
-                                                this.keyMapObjPut(oneDatas[1], oneDatas[2]);
-                                            } else if (oneDatas.length == 4) {
-                                                this.keyMapObjPut(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                                if (oneDatas.length == 3) {
+                                                    this.keyMapObjPut(oneDatas[1], oneDatas[2]);
+                                                } else if (oneDatas.length == 4) {
+                                                    this.keyMapObjPut(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                                }
+                                            } else if (oneDatas[0].equals("-")) {
+
+                                                this.keyMapObjRemove(oneDatas[1]);
                                             }
-                                        } else if (oneDatas[0].equals("-")) {
-
-                                            this.keyMapObjRemove(oneDatas[1]);
-                                        }
-                                    } else {
-                                        if (oneDatas[0].equals("+")) {
-
-                                            if (oneDatas.length == 3) {
-                                                this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2]);
-                                            } else if (oneDatas.length == 4) {
-                                                this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
-                                            }
-                                        } else if (oneDatas[0].equals("-")) {
-
-                                            this.keyMapObjRemoveNoChange(oneDatas[1]);
-                                        }
-                                    }
-
-                                    // 差分データをトランザクションログモードがONの場合のみ書き出し
-                                    // ファイルストリームは既にinputKeyMapObj2Streamメソッド内で作成されている想定
-                                    if (this.workFileMemory == false) {
-
-                                        counter++;
-                                        String writeValueStr = " ";
-                                        String dataType = "+";
-
-                                        if (oneDatas[0].equals("-")) {
-
-                                            dataType = "-";
                                         } else {
+                                            if (oneDatas[0].equals("+")) {
 
-                                            if (oneDatas.length == 3) {
-                                                writeValueStr = oneDatas[2];
-                                            } else if (oneDatas.length == 4) {
-                                                writeValueStr = oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3];
+                                                if (oneDatas.length == 3) {
+                                                    this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2]);
+                                                } else if (oneDatas.length == 4) {
+                                                    this.keyMapObjPutNoChange(oneDatas[1], oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3]);
+                                                }
+                                            } else if (oneDatas[0].equals("-")) {
+
+                                                this.keyMapObjRemoveNoChange(oneDatas[1]);
                                             }
                                         }
 
-                                        this.bw.write(new StringBuilder(ImdstDefine.stringBufferMiddleSize).
-                                            append(dataType).
-                                            append(KeyMapManager.workFileSeq).
-                                            append(oneDatas[1]).
-                                            append(KeyMapManager.workFileSeq).
-                                            append(writeValueStr).
-                                            append(KeyMapManager.workFileSeq).
-                                            append(writeCurrentTime).
-                                            append(KeyMapManager.workFileSeq).
-                                            append(KeyMapManager.workFileEndPoint).
-                                            append("\n").
-                                            toString());
+                                        // 差分データをトランザクションログモードがONの場合のみ書き出し
+                                        // ファイルストリームは既にinputKeyMapObj2Streamメソッド内で作成されている想定
+                                        if (this.workFileMemory == false) {
 
-                                        if((counter % 100) == 0) this.bw.flush();
+                                            counter++;
+                                            String writeValueStr = " ";
+                                            String dataType = "+";
+
+                                            if (oneDatas[0].equals("-")) {
+
+                                                dataType = "-";
+                                            } else {
+
+                                                if (oneDatas.length == 3) {
+                                                    writeValueStr = oneDatas[2];
+                                                } else if (oneDatas.length == 4) {
+                                                    writeValueStr = oneDatas[2] + KeyMapManager.workFileSeq + oneDatas[3];
+                                                }
+                                            }
+
+                                            this.bw.write(new StringBuilder(ImdstDefine.stringBufferMiddleSize).
+                                                append(dataType).
+                                                append(KeyMapManager.workFileSeq).
+                                                append(oneDatas[1]).
+                                                append(KeyMapManager.workFileSeq).
+                                                append(writeValueStr).
+                                                append(KeyMapManager.workFileSeq).
+                                                append(writeCurrentTime).
+                                                append(KeyMapManager.workFileSeq).
+                                                append(KeyMapManager.workFileEndPoint).
+                                                append("\n").
+                                                toString());
+
+                                            if((counter % 100) == 0) this.bw.flush();
+                                        }
                                     }
                                 }
+                                if (this.workFileMemory == false) this.bw.flush();
+                                allDataLines = null;
                             }
-                            allDataLines = null;
                         }
 
                         // トランザクションログモードがONの場合のみflush

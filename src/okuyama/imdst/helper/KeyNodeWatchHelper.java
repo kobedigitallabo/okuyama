@@ -453,7 +453,15 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             pw.flush();
 
             // データを送信
-            pw.println(mbr.readLine());
+            String diffDataStr = null;
+            while((diffDataStr = mbr.readLine()) != null) {
+
+                if (diffDataStr.equals("-1")) break;
+                pw.println(diffDataStr);
+                pw.flush();
+            }
+
+            pw.println("-1");
             pw.flush();
 
             logger.info("Recover Step - 12");

@@ -24,7 +24,52 @@ public class FileBaseDataList extends AbstractList {
 
     private BufferedWriter wr = null;
 
-	private static int paddingSymbol = 64;
+    private BufferedReader br = null;
+
+    private int nowIndex = 0;
+
+    private static int paddingSymbol = 64;
+
+    private static byte[] paddingSymbols = {64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
+                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64};
+
+
+    private static String middlePaddingSymbolStr = new String(paddingSymbols);
+
+    private static String largePaddingSymbolStr = new StringBuilder(8192).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).
+                                                  append(new String(paddingSymbols)).toString();
+
 
     // Total Size
     private AtomicInteger totalSize = null;
@@ -58,7 +103,7 @@ public class FileBaseDataList extends AbstractList {
      * @throws
      */
     public FileBaseDataList(String dataFile, int size) {
-		this.oneDataLength = size;
+        this.oneDataLength = size;
         this.dataFileDir = dataFile;
         this.dataFile = new File(dataFile);
         this.init();
@@ -76,6 +121,7 @@ public class FileBaseDataList extends AbstractList {
 
             // start file stream
             this.raf = new RandomAccessFile(this.dataFile, "rwd");
+            this.br = new BufferedReader(new FileReader(this.dataFile));
             this.wr = new BufferedWriter(new FileWriter(this.dataFile, true));
             ret = true;
         } catch(Exception e) {
@@ -110,24 +156,16 @@ public class FileBaseDataList extends AbstractList {
             }
 
 
-			String writeStr = writeStrBuf.toString();
+            String writeStr = writeStrBuf.toString();
 
             synchronized (sync) {
 
                 this.wr.write(writeStr);
-	            this.wr.flush();
-
-		        // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
-		        int valueSize = writeStr.length();
-				byte[] fillByte = new byte[1];
-				fillByte[0] = new Integer(paddingSymbol).byteValue();
-		        for (int i = 0; i < (oneDataLength - valueSize); i++) {
-				
-					this.wr.write(new String(fillByte));
-					if ((i % 1024) == 0) this.wr.flush();
-				}
-	            this.wr.flush();
+                this.wr.write("\n");
+                this.wr.flush();
             }
+            writeStr = null;
+            writeStrBuf = null;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -150,19 +188,25 @@ public class FileBaseDataList extends AbstractList {
             try {
 
                 synchronized (sync) { 
-                    this.raf.seek(oneDataLength * index);
-                    byte[] readDatas = new byte[oneDataLength];
-                    this.raf.read(readDatas);
 
-                    int counter = 0;
+                    String tmp = null;
+                    if (index == nowIndex) {
 
-                    for (int i= 0; i < this.oneDataLength; i++) {
+                        tmp = this.br.readLine();
+                        nowIndex++;
+                    } else {
 
-                        if (readDatas[i] == FileBaseDataList.paddingSymbol) break;
-                        counter++;
+                        this.nowIndex = 0;
+                        this.br.close();
+                        this.br = new BufferedReader(new FileReader(this.dataFile));
+                        while((tmp = this.br.readLine()) != null) {
+                            if(index == nowIndex) {
+                                nowIndex++;
+                                break;
+                            }
+                            nowIndex++;
+                        }
                     }
-
-                    String tmp = new String(readDatas, 0, counter, "UTF-8");
 
                     if (tmp.indexOf("StringClass") == 0) {
                         String[] tmpStrs = tmp.split("StringClass");
@@ -219,20 +263,25 @@ public class FileBaseDataList extends AbstractList {
      * @throws
      */
     public void clear() {
-		try {
+        try {
             if(this.raf != null) {
-				this.raf.close();
-				this.raf = null;
-			}
+                this.raf.close();
+                this.raf = null;
+            }
 
             if(this.wr != null) {
-				this.wr.close();
-				this.wr = null;
-			}
+                this.wr.close();
+                this.wr = null;
+            }
+
+            if(this.br != null) {
+                this.br.close();
+                this.br = null;
+            }
 
             if (this.dataFile.exists()) this.dataFile.delete();
-		} catch(Exception e) {
-		}
+        } catch(Exception e) {
+        }
     }
 
 

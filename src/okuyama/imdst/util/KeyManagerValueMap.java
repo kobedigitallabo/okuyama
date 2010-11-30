@@ -145,11 +145,11 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             try {
 
                 int i = 0;
-				long seekPoint = 0L;
+                long seekPoint = 0L;
                 byte[] buf = new byte[this.oneDataLength];
 
                 // seek値取得
-				if ((seekPoint = this.seekDataPoint(key)) == -1) return null;
+                if ((seekPoint = this.seekDataPoint(key)) == -1) return null;
 
                 synchronized (sync) {
                     // Vacuum中の場合はデータの格納先が変更されている可能性があるので、
@@ -161,7 +161,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         }
                     }
 
-					this.readDataFile(buf, seekPoint, this.oneDataLength);
+                    this.readDataFile(buf, seekPoint, this.oneDataLength);
                 }
 
                 ret = new String(buf, ImdstDefine.keyWorkFileEncoding);
@@ -195,17 +195,17 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 } else {
 
                     int i = 0;
-					int readRet = 0;
-					long seekPoint = 0L;
+                    int readRet = 0;
+                    long seekPoint = 0L;
                     byte[] buf = new byte[this.oneDataLength];
 
-	                // seek値取得
-					if ((seekPoint = this.seekDataPoint(key)) == -1) return null;
+                    // seek値取得
+                    if ((seekPoint = this.seekDataPoint(key)) == -1) return null;
 
                     synchronized (sync) {
-						readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
+                        readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
                         if (readRet == -1) 
-	                            return null;
+                                return null;
                     }
 
                     if (readRet > this.oneDataLength) {
@@ -259,16 +259,16 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             int i = 0;
             byte[] buf = new byte[this.oneDataLength];
             long seekPoint = 0L;
-			int readRet = 0;
+            int readRet = 0;
 
             synchronized (sync) {
 
                 // Vacuum中はMap内の行数指定と実際のデータファイルでの位置が異なる場合があるため、
                 // Vacuum中で且つ、Mapを更新中の場合はここで同期化する。
                 // seek値取得
-				if ((seekPoint = this.seekDataPoint(key)) == -1) return null;
+                if ((seekPoint = this.seekDataPoint(key)) == -1) return null;
 
-				readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
+                readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
 
                 if (readRet > this.oneDataLength) {
 
@@ -316,6 +316,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * @return Object 返却値(Fileモード時は返却値は常にnull)
      */
     public Object put(Object key, Object value) {
+
         Object ret = null;
         if (this.memoryMode) {
             ret = super.put(key, value);
@@ -687,19 +688,19 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     }
 
 
-	/**
-	 * 読み込み開始位置を渡すことでデータファイルからValue値を読み込む.<br>
+    /**
+     * 読み込み開始位置を渡すことでデータファイルからValue値を読み込む.<br>
      * 返却値は読み込んだデータ数.<br>
      * 1Valueが終端に達していない場合は、読み込み指定された値の+1を返す.<br>
-	 * 読み込みに失敗した場合は-1を返す.<br>
-	 *
- 	 * @param buf 読み込み用Buffer
-	 * @param seekPoint seek値
-	 * @param readLength 読み込み指定地
-	 * @return 読み込んだデータサイズ
-	 */
-	private int readDataFile(byte[] buf, long seekPoint, int readLength) throws Exception {
-		int ret = readLength;
+     * 読み込みに失敗した場合は-1を返す.<br>
+     *
+     * @param buf 読み込み用Buffer
+     * @param seekPoint seek値
+     * @param readLength 読み込み指定地
+     * @return 読み込んだデータサイズ
+     */
+    private int readDataFile(byte[] buf, long seekPoint, int readLength) throws Exception {
+        int ret = readLength;
 
         if (raf != null) {
 
@@ -710,20 +711,20 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         }
 
 
-	    if (buf[buf.length - 1] != 38 && buf[buf.length - 2] != 33 && buf[buf.length - 1] != 48) ret++;
+        if (buf[buf.length - 1] != 38 && buf[buf.length - 2] != 33 && buf[buf.length - 1] != 48) ret++;
 
-		return ret;
-	}
+        return ret;
+    }
 
 
-	/**
-	 * Key値を渡すことでそのKeyの対となるValueがデータファイルのどこにあるかを.<br>
+    /**
+     * Key値を渡すことでそのKeyの対となるValueがデータファイルのどこにあるかを.<br>
      * データファイル中のバイト位置で返す.<br>
-	 *
-	 * @param key Key値
-	 * @return long ファイル中の開始位置 データが存在しない場合は-1が返却される
-	 */
-	private long seekDataPoint(Object key) {
+     *
+     * @param key Key値
+     * @return long ファイル中の開始位置 データが存在しない場合は-1が返却される
+     */
+    private long seekDataPoint(Object key) {
 
         Integer lineInteger = (Integer)super.get(key);
         int line = 0;
@@ -735,7 +736,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         // seek計算
         return new Long(this.seekOneDataLength).longValue() * new Long((line - 1)).longValue();
-	}
+    }
 
 
     /**

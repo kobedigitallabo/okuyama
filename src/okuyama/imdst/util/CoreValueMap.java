@@ -28,7 +28,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
     private AbstractMap mainMap = null;
 
-	private boolean allDataMemory = false;
+    private boolean allDataMemory = false;
 
     // メモリ救済用
     // メモリ領域が枯渇した場合に使用する仮想領域
@@ -46,7 +46,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
             mainMap  = new ConcurrentHashMap(size, upper, multi);
             converter = new MemoryModeCoreValueCnv();
-			this.allDataMemory = true;
+            this.allDataMemory = true;
         } else {
 
             mainMap  = new ConcurrentHashMap(size, upper, multi);
@@ -231,11 +231,11 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             if (this.urgentSaveMap != null) return true;
 
             this.urgentSaveMapConverter = new AllFileModeCoreValueCnv();
-			if (this.allDataMemory) {
-				this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 1000000, 0.10, (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1));
-			} else {
-	            this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 1000000, 0.10);
-			}
+            if (this.allDataMemory) {
+                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 1000000, 0.10, (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1));
+            } else {
+                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 1000000, 0.10);
+            }
             this.urgentSaveMode = true;
         }
         return true;
