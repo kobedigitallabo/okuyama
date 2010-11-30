@@ -13,6 +13,9 @@ import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.JavaSystemApi;
 
+import okuyama.imdst.util.FileBaseDataMap;
+
+
 /**
  * Serverのリソース全般を管理する.<br>
  * メモリの使用状況の管理.<br>
@@ -26,6 +29,8 @@ public class TestJob extends AbstractJob implements IJob {
 
     // 停止ファイルの監視サイクル時間(ミリ秒)
     private int checkCycle = 5000;
+	private static String[] dirs = {"./keymapfile/1.dir/","./keymapfile/2.dir/"};
+	private static FileBaseDataMap fileBaseDataMap = new FileBaseDataMap(dirs, 25600, 0.2, 1024*1024);
 
     /**
      * Logger.<br>
@@ -44,12 +49,23 @@ public class TestJob extends AbstractJob implements IJob {
         String ret = SUCCESS;
 
         try{
-            int helperCode = super.executeHelper("TestHelper", null);
+			//String[] dirs = {"./keymapfile/1.dir/","./keymapfile/2.dir/"};
+			//FileBaseDataMap fileBaseDataMap = new FileBaseDataMap(dirs, 25600, 0.2, 1024*1024);
+long start = System.nanoTime();
+			for (int i = 0; i < 50; i++) {
+				fileBaseDataMap.put(optionParam + "key" + i, optionParam + "value" + i);
+			}
 
-            Object[] helperRet = null;
-            while(helperRet == null) {
-                 helperRet = super.waitGetHelperReturnParam(helperCode, 10);
-            }
+long end = System.nanoTime();
+System.out.println((end - start) / 1024 / 1024);
+
+long start2 = System.nanoTime();
+			for (int i = 0; i < 50; i++) {
+				fileBaseDataMap.get(optionParam + "key" + i);
+			}
+
+long end2 = System.nanoTime();
+System.out.println("2=" + ((end - start) / 1024 / 1024));
 
         } catch(Exception e) {
             logger.error("TestJob - executeJob - Error", e);
