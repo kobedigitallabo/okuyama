@@ -17,6 +17,7 @@ import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.protocol.*;
 import okuyama.imdst.util.io.KeyNodeConnector;
+import okuyama.imdst.util.JavaSystemApi;
 
 import com.sun.mail.util.BASE64DecoderStream;
 
@@ -205,15 +206,23 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // クライアントからの要求を取得
                     // Takerで会話開始
-                    //this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode);
-                    clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
+
+                    if (isProtocolOkuyama) {
+                        clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
+                        // パラメータ分解
+                        clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
+                    } else {
+                        // パラメータ分解
+                        clientParameterList = this.porotocolTaker.takeRequestLine4List(br, pw);
+                    }
+
 
                     if (this.porotocolTaker.nextExecution() != 1) {
 
                         // 処理をやり直し
                         if (this.porotocolTaker.nextExecution() == 2) { 
                             // 処理が完了したらQueueに戻す
-                            queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+                            queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
                             queueParam[0] = queueMap;
                             super.addSmallSizeParameterQueue(addQueueNames, queueParam);
                             continue;
@@ -227,8 +236,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         }
                     }
 
-                    // パラメータ分解
-                    clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
                     // 本体処理開始
                     // 処理番号で処理を分岐
@@ -244,12 +251,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
 
                             // Key値とValueを格納する
-                            if (clientParameterList.length > 5) {
-                                clientParameterList[4] = 
-                                    clientParameterList[4] + 
-                                        ImdstDefine.keyHelperClientParamSep + 
-                                            clientParameterList[5];
-                            }
                             retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
                             break;
                         case 2 :
@@ -448,7 +449,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     pw.flush();
 
                     // 処理が完了したら読み出し待機Queueに戻す
-                    queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+                    queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
 
                     queueParam[0] = queueMap;
                     super.addSmallSizeParameterQueue(addQueueNames, queueParam);

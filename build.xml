@@ -295,7 +295,7 @@
 
 
 	<!-- DataNode,SlaveDataNode,ThirdDataNode,MasterNode Execute task -->
-	<target name="serverrun" depends="compile">
+	<target name="serverrun">
 		<parallel>
 			<ant target='datanode' />
 			<ant target='slavedatanode' />

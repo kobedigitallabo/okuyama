@@ -368,8 +368,8 @@ public class TestSock {
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
                 String[] keys = null;
-				boolean noExistsData = true;
-				if (args.length > 5) noExistsData = new Boolean(args[5]).booleanValue();
+                boolean noExistsData = true;
+                if (args.length > 5) noExistsData = new Boolean(args[5]).booleanValue();
 
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]); i++) {
@@ -422,6 +422,30 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start));
                 imdstKeyValueClient.close();
+            } else if (args[0].equals("5.1")) {
+                int port = Integer.parseInt(args[2]);
+                // ImdstKeyValueClientでファイルのバイナリデータをBase64にエンコードして文字列として保存
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                String[] keys = null;
+                long start = new Date().getTime();
+                // args[4]はファイル名、args[5]はキー値
+                for (int i = 0; i < Integer.parseInt(args[3]); i++) {
+                    // ファイルをバイナリで読み込み
+                    byte[] fileByte = null;
+                    File file = new File(args[4]);
+                    fileByte = new byte[new Long(file.length()).intValue()];
+                    FileInputStream fis = new FileInputStream(file);
+                    fis.read(fileByte, 0, fileByte.length);
+                    //imdstKeyValueClient.setCompressMode(true);
+                    if (!imdstKeyValueClient.sendByteValue(args[5], fileByte)) {
+                        System.out.println("ImdstKeyValueClient - error");
+                    }
+                    fis.close();
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start));
+                imdstKeyValueClient.close();
 
             } else if (args[0].equals("6")) {
                 int port = Integer.parseInt(args[2]);
@@ -462,6 +486,34 @@ public class TestSock {
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     //imdstKeyValueClient.setCompressMode(true);
                     ret = imdstKeyValueClient.getByteValueVer2(args[5]);
+                    if (ret[0].equals("true")) {
+                        // データ有り
+                        byte[] fileByte = null;
+                        File file = new File(args[4]);
+                        FileOutputStream fos = new FileOutputStream(file);
+                        fileByte = (byte[])ret[1];
+                        fos.write(fileByte, 0, fileByte.length);
+                        fos.close();
+                    } else if (ret[0].equals("false")) {
+                        System.out.println("データなし");
+                    } else if (ret[0].equals("error")) {
+                        System.out.println(ret[1]);
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start));
+                imdstKeyValueClient.close();
+            } else if (args[0].equals("6.2")) {
+                int port = Integer.parseInt(args[2]);
+                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)(バイナリ)
+                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                imdstKeyValueClient.connect(args[1], port);
+                Object[] ret = null;
+                long start = new Date().getTime();
+                
+                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                    //imdstKeyValueClient.setCompressMode(true);
+                    ret = imdstKeyValueClient.readByteValue(args[5]);
                     if (ret[0].equals("true")) {
                         // データ有り
                         byte[] fileByte = null;

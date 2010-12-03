@@ -75,6 +75,7 @@ public class OkuyamaProtocolTaker implements IProtocolTaker {
         return retStrs;
     }
 
+
     /**
      * okuyama用のリクエストをパースし共通のプロトコルに変換.<br>
      *
@@ -99,9 +100,13 @@ public class OkuyamaProtocolTaker implements IProtocolTaker {
     }
 
 
+    public String[] takeRequestLine4List(BufferedReader br, PrintWriter pw) throws Exception {
+        return null;
+    }
+
+
     /**
      * okuyama用のレスポンスを作成.<br>
-     * 対応しているメソッドはset,get,deleteのみ.<br>
      *
      * @param retParams
      * @return String

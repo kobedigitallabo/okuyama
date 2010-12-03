@@ -76,6 +76,11 @@ public class MemcachedProtocolTaker4Data implements IProtocolTaker {
     }
 
 
+    public String[] takeRequestLine4List(BufferedReader br, PrintWriter pw) throws Exception {
+        return null;
+    }
+
+
     /**
      * memcache用のレスポンスを作成.<br>
      * 対応しているメソッドはset,get,deleteのみ.<br>

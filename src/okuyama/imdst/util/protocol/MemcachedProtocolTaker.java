@@ -8,6 +8,7 @@ import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
 import okuyama.imdst.util.ImdstDefine;
+import okuyama.imdst.util.JavaSystemApi;
 
 /**
  * クライアントとのProtocolの差を保管する.<br>
@@ -25,6 +26,10 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
     private String requestLine = null;
     private String[] requestSplit = null;
 
+
+    private StringBuilder retGetBuf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
+
+
     /**
      * 初期化
      *
@@ -35,6 +40,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
         this.requestLine = null;
         this.requestSplit = null;
     }
+
 
     /**
      * memcached用のリクエストをパースし共通のプロトコルに変換.<br>
@@ -47,10 +53,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
      */
     public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception {
         String retStr = null;
-        this.nextExec = 1;
-
-        // memcache時に使用するのは取り合えずは命令部分と、データ部分のみ
-        StringBuilder methodBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+/*        this.nextExec = 1;
 
         String executeMethodStr = br.readLine();
 
@@ -70,8 +73,45 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
         retStr = this.memcacheMethodCnv(executeMethodStr, br, pw);
 
         if (retStr == null) this.nextExec = 2;
-
+*/
         return retStr;
+    }
+
+    /**
+     * memcached用のリクエストをパースし共通のプロトコルに変換.<br>
+     * 対応しているメソッドはset,get,delete,add,versionのみ.<br>
+     *
+     * @param br
+     * @param pw
+     * @return String 
+     * @throw Exception
+     */
+    public String[] takeRequestLine4List(BufferedReader br, PrintWriter pw) throws Exception {
+        String[] retStrs = null;
+        this.nextExec = 1;
+
+        String executeMethodStr = br.readLine();
+
+        this.requestLine = executeMethodStr;
+
+        // 切断指定確認
+        if (executeMethodStr == null ||
+            executeMethodStr.trim().equals("quit") ||
+                executeMethodStr.equals(ImdstDefine.imdstConnectExitRequest)) {
+
+            // 接続を切断
+            this.nextExec = 3;
+            retStrs = new String[1];
+            retStrs[0] = executeMethodStr;
+            return retStrs;
+        }
+
+        // memcacheクライアントの内容からリクエストを作り上げる
+        retStrs = this.memcacheMethodCnv(executeMethodStr, br, pw);
+
+        if (retStrs == null) this.nextExec = 2;
+
+        return retStrs;
     }
 
 
@@ -91,6 +131,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
             retStr = this.memcacheReturnCnv(retParams);
             this.nextExec = 1;
         }
+
         return retStr;
     }
 
@@ -123,15 +164,14 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
      * @return String
      * @Exception
      */
-    private String memcacheMethodCnv(String executeMethodStr, BufferedReader br, PrintWriter pw) throws Exception{
-        String retStr = null;
+    private String[] memcacheMethodCnv(String executeMethodStr, BufferedReader br, PrintWriter pw) throws Exception{
+        String[] retStrs = null;
         this.methodMatch = true;
 
         try {
             executeMethodStr = executeMethodStr.trim();
             String[] executeMethods = executeMethodStr.split(ImdstDefine.memcacheExecuteMethodSep);
             this.requestSplit = executeMethods;
-            StringBuilder methodBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
             // memcacheの処理方法で分岐
             if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodSet)) {
@@ -142,93 +182,91 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 if (executeMethods.length != 5) {
                     pw.println(ImdstDefine.memcacheMethodReturnErrorComn);
                     pw.flush();
-                    return retStr;
+                    return retStrs;
                 }
 
+                // 読み込みサイズ指定
+                int readSize = Integer.parseInt(executeMethods[4]);
+
                 // サイズチェック
-                if (Integer.parseInt(executeMethods[4]) > ImdstDefine.saveDataMaxSize) {
+                if (readSize > ImdstDefine.saveDataMaxSize) {
                     br.readLine();
                     pw.print("SERVER_ERROR <Regis Max Byte Over>");
                     pw.print("\r\n");
                     pw.flush();
-                    return retStr;
+                    return retStrs;
                 }
+
 
                 // TODO:連結してまた分解って。。。後で考えます
-                methodBuf.append("1");
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(ImdstDefine.imdstBlankStrData);
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append("0");                                  // TransactionCode(0固定)
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
+                retStrs = new String[5];
+                retStrs[0] = "1";
+                retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
+                retStrs[2] = ImdstDefine.imdstBlankStrData;
+                retStrs[3] = "0";
 
-                byte[] strs = new byte[Integer.parseInt(executeMethods[4])];
-                for (int i = 0; i < Integer.parseInt(executeMethods[4]); i++) {
+                byte[] strs = new byte[readSize];
+                for (int i = 0; i < readSize; i++) {
                     strs[i] = new Integer(br.read()).byteValue();
                 }
+
                 if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
 
-                    String workStr = new String(strs);
-                    //String workStr = br.readLine();
-
-                    // 改行文字が含まれているため切除する
-                    /*byte[] workBytes = workStr.getBytes();
-                    byte[] cnvBytes = new byte[workBytes.length - 1];
-                    System.arraycopy(workBytes, 1, cnvBytes, 0, (workBytes.length - 1));*/
-                    byte[] cnvBytes = workStr.getBytes();
-                    methodBuf.append(new String(BASE64EncoderStream.encode(cnvBytes)) + ImdstDefine.keyHelperClientParamSep + executeMethods[2]);
-                    retStr = methodBuf.toString();
+                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(executeMethods[2]).append("-").append(this.calcExpireTime(executeMethods[3])).toString();
                 }  else {
 
                     pw.print("CLIENT_ERROR bad data chunk");
                     pw.print("\r\n");
                     pw.flush();
-                    return retStr;
+                    retStrs = null;
+                    return retStrs;
                 }
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodAdd) || executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodAppend)) {
 
                 // Append
                 // 分解すると コマンド,key,特有32bit値(Flags),有効期限,格納バイト数
+                // 読み込みサイズ指定
+                int readSize = Integer.parseInt(executeMethods[4]);
 
                 // 命令文字列の数をチェック
                 if (executeMethods.length != 5) {
                     pw.println(ImdstDefine.memcacheMethodReturnErrorComn);
                     pw.flush();
-                    return retStr;
+                    return retStrs;
                 }
 
                 // サイズチェック
-                if (Integer.parseInt(executeMethods[4]) > ImdstDefine.saveDataMaxSize) {
+                if (readSize > ImdstDefine.saveDataMaxSize) {
                     br.readLine();
                     pw.print("SERVER_ERROR <Regis Max Byte Over>");
                     pw.print("\r\n");
                     pw.flush();
-                    return retStr;
+                    return retStrs;
                 }
 
                 // TODO:連結してまた分解って。。。後で考えます
-                methodBuf.append("6");
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(ImdstDefine.imdstBlankStrData);
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append("0");                                  // TransactionCode(0固定)
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                
-                String workStr = br.readLine();
+                retStrs = new String[5];
+                retStrs[0] = "6";
+                retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
+                retStrs[2] = ImdstDefine.imdstBlankStrData;
+                retStrs[3] = "0";
 
-                // 改行文字が含まれているため切除する
-                /*byte[] workBytes = workStr.getBytes();
-                byte[] cnvBytes = new byte[workBytes.length - 1];
-                System.arraycopy(workBytes, 1, cnvBytes, 0, (workBytes.length - 1));*/
-                byte[] cnvBytes = workStr.getBytes();
-                methodBuf.append(new String(BASE64EncoderStream.encode(cnvBytes)) + ImdstDefine.keyHelperClientParamSep + executeMethods[2]);
-                retStr = methodBuf.toString();
+                byte[] strs = new byte[readSize];
+                for (int i = 0; i < readSize; i++) {
+                    strs[i] = new Integer(br.read()).byteValue();
+                }
 
-                
+                if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
+
+                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(executeMethods[2]).append("-").append(this.calcExpireTime(executeMethods[3])).toString();
+                }  else {
+
+                    pw.print("CLIENT_ERROR bad data chunk");
+                    pw.print("\r\n");
+                    pw.flush();
+                    retStrs = null;
+                    return retStrs;
+                }
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodGet)) {
 
                 // Get
@@ -237,14 +275,13 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 if (executeMethods.length != 2) {
                     pw.println(ImdstDefine.memcacheMethodReturnErrorComn);
                     pw.flush();
-                    return retStr;
+                    return retStrs;
                 }
 
                 // TODO:連結してまた分解って。。。後で考えます
-                methodBuf.append("2");
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
-                retStr = methodBuf.toString();
+                retStrs = new String[2];
+                retStrs[0] = "2";
+                retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodDelete)) {
 
                 // Delete
@@ -253,45 +290,43 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 if (executeMethods.length != 2) {
                     pw.println(ImdstDefine.memcacheMethodReturnErrorComn);
                     pw.flush();
-                    return retStr;
+                    return retStrs;
                 }
 
                 // TODO:連結してまた分解って。。。後で考えます
-                methodBuf.append("5");
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append(new String(BASE64EncoderStream.encode(executeMethods[1].getBytes())));
-                methodBuf.append(ImdstDefine.keyHelperClientParamSep);
-                methodBuf.append("0"); // TransactionCode("0"固定)
-                retStr = methodBuf.toString();
+                retStrs = new String[3];
+                retStrs[0] = "5";
+                retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
+                retStrs[2] = "0"; // TransactionCode("0"固定)
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodVersion)) {
             
                 // version
-                // TODO:連結してまた分解って。。。後で考えます
-                methodBuf.append("999");
-                retStr = methodBuf.toString();
+                retStrs = new String[1];
+                retStrs[0] = "999";
             } else {
 
                 // 存在しないプロトコルはokuyama用として処理する。
                 try {
                     // 数値変換出来ない場合はエラー
-                    String[] checkOkuyamaMethods = executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
-                    Integer.parseInt(checkOkuyamaMethods[0]);
+                    retStrs = executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
+                    Integer.parseInt(retStrs[0]);
                 } catch (NumberFormatException e) {
 
                     pw.print("ERROR");
                     pw.print("\r\n");
                     pw.flush();
-                    return retStr;
+                    retStrs = null;
+                    return retStrs;
                 }
 
-                retStr = executeMethodStr;
                 this.methodMatch = false;
             }
         } catch(Exception e) {
             throw e;
         }
-        return retStr;
+        return retStrs;
     }
+
 
     /**
      * memcache用に返却文字を加工する
@@ -312,7 +347,8 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 retStr = ImdstDefine.memcacheMethodRetrunServerError + retParams[2];
             }
         } else if (retParams[0].equals("6")) {
-            // Set
+
+            // Add
             // 返却値は<STORED> or <SERVER_ERROR> or <NOT_STORED>
             if (retParams[1].equals("true")) {
                 retStr = ImdstDefine.memcacheMethodReturnSuccessSet;
@@ -325,34 +361,44 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
 
             // Get
             // 返却値は"VALUE キー値 hashcode byteサイズ \r\n 値 \r\n END
-            StringBuilder retBuf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
             String[] valueSplit = null;
+            retGetBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
             byte[] valueByte = null;
+            String[] metaColumns = null;
 
             if (retParams[1].equals("true")) {
-                retBuf.append("VALUE");
-                retBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                retBuf.append(this.requestSplit[1]);
-                retBuf.append(ImdstDefine.memcacheExecuteMethodSep);
 
                 valueSplit = retParams[2].split(ImdstDefine.keyHelperClientParamSep);
-                if (valueSplit.length < 2) {
-                    retBuf.append("0");
-                } else {
-                    retBuf.append(valueSplit[1]);
+
+                if (valueSplit.length > 1) 
+                    metaColumns = valueSplit[1].split("-");
+
+                if (valueSplit.length < 2 || this.expireCheck(metaColumns[1])) {
+
+                    retGetBuf.append("VALUE");
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    retGetBuf.append(this.requestSplit[1]);
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+
+                    if (valueSplit.length < 2) {
+                        retGetBuf.append("0");
+                    } else {
+                        retGetBuf.append(metaColumns[0]);
+                    }
+
+                    valueByte = BASE64DecoderStream.decode(valueSplit[0].getBytes());
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    retGetBuf.append(valueByte.length);
+                    retGetBuf.append("\r\n");
+                    retGetBuf.append(new String(valueByte));
+                    retGetBuf.append("\r\n");
                 }
-
-                valueByte = BASE64DecoderStream.decode(valueSplit[0].getBytes());
-                retBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                retBuf.append(valueByte.length);
-                retBuf.append("\r\n");
-                retBuf.append(new String(valueByte));
-                retBuf.append("\r\n");
-
             }
-            retBuf.append("END");
+            retGetBuf.append("END");
 
-            retStr = retBuf.toString();
+            retStr = retGetBuf.toString();
+            retGetBuf = null;
         } else if (retParams[0].equals("5")) {
 
             // Delete
@@ -391,4 +437,37 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
         return retStr;
     }
 
+
+    private String calcExpireTime(String timeStr) {
+        String ret = "0";
+        try {
+            if (!timeStr.equals("0")) {
+                // 数値変換出来ない場合はエラー
+                long plusTime = Integer.parseInt(timeStr) * 1000;
+                ret = new Long(JavaSystemApi.currentTimeMillis + plusTime).toString();
+            }
+        } catch (NumberFormatException e) {
+            ret = "0";
+        }
+        return ret;
+    }
+
+
+    private boolean expireCheck(String expirTimeStr) {
+        boolean ret = true;
+
+        try {
+            // 数値変換出来ない場合はエラー
+            if (!expirTimeStr.trim().equals("0")) {
+
+                long expireTime = Long.parseLong(expirTimeStr);
+
+                if (expireTime <= JavaSystemApi.currentTimeMillis) ret = false;
+            }
+        } catch (NumberFormatException e) {
+            ret = false;
+        }
+
+        return ret;
+    }
 }

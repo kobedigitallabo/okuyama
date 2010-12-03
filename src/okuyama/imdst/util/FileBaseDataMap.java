@@ -524,10 +524,10 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
     private long nowIterationFpPosition = 0;
 
     // 遅延書き込み依頼用のQueue
-    private ArrayBlockingQueue delayWriteQueue = new ArrayBlockingQueue(4000);
+    private ArrayBlockingQueue delayWriteQueue = new ArrayBlockingQueue(8000);
 
     // 遅延書き込み前のデータを補完するMap
-    private ConcurrentHashMap delayWriteDifferenceMap = new ConcurrentHashMap(4000, 1900, 32);
+    private ConcurrentHashMap delayWriteDifferenceMap = new ConcurrentHashMap(8000, 7900, 32);
 
     // 遅延書き込みを依頼した回数
     private long delayWriteRequestCount = 0L;

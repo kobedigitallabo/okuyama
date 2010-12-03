@@ -15,7 +15,6 @@ import com.sun.mail.util.BASE64EncoderStream;
 
 /**
  * ConcurrentHashMap拡張.<br>
- * メモリが足りない対応いれたい.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)

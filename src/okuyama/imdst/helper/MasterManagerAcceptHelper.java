@@ -14,6 +14,7 @@ import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.JavaSystemApi;
 
 /**
  * MasterManagerの使用する接続ソケットを監視し、読み込み待ちのソケットを見つけ出し、<br>
@@ -87,7 +88,7 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                 if(br.ready()) {
 
                     // 読み込みのデータがバッファに存在する
-                    clientMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+                    clientMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
                     Object[] queueParam = new Object[1];
                     queueParam[0] = clientMap;
                     super.addSmallSizeParameterQueue(addExecQueueNames, queueParam);
@@ -178,7 +179,7 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                         // 無操作時間が上限に達していないかを確認
                         long last = ((Long)clientMap[ImdstDefine.paramLast]).longValue();
 
-                        if ((System.currentTimeMillis() - last) < connetionTimeout) {
+                        if ((JavaSystemApi.currentTimeMillis - last) < connetionTimeout) {
 
                             // 上限に達していない
                             // 既にコネクションが切断されていないかを確認

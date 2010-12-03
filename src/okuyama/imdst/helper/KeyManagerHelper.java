@@ -14,7 +14,7 @@ import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.protocol.*;
-
+import okuyama.imdst.util.JavaSystemApi;
 
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
@@ -142,7 +142,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             // 処理をやり直し
                             if (this.porotocolTaker.nextExecution() == 2) { 
                                 // 処理が完了したらキューに戻す
-                                queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+                                queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
                                 queueParam[0] = queueMap;
                                 super.addSmallSizeParameterQueue(addQueueNames, queueParam);
                                 continue;
@@ -468,7 +468,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     }
 
                     // 処理が完了したら読み出し確認キュー(KeyManagerAcceptHelper)に戻す
-                    queueMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+                    queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
                     queueParam[0] = queueMap;
                     super.addSmallSizeParameterQueue(addQueueNames, queueParam);
 

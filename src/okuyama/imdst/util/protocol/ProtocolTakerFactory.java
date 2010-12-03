@@ -46,6 +46,11 @@ public class ProtocolTakerFactory {
 
             // memcached
             taker = new MemcachedProtocolTaker4Data(); 
+        } else if (protocol.equals(ImdstDefine.memcache4proxyProtocol) || 
+                    protocol.equals(ImdstDefine.memcached4proxyProtocol)) {
+
+            // memcached for Proxy
+            taker = new MemcachedProtocolTaker4Proxy(); 
         } else {
             throw new Exception("Protocol Error [" + protocol + "]");
         }

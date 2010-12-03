@@ -58,6 +58,8 @@ public class ServerManagedJob extends AbstractJob implements IJob {
         try{
             int counter = 0;
             super.executeHelper("ServerControllerHelper", null, true);
+            super.executeHelper("ServerTimerHelper", null, true);
+
             while (serverRunning) {
 
                 if (counter < 10) {

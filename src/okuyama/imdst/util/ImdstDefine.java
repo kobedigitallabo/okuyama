@@ -118,6 +118,10 @@ public class ImdstDefine {
     // memcacheモード時の命令コマンドの共通エラー文字列
     public static final String memcacheMethodReturnErrorComn = "ERROR";
 
+    // Memcachedのsetコマンド変換用の部分文字列
+    public static final String memcachedSetCommandPaddingStr =ImdstDefine.keyHelperClientParamSep + ImdstDefine.imdstBlankStrData + ImdstDefine.keyHelperClientParamSep + "0" + ImdstDefine.keyHelperClientParamSep; // // TransactionCode(0固定)
+
+
 
     /* --  通信時の固定文字列系定数  ----------                           */
     // クラインが接続を切断する際に通知する文字列
@@ -181,6 +185,10 @@ public class ImdstDefine {
     public static final String memcachedProtocol = "memcached";
     public static final String memcache4datanodeProtocol = "memcache_datanode";
     public static final String memcached4datanodeProtocol = "memcached_datanode";    
+    public static final String memcache4proxyProtocol = "memcache_proxy";
+    public static final String memcached4proxyProtocol = "memcached_proxy";    
+
+
 
     public static final String keyNodeSocketKey = "socket";
     public static final String keyNodeStreamWriterKey = "stream_writer";

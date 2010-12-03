@@ -13,6 +13,7 @@ import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.JavaSystemApi;
 
 /**
  * <br>
@@ -66,8 +67,8 @@ public class KeyManagerConnectHelper extends AbstractHelper {
                 clientMap[ImdstDefine.paramSocket] = socket;
                 clientMap[ImdstDefine.paramPw] = pw;
                 clientMap[ImdstDefine.paramBr] = br;
-                clientMap[ImdstDefine.paramStart] = new Long(System.currentTimeMillis());
-                clientMap[ImdstDefine.paramLast] = new Long(System.currentTimeMillis());
+                clientMap[ImdstDefine.paramStart] = new Long(JavaSystemApi.currentTimeMillis);
+                clientMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
                 clientMap[ImdstDefine.paramCheckCount] = new Integer(0);
 
                 Object[] queueParam = new Object[1];

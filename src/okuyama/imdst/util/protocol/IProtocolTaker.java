@@ -26,6 +26,8 @@ public interface IProtocolTaker {
 
     public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception;
 
+    public String[] takeRequestLine4List(BufferedReader br, PrintWriter pw) throws Exception;
+
     public String takeResponseLine(String[] retParams) throws Exception;
 
     public int nextExecution();

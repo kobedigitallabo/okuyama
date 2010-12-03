@@ -70,7 +70,7 @@ public class KeyNodeConnector {
             this.socket = new Socket();
             this.socket.connect(inetAddr, connectOpenTime);
 
-            this.connectTime = new Long(System.currentTimeMillis());
+            this.connectTime = new Long(JavaSystemApi.currentTimeMillis);
 
             // リカバー対象へのコネクションはタイムアウト時間を長くする
             if (recoverMode && recoverTarget.equals(this.nodeFullName)) {
