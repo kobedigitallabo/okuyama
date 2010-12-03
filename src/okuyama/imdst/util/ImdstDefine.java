@@ -236,7 +236,7 @@ public class ImdstDefine {
     public static final int saveKeyMaxSize = 486;
 
     // 共通のデータファイルに書き出す最大サイズ
-    public static final int dataFileWriteMaxSize = 32;
+    public static final int dataFileWriteMaxSize = 8192;
 
 
     public static final int stringBufferSmallSize = 128;
