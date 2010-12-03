@@ -222,6 +222,7 @@ public class ImdstDefine {
 
     public static final int consistentHashVirtualNode = 50;
 
+
     /* -- プログラム規定数値 ----------------------------------------      */
     // 保存出来る、Key、Tag、Valueの最大長
     // Valueの最大長
@@ -235,7 +236,7 @@ public class ImdstDefine {
     public static final int saveKeyMaxSize = 486;
 
     // 共通のデータファイルに書き出す最大サイズ
-    public static final int dataFileWriteMaxSize = 8192;
+    public static final int dataFileWriteMaxSize = 32;
 
 
     public static final int stringBufferSmallSize = 128;
@@ -296,7 +297,7 @@ public class ImdstDefine {
 
     // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
-    // vacuumStartLimit × (ImdstDefine.saveDataMaxSize * 1.38) = 不要サイズ
+    // vacuumStartLimit × (ImdstDefine.dataFileWriteMaxSize * 1.38) = 不要サイズ
     public static final int vacuumStartCompulsionLimit = 1000000;
 
 

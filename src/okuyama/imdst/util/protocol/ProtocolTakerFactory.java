@@ -50,7 +50,7 @@ public class ProtocolTakerFactory {
                     protocol.equals(ImdstDefine.memcached4proxyProtocol)) {
 
             // memcached for Proxy
-            taker = new MemcachedProtocolTaker4Proxy(); 
+            //taker = new MemcachedProtocolTaker4Proxy(); 
         } else {
             throw new Exception("Protocol Error [" + protocol + "]");
         }

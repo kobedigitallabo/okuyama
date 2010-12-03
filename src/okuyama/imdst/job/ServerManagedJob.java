@@ -3,6 +3,8 @@ package okuyama.imdst.job;
 import java.io.*;
 import java.net.*;
 
+import okuyama.base.JavaMain;
+
 import okuyama.base.lang.BatchException;
 import okuyama.base.job.AbstractJob;
 import okuyama.base.job.AbstractHelper;
@@ -56,18 +58,13 @@ public class ServerManagedJob extends AbstractJob implements IJob {
         ServerSocket serverSocket = null;
 
         try{
-            int counter = 0;
+
             super.executeHelper("ServerControllerHelper", null, true);
             super.executeHelper("ServerTimerHelper", null, true);
 
             while (serverRunning) {
 
-                if (counter < 10) {
-                    Thread.sleep(100);
-                    counter++;
-                } else {
-                    Thread.sleep(checkCycle);
-                }
+				if (StatusUtil.getStatus() != 0) break;
 
                 StringBuilder memBuf = new StringBuilder();
                 memBuf.append("JVM MaxMemory Size =[" + JavaSystemApi.getRuntimeMaxMem("M") + "];");
@@ -90,6 +87,8 @@ public class ServerManagedJob extends AbstractJob implements IJob {
 
                 // GC発行
                 JavaSystemApi.autoGc();
+
+                Thread.sleep(checkCycle);
             }
 
             shareKeys = super.getJobShareParamKeys();
@@ -116,7 +115,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
             // 正常終了ではない
             if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) {
                 logger.error("ServerManagedJob - executeJob - Error End Message=[" + StatusUtil.getStatusMessage() + "]");
-                System.exit(9);
+				JavaMain.shutdownMainProccess();
             }
         }
 
