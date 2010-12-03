@@ -216,33 +216,33 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                             File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
                             if (overDataFile.exists()) {
-								FileInputStream fis = null;
-								InputStreamReader isr = null;
-								BufferedReader br = null;
+                                FileInputStream fis = null;
+                                InputStreamReader isr = null;
+                                BufferedReader br = null;
 
-								try {
+                                try {
 
-	                                fis = new FileInputStream(overDataFile);
-	                                isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
-	                                br = new BufferedReader(isr);
+                                    fis = new FileInputStream(overDataFile);
+                                    isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
+                                    br = new BufferedReader(isr);
 
-	                                StringBuilder retTmpBuf = new StringBuilder(this.oneDataLength);
-	                                retTmpBuf.append(new String(buf, 0, this.oneDataLength, ImdstDefine.keyWorkFileEncoding));
-	                                retTmpBuf.append(br.readLine());
+                                    StringBuilder retTmpBuf = new StringBuilder(this.oneDataLength);
+                                    retTmpBuf.append(new String(buf, 0, this.oneDataLength, ImdstDefine.keyWorkFileEncoding));
+                                    retTmpBuf.append(br.readLine());
 
-	                                ret = retTmpBuf.toString();
-								} catch (Exception inE) {
-					                inE.printStackTrace();
-					                // 致命的
-					                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Read[get] - Error [" + inE.getMessage() + "]");
-								} finally {
-									try {
-										if (br != null) br.close();
-										if (isr != null) isr.close();
-										if (fis != null) fis.close();
-									} catch (Exception inE2) {
-									}
-								}
+                                    ret = retTmpBuf.toString();
+                                } catch (Exception inE) {
+                                    inE.printStackTrace();
+                                    // 致命的
+                                    StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Read[get] - Error [" + inE.getMessage() + "]");
+                                } finally {
+                                    try {
+                                        if (br != null) br.close();
+                                        if (isr != null) isr.close();
+                                        if (fis != null) fis.close();
+                                    } catch (Exception inE2) {
+                                    }
+                                }
                             } else { 
                                 return null;
                             }
@@ -298,30 +298,30 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         InputStreamReader isr = null;
                         BufferedReader br = null;
 
-						try {
-	                        overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
-	                        fis = new FileInputStream(overDataFile);
-	                        isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
-	                        br = new BufferedReader(isr);
-	                        StringBuilder retTmpBuf = new StringBuilder(this.oneDataLength);
+                        try {
+                            overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
+                            fis = new FileInputStream(overDataFile);
+                            isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
+                            br = new BufferedReader(isr);
+                            StringBuilder retTmpBuf = new StringBuilder(this.oneDataLength);
 
-	                        retTmpBuf.append(new String(buf, 0, this.oneDataLength, ImdstDefine.keyWorkFileEncoding));
-	                        retTmpBuf.append(br.readLine());
+                            retTmpBuf.append(new String(buf, 0, this.oneDataLength, ImdstDefine.keyWorkFileEncoding));
+                            retTmpBuf.append(br.readLine());
 
-	                        ret = retTmpBuf.toString();
-						} catch (Exception inE) {
-				            inE.printStackTrace();
-				            // 致命的
-				            StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - syncGet - Inner File Read Error [" + inE.getMessage() + "]");
-						} finally {
-							try {
-								if (br != null) br.close();
-								if (isr != null) isr.close();
-								if (fis != null) fis.close();
+                            ret = retTmpBuf.toString();
+                        } catch (Exception inE) {
+                            inE.printStackTrace();
+                            // 致命的
+                            StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - syncGet - Inner File Read Error [" + inE.getMessage() + "]");
+                        } finally {
+                            try {
+                                if (br != null) br.close();
+                                if (isr != null) isr.close();
+                                if (fis != null) fis.close();
 
-							} catch (Exception inE2) {
-							}
-						}
+                            } catch (Exception inE2) {
+                            }
+                        }
                     }
                 } else {
 
@@ -431,23 +431,22 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         synchronized(this.overSizeDataParallelSyncs[((key.toString().hashCode() << 1) >>> 1) % this.overSizeDataParallelSize]) {
 
                             File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
-							BufferedWriter overBw = null;
-							try {
-	                            overDataFile.delete();
+                            BufferedWriter overBw = null;
+                            try {
 
-	                            overBw = new BufferedWriter (new OutputStreamWriter(new FileOutputStream(overDataFile), ImdstDefine.keyWorkFileEncoding));
-	                            overBw.write(((String)value).substring(this.oneDataLength, ((String)value).length()));
-	                            overBw.flush();
-							} catch (Exception inE) {
-				                inE.printStackTrace();
-				                // 致命的
-				                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Write - Error [" + inE.getMessage() + "]");
-							} finally {
-								try {
-									if (overBw != null) overBw.close();
-								} catch (Exception inE2) {
-								}
-							}
+                                overBw = new BufferedWriter (new OutputStreamWriter(new FileOutputStream(overDataFile, false), ImdstDefine.keyWorkFileEncoding));
+                                overBw.write(((String)value).substring(this.oneDataLength, ((String)value).length()));
+                                overBw.flush();
+                            } catch (Exception inE) {
+                                inE.printStackTrace();
+                                // 致命的
+                                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Write - Error [" + inE.getMessage() + "]");
+                            } finally {
+                                try {
+                                    if (overBw != null) overBw.close();
+                                } catch (Exception inE2) {
+                                }
+                            }
                         }
                     }
                 } else {
