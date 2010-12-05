@@ -45,10 +45,19 @@ public class TestSock {
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     // データ登録
-                    if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                    //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                        System.out.println("ImdstKeyValueClient - error");
-                    }
+					if (args.length > 4) {
+	                    if (!imdstKeyValueClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_" + args[4] + "_" + new Integer(i).toString())) {
+	                    //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+	                        System.out.println("ImdstKeyValueClient - error");
+	                    } else {
+							System.out.println("Store[" + "datasavekey_" + args[4] + "_" + new Integer(i).toString() + "]");
+						}
+					} else {
+	                    if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+	                    //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+	                        System.out.println("ImdstKeyValueClient - error");
+	                    }
+					}
                     //if ((i % 1000) == 0) System.out.println(i);
                 }
                 long end = new Date().getTime();
@@ -152,17 +161,31 @@ public class TestSock {
                 String[] ret = null;
 
                 long start = new Date().getTime();
-                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                    ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
-                    if (ret[0].equals("true")) {
-                        // データ有り
-                        System.out.println(ret[1]);
-                    } else if (ret[0].equals("false")) {
-                        System.out.println("データなし");
-                    } else if (ret[0].equals("error")) {
-                        System.out.println(ret[1]);
-                    }
-                }
+				if (args.length > 4) {
+	                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+	                    ret = imdstKeyValueClient.getValue("datasavekey_" + args[4] + "_" + new Integer(i).toString());
+	                    if (ret[0].equals("true")) {
+	                        // データ有り
+	                        System.out.println(ret[1]);
+	                    } else if (ret[0].equals("false")) {
+	                        System.out.println("データなし");
+	                    } else if (ret[0].equals("error")) {
+	                        System.out.println(ret[1]);
+	                    }
+	                }
+				} else {
+	                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+	                    ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
+	                    if (ret[0].equals("true")) {
+	                        // データ有り
+	                        System.out.println(ret[1]);
+	                    } else if (ret[0].equals("false")) {
+	                        System.out.println("データなし");
+	                    } else if (ret[0].equals("error")) {
+	                        System.out.println(ret[1]);
+	                    }
+	                }
+				}
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
