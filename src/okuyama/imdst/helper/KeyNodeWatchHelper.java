@@ -410,14 +410,21 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             // 送信
             pw.println(buf.toString());
             pw.flush();
-            logger.info("Recover Step - 5 Send Line Count=[" + lineCount + "]");
+            logger.info("Recover Step - 5 Recover Data Schedule Line Count =[" + lineCount + "]");
 
-            for (int i = 0; i < Integer.parseInt(lineCount); i++) {
+            for (int i = 0; i < Integer.MAX_VALUE; i++) {
                 // 値を書き出し
                 logger.info("Recover Step - 6 [" + i + "]");
                 retParam = mbr.readLine();
-                pw.println(retParam);
-                pw.flush();
+
+                if (retParam == null || retParam.trim().equals("") || (retParam.length() < 3 && retParam.trim().equals("-1"))) {
+	                pw.println("-1");
+	                pw.flush();
+					break;
+				} else {
+	                pw.println(retParam);
+				}
+
                 logger.info("Recover Step - 7 [" + i + "]");
             }
 
@@ -443,6 +450,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             // 送信
             mpw.println(buf.toString());
             mpw.flush();
+
 
             logger.info("Recover Step - 11");
             // 差分データを送る

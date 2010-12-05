@@ -97,6 +97,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 }
             }
         } catch(Exception e) {
+			e.printStackTrace();
             System.out.println(retMap);
             throw new BatchException(e);
         }

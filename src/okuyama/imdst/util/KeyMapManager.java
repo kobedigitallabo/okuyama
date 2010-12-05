@@ -1266,6 +1266,7 @@ public class KeyMapManager extends Thread {
                         // 全てのデータを送る
                         allDataBuf.append(allDataSep);
                         allDataBuf.append(key);
+
                         allDataBuf.append(KeyMapManager.workFileSeq);
                         allDataBuf.append(this.keyMapObjGet(key));
                         allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
@@ -1278,9 +1279,15 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-                    pw.println(allDataBuf.toString());
-                    pw.flush();
+					String lastSendStr = allDataBuf.toString();
+					if (!lastSendStr.equals("")) {
+	                    pw.println(lastSendStr);
+	                    pw.flush();
+					}
                     allDataBuf = null;
+
+                    pw.println("-1");
+                    pw.flush();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1413,11 +1420,16 @@ public class KeyMapManager extends Thread {
 
                         // 取り込み開始
                         long counter = 0;
-                        for (int idx = 0; idx < dataLineCount; idx++) {
+                        for (int idx = 0; idx < Integer.MAX_VALUE; idx++) {
 
                             // 最終更新日付変えずに全てのデータを登録する
                             // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
                             String allDataStr = br.readLine();
+
+							if (allDataStr == null || allDataStr.trim().equals("-1")) {
+								logger.info("inputKeyMapObj2Stream ReadLine End");
+								break;
+							}
 
                             String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
                             allDataStr = null;
@@ -1440,7 +1452,9 @@ public class KeyMapManager extends Thread {
                                         this.keyMapObjPutNoChange(oneDatas[0], oneDatas[1] + KeyMapManager.workFileSeq + oneDatas[2]);
 
                                         if (this.workFileMemory == false) this.bw.write("+" + KeyMapManager.workFileSeq + oneDatas[0] + KeyMapManager.workFileSeq + oneDatas[1] + KeyMapManager.workFileSeq + oneDatas[2] + KeyMapManager.workFileSeq + inputStartTime + KeyMapManager.workFileSeq + KeyMapManager.workFileEndPoint + "\n");
-                                    }
+                                    } else {
+
+									}
                                 }
                             }
 

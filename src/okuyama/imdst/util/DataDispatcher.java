@@ -25,7 +25,7 @@ public class DataDispatcher {
     public volatile static int[] oldRules = null;
 
     // 全てのノード情報の詳細を格納
-    private static ConcurrentHashMap keyNodeMap = new ConcurrentHashMap(6, 6, 64);
+    private static ConcurrentHashMap keyNodeMap = new ConcurrentHashMap(6, 6,512);
 
     // ConsistentHash用Circle
     private static SortedMap nodeCircle = null;
