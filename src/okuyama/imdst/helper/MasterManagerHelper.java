@@ -1807,6 +1807,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 処理番号, true or false, valueの想定
                         // value値にセパレータが入っていても無視する
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
+if (retParams[1].equals("false")) {
+    logger.error("DataNotFound key=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "] Connectoer[" + keyNodeConnector.connectorDump() + "]");
+}
                     } else if (type.equals("4")) {
 
                         // Tag値でキー値群を取得

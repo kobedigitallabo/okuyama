@@ -647,6 +647,7 @@ public class KeyMapManager extends Thread {
         return ret;
     }
 
+
     // キーを指定することでノードを削除する
     public String removeKeyPair(String key, String transactionCode) throws BatchException {
         String ret = null;

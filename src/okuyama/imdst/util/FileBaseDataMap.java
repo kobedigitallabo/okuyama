@@ -641,9 +641,8 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
     // 遅延書き込み用
     public void run() {
         while (true) {
-			
+            
             try {
-				Thread.sleep(1000);
                 Object[] instructionObj = (Object[])this.delayWriteQueue.take();
                 String key = (String)instructionObj[0];
                 String value = (String)instructionObj[1];
@@ -737,12 +736,12 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                     this.totalSize.getAndDecrement();
                 }
 
-				synchronized (this.delayWriteDifferenceMap) {
+                synchronized (this.delayWriteDifferenceMap) {
 
-	                String removeChcek = (String)this.delayWriteDifferenceMap.get(key);
-					if (removeChcek != null && removeChcek.equals(value))
-						this.delayWriteDifferenceMap.remove(key);
-				}
+                    String removeChcek = (String)this.delayWriteDifferenceMap.get(key);
+                    if (removeChcek != null && removeChcek.equals(value))
+                        this.delayWriteDifferenceMap.remove(key);
+                }
                 this.delayWriteExecCount++;
             } catch (Exception e2) {
                 e2.printStackTrace();
@@ -777,9 +776,9 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
         instructionObj[1] = value;
         instructionObj[2] = new Integer(hashCode);
         try {
-			synchronized (this.delayWriteDifferenceMap) {
-	            this.delayWriteDifferenceMap.put(key, value);
-			}
+            synchronized (this.delayWriteDifferenceMap) {
+                this.delayWriteDifferenceMap.put(key, value);
+            }
             this.delayWriteQueue.put(instructionObj);
             this.delayWriteRequestCount++;
         } catch (Exception e) {
@@ -867,11 +866,11 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
      */
     public String get(String key, int hashCode) {
         if (this.delayWriteDifferenceMap.containsKey(key)) {
-			String retStr = (String)this.delayWriteDifferenceMap.get(key);
-			if (retStr ==null) return null;
-			if (retStr.equals("&&&&&&&&&&&")) return null;
-			return retStr;
-		}
+            String retStr = (String)this.delayWriteDifferenceMap.get(key);
+            if (retStr ==null) return null;
+            if (retStr.equals("&&&&&&&&&&&")) return null;
+            return retStr;
+        }
 
         byte[] tmpBytes = null;
 

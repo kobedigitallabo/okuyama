@@ -28,6 +28,8 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
     private int nowCount = 0;
 
+    private ILogger logger = LoggerFactory.createLogger(MethodPatterTestJob.class);
+
     // 初期化メソッド定義
     public void initJob(String initValue) {
         if (initValue != null && !initValue.equals("")) {
@@ -178,6 +180,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     }
                 } else if (ret[0].equals("false")) {
                     System.out.println("データなし key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]");
+                    logger.error("データなし key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]");
                     errorFlg = true;
                 } else if (ret[0].equals("error")) {
                     System.out.println("Error key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]" + ret[1]);
@@ -299,6 +302,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                         //System.out.println(getRet[1]);
                     } else if (getRet[0].equals("false")) {
                         System.out.println("データなし key=[" + keys[ii] + "]");
+                        logger.error("Tag Get データなし key=[" + keys[ii] + "]");
                         errorFlg = true;
                     } else if (getRet[0].equals("error")) {
                         System.out.println("Error key=[" + keys[ii] + "]");
