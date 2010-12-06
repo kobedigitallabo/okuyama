@@ -1689,8 +1689,25 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
+    private String[] getKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String key) throws BatchException {
+        return getKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, key, false);
+    }
+
+
+    /**
+     * KeyNodeからデータを取得する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(2=Keyでデータを取得, 4=TagでKey値を返す)
+     * @param key Key値
+     * @return String[] 結果
+     * @throws BatchException
+     */
     private String[] getKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String key) throws BatchException {
-        return getKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, type, key, false)
+        return getKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, type, key, false);
     }
 
 
@@ -1862,8 +1879,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                     workRet[idx] = retParams[idx];
                                 }
                                 workRet[retParams.length] = cnvConsistencyRet[1];
-                            }
-
                             } else {
 
                                 retParams[2] = cnvConsistencyRet[0];
@@ -1887,8 +1902,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                     workRet[idx] = retParams[idx];
                                 }
                                 workRet[retParams.length] = cnvConsistencyRet[1];
-                            }
-
                             } else {
 
                                 retParams[2] = cnvConsistencyRet[0];
