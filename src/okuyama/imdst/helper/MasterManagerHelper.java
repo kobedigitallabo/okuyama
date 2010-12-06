@@ -1690,6 +1690,23 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @throws BatchException
      */
     private String[] getKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String key) throws BatchException {
+        return getKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, type, key, false)
+    }
+
+
+    /**
+     * KeyNodeからデータを取得する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(2=Keyでデータを取得, 4=TagでKey値を返す)
+     * @param key Key値
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String key, boolean returnVersion) throws BatchException {
         boolean exceptionFlg = false;
         String[] ret = null;
         String[] thirdRet = null;
@@ -1697,7 +1714,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-            ret = this.getKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, key);
+            ret = this.getKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, key, returnVersion);
 
         } catch (BatchException be) {
 
@@ -1713,7 +1730,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 if (exceptionFlg) {
 
-                    thirdRet = this.getKeyNodeValue(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, key);
+                    thirdRet = this.getKeyNodeValue(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, key, returnVersion);
                     ret = thirdRet;
                 } else {
                     // サードノードの使用終了のみマーク
@@ -1741,7 +1758,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] getKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String key) throws BatchException {
+    private String[] getKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String key, boolean returnVersion) throws BatchException {
         KeyNodeConnector keyNodeConnector = null;
 
         String[] retParams = null;
@@ -1836,7 +1853,21 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     if (type.equals("4")) {
                         if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
                             cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
+
+                            // Valueのバージョンをクライアントに返す場合は処理
                             retParams[2] = cnvConsistencyRet[0];
+                            if (returnVersion) {
+                                String[] workRet = new String[retParams.length + 1];
+                                for (int idx = 0; idx < retParams.length; idx++) {
+                                    workRet[idx] = retParams[idx];
+                                }
+                                workRet[retParams.length] = cnvConsistencyRet[1];
+                            }
+
+                            } else {
+
+                                retParams[2] = cnvConsistencyRet[0];
+                            }
                         }
                         break;
                     }
@@ -1847,8 +1878,21 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 弱一貫性 or 中一貫性の場合はデータが取れ次第返却
                         // 一貫性データが付随した状態から通常データに変換する
                         if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
+
                             cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
                             retParams[2] = cnvConsistencyRet[0];
+                            if (returnVersion) {
+                                String[] workRet = new String[retParams.length + 1];
+                                for (int idx = 0; idx < retParams.length; idx++) {
+                                    workRet[idx] = retParams[idx];
+                                }
+                                workRet[retParams.length] = cnvConsistencyRet[1];
+                            }
+
+                            } else {
+
+                                retParams[2] = cnvConsistencyRet[0];
+                            }
                         }
                         break;
                     } else {
@@ -1913,7 +1957,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // 強一貫性且つKey－Value取得の場合は処理
             if (type.equals("2") && this.dataConsistencyMode == 2) {
-                retParams = this.strongConsistencyDataConvert(retParams, mainNodeRetParam, subNodeRetParam, type);
+                retParams = this.strongConsistencyDataConvert(retParams, mainNodeRetParam, subNodeRetParam, type, returnVersion);
             }
         } catch (Exception e) {
             //e.printStackTrace();
@@ -3708,6 +3752,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果 [0]=取り出した結果文字列, [1]=更新時間(登録されていない場合は-1)
      */
     private String[] dataConvert4Consistency(String targetStr) {
+
         String[] ret = new String[2];
         ret[0] = null;
         ret[1] = "-1";
@@ -3739,7 +3784,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @param execRetParams
      *
      */
-    private String[] strongConsistencyDataConvert(String[] execRetParams, String[] mainNodeRetParam, String[] subNodeRetParam, String type) {
+    private String[] strongConsistencyDataConvert(String[] execRetParams, String[] mainNodeRetParam, String[] subNodeRetParam, String type, boolean returnVersion) {
         String[] checkConsistencyRetMain = null;
         String[] checkConsistencyRetSub = null;
 
@@ -3776,16 +3821,33 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retParams[1] = "false";
             } else if (Long.parseLong(checkConsistencyRetMain[1]) >= Long.parseLong(checkConsistencyRetSub[1])) {
 
-                retParams = new String[3];
+                if (!returnVersion) {
+                    retParams = new String[3];
+                } else {
+                    retParams = new String[4];
+                }
                 retParams[0] = type;
                 retParams[1] = "true";
                 retParams[2] = checkConsistencyRetMain[0];
+
+                if (returnVersion)
+                    retParams[3] = checkConsistencyRetMain[1];
+
             } else {
 
-                retParams = new String[3];
+                if (!returnVersion) {
+                    retParams = new String[3];
+                } else {
+                    retParams = new String[4];
+                }
+
                 retParams[0] = type;
                 retParams[1] = "true";
                 retParams[2] = checkConsistencyRetSub[0];
+
+                if (returnVersion)
+                    retParams[3] = checkConsistencyRetSub[1];
+
             }
         } else if (checkConsistencyRetMain != null) {
 
@@ -3794,6 +3856,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retParams[1] = "false";
             } else {
 
+                if (returnVersion) {
+                    String[] workRet  =new String[4];
+                    workRet[0] = retParams[0];
+                    workRet[1] = retParams[1];
+                    workRet[2] = retParams[2];
+                    workRet[3] = checkConsistencyRetMain[1];
+                    retParams = workRet;
+                }
+
                 retParams[2] = checkConsistencyRetMain[0];
             }
         } else {
@@ -3801,6 +3872,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             if (checkConsistencyRetSub[0] == null) {
                 retParams[1] = "false";
             } else {
+                if (returnVersion) {
+
+                    String[] workRet  =new String[4];
+                    workRet[0] = retParams[0];
+                    workRet[1] = retParams[1];
+                    workRet[2] = retParams[2];
+                    workRet[3] = checkConsistencyRetSub[1];
+                    retParams = workRet;
+                }
 
                 retParams[2] = checkConsistencyRetSub[0];
             }

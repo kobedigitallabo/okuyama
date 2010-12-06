@@ -494,14 +494,17 @@ public class KeyMapManager extends Thread {
                     }
 
                     String data = null;
-                    if (keyNode.indexOf("-1") == -1) {
-
-                        data = keyNode;
-                    } else if (!containsKeyPair(key)) {
+                    boolean containsKeyRet = containsKeyPair(key);
+                    if (!containsKeyRet) {
 
                         String[] keyNoddes = keyNode.split("!");
-                        data = keyNoddes[0] + "!0";
-                    } else {
+                        
+                        if (keyNoddes.length > 1) {
+                            data = keyNoddes[0] + "!" + keyNoddes[1];
+                        } else {
+                            data = keyNoddes[0] + "!0";
+                        }
+                    } else if (containsKeyRet) {
 
                         String tmp = keyMapObjGet(key);
                         String[] keyNoddes = keyNode.split("!");
@@ -509,13 +512,22 @@ public class KeyMapManager extends Thread {
                         if (tmp != null) {
 
                             String[] tmps = tmp.split("!");
-                            data = keyNoddes[0] + "!" + (Long.parseLong(tmps[1]) + 1);
+                            if (keyNoddes[1].equals("0")) {
+                                data = keyNoddes[0] + "!" + (Long.parseLong(tmps[1]) + 1);
+                            } else {
+                                data = keyNode;
+                            }
                         } else {
 
-                            data = keyNoddes[0] + "!0";
+                            data = keyNode;
                         }
-                    }
+                    } 
+/*
+                    else if (keyNode.indexOf("-1") == -1) {
 
+                        data = keyNode;
+                    }
+*/
                     // 登録
                     keyMapObjPut(key, data);
 
@@ -1279,11 +1291,11 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-					String lastSendStr = allDataBuf.toString();
-					if (!lastSendStr.equals("")) {
-	                    pw.println(lastSendStr);
-	                    pw.flush();
-					}
+                    String lastSendStr = allDataBuf.toString();
+                    if (!lastSendStr.equals("")) {
+                        pw.println(lastSendStr);
+                        pw.flush();
+                    }
                     allDataBuf = null;
 
                     pw.println("-1");
@@ -1426,10 +1438,10 @@ public class KeyMapManager extends Thread {
                             // ストリームからKeyMapの1ラインを読み込み、パース後1件づつ登録
                             String allDataStr = br.readLine();
 
-							if (allDataStr == null || allDataStr.trim().equals("-1")) {
-								logger.info("inputKeyMapObj2Stream ReadLine End");
-								break;
-							}
+                            if (allDataStr == null || allDataStr.trim().equals("-1")) {
+                                logger.info("inputKeyMapObj2Stream ReadLine End");
+                                break;
+                            }
 
                             String[] allDataLines = allDataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
                             allDataStr = null;
@@ -1454,7 +1466,7 @@ public class KeyMapManager extends Thread {
                                         if (this.workFileMemory == false) this.bw.write("+" + KeyMapManager.workFileSeq + oneDatas[0] + KeyMapManager.workFileSeq + oneDatas[1] + KeyMapManager.workFileSeq + oneDatas[2] + KeyMapManager.workFileSeq + inputStartTime + KeyMapManager.workFileSeq + KeyMapManager.workFileEndPoint + "\n");
                                     } else {
 
-									}
+                                    }
                                 }
                             }
 
