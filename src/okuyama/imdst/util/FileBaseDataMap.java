@@ -644,6 +644,8 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
             
             try {
                 Object[] instructionObj = (Object[])this.delayWriteQueue.take();
+
+
                 String key = (String)instructionObj[0];
                 String value = (String)instructionObj[1];
                 int hashCode = ((Integer)instructionObj[2]).intValue();

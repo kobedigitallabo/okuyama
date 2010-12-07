@@ -197,8 +197,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                     return retStrs;
                 }
 
-
-                // TODO:連結してまた分解って。。。後で考えます
+                // okuyamaプロトコルに変更
                 retStrs = new String[5];
                 retStrs[0] = "1";
                 retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
@@ -244,7 +243,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                     return retStrs;
                 }
 
-                // TODO:連結してまた分解って。。。後で考えます
+                // okuyamaプロトコルに変更
                 retStrs = new String[5];
                 retStrs[0] = "6";
                 retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
@@ -278,9 +277,24 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                     return retStrs;
                 }
 
-                // TODO:連結してまた分解って。。。後で考えます
+                // okuyamaプロトコルに変更
                 retStrs = new String[2];
                 retStrs[0] = "2";
+                retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
+            } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodGets)) {
+
+                // Gets
+                // 分解すると コマンド,key
+                // 命令文字列の数をチェック
+                if (executeMethods.length != 2) {
+                    pw.println(ImdstDefine.memcacheMethodReturnErrorComn);
+                    pw.flush();
+                    return retStrs;
+                }
+
+                // okuyamaプロトコルに変更
+                retStrs = new String[2];
+                retStrs[0] = "15";
                 retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodDelete)) {
 
@@ -293,7 +307,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                     return retStrs;
                 }
 
-                // TODO:連結してまた分解って。。。後で考えます
+                // okuyamaプロトコルに変更
                 retStrs = new String[3];
                 retStrs[0] = "5";
                 retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
@@ -390,6 +404,50 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                     valueByte = BASE64DecoderStream.decode(valueSplit[0].getBytes());
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
                     retGetBuf.append(valueByte.length);
+                    retGetBuf.append("\r\n");
+                    retGetBuf.append(new String(valueByte));
+                    retGetBuf.append("\r\n");
+                }
+            }
+            retGetBuf.append("END");
+
+            retStr = retGetBuf.toString();
+            retGetBuf = null;
+        } else if (retParams[0].equals("15")) {
+
+            // Get
+            // 返却値は"VALUE キー値 hashcode byteサイズ casユニーク値 \r\n 値 \r\n END
+            String[] valueSplit = null;
+            retGetBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
+            byte[] valueByte = null;
+            String[] metaColumns = null;
+
+            if (retParams[1].equals("true")) {
+
+                valueSplit = retParams[2].split(ImdstDefine.keyHelperClientParamSep);
+
+                if (valueSplit.length > 1) 
+                    metaColumns = valueSplit[1].split("-");
+
+                if (valueSplit.length < 2 || this.expireCheck(metaColumns[1])) {
+
+                    retGetBuf.append("VALUE");
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    retGetBuf.append(this.requestSplit[1]);
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+
+                    if (valueSplit.length < 2) {
+                        retGetBuf.append("0");
+                    } else {
+                        retGetBuf.append(metaColumns[0]);
+                    }
+
+                    valueByte = BASE64DecoderStream.decode(valueSplit[0].getBytes());
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    retGetBuf.append(valueByte.length);
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    retGetBuf.append(retParams[3]);
                     retGetBuf.append("\r\n");
                     retGetBuf.append(new String(valueByte));
                     retGetBuf.append("\r\n");

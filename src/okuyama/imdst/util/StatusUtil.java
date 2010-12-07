@@ -380,7 +380,8 @@ public class StatusUtil {
 
 
     // MainMasterNodeかを設定
-    public static void setMainMasterNode(boolean flg) {
+    public static void setMainMasterNode(boolean flg, int no) {
+        //if (flg == false) System.out.println(no);
         mainMasterNode = new Boolean(flg);
     }
 

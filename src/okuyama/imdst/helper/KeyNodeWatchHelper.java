@@ -418,12 +418,12 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 retParam = mbr.readLine();
 
                 if (retParam == null || retParam.trim().equals("") || (retParam.length() < 3 && retParam.trim().equals("-1"))) {
-	                pw.println("-1");
-	                pw.flush();
-					break;
-				} else {
-	                pw.println(retParam);
-				}
+                    pw.println("-1");
+                    pw.flush();
+                    break;
+                } else {
+                    pw.println(retParam);
+                }
 
                 logger.info("Recover Step - 7 [" + i + "]");
             }

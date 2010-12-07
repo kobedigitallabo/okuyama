@@ -141,7 +141,11 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                     ImdstKeyValueClient imdstKeyValueClient = null;
                     String checkMasterNodeStr = StatusUtil.getCheckTargetMasterNodes();
 
-                    if (checkMasterNodeStr != null && !checkMasterNodeStr.trim().equals("")) {
+                    if (checkMasterNodeStr != null && checkMasterNodeStr.equals("false")) {
+
+                        // 自身がメインマスターノード
+                        StatusUtil.setMainMasterNode(false, -1);
+                    } else if (checkMasterNodeStr != null && !checkMasterNodeStr.trim().equals("")) {
 
                         checkMasterNodes = checkMasterNodeStr.split(",");
 
@@ -178,8 +182,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
                                 // ファイルモード
                                 // 自身がメインマスターノード
-
-                                StatusUtil.setMainMasterNode(true);
+                                StatusUtil.setMainMasterNode(true, 1);
                             } else {
 
                                 // Nodeモード
@@ -196,13 +199,14 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                                     // ノードに登録
                                     imdstKeyValueClient = new ImdstKeyValueClient();
                                     imdstKeyValueClient.connect(node, Integer.parseInt(port));
+
                                     imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
                                 } catch(Exception e) {
                                     logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
 
                                     // エラーが発生した場合は例外としノードに設定せずに自身の設定を変更
 
-                                    StatusUtil.setMainMasterNode(true);
+                                    StatusUtil.setMainMasterNode(true, 2);
                                     mainMasterNodeModeStr = StatusUtil.getMyNodeInfo();
                                 } finally {
                                     if (imdstKeyValueClient != null) {
@@ -218,12 +222,12 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
                                 // ファイルモード
                                 // 自身がメインマスターノードではない
-                                StatusUtil.setMainMasterNode(false);
+                                StatusUtil.setMainMasterNode(false, 3);
                             } else {
 
                                 // Nodeモード
                                 // 自身がメインマスターノードではない
-                                StatusUtil.setMainMasterNode(false);
+                                StatusUtil.setMainMasterNode(false, 4);
                             }
                         }
                     } else {
@@ -234,7 +238,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
                             // ファイルモード
                             // 自身がメインマスターノード
-                            StatusUtil.setMainMasterNode(true);
+                            StatusUtil.setMainMasterNode(true, 5);
                         } else {
 
                             // Nodeモード
@@ -251,13 +255,14 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                                 // ノードに登録
                                 imdstKeyValueClient = new ImdstKeyValueClient();
                                 imdstKeyValueClient.connect(node, Integer.parseInt(port));
+
                                 imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
                             } catch(Exception e) {
 
                                 logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
 
                                 // エラーが発生した場合は例外としノードに設定せずに自身の設定を変更
-                                StatusUtil.setMainMasterNode(true);
+                                StatusUtil.setMainMasterNode(true, 6);
                                 mainMasterNodeModeStr = StatusUtil.getMyNodeInfo();
                             } finally {
                                 if (imdstKeyValueClient != null) {
@@ -548,6 +553,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 if (mainMasterNodeInfoStr != null && !mainMasterNodeInfoStr.trim().equals("")) {
 
                     // 設定情報の枠がない場合は自身の情報を登録
+
                     imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, mainMasterNodeInfoStr);
                 }
             } else if (nodeRet[0].equals("error")) {
@@ -652,9 +658,9 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         // 自身がMainMasterNodeか解析
         if (mainMasterNodeModeStr != null && 
                 mainMasterNodeModeStr.equals("true")) {
-            StatusUtil.setMainMasterNode(true);
+            StatusUtil.setMainMasterNode(true, 7);
         } else {
-            StatusUtil.setMainMasterNode(false);
+            StatusUtil.setMainMasterNode(false, 8);
         }
 
         StatusUtil.setSlaveMasterNodes(slaveMasterNodeInfoStr);
@@ -668,7 +674,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 if (mainMasterNodeInfoStr.trim().equals(myNodeInfoStr.trim())) {
 
                     // 自身がメインマスターノード
-                    StatusUtil.setMainMasterNode(true);
+                    StatusUtil.setMainMasterNode(true, 9);
                     if (allMasterNodeInfoStr != null) {
 
                         String[] allMasterNodeInfos = allMasterNodeInfoStr.trim().split(",");
@@ -699,7 +705,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 } else {
 
                     // 自身はメインマスターノードではない
-                    StatusUtil.setMainMasterNode(false);
+                    StatusUtil.setMainMasterNode(false, 10);
                     StatusUtil.setSlaveMasterNodes(null);
                 }
 
@@ -707,17 +713,25 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
                 // 自身がチェックしなければいけないMasterノードを登録
                 StatusUtil.setCheckTargetMasterNodes("");
+
                 if (allMasterNodeInfoStr != null) {
+
 
                     String checkTargetMasterNodes = null;
                     if (allMasterNodeInfoStr.indexOf(myNodeInfoStr) > 0) {
                         String[] workStrs = allMasterNodeInfoStr.split(myNodeInfoStr);
 
                         if (workStrs.length > 0) {
+
                             if(!workStrs[0].trim().equals("")) {
+
                                 StatusUtil.setCheckTargetMasterNodes(workStrs[0]);
                             }
                         }
+                    } else if (allMasterNodeInfoStr.indexOf(myNodeInfoStr) == -1) {
+                        // 自身がチェックするすべてのMasterNodeに含まれていない場合はMainMasterNodeになることが許されていない
+                        // その場合はチェック対象は"false"になりチェックを行わない
+                        StatusUtil.setCheckTargetMasterNodes("false");
                     }
                 }
             }
@@ -804,9 +818,9 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         // 自身がMainMasterNodeか解析
         if (mainMasterNodeModeStr != null && 
                 mainMasterNodeModeStr.equals("true")) {
-            StatusUtil.setMainMasterNode(true);
+            StatusUtil.setMainMasterNode(true, 11);
         } else {
-            StatusUtil.setMainMasterNode(false);
+            StatusUtil.setMainMasterNode(false, 12);
         }
 
         StatusUtil.setSlaveMasterNodes(slaveMasterNodeInfoStr);
@@ -820,7 +834,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 if (mainMasterNodeInfoStr.trim().equals(myNodeInfoStr.trim())) {
 
                     // 自身がメインマスターノード
-                    StatusUtil.setMainMasterNode(true);
+                    StatusUtil.setMainMasterNode(true, 13);
 
                     if (allMasterNodeInfoStr != null) {
 
@@ -852,7 +866,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 } else {
 
                     // 自身はメインマスターノードではない
-                    StatusUtil.setMainMasterNode(false);
+                    StatusUtil.setMainMasterNode(false, 14);
                     StatusUtil.setSlaveMasterNodes(null);
                 }
 
@@ -871,6 +885,11 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                                 StatusUtil.setCheckTargetMasterNodes(workStrs[0]);
                             }
                         }
+                    } else if (allMasterNodeInfoStr.indexOf(myNodeInfoStr) == -1) {
+
+                        // 自身がチェックするすべてのMasterNodeに含まれていない場合はMainMasterNodeになることが許されていない
+                        // その場合はチェック対象は"false"になりチェックを行わない
+                        StatusUtil.setCheckTargetMasterNodes("false");
                     }
                 }
             }

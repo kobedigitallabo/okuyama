@@ -329,6 +329,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // 値の減算
                             retParams = this.decrValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
                             break;
+                        case 15 :
+
+                            // KeyでValueを取得(バージョン番号込)
+                            retParams = this.getKeyValueAndVersion(clientParameterList[1]);
+                            break;
                         case 30 :
 
                             // 各キーノードへデータロック依頼
@@ -879,6 +884,115 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             retStrs[2] = "NG:MasterManagerHelper - getKeyValue - Exception - " + e.toString();
         }
         //logger.debug("MasterManagerHelper - getKeyValue - end");
+        return retStrs;
+    }
+
+
+    /**
+     * KeyでValueを取得する.<br>
+     * 合わせてバージョン番号も返す.<br>
+     * 処理フロー.<br>
+     * 1.DataDispatcherにKeyを使用してValueの保存先を問い合わせる<br>
+     * 2.KeyNodeに接続してValueを取得する<br>
+     * 3.結果文字列の配列を作成(成功時は処理番号"15"と"true"とValue、失敗時は処理番号"15"と"false"とValue)<br>
+     *
+     *
+     * @param keyStr key値の文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getKeyValueAndVersion(String keyStr) throws BatchException {
+
+        String[] retStrs = new String[4];
+
+        String[] keyNodeSaveRet = null;
+        String[] keyNodeInfo = null;
+
+        try {
+
+            // Isolation変換実行
+            keyStr = this.encodeIsolationConvert(keyStr);
+
+            if (!this.checkKeyLength(keyStr))  {
+                // 保存失敗
+                retStrs[0] = "15";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                retStrs[3] = "";
+                return retStrs;
+            }
+
+           keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess);
+
+            // 取得実行
+            if (keyNodeInfo.length == 3) {
+                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "2", keyStr, true);
+            } else if (keyNodeInfo.length == 6) {
+                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr, true);
+            } else if (keyNodeInfo.length == 9) {
+                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr, true);
+            }
+
+
+            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
+            // でそちらのルールでのデータ格納場所も調べる
+            if (keyNodeSaveRet[1].equals("false")) {
+
+                // キー値を使用して取得先を決定
+                // 過去ルールがなくなれば終了
+                for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess, i)) != null; i++) {
+
+                    // 取得実行
+                    if (keyNodeInfo.length == 3) {
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "2", keyStr, true);
+                    } else if (keyNodeInfo.length == 6) {
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr, true);
+                    } else if (keyNodeInfo.length == 9) {
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr, true);
+                    }
+
+
+                    // 過去ルールからデータを発見
+                    if (keyNodeSaveRet[1].equals("true")) {
+                        //System.out.println("過去ルールからデータを発見 =[" + keyNodeInfo[2] + "]");
+                        break;
+                    }
+                }
+            }
+
+
+            // 取得結果確認
+            if (keyNodeSaveRet[1].equals("false")) {
+
+                // 取得失敗(データなし)
+                retStrs[0] = "15";
+                retStrs[1] = "false";
+                retStrs[2] = "";
+                retStrs[3] = "";
+            } else {
+
+                retStrs[0] = "15";
+                retStrs[1] = "true";
+                retStrs[2] = keyNodeSaveRet[2];
+                retStrs[3] = keyNodeSaveRet[3];
+            }
+
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - getKeyValueAndVersion - Error", be);
+
+            retStrs[0] = "15";
+            retStrs[1] = "error";
+            retStrs[2] = "NG:MasterManagerHelper - getKeyValueAndVersion - Exception - " + be.toString();
+            retStrs[3] = "";
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            retStrs[0] = "15";
+            retStrs[1] = "error";
+            retStrs[2] = "NG:MasterManagerHelper - getKeyValueAndVersion - Exception - " + e.toString();
+            retStrs[3] = "";
+        }
+
         return retStrs;
     }
 
@@ -1902,6 +2016,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                     workRet[idx] = retParams[idx];
                                 }
                                 workRet[retParams.length] = cnvConsistencyRet[1];
+                                retParams = workRet;
                             } else {
 
                                 retParams[2] = cnvConsistencyRet[0];

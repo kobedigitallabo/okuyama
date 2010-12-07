@@ -97,6 +97,9 @@ public class ImdstDefine {
     // memcacheモード時の命令コマンドのget命令文字
     public static final String memcacheExecuteMethodGet = "get";
 
+    // memcacheモード時の命令コマンドのgets命令文字
+    public static final String memcacheExecuteMethodGets = "gets";
+
     // memcacheのSet時の32bit値をValue値に連結する場合のセパレータ
     public static final String memcacheUnique32BitSep = ":";
 
