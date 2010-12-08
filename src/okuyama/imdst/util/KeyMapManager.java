@@ -659,7 +659,7 @@ public class KeyMapManager extends Thread {
      * @param transactionCode 
      * @param updateVersionNo
      */
-    public boolean setKeyPairVersionCheck(String key, String keyNode, String transactionCode, String updateVersionNo) throws BatchException {
+    public boolean setKeyPairVersionCheck(String key, String keyNode, String transactionCode, String updateVersionNo, boolean execCheck) throws BatchException {
         boolean ret = false;
         if (!blocking) {
             try {
@@ -668,7 +668,8 @@ public class KeyMapManager extends Thread {
 
                     //logger.debug("setKeyPairVersionCheck - synchronized - start");
 
-                    if(this.containsKeyPair(key)) {
+
+                    if(execCheck == true && this.containsKeyPair(key)) {
 
                         String checkValue = this.getKeyPair(key);
                         if(!((String[])checkValue.split("!"))[1].equals(updateVersionNo)) return ret;
@@ -684,14 +685,13 @@ public class KeyMapManager extends Thread {
 
 
                     String data = null;
-                    if (keyNode.indexOf("-1") == -1) {
+                    String[] keyNoddes = keyNode.split("!");
+					if (execCheck) {
+	                    data = keyNoddes[0] + "!" + ((new Long(updateVersionNo).longValue()) + 1);
+					} else {
+	                    data = keyNoddes[0] + "!" + updateVersionNo;
+					}
 
-                        data = keyNode;
-                    } else {
-
-                        String[] keyNoddes = keyNode.split("!");
-                        data = keyNoddes[0] + "!0";
-                    }
 
                     keyMapObjPut(key, data);
                     ret = true;

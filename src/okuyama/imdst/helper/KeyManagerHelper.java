@@ -95,6 +95,8 @@ public class KeyManagerHelper extends AbstractHelper {
 
             String updateVersionNo = null;
 
+            String execCheckStr = null;
+
             // Jobからの引数
             this.keyMapManager = (KeyMapManager)parameters[0];
             String pollQueueName = (String)parameters[1];
@@ -351,17 +353,18 @@ public class KeyManagerHelper extends AbstractHelper {
                             requestHashCode = clientParameterList[1];
                             transactionCode = clientParameterList[2];
                             updateVersionNo = clientParameterList[3];
-                            requestDataNode = clientParameterList[4];
+                            execCheckStr    = clientParameterList[4];
+                            requestDataNode = clientParameterList[5];
 
                             // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
-                            if (clientParameterList.length > 5) {
+                            if (clientParameterList.length > 6) {
                                 requestDataNode = requestDataNode + 
                                     ImdstDefine.keyHelperClientParamSep + 
-                                        clientParameterList[5];
+                                        clientParameterList[6];
                             }
 
                             // メソッド呼び出し
-                            retParams = this.setDatanodeVersionCheck(requestHashCode, requestDataNode, transactionCode, updateVersionNo);
+                            retParams = this.setDatanodeVersionCheck(requestHashCode, requestDataNode, transactionCode, updateVersionNo, new Boolean(execCheckStr).booleanValue());
                             retParamBuf.append(retParams[0]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[1]);
@@ -629,13 +632,13 @@ public class KeyManagerHelper extends AbstractHelper {
 
     // KeyとDataNode値を格納する
     // バージョン値が異なる場合は失敗する
-    private String[] setDatanodeVersionCheck(String key, String dataNodeStr, String transactionCode, String versionNo) {
+    private String[] setDatanodeVersionCheck(String key, String dataNodeStr, String transactionCode, String versionNo, boolean execCheck) {
         //logger.debug("KeyManagerHelper - setDatanodeVersionCheck - start");
         String[] retStrs = new String[3];
         try {
             if (dataNodeStr.length() < setDatanodeMaxSize) {
                 if(!this.keyMapManager.checkError()) {
-                    if(this.keyMapManager.setKeyPairVersionCheck(key, dataNodeStr, transactionCode, versionNo)) {
+                    if(this.keyMapManager.setKeyPairVersionCheck(key, dataNodeStr, transactionCode, versionNo, execCheck)) {
 
                         retStrs[0] = "15";
                         retStrs[1] = "true";
