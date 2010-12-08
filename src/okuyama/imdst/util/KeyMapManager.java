@@ -650,12 +650,91 @@ public class KeyMapManager extends Thread {
     }
 
 
+    /**
+     * キーを指定することでノードをセットする.<br>
+     * 引数のVersionNoと登録されているVersionNoが異なる場合は失敗する.<br>
+     *
+     * @param key キー値
+     * @param keyNode Value値
+     * @param transactionCode 
+     * @param updateVersionNo
+     */
+    public boolean setKeyPairVersionCheck(String key, String keyNode, String transactionCode, String updateVersionNo) throws BatchException {
+        boolean ret = false;
+        if (!blocking) {
+            try {
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
+
+                    //logger.debug("setKeyPairVersionCheck - synchronized - start");
+
+                    if(this.containsKeyPair(key)) {
+
+                        String checkValue = this.getKeyPair(key);
+                        if(!((String[])checkValue.split("!"))[1].equals(updateVersionNo)) return ret;
+                    }
+
+                    if (this.moveAdjustmentDataMap != null) {
+
+                        synchronized (this.moveAdjustmentSync) {
+                            if (this.moveAdjustmentDataMap != null && this.moveAdjustmentDataMap.containsKey(key))
+                                this.moveAdjustmentDataMap.remove(key);
+                        }
+                    }
+
+
+                    String data = null;
+                    if (keyNode.indexOf("-1") == -1) {
+
+                        data = keyNode;
+                    } else {
+
+                        String[] keyNoddes = keyNode.split("!");
+                        data = keyNoddes[0] + "!0";
+                    }
+
+                    keyMapObjPut(key, data);
+                    ret = true;
+
+                    // データ操作履歴ファイルに追記
+                    if (this.workFileMemory == false) {
+                        synchronized(this.lockWorkFileSync) {
+                            this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                            this.bw.flush();
+                        }
+                    }
+
+                    if (this.diffDataPoolingFlg) {
+                        synchronized (diffSync) {
+                            if (this.diffDataPoolingFlg) {
+
+                                this.diffDataPoolingListForFileBase.add("+" + KeyMapManager.workFileSeq + key + KeyMapManager.workFileSeq +  data);
+                            }
+                        }
+                    }
+                }
+
+                // データの書き込みを指示
+                this.writeMapFileFlg = true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("setKeyPairVersionCheck - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "setKeyPairVersionCheck - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+        return ret;
+    }
+
+
     // キーを指定することでノードを返す
     public String getKeyPair(String key) {
         String ret = null;
         if (!blocking) {
             ret =  (String)keyMapObjGet(key);
         }
+
         return ret;
     }
 

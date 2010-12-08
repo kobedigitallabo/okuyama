@@ -59,6 +59,9 @@ public class ImdstDefine {
     // データノードに対するKeyデータ新規登録時に既に値が登録されていた場合のエラーメッセージ
     public static final String keyNodeKeyNewRegistErrMsg = "NG:Data has already been registered";
 
+    // データノードに対するKeyデータ登録時にバージョン値が変わっている場合のエラーメッセージ
+    public static final String keyNodeKeyUpdatedErrMsg = "NG:Data has already been updated";
+
     // データノードに対するKeyデータ削除時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeKeyRemoveSuccessStr = "5,true";
 

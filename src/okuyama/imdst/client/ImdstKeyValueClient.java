@@ -1814,6 +1814,277 @@ public class ImdstKeyValueClient {
 
     /**
      * マスタサーバからKeyでデータを取得する.<br>
+     * 文字列エンコーディング指定なし.<br>
+     * デフォルトエンコーディングにて復元.<br>
+     * バージョン情報(memcachedでのcasユニーク値)を返す.<br>
+     *
+     * @param keyStr
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数値"
+     * @throws Exception
+     */
+    public String[] getsValue(String keyStr) throws Exception {
+        return this.getsValue(keyStr, null);
+    }
+
+    /**
+     * マスタサーバからKeyでデータを取得する.<br>
+     * 文字列エンコーディング指定あり.<br>
+     * バージョン情報(memcachedでのcasユニーク値)を返す.<br>
+     *
+     * @param keyStr
+     * @param encoding
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数値"
+     * @throws Exception
+     */
+    public String[] getsValue(String keyStr, String encoding) throws Exception {
+        String[] ret = new String[3]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        try {
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.equals("")) {
+                throw new ImdstClientException("The blank is not admitted on a key");
+            }
+
+
+            // 処理番号連結
+            getValueServerReqBuf.append("15");
+            // セパレータ連結
+            getValueServerReqBuf.append(ImdstKeyValueClient.sepStr);
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            getValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+
+
+            // サーバ送信
+            pw.println(getValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("15")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    ret[0] = serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if (serverRet[2].equals(ImdstKeyValueClient.blankStr)) {
+                        ret[1] = "";
+                    } else {
+
+                        // Value文字列をBase64でデコード
+                        if (encoding == null) {
+                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()));
+                        } else {
+                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()), encoding);
+                        }
+                    }
+
+                    if (serverRet.length > 2)
+                        ret[2] = serverRet[3];
+
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                    ret[2] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+
+                    if (serverRet.length > 2)
+                        ret[2] = serverRet[3];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new ImdstClientException("Execute Violation of validity");
+            }
+        } catch (ImdstClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getsValue(keyStr, encoding);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getsValue(keyStr, encoding);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getsValue(keyStr, encoding);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * マスタサーバからKeyでデータを取得する.<br>
+     * Key値をBase64でエンコードしない.<br>
+     * バージョン情報(memcachedでのcasユニーク値)を返す.<br>
+     *
+     * @param keyStr
+     * @param encoding
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数値"
+     * @throws Exception
+     */
+    public String[] getsValueNoEncode(String keyStr) throws Exception {
+        String[] ret = new String[3]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.equals("")) {
+                throw new ImdstClientException("The blank is not admitted on a key");
+            }
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmall_2Size);
+
+
+            // 処理番号連結
+            serverRequestBuf.append("15");
+            // セパレータ連結
+            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
+
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            serverRequestBuf.append(keyStr);
+
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("15")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    ret[0] = serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if (serverRet[2].equals(ImdstKeyValueClient.blankStr)) {
+                        ret[1] = "";
+                    } else {
+
+                        ret[1] = serverRet[2];
+                    }
+
+                    if (serverRet.length > 2)
+                        ret[2] = serverRet[3];
+
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                    ret[2] = null;
+
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                    if (serverRet.length > 2)
+                        ret[2] = serverRet[3];
+
+                }
+            } else {
+
+                // 妥当性違反
+                throw new ImdstClientException("Execute Violation of validity");
+            }
+        } catch (ImdstClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getsValueNoEncode(keyStr);
+                } catch (Exception e) {
+                    throw ce;
+                }
+            } else {
+                throw ce;
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getsValueNoEncode(keyStr);
+                } catch (Exception e) {
+                    throw se;
+                }
+            } else {
+                throw se;
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getsValueNoEncode(keyStr);
+                } catch (Exception ee) {
+                    throw new Exception(e);
+                }
+            } else {
+                throw new Exception(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * マスタサーバからKeyでデータを取得する.<br>
      * Scriptを同時に実行する.<br>
      * 文字列エンコーディング指定あり.<br>
      *

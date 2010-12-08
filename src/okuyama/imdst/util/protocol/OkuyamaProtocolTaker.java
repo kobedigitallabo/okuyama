@@ -123,9 +123,16 @@ public class OkuyamaProtocolTaker implements IProtocolTaker {
             this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
 
             // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
-            if (retParams[2] != null) {
+            if (retParams.length > 2 && retParams[2] != null) {
                 this.retParamBuf.append(((String[])retParams[2].split(ImdstDefine.keyHelperClientParamSep))[0]);
             }
+
+            // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
+            if (retParams.length > 3 && retParams[3] != null) {
+                this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                this.retParamBuf.append(retParams[3]);
+            }
+
             this.nextExec = 1;
         }
         return this.retParamBuf.toString();

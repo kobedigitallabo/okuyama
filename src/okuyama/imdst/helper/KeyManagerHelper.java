@@ -93,6 +93,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
             String accessQueueName = null;
 
+            String updateVersionNo = null;
 
             // Jobからの引数
             this.keyMapManager = (KeyMapManager)parameters[0];
@@ -337,6 +338,30 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             // メソッド呼び出し
                             retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+                            break;
+                        case 15 :
+
+                            // Key値とDataNode名を格納する
+                            // バージョン番号が異なる場合は失敗する
+                            requestHashCode = clientParameterList[1];
+                            transactionCode = clientParameterList[2];
+                            updateVersionNo = clientParameterList[3];
+                            requestDataNode = clientParameterList[4];
+
+                            // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
+                            if (clientParameterList.length > 5) {
+                                requestDataNode = requestDataNode + 
+                                    ImdstDefine.keyHelperClientParamSep + 
+                                        clientParameterList[5];
+                            }
+
+                            // メソッド呼び出し
+                            retParams = this.setDatanodeVersionCheck(requestHashCode, requestDataNode, transactionCode, updateVersionNo);
                             retParamBuf.append(retParams[0]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[1]);
@@ -598,6 +623,49 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[2] = "NG:KeyManagerHelper - setDatanodeOnlyOnce - Exception - " + be.toString();
         }
         //logger.debug("KeyManagerHelper - insertDatanode - end");
+        return retStrs;
+    }
+
+
+    // KeyとDataNode値を格納する
+    // バージョン値が異なる場合は失敗する
+    private String[] setDatanodeVersionCheck(String key, String dataNodeStr, String transactionCode, String versionNo) {
+        //logger.debug("KeyManagerHelper - setDatanodeVersionCheck - start");
+        String[] retStrs = new String[3];
+        try {
+            if (dataNodeStr.length() < setDatanodeMaxSize) {
+                if(!this.keyMapManager.checkError()) {
+                    if(this.keyMapManager.setKeyPairVersionCheck(key, dataNodeStr, transactionCode, versionNo)) {
+
+                        retStrs[0] = "15";
+                        retStrs[1] = "true";
+                        retStrs[2] = "OK";
+                    } else {
+
+                        retStrs[0] = "15";
+                        retStrs[1] = "false";
+                        retStrs[2] = ImdstDefine.keyNodeKeyUpdatedErrMsg;
+                    }
+                } else {
+
+                    retStrs[0] = "15";
+                    retStrs[1] = "false";
+                    retStrs[2] = "NG:KeyMapManager - setDatanodeVersionCheck - CheckError - NG";
+                }
+            } else {
+
+                retStrs[0] = "15";
+                retStrs[1] = "fa1lse";
+                retStrs[2] = "NG:Max Data Size Over";
+            }
+        } catch (BatchException be) {
+
+            logger.debug("KeyManagerHelper - setDatanodeVersionCheck - Error", be);
+            retStrs[0] = "15";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - setDatanodeVersionCheck - Exception - " + be.toString();
+        }
+        //logger.debug("KeyManagerHelper - setDatanodeVersionCheck - end");
         return retStrs;
     }
 
