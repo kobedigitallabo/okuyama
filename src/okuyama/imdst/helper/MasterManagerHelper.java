@@ -3117,6 +3117,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     /**
 	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  引数にcas値が足りていない !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	 * 取り合え合ずsetKeyNodeValueOnlyOnceをコピーしただけ。まだ何もしていない
      * KeyNodeに対してデータを保存する.<br>
      * 既に登録されている場合は失敗する.<br>
      * 
@@ -3176,6 +3177,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     /**
 	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  引数にcas値が足りていない !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	 * 取り合え合ずsetKeyNodeValueOnlyOnceをコピーしただけ。まだ何もしていない
      * KeyNodeに対してデータを保存する.<br>
      * 既に登録されている場合は失敗する.<br>
      * 
