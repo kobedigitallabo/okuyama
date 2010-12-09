@@ -686,12 +686,8 @@ public class KeyMapManager extends Thread {
 
                     String data = null;
                     String[] keyNoddes = keyNode.split("!");
-					if (execCheck) {
-	                    data = keyNoddes[0] + "!" + ((new Long(updateVersionNo).longValue()) + 1);
-					} else {
-	                    data = keyNoddes[0] + "!" + updateVersionNo;
-					}
-
+                    // VersionNoを送られてきた値+1で更新
+                    data = keyNoddes[0] + "!" + ((new Long(updateVersionNo).longValue()) + 1);
 
                     keyMapObjPut(key, data);
                     ret = true;

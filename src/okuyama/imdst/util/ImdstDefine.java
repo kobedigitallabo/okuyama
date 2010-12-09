@@ -56,6 +56,9 @@ public class ImdstDefine {
     // データノードに対するKeyデータ新規登録時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeKeyNewRegistSuccessStr = "6,true";
 
+    // データノードに対するバージョンチェック登録時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeUpdateVersionCheckSuccessStr = "16,true";
+
     // データノードに対するKeyデータ新規登録時に既に値が登録されていた場合のエラーメッセージ
     public static final String keyNodeKeyNewRegistErrMsg = "NG:Data has already been registered";
 
@@ -103,6 +106,10 @@ public class ImdstDefine {
     // memcacheモード時の命令コマンドのgets命令文字
     public static final String memcacheExecuteMethodGets = "gets";
 
+    // memcacheモード時の命令コマンドのcas命令文字
+    public static final String memcacheExecuteMethodCas = "cas";
+
+
     // memcacheのSet時の32bit値をValue値に連結する場合のセパレータ
     public static final String memcacheUnique32BitSep = ":";
 
@@ -114,6 +121,9 @@ public class ImdstDefine {
 
     // memcacheモード時の命令コマンドのadd命令の登録エラー結果文字
     public static final String memcacheMethodReturnErrorAdd = "NOT_STORED";
+
+    // memcacheモード時の命令コマンドのcas命令の登録エラー結果文字
+    public static final String memcacheMethodReturnErrorCas = "EXISTS";
 
     // memcacheモード時の命令コマンドのdelete命令の削除成功結果文字
     public static final String memcacheMethodReturnSuccessDelete = "DELETED";

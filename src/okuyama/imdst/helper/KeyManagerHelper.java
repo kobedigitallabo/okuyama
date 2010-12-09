@@ -175,6 +175,7 @@ public class KeyManagerHelper extends AbstractHelper {
                         continue;
                     }
 
+
                     // クライアントからのパラメータ分解
                     clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
 
@@ -346,7 +347,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                             break;
-                        case 15 :
+                        case 16 :
 
                             // Key値とDataNode名を格納する
                             // バージョン番号が異なる場合は失敗する
@@ -640,31 +641,31 @@ public class KeyManagerHelper extends AbstractHelper {
                 if(!this.keyMapManager.checkError()) {
                     if(this.keyMapManager.setKeyPairVersionCheck(key, dataNodeStr, transactionCode, versionNo, execCheck)) {
 
-                        retStrs[0] = "15";
+                        retStrs[0] = "16";
                         retStrs[1] = "true";
                         retStrs[2] = "OK";
                     } else {
 
-                        retStrs[0] = "15";
+                        retStrs[0] = "16";
                         retStrs[1] = "false";
                         retStrs[2] = ImdstDefine.keyNodeKeyUpdatedErrMsg;
                     }
                 } else {
 
-                    retStrs[0] = "15";
+                    retStrs[0] = "16";
                     retStrs[1] = "false";
                     retStrs[2] = "NG:KeyMapManager - setDatanodeVersionCheck - CheckError - NG";
                 }
             } else {
 
-                retStrs[0] = "15";
-                retStrs[1] = "fa1lse";
+                retStrs[0] = "16";
+                retStrs[1] = "false";
                 retStrs[2] = "NG:Max Data Size Over";
             }
         } catch (BatchException be) {
 
             logger.debug("KeyManagerHelper - setDatanodeVersionCheck - Error", be);
-            retStrs[0] = "15";
+            retStrs[0] = "16";
             retStrs[1] = "false";
             retStrs[2] = "NG:KeyManagerHelper - setDatanodeVersionCheck - Exception - " + be.toString();
         }

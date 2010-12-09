@@ -296,6 +296,54 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 retStrs = new String[2];
                 retStrs[0] = "15";
                 retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
+            } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodCas)) {
+
+                // cas
+                // 分解すると コマンド,key,特有32bit値(Flags),有効期限,格納バイト数,cas値
+                // 読み込みサイズ指定
+                int readSize = Integer.parseInt(executeMethods[4]);
+
+                // 命令文字列の数をチェック
+                if (executeMethods.length != 6) {
+                    pw.println(ImdstDefine.memcacheMethodReturnErrorComn);
+                    pw.flush();
+                    return retStrs;
+                }
+
+                // サイズチェック
+                if (readSize > ImdstDefine.saveDataMaxSize) {
+                    br.readLine();
+                    pw.print("SERVER_ERROR <Regis Max Byte Over>");
+                    pw.print("\r\n");
+                    pw.flush();
+                    return retStrs;
+                }
+
+                // okuyamaプロトコルに変更
+                retStrs = new String[6];
+                retStrs[0] = "16";
+                retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
+                retStrs[2] = ImdstDefine.imdstBlankStrData;
+                retStrs[3] = "0";
+                retStrs[5] = executeMethods[5]; // cas値
+
+                byte[] strs = new byte[readSize];
+                for (int i = 0; i < readSize; i++) {
+                    strs[i] = new Integer(br.read()).byteValue();
+                }
+
+                if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
+
+                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(executeMethods[2]).append("-").append(this.calcExpireTime(executeMethods[3])).toString();
+                }  else {
+
+                    pw.print("CLIENT_ERROR bad data chunk");
+                    pw.print("\r\n");
+                    pw.flush();
+                    retStrs = null;
+                    return retStrs;
+                }
+
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodDelete)) {
 
                 // Delete
@@ -360,17 +408,6 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
             } else if (retParams[1].equals("false") || retParams[1].equals("null")) {
                 retStr = ImdstDefine.memcacheMethodRetrunServerError + retParams[2];
             }
-        } else if (retParams[0].equals("6")) {
-
-            // Add
-            // 返却値は<STORED> or <SERVER_ERROR> or <NOT_STORED>
-            if (retParams[1].equals("true")) {
-                retStr = ImdstDefine.memcacheMethodReturnSuccessSet;
-            } else if (retParams[1].equals("false") || retParams[1].equals(ImdstDefine.keyNodeKeyNewRegistErrMsg)) {
-                retStr = ImdstDefine.memcacheMethodReturnErrorAdd;
-            } else if (retParams[1].equals("false") || retParams[1].equals("null")) {
-                retStr = ImdstDefine.memcacheMethodRetrunServerError + retParams[2];
-            }
         } else if (retParams[0].equals("2")) {
 
             // Get
@@ -413,6 +450,17 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
 
             retStr = retGetBuf.toString();
             retGetBuf = null;
+        } else if (retParams[0].equals("6")) {
+
+            // Add
+            // 返却値は<STORED> or <SERVER_ERROR> or <NOT_STORED>
+            if (retParams[1].equals("true")) {
+                retStr = ImdstDefine.memcacheMethodReturnSuccessSet;
+            } else if (retParams[1].equals("false") || retParams[1].equals(ImdstDefine.keyNodeKeyNewRegistErrMsg)) {
+                retStr = ImdstDefine.memcacheMethodReturnErrorAdd;
+            } else if (retParams[1].equals("false") || retParams[1].equals("null")) {
+                retStr = ImdstDefine.memcacheMethodRetrunServerError + retParams[2];
+            }
         } else if (retParams[0].equals("15")) {
 
             // Get
@@ -457,6 +505,17 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
 
             retStr = retGetBuf.toString();
             retGetBuf = null;
+        } else if (retParams[0].equals("16")) {
+
+            // cas
+            // 返却値は<STORED> or <EXISTS>
+            if (retParams[1].equals("true")) {
+                retStr = ImdstDefine.memcacheMethodReturnSuccessSet;
+            } else if (retParams[1].equals("false") || retParams[1].equals(ImdstDefine.keyNodeKeyUpdatedErrMsg)) {
+                retStr = ImdstDefine.memcacheMethodReturnErrorCas;
+            } else if (retParams[1].equals("false") || retParams[1].equals("null")) {
+                retStr = ImdstDefine.memcacheMethodRetrunServerError + retParams[2];
+            }
         } else if (retParams[0].equals("5")) {
 
             // Delete

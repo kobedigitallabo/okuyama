@@ -334,6 +334,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // KeyでValueを取得(バージョン番号込)
                             retParams = this.getKeyValueAndVersion(clientParameterList[1]);
                             break;
+                        case 16 :
+
+                            // KeyでValueを更新(バージョンチェック込)
+                            retParams = this.setKeyValueVersionCheck(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5]);
+                            break;
                         case 30 :
 
                             // 各キーノードへデータロック依頼
@@ -787,16 +792,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     /**
      * Key-Valueを保存する.<br>
      * バージョン番号をチェックして異なる場合は失敗する.<br>
-     * 処理フロー.<br>
      *
      * @param keyStr key値の文字列
      * @param tagStr tag値の文字列
-	 * @param transactionCode 
-	 * @param dataStr 
+     * @param transactionCode 
+     * @param dataStr 
+     * @param checkVersionNo
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] setKeyValueVersionCheck(String keyStr, String tagStr, String transactionCode, String dataStr) throws BatchException {
+    private String[] setKeyValueVersionCheck(String keyStr, String tagStr, String transactionCode, String dataStr, String checkVersionNo) throws BatchException {
         //logger.debug("MasterManagerHelper - setKeyValueVersionCheck - start");
         String[] retStrs = new String[3];
 
@@ -818,7 +823,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // Key値チェック
             if (!this.checkKeyLength(keyStr))  {
                 // 保存失敗
-                retStrs[0] = "15";
+                retStrs[0] = "16";
                 retStrs[1] = "false";
                 retStrs[2] = "Key Length Error";
                 return retStrs;
@@ -836,18 +841,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // 保存実行
             // スレーブKeyNodeが存在する場合で値を変更
            if (keyNodeInfo.length == 3) {
-                keyNodeSaveRet = this.setKeyNodeValueVersionCheck(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "1", keyDataNodePair, transactionCode);
+                keyNodeSaveRet = this.setKeyNodeValueVersionCheck(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "1", keyDataNodePair, transactionCode, checkVersionNo, true);
             } else if (keyNodeInfo.length == 6) {
-                keyNodeSaveRet = this.setKeyNodeValueVersionCheck(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "1", keyDataNodePair, transactionCode);
+                keyNodeSaveRet = this.setKeyNodeValueVersionCheck(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "1", keyDataNodePair, transactionCode, checkVersionNo, true);
             } else if (keyNodeInfo.length == 9) {
-                keyNodeSaveRet = this.setKeyNodeValueVersionCheck(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "1", keyDataNodePair, transactionCode);
+                keyNodeSaveRet = this.setKeyNodeValueVersionCheck(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "1", keyDataNodePair, transactionCode, checkVersionNo);
             }
 
 
             // 保存結果確認
             if (keyNodeSaveRet[1].equals("false")) {
                 // 保存失敗
-                retStrs[0] = "15";
+                retStrs[0] = "16";
                 retStrs[1] = "false";
                 retStrs[2] = keyNodeSaveRet[2];
 
@@ -865,7 +870,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 for (int i = 0; i < tags.length; i++) {
                     if (!this.checkKeyLength(tags[i]))  {
                         // 保存失敗
-                        retStrs[0] = "15";
+                        retStrs[0] = "16";
                         retStrs[1] = "false";
                         throw new BatchException("Tag Length Error");
                     }
@@ -891,7 +896,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 保存結果確認
                     if (keyNodeSaveRet[1].equals("false")) {
                         // 保存失敗
-                        retStrs[0] = "15";
+                        retStrs[0] = "16";
                         retStrs[1] = "false";
                         retStrs[2] = keyNodeSaveRet[2];
                         throw new BatchException("Tag Data Save Error");
@@ -899,19 +904,19 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
             }
 
-            retStrs[0] = "15";
+            retStrs[0] = "16";
             retStrs[1] = "true";
             retStrs[2] = "OK";
 
         } catch (BatchException be) {
 
             logger.info("MasterManagerHelper - setKeyValueVersionCheck - Error", be);
-            retStrs[0] = "15";
+            retStrs[0] = "16";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - setKeyValueVersionCheck - Exception - " + be.toString();
         } catch (Exception e) {
             logger.info("MasterManagerHelper - setKeyValueVersionCheck - Error", e);
-            retStrs[0] = "15";
+            retStrs[0] = "16";
             retStrs[1] = "false";
             retStrs[2] = "NG:MasterManagerHelper - setKeyValueVersionCheck - Exception - " + e.toString();
         }
@@ -3116,8 +3121,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
     /**
-	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  引数にcas値が足りていない !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	 * 取り合え合ずsetKeyNodeValueOnlyOnceをコピーしただけ。まだ何もしていない
+     * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  引数にcas値が足りていない !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     * 取り合え合ずsetKeyNodeValueOnlyOnceをコピーしただけ。まだ何もしていない
      * KeyNodeに対してデータを保存する.<br>
      * 既に登録されている場合は失敗する.<br>
      * 
@@ -3130,7 +3135,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] setKeyNodeValueVersionCheck(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
+    private String[] setKeyNodeValueVersionCheck(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String[] values, String transactionCode, String checkVersionNo) throws BatchException {
         boolean exceptionFlg = false;
         String[] ret = null;
         String[] thirdRet = null;
@@ -3138,7 +3143,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-            ret = this.setKeyNodeValueVersionCheck(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values, transactionCode);
+            ret = this.setKeyNodeValueVersionCheck(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values, transactionCode, checkVersionNo, true);
         } catch (BatchException be) {
 
             retBe = be;
@@ -3151,16 +3156,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             
             try {
                 if (exceptionFlg) {
-                    thirdRet = this.setKeyNodeValueVersionCheck(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, values, transactionCode);
+                    thirdRet = this.setKeyNodeValueVersionCheck(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, values, transactionCode, checkVersionNo, true);
                     ret = thirdRet;
                 } else {
                     if (ret[1].equals("true")) {
 
-                        // 保存成功
-                        // まだ登録されていない
                         // 無条件で登録
-						// TODO　ここでversionチェックせずに登録するほうのメソッドを呼び出す
-                        thirdRet = this.setKeyNodeValueVersionCheck(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, "1", values, transactionCode);
+                        // ここでversionチェックせずに登録するほうのメソッドを呼び出す
+                        thirdRet = this.setKeyNodeValueVersionCheck(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, "1", values, transactionCode, checkVersionNo, false);
                     } else {
                         // サードノードの使用終了のみマーク
                         if (thirdKeyNodeFullName != null) 
@@ -3176,8 +3179,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
     /**
-	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  引数にcas値が足りていない !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	 * 取り合え合ずsetKeyNodeValueOnlyOnceをコピーしただけ。まだ何もしていない
+     * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  引数にcas値が足りていない !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     * 取り合え合ずsetKeyNodeValueOnlyOnceをコピーしただけ。まだ何もしていない
      * KeyNodeに対してデータを保存する.<br>
      * 既に登録されている場合は失敗する.<br>
      * 
@@ -3190,7 +3193,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] setKeyNodeValueVersionCheck(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
+    private String[] setKeyNodeValueVersionCheck(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode, String checkVersionNo, boolean execCheck) throws BatchException {
 
         KeyNodeConnector keyNodeConnector = null;
 
@@ -3244,16 +3247,19 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // Key値でデータノード名を保存
                     StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
                     String sendStr = null;
+
                     // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
-                    buf.append("15");                                     // Type
+                    buf.append("16");                                    // Type
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(this.stringCnv(values[0]));               // Key値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(transactionCode);                         // Transaction値
                     buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(checkVersionNo);                          // 保存バージョン
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
+                    buf.append(execCheck);                               // チェック有無
+                    buf.append(ImdstDefine.keyHelperClientParamSep);
                     buf.append(values[1]);                               // Value値
-                    buf.append(ImdstDefine.setTimeParamSep);
-                    buf.append(setTime);                                 // 保存バージョン
                     sendStr = buf.toString();
 
                     // 送信
@@ -3267,8 +3273,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     super.addKeyNodeCacheConnectionPool(keyNodeConnector);
 
                     // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-                    //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                    if (retParam.indexOf(ImdstDefine.keyNodeKeyNewRegistSuccessStr) == 0) {
+                    if (retParam.indexOf(ImdstDefine.keyNodeUpdateVersionCheckSuccessStr) == 0) {
 
                         mainNodeSave = true;
                         mainRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
@@ -3283,7 +3288,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         keyNodeConnector.close();
                         keyNodeConnector = null;
                     }
-                    super.setDeadNode(keyNodeName + ":" + keyNodePort, 8, se);
+                    super.setDeadNode(keyNodeName + ":" + keyNodePort, 115, se);
                     logger.debug(se);
                 } catch (IOException ie) {
                     mainNodeNetworkError = true;
@@ -3291,14 +3296,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         keyNodeConnector.close();
                         keyNodeConnector = null;
                     }
-                    super.setDeadNode(keyNodeName + ":" + keyNodePort, 9, ie);
+                    super.setDeadNode(keyNodeName + ":" + keyNodePort, 116, ie);
                     logger.debug(ie);
                 } catch (Exception ee) {
                     if (keyNodeConnector != null) {
                         keyNodeConnector.close();
                         keyNodeConnector = null;
                     }
-                    super.setDeadNode(keyNodeName + ":" + keyNodePort, 10, ee);
+                    super.setDeadNode(keyNodeName + ":" + keyNodePort, 117, ee);
                     logger.debug(ee);
                 }
 
@@ -3307,17 +3312,19 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
 
-            if (subKeyNodeName != null) {
+            if (subKeyNodeName != null ) {
                 // Subノードで実施
                 if (mainNodeSave == true || (mainNodeSave == false && mainNodeNetworkError == true)) {
-                    String subNodeExecType = "";
 
                     // Mainノードが処理成功もしくは、ネットワークエラーの場合はSubノードの処理を行う。
-                    // KeyNodeとの接続を確立
-                    if (!mainNodeSave) {
-                        subNodeExecType = "6";
+                    if (mainNodeSave) {
+                        // Mainノードで登録が成功している
+                        // 無条件(バージョンチェックなし)で登録
+                        execCheck = false;
                     } else {
-                        subNodeExecType = "1";
+                        // Mainノードがネットワーク障害で失敗している
+                        // バージョンチェックを行う
+                        execCheck = true;
                     }
 
                     keyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
@@ -3330,15 +3337,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             String sendStr = null;
 
                             // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
-                            buf.append(subNodeExecType);                         // Type
+                            buf.append("16");                                    // Type
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(this.stringCnv(values[0]));               // Key値
                             buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(transactionCode);                         // Transaction値
                             buf.append(ImdstDefine.keyHelperClientParamSep);
+                            buf.append(checkVersionNo);                          // 保存バージョン
+                            buf.append(ImdstDefine.keyHelperClientParamSep);
+                            buf.append(execCheck);                               // チェック有無
+                            buf.append(ImdstDefine.keyHelperClientParamSep);
                             buf.append(values[1]);                               // Value値
-                            buf.append(ImdstDefine.setTimeParamSep);
-                            buf.append(setTime);                                 // 保存バージョン
+
                             sendStr = buf.toString();
 
                             // 送信
@@ -3354,7 +3364,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
                             //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                            if (retParam.indexOf(ImdstDefine.keyNodeKeyNewRegistSuccessStr) == 0) {
+                            if (retParam.indexOf(ImdstDefine.keyNodeUpdateVersionCheckSuccessStr) == 0) {
 
                                 subNodeSave = true;
                                 subRetParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
@@ -3369,7 +3379,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 keyNodeConnector.close();
                                 keyNodeConnector = null;
                             }
-                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 11, se);
+                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 125, se);
                             logger.debug(se);
                         } catch (IOException ie) {
                             subNodeNetworkError = true;
@@ -3377,14 +3387,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 keyNodeConnector.close();
                                 keyNodeConnector = null;
                             }
-                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 12, ie);
+                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 126, ie);
                             logger.debug(ie);
                         } catch (Exception ee) {
                             if (keyNodeConnector != null) {
                                 keyNodeConnector.close();
                                 keyNodeConnector = null;
                             }
-                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 13, ee);
+                            super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 127, ee);
                             logger.debug(ee);
                         }
 
@@ -3394,7 +3404,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
             }
 
-            // Main、Sub両方ともネットワークでのエラーがであるか確認
+            // Main、Sub両方ともネットワークでのエラーであるか確認
             if (mainNodeNetworkError == true && subNodeNetworkError == true) {
                 // ネットワークエラー
                 throw new BatchException("Key Node IO Error: detail info for log file");
@@ -3426,7 +3436,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // SubNode保存失敗
                         if (subNodeNetworkError == false) {
 
-                            // 既に書き込み済みでの失敗 
+                            // バージョン違いでの失敗
                             retParams = subRetParams;
                         }
                     } else {
