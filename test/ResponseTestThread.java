@@ -20,8 +20,8 @@ public class ResponseTestThread extends Thread {
     private volatile boolean endFlg = false;
 
 
-    private static final String tmpKey = "DataSaveKey910111213";
-    private static final String tmpValue = "DataSaveValue123456789101112131415161718192021222324252627282930313233343536373839404142quyrt_";
+    private static final String tmpKey = "DataSaveKey910111213_123456789";
+    private static final String tmpValue = "Da";
 
 
 

@@ -86,6 +86,9 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
                         if (execMethods[i].equals("add")) 
                             retMap.put("add", execAdd(imdstKeyValueClient, start, count));
+
+                        if (execMethods[i].equals("gets-cas")) 
+                            retMap.put("cas", execGetsCas(imdstKeyValueClient, start, count));
                     }
 
                     System.out.println("ErrorMap=" + retMap.toString());
@@ -97,7 +100,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 }
             }
         } catch(Exception e) {
-			e.printStackTrace();
+            e.printStackTrace();
             System.out.println(retMap);
             throw new BatchException(e);
         }
@@ -537,4 +540,65 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
         System.out.println("execAdd - End");
         return errorFlg;
     }
+
+
+    private boolean execGetsCas(ImdstKeyValueClient client, int start, int count) throws Exception {
+        ImdstKeyValueClient imdstKeyValueClient = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execCas - Start");
+
+            if (client != null) {
+                imdstKeyValueClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                imdstKeyValueClient = new ImdstKeyValueClient();
+
+                // マスタサーバに接続
+                imdstKeyValueClient.connect(masterNodeName, port);
+            }
+
+            long startTime = new Date().getTime();
+            int casCount = 0;
+            for (int i = start; i < count; i++) {
+                // データ登録
+
+                if (!imdstKeyValueClient.setValue(casCount + "_castest_datasavekey", "castest_testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + casCount + "_" + new Integer(i).toString())) {
+                    System.out.println("Set - Error=[" + casCount + "_castest_datasavekey] Value[" + this.nowCount + "castest_testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + casCount + "_" + new Integer(i).toString() + "]");
+                    errorFlg = true;
+                }
+                casCount++;
+            }
+
+            Random rndIdx = new Random();
+            int casSuccessCount = 0;
+            int casErrorCount = 0;
+            for (int casIdx = 0; casIdx < 6000; casIdx++) {
+                int rndSet = rndIdx.nextInt(casCount);
+                Object[] getsRet = imdstKeyValueClient.getsValue(rndSet + "_castest_datasavekey");
+
+
+                String[] retParam = imdstKeyValueClient.setValueVersionCheck(rndSet + "_castest_datasavekey", "updated-" + rndSet, (String)getsRet[2]);
+                if(retParam[0].equals("true")) {
+                    casSuccessCount++;
+                } else {
+                    casErrorCount++;
+                }
+            }
+            long endTime = new Date().getTime();
+
+            System.out.println("Cas Method= " + (endTime - startTime) + " milli second Suucess=" + casSuccessCount + "  Error=" + casErrorCount);
+
+            if (client == null) {
+                imdstKeyValueClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execCas - End");
+        return errorFlg;
+    }
+
 }

@@ -1238,7 +1238,7 @@ public class ImdstKeyValueClient {
      * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
      * @throws Exception
      */
-    public String[] setValueVersionCheck(String keyStr, String value, long versionNo) throws Exception {
+    public String[] setValueVersionCheck(String keyStr, String value, String versionNo) throws Exception {
         return this.setValueVersionCheck(keyStr, null, value, versionNo);
     }
 
@@ -1257,7 +1257,7 @@ public class ImdstKeyValueClient {
      * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
      * @throws Exception
      */
-    public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, long versionNo) throws Exception {
+    public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, String versionNo) throws Exception {
         String[] ret = null; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -2015,7 +2015,7 @@ public class ImdstKeyValueClient {
      *
      * @param keyStr
      * @param encoding
-     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数値"
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数字"
      * @throws Exception
      */
     public String[] getsValue(String keyStr, String encoding) throws Exception {
