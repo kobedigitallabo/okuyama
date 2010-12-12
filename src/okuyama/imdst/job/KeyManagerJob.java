@@ -2,6 +2,7 @@ package okuyama.imdst.job;
 
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import okuyama.base.lang.BatchException;
 import okuyama.base.job.AbstractJob;
@@ -365,14 +366,40 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                 super.executeHelper("KeyManagerAcceptHelper", queueParam, true);
             }
 
+
+			// KeyManagerHelper設定
+			Object[] helperShareParams = new Object[(this.maxWorkerParallelQueue * 2)];
+
+			queueIndex = 0;
+            for (int i = 0; i < (this.maxWorkerParallelQueue * 2); i=i+2) {
+				helperShareParams[i] = "Bind-KeyManagerHelper" + this.myPrefix + queueIndex;
+				helperShareParams[i+1] = new AtomicInteger(0);
+				queueIndex++;
+			}
+
+			queueIndex = 0;
+            for (int i = 0; i < this.maxWorkerParallelExecution; i++) {
+                queueIndex = (i+1) % this.maxWorkerParallelQueue;
+				AtomicInteger queueBindHelperCount = (AtomicInteger)helperShareParams[(new Long(queueIndex).intValue()*2)+1];
+				queueBindHelperCount.getAndIncrement();
+				helperShareParams[(new Long(queueIndex).intValue()*2)+1] = queueBindHelperCount;
+			}
+
             for (int i = 0; i < maxWorkerParallelExecution; i++) {
                 queueIndex = (i+1) % this.maxWorkerParallelQueue;
 
-                Object[] queueParam = new Object[3];
+                Object[] queueParam = new Object[4];
                 queueParam[0] = this.keyMapManager;
                 queueParam[1] = "KeyManagerHelper" + this.myPrefix + queueIndex;
                 queueParam[2] = this.maxAcceptParallelQueueNames;
-                super.executeHelper("KeyManagerHelper", queueParam, true);
+                queueParam[3] = "Bind-KeyManagerHelper" + this.myPrefix + queueIndex;
+
+				if (i == 0) {
+
+	                super.executeHelper("KeyManagerHelper", queueParam, true, helperShareParams);
+				} else {
+	                super.executeHelper("KeyManagerHelper", queueParam, true);
+				}
             }
         } catch(Exception e) {
                 e.printStackTrace();

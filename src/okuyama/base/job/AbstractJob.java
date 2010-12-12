@@ -151,6 +151,51 @@ abstract public class AbstractJob extends Thread {
         logger.debug("Execution End");
     }
 
+
+    /**
+     * Helperクラスインスタンスを返す.<br>
+     * Helperが存在しない場合はExceptionを返す.<br>
+     * 
+     * 
+     * @param helperName helperName名
+     * @param helpreParams helperパラメータ配列
+	 * @param inputHelperShareParam ヘルパー共有領域に事前に登録したいパラメータ Key-Valueのセットで配列登録すること(inputHelperShareParam[0]=1番目の要素のKey,inputHelperShareParam[1]=1番目の要素のValue,inputHelperShareParam[2]=2番目の要素のKey,inputHelperShareParam[3]=2番目の要素のValue)
+     * @return AbstractHelper Helperインスタンス
+     * @throws BatchException
+     **/
+    protected int executeHelperQueue(String helperName, Object[] helpreParams, Object[] inputHelperShareParam) throws BatchException {
+        logger.debug("executeHelperQueue - start");
+        int ret = 0;
+        AbstractHelper helper = null;
+        try {
+            while (true) {
+                helper = HelperPool.getHelper(helperName);
+                if (helper != null) break;
+            }
+
+			for (int i = 0; i < inputHelperShareParam.length; i=i+2) {
+				helper.setHelperShareParam(inputHelperShareParam[i], inputHelperShareParam[i+1]);
+			}
+
+            helper.addParameterQueue(helpreParams);
+            helper.setParameters(null);
+            // ExecutorService を使用するために変更
+            //helper.start();
+
+            HelperPool.returnHelper(helperName,helper);
+            ret = helper.hashCode();
+        } catch (BatchException be) {
+            logger.error("createHelper - BatchException");
+            throw be;
+        } catch (Exception e) {
+            logger.error("createHelper - Exception");
+            throw new BatchException(e);
+        }
+        logger.debug("executeHelper - end");
+        return ret;
+	}
+
+
     /**
      * Helperクラスインスタンスを返す.<br>
      * Helperが存在しない場合はExceptionを返す.<br>
@@ -282,6 +327,51 @@ abstract public class AbstractJob extends Thread {
         logger.debug("executeHelper - end");
         return ret;
     }
+
+
+    /**
+     * Helperクラスインスタンスを返す.<br>
+     * Helperが存在しない場合はExceptionを返す.<br>
+     * 
+     * 
+     * @param helperName helperName名
+     * @param helpreParams helperパラメータ配列
+	 * @param inputHelperShareParam ヘルパー共有領域に事前に登録したいパラメータ Key-Valueのセットで配列登録すること(inputHelperShareParam[0]=1番目の要素のKey,inputHelperShareParam[1]=1番目の要素のValue,inputHelperShareParam[2]=2番目の要素のKey,inputHelperShareParam[3]=2番目の要素のValue)
+     * @return AbstractHelper Helperインスタンス
+     * @throws BatchException
+     **/
+    protected int executeHelper(String helperName, Object[] helpreParams, boolean reboot, Object[] inputHelperShareParam) throws BatchException {
+        logger.debug("executeHelper - start");
+        int ret = 0;
+        AbstractHelper helper = null;
+        try {
+            while (true) {
+                helper = HelperPool.getHelper(helperName);
+                if (helper != null) break;
+            }
+
+			for (int i = 0; i < inputHelperShareParam.length; i=i+2) {
+				helper.setHelperShareParam(inputHelperShareParam[i], inputHelperShareParam[i+1]);
+			}
+
+            helper.setParameters(helpreParams);
+            helper.setReboot(reboot);
+            // ExecutorService を使用するために変更
+            //helper.start();
+
+            HelperPool.returnHelper(helperName,helper);
+            ret = helper.hashCode();
+        } catch (BatchException be) {
+            logger.error("createHelper - BatchException");
+            throw be;
+        } catch (Exception e) {
+            logger.error("createHelper - Exception");
+            throw new BatchException(e);
+        }
+        logger.debug("executeHelper - end");
+        return ret;
+    }
+
 
     /**
      * Job設定ファイルの自由に設定出来る値を取得する.<br>

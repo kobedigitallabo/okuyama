@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 import javax.script.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import okuyama.base.lang.BatchException;
 import okuyama.base.job.AbstractHelper;
@@ -40,6 +41,13 @@ public class KeyManagerHelper extends AbstractHelper {
 
     private String queuePrefix = null;
 
+
+	// 自身と論理的に同じQueueに紐付いているHelperの現在待機カウンター
+	private AtomicInteger numberOfQueueBindWaitCounter = null;
+
+	private static final int returnProccessingCount = 2;
+
+
     // プロトコルモード
     private String protocolMode = null;
     private IProtocolTaker porotocolTaker = null;
@@ -68,6 +76,10 @@ public class KeyManagerHelper extends AbstractHelper {
 
         boolean closeFlg = false;
         boolean serverRunning = true;
+
+		String bindQueueWaitHelperCountKey = "";
+		boolean reloopSameClient = false;
+
 
         Socket soc = null;
         PrintWriter pw = null;
@@ -102,17 +114,28 @@ public class KeyManagerHelper extends AbstractHelper {
             String pollQueueName = (String)parameters[1];
             String[] addQueueNames = (String[])parameters[2];
 
+
+			// Helperの全体数と現在処理中の数を知るためのKey値
+			bindQueueWaitHelperCountKey = (String)parameters[3];
+
+			// 全体処理数を取得
+			numberOfQueueBindWaitCounter = (AtomicInteger)super.getHelperShareParam(bindQueueWaitHelperCountKey);
+
             // プロトコル決定
             if (this.protocolMode != null && !this.protocolMode.trim().equals("") && !this.protocolMode.equals("okuyama")) {
                 this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode + "_datanode");
             }
 
+
+            Object[] queueParam = null;
+            Object[] queueMap = null;
+
             while(serverRunning) {
                 try {
                     // 切断確認
-                    if (closeFlg) {
+                    if (closeFlg) 
                         this.closeClientConnect(pw, br, soc);
-                    }
+
 
                     // 結果文字列バッファ初期化
                     retParamBuf.delete(0, Integer.MAX_VALUE);
@@ -120,16 +143,28 @@ public class KeyManagerHelper extends AbstractHelper {
                     // 結果クリア
                     retParams = null;
 
-                    // キューを待ち受ける
-                    Object[] queueParam = super.pollSpecificationParameterQueue(pollQueueName);
+					// 既にクローズしている場合は、もしくは同一クライアント処理がtrueの場合意外はキュー待ち処理
+					if (closeFlg == true || reloopSameClient == false) {
 
-                    Object[] queueMap = (Object[])queueParam[0];
+	                    // キューを待ち受ける
+	                    queueParam = super.pollSpecificationParameterQueue(pollQueueName);
 
-                    pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
-                    br = (BufferedReader)queueMap[ImdstDefine.paramBr];
-                    soc = (Socket)queueMap[ImdstDefine.paramSocket];
-                    soc.setSoTimeout(0);
-                    closeFlg = false;
+	                    queueMap = (Object[])queueParam[0];
+
+	                    pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
+	                    br = (BufferedReader)queueMap[ImdstDefine.paramBr];
+	                    soc = (Socket)queueMap[ImdstDefine.paramSocket];
+	                    soc.setSoTimeout(0);
+	                    closeFlg = false;
+					}
+
+					// 処理中のため待機カウンターを減算
+					if (!reloopSameClient) 
+						numberOfQueueBindWaitCounter.getAndDecrement();
+
+					// 同一クライアント処理フラグ初期化
+					reloopSameClient = false;
+
 
 
                     // プロトコルに合わせて処理を分岐
@@ -496,18 +531,65 @@ public class KeyManagerHelper extends AbstractHelper {
                         }
                     }
 
-                    // 処理が完了したら読み出し確認キュー(KeyManagerAcceptHelper)に戻す
-                    queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
-                    queueParam[0] = queueMap;
-                    super.addSmallSizeParameterQueue(addQueueNames, queueParam);
+
+					// 処理待機中のHelper数が閾値と同じかもしくは大きい場合は同様のクライアントを処理
+					if (numberOfQueueBindWaitCounter.get() >= returnProccessingCount) {
+
+						try {
+
+							if(!br.ready()) {
+
+		                        br.mark(1);
+		                        soc.setSoTimeout(300);
+								int readCheck = br.read();
+								br.reset();
+								reloopSameClient = true;
+			                    soc.setSoTimeout(0);
+			                    closeFlg = false;
+							} else {
+
+								reloopSameClient = true;
+			                    soc.setSoTimeout(0);
+			                    closeFlg = false;
+							}
+						} catch (SocketTimeoutException ste) {
+
+		                    // 読み込みタイムアウトなら読み出し待機Queueに戻す
+		                    queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
+		                    queueParam[0] = queueMap;
+		                    super.addSmallSizeParameterQueue(addQueueNames, queueParam);
+							reloopSameClient = false;
+						} catch (Throwable te) {
+
+							// エラーの場合はクローズ
+							this.closeClientConnect(pw, br, soc);
+							reloopSameClient = false;
+						}
+					} else {
+
+	                    // 処理が完了したら読み出し確認キュー(KeyManagerAcceptHelper)に戻す
+	                    queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
+	                    queueParam[0] = queueMap;
+	                    super.addSmallSizeParameterQueue(addQueueNames, queueParam);
+						reloopSameClient = false;
+					}
+
 
                 } catch (SocketException se) {
                     closeFlg = true;
+					reloopSameClient = false;
                 } catch (ArrayIndexOutOfBoundsException aie) {
                     logger.error("KeyManagerHelper No Method_1 =[" + clientParameterList[0] + "]");
+					reloopSameClient = false;
                 } catch (NumberFormatException nfe) {
                     logger.error("KeyManagerHelper No Method_2 =[" + clientParameterList[0] + "]");
-                }
+					reloopSameClient = false;
+                } finally {
+
+					// 処理待機を加算
+					if (!reloopSameClient)
+						numberOfQueueBindWaitCounter.getAndIncrement();
+				}
             }
 
             ret = super.SUCCESS;
@@ -517,6 +599,8 @@ public class KeyManagerHelper extends AbstractHelper {
             ret = super.ERROR;
             //throw new BatchException(e);
         } finally {
+
+			numberOfQueueBindWaitCounter.getAndIncrement();
 
             try {
                 if (pw != null) {

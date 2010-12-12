@@ -23,8 +23,6 @@ import okuyama.base.util.HelperPool;
 //abstract public class AbstractHelper extends Thread {
 abstract public class AbstractHelper  implements Runnable{
 
-
-
     // Logger
     private ILogger logger = LoggerFactory.createLogger(AbstractHelper.class);
 
