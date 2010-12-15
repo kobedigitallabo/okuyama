@@ -15,6 +15,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     memcachedでいうところのexpireTimeを設定可能に 
     現在この設定はmemcachedクライアントからのみ設定可能である。
     つまりokuyamaのクライアントから登録した値の有効期限は無期限となる
+   これによりmemcachedクライアントの登録時のすべてのOptionカラムの値が使用可能となった。
 
   ■排他的更新機能を追加
     memcachedでいうところのgets、cas操作に対応 
