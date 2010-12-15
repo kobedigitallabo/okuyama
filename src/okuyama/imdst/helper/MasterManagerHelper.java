@@ -54,10 +54,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // トランザクションの使用
     private String[] transactionManagerInfo = null;
 
-	// 自身と論理的に同じQueueに紐付いているHelperの現在待機カウンター
-	private AtomicInteger numberOfQueueBindWaitCounter = null;
+    // 自身と論理的に同じQueueに紐付いているHelperの現在待機カウンター
+    private AtomicInteger numberOfQueueBindWaitCounter = null;
 
-	private static final int returnProccessingCount = 2;
+    private static final int returnProccessingCount = 2;
 
     // 更新時間
     private short setTime = 0;
@@ -123,8 +123,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String pollQueueName = null;
         String[] addQueueNames = null;
 
-		String bindQueueWaitHelperCountKey = "";
-		boolean reloopSameClient = false;
+        String bindQueueWaitHelperCountKey = "";
+        boolean reloopSameClient = false;
 
 
         String[] retParams = null;
@@ -147,8 +147,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // パラメータ取り出し
             parameters = super.getParameters();
 
-            // Jobからの引数
 
+            // MasterManagerJobからの引数を自身に設定
 
             // プロトコルモードを取得
             // プロトコルに合わせてTakerを初期化
@@ -163,12 +163,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 okuyamaPorotocolTaker = ProtocolTakerFactory.getProtocolTaker("okuyama");
             }
 
-
-            // トランザクション設定
+            // トランザクションロック設定
             this.transactionMode = ((Boolean)parameters[4]).booleanValue();
-            if (this.transactionMode) {
+            // トランザクションロック-ON
+            if (this.transactionMode) 
                 transactionManagerInfo = (String[])parameters[5];
-            }
+
 
             // 一貫性モード初期化
             this.initConsistencyMode();
@@ -178,15 +178,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             this.myPollQueue = (String)parameters[6];
             addQueueNames = (String[])parameters[7];
 
-			// Helperの全体数と現在処理中の数を知るためのKey値
-			bindQueueWaitHelperCountKey = (String)parameters[8];
+            // Helperの全体数と現在処理中の数を知るためのKey値
+            bindQueueWaitHelperCountKey = (String)parameters[8];
 
-			// 全体処理数を取得
-			numberOfQueueBindWaitCounter = (AtomicInteger)super.getHelperShareParam(bindQueueWaitHelperCountKey);
+            // 全体処理数を取得
+            numberOfQueueBindWaitCounter = (AtomicInteger)super.getHelperShareParam(bindQueueWaitHelperCountKey);
 
+            // Queue用の変数
+            Object[] queueParam = null;
+            Object[] queueMap = null;
 
-			Object[] queueParam = null;
-			Object[] queueMap = null;
             // 本体処理 - 終了までループ
             while(serverRunning) {
                 try {
@@ -201,34 +202,34 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // Taker初期化
                     this.porotocolTaker.init();
 
-					if (closeFlg == true || reloopSameClient == false) {
+                    if (closeFlg == true || reloopSameClient == false) {
 
-	                    // Queueから処理取得
-	                    queueParam = super.pollSpecificationParameterQueue(pollQueueName);
+                        // Queueから処理取得
+                        queueParam = super.pollSpecificationParameterQueue(pollQueueName);
 
-	                    // Queueからのパラメータ
-	                    queueMap = (Object[])queueParam[0];
+                        // Queueからのパラメータ
+                        queueMap = (Object[])queueParam[0];
 
-	                    // ロードバランシング指定
-	                    this.reverseAccess = ((Boolean)queueMap[ImdstDefine.paramBalance]).booleanValue();
+                        // ロードバランシング指定
+                        this.reverseAccess = ((Boolean)queueMap[ImdstDefine.paramBalance]).booleanValue();
 
-	                    // 一貫性レベル設定
-	                    if (dataConsistencyMode == 1) this.reverseAccess = true;
+                        // 一貫性レベル設定
+                        if (dataConsistencyMode == 1) this.reverseAccess = true;
 
-	                    // ソケット周り(いずれクラス化する)
-	                    pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
-	                    br = (BufferedReader)queueMap[ImdstDefine.paramBr];
-	                    socket = (Socket)queueMap[ImdstDefine.paramSocket];
-	                    socket.setSoTimeout(0);
-	                    closeFlg = false;
-					}
+                        // ソケット周り(いずれクラス化する)
+                        pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
+                        br = (BufferedReader)queueMap[ImdstDefine.paramBr];
+                        socket = (Socket)queueMap[ImdstDefine.paramSocket];
+                        socket.setSoTimeout(0);
+                        closeFlg = false;
+                    }
 
-					// 処理中のため待機カウンターを減算
-					if (!reloopSameClient) 
-						numberOfQueueBindWaitCounter.getAndDecrement();
+                    // 処理中のため待機カウンターを減算
+                    if (!reloopSameClient) 
+                        numberOfQueueBindWaitCounter.getAndDecrement();
 
-					// 同一クライアント処理フラグ初期化
-					reloopSameClient = false;
+                    // 同一クライアント処理フラグ初期化
+                    reloopSameClient = false;
 
                     // クライアントからの要求を取得
                     // Takerで会話開始
@@ -484,69 +485,69 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     pw.flush();
 
 
-					// 処理待機中のHelper数が閾値と同じかもしくは大きい場合は同様のクライアントを処理
-					if (numberOfQueueBindWaitCounter.get() >= returnProccessingCount) {
+                    // 処理待機中のHelper数が閾値と同じかもしくは大きい場合は同様のクライアントを処理
+                    if (numberOfQueueBindWaitCounter.get() >= returnProccessingCount) {
 
-						try {
+                        try {
 
-							if(!br.ready()) {
+                            if(!br.ready()) {
 
-		                        br.mark(1);
-		                        socket.setSoTimeout(300);
-								int readCheck = br.read();
-								br.reset();
-								reloopSameClient = true;
-			                    socket.setSoTimeout(0);
-			                    closeFlg = false;
-							} else {
+                                br.mark(1);
+                                socket.setSoTimeout(300);
+                                int readCheck = br.read();
+                                br.reset();
+                                reloopSameClient = true;
+                                socket.setSoTimeout(0);
+                                closeFlg = false;
+                            } else {
 
-								reloopSameClient = true;
-			                    socket.setSoTimeout(0);
-			                    closeFlg = false;
-							}
-						} catch (SocketTimeoutException ste) {
+                                reloopSameClient = true;
+                                socket.setSoTimeout(0);
+                                closeFlg = false;
+                            }
+                        } catch (SocketTimeoutException ste) {
 
-		                    // 読み込みタイムアウトなら読み出し待機Queueに戻す
-		                    queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
-		                    queueParam[0] = queueMap;
-		                    super.addSmallSizeParameterQueue(addQueueNames, queueParam);
-							reloopSameClient = false;
-						} catch (Throwable te) {
+                            // 読み込みタイムアウトなら読み出し待機Queueに戻す
+                            queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
+                            queueParam[0] = queueMap;
+                            super.addSmallSizeParameterQueue(addQueueNames, queueParam);
+                            reloopSameClient = false;
+                        } catch (Throwable te) {
 
-							// エラーの場合はクローズ
-							this.closeClientConnect(pw, br, socket);
-							reloopSameClient = false;
-						}
-					} else {
+                            // エラーの場合はクローズ
+                            this.closeClientConnect(pw, br, socket);
+                            reloopSameClient = false;
+                        }
+                    } else {
 
-	                    // 処理が完了したら読み出し待機Queueに戻す
-	                    queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
-	                    queueParam[0] = queueMap;
-	                    super.addSmallSizeParameterQueue(addQueueNames, queueParam);
-						reloopSameClient = false;
-					}
+                        // 処理が完了したら読み出し待機Queueに戻す
+                        queueMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
+                        queueParam[0] = queueMap;
+                        super.addSmallSizeParameterQueue(addQueueNames, queueParam);
+                        reloopSameClient = false;
+                    }
                 } catch (NumberFormatException e) {
 
                     pw.println("-1,false,ERROR");
                     pw.flush();
                     closeFlg = true;
-					reloopSameClient = false;
+                    reloopSameClient = false;
                 } catch (SocketException se) {
 
                     // クライアントとの接続が強制的に切れた場合は切断要求とみなす
                     closeFlg = true;
-					reloopSameClient = false;
+                    reloopSameClient = false;
                 } catch (IOException ie) {
 
                     // 無条件で切断
                     closeFlg = true;
-					reloopSameClient = false;
+                    reloopSameClient = false;
                 } finally {
 
-					// 処理待機を加算
-					if (!reloopSameClient)
-						numberOfQueueBindWaitCounter.getAndIncrement();
-				}
+                    // 処理待機を加算
+                    if (!reloopSameClient)
+                        numberOfQueueBindWaitCounter.getAndIncrement();
+                }
             }
 
             ret = super.SUCCESS;

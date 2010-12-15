@@ -20,3 +20,15 @@ rem キー値をkey_aでValueを削除
 php PhpTestSock.php 8 127.0.0.1 8888 key_a
 rem 分散ロックを使用する
 php PhpTestSock.php 9 127.0.0.1 8888 key_a 10 5
+rem 値の新規登録をおこなう
+php PhpTestSock.php 10 127.0.0.1 8888 newkey newvalue
+rem gets
+php PhpTestSock.php 11 127.0.0.1 8888 newkey
+rem cas
+php PhpTestSock.php 12 127.0.0.1 8888 key_a value_cas 1
+rem cas Miss
+php PhpTestSock.php 12 127.0.0.1 8888 key_a value_cas 1
+rem cas Tag
+php PhpTestSock.php 13 127.0.0.1 8888 key_a value_cas tag1 2
+rem gets
+php PhpTestSock.php 11 127.0.0.1 8888 key_a

@@ -854,7 +854,7 @@ public class KeyMapManager extends Thread {
 
                             // 既に別のKeyが登録済みなので、そのキーにアペンドしても良いかを確認
                             // 登録時間の長さ(16)もプラス
-                            if ((keyStrs.getBytes().length + KeyMapManager.tagKeySep.getBytes().length + key.getBytes().length + 16) >= ImdstDefine.saveDataMaxSize) {
+                            if ((keyStrs.getBytes().length + KeyMapManager.tagKeySep.getBytes().length + key.getBytes().length + 16) >= ImdstDefine.dataFileWriteMaxSize) {
 
                                 // 既にキー値が最大のサイズに到達しているので別のキーを生み出す
                                 counter++;

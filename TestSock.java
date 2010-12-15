@@ -781,7 +781,7 @@ public class TestSock {
             } else if (args[0].equals("13")) {
 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(getsValue)
+                // ImdstKeyValueClientを使用してデータを取得(getValueVersionCheck)
                 ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
                 imdstKeyValueClient.connect(args[1], port);
                 String[] ret = null;
@@ -789,7 +789,7 @@ public class TestSock {
                 long start = new Date().getTime();
                 if (args.length > 4) {
                     for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                        ret = imdstKeyValueClient.getsValue("datasavekey_" + args[4] + "_" + new Integer(i).toString());
+                        ret = imdstKeyValueClient.getValueVersionCheck("datasavekey_" + args[4] + "_" + new Integer(i).toString());
                         if (ret[0].equals("true")) {
                             // データ有り
                             System.out.println("Value=[" + ret[1] + "]");
@@ -803,7 +803,7 @@ public class TestSock {
                     }
                 } else {
                     for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                        ret = imdstKeyValueClient.getsValue("datasavekey_" + new Integer(i).toString());
+                        ret = imdstKeyValueClient.getValueVersionCheck("datasavekey_" + new Integer(i).toString());
                         if (ret[0].equals("true")) {
                             // データ有り
                             System.out.println(ret[1]);
@@ -829,7 +829,7 @@ public class TestSock {
                 String[] ret = null;
 
                 long start = new Date().getTime();
-                ret = imdstKeyValueClient.getsValue(args[3]);
+                ret = imdstKeyValueClient.getValueVersionCheck(args[3]);
                 if (ret[0].equals("true")) {
 
                     // データ有り

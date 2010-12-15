@@ -1,4 +1,5 @@
 <?php
+
   // PHPテストスクリプト
   // PHPでのデータ登録
   // 引数は
@@ -240,7 +241,20 @@
       // データを引数の回数分登録
       var_dump($client->setNewValue($argv[4], $argv[5]));
 
+    } else if ($argv[1] === "11") {
+      // gets
+      var_dump($client->getValueVersionCheck($argv[4]));
+
+    } else if ($argv[1] === "12") {
+      // cas
+      var_dump($client->setValueVersionCheck($argv[4], $argv[5], null, $argv[6]));
+
+    } else if ($argv[1] === "13") {
+      // cas tag付
+      var_dump($client->setValueVersionCheck($argv[4], $argv[5], $argv[6], $argv[7]));
+
     }
+
 
 
     $client->close();

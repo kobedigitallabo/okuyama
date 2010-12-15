@@ -577,7 +577,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             int casErrorCount = 0;
             for (int casIdx = 0; casIdx < 6000; casIdx++) {
                 int rndSet = rndIdx.nextInt(casCount);
-                Object[] getsRet = imdstKeyValueClient.getsValue(rndSet + "_castest_datasavekey");
+                Object[] getsRet = imdstKeyValueClient.getValueVersionCheck(rndSet + "_castest_datasavekey");
 
 
                 String[] retParam = imdstKeyValueClient.setValueVersionCheck(rndSet + "_castest_datasavekey", "updated-" + rndSet, (String)getsRet[2]);

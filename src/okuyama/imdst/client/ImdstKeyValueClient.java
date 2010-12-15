@@ -2004,8 +2004,8 @@ public class ImdstKeyValueClient {
      * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数値"
      * @throws Exception
      */
-    public String[] getsValue(String keyStr) throws Exception {
-        return this.getsValue(keyStr, null);
+    public String[] getValueVersionCheck(String keyStr) throws Exception {
+        return this.getValueVersionCheck(keyStr, null);
     }
 
     /**
@@ -2018,7 +2018,7 @@ public class ImdstKeyValueClient {
      * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数字"
      * @throws Exception
      */
-    public String[] getsValue(String keyStr, String encoding) throws Exception {
+    public String[] getValueVersionCheck(String keyStr, String encoding) throws Exception {
         String[] ret = new String[3]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -2103,7 +2103,7 @@ public class ImdstKeyValueClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.getsValue(keyStr, encoding);
+                    ret = this.getValueVersionCheck(keyStr, encoding);
                 } catch (Exception e) {
                     throw ce;
                 }
@@ -2114,7 +2114,7 @@ public class ImdstKeyValueClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.getsValue(keyStr, encoding);
+                    ret = this.getValueVersionCheck(keyStr, encoding);
                 } catch (Exception e) {
                     throw se;
                 }
@@ -2125,7 +2125,7 @@ public class ImdstKeyValueClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.getsValue(keyStr, encoding);
+                    ret = this.getValueVersionCheck(keyStr, encoding);
                 } catch (Exception ee) {
                     throw new Exception(e);
                 }
@@ -2147,7 +2147,7 @@ public class ImdstKeyValueClient {
      * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数値"
      * @throws Exception
      */
-    public String[] getsValueNoEncode(String keyStr) throws Exception {
+    public String[] getValueVersionCheckNoEncode(String keyStr) throws Exception {
         String[] ret = new String[3]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -2231,7 +2231,7 @@ public class ImdstKeyValueClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.getsValueNoEncode(keyStr);
+                    ret = this.getValueVersionCheckNoEncode(keyStr);
                 } catch (Exception e) {
                     throw ce;
                 }
@@ -2242,7 +2242,7 @@ public class ImdstKeyValueClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.getsValueNoEncode(keyStr);
+                    ret = this.getValueVersionCheckNoEncode(keyStr);
                 } catch (Exception e) {
                     throw se;
                 }
@@ -2253,7 +2253,7 @@ public class ImdstKeyValueClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.getsValueNoEncode(keyStr);
+                    ret = this.getValueVersionCheckNoEncode(keyStr);
                 } catch (Exception ee) {
                     throw new Exception(e);
                 }

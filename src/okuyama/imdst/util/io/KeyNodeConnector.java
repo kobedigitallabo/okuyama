@@ -120,9 +120,11 @@ public class KeyNodeConnector {
         } catch (Exception e) {
 
             if (this.retryConnectMode == true && this.retry == false) {
+
                 this.retry = true;
                 try {
                     if (this.socket != null && this.socket.isClosed() != true) {
+
                         this.br.close();
                         this.br = null;
                         this.pw.close();
@@ -132,25 +134,27 @@ public class KeyNodeConnector {
                     }
 
                     try {
+
                         this.connect();
                     } catch (SocketTimeoutException ste) {
 
                         // 再リトライ
                         try {
-                            System.err.println("KeyNodeConnectior Retry Connect - start");
+
                             this.connect();
-                            System.err.println("KeyNodeConnectior Retry Connect - end");
                         } catch (SocketTimeoutException ste2) {
-                            ste2.printStackTrace();
+
                             throw ste2;
                         }
                     }
 
                     // リトライフラグが有効でかつ、送信文字が指定されている場合は再送後、取得
                     if (retryStr != null) {
+
                         this.println(retryStr);
                         this.flush();
                     }
+
                     ret = this.readLine();
                 } catch(Exception ee) {
                     throw e;
