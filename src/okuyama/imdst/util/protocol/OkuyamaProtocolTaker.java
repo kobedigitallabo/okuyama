@@ -14,7 +14,7 @@ import okuyama.imdst.util.ImdstDefine;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class OkuyamaProtocolTaker implements IProtocolTaker {
+public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProtocolTaker {
 
     private int nextExec = 0;
 
@@ -117,22 +117,55 @@ public class OkuyamaProtocolTaker implements IProtocolTaker {
             this.retParamBuf.delete(0, Integer.MAX_VALUE);
 
         if (retParams != null && retParams.length > 1) {
-            this.retParamBuf.append(retParams[0]);
-            this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-            this.retParamBuf.append(retParams[1]);
-            this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
 
-            // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
-            if (retParams.length > 2 && retParams[2] != null) {
-                this.retParamBuf.append(((String[])retParams[2].split(ImdstDefine.keyHelperClientParamSep))[0]);
-            }
+            // getValue or getValueVerionCheckの場合
+            if (retParams[0].equals("2") || retParams[0].equals("15")) {
+                String[] metaColumns = null;
+                String[] valueSplit = retParams[2].split(ImdstDefine.keyHelperClientParamSep);
 
-            // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
-            if (retParams.length > 3 && retParams[3] != null) {
+                if (valueSplit.length > 1) 
+                    metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
+
+                // 有効期限チェックも同時に行う
+                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                    this.retParamBuf.append(retParams[0]);
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                    this.retParamBuf.append(retParams[1]);
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+
+                    // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
+                    if (retParams.length > 2 && retParams[2] != null) {
+                        this.retParamBuf.append(((String[])retParams[2].split(ImdstDefine.keyHelperClientParamSep))[0]);
+                    }
+
+                    // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
+                    if (retParams.length > 3 && retParams[3] != null) {
+                        this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        this.retParamBuf.append(retParams[3]);
+                    }
+                } else {
+                    this.retParamBuf.append(retParams[0]);
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                    this.retParamBuf.append("false");
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                }
+            } else {
+                this.retParamBuf.append(retParams[0]);
                 this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                this.retParamBuf.append(retParams[3]);
-            }
+                this.retParamBuf.append(retParams[1]);
+                this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
 
+                // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
+                if (retParams.length > 2 && retParams[2] != null) {
+                    this.retParamBuf.append(((String[])retParams[2].split(ImdstDefine.keyHelperClientParamSep))[0]);
+                }
+
+                // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
+                if (retParams.length > 3 && retParams[3] != null) {
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                    this.retParamBuf.append(retParams[3]);
+                }
+            }
             this.nextExec = 1;
         }
         return this.retParamBuf.toString();

@@ -17,7 +17,7 @@ import okuyama.imdst.util.JavaSystemApi;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class MemcachedProtocolTaker implements IProtocolTaker {
+public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IProtocolTaker {
 
     private int nextExec = 0;
     private boolean methodMatch = true;
@@ -211,7 +211,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
 
                 if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
 
-                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(executeMethods[2]).append("-").append(this.calcExpireTime(executeMethods[3])).toString();
+                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(executeMethods[2]).append(AbstractProtocolTaker.metaColumnSep).append(this.calcExpireTime(executeMethods[3])).toString();
                 }  else {
 
                     pw.print("CLIENT_ERROR bad data chunk");
@@ -257,7 +257,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
 
                 if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
 
-                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(executeMethods[2]).append("-").append(this.calcExpireTime(executeMethods[3])).toString();
+                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(executeMethods[2]).append(AbstractProtocolTaker.metaColumnSep).append(this.calcExpireTime(executeMethods[3])).toString();
                 }  else {
 
                     pw.print("CLIENT_ERROR bad data chunk");
@@ -334,7 +334,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
 
                 if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
 
-                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(executeMethods[2]).append("-").append(this.calcExpireTime(executeMethods[3])).toString();
+                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(executeMethods[2]).append(AbstractProtocolTaker.metaColumnSep).append(this.calcExpireTime(executeMethods[3])).toString();
                 }  else {
 
                     pw.print("CLIENT_ERROR bad data chunk");
@@ -423,9 +423,10 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 valueSplit = retParams[2].split(ImdstDefine.keyHelperClientParamSep);
 
                 if (valueSplit.length > 1) 
-                    metaColumns = valueSplit[1].split("-");
+                    metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
-                if (valueSplit.length < 2 || this.expireCheck(metaColumns[1])) {
+                // 有効期限チェックも同時に行う(memcachedのみ)
+                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
 
                     retGetBuf.append("VALUE");
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
@@ -463,7 +464,7 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
             }
         } else if (retParams[0].equals("15")) {
 
-            // Get
+            // Gets
             // 返却値は"VALUE キー値 hashcode byteサイズ casユニーク値 \r\n 値 \r\n END
             String[] valueSplit = null;
             retGetBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
@@ -476,9 +477,9 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
                 valueSplit = retParams[2].split(ImdstDefine.keyHelperClientParamSep);
 
                 if (valueSplit.length > 1) 
-                    metaColumns = valueSplit[1].split("-");
+                    metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
-                if (valueSplit.length < 2 || this.expireCheck(metaColumns[1])) {
+                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
 
                     retGetBuf.append("VALUE");
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
@@ -554,37 +555,4 @@ public class MemcachedProtocolTaker implements IProtocolTaker {
         return retStr;
     }
 
-
-    private String calcExpireTime(String timeStr) {
-        String ret = "0";
-        try {
-            if (!timeStr.equals("0")) {
-                // 数値変換出来ない場合はエラー
-                long plusTime = Integer.parseInt(timeStr) * 1000;
-                ret = new Long(JavaSystemApi.currentTimeMillis + plusTime).toString();
-            }
-        } catch (NumberFormatException e) {
-            ret = "0";
-        }
-        return ret;
-    }
-
-
-    private boolean expireCheck(String expirTimeStr) {
-        boolean ret = true;
-
-        try {
-            // 数値変換出来ない場合はエラー
-            if (!expirTimeStr.trim().equals("0")) {
-
-                long expireTime = Long.parseLong(expirTimeStr);
-
-                if (expireTime <= JavaSystemApi.currentTimeMillis) ret = false;
-            }
-        } catch (NumberFormatException e) {
-            ret = false;
-        }
-
-        return ret;
-    }
 }

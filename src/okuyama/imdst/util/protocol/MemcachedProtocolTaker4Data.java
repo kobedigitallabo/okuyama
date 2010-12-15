@@ -16,7 +16,7 @@ import okuyama.imdst.util.ImdstDefine;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class MemcachedProtocolTaker4Data implements IProtocolTaker {
+public class MemcachedProtocolTaker4Data  extends AbstractProtocolTaker implements IProtocolTaker {
 
     private int nextExec = 0;
 
