@@ -5,14 +5,20 @@ okuyamaサーバインストールパッケージ
   $ant jar
 
 本ファイル配下のディレクトリ、ファイルをすべてをサーバに配置する
-環境変数OKUYAMA_HOMEを配置ディレクトリとして設定する
-bin/okuyamaにパスを通す
-DataNode.propertiesのファイルパス指定を変更する(本ファイルは/home/okuyama/okuyamaにインストールした想定)
+(説明では/home/okuyama/okuyamaにインストールした想定)
+1.環境変数OKUYAMA_HOMEを配置ディレクトリとして設定する
+  例)
+    OKUYAMA_HOME=/home/okuyama/okuyam
+    export OKUYAMA_HOME
+
+2.bin/okuyamaにパスを通す
+
+3.DataNode.propertiesのファイルパス指定を変更する
 
 上記まで完了すれば以下のコマンドで起動、停止可能
 起動時引数
 1.動作指定: start 
-2.バックグラウンド指定(-server or 省略)
+2.バックグラウンド指定(-server)
 3.起動用設定ファイル
 
 okuyama start -server /home/okuyama/okuyama/conf/MasterNode.properties
