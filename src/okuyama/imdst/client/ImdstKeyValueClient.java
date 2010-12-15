@@ -1231,6 +1231,7 @@ public class ImdstKeyValueClient {
      * バージョン値を使用して更新前チェックを行う.<br>
      * 失敗した場合は、falseが返る<br>
      * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     * memcachedのcasに相当.<br>
      *
      * @param keyStr
      * @param value
@@ -1249,6 +1250,7 @@ public class ImdstKeyValueClient {
      * バージョン値を使用して更新前チェックを行う.<br>
      * 失敗した場合は、falseが返る<br>
      * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     * memcachedのcasに相当.<br>
      * 
      * @param keyStr
      * @param tagStrs
@@ -2012,6 +2014,7 @@ public class ImdstKeyValueClient {
      * マスタサーバからKeyでデータを取得する.<br>
      * 文字列エンコーディング指定あり.<br>
      * バージョン情報(memcachedでのcasユニーク値)を返す.<br>
+     * memcachedのgetsに相当.<br>
      *
      * @param keyStr
      * @param encoding
@@ -2141,6 +2144,7 @@ public class ImdstKeyValueClient {
      * マスタサーバからKeyでデータを取得する.<br>
      * Key値をBase64でエンコードしない.<br>
      * バージョン情報(memcachedでのcasユニーク値)を返す.<br>
+     * memcachedのgetsに相当.<br>
      *
      * @param keyStr
      * @param encoding

@@ -826,10 +826,12 @@ class OkuyamaClient {
      * マスタサーバへデータを送信する.<br>
      * バージョンチェックを行う.<br>
      * Tag有り.<br>
+     * memcachedのcasに相当する.<br>
      *
      * @param keyStr
-     * @param tagStrs
      * @param value
+     * @param tagStrs
+     * @param versionNo
      * @return boolean
      * @throws Exception
      */
