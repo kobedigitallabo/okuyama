@@ -723,7 +723,8 @@ public class KeyManagerHelper extends AbstractHelper {
         try {
             if (dataNodeStr.length() < setDatanodeMaxSize) {
                 if(!this.keyMapManager.checkError()) {
-                    if(this.keyMapManager.setKeyPairVersionCheck(key, dataNodeStr, transactionCode, versionNo, execCheck)) {
+
+                    if(this.keyMapManager.containsKeyPair(key) && this.keyMapManager.setKeyPairVersionCheck(key, dataNodeStr, transactionCode, versionNo, execCheck)) {
 
                         retStrs[0] = "16";
                         retStrs[1] = "true";
