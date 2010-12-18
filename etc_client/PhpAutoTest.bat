@@ -25,10 +25,10 @@ php PhpTestSock.php 10 127.0.0.1 8888 newkey newvalue
 rem gets
 php PhpTestSock.php 11 127.0.0.1 8888 newkey
 rem cas
-php PhpTestSock.php 12 127.0.0.1 8888 key_a value_cas 1
+php PhpTestSock.php 12 127.0.0.1 8888 newkey value_cas 0
 rem cas Miss
-php PhpTestSock.php 12 127.0.0.1 8888 key_a value_cas 1
+php PhpTestSock.php 12 127.0.0.1 8888 newkey value_cas 1
 rem cas Tag
-php PhpTestSock.php 13 127.0.0.1 8888 key_a value_cas tag1 2
+php PhpTestSock.php 13 127.0.0.1 8888 newkey value_cas tag1 2
 rem gets
-php PhpTestSock.php 11 127.0.0.1 8888 key_a
+php PhpTestSock.php 11 127.0.0.1 8888 newkey
