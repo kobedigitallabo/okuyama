@@ -941,6 +941,7 @@ public class ImdstKeyValueClient {
             } else {
 
                 // ValueをBase64でエンコード
+
                 value = new String(this.dataEncoding(value.getBytes()));
             }
 

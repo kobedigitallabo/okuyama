@@ -5,6 +5,8 @@ import java.util.*;
 import java.net.*;
 
 import okuyama.imdst.util.ImdstDefine;
+import okuyama.imdst.util.io.CustomReader;
+
 
 /**
  * クライアントとのProtocolの差を保管する.<br>
@@ -76,6 +78,10 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
     }
 
 
+    public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception {
+        return null;
+    }
+
     /**
      * okuyama用のリクエストをパースし共通のプロトコルに変換.<br>
      *
@@ -84,7 +90,7 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
      * @return String[] 
      * @throw Exception
      */
-    public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception {
+    public String takeRequestLine(CustomReader br, PrintWriter pw) throws Exception {
         String retStr = null;
         retStr = br.readLine();
 
@@ -100,7 +106,7 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
     }
 
 
-    public String[] takeRequestLine4List(BufferedReader br, PrintWriter pw) throws Exception {
+    public String[] takeRequestLine4List(CustomReader br, PrintWriter pw) throws Exception {
         return null;
     }
 

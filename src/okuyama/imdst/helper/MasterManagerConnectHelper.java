@@ -14,6 +14,7 @@ import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.io.CustomReader;
 
 /**
  * <br>
@@ -64,18 +65,19 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                                     new BufferedWriter(
                                         new OutputStreamWriter(socket.getOutputStream(), 
                                                                 ImdstDefine.keyHelperClientParamEncoding)));
-                BufferedReader br = new BufferedReader(
-                                        new InputStreamReader(socket.getInputStream(), 
-                                                                ImdstDefine.keyHelperClientParamEncoding));
+                InputStream is = socket.getInputStream();
 
-                Object[] clientMap = new Object[7];
+                CustomReader cr = new CustomReader(is);
+
+                Object[] clientMap = new Object[8];
                 clientMap[ImdstDefine.paramSocket] = socket;
                 clientMap[ImdstDefine.paramPw] = pw;
-                clientMap[ImdstDefine.paramBr] = br;
+                clientMap[ImdstDefine.paramBr] = cr;
                 clientMap[ImdstDefine.paramStart] = new Long(JavaSystemApi.currentTimeMillis);
                 clientMap[ImdstDefine.paramLast] = new Long(JavaSystemApi.currentTimeMillis);
                 clientMap[ImdstDefine.paramBalance] = param[1];
                 clientMap[ImdstDefine.paramCheckCountMaster] = new Integer(0);
+                clientMap[ImdstDefine.paramBis] = cr;
 
                 Object[] queueParam = new Object[1];
                 queueParam[0] = clientMap;

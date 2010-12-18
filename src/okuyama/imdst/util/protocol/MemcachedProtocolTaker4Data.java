@@ -8,6 +8,7 @@ import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
 import okuyama.imdst.util.ImdstDefine;
+import okuyama.imdst.util.io.CustomReader;
 
 /**
  * クライアントとのProtocolの差を保管する.<br>
@@ -36,6 +37,7 @@ public class MemcachedProtocolTaker4Data  extends AbstractProtocolTaker implemen
         this.requestLine = null;
         this.requestSplit = null;
     }
+
 
     /**
      * memcache用のリクエストをパースし共通のプロトコルに変換.<br>
@@ -76,7 +78,20 @@ public class MemcachedProtocolTaker4Data  extends AbstractProtocolTaker implemen
     }
 
 
-    public String[] takeRequestLine4List(BufferedReader br, PrintWriter pw) throws Exception {
+    /**
+     * memcache用のリクエストをパースし共通のプロトコルに変換.<br>
+     * 対応しているメソッドはset,get,deleteのみ.<br>
+     *
+     * @param br
+     * @param pw
+     * @return String 
+     * @throw Exception
+     */
+    public String takeRequestLine(CustomReader br, PrintWriter pw) throws Exception {
+        return null;
+    }
+
+    public String[] takeRequestLine4List(CustomReader br, PrintWriter pw) throws Exception {
         return null;
     }
 

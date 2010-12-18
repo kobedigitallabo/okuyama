@@ -5,6 +5,7 @@ import java.util.*;
 import java.net.*;
 
 import okuyama.imdst.util.ImdstDefine;
+import okuyama.imdst.util.io.CustomReader;
 
 /**
  * クライアントとのProtocolの差を保管する.<br>
@@ -24,9 +25,11 @@ public interface IProtocolTaker {
 
     public void init();
 
+    public String takeRequestLine(CustomReader br, PrintWriter pw) throws Exception;
+
     public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception;
 
-    public String[] takeRequestLine4List(BufferedReader br, PrintWriter pw) throws Exception;
+    public String[] takeRequestLine4List(CustomReader br, PrintWriter pw) throws Exception;
 
     public String takeResponseLine(String[] retParams) throws Exception;
 

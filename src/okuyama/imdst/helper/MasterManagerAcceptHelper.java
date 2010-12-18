@@ -15,6 +15,7 @@ import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.io.CustomReader;
 
 /**
  * MasterManagerの使用する接続ソケットを監視し、読み込み待ちのソケットを見つけ出し、<br>
@@ -81,7 +82,7 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                 if (param == null || param.length < 1) continue;
 
                 Object[] clientMap = (Object[])param[0];
-                BufferedReader br = (BufferedReader)clientMap[ImdstDefine.paramBr];
+                CustomReader br = (CustomReader)clientMap[ImdstDefine.paramBr];
                 Socket socket = (Socket)clientMap[ImdstDefine.paramSocket];
 
                 // 読み込みのデータがバッファに存在するかをチェック
@@ -160,7 +161,8 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
                 Object[] param = null;
                 Object[] clientMap = null;
                 Socket socket = null;
-                BufferedReader br = null;
+                CustomReader br = null;
+
                 try {
                     param = (Object[])connectCheckQueue.take();
                     clientMap = (Object[])param[0];
@@ -171,7 +173,7 @@ public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
 
                         clientMap[ImdstDefine.paramCheckCountMaster] = new Integer(0);
 
-                        br = (BufferedReader)clientMap[ImdstDefine.paramBr];
+                        br = (CustomReader)clientMap[ImdstDefine.paramBr];
 
                         int test = 0;
                         br.mark(1);

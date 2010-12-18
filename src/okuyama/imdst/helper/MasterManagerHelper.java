@@ -19,6 +19,7 @@ import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.protocol.*;
 import okuyama.imdst.util.io.KeyNodeConnector;
 import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.io.CustomReader;
 
 import com.sun.mail.util.BASE64DecoderStream;
 
@@ -138,7 +139,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         // クライアントへのアウトプット(結果セット用の文字列用と、バイトデータ転送用)
         PrintWriter pw = null;
-        BufferedReader br = null;
+        CustomReader br = null;
+        BufferedInputStream bis = null;
         Socket socket = null;
 
 
@@ -218,7 +220,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // ソケット周り(いずれクラス化する)
                         pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
-                        br = (BufferedReader)queueMap[ImdstDefine.paramBr];
+                        br = (CustomReader)queueMap[ImdstDefine.paramBr];
                         socket = (Socket)queueMap[ImdstDefine.paramSocket];
                         socket.setSoTimeout(0);
                         closeFlg = false;
@@ -275,7 +277,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             break;
                         case 1 :
                             //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
-
+//System.out.println(clientParameterList[4]);
                             // Key値とValueを格納する
                             retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
                             break;
@@ -4395,7 +4397,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * Clientとの接続を切断する.<br>
      *
      */
-    private void closeClientConnect(PrintWriter pw, BufferedReader br, Socket socket) {
+    private void closeClientConnect(PrintWriter pw, CustomReader br, Socket socket) {
 
         try {
             if(pw != null) {

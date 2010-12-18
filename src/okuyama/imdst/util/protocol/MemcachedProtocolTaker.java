@@ -9,6 +9,8 @@ import com.sun.mail.util.BASE64EncoderStream;
 
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.io.CustomReader;
+
 
 /**
  * クライアントとのProtocolの差を保管する.<br>
@@ -42,6 +44,10 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
     }
 
 
+    public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception {
+        return null;
+    }
+
     /**
      * memcached用のリクエストをパースし共通のプロトコルに変換.<br>
      * 対応しているメソッドはset,get,delete,add,versionのみ.<br>
@@ -51,7 +57,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
      * @return String 
      * @throw Exception
      */
-    public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception {
+    public String takeRequestLine(CustomReader br, PrintWriter pw) throws Exception {
         String retStr = null;
 /*        this.nextExec = 1;
 
@@ -86,7 +92,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
      * @return String 
      * @throw Exception
      */
-    public String[] takeRequestLine4List(BufferedReader br, PrintWriter pw) throws Exception {
+    public String[] takeRequestLine4List(CustomReader br, PrintWriter pw) throws Exception {
         String[] retStrs = null;
         this.nextExec = 1;
 
@@ -161,15 +167,17 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
      * @param executeMethodStr
      * @param br
      * @param pw
+     * @param soc
      * @return String
      * @Exception
      */
-    private String[] memcacheMethodCnv(String executeMethodStr, BufferedReader br, PrintWriter pw) throws Exception{
+    private String[] memcacheMethodCnv(String executeMethodStr, CustomReader br, PrintWriter pw) throws Exception{
         String[] retStrs = null;
         this.methodMatch = true;
 
         try {
             executeMethodStr = executeMethodStr.trim();
+
             String[] executeMethods = executeMethodStr.split(ImdstDefine.memcacheExecuteMethodSep);
             this.requestSplit = executeMethods;
 
@@ -205,9 +213,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 retStrs[3] = "0";
 
                 byte[] strs = new byte[readSize];
-                for (int i = 0; i < readSize; i++) {
-                    strs[i] = new Integer(br.read()).byteValue();
-                }
+                br.read(strs);
 
                 if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
 
@@ -222,7 +228,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 }
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodAdd) || executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodAppend)) {
 
-                // Append
+                // Add
                 // 分解すると コマンド,key,特有32bit値(Flags),有効期限,格納バイト数
                 // 読み込みサイズ指定
                 int readSize = Integer.parseInt(executeMethods[4]);
@@ -251,9 +257,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 retStrs[3] = "0";
 
                 byte[] strs = new byte[readSize];
-                for (int i = 0; i < readSize; i++) {
-                    strs[i] = new Integer(br.read()).byteValue();
-                }
+                br.read(strs);
 
                 if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
 
@@ -328,9 +332,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 retStrs[5] = executeMethods[5]; // cas値
 
                 byte[] strs = new byte[readSize];
-                for (int i = 0; i < readSize; i++) {
-                    strs[i] = new Integer(br.read()).byteValue();
-                }
+                br.read(strs);
 
                 if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
 
@@ -443,7 +445,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
                     retGetBuf.append(valueByte.length);
                     retGetBuf.append("\r\n");
-                    retGetBuf.append(new String(valueByte));
+                    retGetBuf.append(new String(valueByte, "UTF-8"));
                     retGetBuf.append("\r\n");
                 }
             }
@@ -498,7 +500,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
                     retGetBuf.append(retParams[3]);
                     retGetBuf.append("\r\n");
-                    retGetBuf.append(new String(valueByte));
+                    retGetBuf.append(new String(valueByte, "UTF-8"));
                     retGetBuf.append("\r\n");
                 }
             }
