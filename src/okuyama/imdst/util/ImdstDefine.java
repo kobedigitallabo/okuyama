@@ -239,6 +239,7 @@ public class ImdstDefine {
 
     public static final int consistentHashVirtualNode = 50;
 
+    public static final boolean calcSizeFlg = true;
 
     /* -- プログラム規定数値 ----------------------------------------      */
     // 保存出来る、Key、Tag、Valueの最大長

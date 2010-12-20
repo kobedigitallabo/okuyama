@@ -9,8 +9,9 @@ import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
 import okuyama.base.lang.BatchException;
 import okuyama.imdst.util.StatusUtil;
-
 import org.apache.commons.codec.digest.DigestUtils;
+import java.util.concurrent.atomic.AtomicLong;
+
 
 /**
  * KeyとValueを管理する独自Mapクラス.<br>
@@ -34,6 +35,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private transient Object sync = new Object();
     private transient boolean vacuumExecFlg = false;
     private transient List vacuumDiffDataList = null;
+
+    private ConcurrentHashMap dataSizeMap = new ConcurrentHashMap();
 
     private String lineFile = null;
     private String tmpVacuumeLineFile = null;
@@ -354,6 +357,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     public Object put(Object key, Object value) {
 
         Object ret = null;
+        this.totalDataSizeCalc(key, (((String)value).length() + ((String)key).length()));
+
         if (this.memoryMode) {
             ret = super.put(key, value);
         } else {
@@ -474,6 +479,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         Object ret = null;
 
         synchronized (sync) {
+            this.totalDataSizeCalc(key, 0L);
             ret = super.remove(key);
             this.nowKeySize = super.size();
 
@@ -503,6 +509,46 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         return super.containsKey(key);
     }
+
+
+    private void totalDataSizeCalc(Object key, long addSize) {
+        if (!ImdstDefine.calcSizeFlg) return;
+
+        if (addSize != 0)
+            addSize = 2 * (addSize) + 38 + 2 + 32;
+
+
+        String unique = null;
+        String keyStr = (String)key;
+        int beforeSize = 0;
+        AtomicLong size = null;
+        Object val = this.get(key);
+
+       if(keyStr.indexOf("#") == 0) {
+            unique = keyStr.substring(0, 6);
+        } else {
+            unique = "all";
+        }
+
+        if (val != null) {
+            beforeSize = ((String)val).length();
+            beforeSize = beforeSize + ((String)key).length();
+            beforeSize = 2 * (beforeSize) + 38 + 2 + 32;
+            beforeSize = beforeSize * -1;
+        }
+
+        if(!dataSizeMap.containsKey(unique)) {
+            size = new AtomicLong(0L);
+        } else {
+            size = (AtomicLong)dataSizeMap.get(unique);
+        }
+
+        size.getAndAdd(beforeSize);
+        size.getAndAdd(addSize);
+
+        dataSizeMap.put(unique, size);
+    }
+
 
     /**
      * データファイルの不要領域を掃除して新たなファイルを作りなおす.<br>
