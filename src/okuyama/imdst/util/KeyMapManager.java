@@ -2197,6 +2197,11 @@ public class KeyMapManager extends Thread {
         return this.keyMapObj.size();
     }
 
+    // 格納データのサイズを返す
+    public long getSaveDataSize(String unique) {
+        return this.keyMapObj.getDataUseSize(unique);
+    }
+
     // 自身のステータスがエラーでないかを返す
     public boolean checkError() {
         return this.blocking;

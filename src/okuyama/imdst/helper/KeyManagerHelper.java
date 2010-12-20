@@ -503,6 +503,26 @@ public class KeyManagerHelper extends AbstractHelper {
                             pw.flush();
                             //retParamBuf = null;
                             break;
+
+                        case 60 :
+
+                            // KeyMapManagerのデータサイズを返す
+							String unique = null;
+							if (clientParameterList.length > 1 && !clientParameterList[1].trim().equals("")) {
+								unique = clientParameterList[1];
+							}
+
+
+                            long saveSize = this.keyMapManager.getSaveDataSize(unique);
+
+                            retParamBuf.append("60");
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append("true");
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(unique);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+							retParamBuf.append(saveSize);
+                            break;
                         case 100 :
 
                             // KeyMapManager Dump

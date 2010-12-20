@@ -357,7 +357,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     public Object put(Object key, Object value) {
 
         Object ret = null;
-        this.totalDataSizeCalc(key, (((String)value).length() + ((String)key).length()));
+        this.totalDataSizeCalc(key, value);
 
         if (this.memoryMode) {
             ret = super.put(key, value);
@@ -479,7 +479,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         Object ret = null;
 
         synchronized (sync) {
-            this.totalDataSizeCalc(key, 0L);
+            this.totalDataSizeCalc(key, null);
             ret = super.remove(key);
             this.nowKeySize = super.size();
 
@@ -511,12 +511,15 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     }
 
 
-    private void totalDataSizeCalc(Object key, long addSize) {
+    private void totalDataSizeCalc(Object key, Object value) {
         if (!ImdstDefine.calcSizeFlg) return;
 
-        if (addSize != 0)
-            addSize = 2 * (addSize) + 38 + 2 + 32;
+		long addSize = 0L;
 
+		if (value != null) addSize = ((String)key).length() + ((String)value).length();
+
+        if (addSize != 0L)
+            addSize = 2 * (addSize) + 38 + 2 + 32;
 
         String unique = null;
         String keyStr = (String)key;
@@ -539,15 +542,29 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         if(!dataSizeMap.containsKey(unique)) {
             size = new AtomicLong(0L);
+	        dataSizeMap.put(unique, size);
         } else {
             size = (AtomicLong)dataSizeMap.get(unique);
         }
 
         size.getAndAdd(beforeSize);
         size.getAndAdd(addSize);
-
-        dataSizeMap.put(unique, size);
     }
+
+
+	public long getDataUseSize(String unique) {
+
+		AtomicLong size = new AtomicLong(0L);
+
+		if (unique == null) unique = "all";
+
+        if(dataSizeMap.containsKey(unique)) {
+
+	        size = (AtomicLong)dataSizeMap.get(unique);
+		}
+
+		return size.longValue();
+	}
 
 
     /**
