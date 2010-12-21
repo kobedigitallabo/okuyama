@@ -336,7 +336,11 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
                 if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
 
-                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(executeMethods[2]).append(AbstractProtocolTaker.metaColumnSep).append(this.calcExpireTime(executeMethods[3])).toString();
+                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).
+                                                                                                 append(executeMethods[2]).
+                                                                                                 append(AbstractProtocolTaker.metaColumnSep).
+                                                                                                 append(this.calcExpireTime(executeMethods[3])).
+                                                                                                 toString();
                 }  else {
 
                     pw.print("CLIENT_ERROR bad data chunk");

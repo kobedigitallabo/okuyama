@@ -82,6 +82,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         logger.info("okuyama MasterNode Initialization Start ...");
         System.out.println("okuyama MasterNode Initialization Start ...");
 
+        // バインドIPおよび、ポート番号、BackLog初期化
         if (initValue.indexOf(":") != -1) {
 
             String[] splitInitVal = initValue.split(":");
@@ -104,6 +105,14 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         } else {
 
             this.portNo = Integer.parseInt(initValue);
+        }
+
+
+        // メソッド実行許可初期化
+        String executionMethodsStr = (String)super.getPropertiesValue(ImdstDefine.Prop_ExecutionMethods);
+        if (executionMethodsStr != null && !executionMethodsStr.trim().equals("")) {
+            String[] methodNoList = executionMethodsStr.split(",");
+            StatusUtil.initExecuteMethodList(methodNoList);
         }
 
 
@@ -323,33 +332,33 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
 
 
-			// MasterManagerHelper用設定
-			Object[] helperShareParams = new Object[(this.maxWorkerParallelQueue * 2)];
+            // MasterManagerHelper用設定
+            Object[] helperShareParams = new Object[(this.maxWorkerParallelQueue * 2)];
 
-			queueIndex = 0;
+            queueIndex = 0;
             for (int i = 0; i < (this.maxWorkerParallelQueue * 2); i=i+2) {
-				helperShareParams[i] = "Bind-MasterManagerHelper" + queueIndex;
-				helperShareParams[i+1] = new AtomicInteger(0);
-				queueIndex++;
-			}
+                helperShareParams[i] = "Bind-MasterManagerHelper" + queueIndex;
+                helperShareParams[i+1] = new AtomicInteger(0);
+                queueIndex++;
+            }
 
 
-			queueIndex = 0;
+            queueIndex = 0;
             for (int i = 0; i < this.maxWorkerParallelExecution; i++) {
                 queueIndex = (i+1) % this.maxWorkerParallelQueue;
-				AtomicInteger queueBindHelperCount = (AtomicInteger)helperShareParams[(new Long(queueIndex).intValue()*2)+1];
-				queueBindHelperCount.getAndIncrement();
-				helperShareParams[(new Long(queueIndex).intValue()*2)+1] = queueBindHelperCount;
-			}
+                AtomicInteger queueBindHelperCount = (AtomicInteger)helperShareParams[(new Long(queueIndex).intValue()*2)+1];
+                queueBindHelperCount.getAndIncrement();
+                helperShareParams[(new Long(queueIndex).intValue()*2)+1] = queueBindHelperCount;
+            }
 
-			/*
+            /*
             for (int i = 0; i < (this.maxWorkerParallelQueue * 2); i=i+2) {
-				System.out.println(helperShareParams[i]);
-				System.out.println(helperShareParams[i+1]);
-				System.out.println("-----------------");
-			}*/
+                System.out.println(helperShareParams[i]);
+                System.out.println(helperShareParams[i+1]);
+                System.out.println("-----------------");
+            }*/
 
-			queueIndex = 0;
+            queueIndex = 0;
             for (int i = 0; i < this.maxWorkerParallelExecution; i++) {
                 queueIndex = (i+1) % this.maxWorkerParallelQueue;
 
@@ -364,11 +373,11 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 helperParams[7] = this.maxAcceptParallelQueueNames;
                 helperParams[8] = "Bind-MasterManagerHelper" + queueIndex;
 
-				if (i == 0) {
-	                super.executeHelper("MasterManagerHelper", helperParams, true, helperShareParams);
-				} else {
-	                super.executeHelper("MasterManagerHelper", helperParams, true);
-				}
+                if (i == 0) {
+                    super.executeHelper("MasterManagerHelper", helperParams, true, helperShareParams);
+                } else {
+                    super.executeHelper("MasterManagerHelper", helperParams, true);
+                }
             }
 
 

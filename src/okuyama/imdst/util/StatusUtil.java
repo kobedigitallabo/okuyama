@@ -80,6 +80,10 @@ public class StatusUtil {
 
     private static Map isolationCnvExclusionMap = null;
 
+    // 実行許可メソッドリスト
+    private static int[] methodList = null;
+
+
     /**
      * ノード使用状態の枠を初期化
      */
@@ -164,6 +168,41 @@ public class StatusUtil {
      */
     public static String getStatusMessage() {
         return StatusUtil.msg;
+    }
+
+
+
+    /**
+     * 実行可能メソッドのNoを登録する.<br>
+     *
+     * @param methodNo
+     */
+    public static void initExecuteMethodList(String[] methodNoList) {
+        if (methodNoList != null) {
+            methodList = new int[1000];
+            for (int i = 0; i < 1000; i++) {
+                methodList[i] = -1;
+            }
+
+            for (int i = 0; i < methodNoList.length; i++) {
+                methodList[Integer.parseInt(methodNoList[i])] = 1;
+            }
+        }
+
+    }
+
+
+    /**
+     * 指定されたメソッドが実行可能か返す.<br>
+     * 可能な場合は引数をそのまま返却、不可の場合は-1を返す.<br>
+     *
+     * @param methodNo
+     * @return int
+     */
+    public static int isExecuteMethod(int methodNo) {
+        if (methodList == null) return methodNo;
+        if (methodList[methodNo] == 1) return methodNo;
+        return -1;
     }
 
 

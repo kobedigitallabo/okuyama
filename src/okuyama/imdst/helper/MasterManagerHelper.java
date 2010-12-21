@@ -267,7 +267,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // 本体処理開始
                     // 処理番号で処理を分岐
-                    switch (Integer.parseInt(clientParameterList[0])) {
+                    // 実行許可も判定
+                    switch (StatusUtil.isExecuteMethod(Integer.parseInt(clientParameterList[0]))) {
 
                         case 0 :
 
@@ -277,7 +278,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             break;
                         case 1 :
                             //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
-//System.out.println(clientParameterList[4]);
+
                             // Key値とValueを格納する
                             retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
                             break;
@@ -455,7 +456,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParams[1] = ImdstDefine.okuyamaVersion;
                             retParams[2] = "";
                             break;
+                        case -1 :
+
+                            // 実行許可なし
+                            logger.info("MasterManagerHelper Execution has not been permitted  MethodNo=[" + clientParameterList[0] + "]");
+                            retParams = new String[3];
+                            retParams[0] = clientParameterList[0];
+                            retParams[1] = "error";
+                            retParams[2] = "Execution has not been permitted";
+                            break;
                         default :
+
                             logger.info("MasterManagerHelper No Method =[" + clientParameterList[0] + "]");
                             break;
                     }

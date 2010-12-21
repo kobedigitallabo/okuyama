@@ -6,6 +6,7 @@ import java.net.*;
 
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.SystemUtil;
 
 /**
  * ProtocolTakerの共通処理をまとめる.<br>
@@ -15,7 +16,7 @@ import okuyama.imdst.util.JavaSystemApi;
  */
 abstract public class AbstractProtocolTaker {
 
-    protected static String metaColumnSep = "-";
+    protected static String metaColumnSep = ImdstDefine.valueMetaColumnSep;
 
     protected String calcExpireTime(String timeStr) {
         String ret = "0";
@@ -33,21 +34,7 @@ abstract public class AbstractProtocolTaker {
 
 
     protected boolean expireCheck(String expirTimeStr) {
-        boolean ret = true;
-
-        try {
-            // 数値変換出来ない場合はエラー
-            if (!expirTimeStr.trim().equals("0")) {
-
-                long expireTime = Long.parseLong(expirTimeStr);
-
-                if (expireTime <= JavaSystemApi.currentTimeMillis) ret = false;
-            }
-        } catch (NumberFormatException e) {
-            ret = false;
-        }
-
-        return ret;
+        return SystemUtil.expireCheck(expirTimeStr);
     }
 
 }

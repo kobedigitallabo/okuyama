@@ -177,6 +177,7 @@ public class ImdstDefine {
     public static final String Prop_DataConsistencyMode = "DataConsistencyMode";
     public static final String Prop_IsolationMode = "IsolationMode";
     public static final String Prop_IsolationPrefix = "IsolationPrefix";
+    public static final String Prop_ExecutionMethods = "ExecutionMethods";
     public static final String Prop_ConnectionAutoCloseTime = "connectionAutoCloseTime";
     public static final String Prop_MemoryMode = ".memoryMode";
     public static final String Prop_DataMemory = ".dataMemory";
@@ -200,10 +201,9 @@ public class ImdstDefine {
     public static final String memcacheProtocol = "memcache";
     public static final String memcachedProtocol = "memcached";
     public static final String memcache4datanodeProtocol = "memcache_datanode";
-    public static final String memcached4datanodeProtocol = "memcached_datanode";    
+    public static final String memcached4datanodeProtocol = "memcached_datanode";
     public static final String memcache4proxyProtocol = "memcache_proxy";
-    public static final String memcached4proxyProtocol = "memcached_proxy";    
-
+    public static final String memcached4proxyProtocol = "memcached_proxy";
 
 
     public static final String keyNodeSocketKey = "socket";
@@ -237,9 +237,21 @@ public class ImdstDefine {
 
     public static final String addNode4ConsistentHashMode = "addNode4ConsistentHashMode";
 
+    // 分散アルゴリズムにConsistentHashを使用した場合の仮想ノードの数
     public static final int consistentHashVirtualNode = 50;
 
-    public static final boolean calcSizeFlg = true;
+    // Value値に含まれるメタ情報の区切り文字
+    public static final String valueMetaColumnSep = "-";
+
+    // 有効期限切れのデータを実際に物理削除するまでの経過時間(ミリ秒)
+    public static final long invalidDataDeleteTime = 300000;
+
+
+
+    // データサイズ演算設定
+    // true:計算する
+    // false:計算しない
+    public static final boolean calcSizeFlg = false;
 
     /* -- プログラム規定数値 ----------------------------------------      */
     // 保存出来る、Key、Tag、Valueの最大長

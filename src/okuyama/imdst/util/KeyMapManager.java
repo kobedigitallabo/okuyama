@@ -112,6 +112,9 @@ public class KeyMapManager extends Thread {
     // データへの最終アクセス時間
     private long lastAccess = 0L;
 
+    // 無効データバキューム実行指定
+    private boolean vacuumInvalidDataFlg = true;
+
     // データファイルのバキューム実行指定
     private boolean vacuumExec = true;
 
@@ -341,6 +344,7 @@ public class KeyMapManager extends Thread {
      */ 
     public void run (){
         int sizeCheckCounter = 0;
+        int vacuumInvalidDataCount = 0;
 
         while(true) {
 
@@ -457,8 +461,53 @@ public class KeyMapManager extends Thread {
                         }
                     }
                 }
-
                 logger.info("VacuumCheck - End");
+
+
+                // 有効期限切れデータの削除
+                // 実行指定(vacuumInvalidDataFlg)がtrueの場合に1時間に1回実行される
+                // このif文に到達するのが1分に1回なので、それを60回繰り返すと削除処理を実行する
+                if (vacuumInvalidDataFlg == true && vacuumInvalidDataCount > 60) {
+                    logger.debug("vacuumInvalidData - Start - 1");
+
+                    synchronized(this.poolKeyLock) {
+                        Set entrySet = this.keyMapObj.entrySet();
+                        Iterator entryIte = entrySet.iterator(); 
+
+                        long counter = 0;
+                        while(entryIte.hasNext()) {
+
+                            if ((counter % 2000) == 0) logger.info("vacuumInvalidData - Exec Count[" + counter + "]");
+
+                            Map.Entry obj = (Map.Entry)entryIte.next();
+                            if (obj == null) continue;
+                            Object key = null;
+
+                            key = obj.getKey();
+
+                            String valStr = (String)this.getKeyPair((String)key);
+                            String[] valStrSplit = valStr.split(ImdstDefine.setTimeParamSep);
+                            valStr = valStrSplit[0];
+
+                            // 有効期限チェックを行う(有効期限を5分過ぎているデータが対象)
+                            String[] checkValueSplit = valStr.split(ImdstDefine.keyHelperClientParamSep);
+
+                            if (checkValueSplit.length > 1) {
+
+                                String[] metaColumns = checkValueSplit[1].split(ImdstDefine.valueMetaColumnSep);
+                                if (!SystemUtil.expireCheck(metaColumns[1], ImdstDefine.invalidDataDeleteTime)) {
+
+                                    // 無効データは削除
+                                    this.removeKeyPair((String)key, "0");
+                                }
+                            }
+                        }
+                    }
+                    logger.debug("vacuumInvalidData - End - 1");
+                    vacuumInvalidDataCount = 0;
+                }
+
+                vacuumInvalidDataCount++;
             } catch (Exception e) {
 
                 e.printStackTrace();
