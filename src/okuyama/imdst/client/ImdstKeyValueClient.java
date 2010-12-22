@@ -5,11 +5,11 @@ import java.io.*;
 import java.net.*;
 import java.util.zip.*;
 
-
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
 import okuyama.imdst.util.ImdstDefine;
+
 
 /**
  * MasterNodeと通信を行うプログラムインターフェース<br>
@@ -79,8 +79,10 @@ public class ImdstKeyValueClient {
         this.dataDecoding("".getBytes());
     }
 
+
     /**
      * 保存するデータの最大長を変更する.<br>
+     * 接続時に
      *
      * @param size 保存サイズ(バイト長)
      */
@@ -130,8 +132,9 @@ public class ImdstKeyValueClient {
      * 接続出来ない場合自動的に別ノードへ再接続を行う.<br>
      *
      * @param masterNodes 接続情報の配列 "IP:PORT"の形式
+     * @throws ImdstClientException
      */
-    public void autoConnect() throws Exception {
+    public void autoConnect() throws ImdstClientException {
         ArrayList tmpMasterNodeList = new ArrayList();
         ArrayList workList = (ArrayList)this.masterNodesList.clone();
         Random rnd = new Random();
@@ -185,7 +188,7 @@ public class ImdstKeyValueClient {
                     // 無視
                     this.socket = null;
                 }
-                if(tmpMasterNodeList.size() < 1) throw e;
+                if(tmpMasterNodeList.size() < 1) throw new ImdstClientException(e);
             }
         }
     }
@@ -196,8 +199,9 @@ public class ImdstKeyValueClient {
      * 接続出来ない場合自動的に別ノードへ再接続を行う.<br>
      *
      * @param masterNodes 接続情報の配列 "IP:PORT"の形式
+     * @throws ImdstClientException
      */
-    public void nextConnect() throws Exception {
+    public void nextConnect() throws ImdstClientException {
         ArrayList tmpMasterNodeList = new ArrayList();
         tmpMasterNodeList = (ArrayList)this.masterNodesList.clone();
 
@@ -243,7 +247,7 @@ public class ImdstKeyValueClient {
                     // 無視
                     this.socket = null;
                 }
-                if(tmpMasterNodeList.size() < 1) throw e;
+                if(tmpMasterNodeList.size() < 1) throw new ImdstClientException(e);
             }
         }
     }
@@ -253,24 +257,25 @@ public class ImdstKeyValueClient {
      * 接続処理.<br>
      * エンコーディング指定なし.<br>
      *
-     * @param server
-     * @param port
-     * @throws Exception
+     * @param server サーバ名
+     * @param port ポート番号
+     * @throws ImdstClientException
      */
-    public void connect(String server, int port) throws Exception {
+    public void connect(String server, int port) throws ImdstClientException {
         this.connect(server, port, ImdstKeyValueClient.connectDefaultEncoding);
     }
+
 
     /**
      * 接続処理.<br>
      * エンコーディング指定有り.<br>
      *
-     * @param server
-     * @param port
-     * @param encoding
-     * @throws Exception
+     * @param server サーバ名
+     * @param port ポート番号
+     * @param encoding サーバとのストリームエンコーディング指定(デフォルトUTF-8)
+     * @throws ImdstClientException
      */
-    public void connect(String server, int port, String encoding) throws Exception {
+    public void connect(String server, int port, String encoding) throws ImdstClientException {
         try {
             this.socket = new Socket();
             InetSocketAddress inetAddr = new InetSocketAddress(server, port);
@@ -302,7 +307,7 @@ public class ImdstKeyValueClient {
                 // 無視
                 this.socket = null;
             }
-            throw e;
+            throw new ImdstClientException(e);
         }
     }
 
@@ -310,9 +315,9 @@ public class ImdstKeyValueClient {
     /**
      * マスタサーバとの接続を切断.<br>
      *
-     * @throw Exception
+     * @throws ImdstClientException
      */
-    public void close() throws Exception {
+    public void close() throws ImdstClientException {
         try {
             this.transactionCode = "0";
             if (this.pw != null) {
@@ -334,19 +339,22 @@ public class ImdstKeyValueClient {
                 this.socket = null;
             }
         } catch (Exception e) {
-            throw e;
+            throw new ImdstClientException(e);
         }
     }
 
 
     /**
      * Clientを初期化する.<br>
-     * 今のところは最大保存サイズの初期化のみ<br>
-     *
+     * 今のところはValueの最大保存サイズの初期化のみ.<br>
+     * ※本メソッドは内部で自動的に呼び出されるので特に呼び出す必要はない.<br>
+     * ※あまりに長時間コネクションプールを行う場合に呼び出せば<br>
+     *   その都度サイズを初期化できる.<br>
+     * 
      * @return boolean true:開始成功 false:開始失敗
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public boolean initClient() throws Exception {
+    public boolean initClient() throws ImdstClientException {
         boolean ret = false;
         String serverRetStr = null;
         String[] serverRet = null;
@@ -356,10 +364,8 @@ public class ImdstKeyValueClient {
         try {
             if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
 
-
             // 文字列バッファ初期化
             serverRequestBuf = new StringBuilder();
-
 
             // 処理番号連結
             serverRequestBuf.append("0");
@@ -401,10 +407,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.initClient();
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -412,10 +418,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.initClient();
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -423,10 +429,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.initClient();
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -436,12 +442,12 @@ public class ImdstKeyValueClient {
     /**
      * Transactionを開始する.<br>
      * データロック、ロックリリースを使用する場合は、<br>
-     * 事前に呼び出す必要がある<br>
+     * 事前に呼び出す必要がある.<br>
      *
      * @return boolean true:開始成功 false:開始失敗
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public boolean startTransaction() throws Exception {
+    public boolean startTransaction() throws ImdstClientException {
         boolean ret = false;
         String serverRetStr = null;
         String[] serverRet = null;
@@ -493,10 +499,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.startTransaction();
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -504,10 +510,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.startTransaction();
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -515,10 +521,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.startTransaction();
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -527,11 +533,9 @@ public class ImdstKeyValueClient {
 
     /**
      * Transactionを終了する.<br>
-     * データロック、ロックリリースを使用を完了後に、<br>
+     * データロック、ロックリリースの使用を完了後に、<br>
      * 呼び出すことで、現在使用中のTransactionを終了できる<br>
      *
-     * 
-     * @throws Exception
      */
     public void endTransaction() {
         this.transactionCode = "0";
@@ -540,15 +544,15 @@ public class ImdstKeyValueClient {
 
     /**
      * データのLockを依頼する.<br>
-     * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
+     * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である<br>
      * 
-     * @param keyStr
+     * @param keyStr ロック対象のKey値
      * @param lockingTime Lockを取得後、維持する時間(この時間を経過すると自動的にLockが解除される)(単位は秒)(0は無制限)
      * @param waitLockTime Lockを取得する場合に既に取得中の場合この時間はLock取得をリトライする(単位は秒)(0は1度取得を試みる)
      * @return String[] 要素1(Lock成否):"true" or "false"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] lockData(String keyStr, int lockingTime, int waitLockTime) throws Exception {
+    public String[] lockData(String keyStr, int lockingTime, int waitLockTime) throws ImdstClientException {
         String[] ret = new String[1]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -633,10 +637,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.lockData(keyStr, lockingTime, waitLockTime);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -644,10 +648,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.lockData(keyStr, lockingTime, waitLockTime);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -655,10 +659,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.lockData(keyStr, lockingTime, waitLockTime);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -667,13 +671,13 @@ public class ImdstKeyValueClient {
 
     /**
      * データのLock解除を依頼する.<br>
-     * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
+     * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である.<br>
      *
-     * @param keyStr
+     * @param keyStr ロック対象Key値
      * @return String[] 要素1(Lock解除成否):"true" or "false"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] releaseLockData(String keyStr) throws Exception {
+    public String[] releaseLockData(String keyStr) throws ImdstClientException {
         String[] ret = new String[1]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -749,10 +753,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.releaseLockData(keyStr);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -760,10 +764,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.releaseLockData(keyStr);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -771,29 +775,37 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.releaseLockData(keyStr);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
     }
 
 
-    // トランザクションを開始している場合、自身のトランザクションを一意に表す
-    // コードを返す.
-    // このコードをsetNowTransactionCodeに渡すと、別クライアントのTransactionを引き継げる
-    // !! 他クライアントの処理を横取ることが出来るため、使用を推奨しない !! 
-    public String getNowTransactionCode() {
+    /**
+     * トランザクションを開始している場合、自身のトランザクションを一意に表す
+     * コードを返す.
+     * このコードをsetNowTransactionCodeに渡すと、別クライアントのTransactionを引き継げる
+     * !! 他クライアントの処理を横取ることが出来るため、使用を推奨しない !! 
+     * 
+     * @return String
+     */
+    protected String getNowTransactionCode() {
         return this.transactionCode;
     }
 
 
-    // 他のクライアントが実施しているトランザクションコードを設定することで、
-    // トランザクション処理を引き継ぐことが出来る。
-    // !!! 他クライアントの処理を横取ることが出来るため、使用を推奨しない !!!
-    public void setNowTransactionCode(String transactionCode) {
+    /**
+     * 他のクライアントが実施しているトランザクションコードを設定することで、
+     * トランザクション処理を引き継ぐことが出来る。
+     * !!! 他クライアントの処理を横取ることが出来るため、使用を推奨しない !!!
+     * 
+     * @return String
+     */
+    protected void setNowTransactionCode(String transactionCode) {
         this.transactionCode = transactionCode;
     }
 
@@ -802,9 +814,9 @@ public class ImdstKeyValueClient {
      * MasterNodeの生死を確認する.<br>
      *
      * @return boolean true:開始成功 false:開始失敗
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public boolean arrivalMasterNode() throws Exception {
+    public boolean arrivalMasterNode() throws ImdstClientException {
         boolean ret = false;
         String serverRetStr = null;
         String[] serverRet = null;
@@ -854,10 +866,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.arrivalMasterNode();
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -865,10 +877,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.arrivalMasterNode();
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -876,10 +888,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.arrivalMasterNode();
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -887,29 +899,29 @@ public class ImdstKeyValueClient {
 
 
     /**
-     * マスタサーバへデータを送信する.<br>
+     * マスタサーバへデータを登録要求する.<br>
      * Tagなし.<br>
      *
-     * @param keyStr
-     * @param value
-     * @return boolean
-     * @throws Exception
+     * @param keyStr Key値
+     * @param value value値
+     * @return boolean 登録成否
+     * @throws ImdstClientException
      */
-    public boolean setValue(String keyStr, String value) throws Exception {
+    public boolean setValue(String keyStr, String value) throws ImdstClientException {
         return this.setValue(keyStr, null, value);
     }
 
     /**
-     * マスタサーバへデータを送信する.<br>
+     * マスタサーバへデータを登録要求する.<br>
      * Tag有り.<br>
      *
-     * @param keyStr
-     * @param tagStrs
-     * @param value
-     * @return boolean
-     * @throws Exception
+     * @param keyStr Key値
+     * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
+     * @param value value値
+     * @return boolean 登録成否
+     * @throws ImdstClientException
      */
-    public boolean setValue(String keyStr, String[] tagStrs, String value) throws Exception {
+    public boolean setValue(String keyStr, String[] tagStrs, String value) throws ImdstClientException {
         boolean ret = false; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -1020,10 +1032,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.setValue(keyStr, tagStrs, value);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1031,10 +1043,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.setValue(keyStr, tagStrs, value);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1042,46 +1054,46 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.setValue(keyStr, tagStrs, value);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
     }
 
     /**
-     * マスタサーバへ新規データを送信する.<br>
+     * マスタサーバへ新規データを登録要求する.<br>
      * Tagなし.<br>
      * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
      * その場合は、falseが返る<br>
      * 成功の場合は配列の長さは1である。失敗時は2である<br>
      *
-     * @param keyStr
-     * @param value
+     * @param keyStr Key値
+     * @param value Value値
      * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] setNewValue(String keyStr, String value) throws Exception {
+    public String[] setNewValue(String keyStr, String value) throws ImdstClientException {
         return this.setNewValue(keyStr, null, value);
     }
 
 
     /**
-     * マスタサーバへ新規データを送信する.<br>
+     * マスタサーバへ新規データを登録要求する.<br>
      * Tag有り.<br>
      * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
      * その場合は、falseが返る<br>
      * 成功の場合は配列の長さは1である。失敗時は2である<br>
      * 
-     * @param keyStr
-     * @param tagStrs
-     * @param value
+     * @param keyStr Key値
+     * @param tagStrs Tag値 例){"tag1","tag2","tag3"}
+     * @param value Value値
      * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] setNewValue(String keyStr, String[] tagStrs, String value) throws Exception {
+    public String[] setNewValue(String keyStr, String[] tagStrs, String value) throws ImdstClientException {
         String[] ret = null; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -1194,10 +1206,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.setNewValue(keyStr, tagStrs, value);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1205,10 +1217,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.setNewValue(keyStr, tagStrs, value);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1216,10 +1228,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.setNewValue(keyStr, tagStrs, value);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -1227,40 +1239,40 @@ public class ImdstKeyValueClient {
 
 
     /**
-     * マスタサーバへ新規データを送信する.<br>
+     * マスタサーバへバージョンチェック付き値登録要求をする.<br>
      * Tagなし.<br>
      * バージョン値を使用して更新前チェックを行う.<br>
      * 失敗した場合は、falseが返る<br>
      * 成功の場合は配列の長さは1である。失敗時は2である<br>
      * memcachedのcasに相当.<br>
      *
-     * @param keyStr
-     * @param value
-     * @param versionNo
+     * @param keyStr Key値
+     * @param value Value値
+     * @param versionNo getValueVersionCheckメソッドで取得したバージョンNo
      * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] setValueVersionCheck(String keyStr, String value, String versionNo) throws Exception {
+    public String[] setValueVersionCheck(String keyStr, String value, String versionNo) throws ImdstClientException {
         return this.setValueVersionCheck(keyStr, null, value, versionNo);
     }
 
 
     /**
-     * マスタサーバへ新規データを送信する.<br>
+     * マスタサーバへバージョンチェック付き値登録要求をする.<br>
      * Tag有り.<br>
      * バージョン値を使用して更新前チェックを行う.<br>
      * 失敗した場合は、falseが返る<br>
      * 成功の場合は配列の長さは1である。失敗時は2である<br>
      * memcachedのcasに相当.<br>
      * 
-     * @param keyStr
-     * @param tagStrs
-     * @param value
-     * @param versionNo
+     * @param keyStr Key値
+     * @param tagStrs Tag値
+     * @param value Value値
+     * @param versionNo getValueVersionCheckメソッドで取得したバージョンNo
      * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, String versionNo) throws Exception {
+    public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, String versionNo) throws ImdstClientException {
         String[] ret = null; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -1378,10 +1390,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.setValueVersionCheck(keyStr, tagStrs, value, versionNo);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1389,10 +1401,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.setValueVersionCheck(keyStr, tagStrs, value, versionNo);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1400,10 +1412,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.setValueVersionCheck(keyStr, tagStrs, value, versionNo);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -1411,34 +1423,34 @@ public class ImdstKeyValueClient {
 
 
     /**
-     * マスタサーバへデータを送信する(バイナリデータ).<br>
+     * マスタサーバへデータを登録要求する(バイナリデータ).<br>
      * Tagなし.<br>
      *
-     * @param keyStr
-     * @param values
-     * @return boolean
-     * @throws Exception
+     * @param keyStr Key値
+     * @param values Value値(byte配列)
+     * @return boolean 登録成否
+     * @throws ImdstClientException
      */
-    public boolean setByteValue(String keyStr, byte[] values) throws Exception {
+    public boolean setByteValue(String keyStr, byte[] values) throws ImdstClientException {
         return this.setByteValue(keyStr, null, values);
     }
 
 
     /**
-     * マスタサーバへデータを送信する(バイナリデータ).<br>
+     * マスタサーバへデータを登録要求する(バイナリデータ).<br>
      * Tag有り.<br>
      * 処理の流れとしては、まずvalueを一定の容量で区切り、その単位で、<br>
      * Key値にプレフィックスを付けた値を作成し、かつ、特定のセパレータで連結して、<br>
      * 渡されたKeyを使用して連結文字を保存する<br>
      * 
      *
-     * @param keyStr
-     * @param tagStrs
-     * @param values
-     * @return boolean
-     * @throws Exception
+     * @param keyStr Key値
+     * @param tagStrs Tag値
+     * @param values Value値(byte配列)
+     * @return boolean 登録成否
+     * @throws ImdstClientException
      */
-    public boolean setByteValue(String keyStr, String[] tagStrs, byte[] values) throws Exception {
+    public boolean setByteValue(String keyStr, String[] tagStrs, byte[] values) throws ImdstClientException {
 
         boolean ret = false;
 
@@ -1512,7 +1524,7 @@ public class ImdstKeyValueClient {
             ret = this.setValue(keyStr, tagStrs, saveKeys.toString());
 
         } catch (Exception e) {
-            throw e;
+            throw new ImdstClientException(e);
         }
         return ret;
     }
@@ -1524,9 +1536,9 @@ public class ImdstKeyValueClient {
      * @param keyStr
      * @param values
      * @return boolean
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    private boolean sendByteData(String keyStr, byte[] values) throws Exception {
+    private boolean sendByteData(String keyStr, byte[] values) throws ImdstClientException {
         boolean ret = false; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -1600,10 +1612,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.sendByteData(keyStr, values);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1611,10 +1623,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.sendByteData(keyStr, values);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1622,24 +1634,26 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.sendByteData(keyStr, values);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
     }
 
+
     /**
      * マスタサーバへデータを送信する(バイナリデータ).<br>
+     * setByteValueメソッドとの違いはValueをSplitしないで登録する部分.<br>
      *
-     * @param keyStr
-     * @param values
-     * @return boolean
-     * @throws Exception
+     * @param keyStr Key値
+     * @param values Value値
+     * @return boolean 登録成否
+     * @throws ImdstClientException
      */
-    public boolean sendByteValue(String keyStr, byte[] values) throws Exception {
+    public boolean sendByteValue(String keyStr, byte[] values) throws ImdstClientException {
         boolean ret = false; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -1713,10 +1727,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.sendByteValue(keyStr, values);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1724,10 +1738,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.sendByteValue(keyStr, values);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1735,10 +1749,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.sendByteValue(keyStr, values);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -1746,28 +1760,29 @@ public class ImdstKeyValueClient {
 
 
     /**
-     * マスタサーバからKeyでデータを取得する.<br>
+     * マスタサーバからKeyでValueを取得する.<br>
      * 文字列エンコーディング指定なし.<br>
      * デフォルトエンコーディングにて復元.<br>
      *
-     * @param keyStr
-     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
+     * @param keyStr Key値
+     * @return String[] 要素1(データ有無):"true" or "false", 要素2(データ):"データ文字列"
+     * @throws ImdstClientException
      */
-    public String[] getValue(String keyStr) throws Exception {
+    public String[] getValue(String keyStr) throws ImdstClientException {
         return this.getValue(keyStr, null);
     }
 
+
     /**
-     * マスタサーバからKeyでデータを取得する.<br>
+     * マスタサーバからKeyでValueを取得する.<br>
      * 文字列エンコーディング指定あり.<br>
      *
-     * @param keyStr
-     * @param encoding
+     * @param keyStr Key値
+     * @param encoding エンコーディング指定
      * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] getValue(String keyStr, String encoding) throws Exception {
+    public String[] getValue(String keyStr, String encoding) throws ImdstClientException {
         String[] ret = new String[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -1847,10 +1862,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValue(keyStr, encoding);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1858,10 +1873,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValue(keyStr, encoding);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -1869,10 +1884,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValue(keyStr, encoding);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -1880,149 +1895,33 @@ public class ImdstKeyValueClient {
 
 
     /**
-     * マスタサーバからKeyでデータを取得する.<br>
-     * Key値をBase64でエンコードしない.<br>
-     *
-     * @param keyStr
-     * @param encoding
-     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
-     */
-    public String[] getValueNoEncode(String keyStr) throws Exception {
-        String[] ret = new String[2]; 
-        String serverRetStr = null;
-        String[] serverRet = null;
-
-        StringBuilder serverRequestBuf = null;
-
-        try {
-            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
-
-            // エラーチェック
-            // Keyに対する無指定チェック
-            if (keyStr == null ||  keyStr.equals("")) {
-                throw new ImdstClientException("The blank is not admitted on a key");
-            }
-
-            // 文字列バッファ初期化
-            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmall_2Size);
-
-
-            // 処理番号連結
-            serverRequestBuf.append("2");
-            // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
-
-
-            // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(keyStr);
-
-
-            // サーバ送信
-            pw.println(serverRequestBuf.toString());
-            pw.flush();
-
-            // サーバから結果受け取り
-            serverRetStr = br.readLine();
-
-            serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
-
-            // 処理の妥当性確認
-            if (serverRet[0].equals("2")) {
-                if (serverRet[1].equals("true")) {
-
-                    // データ有り
-                    ret[0] = serverRet[1];
-
-                    // Valueがブランク文字か調べる
-                    if (serverRet[2].equals(ImdstKeyValueClient.blankStr)) {
-                        ret[1] = "";
-                    } else {
-
-                        ret[1] = serverRet[2];
-                    }
-                } else if(serverRet[1].equals("false")) {
-
-                    // データなし
-                    ret[0] = serverRet[1];
-                    ret[1] = null;
-                } else if(serverRet[1].equals("error")) {
-
-                    // エラー発生
-                    ret[0] = serverRet[1];
-                    ret[1] = serverRet[2];
-                }
-            } else {
-
-                // 妥当性違反
-                throw new ImdstClientException("Execute Violation of validity");
-            }
-        } catch (ImdstClientException ice) {
-            throw ice;
-        } catch (ConnectException ce) {
-            if (this.masterNodesList != null && masterNodesList.size() > 1) {
-                try {
-                    this.autoConnect();
-                    ret = this.getValueNoEncode(keyStr);
-                } catch (Exception e) {
-                    throw ce;
-                }
-            } else {
-                throw ce;
-            }
-        } catch (SocketException se) {
-            if (this.masterNodesList != null && masterNodesList.size() > 1) {
-                try {
-                    this.autoConnect();
-                    ret = this.getValueNoEncode(keyStr);
-                } catch (Exception e) {
-                    throw se;
-                }
-            } else {
-                throw se;
-            }
-        } catch (Throwable e) {
-            if (this.masterNodesList != null && masterNodesList.size() > 1) {
-                try {
-                    this.autoConnect();
-                    ret = this.getValueNoEncode(keyStr);
-                } catch (Exception ee) {
-                    throw new Exception(e);
-                }
-            } else {
-                throw new Exception(e);
-            }
-        }
-        return ret;
-    }
-
-
-    /**
-     * マスタサーバからKeyでデータを取得する.<br>
+     * マスタサーバからKeyでValueを取得する.<br>
      * 文字列エンコーディング指定なし.<br>
      * デフォルトエンコーディングにて復元.<br>
      * バージョン情報(memcachedでのcasユニーク値)を返す.<br>
+     * memcachedのgetsに相当.<br>
      *
-     * @param keyStr
-     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数値"
-     * @throws Exception
+     * @param keyStr Key値
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(VersionNo):"0始まりの数値"
+     * @throws ImdstClientException
      */
-    public String[] getValueVersionCheck(String keyStr) throws Exception {
+    public String[] getValueVersionCheck(String keyStr) throws ImdstClientException {
         return this.getValueVersionCheck(keyStr, null);
     }
 
+
     /**
-     * マスタサーバからKeyでデータを取得する.<br>
+     * マスタサーバからKeyでValueを取得する.<br>
      * 文字列エンコーディング指定あり.<br>
      * バージョン情報(memcachedでのcasユニーク値)を返す.<br>
      * memcachedのgetsに相当.<br>
      *
-     * @param keyStr
+     * @param keyStr Key値
      * @param encoding
-     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数字"
-     * @throws Exception
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(VersionNo):"0始まりの数値"
+     * @throws ImdstClientException
      */
-    public String[] getValueVersionCheck(String keyStr, String encoding) throws Exception {
+    public String[] getValueVersionCheck(String keyStr, String encoding) throws ImdstClientException {
         String[] ret = new String[3]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -2109,10 +2008,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValueVersionCheck(keyStr, encoding);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -2120,10 +2019,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValueVersionCheck(keyStr, encoding);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -2131,10 +2030,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValueVersionCheck(keyStr, encoding);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -2142,145 +2041,16 @@ public class ImdstKeyValueClient {
 
 
     /**
-     * マスタサーバからKeyでデータを取得する.<br>
-     * Key値をBase64でエンコードしない.<br>
-     * バージョン情報(memcachedでのcasユニーク値)を返す.<br>
-     * memcachedのgetsに相当.<br>
-     *
-     * @param keyStr
-     * @param encoding
-     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数値"
-     * @throws Exception
-     */
-    public String[] getValueVersionCheckNoEncode(String keyStr) throws Exception {
-        String[] ret = new String[3]; 
-        String serverRetStr = null;
-        String[] serverRet = null;
-
-        StringBuilder serverRequestBuf = null;
-
-        try {
-            if (this.socket == null) throw new ImdstClientException("No ServerConnect!!");
-
-            // エラーチェック
-            // Keyに対する無指定チェック
-            if (keyStr == null ||  keyStr.equals("")) {
-                throw new ImdstClientException("The blank is not admitted on a key");
-            }
-
-            // 文字列バッファ初期化
-            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmall_2Size);
-
-
-            // 処理番号連結
-            serverRequestBuf.append("15");
-            // セパレータ連結
-            serverRequestBuf.append(ImdstKeyValueClient.sepStr);
-
-
-            // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(keyStr);
-
-
-            // サーバ送信
-            pw.println(serverRequestBuf.toString());
-            pw.flush();
-
-            // サーバから結果受け取り
-            serverRetStr = br.readLine();
-
-            serverRet = serverRetStr.split(ImdstKeyValueClient.sepStr);
-
-            // 処理の妥当性確認
-            if (serverRet[0].equals("15")) {
-                if (serverRet[1].equals("true")) {
-
-                    // データ有り
-                    ret[0] = serverRet[1];
-
-                    // Valueがブランク文字か調べる
-                    if (serverRet[2].equals(ImdstKeyValueClient.blankStr)) {
-                        ret[1] = "";
-                    } else {
-
-                        ret[1] = serverRet[2];
-                    }
-
-                    if (serverRet.length > 2)
-                        ret[2] = serverRet[3];
-
-                } else if(serverRet[1].equals("false")) {
-
-                    // データなし
-                    ret[0] = serverRet[1];
-                    ret[1] = null;
-                    ret[2] = null;
-
-                } else if(serverRet[1].equals("error")) {
-
-                    // エラー発生
-                    ret[0] = serverRet[1];
-                    ret[1] = serverRet[2];
-                    if (serverRet.length > 2)
-                        ret[2] = serverRet[3];
-
-                }
-            } else {
-
-                // 妥当性違反
-                throw new ImdstClientException("Execute Violation of validity");
-            }
-        } catch (ImdstClientException ice) {
-            throw ice;
-        } catch (ConnectException ce) {
-            if (this.masterNodesList != null && masterNodesList.size() > 1) {
-                try {
-                    this.autoConnect();
-                    ret = this.getValueVersionCheckNoEncode(keyStr);
-                } catch (Exception e) {
-                    throw ce;
-                }
-            } else {
-                throw ce;
-            }
-        } catch (SocketException se) {
-            if (this.masterNodesList != null && masterNodesList.size() > 1) {
-                try {
-                    this.autoConnect();
-                    ret = this.getValueVersionCheckNoEncode(keyStr);
-                } catch (Exception e) {
-                    throw se;
-                }
-            } else {
-                throw se;
-            }
-        } catch (Throwable e) {
-            if (this.masterNodesList != null && masterNodesList.size() > 1) {
-                try {
-                    this.autoConnect();
-                    ret = this.getValueVersionCheckNoEncode(keyStr);
-                } catch (Exception ee) {
-                    throw new Exception(e);
-                }
-            } else {
-                throw new Exception(e);
-            }
-        }
-        return ret;
-    }
-
-
-    /**
-     * マスタサーバからKeyでデータを取得する.<br>
+     * マスタサーバからKeyでValueを取得する.<br>
      * Scriptを同時に実行する.<br>
-     * 文字列エンコーディング指定あり.<br>
+     * 文字列エンコーディング指定なし.<br>
      *
      * @param keyStr キー値
      * @param scriptStr スクリプト文
      * @return String[] 要素1(データ、エラー有無):"true" or "false" or "error", 要素2(データorエラー内容):"文字列"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] getValueScript(String keyStr, String scriptStr) throws Exception {
+    public String[] getValueScript(String keyStr, String scriptStr) throws ImdstClientException {
         return getValueScript(keyStr, scriptStr, null);
         
     }
@@ -2289,15 +2059,15 @@ public class ImdstKeyValueClient {
     /**
      * マスタサーバからKeyでデータを取得する.<br>
      * Scriptを同時に実行する.<br>
-     * 文字列エンコーディング指定あり.<br>
+     * 文字エンコーディング指定あり.<br>
      *
      * @param keyStr キー値
      * @param scriptStr スクリプト文
-     * @param encoding
+     * @param encoding エンコード指定
      * @return String[] 要素1(データ、エラー有無):"true" or "false" or "error", 要素2(データorエラー内容):"文字列"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] getValueScript(String keyStr, String scriptStr, String encoding) throws Exception {
+    public String[] getValueScript(String keyStr, String scriptStr, String encoding) throws ImdstClientException {
         String[] ret = new String[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -2388,10 +2158,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValueScript(keyStr, scriptStr, encoding);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -2399,10 +2169,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValueScript(keyStr, scriptStr, encoding);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -2410,10 +2180,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValueScript(keyStr, scriptStr, encoding);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -2421,17 +2191,17 @@ public class ImdstKeyValueClient {
 
 
     /**
-     * マスタサーバからKeyでデータを取得する.<br>
+     * マスタサーバからKeyでValueを取得する.<br>
      * Scriptを同時に実行する.<br>
      * ScriptにValue更新指示を記述してる場合はこちらを実行する.<br>
-     * 文字列エンコーディング指定あり.<br>
+     * 文字列エンコーディング指定なし.<br>
      *
      * @param keyStr キー値
      * @param scriptStr スクリプト文
      * @return String[] 要素1(データ、エラー有無):"true" or "false" or "error", 要素2(データorエラー内容):"文字列"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] getValueScriptForUpdate(String keyStr, String scriptStr) throws Exception {
+    public String[] getValueScriptForUpdate(String keyStr, String scriptStr) throws ImdstClientException {
         return getValueScriptForUpdate(keyStr, scriptStr, null);
         
     }
@@ -2447,9 +2217,9 @@ public class ImdstKeyValueClient {
      * @param scriptStr スクリプト文
      * @param encoding
      * @return String[] 要素1(データ、エラー有無):"true" or "false" or "error", 要素2(データorエラー内容):"文字列"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] getValueScriptForUpdate(String keyStr, String scriptStr, String encoding) throws Exception {
+    public String[] getValueScriptForUpdate(String keyStr, String scriptStr, String encoding) throws ImdstClientException {
         String[] ret = new String[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -2540,10 +2310,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValueScriptForUpdate(keyStr, scriptStr, encoding);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -2551,10 +2321,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValueScriptForUpdate(keyStr, scriptStr, encoding);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -2562,10 +2332,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getValueScriptForUpdate(keyStr, scriptStr, encoding);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -2573,24 +2343,25 @@ public class ImdstKeyValueClient {
 
 
     /**
-     * マスタサーバからKeyでデータを削除する.<br><br>
+     * マスタサーバからKeyでValueを削除する.<br><br>
      *
-     * @param keyStr
+     * @param keyStr Key値
      * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] removeValue(String keyStr) throws Exception {
+    public String[] removeValue(String keyStr) throws ImdstClientException {
         return this.removeValue(keyStr, null);
     }
 
     /**
      * マスタサーバからKeyでデータを削除する.<br>
      * 取得値のエンコーディング指定あり.<br>
-     * @param keyStr
+     *
+     * @param keyStr Key値
      * @return String[] 削除したデータ 内容) 要素1(データ削除有無):"true" or "false",要素2(削除データ):"データ文字列"
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public String[] removeValue(String keyStr, String encoding) throws Exception {
+    public String[] removeValue(String keyStr, String encoding) throws ImdstClientException {
         String[] ret = new String[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -2674,10 +2445,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.removeValue(keyStr, encoding);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -2685,10 +2456,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.removeValue(keyStr, encoding);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -2696,10 +2467,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.removeValue(keyStr, encoding);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -2707,13 +2478,14 @@ public class ImdstKeyValueClient {
 
 
     /**
-     * マスタサーバからKeyでデータを取得する(バイナリ).<br>
+     * マスタサーバからKeyでValueを取得する(バイナリ).<br>
+     * setByteValueで登録したValueはこちらで取得する.<br>
      *
-     * @param keyStr
+     * @param keyStr Key値
      * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public Object[] getByteValue(String keyStr) throws Exception {
+    public Object[] getByteValue(String keyStr) throws ImdstClientException {
         Object[] ret = new Object[2];
         Object[] byteTmpRet = null;
 
@@ -2801,20 +2573,22 @@ public class ImdstKeyValueClient {
                 ret[1] = workKeyRet[1];
             }
         } catch(Exception e) {
-            throw e;
+            throw new ImdstClientException(e);
         }
         return ret;
     }
 
 
     /**
-     * マスタサーバからKeyでデータを取得する(バイナリ).<br>
+     * マスタサーバからKeyでValueを取得する(バイナリ).<br>
+     * setByteValueメソッドで登録したValueはこちらで取得する.<br>
+     * getByteValueよりもこちらのほうが高速に動作する.<br>
      *
-     * @param keyStr
+     * @param keyStr Key値
      * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public Object[] getByteValueVer2(String keyStr) throws Exception {
+    public Object[] getByteValueVer2(String keyStr) throws ImdstClientException {
         ArrayList byteDataList = null;
         Object[] ret = new Object[2];
         Object[] byteTmpRet = null;
@@ -2897,7 +2671,7 @@ public class ImdstKeyValueClient {
                 ret[1] = workKeyRet[1];
             }
         } catch(Exception e) {
-            throw e;
+            throw new ImdstClientException(e);
         }
         return ret;
     }
@@ -2906,11 +2680,11 @@ public class ImdstKeyValueClient {
     /**
      * マスタサーバからKeyでデータを取得する(バイナリ).<br>
      *
-     * @param keyStr
+     * @param keyStr Key値
      * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    private Object[] getByteData(String keyStr) throws Exception {
+    private Object[] getByteData(String keyStr) throws ImdstClientException {
         Object[] ret = new Object[2];
         byte[] byteRet = null;
         String serverRetStr = null;
@@ -2991,10 +2765,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getByteData(keyStr);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -3002,10 +2776,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getByteData(keyStr);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -3013,10 +2787,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getByteData(keyStr);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -3025,12 +2799,13 @@ public class ImdstKeyValueClient {
 
     /**
      * マスタサーバからKeyでデータを取得する(バイナリ).<br>
+     * sendByteValueで登録したValueはこちらで取得する.<br>
      *
-     * @param keyStr
+     * @param keyStr Key値
      * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
-     * @throws Exception
+     * @throws ImdstClientException
      */
-    public Object[] readByteValue(String keyStr) throws Exception {
+    public Object[] readByteValue(String keyStr) throws ImdstClientException {
         Object[] ret = new Object[2];
         byte[] byteRet = null;
         String serverRetStr = null;
@@ -3110,10 +2885,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.readByteValue(keyStr);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -3121,10 +2896,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.readByteValue(keyStr);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -3132,10 +2907,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.readByteValue(keyStr);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -3143,27 +2918,27 @@ public class ImdstKeyValueClient {
 
 
     /**
-     * マスタサーバからTagでKey値群を取得する.<br>
+     * マスタサーバからTagでKey値配列を取得する.<br>
      *
-     * @param tagStr
-
-     * @return Object[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
+     * @param tagStr Tag値
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(Key値配列):Stringの配列
+     * @throws ImdstClientException
      */
-    public Object[] getTagKeys(String tagStr) throws Exception {
+    public Object[] getTagKeys(String tagStr) throws ImdstClientException {
         return this.getTagKeys(tagStr, true);
     }
 
 
     /**
-     * マスタサーバからTagでKey値群を取得する.<br>
+     * マスタサーバからTagでKey値配列を取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
      *
-     * @param tagStr
+     * @param tagStr Tag値
      * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
-     * @return Object[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(Key値配列):Stringの配列
+     * @throws ImdstClientException
      */
-    public Object[] getTagKeys(String tagStr, boolean noExistsData) throws Exception {
+    public Object[] getTagKeys(String tagStr, boolean noExistsData) throws ImdstClientException {
         Object[] ret = new Object[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -3253,10 +3028,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getTagKeys(tagStr);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -3264,10 +3039,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getTagKeys(tagStr);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Throwable e) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -3275,10 +3050,10 @@ public class ImdstKeyValueClient {
                     this.autoConnect();
                     ret = this.getTagKeys(tagStr);
                 } catch (Exception ee) {
-                    throw new Exception(e);
+                    throw new ImdstClientException(e);
                 }
             } else {
-                throw new Exception(e);
+                throw new ImdstClientException(e);
             }
         }
         return ret;
@@ -3290,8 +3065,11 @@ public class ImdstKeyValueClient {
      * DataNodのステータスは常にメインマスターノードが管理しているので、メインマスターノードに<br>
      * 接続している場合のみ取得可能.<br>
      *
+     * @param nodeInfo DataNodeとPortの組み合わせ文字列 "NodeName:PortNo"
+     * @return String 結果文字列
+     * @throws ImdstClientException
      */
-    public String getDataNodeStatus(String nodeInfo) throws Exception {
+    public String getDataNodeStatus(String nodeInfo) throws ImdstClientException {
         String ret = null;
         String serverRetStr = null;
         String[] serverRet = null;
@@ -3346,10 +3124,10 @@ public class ImdstKeyValueClient {
                     this.nextConnect();
                     ret = this.getDataNodeStatus(nodeInfo);
                 } catch (Exception e) {
-                    throw ce;
+                    throw new ImdstClientException(ce);
                 }
             } else {
-                throw ce;
+                throw new ImdstClientException(ce);
             }
         } catch (SocketException se) {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
@@ -3357,13 +3135,13 @@ public class ImdstKeyValueClient {
                     this.nextConnect();
                     ret = this.getDataNodeStatus(nodeInfo);
                 } catch (Exception e) {
-                    throw se;
+                    throw new ImdstClientException(se);
                 }
             } else {
-                throw se;
+                throw new ImdstClientException(se);
             }
         } catch (Exception e) {
-            throw e;
+            throw new ImdstClientException(e);
         }
         return ret;
     }
@@ -3566,15 +3344,4 @@ public class ImdstKeyValueClient {
         }
         return null;
     }
-
-    class ImdstClientException extends Exception {
-        public ImdstClientException(String msg) {
-            super(msg);
-        }
-
-        public ImdstClientException(String msg, Throwable t) {
-            super(msg, t);
-        }
-    }
 }
-
