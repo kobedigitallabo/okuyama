@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Project ROOT  -->
 <project name="okuyama" default="package" basedir=".">
-	<property name="project.title"   value="okuyama" />
-	<property name="doc.dir"         value="doc" />
-	<property name="src.dir"         value="src" />
-	<property name="build.dir"       value="classes" />
-	<property name="install.dir"     value="install" />
-    <property name="version"         value="0.8.4" />
-
+	<property name="project.title"  value="okuyama" />
+	<property name="doc.dir"		value="doc" />
+	<property name="src.dir"		value="src" />
+	<property name="build.dir"		value="classes" />
+	<property name="install.dir"	value="install" />
+	<property name="version"		value="0.8.4" />
+	<property name="javadoc.dir"	value="javadoc"/>
+	<property name="lib.dir"	    value="lib"/>
 
 	<!-- Use Project Lib  -->
 	<path id="project.class.path">
@@ -45,6 +46,7 @@
 		</copy>
 	</target>
 
+
 	<!-- jar make task  -->
 	<target name="jar" depends="compile">
 		<jar compress="yes" jarfile="okuyama-${version}.jar" basedir="${build.dir}" includes="**/*.class" />
@@ -54,6 +56,20 @@
 	</target>
 
 
+
+	<!-- Javadoc-->
+	<target name="javadoc" description="Javadoc">
+		<echo message="Javadoc"/>
+		<delete dir="${javadoc.dir}" />
+		<mkdir dir="${javadoc.dir}" />
+		<javadoc packagenames="*" sourcepath="${src.dir}" destdir="${javadoc.dir}" encoding="UTF-8" charset="UTF-8">
+			<classpath>
+				<fileset dir="${lib.dir}">
+					<include name="*.jar"/>
+				</fileset>
+			</classpath>
+		</javadoc>
+	</target>
 
 	<!-- DataNodeServer Execute task -->
 	<target name="datanode">
@@ -165,7 +181,7 @@
 			<arg value="${value}"/>
 			<classpath refid="project.class.path"/>
 		</java>
-        <echo>Set Command End</echo>
+		<echo>Set Command End</echo>
 	</target>
 
 
@@ -189,7 +205,7 @@
 			<arg value="${key}"/>
 			<classpath refid="project.class.path"/>
 		</java>
-        <echo>Get Command End</echo>
+		<echo>Get Command End</echo>
 	</target>
 
 
