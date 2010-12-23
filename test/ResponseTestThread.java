@@ -6,7 +6,7 @@ import java.net.*;
 
 import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
-import okuyama.base.lang.BatchException;
+
 
 public class ResponseTestThread extends Thread {
 
