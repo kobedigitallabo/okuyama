@@ -3,7 +3,8 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
-import okuyama.imdst.client.ImdstKeyValueClient;
+import okuyama.imdst.client.OkuyamaClient;
+import okuyama.imdst.client.OkuyamaClientException;
 import okuyama.base.lang.BatchException;
 
 

@@ -2,7 +2,7 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
-import okuyama.imdst.client.ImdstKeyValueClient;
+import okuyama.imdst.client.OkuyamaClient;
 import okuyama.base.lang.BatchException;
 
 public class TestSock {
@@ -33,29 +33,29 @@ public class TestSock {
             if (args[0].equals("1")) {
 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを保存(Tagなし)
+                // OkuyamaClientを使用してデータを保存(Tagなし)
 
                 // クライアントインスタンスを作成
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(args[1], port);
+                okuyamaClient.connect(args[1], port);
 
 
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     // データ登録
                     if (args.length > 4) {
-                        if (!imdstKeyValueClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_" + args[4] + "_" + new Integer(i).toString())) {
-                        //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                            System.out.println("ImdstKeyValueClient - error");
+                        if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_" + args[4] + "_" + new Integer(i).toString())) {
+                        //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                            System.out.println("OkuyamaClient - error");
                         } else {
                             System.out.println("Store[" + "datasavekey_" + args[4] + "_" + new Integer(i).toString() + "]");
                         }
                     } else {
-                        if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                        //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                            System.out.println("ImdstKeyValueClient - error");
+                        if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                        //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                            System.out.println("OkuyamaClient - error");
                         }
                     }
                     //if ((i % 1000) == 0) System.out.println(i);
@@ -63,60 +63,60 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } if (args[0].equals("1.1")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを保存(Tagなし)
+                // OkuyamaClientを使用してデータを保存(Tagなし)
 
                 // クライアントインスタンスを作成
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
                 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(args[1], port);
+                okuyamaClient.connect(args[1], port);
 
 
                 long start = new Date().getTime();
-                if (!imdstKeyValueClient.setValue(args[3], args[4])) {
-                //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                    System.out.println("ImdstKeyValueClient - error");
+                if (!okuyamaClient.setValue(args[3], args[4])) {
+                //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                    System.out.println("OkuyamaClient - error");
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
 
             } else if (args[0].equals("1.2")) {
                 // AutoConnectionモード
                 // クライアントインスタンスを作成
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
                 String[] infos = args[1].split(",");
-                imdstKeyValueClient.setConnectionInfos(infos);
-                imdstKeyValueClient.autoConnect();
+                okuyamaClient.setConnectionInfos(infos);
+                okuyamaClient.autoConnect();
 
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[2]);i++) {
                     // データ登録
-                    if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                        System.out.println("ImdstKeyValueClient - error");
+                    if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                        System.out.println("OkuyamaClient - error");
                     }
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } if (args[0].equals("1.3")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを保存(Tagなし)
+                // OkuyamaClientを使用してデータを保存(Tagなし)
 
                 // クライアントインスタンスを作成
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(args[1], port);
+                okuyamaClient.connect(args[1], port);
 
                 StringBuffer bufs = new StringBuffer();
 
@@ -144,26 +144,26 @@ public class TestSock {
                     
                 long start = new Date().getTime();
 
-                if (!imdstKeyValueClient.setValue(args[3], bufs.toString())) {
-                //if (!imdstKeyValueClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                    System.out.println("ImdstKeyValueClient - error");
+                if (!okuyamaClient.setValue(args[3], bufs.toString())) {
+                //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                    System.out.println("OkuyamaClient - error");
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("2")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
                 if (args.length > 4) {
                     for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                        ret = imdstKeyValueClient.getValue("datasavekey_" + args[4] + "_" + new Integer(i).toString());
+                        ret = okuyamaClient.getValue("datasavekey_" + args[4] + "_" + new Integer(i).toString());
                         if (ret[0].equals("true")) {
                             // データ有り
                             System.out.println(ret[1]);
@@ -175,7 +175,7 @@ public class TestSock {
                     }
                 } else {
                     for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                        ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
+                        ret = okuyamaClient.getValue("datasavekey_" + new Integer(i).toString());
                         if (ret[0].equals("true")) {
                             // データ有り
                             System.out.println(ret[1]);
@@ -189,17 +189,17 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("2.1")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
-                ret = imdstKeyValueClient.getValue(args[3]);
+                ret = okuyamaClient.getValue(args[3]);
                 if (ret[0].equals("true")) {
                     // データ有り
                     System.out.println(ret[1]);
@@ -211,18 +211,18 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("2.11")) {
 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                    ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
+                    ret = okuyamaClient.getValue("datasavekey_" + new Integer(i).toString());
                     if (ret[0].equals("true")) {
                         // データ有り
                     } else if (ret[0].equals("false")) {
@@ -234,20 +234,20 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("2.2")) {
                 // AutoConnectionモード
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
                 String[] infos = args[1].split(",");
-                imdstKeyValueClient.setConnectionInfos(infos);
-                imdstKeyValueClient.autoConnect();
+                okuyamaClient.setConnectionInfos(infos);
+                okuyamaClient.autoConnect();
 
                 String[] ret = null;
 
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[2]);i++) {
-                    ret = imdstKeyValueClient.getValue("datasavekey_" + new Integer(i).toString());
+                    ret = okuyamaClient.getValue("datasavekey_" + new Integer(i).toString());
                     if (ret[0].equals("true")) {
                         // データ有り
                         System.out.println(ret[1]);
@@ -260,19 +260,19 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("2.22")) {
                 // AutoConnectionモード
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
                 String[] infos = args[1].split(",");
-                imdstKeyValueClient.setConnectionInfos(infos);
-                imdstKeyValueClient.autoConnect();
+                okuyamaClient.setConnectionInfos(infos);
+                okuyamaClient.autoConnect();
 
                 String[] ret = null;
 
                 long start = new Date().getTime();
-                ret = imdstKeyValueClient.getValue(args[2]);
+                ret = okuyamaClient.getValue(args[2]);
                 if (ret[0].equals("true")) {
                     // データ有り
                     System.out.println(ret[1]);
@@ -284,18 +284,18 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
 
             } else if (args[0].equals("2.3")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
-                ret = imdstKeyValueClient.getValueScript(args[3], args[4]);
+                ret = okuyamaClient.getValueScript(args[3], args[4]);
                 if (ret[0].equals("true")) {
                     // データ有り
                     System.out.println(ret[1]);
@@ -307,17 +307,17 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("2.4")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
-                ret = imdstKeyValueClient.getValueScriptForUpdate(args[3], args[4]);
+                ret = okuyamaClient.getValueScriptForUpdate(args[3], args[4]);
                 if (ret[0].equals("true")) {
                     // データ有り
                     System.out.println(ret[1]);
@@ -329,13 +329,13 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("3")) {
 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを保存(Tagあり)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを保存(Tagあり)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] tag1 = {"tag1"};
                 String[] tag2 = {"tag1","tag2"};
                 String[] tag3 = {"tag1","tag2","tag3"};
@@ -360,43 +360,43 @@ public class TestSock {
                         counter = 0;
                     }
 
-                    if (!imdstKeyValueClient.setValue("tagsampledatakey_" + new Integer(i).toString(), setTag, "tagsamplesavedata_" + new Integer(i).toString())) {
-                        System.out.println("ImdstKeyValueClient - error");
+                    if (!okuyamaClient.setValue("tagsampledatakey_" + new Integer(i).toString(), setTag, "tagsamplesavedata_" + new Integer(i).toString())) {
+                        System.out.println("OkuyamaClient - error");
                     }
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("3.1")) {
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを保存(Tagあり)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを保存(Tagあり)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] setTag = args[4].split(" ");
 
                 int counter = 0;
                 String keyStr = null;
 
                 long start = new Date().getTime();
-                imdstKeyValueClient.setValue(args[3], setTag, args[5]);
+                okuyamaClient.setValue(args[3], setTag, args[5]);
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("4")) {
 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(Tagでの取得)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(Tagでの取得)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] keys = null;
                 boolean noExistsData = true;
                 if (args.length > 5) noExistsData = new Boolean(args[5]).booleanValue();
 
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]); i++) {
-                    Object[] ret = imdstKeyValueClient.getTagKeys(args[4], noExistsData);
+                    Object[] ret = okuyamaClient.getTagKeys(args[4], noExistsData);
                     if (ret[0].equals("true")) {
                         // データ有り
                         keys = (String[])ret[1];
@@ -413,19 +413,19 @@ public class TestSock {
                 if (keys != null) {
                     for (int ii = 0; ii < keys.length; ii++) {
                         System.out.println("Key=[" + keys[ii] + "]");
-                        String[] ret = imdstKeyValueClient.getValue(keys[ii]);
+                        String[] ret = okuyamaClient.getValue(keys[ii]);
                         System.out.println("Value=[" + ret[1] + "]");
                     }
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start));
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
 
             } else if (args[0].equals("5")) {
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientでファイルをキー値で保存する
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientでファイルをキー値で保存する
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] keys = null;
                 long start = new Date().getTime();
                 // args[4]はファイル名、args[5]はキー値
@@ -436,20 +436,20 @@ public class TestSock {
                     fileByte = new byte[new Long(file.length()).intValue()];
                     FileInputStream fis = new FileInputStream(file);
                     fis.read(fileByte, 0, fileByte.length);
-                    //imdstKeyValueClient.setCompressMode(true);
-                    if (!imdstKeyValueClient.setByteValue(args[5], fileByte)) {
-                        System.out.println("ImdstKeyValueClient - error");
+                    //okuyamaClient.setCompressMode(true);
+                    if (!okuyamaClient.setByteValue(args[5], fileByte)) {
+                        System.out.println("OkuyamaClient - error");
                     }
                     fis.close();
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start));
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("5.1")) {
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientでファイルのバイナリデータをBase64にエンコードして文字列として保存
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientでファイルのバイナリデータをBase64にエンコードして文字列として保存
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] keys = null;
                 long start = new Date().getTime();
                 // args[3]はファイル名、args[4]はキー値
@@ -460,27 +460,27 @@ public class TestSock {
                 fileByte = new byte[new Long(file.length()).intValue()];
                 FileInputStream fis = new FileInputStream(file);
                 fis.read(fileByte, 0, fileByte.length);
-                //imdstKeyValueClient.setCompressMode(true);
-                if (!imdstKeyValueClient.sendByteValue(args[4], fileByte)) {
-                    System.out.println("ImdstKeyValueClient - error");
+                //okuyamaClient.setCompressMode(true);
+                if (!okuyamaClient.sendByteValue(args[4], fileByte)) {
+                    System.out.println("OkuyamaClient - error");
                 }
                 fis.close();
 
                 long end = new Date().getTime();
                 System.out.println((end - start));
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
 
             } else if (args[0].equals("6")) {
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)(バイナリ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)(バイナリ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 Object[] ret = null;
                 long start = new Date().getTime();
                 
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                    //imdstKeyValueClient.setCompressMode(true);
-                    ret = imdstKeyValueClient.getByteValue(args[5]);
+                    //okuyamaClient.setCompressMode(true);
+                    ret = okuyamaClient.getByteValue(args[5]);
                     if (ret[0].equals("true")) {
                         // データ有り
                         byte[] fileByte = null;
@@ -497,18 +497,18 @@ public class TestSock {
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start));
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("6.1")) {
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)(バイナリ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)(バイナリ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 Object[] ret = null;
                 long start = new Date().getTime();
                 
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                    //imdstKeyValueClient.setCompressMode(true);
-                    ret = imdstKeyValueClient.getByteValueVer2(args[5]);
+                    //okuyamaClient.setCompressMode(true);
+                    ret = okuyamaClient.getByteValueVer2(args[5]);
                     if (ret[0].equals("true")) {
                         // データ有り
                         byte[] fileByte = null;
@@ -525,18 +525,18 @@ public class TestSock {
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start));
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("6.2")) {
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)(バイナリ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)(バイナリ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 Object[] ret = null;
                 long start = new Date().getTime();
                 
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                    //imdstKeyValueClient.setCompressMode(true);
-                    ret = imdstKeyValueClient.readByteValue(args[5]);
+                    //okuyamaClient.setCompressMode(true);
+                    ret = okuyamaClient.readByteValue(args[5]);
                     if (ret[0].equals("true")) {
                         // データ有り
                         byte[] fileByte = null;
@@ -553,17 +553,17 @@ public class TestSock {
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start));
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("7")) {
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを削除
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを削除
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                    ret = imdstKeyValueClient.removeValue("datasavekey_" + new Integer(i).toString());
+                    ret = okuyamaClient.removeValue("datasavekey_" + new Integer(i).toString());
                     if (ret[0].equals("true")) {
                         // データ有り
                         System.out.println(ret[1]);
@@ -576,17 +576,17 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("7.1")) {
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してTag用のテストKey値データを削除
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してTag用のテストKey値データを削除
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                    ret = imdstKeyValueClient.removeValue("tagsampledatakey_" + new Integer(i).toString());
+                    ret = okuyamaClient.removeValue("tagsampledatakey_" + new Integer(i).toString());
                     if (ret[0].equals("true")) {
                         // データ有り
                         System.out.println(ret[1]);
@@ -599,17 +599,17 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("8")) {
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを削除
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを削除
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
 
-                ret = imdstKeyValueClient.removeValue(args[3]);
+                ret = okuyamaClient.removeValue(args[3]);
                 if (ret[0].equals("true")) {
                     // データ有り
                     System.out.println(ret[1]);
@@ -621,24 +621,24 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("9")) {
                 int port = Integer.parseInt(args[2]);
                 // Transactionを開始してデータをLock後、データを更新、取得し、Lockを解除
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
 
-                imdstKeyValueClient.startTransaction();
-                imdstKeyValueClient.lockData("datasavekey_3", 20, 5);
-                imdstKeyValueClient.lockData("datasavekey_2", 5, 5);
-                if (!imdstKeyValueClient.setValue("datasavekey_3", "locktestdata")) {
+                okuyamaClient.startTransaction();
+                okuyamaClient.lockData("datasavekey_3", 20, 5);
+                okuyamaClient.lockData("datasavekey_2", 5, 5);
+                if (!okuyamaClient.setValue("datasavekey_3", "locktestdata")) {
                     
-                    System.out.println("ImdstKeyValueClient - Lock Update Error");
+                    System.out.println("OkuyamaClient - Lock Update Error");
                 }
-                ret = imdstKeyValueClient.getValue("datasavekey_3");
+                ret = okuyamaClient.getValue("datasavekey_3");
                 if (ret[0].equals("true")) {
                     // データ有り
                     System.out.println(ret[1]);
@@ -650,30 +650,30 @@ public class TestSock {
 
 
                 //Thread.sleep(10000);
-                //imdstKeyValueClient.releaseLockData("datasavekey_3");
+                //okuyamaClient.releaseLockData("datasavekey_3");
 
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("10")) {
                 int port = Integer.parseInt(args[2]);
                 // Transactionを開始してデータをLock後、データを更新、取得し、Lockを解除
 
                 // 引数はLock対象のKey値, Lock維持時間(秒)(0は無制限), Lockが既に取得されている場合の取得リトライし続ける時間(秒)(0は1回取得を試みる)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 // Lock準備
-                if(!imdstKeyValueClient.startTransaction()) {
+                if(!okuyamaClient.startTransaction()) {
                     throw new Exception("Transactionの開始に失敗");
                 }
 
                 long start = new Date().getTime();
 
                 // Lock実行
-                ret = imdstKeyValueClient.lockData(args[3], Integer.parseInt(args[4]), Integer.parseInt(args[5]));
+                ret = okuyamaClient.lockData(args[3], Integer.parseInt(args[4]), Integer.parseInt(args[5]));
                 if (ret[0].equals("true")) {
                     System.out.println("Lock成功");
                 } else if (ret[0].equals("false")) {
@@ -686,11 +686,11 @@ public class TestSock {
                 Thread.sleep(5000);
 
                 // 自身でロックしているので更新可能
-                if (!imdstKeyValueClient.setValue(args[3], "LockDataValue")) {
+                if (!okuyamaClient.setValue(args[3], "LockDataValue")) {
                     System.out.println("登録失敗");
                 }
 
-                ret = imdstKeyValueClient.getValue(args[3]);
+                ret = okuyamaClient.getValue(args[3]);
                 if (ret[0].equals("true")) {
                     // データ有り
                     System.out.println("Lock中に登録したデータ[" + ret[1] + "]");
@@ -701,7 +701,7 @@ public class TestSock {
                 }
 
                 // 自身でロックしているので削除可能
-                ret = imdstKeyValueClient.removeValue(args[3]);
+                ret = okuyamaClient.removeValue(args[3]);
 
                 if (ret[0].equals("true")) {
                     // データ有り
@@ -713,7 +713,7 @@ public class TestSock {
                 }
 
                 // Lock開放
-                ret = imdstKeyValueClient.releaseLockData(args[3]);
+                ret = okuyamaClient.releaseLockData(args[3]);
                 if (ret[0].equals("true")) {
                     System.out.println("Lock開放成功");
                 } else if (ret[0].equals("false")) {
@@ -724,22 +724,22 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 // トランザクション開放
-                imdstKeyValueClient.endTransaction();
-                imdstKeyValueClient.close();
+                okuyamaClient.endTransaction();
+                okuyamaClient.close();
             } else if (args[0].equals("11")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを保存一度登録した値はエラー
+                // OkuyamaClientを使用してデータを保存一度登録した値はエラー
 
                 // クライアントインスタンスを作成
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
                 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(args[1], port);
+                okuyamaClient.connect(args[1], port);
 
 
                 long start = new Date().getTime();
-                String[] retParam = imdstKeyValueClient.setNewValue(args[3], args[4]);
+                String[] retParam = okuyamaClient.setNewValue(args[3], args[4]);
                 if(retParam[0].equals("false")) {
                 
                     System.out.println(retParam[1]);
@@ -750,23 +750,23 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("12")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを保存一度登録した値はエラー
+                // OkuyamaClientを使用してデータを保存一度登録した値はエラー
                 // Tag有り
 
                 // クライアントインスタンスを作成
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
                 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(args[1], port);
+                okuyamaClient.connect(args[1], port);
 
 
                 long start = new Date().getTime();
                 String[] tags = args[4].split(",");
-                String[] retParam = imdstKeyValueClient.setNewValue(args[3], tags, args[5]);
+                String[] retParam = okuyamaClient.setNewValue(args[3], tags, args[5]);
                 if(retParam[0].equals("false")) {
                 
                     System.out.println(retParam[1]);
@@ -777,19 +777,19 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("13")) {
 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(getValueVersionCheck)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(getValueVersionCheck)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
                 if (args.length > 4) {
                     for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                        ret = imdstKeyValueClient.getValueVersionCheck("datasavekey_" + args[4] + "_" + new Integer(i).toString());
+                        ret = okuyamaClient.getValueVersionCheck("datasavekey_" + args[4] + "_" + new Integer(i).toString());
                         if (ret[0].equals("true")) {
                             // データ有り
                             System.out.println("Value=[" + ret[1] + "]");
@@ -803,7 +803,7 @@ public class TestSock {
                     }
                 } else {
                     for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                        ret = imdstKeyValueClient.getValueVersionCheck("datasavekey_" + new Integer(i).toString());
+                        ret = okuyamaClient.getValueVersionCheck("datasavekey_" + new Integer(i).toString());
                         if (ret[0].equals("true")) {
                             // データ有り
                             System.out.println(ret[1]);
@@ -819,17 +819,17 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("13.1")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを取得(Keyのみ)
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
-                imdstKeyValueClient.connect(args[1], port);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
                 String[] ret = null;
 
                 long start = new Date().getTime();
-                ret = imdstKeyValueClient.getValueVersionCheck(args[3]);
+                ret = okuyamaClient.getValueVersionCheck(args[3]);
                 if (ret[0].equals("true")) {
 
                     // データ有り
@@ -844,22 +844,22 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("14")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを保存
+                // OkuyamaClientを使用してデータを保存
                 // バージョンチェック有り
 
                 // クライアントインスタンスを作成
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
                 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(args[1], port);
+                okuyamaClient.connect(args[1], port);
 
 
                 long start = new Date().getTime();
-                String[] retParam = imdstKeyValueClient.setValueVersionCheck(args[3], args[4], args[5]);
+                String[] retParam = okuyamaClient.setValueVersionCheck(args[3], args[4], args[5]);
                 if(retParam[0].equals("false")) {
                 
                     System.out.println(retParam[1]);
@@ -870,24 +870,24 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } else if (args[0].equals("15")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // ImdstKeyValueClientを使用してデータを保存
+                // OkuyamaClientを使用してデータを保存
                 // バージョンチェック有り
                 // Tag有り
 
                 // クライアントインスタンスを作成
-                ImdstKeyValueClient imdstKeyValueClient = new ImdstKeyValueClient();
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
                 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(args[1], port);
+                okuyamaClient.connect(args[1], port);
 
 
                 long start = new Date().getTime();
                 String[] tags = args[4].split(",");
-                String[] retParam = imdstKeyValueClient.setValueVersionCheck(args[3], tags, args[5], args[6]);
+                String[] retParam = okuyamaClient.setValueVersionCheck(args[3], tags, args[5], args[6]);
                 if(retParam[0].equals("false")) {
                 
                     System.out.println(retParam[1]);
@@ -898,7 +898,7 @@ public class TestSock {
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } 
 
 

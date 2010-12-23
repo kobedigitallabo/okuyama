@@ -609,7 +609,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    protected String[] setKeyValue(String keyStr, String tagStr, String transactionCode, String dataStr) throws BatchException {
+    private String[] setKeyValue(String keyStr, String tagStr, String transactionCode, String dataStr) throws BatchException {
         //logger.debug("MasterManagerHelper - setKeyValue - start");
         String[] retStrs = new String[3];
 
@@ -635,6 +635,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[0] = "1";
                 retStrs[1] = "false";
                 retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
+            // Value値チェック
+            if (!this.checkValueLength(dataStr)) {
+                // 保存失敗
+                retStrs[0] = "1";
+                retStrs[1] = "false";
+                retStrs[2] = "Value Length Error";
                 return retStrs;
             }
 
@@ -778,6 +787,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 return retStrs;
             }
 
+            // Value値チェック
+            if (!this.checkValueLength(dataStr))  {
+                // 保存失敗
+                retStrs[0] = "6";
+                retStrs[1] = "false";
+                retStrs[2] = "Value Length Error";
+                return retStrs;
+            }
+
             // キー値とデータを保存
             // 保存先問い合わせ
             String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess);
@@ -911,6 +929,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[0] = "16";
                 retStrs[1] = "false";
                 retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
+            // Value値チェック
+            if (!this.checkValueLength(dataStr))  {
+                // 保存失敗
+                retStrs[0] = "16";
+                retStrs[1] = "false";
+                retStrs[2] = "Value Length Error";
                 return retStrs;
             }
 
@@ -1578,7 +1605,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    protected String[] decrValue(String keyStr, String decrValue, String transactionCode) throws BatchException {
+    private String[] decrValue(String keyStr, String decrValue, String transactionCode) throws BatchException {
         //logger.debug("MasterManagerHelper - decrValue - start");
         String[] retStrs = new String[3];
 
@@ -1614,7 +1641,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    protected String[] incrValue(String keyStr, String incrValue, String transactionCode) throws BatchException {
+    private String[] incrValue(String keyStr, String incrValue, String transactionCode) throws BatchException {
         //logger.debug("MasterManagerHelper - incrValue - start");
         String[] retStrs = new String[3];
 
@@ -4644,6 +4671,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private boolean checkKeyLength(String key) {
         if (key == null) return false;
         if (key.length() >= ImdstDefine.saveKeyMaxSize) return false;
+        return true;
+    }
+
+    // Value値の長さをチェック
+    private boolean checkValueLength(String value) {
+        if (value == null) return false;
+        if (value.length() >= new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue()) return false;
         return true;
     }
 }

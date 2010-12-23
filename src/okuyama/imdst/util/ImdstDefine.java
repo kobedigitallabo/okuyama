@@ -9,7 +9,7 @@ package okuyama.imdst.util;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.8.4";
+    public static final String okuyamaVersion = "VERSION okuyama-0.8.5";
 
     /* -- KeyMapファイルに関係する定数 ----------                        */
     // KeyNodeのWorkファイルでのセパレータ

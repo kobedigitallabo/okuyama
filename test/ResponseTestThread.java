@@ -4,7 +4,8 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
-import okuyama.imdst.client.ImdstKeyValueClient;
+import okuyama.imdst.client.OkuyamaClient;
+import okuyama.imdst.client.OkuyamaClientException;
 import okuyama.base.lang.BatchException;
 
 public class ResponseTestThread extends Thread {
@@ -34,17 +35,17 @@ public class ResponseTestThread extends Thread {
 
 
     public void run() {
-        ImdstKeyValueClient imdstKeyValueClient = null;
+        OkuyamaClient okuyamaClient = null;
         while(!ResponseTest.startFlg){}
         try {
             if (ResponseTest.args[0].equals("1")) {
 
-                imdstKeyValueClient = new ImdstKeyValueClient();
+                okuyamaClient = new OkuyamaClient();
 
                 String[] infos = ResponseTest.args[1].split(",");
-                imdstKeyValueClient.setConnectionInfos(infos);
+                okuyamaClient.setConnectionInfos(infos);
 
-                imdstKeyValueClient.autoConnect();
+                okuyamaClient.autoConnect();
 
                 String key = tmpKey + threadNo + "_" + prefix + "_";
                 String value= tmpValue + threadNo + "_" + prefix + "_";
@@ -59,7 +60,7 @@ public class ResponseTestThread extends Thread {
                     while(true &&  ResponseTest.startFlg){
 
                         int appendInt = rnd.nextInt(rndVal);
-                        if(!imdstKeyValueClient.setValue(key + appendInt, value + appendInt)) {
+                        if(!okuyamaClient.setValue(key + appendInt, value + appendInt)) {
                             System.out.println("Error");
                         }
                         this.execCounter++;
@@ -69,7 +70,7 @@ public class ResponseTestThread extends Thread {
                     // Loop
                     while(true &&  ResponseTest.startFlg){
 
-                        if(!imdstKeyValueClient.setValue(key + this.execCounter, value + this.execCounter)) {
+                        if(!okuyamaClient.setValue(key + this.execCounter, value + this.execCounter)) {
                             System.out.println("Error");
                         }
                         this.execCounter++;
@@ -78,12 +79,12 @@ public class ResponseTestThread extends Thread {
                 }
             } else if (ResponseTest.args[0].equals("2")) {
 
-                imdstKeyValueClient = new ImdstKeyValueClient();
+                okuyamaClient = new OkuyamaClient();
 
                 String[] infos = ResponseTest.args[1].split(",");
-                imdstKeyValueClient.setConnectionInfos(infos);
+                okuyamaClient.setConnectionInfos(infos);
 
-                imdstKeyValueClient.autoConnect();
+                okuyamaClient.autoConnect();
 
                 String key = tmpKey + threadNo + "_" + prefix + "_";
                 String[] ret = null;
@@ -96,7 +97,7 @@ public class ResponseTestThread extends Thread {
 
                     while(true &&  ResponseTest.startFlg){
 
-                        ret = imdstKeyValueClient.getValue(key + rnd.nextInt(rndVal));
+                        ret = okuyamaClient.getValue(key + rnd.nextInt(rndVal));
 
                         if(ret[0].length() == 5) {
                             System.out.println("Not Found");
@@ -110,7 +111,7 @@ public class ResponseTestThread extends Thread {
                     // Loop
                     while(true &&  ResponseTest.startFlg){
 
-                        ret = imdstKeyValueClient.getValue(key + this.execCounter);
+                        ret = okuyamaClient.getValue(key + this.execCounter);
 
                         if(ret[0].length() == 5) {
                             System.out.println("Not Found");
@@ -129,7 +130,7 @@ public class ResponseTestThread extends Thread {
             endFlg = true;
         } finally {
             try {
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             } catch (Exception e2) {
             }
         }
