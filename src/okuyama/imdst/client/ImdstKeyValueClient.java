@@ -14,7 +14,7 @@ import okuyama.imdst.util.ImdstDefine;
  * MasterNodeと通信を行うプログラムインターフェース<br>
  * okuyamaが内部で使用するClient<br>
  * 一般的なクライアントアプリケーションが使用する想定ではない<br>
- * okuyama.imdst.client.OkuyamaClientを使用すること.
+ * okuyama.imdst.client.OkuyamaClientを使用してください.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
