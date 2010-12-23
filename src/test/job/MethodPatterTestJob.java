@@ -55,7 +55,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             int port = masterNodePort;
 
             // クライアントインスタンスを作成
-            ImdstKeyValueClient imdstKeyValueClient = null;
+            OkuyamaClient okuyamaClient = null;
 
             String startStr = super.getPropertiesValue(super.getJobName() + "start");
             int start = Integer.parseInt(startStr);
@@ -67,36 +67,36 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     for (int i = 1; i < execMethods.length; i++) {
 
                         if (execMethods[i].equals("set")) 
-                            retMap.put("set", execSet(imdstKeyValueClient, start, count));
+                            retMap.put("set", execSet(okuyamaClient, start, count));
 
                         if (execMethods[i].equals("get")) 
-                            retMap.put("get", execGet(imdstKeyValueClient, start, count));
+                            retMap.put("get", execGet(okuyamaClient, start, count));
 
                         if (execMethods[i].equals("settag")) 
-                            retMap.put("settag", execTagSet(imdstKeyValueClient, start, count));
+                            retMap.put("settag", execTagSet(okuyamaClient, start, count));
 
                         if (execMethods[i].equals("gettag")) 
-                            retMap.put("gettag", execTagGet(imdstKeyValueClient, start, count));
+                            retMap.put("gettag", execTagGet(okuyamaClient, start, count));
 
                         if (execMethods[i].equals("remove")) 
-                            retMap.put("remove", execRemove(imdstKeyValueClient, start, 500));
+                            retMap.put("remove", execRemove(okuyamaClient, start, 500));
 
                         if (execMethods[i].equals("script")) 
-                            retMap.put("script", execScript(imdstKeyValueClient, start, count));
+                            retMap.put("script", execScript(okuyamaClient, start, count));
 
                         if (execMethods[i].equals("add")) 
-                            retMap.put("add", execAdd(imdstKeyValueClient, start, count));
+                            retMap.put("add", execAdd(okuyamaClient, start, count));
 
                         if (execMethods[i].equals("gets-cas")) 
-                            retMap.put("cas", execGetsCas(imdstKeyValueClient, start, count));
+                            retMap.put("cas", execGetsCas(okuyamaClient, start, count));
                     }
 
                     System.out.println("ErrorMap=" + retMap.toString());
                     System.out.println("---------------------------------------------");
                     // クライアントインスタンスを作成
-                    imdstKeyValueClient = new ImdstKeyValueClient();
+                    okuyamaClient = new OkuyamaClient();
                     // マスタサーバに接続
-                    imdstKeyValueClient.connect(masterNodeName, port);
+                    okuyamaClient.connect(masterNodeName, port);
                 }
             }
         } catch(Exception e) {
@@ -109,28 +109,28 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
     }
 
 
-    private boolean execSet(ImdstKeyValueClient client, int start, int count) throws Exception {
-        ImdstKeyValueClient imdstKeyValueClient = null;
+    private boolean execSet(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
         boolean errorFlg = false;
         try {
             System.out.println("execSet - Start");
             if (client != null) {
-                imdstKeyValueClient = client;
+                okuyamaClient = client;
             } else {
                 int port = masterNodePort;
 
                 // クライアントインスタンスを作成
-                imdstKeyValueClient = new ImdstKeyValueClient();
+                okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(masterNodeName, port);
+                okuyamaClient.connect(masterNodeName, port);
             }
 
             long startTime = new Date().getTime();
             for (int i = start; i < count; i++) {
                 // データ登録
 
-                if (!imdstKeyValueClient.setValue(this.nowCount + "datasavekey_" + new Integer(i).toString(), this.nowCount + "testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + new Integer(i).toString())) {
+                if (!okuyamaClient.setValue(this.nowCount + "datasavekey_" + new Integer(i).toString(), this.nowCount + "testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + new Integer(i).toString())) {
                     System.out.println("Set - Error=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + ", " + this.nowCount + "testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + new Integer(i).toString());
                     errorFlg = true;
                 }
@@ -140,7 +140,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             System.out.println("Set Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             }
         } catch (Exception e) {
             throw e;
@@ -151,29 +151,29 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
     }
 
 
-    private boolean execGet(ImdstKeyValueClient client, int start, int count) throws Exception {
-        ImdstKeyValueClient imdstKeyValueClient = null;
+    private boolean execGet(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
         boolean errorFlg = false;
         try {
             System.out.println("execGet - Start");
 
             if (client != null) {
-                imdstKeyValueClient = client;
+                okuyamaClient = client;
             } else {
                 int port = masterNodePort;
 
                 // クライアントインスタンスを作成
-                imdstKeyValueClient = new ImdstKeyValueClient();
+                okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(masterNodeName, port);
+                okuyamaClient.connect(masterNodeName, port);
             }
 
             String[] ret = null;
 
             long startTime = new Date().getTime();
             for (int i = start; i < count; i++) {
-                ret = imdstKeyValueClient.getValue(this.nowCount + "datasavekey_" + new Integer(i).toString());
+                ret = okuyamaClient.getValue(this.nowCount + "datasavekey_" + new Integer(i).toString());
 
                 if (ret[0].equals("true")) {
                     // データ有り
@@ -195,7 +195,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             System.out.println("Get Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             }
         } catch (Exception e) {
             throw e;
@@ -206,21 +206,21 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
 
 
-    private boolean execTagSet(ImdstKeyValueClient client, int start, int count) throws Exception {
-        ImdstKeyValueClient imdstKeyValueClient = null;
+    private boolean execTagSet(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
         boolean errorFlg = false;
         try {
             System.out.println("execTagSet - Start");
             if (client != null) {
-                imdstKeyValueClient = client;
+                okuyamaClient = client;
             } else {
                 int port = masterNodePort;
 
                 // クライアントインスタンスを作成
-                imdstKeyValueClient = new ImdstKeyValueClient();
+                okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(masterNodeName, port);
+                okuyamaClient.connect(masterNodeName, port);
             }
 
             String[] tag1 = {start+"_" + this.nowCount + "_tag1"};
@@ -247,7 +247,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     counter = 0;
                 }
 
-                if (!imdstKeyValueClient.setValue(this.nowCount + "tagsampledatakey_" + new Integer(i).toString(), setTag, this.nowCount + "tagsamplesavedata_" + new Integer(i).toString())) {
+                if (!okuyamaClient.setValue(this.nowCount + "tagsampledatakey_" + new Integer(i).toString(), setTag, this.nowCount + "tagsamplesavedata_" + new Integer(i).toString())) {
                     System.out.println("Tag Set - Error=[" + this.nowCount + "tagsampledatakey_" + new Integer(i).toString() + ", " + this.nowCount + "tagsamplesavedata_" + new Integer(i).toString());
                     errorFlg = true;
                 }
@@ -256,7 +256,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             System.out.println("Tag Set Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             }
         } catch (Exception e) {
             throw e;
@@ -266,22 +266,22 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
     }
 
 
-    private boolean execTagGet(ImdstKeyValueClient client, int start, int count) throws Exception {
-        ImdstKeyValueClient imdstKeyValueClient = null;
+    private boolean execTagGet(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
         boolean errorFlg = false;
         try {
             System.out.println("execTagGet - Start");
 
             if (client != null) {
-                imdstKeyValueClient = client;
+                okuyamaClient = client;
             } else {
                 int port = masterNodePort;
 
                 // クライアントインスタンスを作成
-                imdstKeyValueClient = new ImdstKeyValueClient();
+                okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(masterNodeName, port);
+                okuyamaClient.connect(masterNodeName, port);
             }
 
             String[] tag1 = {start+"_" + this.nowCount + "_tag1"};
@@ -292,14 +292,14 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
             String[] keys = null;
             long startTime = new Date().getTime();
-            Object[] ret = imdstKeyValueClient.getTagKeys(start+"_" + this.nowCount + "_tag1");
+            Object[] ret = okuyamaClient.getTagKeys(start+"_" + this.nowCount + "_tag1");
 
             if (ret[0].equals("true")) {
                 // データ有り
                 keys = (String[])ret[1];
 
                 for (int ii = start; ii < keys.length; ii++) {
-                    String[] getRet = imdstKeyValueClient.getValue(keys[ii]);
+                    String[] getRet = okuyamaClient.getValue(keys[ii]);
 
                     if (getRet[0].equals("true")) {
                         // データ有り
@@ -322,14 +322,14 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 errorFlg = true;
             }
 
-            ret = imdstKeyValueClient.getTagKeys(start+"_" + this.nowCount + "_tag2");
+            ret = okuyamaClient.getTagKeys(start+"_" + this.nowCount + "_tag2");
 
             if (ret[0].equals("true")) {
                 // データ有り
                 keys = (String[])ret[1];
 
                 for (int ii = start; ii < keys.length; ii++) {
-                    String[] getRet = imdstKeyValueClient.getValue(keys[ii]);
+                    String[] getRet = okuyamaClient.getValue(keys[ii]);
 
                     if (getRet[0].equals("true")) {
                         // データ有り
@@ -351,14 +351,14 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 errorFlg = true;
             }
 
-            ret = imdstKeyValueClient.getTagKeys(start+"_" + this.nowCount + "_tag3");
+            ret = okuyamaClient.getTagKeys(start+"_" + this.nowCount + "_tag3");
 
             if (ret[0].equals("true")) {
                 // データ有り
                 keys = (String[])ret[1];
 
                 for (int ii = start; ii < keys.length; ii++) {
-                    String[] getRet = imdstKeyValueClient.getValue(keys[ii]);
+                    String[] getRet = okuyamaClient.getValue(keys[ii]);
 
                     if (getRet[0].equals("true")) {
                         // データ有り
@@ -384,7 +384,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             System.out.println("Tag Get Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             }
         } catch (Exception e) {
             throw e;
@@ -395,29 +395,29 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
 
 
-    private boolean execRemove(ImdstKeyValueClient client, int start, int count) throws Exception {
-        ImdstKeyValueClient imdstKeyValueClient = null;
+    private boolean execRemove(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
         boolean errorFlg = false;
         try {
             System.out.println("execRemove - Start");
 
             if (client != null) {
-                imdstKeyValueClient = client;
+                okuyamaClient = client;
             } else {
                 int port = masterNodePort;
 
                 // クライアントインスタンスを作成
-                imdstKeyValueClient = new ImdstKeyValueClient();
+                okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(masterNodeName, port);
+                okuyamaClient.connect(masterNodeName, port);
             }
 
             String[] ret = null;
 
             long startTime = new Date().getTime();
             for (int i = start; i < count;i++) {
-                ret = imdstKeyValueClient.removeValue(this.nowCount + "datasavekey_" + new Integer(i).toString());
+                ret = okuyamaClient.removeValue(this.nowCount + "datasavekey_" + new Integer(i).toString());
                 if (ret[0].equals("true")) {
                     // データ有り
                     //System.out.println(ret[1]);
@@ -439,7 +439,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
 
             if (client == null) {
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             }
         } catch (Exception e) {
             throw e;
@@ -450,26 +450,26 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
 
 
-    private boolean execScript(ImdstKeyValueClient client, int start, int count) throws Exception {
-        ImdstKeyValueClient imdstKeyValueClient = null;
+    private boolean execScript(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
         boolean errorFlg = false;
         try {
             System.out.println("execScript - Start");
 
             if (client != null) {
-                imdstKeyValueClient = client;
+                okuyamaClient = client;
             } else {
                 int port = masterNodePort;
 
                 // クライアントインスタンスを作成
-                imdstKeyValueClient = new ImdstKeyValueClient();
+                okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(masterNodeName, port);
+                okuyamaClient.connect(masterNodeName, port);
             }
 
             long startTime = new Date().getTime();
-            String[] ret = imdstKeyValueClient.getValueScript(this.nowCount + "datasavekey_" + (start + 600), "var dataValue; var retValue = dataValue.replace('data', 'dummy'); var execRet = '1';");
+            String[] ret = okuyamaClient.getValueScript(this.nowCount + "datasavekey_" + (start + 600), "var dataValue; var retValue = dataValue.replace('data', 'dummy'); var execRet = '1';");
             if (ret[0].equals("true")) {
                 // データ有り
                 //System.out.println(ret[1]);
@@ -489,7 +489,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             System.out.println("GetScript Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             }
         } catch (Exception e) {
             throw e;
@@ -499,26 +499,26 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
     }
 
 
-    private boolean execAdd(ImdstKeyValueClient client, int start, int count) throws Exception {
-        ImdstKeyValueClient imdstKeyValueClient = null;
+    private boolean execAdd(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
         boolean errorFlg = false;
         try {
             System.out.println("execAdd - Start");
 
             if (client != null) {
-                imdstKeyValueClient = client;
+                okuyamaClient = client;
             } else {
                 int port = masterNodePort;
 
                 // クライアントインスタンスを作成
-                imdstKeyValueClient = new ImdstKeyValueClient();
+                okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(masterNodeName, port);
+                okuyamaClient.connect(masterNodeName, port);
             }
 
             long startTime = new Date().getTime();
-            String[] retParam = imdstKeyValueClient.setNewValue(this.nowCount + "Key_ABCDE" + start, this.nowCount + "AAAAAAAAABBBBBBBBBBBBCCCCCCCCCC" + start);
+            String[] retParam = okuyamaClient.setNewValue(this.nowCount + "Key_ABCDE" + start, this.nowCount + "AAAAAAAAABBBBBBBBBBBBCCCCCCCCCC" + start);
 
             if(retParam[0].equals("false")) {
 
@@ -532,7 +532,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             System.out.println("New Value Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             }
         } catch (Exception e) {
             throw e;
@@ -542,22 +542,22 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
     }
 
 
-    private boolean execGetsCas(ImdstKeyValueClient client, int start, int count) throws Exception {
-        ImdstKeyValueClient imdstKeyValueClient = null;
+    private boolean execGetsCas(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
         boolean errorFlg = false;
         try {
             System.out.println("execCas - Start");
 
             if (client != null) {
-                imdstKeyValueClient = client;
+                okuyamaClient = client;
             } else {
                 int port = masterNodePort;
 
                 // クライアントインスタンスを作成
-                imdstKeyValueClient = new ImdstKeyValueClient();
+                okuyamaClient = new OkuyamaClient();
 
                 // マスタサーバに接続
-                imdstKeyValueClient.connect(masterNodeName, port);
+                okuyamaClient.connect(masterNodeName, port);
             }
 
             long startTime = new Date().getTime();
@@ -565,7 +565,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             for (int i = start; i < count; i++) {
                 // データ登録
 
-                if (!imdstKeyValueClient.setValue(casCount + "_castest_datasavekey", "castest_testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + casCount + "_" + new Integer(i).toString())) {
+                if (!okuyamaClient.setValue(casCount + "_castest_datasavekey", "castest_testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + casCount + "_" + new Integer(i).toString())) {
                     System.out.println("Set - Error=[" + casCount + "_castest_datasavekey] Value[" + this.nowCount + "castest_testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + casCount + "_" + new Integer(i).toString() + "]");
                     errorFlg = true;
                 }
@@ -577,10 +577,10 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             int casErrorCount = 0;
             for (int casIdx = 0; casIdx < 6000; casIdx++) {
                 int rndSet = rndIdx.nextInt(casCount);
-                Object[] getsRet = imdstKeyValueClient.getValueVersionCheck(rndSet + "_castest_datasavekey");
+                Object[] getsRet = okuyamaClient.getValueVersionCheck(rndSet + "_castest_datasavekey");
 
 
-                String[] retParam = imdstKeyValueClient.setValueVersionCheck(rndSet + "_castest_datasavekey", "updated-" + rndSet, (String)getsRet[2]);
+                String[] retParam = okuyamaClient.setValueVersionCheck(rndSet + "_castest_datasavekey", "updated-" + rndSet, (String)getsRet[2]);
                 if(retParam[0].equals("true")) {
                     casSuccessCount++;
                 } else {
@@ -592,7 +592,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             System.out.println("Cas Method= " + (endTime - startTime) + " milli second Suucess=" + casSuccessCount + "  Error=" + casErrorCount);
 
             if (client == null) {
-                imdstKeyValueClient.close();
+                okuyamaClient.close();
             }
         } catch (Exception e) {
             throw e;
