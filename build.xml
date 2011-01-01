@@ -6,7 +6,7 @@
 	<property name="src.dir"		value="src" />
 	<property name="build.dir"		value="classes" />
 	<property name="install.dir"	value="install" />
-	<property name="version"		value="0.8.4" />
+	<property name="version"		value="0.8.5" />
 	<property name="javadoc.dir"	value="javadoc"/>
 	<property name="lib.dir"	    value="lib"/>
 
@@ -310,8 +310,20 @@
 	</target>
 
 
-	<!-- DataNode,SlaveDataNode,ThirdDataNode,MasterNode Execute task -->
+	<!-- DataNode,MasterNode Execute task -->
 	<target name="serverrun">
+		<parallel>
+			<ant target='datanode' />
+			<sequential>
+				<sleep seconds="10" />
+				<ant target='masternode' />
+			</sequential>
+		</parallel>
+	</target>
+
+
+	<!-- DataNode,SlaveDataNode,ThirdDataNode,MasterNode Execute task -->
+	<target name="fullserverrun">
 		<parallel>
 			<ant target='datanode' />
 			<ant target='slavedatanode' />
