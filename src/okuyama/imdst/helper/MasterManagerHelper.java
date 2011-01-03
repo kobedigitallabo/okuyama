@@ -142,7 +142,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         CustomReader br = null;
         BufferedInputStream bis = null;
         Socket socket = null;
-
+		String socketString = null;
 
         try{
 
@@ -223,6 +223,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         br = (CustomReader)queueMap[ImdstDefine.paramBr];
                         socket = (Socket)queueMap[ImdstDefine.paramSocket];
                         socket.setSoTimeout(0);
+						socketString = socket.toString();
                         closeFlg = false;
                     }
 
@@ -502,11 +503,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     if (numberOfQueueBindWaitCounter.get() >= returnProccessingCount) {
 
                         try {
-
                             if(!br.ready()) {
 
                                 br.mark(1);
-                                socket.setSoTimeout(300);
+                                socket.setSoTimeout(200);
                                 int readCheck = br.read();
                                 br.reset();
                                 reloopSameClient = true;
@@ -562,7 +562,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         numberOfQueueBindWaitCounter.getAndIncrement();
 
 					// 処理Logを出力
-					this.outputExecutionLog(retParams, clientParameterList);
+					this.outputExecutionLog(retParams, clientParameterList, closeFlg, socketString);
                 }
             }
 
@@ -587,11 +587,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
-	private void outputExecutionLog(String[] retParams, String[] clientParameterList) {
-		if(logger.isDebugEnabled() || logger.isInfoEnabled()) {
+	private void outputExecutionLog(String[] retParams, String[] clientParameterList, boolean closeFlg, String socketString) {
+		boolean noLog = false;
+		if(logger.isDebugEnabled()) {
+		//if(logger.isDebugEnabled() || logger.isInfoEnabled()) {
 			StringBuffer logBuf = new StringBuffer(100);
 
-			if (retParams != null && retParams.length > 0 &&
+			if (closeFlg) {
+
+				logBuf.append("Close Connection");
+			} else if (retParams != null && retParams.length > 0 &&
 					 clientParameterList.length > 0 && clientParameterList != null) {
 
 				logBuf.append("Method=");
@@ -612,6 +617,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 										retParams[0].equals("6") ||
 											retParams[0].equals("15") ||
 												retParams[0].equals("16")) {
+						if (clientParameterList[1] != null && clientParameterList[1].indexOf("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfI") == 0) noLog = true;
 						logBuf.append("Key=");
 						logBuf.append(clientParameterList[1]);
 					}
@@ -620,15 +626,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 			} else {
 
 				logBuf.append("Unexpected error  ");
-				logBuf.append("retParams=[" + retParams +"]");
-				logBuf.append("  clientParameterList=[" + clientParameterList +"]");
+				logBuf.append("retParams=[" + retParams +"]  ");
+				logBuf.append("clientParameterList=[" + clientParameterList +"]");
 			}
 
-			if (logger.isDebugEnabled()) {
+
+			logBuf.append("  Client=[" + socketString + "]");
+			if (logger.isDebugEnabled() && !noLog) {
 				logger.debug(logBuf.toString());
-			} else if (logger.isInfoEnabled()) {
+			} /*else if (logger.isInfoEnabled()) {
 				logger.info(logBuf.toString());
-			}
+			}*/
 		}
 	}
 
