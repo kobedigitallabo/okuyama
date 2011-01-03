@@ -108,4 +108,14 @@ public class DefaultLogger implements ILogger {
         this.logger.warn(message, t);
     }
 
+
+	public boolean isDebugEnabled() {
+		return this.logger.isDebugEnabled();
+	}
+
+
+	public boolean isInfoEnabled() {
+		return this.logger.isInfoEnabled();
+	}
+
 }

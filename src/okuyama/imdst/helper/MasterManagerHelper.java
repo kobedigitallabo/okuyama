@@ -560,6 +560,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 処理待機を加算
                     if (!reloopSameClient)
                         numberOfQueueBindWaitCounter.getAndIncrement();
+
+					// 処理Logを出力
+					this.outputExecutionLog(retParams, clientParameterList);
                 }
             }
 
@@ -582,6 +585,52 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      */
     public void endHelper() {
     }
+
+
+	private void outputExecutionLog(String[] retParams, String[] clientParameterList) {
+		if(logger.isDebugEnabled() || logger.isInfoEnabled()) {
+			StringBuffer logBuf = new StringBuffer(100);
+
+			if (retParams != null && retParams.length > 0 &&
+					 clientParameterList.length > 0 && clientParameterList != null) {
+
+				logBuf.append("Method=");
+				logBuf.append(retParams[0]);
+				logBuf.append("  ");
+
+				if (retParams.length > 1) {
+					logBuf.append("ExecutionResult=");
+					logBuf.append(retParams[1]);
+					logBuf.append("  ");
+				}
+
+				if (retParams[0] != null) {
+					if (retParams[0].equals("1") || 
+							retParams[0].equals("2") ||
+								retParams[0].equals("3") ||
+									retParams[0].equals("5") ||
+										retParams[0].equals("6") ||
+											retParams[0].equals("15") ||
+												retParams[0].equals("16")) {
+						logBuf.append("Key=");
+						logBuf.append(clientParameterList[1]);
+					}
+				}
+
+			} else {
+
+				logBuf.append("Unexpected error  ");
+				logBuf.append("retParams=[" + retParams +"]");
+				logBuf.append("  clientParameterList=[" + clientParameterList +"]");
+			}
+
+			if (logger.isDebugEnabled()) {
+				logger.debug(logBuf.toString());
+			} else if (logger.isInfoEnabled()) {
+				logger.info(logBuf.toString());
+			}
+		}
+	}
 
 
     /**
@@ -1130,7 +1179,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - getKeyValue - Exception - " + be.toString();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("MasterManagerHelper - getKeyValue - Error", e);
 
             retStrs[0] = "2";
             retStrs[1] = "error";
@@ -1238,7 +1287,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             retStrs[2] = "NG:MasterManagerHelper - getKeyValueAndVersion - Exception - " + be.toString();
             retStrs[3] = "";
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("MasterManagerHelper - getKeyValueAndVersion - Error", e);
 
             retStrs[0] = "15";
             retStrs[1] = "error";
@@ -1340,7 +1389,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getKeyValueScript - Error", be);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("MasterManagerHelper - getKeyValueScript - Error", e);
             retStrs[0] = "8";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - getKeyValueScript - Exception - " + e.toString();
@@ -1490,7 +1539,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[2] = keyNodeSaveRet[2];
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("MasterManagerHelper - getKeyValueScriptForUpdate - Error", e);
             retStrs[0] = "9";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e.toString();
@@ -1568,7 +1617,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
             // 取得結果確認
-            if (keyNodeRemoveRet[1].equals("false")) {
+			if (keyNodeRemoveRet == null || keyNodeRemoveRet.length < 1) {
+				throw new BatchException("Key Node IO Error: detail info for log file");
+			} else if (keyNodeRemoveRet[1].equals("false")) {
 
                 // 削除失敗(元データなし)
                 retStrs[0] = keyNodeRemoveRet[0];
@@ -1583,7 +1634,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - removeKeyValue - Error", be);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("MasterManagerHelper - removeKeyValue - Error", e);
             retStrs[0] = "5";
             retStrs[1] = "error";
             retStrs[2] = "NG:MasterManagerHelper - removeKeyValue - Exception - " + e.toString();

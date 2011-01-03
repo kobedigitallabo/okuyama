@@ -33,4 +33,7 @@ public interface ILogger {
 
     public void warn(Object message, Throwable t) ;
 
+	public boolean isDebugEnabled() ;
+
+	public boolean isInfoEnabled() ;
 }

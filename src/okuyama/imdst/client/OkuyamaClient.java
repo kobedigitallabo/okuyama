@@ -419,12 +419,11 @@ public class OkuyamaClient {
 
             // 処理番号連結
             serverRequestBuf.append("0");
-            // セパレータ連結
-            serverRequestBuf.append(OkuyamaClient.sepStr);
 
 
             // サーバ送信
             pw.println(serverRequestBuf.toString());
+
             pw.flush();
 
             // サーバから結果受け取り
@@ -971,7 +970,6 @@ public class OkuyamaClient {
             serverRetStr = br.readLine();
             serverRet = serverRetStr.split(OkuyamaClient.sepStr);
 
-
             // 処理の妥当性確認
             if (serverRet.length == 3 && serverRet[0].equals("1")) {
                 if (serverRet[1].equals("true")) {
@@ -1331,6 +1329,7 @@ public class OkuyamaClient {
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
+
             serverRet = serverRetStr.split(OkuyamaClient.sepStr);
 
             // 処理の妥当性確認
@@ -1807,6 +1806,7 @@ public class OkuyamaClient {
 
             // サーバ送信
             pw.println(getValueServerReqBuf.toString());
+
             pw.flush();
 
             // サーバから結果受け取り
@@ -1948,6 +1948,8 @@ public class OkuyamaClient {
 
             // サーバ送信
             pw.println(getValueServerReqBuf.toString());
+
+
             pw.flush();
 
             // サーバから結果受け取り
@@ -2398,6 +2400,8 @@ public class OkuyamaClient {
 
             // サーバ送信
             pw.println(serverRequestBuf.toString());
+
+
             pw.flush();
 
             // サーバから結果受け取り
@@ -2983,6 +2987,7 @@ public class OkuyamaClient {
 
             // サーバ送信
             pw.println(serverRequestBuf.toString());
+
             pw.flush();
 
             // サーバから結果受け取り

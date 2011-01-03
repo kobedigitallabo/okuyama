@@ -80,6 +80,14 @@
 		</java>
 	</target>
 
+	<target name="datanode_small">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
+			<arg value="/Main.properties"/>
+			<arg value="/DataNode_small.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
 
 	<!-- SlaveDataNodeServer Execute task -->
 	<target name="slavedatanode">
@@ -106,6 +114,14 @@
 		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/MasterNode.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+	<target name="masternode_small">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
+			<arg value="/Main.properties"/>
+			<arg value="/MasterNode_small.properties"/>
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>
@@ -313,10 +329,10 @@
 	<!-- DataNode,MasterNode Execute task -->
 	<target name="serverrun">
 		<parallel>
-			<ant target='datanode' />
+			<ant target='datanode_small' />
 			<sequential>
 				<sleep seconds="10" />
-				<ant target='masternode' />
+				<ant target='masternode_small' />
 			</sequential>
 		</parallel>
 	</target>
