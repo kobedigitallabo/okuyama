@@ -7,6 +7,7 @@ import java.net.*;
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
+import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.JavaSystemApi;
 import okuyama.imdst.util.io.CustomReader;
@@ -98,7 +99,11 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
         String executeMethodStr = br.readLine();
 
+        // Debugログ書き出し
+        SystemUtil.debugLine("Request_1  " + requestLine);
+
         this.requestLine = executeMethodStr;
+
 
         // 切断指定確認
         if (executeMethodStr == null ||
@@ -114,6 +119,15 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
         // memcacheクライアントの内容からリクエストを作り上げる
         retStrs = this.memcacheMethodCnv(executeMethodStr, br, pw);
+
+        if (retStrs != null) {
+            for (int i = 0; i < retStrs.length; i++) {
+                // Debugログ書き出し
+                SystemUtil.debugLine("Request_2  " + retStrs[i]);
+            }
+        } else {
+            SystemUtil.debugLine("Request_2  null");
+        }
 
         if (retStrs == null) this.nextExec = 2;
 
@@ -137,6 +151,9 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
             retStr = this.memcacheReturnCnv(retParams);
             this.nextExec = 1;
         }
+
+        // Debugログ書き出し
+        SystemUtil.debugLine("Response   " + retStr);
 
         return retStr;
     }

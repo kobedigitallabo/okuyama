@@ -83,6 +83,29 @@ public class StatusUtil {
     // 実行許可メソッドリスト
     private static int[] methodList = null;
 
+    // Debugモードで起動しているかを設定
+    private static boolean debugMode = false;
+
+
+    /**
+     * デバッグモード設定.<br>
+     *
+     * @param debugMode
+     */
+    public static void setDebugOption(boolean debugMode) {
+        StatusUtil.debugMode = debugMode;
+    }
+
+
+    /**
+     * デバッグモード取得.<br>
+     *
+     * @return boolean
+     */
+    public static boolean getDebugOption() {
+        return StatusUtil.debugMode;
+    }
+
 
     /**
      * ノード使用状態の枠を初期化

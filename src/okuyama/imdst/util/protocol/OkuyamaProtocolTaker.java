@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
+import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.io.CustomReader;
 
@@ -74,6 +75,9 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
             this.nextExec = 3;
         }
 
+        // Debugログ書き出し
+        SystemUtil.debugLine("Request   " + retStrs.toString());
+
         return retStrs;
     }
 
@@ -101,6 +105,9 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
             // 接続を切断
             this.nextExec = 3;
         }
+
+        // Debugログ書き出し
+        SystemUtil.debugLine("Request   " + retStr);
 
         return retStr;
     }
@@ -174,6 +181,10 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
             }
             this.nextExec = 1;
         }
+
+        // Debugログ書き出し
+        SystemUtil.debugLine("Response  " + retParamBuf);
+
         return this.retParamBuf.toString();
     }
 

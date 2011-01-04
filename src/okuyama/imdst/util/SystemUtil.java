@@ -1,10 +1,12 @@
 package okuyama.imdst.util;
 
+import java.util.Date;
+
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
 
 /**
- * システム系のApiに対してアクセスする.<br>
+ * okuyamaが使用する共通的なApiに対してアクセスする.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -97,4 +99,21 @@ public class SystemUtil {
         return ret;
     }
 
+
+    /**
+     * -debugオプションを利用した際に、標準出力への出力を行う.<br>
+     *
+     * @param String outputStr
+     */
+    public static void debugLine(String outputStr) {
+        if (StatusUtil.getDebugOption()) {
+            StringBuffer strBuf = new StringBuffer(100);
+            strBuf.append(new Date());
+            strBuf.append(" DebugLine \"");
+            strBuf.append(outputStr);
+            strBuf.append("\"");
+            System.out.println(strBuf.toString());
+            strBuf = null;
+        }
+    }
 }

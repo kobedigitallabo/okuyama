@@ -45,8 +45,6 @@ public class  HelperPool extends Thread {
     // HelperThread Join待機時間
     private static int helperThreadJoinTime = 5000;
 
-    private static Object poolLock = new Object();
-
     // スレッド内でのチェックをコントロール
     private boolean poolRunning = true;
 

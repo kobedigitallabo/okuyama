@@ -218,6 +218,7 @@ public class ImdstDefine {
     public static final String configModeNode = "node";
 
     public static final String ConfigSaveNodePrefix = "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ ";
+    public static final String ConfigSaveNodePrefixEncodeStr = "TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfI";
 
     public static final int paramSocket       = 0;
     public static final int paramPw           = 1;

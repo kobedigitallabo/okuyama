@@ -85,4 +85,6 @@ public class BatchDefine {
     public static final String COMMIT_TYPE_AUTO = "auto";
     public static final String COMMIT_TYPE_USER = "user";
 
+    // ユーザが起動時に指定した設定ファイル以外のオプション文字列が全て格納される
+    public static String USER_OPTION_STR = "";
 }

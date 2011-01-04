@@ -1,5 +1,6 @@
 package okuyama.base;
 
+import okuyama.base.lang.BatchDefine;
 import okuyama.base.lang.BatchException;
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
@@ -38,6 +39,18 @@ public class JavaMain {
             }
 
             JavaMain me = new JavaMain();
+
+            // 起動オプションを取り込み
+            if (args.length > 2) {
+                for (int i = 2; i < args.length; i++) {
+                    BatchDefine.USER_OPTION_STR = BatchDefine.USER_OPTION_STR + " " + args[i];
+                }
+                BatchDefine.USER_OPTION_STR = BatchDefine.USER_OPTION_STR.trim();
+            } else {
+                BatchDefine.USER_OPTION_STR = null;
+            }
+
+            // 本体処理実行
             me.exec(args[0],args[1]);
 
         } catch (BatchException be) {

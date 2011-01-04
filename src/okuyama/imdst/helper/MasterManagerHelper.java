@@ -19,6 +19,7 @@ import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.protocol.*;
 import okuyama.imdst.util.io.KeyNodeConnector;
 import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.io.CustomReader;
 
 import com.sun.mail.util.BASE64DecoderStream;
@@ -142,7 +143,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         CustomReader br = null;
         BufferedInputStream bis = null;
         Socket socket = null;
-		String socketString = null;
+        String socketString = null;
 
         try{
 
@@ -223,7 +224,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         br = (CustomReader)queueMap[ImdstDefine.paramBr];
                         socket = (Socket)queueMap[ImdstDefine.paramSocket];
                         socket.setSoTimeout(0);
-						socketString = socket.toString();
+                        socketString = socket.toString();
                         closeFlg = false;
                     }
 
@@ -561,8 +562,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     if (!reloopSameClient)
                         numberOfQueueBindWaitCounter.getAndIncrement();
 
-					// 処理Logを出力
-					this.outputExecutionLog(retParams, clientParameterList, closeFlg, socketString);
+                    // 処理Logを出力
+                    this.outputExecutionLog(retParams, clientParameterList, closeFlg, socketString);
                 }
             }
 
@@ -587,58 +588,58 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
-	private void outputExecutionLog(String[] retParams, String[] clientParameterList, boolean closeFlg, String socketString) {
-		boolean noLog = false;
-		if(logger.isDebugEnabled()) {
-		//if(logger.isDebugEnabled() || logger.isInfoEnabled()) {
-			StringBuffer logBuf = new StringBuffer(100);
+    private void outputExecutionLog(String[] retParams, String[] clientParameterList, boolean closeFlg, String socketString) {
+        boolean noLog = false;
+        if(logger.isDebugEnabled()) {
+        //if(logger.isDebugEnabled() || logger.isInfoEnabled()) {
+            StringBuffer logBuf = new StringBuffer(100);
 
-			if (closeFlg) {
+            if (closeFlg) {
 
-				logBuf.append("Close Connection");
-			} else if (retParams != null && retParams.length > 0 &&
-					 clientParameterList.length > 0 && clientParameterList != null) {
+                logBuf.append("Close Connection");
+            } else if (retParams != null && retParams.length > 0 &&
+                     clientParameterList.length > 0 && clientParameterList != null) {
 
-				logBuf.append("Method=");
-				logBuf.append(retParams[0]);
-				logBuf.append("  ");
+                logBuf.append("Method=");
+                logBuf.append(retParams[0]);
+                logBuf.append("  ");
 
-				if (retParams.length > 1) {
-					logBuf.append("ExecutionResult=");
-					logBuf.append(retParams[1]);
-					logBuf.append("  ");
-				}
+                if (retParams.length > 1) {
+                    logBuf.append("ExecutionResult=");
+                    logBuf.append(retParams[1]);
+                    logBuf.append("  ");
+                }
 
-				if (retParams[0] != null) {
-					if (retParams[0].equals("1") || 
-							retParams[0].equals("2") ||
-								retParams[0].equals("3") ||
-									retParams[0].equals("5") ||
-										retParams[0].equals("6") ||
-											retParams[0].equals("15") ||
-												retParams[0].equals("16")) {
-						if (clientParameterList[1] != null && clientParameterList[1].indexOf("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfI") == 0) noLog = true;
-						logBuf.append("Key=");
-						logBuf.append(clientParameterList[1]);
-					}
-				}
+                if (retParams[0] != null) {
+                    if (retParams[0].equals("1") || 
+                            retParams[0].equals("2") ||
+                                retParams[0].equals("3") ||
+                                    retParams[0].equals("5") ||
+                                        retParams[0].equals("6") ||
+                                            retParams[0].equals("15") ||
+                                                retParams[0].equals("16")) {
+                        if (clientParameterList[1] != null && clientParameterList[1].indexOf(ImdstDefine.ConfigSaveNodePrefixEncodeStr) == 0) noLog = true;
+                        logBuf.append("Key=");
+                        logBuf.append(clientParameterList[1]);
+                    }
+                }
 
-			} else {
+            } else {
 
-				logBuf.append("Unexpected error  ");
-				logBuf.append("retParams=[" + retParams +"]  ");
-				logBuf.append("clientParameterList=[" + clientParameterList +"]");
-			}
+                logBuf.append("Unexpected error  ");
+                logBuf.append("retParams=[" + retParams +"]  ");
+                logBuf.append("clientParameterList=[" + clientParameterList +"]");
+            }
 
 
-			logBuf.append("  Client=[" + socketString + "]");
-			if (logger.isDebugEnabled() && !noLog) {
-				logger.debug(logBuf.toString());
-			} /*else if (logger.isInfoEnabled()) {
-				logger.info(logBuf.toString());
-			}*/
-		}
-	}
+            logBuf.append("  Client=[" + socketString + "]");
+            if (logger.isDebugEnabled() && !noLog) {
+                logger.debug(logBuf.toString());
+            } /*else if (logger.isInfoEnabled()) {
+                logger.info(logBuf.toString());
+            }*/
+        }
+    }
 
 
     /**
@@ -1625,9 +1626,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
             // 取得結果確認
-			if (keyNodeRemoveRet == null || keyNodeRemoveRet.length < 1) {
-				throw new BatchException("Key Node IO Error: detail info for log file");
-			} else if (keyNodeRemoveRet[1].equals("false")) {
+            if (keyNodeRemoveRet == null || keyNodeRemoveRet.length < 1) {
+                throw new BatchException("Key Node IO Error: detail info for log file");
+            } else if (keyNodeRemoveRet[1].equals("false")) {
 
                 // 削除失敗(元データなし)
                 retStrs[0] = keyNodeRemoveRet[0];
