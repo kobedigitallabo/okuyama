@@ -107,8 +107,8 @@ public class SystemUtil {
      */
     public static void debugLine(String outputStr) {
         if (StatusUtil.getDebugOption()) {
-            StringBuffer strBuf = new StringBuffer(100);
-            strBuf.append(new Date());
+            StringBuilder strBuf = new StringBuilder(100);
+            strBuf.append(new Date().toString());
             strBuf.append(" DebugLine \"");
             strBuf.append(outputStr);
             strBuf.append("\"");

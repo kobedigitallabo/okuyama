@@ -7,6 +7,7 @@ import java.net.*;
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
+import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.JavaSystemApi;
@@ -29,8 +30,9 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
     private String requestLine = null;
     private String[] requestSplit = null;
 
-
     private StringBuilder retGetBuf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
+
+    private String clientInfo = null;
 
 
     /**
@@ -42,6 +44,16 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
         this.methodMatch = true;
         this.requestLine = null;
         this.requestSplit = null;
+    }
+
+
+    /**
+     * 自身が担当する通信対象の情報を設定する.<br>
+     *
+     * @param clientInfo 通信対象の情報
+     */
+    public void setClientInfo(String clientInfo) {
+        this.clientInfo = clientInfo;
     }
 
 
@@ -59,29 +71,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
      * @throw Exception
      */
     public String takeRequestLine(CustomReader br, PrintWriter pw) throws Exception {
-        String retStr = null;
-/*        this.nextExec = 1;
-
-        String executeMethodStr = br.readLine();
-
-        this.requestLine = executeMethodStr;
-
-        // 切断指定確認
-        if (executeMethodStr == null ||
-            executeMethodStr.trim().equals("quit") ||
-                executeMethodStr.equals(ImdstDefine.imdstConnectExitRequest)) {
-
-            // 接続を切断
-            this.nextExec = 3;
-            return executeMethodStr;
-        }
-
-        // memcacheクライアントの内容からリクエストを作り上げる
-        retStr = this.memcacheMethodCnv(executeMethodStr, br, pw);
-
-        if (retStr == null) this.nextExec = 2;
-*/
-        return retStr;
+        return null;
     }
 
     /**
@@ -100,7 +90,8 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
         String executeMethodStr = br.readLine();
 
         // Debugログ書き出し
-        SystemUtil.debugLine("Request_1  " + requestLine);
+        if (StatusUtil.getDebugOption()) 
+            SystemUtil.debugLine(clientInfo + " : Request_head : " + requestLine);
 
         this.requestLine = executeMethodStr;
 
@@ -120,16 +111,21 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
         // memcacheクライアントの内容からリクエストを作り上げる
         retStrs = this.memcacheMethodCnv(executeMethodStr, br, pw);
 
-        if (retStrs != null) {
-            for (int i = 0; i < retStrs.length; i++) {
-                // Debugログ書き出し
-                SystemUtil.debugLine("Request_2  " + retStrs[i]);
-            }
-        } else {
-            SystemUtil.debugLine("Request_2  null");
-        }
-
+        // 以降の処理支持を決定
         if (retStrs == null) this.nextExec = 2;
+
+
+        // Debugログ書き出し
+        if (StatusUtil.getDebugOption()) {
+
+            if(retStrs != null) {
+                for (int i = 0; i < retStrs.length; i++) {
+                    SystemUtil.debugLine(clientInfo + " : Request_body : " + retStrs[i]);
+                }
+            } else {
+                SystemUtil.debugLine(clientInfo + " : Request_body : null");
+            }
+        }
 
         return retStrs;
     }
@@ -153,7 +149,8 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
         }
 
         // Debugログ書き出し
-        SystemUtil.debugLine("Response   " + retStr);
+        if (StatusUtil.getDebugOption()) 
+            SystemUtil.debugLine(clientInfo + " : Response  : " + retStr);
 
         return retStr;
     }

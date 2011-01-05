@@ -64,37 +64,54 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
             while (true) {
 
                 Socket soc = svSoc.accept();
-                soc.close();
-                break;
+                try {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(soc.getInputStream(), "UTF-8"));
+                    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(soc.getOutputStream() , "UTF-8")));
 
-/*
-                BufferedReader br = new BufferedReader(new InputStreamReader(soc.getInputStream(), "UTF-8"));
-                PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(soc.getOutputStream() , "UTF-8")));
+                    String command = br.readLine();
+                    if (command.equals("shutdown")) {
+                        pw.println("Commond Success");
+                        pw.flush();
+                        pw.println("Shutdown ...");
+                        pw.flush();
+                        Thread.sleep(1500);
+                        soc.close();
+                        JavaMain.shutdownMainProccess();
+                        break;
+                    } else if (command.equals("debug")) {
 
-                String command = br.readLine();
+                        StatusUtil.setDebugOption(true);
+                        pw.println(command + " Suuccess");
+                        pw.flush();
 
-                if (command.equals("shutdown")) {
-                    pw.println("Shutdown processing beginning");
-                    pw.flush();
-                    pw.close();
-                    br.close();
-                    soc.close();
+                        Thread.sleep(1500);
 
-                    JavaMain.shutdownMainProccess();
-                } else if (command.equals("status")) {
+                        br.close();
+                        pw.close();
+                        soc.close();
+                    } else if (command.equals("nodebug")) {
 
-                    pw.println("Starting Server ...");
-                    pw.flush();
-                } else {
-                    pw.println(command + " Command Not Found");
-                    pw.flush();
+                        StatusUtil.setDebugOption(false);
+                        pw.println(command + " Suuccess");
+                        pw.flush();
+
+                        br.close();
+                        pw.close();
+                        Thread.sleep(1500);
+                        soc.close();
+                    } else {
+                        pw.println(command + " Command Not Found");
+                        pw.flush();
+
+                        br.close();
+                        pw.close();
+                        Thread.sleep(1500);
+                        soc.close();
+                    }
+                } catch(Exception innerE) {
+                    logger.info("ServerControllerHelper - executeHelper - Inner-Error", innerE);
                 }
-                pw.close();
-                br.close();
-                soc.close();
-*/
             }
-            JavaMain.shutdownMainProccess();
         } catch(Exception e) {
             e.printStackTrace();
             logger.error("ServerControllerHelper - executeHelper - Error", e);

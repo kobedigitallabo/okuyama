@@ -225,6 +225,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         socket = (Socket)queueMap[ImdstDefine.paramSocket];
                         socket.setSoTimeout(0);
                         socketString = socket.toString();
+                        this.porotocolTaker.setClientInfo(socketString);
                         closeFlg = false;
                     }
 
@@ -480,7 +481,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         retParamStr = this.porotocolTaker.takeResponseLine(retParams);
                     } else {
-
+                        okuyamaPorotocolTaker.setClientInfo(socketString);
                         retParamStr = okuyamaPorotocolTaker.takeResponseLine(retParams);
                     }
 
@@ -561,9 +562,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 処理待機を加算
                     if (!reloopSameClient)
                         numberOfQueueBindWaitCounter.getAndIncrement();
-
-                    // 処理Logを出力
-                    this.outputExecutionLog(retParams, clientParameterList, closeFlg, socketString);
                 }
             }
 
@@ -585,60 +583,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      *
      */
     public void endHelper() {
-    }
-
-
-    private void outputExecutionLog(String[] retParams, String[] clientParameterList, boolean closeFlg, String socketString) {
-        boolean noLog = false;
-        if(logger.isDebugEnabled()) {
-        //if(logger.isDebugEnabled() || logger.isInfoEnabled()) {
-            StringBuffer logBuf = new StringBuffer(100);
-
-            if (closeFlg) {
-
-                logBuf.append("Close Connection");
-            } else if (retParams != null && retParams.length > 0 &&
-                     clientParameterList.length > 0 && clientParameterList != null) {
-
-                logBuf.append("Method=");
-                logBuf.append(retParams[0]);
-                logBuf.append("  ");
-
-                if (retParams.length > 1) {
-                    logBuf.append("ExecutionResult=");
-                    logBuf.append(retParams[1]);
-                    logBuf.append("  ");
-                }
-
-                if (retParams[0] != null) {
-                    if (retParams[0].equals("1") || 
-                            retParams[0].equals("2") ||
-                                retParams[0].equals("3") ||
-                                    retParams[0].equals("5") ||
-                                        retParams[0].equals("6") ||
-                                            retParams[0].equals("15") ||
-                                                retParams[0].equals("16")) {
-                        if (clientParameterList[1] != null && clientParameterList[1].indexOf(ImdstDefine.ConfigSaveNodePrefixEncodeStr) == 0) noLog = true;
-                        logBuf.append("Key=");
-                        logBuf.append(clientParameterList[1]);
-                    }
-                }
-
-            } else {
-
-                logBuf.append("Unexpected error  ");
-                logBuf.append("retParams=[" + retParams +"]  ");
-                logBuf.append("clientParameterList=[" + clientParameterList +"]");
-            }
-
-
-            logBuf.append("  Client=[" + socketString + "]");
-            if (logger.isDebugEnabled() && !noLog) {
-                logger.debug(logBuf.toString());
-            } /*else if (logger.isInfoEnabled()) {
-                logger.info(logBuf.toString());
-            }*/
-        }
     }
 
 

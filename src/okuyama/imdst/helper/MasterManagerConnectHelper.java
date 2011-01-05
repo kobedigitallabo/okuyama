@@ -13,6 +13,7 @@ import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.JavaSystemApi;
 import okuyama.imdst.util.io.CustomReader;
 
@@ -61,6 +62,12 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                 if (param == null || param.length < 1) continue;
 
                 Socket socket = (Socket)param[0];
+
+                // ログ書き出し
+                logger.info("Accept : " + socket.toString());
+                SystemUtil.debugLine("Accept : " + socket.toString());
+
+
                 PrintWriter pw = new PrintWriter(
                                     new BufferedWriter(
                                         new OutputStreamWriter(socket.getOutputStream(), 

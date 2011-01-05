@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
+import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.io.CustomReader;
@@ -25,6 +26,8 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
 
     private StringBuilder retParamBuf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
 
+    private String clientInfo = null;
+
 
     /**
      * 初期化
@@ -33,6 +36,16 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
     public void init() {
         this.nextExec = 0;
         this.methodMatch = true;
+    }
+
+
+    /**
+     * 自身が担当する通信対象の情報を設定する.<br>
+     *
+     * @param clientInfo 通信対象の情報
+     */
+    public void setClientInfo(String clientInfo) {
+        this.clientInfo = clientInfo;
     }
 
 
@@ -76,7 +89,8 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
         }
 
         // Debugログ書き出し
-        SystemUtil.debugLine("Request   " + retStrs.toString());
+        if (StatusUtil.getDebugOption()) 
+            SystemUtil.debugLine("Request  : " + retStrs.toString());
 
         return retStrs;
     }
@@ -107,7 +121,8 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
         }
 
         // Debugログ書き出し
-        SystemUtil.debugLine("Request   " + retStr);
+        if (StatusUtil.getDebugOption()) 
+            SystemUtil.debugLine(clientInfo + " : Request  : " + retStr);
 
         return retStr;
     }
@@ -183,7 +198,8 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
         }
 
         // Debugログ書き出し
-        SystemUtil.debugLine("Response  " + retParamBuf);
+        if (StatusUtil.getDebugOption()) 
+            SystemUtil.debugLine(clientInfo + " : Response : " + retParamBuf);
 
         return this.retParamBuf.toString();
     }

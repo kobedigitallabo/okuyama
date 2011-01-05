@@ -11,7 +11,7 @@ public class ImdstDefine {
 
     public static final String okuyamaVersion = "VERSION okuyama-0.8.5";
 
-    /* -- KeyMapファイルに関係する定数 ----------                        */
+    // -- KeyMapファイルに関係する定数 -------------------------------------------------
     // KeyNodeのWorkファイルでのセパレータ
     //public static final String keyWorkFileSep = "#imdst7386#";
     public static final String keyWorkFileSep = ",";
@@ -24,7 +24,7 @@ public class ImdstDefine {
     public static final String keyWorkFileEndPointStr = ";";
 
 
-    /* --  クライアントとの転送内容に使用する定数 ----------              */
+    // --  クライアントとの転送内容に使用する定数 -------------------------------------
     // クライアントとの文字コード
     public static final String keyHelperClientParamEncoding = "UTF-8";
 
@@ -137,16 +137,15 @@ public class ImdstDefine {
     // Memcachedのsetコマンド変換用の部分文字列
     public static final String memcachedSetCommandPaddingStr =ImdstDefine.keyHelperClientParamSep + ImdstDefine.imdstBlankStrData + ImdstDefine.keyHelperClientParamSep + "0" + ImdstDefine.keyHelperClientParamSep; // // TransactionCode(0固定)
 
-
-
-    /* --  通信時の固定文字列系定数  ----------                           */
+    // --  通信時の固定文字列系定数  --------------------------------------------------
     // クラインが接続を切断する際に通知する文字列
     public static final String imdstConnectExitRequest = "(&imdst9999&)";
 
     // 全てのKeyMapObjectファイルをKey=Valueの形式で接続した場合のデータ区切り文字
     public static final String imdstConnectAllDataSendDataSep = ";";
 
-    /* --  設定ファイルの固定文字列系定数  ----------                     */
+
+    // --  設定ファイルの固定文字列系定数  ---------------------------------------------
     public static final String Prop_KeyMapNodesRule = "KeyMapNodesRule";
     public static final String Prop_KeyMapNodesInfo = "KeyMapNodesInfo";
     public static final String Prop_SubKeyMapNodesInfo = "SubKeyMapNodesInfo";
@@ -188,7 +187,7 @@ public class ImdstDefine {
     public static final String Prop_KeyStoreDirs = ".keyStoreDirs";
 
 
-    /* -- ここからプログラム内固定文字列系(Mapのキーとか)  ----------      */
+    // -- ここからプログラム内固定文字列系(Mapのキーとか)  -------------------------------
     public static final String dataNodeParamKey_1 = "dataNodeNameList";
     public static final String dataNodeParamKey_2 = "dataNodePortList";
     public static final String dataNodeParamKey_3 = "dataSubNodeNameList";
@@ -238,23 +237,12 @@ public class ImdstDefine {
 
     public static final String addNode4ConsistentHashMode = "addNode4ConsistentHashMode";
 
-    // 分散アルゴリズムにConsistentHashを使用した場合の仮想ノードの数
-    public static final int consistentHashVirtualNode = 50;
-
     // Value値に含まれるメタ情報の区切り文字
     public static final String valueMetaColumnSep = "-";
 
-    // 有効期限切れのデータを実際に物理削除するまでの経過時間(ミリ秒)
-    public static final long invalidDataDeleteTime = 300000;
 
 
-
-    // データサイズ演算設定
-    // true:計算する
-    // false:計算しない
-    public static final boolean calcSizeFlg = false;
-
-    /* -- プログラム規定数値 ----------------------------------------      */
+    // ---- プログラム規定数値 -------------------------------------------------------------
     // 保存出来る、Key、Tag、Valueの最大長
     // Valueの最大長
     public static final int saveDataMaxSize = 1048576;
@@ -320,22 +308,43 @@ public class ImdstDefine {
     public static final int recoverConnectionTimeout = 60000 * 60;
 
 
-    // ---- KeyMapManager系 ----
+    // ---- 分散アルゴリズム系 ---------------------------------------------------
+    // 分散アルゴリズムにConsistentHashを使用した場合の仮想ノードの数
+    public static final int consistentHashVirtualNode = 50;
+
+
+    // ---- KeyMapManager系 ------------------------------------------------------
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う候補となる
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     public static final int vacuumStartLimit = 100000;
-
 
     // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.dataFileWriteMaxSize * 1.38) = 不要サイズ
     public static final int vacuumStartCompulsionLimit = 1000000;
 
-
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     public static final int vacuumExecAfterAccessTime = 30000;
 
-
     // トランザクションログをローテーションする際のサイズ(1.8GB)
     public static final long workFileChangeNewFileSize = 1610612736;
+
+    // 保存データサイズの合計値演算設定
+    // true:計算する
+    // false:計算しない
+    public static final boolean calcSizeFlg = false;
+
+    // 有効期限切れデータバキューム実行指定
+    public static boolean vacuumInvalidDataFlg = true;
+
+    // 有効期限切れデータ削除チェックサイクル(単位:分)
+    public static int startVaccumInvalidCount = 1;
+//  public static int startVaccumInvalidCount = 30;
+
+    // 有効期限切れのデータを実際に物理削除するまでの経過時間(ミリ秒)
+//    public static final long invalidDataDeleteTime = 300000;
+    public static final long invalidDataDeleteTime = 10000;
+
+
+
 }

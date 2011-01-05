@@ -7,6 +7,8 @@ import java.net.*;
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
+import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.io.CustomReader;
 
@@ -27,6 +29,9 @@ public class MemcachedProtocolTaker4Data  extends AbstractProtocolTaker implemen
     private String requestLine = null;
     private String[] requestSplit = null;
 
+    private String clientInfo = null;
+
+
     /**
      * 初期化
      *
@@ -38,6 +43,14 @@ public class MemcachedProtocolTaker4Data  extends AbstractProtocolTaker implemen
         this.requestSplit = null;
     }
 
+    /**
+     * 自身が担当する通信対象の情報を設定する.<br>
+     *
+     * @param clientInfo 通信対象の情報
+     */
+    public void setClientInfo(String clientInfo) {
+        this.clientInfo = clientInfo;
+    }
 
     /**
      * memcache用のリクエストをパースし共通のプロトコルに変換.<br>

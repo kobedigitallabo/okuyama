@@ -112,9 +112,6 @@ public class KeyMapManager extends Thread {
     // データへの最終アクセス時間
     private long lastAccess = 0L;
 
-    // 無効データバキューム実行指定
-    private boolean vacuumInvalidDataFlg = true;
-
     // データファイルのバキューム実行指定
     private boolean vacuumExec = true;
 
@@ -463,17 +460,19 @@ public class KeyMapManager extends Thread {
                 }
                 logger.info("VacuumCheck - End");
 
-
+long start = 0L;
+long end = 0L;
                 // 有効期限切れデータの削除
-                // 実行指定(vacuumInvalidDataFlg)がtrueの場合に1時間に1回実行される
+                // 実行指定(ImdstDefine.vacuumInvalidDataFlg)がtrueの場合に1時間に1回実行される
                 // このif文に到達するのが1分に1回なので、それを60回繰り返すと削除処理を実行する
-                if (vacuumInvalidDataFlg == true && vacuumInvalidDataCount > 60) {
-                    logger.debug("vacuumInvalidData - Start - 1");
-
+                if (ImdstDefine.vacuumInvalidDataFlg == true && vacuumInvalidDataCount > ImdstDefine.startVaccumInvalidCount) {
+                    logger.info("vacuumInvalidData - Start - 1");
+System.out.println("vacuumInvalidData - Start");
                     synchronized(this.poolKeyLock) {
                         Set entrySet = this.keyMapObj.entrySet();
                         Iterator entryIte = entrySet.iterator(); 
-
+                        long removeTagetData =0L;
+start = System.nanoTime();
                         long counter = 0;
                         while(entryIte.hasNext()) {
 
@@ -499,11 +498,18 @@ public class KeyMapManager extends Thread {
 
                                     // 無効データは削除
                                     this.removeKeyPair((String)key, "0");
+                                    removeTagetData++;
                                 }
                             }
                         }
+                        logger.info("RemoveInvalidData - Count [" + removeTagetData + "]");
+end = System.nanoTime();
+System.out.println((end - start) / 1000 / 1000);
+System.out.println("RemoveInvalidData - Count [" + removeTagetData + "]");
+
                     }
-                    logger.debug("vacuumInvalidData - End - 1");
+System.out.println("vacuumInvalidData - End");
+                    logger.info("vacuumInvalidData - End - 1");
                     vacuumInvalidDataCount = 0;
                 }
 
@@ -571,12 +577,7 @@ public class KeyMapManager extends Thread {
                             data = keyNode;
                         }
                     } 
-/*
-                    else if (keyNode.indexOf("-1") == -1) {
 
-                        data = keyNode;
-                    }
-*/
                     // 登録
                     keyMapObjPut(key, data);
 

@@ -14,6 +14,7 @@ import okuyama.base.util.LoggerFactory;
 import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.protocol.*;
 import okuyama.imdst.util.JavaSystemApi;
 
@@ -109,6 +110,8 @@ public class KeyManagerHelper extends AbstractHelper {
 
             String execCheckStr = null;
 
+            String clientInfo = null;
+
             // Jobからの引数
             this.keyMapManager = (KeyMapManager)parameters[0];
             String pollQueueName = (String)parameters[1];
@@ -155,6 +158,7 @@ public class KeyManagerHelper extends AbstractHelper {
                         br = (BufferedReader)queueMap[ImdstDefine.paramBr];
                         soc = (Socket)queueMap[ImdstDefine.paramSocket];
                         soc.setSoTimeout(0);
+                        clientInfo = soc.toString();
                         closeFlg = false;
                     }
 
@@ -171,6 +175,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     if (this.porotocolTaker != null) {
 
                         this.porotocolTaker = ProtocolTakerFactory.getProtocolTaker(this.protocolMode + "_datanode");
+                        this.porotocolTaker.setClientInfo(clientInfo);
 
                         // Takerで会話開始
                         clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
@@ -196,6 +201,10 @@ public class KeyManagerHelper extends AbstractHelper {
 
                         // okuyamaプロトコル
                         clientParametersStr = br.readLine();
+
+                        // Debugログ書き出し
+                        if (StatusUtil.getDebugOption()) 
+                            SystemUtil.debugLine(clientInfo + " : Request  : " + clientParametersStr);
                     }
 
 
@@ -507,10 +516,10 @@ public class KeyManagerHelper extends AbstractHelper {
                         case 60 :
 
                             // KeyMapManagerのデータサイズを返す
-							String unique = null;
-							if (clientParameterList.length > 1 && !clientParameterList[1].trim().equals("")) {
-								unique = clientParameterList[1];
-							}
+                            String unique = null;
+                            if (clientParameterList.length > 1 && !clientParameterList[1].trim().equals("")) {
+                                unique = clientParameterList[1];
+                            }
 
 
                             long saveSize = this.keyMapManager.getSaveDataSize(unique);
@@ -521,7 +530,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(unique);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-							retParamBuf.append(saveSize);
+                            retParamBuf.append(saveSize);
                             break;
                         case 100 :
 
@@ -538,6 +547,11 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
                     if (retParamBuf.length() > 0) {
+
+                        // Debugログ書き出し
+                        if (StatusUtil.getDebugOption()) 
+                            SystemUtil.debugLine(clientInfo + " : Response : " + retParamBuf);
+
                         // プロトコルに合わせて処理を分岐
                         if (this.porotocolTaker != null) {
 
@@ -560,7 +574,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             if(!br.ready()) {
 
                                 br.mark(1);
-                                soc.setSoTimeout(300);
+                                soc.setSoTimeout(200);
                                 int readCheck = br.read();
                                 br.reset();
                                 reloopSameClient = true;

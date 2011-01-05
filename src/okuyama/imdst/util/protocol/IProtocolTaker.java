@@ -25,6 +25,8 @@ public interface IProtocolTaker {
 
     public void init();
 
+    public void setClientInfo(String clientInfo);
+
     public String takeRequestLine(CustomReader br, PrintWriter pw) throws Exception;
 
     public String takeRequestLine(BufferedReader br, PrintWriter pw) throws Exception;
