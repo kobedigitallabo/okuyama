@@ -324,7 +324,7 @@ public class ImdstDefine {
     public static final int vacuumStartCompulsionLimit = 1000000;
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
-    public static final int vacuumExecAfterAccessTime = 30000;
+    public static final int vacuumExecAfterAccessTime = 200;
 
     // トランザクションログをローテーションする際のサイズ(1.8GB)
     public static final long workFileChangeNewFileSize = 1610612736;
@@ -343,7 +343,7 @@ public class ImdstDefine {
 
     // 有効期限切れのデータを実際に物理削除するまでの経過時間(ミリ秒)
 //    public static final long invalidDataDeleteTime = 300000;
-    public static final long invalidDataDeleteTime = 10000;
+    public static final long invalidDataDeleteTime = 5000;
 
 
 

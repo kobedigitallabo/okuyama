@@ -91,7 +91,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
         // Debugログ書き出し
         if (StatusUtil.getDebugOption()) 
-            SystemUtil.debugLine(clientInfo + " : Request_head : " + requestLine);
+            SystemUtil.debugLine(clientInfo + " : Request_head : " + executeMethodStr);
 
         this.requestLine = executeMethodStr;
 
