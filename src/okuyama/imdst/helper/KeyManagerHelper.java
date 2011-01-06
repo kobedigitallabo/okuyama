@@ -521,7 +521,6 @@ public class KeyManagerHelper extends AbstractHelper {
                                 unique = clientParameterList[1];
                             }
 
-
                             long saveSize = this.keyMapManager.getSaveDataSize(unique);
 
                             retParamBuf.append("60");
@@ -531,6 +530,48 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(unique);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(saveSize);
+                            break;
+                        case 61 :
+
+                            // 特定のIsolation単位のデータを全て削除する
+                            // Isolationキーを先頭"#"付で指定する.6文字固定となる
+                            // もしくは、"#all"を指定する.これは全てのデータを削除する
+                            String truncateKey = null;
+
+                            if (clientParameterList.length > 1 && !clientParameterList[1].trim().equals("")) {
+
+                                truncateKey = clientParameterList[1];
+
+                                if ((truncateKey.indexOf("#") == 0 && truncateKey.length() == 6) || truncateKey.equals("#all")) {
+
+                                    long truncateCount = this.keyMapManager.truncateData(truncateKey);
+                                    retParamBuf.append("61");
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append("true");
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(truncateKey);
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(truncateCount);
+                                } else {
+
+                                    retParamBuf.append("61");
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append("false");
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(truncateKey);
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append("0");
+                                }
+                            } else {
+
+                                retParamBuf.append("61");
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append("false");
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(truncateKey);
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append("0");
+                            }
                             break;
                         case 100 :
 

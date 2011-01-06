@@ -179,6 +179,7 @@ public class KeyMapManager extends Thread {
         this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, dirs);
     }
 
+
     /**
      * 初期化処理
      */
@@ -334,6 +335,7 @@ public class KeyMapManager extends Thread {
         logger.debug("init - end");
     }
 
+
     /**
      * 定期的にトランザクションログファイルのローテーション及び、Vacuum処理を行う.<br>
      * システム停止要求を監視して停止依頼があった場合は自身を終了する.<br>
@@ -460,23 +462,23 @@ public class KeyMapManager extends Thread {
                 }
                 logger.info("VacuumCheck - End");
 
-long start = 0L;
-long end = 0L;
+
+
                 // 有効期限切れデータの削除
                 // 実行指定(ImdstDefine.vacuumInvalidDataFlg)がtrueの場合に1時間に1回実行される
-                // このif文に到達するのが1分に1回なので、それを60回繰り返すと削除処理を実行する
-                if (ImdstDefine.vacuumInvalidDataFlg == true && vacuumInvalidDataCount > ImdstDefine.startVaccumInvalidCount) {
-                    logger.info("vacuumInvalidData - Start - 1");
-System.out.println("vacuumInvalidData - Start");
+                // このif文に到達するのが1分に1回なので、それを30回繰り返すと削除処理を実行する
+                if (dataMemory == true && ImdstDefine.vacuumInvalidDataFlg == true && vacuumInvalidDataCount > ImdstDefine.startVaccumInvalidCount) {
+                    logger.info("VacuumInvalidData - Start - 1");
+
                     synchronized(this.poolKeyLock) {
                         Set entrySet = this.keyMapObj.entrySet();
                         Iterator entryIte = entrySet.iterator(); 
                         long removeTagetData =0L;
-start = System.nanoTime();
+
                         long counter = 0;
                         while(entryIte.hasNext()) {
-
-                            if ((counter % 2000) == 0) logger.info("vacuumInvalidData - Exec Count[" + counter + "]");
+                            counter++;
+                            if ((counter % 5000) == 0) logger.info("VacuumInvalidData - Exec Count[" + counter + "]");
 
                             Map.Entry obj = (Map.Entry)entryIte.next();
                             if (obj == null) continue;
@@ -488,7 +490,7 @@ start = System.nanoTime();
                             String[] valStrSplit = valStr.split(ImdstDefine.setTimeParamSep);
                             valStr = valStrSplit[0];
 
-                            // 有効期限チェックを行う(有効期限を5分過ぎているデータが対象)
+                            // 有効期限チェックを行う(有効期限を1分過ぎているデータが対象)
                             String[] checkValueSplit = valStr.split(ImdstDefine.keyHelperClientParamSep);
 
                             if (checkValueSplit.length > 1) {
@@ -502,14 +504,10 @@ start = System.nanoTime();
                                 }
                             }
                         }
-                        logger.info("RemoveInvalidData - Count [" + removeTagetData + "]");
-end = System.nanoTime();
-System.out.println((end - start) / 1000 / 1000);
-System.out.println("RemoveInvalidData - Count [" + removeTagetData + "]");
 
+                        logger.info("RemoveInvalidData - Count [" + removeTagetData + "]");
                     }
-System.out.println("vacuumInvalidData - End");
-                    logger.info("vacuumInvalidData - End - 1");
+                    logger.info("VacuumInvalidData - End - 1");
                     vacuumInvalidDataCount = 0;
                 }
 
@@ -526,6 +524,54 @@ System.out.println("vacuumInvalidData - End");
 
 
     /**
+     * 指定のIsolation指定のuniqueKeyに関係するデータを全て削除する.<br>
+     *
+     * @param uniqueKey
+     * @return long 削除件数
+     */
+    public long truncateData(String uniqueKey) {
+        long truncateTagetData =0L;
+        try {
+
+            String tagUniqueKey = tagStartStr + uniqueKey;
+
+            logger.info("truncateData - Start");
+            synchronized(this.poolKeyLock) {
+                Set entrySet = this.keyMapObj.entrySet();
+                Iterator entryIte = entrySet.iterator(); 
+
+
+                long counter = 0;
+                while(entryIte.hasNext()) {
+                    counter++;
+                    if ((counter % 5000) == 0) logger.info("TruncateData - Exec Count[" + counter + "]");
+
+                    Map.Entry obj = (Map.Entry)entryIte.next();
+                    if (obj == null) continue;
+                    String key = null;
+
+                    key = (String)obj.getKey();
+
+                    if (uniqueKey.equals("#all") || (key.indexOf(uniqueKey) == 0 || key.indexOf(tagUniqueKey) == 0)) {
+
+                        // 削除対象データ
+                        this.removeKeyPair((String)key, "0");
+                        truncateTagetData++;
+                    }
+                }
+                logger.info("TruncateData - TotalTargetCount [" + counter + "]");
+                logger.info("TruncateData - TotalRemoveCount [" + truncateTagetData + "]");
+            }
+            logger.info("truncateData - End");
+        } catch (Exception e) {
+            logger.error("truncateData - Error" + e);
+            e.printStackTrace();
+        }
+        return truncateTagetData;
+    }
+
+
+    /**
      * キーを指定することでノードをセットする.<br>
      *
      * @param key キー値
@@ -534,6 +580,7 @@ System.out.println("vacuumInvalidData - End");
      * @param boolean 移行データ指定
      */
     public void setKeyPair(String key, String keyNode, String transactionCode) throws BatchException {
+
         if (!blocking) {
             try {
 
@@ -2248,8 +2295,8 @@ System.out.println("vacuumInvalidData - End");
     }
 
     // 格納データのサイズを返す
-    public long getSaveDataSize(String unique) {
-        return this.keyMapObj.getDataUseSize(unique);
+    public long getSaveDataSize(String uniqueKey) {
+        return this.keyMapObj.getDataUseSize(uniqueKey);
     }
 
     // 自身のステータスがエラーでないかを返す

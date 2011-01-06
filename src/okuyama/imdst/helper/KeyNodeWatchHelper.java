@@ -115,7 +115,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                         if(pingRet[0].equals("false")) {
                             // ノードダウン
                             logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Dead");
-                            super.setDeadNode(nodeInfo, 1, null);
+                            super.setDeadNode(nodeInfo, 1, null, true);
                             StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "Node Check Dead");
                         } else if (!super.isNodeArrival(nodeInfo)) {
 
@@ -140,7 +140,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 logger.info("Node Name [" + nodeInfo +"] Use Wait 1-1 Start");
 
                                 // 復旧前に現在稼働中のMasterNodeに再度停止ノードと、リカバー開始を伝える
-                                super.setDeadNode(nodeInfo, 1, null);
+                                super.setDeadNode(nodeInfo, 1, null, true);
                                 super.setRecoverNode(true, (String)subNodeList.get(i));
 
                                 logger.info(nodeInfo + " - Recover Start");
@@ -193,7 +193,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             if(pingRet[0].equals("false")) {
                                 // ノードダウン
                                 logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Dead");
-                                super.setDeadNode(subNodeInfo, 2 ,null);
+                                super.setDeadNode(subNodeInfo, 2,null, true);
                                 StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "SubNode Check Dead");
                             } else if (!super.isNodeArrival(subNodeInfo)) {
 
@@ -212,7 +212,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 }
 
                                 // 復旧前に現在稼働中のMasterNodeに再度停止ノードと、リカバー開始を伝える
-                                super.setDeadNode(subNodeInfo, 1, null);
+                                super.setDeadNode(subNodeInfo, 1, null, true);
                                 super.setRecoverNode(true, nodeInfo);
 
                                 logger.info(subNodeInfo + " - Recover Start");

@@ -626,10 +626,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-            // Isolation変換実行
+            // KeyをIsolation変換実行
             keyStr = this.encodeIsolationConvert(keyStr);
-            tagStr = this.encodeIsolationConvert(tagStr);
-
 
             // Key値チェック
             if (!this.checkKeyLength(keyStr)) {
@@ -658,13 +656,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 String[] tags = tagStr.split(ImdstDefine.imdstTagKeyAppendSep);
 
                 for (int i = 0; i < tags.length; i++) {
+
+                    // TagをIsolation変換実行
+                    tags[i] = this.encodeIsolationConvert(tags[i]);
+
                     if (!this.checkKeyLength(tags[i]))  {
                         // 保存失敗
                         retStrs[0] = "1";
                         retStrs[1] = "false";
                         throw new BatchException("Tag Data Length Error");
-
                     }
+
                     // Tag値保存先を問い合わせ
                     String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i], this.reverseAccess);
                     tagKeyPair = new String[2];
@@ -776,9 +778,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-            // Isolation変換実行
+            // KeyをIsolation変換実行
             keyStr = this.encodeIsolationConvert(keyStr);
-            tagStr = this.encodeIsolationConvert(tagStr);
 
             // Key値チェック
             if (!this.checkKeyLength(keyStr))  {
@@ -837,6 +838,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 String[] tags = tagStr.split(ImdstDefine.imdstTagKeyAppendSep);
 
                 for (int i = 0; i < tags.length; i++) {
+                    // TagをIsolation変換実行
+                    tags[i] = this.encodeIsolationConvert(tags[i]);
+
                     if (!this.checkKeyLength(tags[i]))  {
                         // 保存失敗
                         retStrs[0] = "6";
@@ -921,9 +925,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-            // Isolation変換実行
+            // KeyをIsolation変換実行
             keyStr = this.encodeIsolationConvert(keyStr);
-            tagStr = this.encodeIsolationConvert(tagStr);
 
             // Key値チェック
             if (!this.checkKeyLength(keyStr))  {
@@ -982,6 +985,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 String[] tags = tagStr.split(ImdstDefine.imdstTagKeyAppendSep);
 
                 for (int i = 0; i < tags.length; i++) {
+
+                    // TagをIsolation変換
+                    tags[i] = this.encodeIsolationConvert(tags[i]);
+
                     if (!this.checkKeyLength(tags[i]))  {
                         // 保存失敗
                         retStrs[0] = "16";
