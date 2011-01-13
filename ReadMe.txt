@@ -15,11 +15,12 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   1.1. ImdstDefine.calcSizeFlgをtrueにする
   1.2. DataNodeに接続
   1.3. "60,all"と送信:全体値が取れる
-  1.4. "60,Isolationの5文字Prefix"と送信:Isolation単位で取れる
+  1.4. "60,"#" + Isolationの5文字Prefix"と送信:Isolation単位で取れる
 
 2.有効期限切れデータ自動削除
   2.1. ImdstDefine.vacuumInvalidDataFlgをtrueにする
-  2.2. 有効期限切れ自動パージは60分に1回実行され、かつチェック時に有効期限を5分切れているデータが物理削除対象
+  2.2. Key、Value両方がMemoryの場合のみ実行される
+  2.3. 有効期限切れ自動パージは30分に1回実行され、かつチェック時に有効期限を5分切れているデータが物理削除対象
 
 3.デバッグオプションを追加。通信ログを標準出力に出力するように機能追加
   3.1. DataNode、MasterNodeともに起動時の第3引数に"-debug"を付加して起動すると、標準出力に通信内容が出力される
@@ -30,6 +31,12 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
        "shutdown" : サーバ停止
        "debug" : デバッグオプションtrueに動的に変更
        "nodebug" : デバッグオプションfalseに動的に変更
+
+5.truncateを実装
+  5.1. データ削除機能として、Isolation単位および、全体を一度に消す
+       DataNodeの通常ポートに接続
+       ・"61,#all"と送信:DataNodeのすべてが消える
+       ・"61,"#"+IoslationPrefix文字列"と送信:DataNodeからIsolation単位で消す
 
 
 ========================================================================================================

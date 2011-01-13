@@ -289,7 +289,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
             this.serverSocket = new ServerSocket();
             this.serverSocket.bind(bindAddress, this.backLog);
-            
+
             // 共有領域にServerソケットのポインタを格納
             super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
 
@@ -351,12 +351,6 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 helperShareParams[(new Long(queueIndex).intValue()*2)+1] = queueBindHelperCount;
             }
 
-            /*
-            for (int i = 0; i < (this.maxWorkerParallelQueue * 2); i=i+2) {
-                System.out.println(helperShareParams[i]);
-                System.out.println(helperShareParams[i+1]);
-                System.out.println("-----------------");
-            }*/
 
             queueIndex = 0;
             for (int i = 0; i < this.maxWorkerParallelExecution; i++) {
@@ -396,21 +390,40 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) break;
                 try {
 
-                    // クライアントからの接続待ち
-                    socket = serverSocket.accept();
-                    accessCount++;
-
                     Object[] queueParam = new Object[2];
-                    queueParam[0] = socket;
                     if (this.loadBalance) {
                         queueParam[1] = this.balanceModes[new Long(accessCount % this.balancePattern).intValue()];
                     } else {
                         queueParam[1] = this.noBalance;
                     }
 
+                    // クライアントからの接続待ち
+                    socket = serverSocket.accept();
+
+                    // ソケット格納
+                    queueParam[0] = socket;
+
                     // アクセス済みのソケットをキューに貯める
                     super.addSpecificationParameterQueue("MasterManagerConnectHelper" + (accessCount%this.maxConnectParallelQueue), queueParam);
+                    accessCount++;
 
+                } catch (IOException ie) {
+
+                    // IOエラーの場合は再度SocketをOpenする
+                    try {
+                        serverSocket.close();
+                    } catch (IOException ie2) {
+                    } finally {
+                        try {
+
+                            this.serverSocket = new ServerSocket();
+                            this.serverSocket.bind(bindAddress, this.backLog);
+                            // 共有領域にServerソケットのポインタを格納
+                            super.setJobShareParam(super.getJobName() + "_ServeSocket", this.serverSocket);
+                        } catch (IOException ie3) {
+                            break;
+                        }
+                    }
                 } catch (Exception e) {
                     if (StatusUtil.getStatus() == 2) {
                         logger.info("MasterManagerJob - executeJob - ServerEnd");
@@ -422,6 +435,13 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         } catch(Exception e) {
             logger.error("MasterManagerJob - executeJob - Error", e);
             throw new BatchException(e);
+        } finally {
+            try {
+                serverSocket.close();
+            } catch (Exception e2) {
+            }
+            logger.info("okuyama MasterNode shutdown ...");
+            System.out.println("okuyama MasterNode shutdown");
         }
 
         //logger.debug("MasterManagerJob - executeJob - end");

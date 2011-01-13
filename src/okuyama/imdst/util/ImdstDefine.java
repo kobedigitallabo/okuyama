@@ -186,6 +186,9 @@ public class ImdstDefine {
     public static final String Prop_VirtualStoreDirs = ".virtualStoreDirs";
     public static final String Prop_KeyStoreDirs = ".keyStoreDirs";
 
+    public static final String Prop_PacketBalancerParallelExecution = "PacketBalancerParallelExecution";
+    public static final String Prop_PacketBalancerParallelQueue = "PacketBalancerParallelQueue";
+
 
     // -- ここからプログラム内固定文字列系(Mapのキーとか)  -------------------------------
     public static final String dataNodeParamKey_1 = "dataNodeNameList";
@@ -255,7 +258,7 @@ public class ImdstDefine {
     public static final int saveKeyMaxSize = 486;
 
     // 共通のデータファイルに書き出す最大サイズ
-    public static final int dataFileWriteMaxSize = 1024 * 64;
+    public static final int dataFileWriteMaxSize = 1024 * 20;
 
 
     public static final int stringBufferSmallSize = 128;
@@ -333,7 +336,7 @@ public class ImdstDefine {
     // true:計算する
     // false:計算しない
     //public static final boolean calcSizeFlg = true;
-    public static final boolean calcSizeFlg = false;
+    public static final boolean calcSizeFlg = true;
 
     // 有効期限切れデータバキューム実行指定
     public static boolean vacuumInvalidDataFlg = true;

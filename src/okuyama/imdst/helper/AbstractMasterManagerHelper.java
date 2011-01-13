@@ -237,7 +237,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                         BufferedReader br = null;
 
                         try {
-                            Thread.sleep(msIdx * 1000);
+                            Thread.sleep(msIdx * 200);
 
                             // Slaveノード名とポートに分解
                             String[] slaveNodeDt = slaveList[i].split(":");

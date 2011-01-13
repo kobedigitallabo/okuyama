@@ -527,15 +527,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         AtomicLong size = null;
         Object val = this.get(key);
 
-System.out.println(keyStr);
-System.out.println(keyStr.indexOf("#"));
        if(keyStr.indexOf("#") == 0) {
 
             unique = keyStr.substring(0, 6);
         } else {
             unique = "all";
         }
-System.out.println(unique);
+
         if (val != null) {
             beforeSize = ((String)val).length();
             beforeSize = beforeSize + ((String)key).length();
