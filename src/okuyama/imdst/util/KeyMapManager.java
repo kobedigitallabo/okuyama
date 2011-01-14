@@ -599,26 +599,30 @@ public class KeyMapManager extends Thread {
                     boolean containsKeyRet = containsKeyPair(key);
                     if (!containsKeyRet) {
 
-                        String[] keyNoddes = keyNode.split("!");
+                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
                         
                         if (keyNoddes.length > 1) {
-                            data = keyNoddes[0] + "!" + keyNoddes[1];
+                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + keyNoddes[1];
                         } else {
-                            data = keyNoddes[0] + "!0";
+                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
                         }
                     } else if (containsKeyRet) {
 
                         String tmp = keyMapObjGet(key);
-                        String[] keyNoddes = keyNode.split("!");
+                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+
 
                         if (tmp != null) {
-
-                            String[] tmps = tmp.split("!");
-                            if (keyNoddes[1].equals("0")) {
-                                data = keyNoddes[0] + "!" + (Long.parseLong(tmps[1]) + 1);
-                            } else {
-                                data = keyNode;
-                            }
+							if (keyNoddes.length > 1) {
+	                            String[] tmps = tmp.split(ImdstDefine.setTimeParamSep);
+	                            if (keyNoddes[1].equals("0")) {
+	                                data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (Long.parseLong(tmps[1]) + 1);
+	                            } else {
+	                                data = keyNode;
+	                            }
+							} else {
+								data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
+							}
                         } else {
 
                             data = keyNode;
@@ -708,8 +712,8 @@ public class KeyMapManager extends Thread {
                         data = keyNode;
                     } else {
 
-                        String[] keyNoddes = keyNode.split("!");
-                        data = keyNoddes[0] + "!0";
+                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+                        data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
                     }
 
                     keyMapObjPut(key, data);
@@ -769,7 +773,7 @@ public class KeyMapManager extends Thread {
                     if(execCheck == true && this.containsKeyPair(key)) {
 
                         String checkValue = this.getKeyPair(key);
-                        if(!((String[])checkValue.split("!"))[1].equals(updateVersionNo)) return ret;
+                        if(!((String[])checkValue.split(ImdstDefine.setTimeParamSep))[1].equals(updateVersionNo)) return ret;
                     }
 
                     if (this.moveAdjustmentDataMap != null) {
@@ -1843,13 +1847,13 @@ public class KeyMapManager extends Thread {
                         String checkKey = key.substring(startIdx, endIdx);
                         sendTagKey = key.substring(startIdx, endIdx);
 
-                        int lastIdx = checkKey.lastIndexOf("=");
+						// プレフィックスを外すために位置確認
+                        int lastIdx = checkKey.lastIndexOf("_");
 
                         // マッチするか確認
                         // タグの対象データ判定はタグ値に連結されているインデックス文字列や、左右のプレフィックス文字列をはずして判定する
                         for (int idx = 0; idx < rulesInt.length; idx++) {
-
-                            if (DataDispatcher.isRuleMatchKey(checkKey.substring(0, lastIdx+1), rulesInt[idx], matchNo)) {
+                            if (DataDispatcher.isRuleMatchKey(checkKey.substring(0, lastIdx), rulesInt[idx], matchNo)) {
                                 sendFlg = false;
                                 break;
                             }
@@ -1869,12 +1873,15 @@ public class KeyMapManager extends Thread {
 
                     // 送信すべきデータのみ送る
                     if (sendFlg) {
+						SystemUtil.debugLine("outputNoMatchKeyMapKey2Stream - MoveTargetKey[" + key + "]");
                         String data = this.keyMapObjGet(key);
+
                         if (data != null) {
                             if (tagFlg) {
 
                                 // タグ
                                 // タグの場合はValue部分をレコードとしてばらして送る
+
                                 String[] tagDatas = data.split(ImdstDefine.imdstTagKeyAppendSep);
                                 for (int idx = 0; idx < tagDatas.length; idx++) {
 
@@ -1886,6 +1893,9 @@ public class KeyMapManager extends Thread {
                                     allDataBuf.append(sendTagKey);
                                     allDataBuf.append(KeyMapManager.workFileSeq);
                                     allDataBuf.append(tagDatas[idx]);
+                                    allDataBuf.append(ImdstDefine.setTimeParamSep);
+                                    allDataBuf.append("0");							// 保存バージョンNoは0固定
+
                                     allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
                                     counter++;
                                 }
@@ -1977,11 +1987,12 @@ public class KeyMapManager extends Thread {
                         String checkKey = key.substring(startIdx, endIdx);
                         sendTagKey = key.substring(startIdx, endIdx);
 
-                        int lastIdx = checkKey.lastIndexOf("=");
+						// プレフィックスを外すために位置確認
+                        int lastIdx = checkKey.lastIndexOf("_");
 
                         // 対象データ判定
                         // タグの対象データ判定はタグ値に連結されているインデックス文字列や、左右のプレフィックス文字列をはずして判定する
-                        sendFlg = DataDispatcher.isRangeData(checkKey.substring(0, lastIdx+1), rangs);
+                        sendFlg = DataDispatcher.isRangeData(checkKey.substring(0, lastIdx), rangs);
                     } else {
                         // 対象データ判定
                         sendFlg = DataDispatcher.isRangeData(key, rangs);
@@ -1990,6 +2001,7 @@ public class KeyMapManager extends Thread {
 
                     // 送信すべきデータのみ送る
                     if (sendFlg) {
+						SystemUtil.debugLine("outputConsistentHashMoveData2Stream - MoveTargetKey[" + key + "]");
 
                         String data = this.keyMapObjGet(key);
                         if (data != null) {
@@ -1998,6 +2010,7 @@ public class KeyMapManager extends Thread {
 
                                 // タグ
                                 // タグの場合はValue部分をレコードとしてばらして送る
+
                                 String[] tagDatas = data.split(ImdstDefine.imdstTagKeyAppendSep);
                                 for (int idx = 0; idx < tagDatas.length; idx++) {
 
@@ -2055,6 +2068,7 @@ public class KeyMapManager extends Thread {
     // 引数で渡されてストリームからの値をデータ登録する
     // この際、既に登録されているデータは登録しない
     public void inputNoMatchKeyMapKey2Stream(PrintWriter pw, BufferedReader br) throws BatchException {
+
         this.inputConsistentHashMoveData2Stream(pw, br);
     }
 
@@ -2062,6 +2076,7 @@ public class KeyMapManager extends Thread {
     // 引数で渡されてストリームからの値をデータ登録する
     // この際、既に登録されているデータは登録しない
     public void inputConsistentHashMoveData2Stream(PrintWriter pw, BufferedReader br) throws BatchException {
+
         if (!blocking) {
             try {
                 this.moveAdjustmentDataMap = new ConcurrentHashMap(1024, 1000, 512);
@@ -2100,9 +2115,9 @@ public class KeyMapManager extends Thread {
                                     // Tagデータ
                                     // 通常通りタグとして保存
                                     // Tagデータはキー値にインデックス付きで送信されるので、インデックスを取り外す
-                                    int lastIdx = oneDatas[1].lastIndexOf("=");
 
-                                    oneDatas[1] = oneDatas[1].substring(0, lastIdx+1);
+                                    int lastIdx = oneDatas[1].lastIndexOf("_");
+                                    oneDatas[1] = oneDatas[1].substring(0, lastIdx);
 
                                     this.setTagPair(oneDatas[1], oneDatas[2], "0");
                                 }
@@ -2188,11 +2203,12 @@ public class KeyMapManager extends Thread {
 
                         String checkKey = key.substring(startIdx, endIdx);
 
-                        int lastIdx = checkKey.lastIndexOf("=");
+						// プレフィックスを外すために位置確認
+                        int lastIdx = checkKey.lastIndexOf("_");
 
                         // 対象データ判定
                         // タグの対象データ判定はタグ値に連結されているインデックス文字列や、左右のプレフィックス文字列をはずして判定する
-                        if(DataDispatcher.isRangeData(checkKey.substring(0, lastIdx+1), rangs)) this.removeKeyPair(key, "0");
+                        if(DataDispatcher.isRangeData(checkKey.substring(0, lastIdx), rangs)) this.removeKeyPair(key, "0");
                     } else {
                         // 対象データ判定
                         if(DataDispatcher.isRangeData(key, rangs)) this.removeKeyPair(key, "0");
@@ -2330,9 +2346,10 @@ public class KeyMapManager extends Thread {
  
                 key = key.substring(startIdx, endIdx);
 
-                int lastIdx = key.lastIndexOf("=");
+				// プレフィックスを外すために位置確認
+                int lastIdx = key.lastIndexOf("_");
 
-                key = key.substring(0, lastIdx+1);
+                key = key.substring(0, lastIdx);
 
                 System.out.println("Tag=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(tag) + "]");
 

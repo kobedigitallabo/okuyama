@@ -306,7 +306,7 @@ public class DataConsistencyAdjustmentHelper extends AbstractMasterManagerHelper
             } else if (targetDatas[0].equals("2")) {
 
                 // タグ
-                keyNodeInfo = DataDispatcher.dispatchKeyNode(targetDatas[1].substring(0, (targetDatas[1].lastIndexOf("=") +1)), false);
+                keyNodeInfo = DataDispatcher.dispatchKeyNode(targetDatas[1].substring(0, (targetDatas[1].lastIndexOf("_"))), false);
             }
 
 

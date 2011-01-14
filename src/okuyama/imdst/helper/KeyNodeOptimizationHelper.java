@@ -24,7 +24,7 @@ import okuyama.imdst.util.io.KeyNodeConnector;
 public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
     // ノードの監視サイクル時間(ミリ秒)
-    private int checkCycle = 6000 * 3;
+    private int checkCycle = 2000 * 3;
 
 
     private BufferedReader br = null;
@@ -90,6 +90,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
                 // MainのMasterNodeの場合のみ実行
                 if (StatusUtil.isMainMasterNode()) {
+
                     super.setNowNodeDataOptimization(true);
                     // ノード数分チェック
                     for (int i = 0; i < mainNodeList.size(); i++) {
@@ -141,6 +142,8 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
                             // 移動対象データを検索
                             this.searchTargetData(searchNodeDt[0], Integer.parseInt(searchNodeDt[1]), i);
+
+							// TODO:メモリがあふれる可能性があるので。FileBaseのリストに置きえる
                             // 移動完了後に削除するデータ保管用
                             removeDataKeys = new ArrayList(100000);
 
@@ -301,7 +304,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             } else if (targetDatas[0].equals("2")) {
 
                 // タグ
-                keyNodeInfo = DataDispatcher.dispatchKeyNode(targetDatas[1].substring(0, (targetDatas[1].lastIndexOf("=") +1)), false);
+                keyNodeInfo = DataDispatcher.dispatchKeyNode(targetDatas[1].substring(0, (targetDatas[1].lastIndexOf("_"))), false);
             }
 
 

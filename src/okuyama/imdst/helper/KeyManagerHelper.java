@@ -250,6 +250,23 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                             break;
+						case 101 :
+
+                            // Key値とDataNode名を格納する
+                            requestHashCode = clientParameterList[1];
+                            transactionCode = clientParameterList[2];
+                            requestDataNode = clientParameterList[3];
+
+                            // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
+                            if (clientParameterList.length > 4) {
+                                requestDataNode = requestDataNode + 
+                                    ImdstDefine.keyHelperClientParamSep + 
+                                        clientParameterList[4];
+                            }
+
+                            // メソッド呼び出し
+                            retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
+                            break;
                         case 2 :
 
                             // Key値でDataNode名を返す
