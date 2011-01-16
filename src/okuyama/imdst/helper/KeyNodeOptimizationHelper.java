@@ -143,7 +143,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
                             // 移動対象データを検索
                             this.searchTargetData(searchNodeDt[0], Integer.parseInt(searchNodeDt[1]), i);
 
-							// TODO:メモリがあふれる可能性があるので。FileBaseのリストに置きえる
+							// TODO:メモリがあふれる可能性があるので。FileBaseのリストに置きかえる
                             // 移動完了後に削除するデータ保管用
                             removeDataKeys = new ArrayList(100000);
 
