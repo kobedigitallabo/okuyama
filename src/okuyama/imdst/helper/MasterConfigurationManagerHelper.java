@@ -798,7 +798,8 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         // DataDispatcher初期化
         DataDispatcher.init(ruleStrs[0], oldRules, keyMapNodesStr, subKeyMapNodesStr, thirdKeyMapNodesStr, transactionManagerStr);
 
-        super.executeKeyNodeOptimization(true);
+        // TODO:一旦modでのノード追加時のデータ移行は停止する。過去ルールのみで運用
+        //super.executeKeyNodeOptimization(true);
     }
 
 
@@ -808,7 +809,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         String[] mainKeyNodes = null;
         String[] subKeyNodes = new String[0];
-        String[] thirdKeyNodes = new String[0];        
+        String[] thirdKeyNodes = new String[0];
         String[] allNodeInfos = null;
         int allNodeCounter = 0;
 

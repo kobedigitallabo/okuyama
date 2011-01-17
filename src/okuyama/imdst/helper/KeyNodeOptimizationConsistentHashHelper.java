@@ -149,6 +149,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                     sendRequestBuf.append("true");
 
                     if (moveTargetData != null) {
+                        logger.info("Step - 1");
                         while (true) {
                             super.setNowNodeDataOptimization(true);
                             try {
@@ -199,23 +200,23 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                 addThirdDataNodeInfo = (String)moveTargetData.get("tothird");
                                 thirdMoveTargetMap = (HashMap)moveTargetData.get("third");
-
+                                logger.info("Step - 2");
                                 // 使用開始してよいかをチェック
                                 if (addSubDataNodeInfo != null && addThirdDataNodeInfo != null) {
-
+                                    logger.info("Step - 3");
                                     StatusUtil.waitNodeUseStatus(addMainDataNodeInfo, addSubDataNodeInfo, addThirdDataNodeInfo);
                                     // 使用をマーク
                                     StatusUtil.addNodeUse(addMainDataNodeInfo);
                                     StatusUtil.addNodeUse(addSubDataNodeInfo);
                                     StatusUtil.addNodeUse(addThirdDataNodeInfo);
                                 } else if (addSubDataNodeInfo != null) {
-
+                                    logger.info("Step - 4");
                                     StatusUtil.waitNodeUseStatus(addMainDataNodeInfo, addSubDataNodeInfo, null);
                                     // 使用をマーク
                                     StatusUtil.addNodeUse(addMainDataNodeInfo);
                                     StatusUtil.addNodeUse(addSubDataNodeInfo);
                                 } else {
-
+                                    logger.info("Step - 5");
                                     StatusUtil.waitNodeUseStatus(addMainDataNodeInfo, null, null);
                                     // 使用をマーク
                                     StatusUtil.addNodeUse(addMainDataNodeInfo);
@@ -228,7 +229,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 //System.out.println(mainMoveTargetMap);
 
                                 if (super.isNodeArrival(addMainDataNodeInfo)) {
+                                    logger.info("Step - 6");
                                     try {
+                                        logger.info("Step - 7");
                                         toMainKeyNodeConnector = new KeyNodeConnector(toMainDataNodeDt[0], Integer.parseInt(toMainDataNodeDt[1]), toMainDataNodeDt[0]+":"+Integer.parseInt(toMainDataNodeDt[1]));
                                         toMainKeyNodeConnector.connect();
                                         toMainKeyNodeConnector.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
@@ -239,8 +242,10 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                         // 移行先メインデータノードにデータ移行開始を送信
                                         toMainKeyNodeConnector.println(sendRequestBuf.toString());
                                         toMainKeyNodeConnector.flush();
+                                        logger.info("Step - 8");
                                     } catch (Exception e) {
                                         // 使用停止を登録
+                                        logger.info("Step Error - 9");
                                         super.setDeadNode(addMainDataNodeInfo, 37, e);
                                         toMainKeyNodeConnector.close();
                                         toMainKeyNodeConnector = null;
@@ -252,9 +257,11 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 // 移動データレンジMap
                                 //System.out.println(addSubDataNodeInfo);
                                 //System.out.println(subMoveTargetMap);
-
+                                logger.info("Step - 10");
                                 if (addSubDataNodeInfo != null) {
+                                    logger.info("Step - 11");
                                     if (super.isNodeArrival(addSubDataNodeInfo)) {
+                                        logger.info("Step - 12");
                                         try {
                                             toSubDataNodeDt = addSubDataNodeInfo.split(":");
                                             toSubKeyNodeConnector = new KeyNodeConnector(toSubDataNodeDt[0], Integer.parseInt(toSubDataNodeDt[1]), toSubDataNodeDt[0]+":"+Integer.parseInt(toSubDataNodeDt[1]));
@@ -267,8 +274,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                             // 移行先スレーブデータノードにデータ移行開始を送信
                                             toSubKeyNodeConnector.println(sendRequestBuf.toString());
                                             toSubKeyNodeConnector.flush();
+                                            logger.info("Step - 13");
                                         } catch (Exception e) {
-
+                                            logger.info("Step Error - 14");
                                             // 使用停止を登録
                                             super.setDeadNode(addSubDataNodeInfo, 38, e);
                                             toSubKeyNodeConnector.close();
@@ -282,9 +290,11 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 // 移動データレンジMap
                                 //System.out.println(addThirdDataNodeInfo);
                                 //System.out.println(thirdMoveTargetMap);
-
+                                logger.info("Step - 15");
                                 if (addThirdDataNodeInfo != null) {
+                                    logger.info("Step - 16");
                                     if (super.isNodeArrival(addThirdDataNodeInfo)) {
+                                        logger.info("Step - 17");
                                         try {
                                             toThirdDataNodeDt = addThirdDataNodeInfo.split(":");
                                             toThirdKeyNodeConnector = new KeyNodeConnector(toThirdDataNodeDt[0], Integer.parseInt(toThirdDataNodeDt[1]), toThirdDataNodeDt[0]+":"+Integer.parseInt(toThirdDataNodeDt[1]));
@@ -297,8 +307,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                             // 移行先スレーブデータノードにデータ移行開始を送信
                                             toThirdKeyNodeConnector.println(sendRequestBuf.toString());
                                             toThirdKeyNodeConnector.flush();
+                                            logger.info("Step - 18");
                                         } catch (Exception e) {
-
+                                            logger.info("Step Error - 19");
                                             // 使用停止を登録
                                             super.setDeadNode(addThirdDataNodeInfo, 39, e);
                                             toThirdKeyNodeConnector.close();
@@ -310,7 +321,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                 // 全ての移動対象(移動元のデータ)のノードを処理
                                 // 対象データノード1ノードづつ処理
+                                logger.info("Step - 20");
                                 if (mainIterator == null) {
+                                    logger.info("Step - 21");
                                     logger.error("KeyNodeOptimizationConsistentHashHelper - [mainIterator == null] MainDataNode Down!! Please Check [" + addMainDataNodeInfo + "]");
                                     if (toMainKeyNodeConnector != null) toMainKeyNodeConnector.close();
                                     if (toSubKeyNodeConnector != null) toSubKeyNodeConnector.close();
@@ -320,8 +333,9 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                     continue;
                                 }
 
+                                logger.info("Step - 22");
                                 while(mainIterator.hasNext()) {
-
+                                    logger.info("Step - 23");
                                     // 移動データレンジ文字列
                                     // System.out.println(mainRangStr);
 
@@ -335,7 +349,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                     // Subノード処理
                                     if (subIterator != null) {
-
+                                        logger.info("Step - 24");
                                         // 移動データレンジ文字列
                                         // System.out.println(subRangStr);
 
@@ -346,9 +360,10 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                         subRangStr = (String)subMoveTargetMap.get(subDataNodeStr);
                                     }
 
+                                    logger.info("Step - 25");
                                     // Thirdノード処理
                                     if (thirdIterator != null) {
-
+                                        logger.info("Step - 26");
                                         // 移動データレンジ文字列
                                         // System.out.println(thirdRangStr);
 
@@ -359,10 +374,10 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                         thirdRangStr = (String)thirdMoveTargetMap.get(thirdDataNodeStr);
                                     }
 
-
+                                    logger.info("Step - 27");
                                     // 使用開始してよいかをチェック
                                     if (subIterator != null && thirdIterator != null) {
-
+                                        logger.info("Step - 28");
                                         StatusUtil.waitNodeUseStatus(mainDataNodeStr, subDataNodeStr, thirdDataNodeStr);
                                         // 使用をマーク
                                         StatusUtil.addNodeUse(mainDataNodeStr);
@@ -370,24 +385,30 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                         StatusUtil.addNodeUse(thirdDataNodeStr);
                                     } else if (addSubDataNodeInfo != null) {
 
+                                        logger.info("Step - 29");
                                         StatusUtil.waitNodeUseStatus(mainDataNodeStr, subDataNodeStr, null);
                                         // 使用をマーク
                                         StatusUtil.addNodeUse(mainDataNodeStr);
                                         StatusUtil.addNodeUse(subDataNodeStr);
                                     } else {
 
+                                        logger.info("Step - 30");
                                         StatusUtil.waitNodeUseStatus(mainDataNodeStr, null, null);
                                         // 使用をマーク
                                         StatusUtil.addNodeUse(mainDataNodeStr);
                                     }
 
 
+                                    logger.info("Step - 31");
                                     // 対象ノードからデータ取り出し
                                     this.getTargetData(1, mainDataNodeDetail[0], Integer.parseInt(mainDataNodeDetail[1]), mainRangStr);
                                     mainRemoveTargetDatas.add(new String(mainDataNodeDetail[0] + "#" + mainDataNodeDetail[1] + "#" + mainRangStr));
+                                    logger.info("Step - 32");
 
                                     // Subノード処理
                                     if (subIterator != null) {
+
+                                        logger.info("Step - 33");
                                         // 対象ノードからデータ取り出し
                                         this.getTargetData(2, subDataNodeDetail[0], Integer.parseInt(subDataNodeDetail[1]), subRangStr);
                                         subRemoveTargetDatas.add(new String(subDataNodeDetail[0] + "#" + subDataNodeDetail[1] + "#" + subRangStr));
@@ -395,6 +416,8 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                                     // Thirdノード処理
                                     if (thirdIterator != null) {
+
+                                        logger.info("Step - 34");
                                         // 対象ノードからデータ取り出し
                                         this.getTargetData(3, thirdDataNodeDetail[0], Integer.parseInt(thirdDataNodeDetail[1]), thirdRangStr);
                                         thirdRemoveTargetDatas.add(new String(thirdDataNodeDetail[0] + "#" + thirdDataNodeDetail[1] + "#" + thirdRangStr));
@@ -404,12 +427,20 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                     // 対象のデータを順次対象のノードに移動
                                     // Main
                                     while((mainTargetDataStr = this.nextData(1, mainDataNodeStr)) != null) {
+
+                                        logger.info("Step - 35");
                                         if (toMainKeyNodeConnector != null) {
+
+                                            logger.info("Step - mainDataNodeStr[" + mainDataNodeStr + "] 36");
                                             toMainKeyNodeConnector.println(mainTargetDataStr);
                                             toMainKeyNodeConnector.flush();
                                             toMainSendRet = toMainKeyNodeConnector.readLine();
+
+                                            logger.info("Step - mainDataNodeStr[" + mainDataNodeStr + "] 37");
                                             // エラーなら移行中止
                                             if (toMainSendRet == null || !toMainSendRet.equals("next")) { 
+
+                                                logger.info("Step - mainDataNodeStr[" + mainDataNodeStr + "] 38");
                                                 super.setDeadNode(addMainDataNodeInfo, 42, new Exception(addMainDataNodeInfo + "=SendError"));
                                                 sendError = true;
                                                 break;
@@ -417,14 +448,23 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                         }
                                     }
 
+
+                                    logger.info("Step - 39");
                                     // Sub
                                     if (toSubKeyNodeConnector != null) {
+
+                                        logger.info("Step - 40");
                                         while((subTargetDataStr = this.nextData(2, subDataNodeStr)) != null) {
+
+                                            logger.info("Step - subDataNodeStr[" + subDataNodeStr + "] 41");
                                             toSubKeyNodeConnector.println(subTargetDataStr);
                                             toSubKeyNodeConnector.flush();
                                             toSubSendRet = toSubKeyNodeConnector.readLine();
+                                            logger.info("Step - subDataNodeStr[" + subDataNodeStr + "] 42");
                                             // エラーなら移行中止
                                             if (toSubSendRet == null || !toSubSendRet.equals("next")) {
+
+                                                logger.info("Step - subDataNodeStr[" + subDataNodeStr + "] 43");
                                                 super.setDeadNode(addSubDataNodeInfo, 43, new Exception(addSubDataNodeInfo + "=SendError"));
                                                 sendError = true;
                                                 break;
@@ -432,14 +472,23 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                         }
                                     }
 
+                                    logger.info("Step - 44");
                                     // Third
                                     if (toThirdKeyNodeConnector != null) {
+
+                                    logger.info("Step - 45");
                                         while ((thirdTargetDataStr = this.nextData(3, thirdDataNodeStr)) != null) {
+
+                                            logger.info("Step - thirdDataNodeStr[" + thirdDataNodeStr + "] 46");
                                             toThirdKeyNodeConnector.println(thirdTargetDataStr);
                                             toThirdKeyNodeConnector.flush();
                                             toThirdSendRet = toThirdKeyNodeConnector.readLine();
+
+                                            logger.info("Step - thirdDataNodeStr[" + thirdDataNodeStr + "] 47");
                                             // エラーなら移行中止
                                             if (toThirdSendRet == null || !toThirdSendRet.equals("next")) {
+
+                                                logger.info("Step - thirdDataNodeStr[" + thirdDataNodeStr + "] 48");
                                                 super.setDeadNode(addThirdDataNodeInfo, 44, new Exception(addThirdDataNodeInfo + "=SendError"));
                                                 sendError = true;
                                                 break;
@@ -447,23 +496,29 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                         }
                                     }
 
+                                    logger.info("Step - 49");
                                     // 転送元を切断
                                     this.closeConnect(1);
                                     super.execNodeUseEnd(mainDataNodeStr);
 
                                     if (subIterator != null) {
+                                        logger.info("Step - 50");
                                         super.execNodeUseEnd(subDataNodeStr);
                                         this.closeConnect(2);
                                     }
 
                                     if (thirdIterator != null)  {
+
+                                        logger.info("Step - 51");
                                         super.execNodeUseEnd(thirdDataNodeStr);
                                         this.closeConnect(3);
                                     }
 
+                                    logger.info("Step - 52");
                                     if (sendError == true) break;
                                 }
 
+                                logger.info("Step - 53");
                                 // 全てのデータの移行が完了
                                 // 転送先に終了を通知
                                 // Main
@@ -476,9 +531,12 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 toMainKeyNodeConnector.close();
                                 toMainKeyNodeConnector.close();
 
+
+                                logger.info("Step - 54");
                                 // Sub
                                 if (subIterator != null) {
 
+                                    logger.info("Step - 55");
                                     // 使用終了をマーク
                                     super.execNodeUseEnd(addSubDataNodeInfo);
 
@@ -489,9 +547,11 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                     toSubKeyNodeConnector.close();
                                 }
 
+                                logger.info("Step - 56");
                                 // Third
                                 if (thirdIterator != null) {
 
+                                    logger.info("Step - 57");
                                     // 使用終了をマーク
                                     super.execNodeUseEnd(addThirdDataNodeInfo);
 
@@ -502,50 +562,69 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                     toThirdKeyNodeConnector.close();
                                 }
 
-
+                                logger.info("Step - 58");
                                 // 移動もとのデータを消す処理をここに追加
                                 if (sendError == false) {
 
+                                    logger.info("Step - 59");
                                     // 転送が正しく完了した場合のみ処理開始
 
                                     // Main
                                     for (int mainIdx = 0; mainIdx < mainRemoveTargetDatas.size(); mainIdx++) {
+                                        logger.info("Step - 60");
                                         String mainRemoveHostDtStr = (String)mainRemoveTargetDatas.get(mainIdx);
                                         String[] mainRemoveHostDt = mainRemoveHostDtStr.split("#");
                                         if(!this.removeTargetData(mainRemoveHostDt[0], Integer.parseInt(mainRemoveHostDt[1]), mainRemoveHostDt[2])) {
+                                            logger.info("Step - 61");
                                             logger.error("KeyNodeOptimizationConsistentHashHelper - removeTargetData - Error target=[" + mainRemoveHostDt[0] + ":" + mainRemoveHostDt[1] + " Range[" + mainRemoveHostDt[2] + "]");
                                         }
                                     }
 
+
+                                    logger.info("Step - 62");
                                     // Sub
                                     if (subIterator != null) {
 
+                                        logger.info("Step - 63");
                                         for (int subIdx = 0; subIdx < subRemoveTargetDatas.size(); subIdx++) {
+
+                                            logger.info("Step - 64");
                                             String subRemoveHostDtStr = (String)subRemoveTargetDatas.get(subIdx);
                                             String[] subRemoveHostDt = subRemoveHostDtStr.split("#");
                                             if(!this.removeTargetData(subRemoveHostDt[0], Integer.parseInt(subRemoveHostDt[1]), subRemoveHostDt[2])) {
+                                                logger.info("Step - 65");
                                                 logger.error("KeyNodeOptimizationConsistentHashHelper - removeTargetData - Error target=[" + subRemoveHostDt[0] + ":" + subRemoveHostDt[1] + " Range[" + subRemoveHostDt[2] + "]");
                                             }
                                         }
                                     }
 
+
+                                    logger.info("Step - 66");
                                     // Third
                                     if (thirdIterator != null) {
 
+                                        logger.info("Step - 67");
                                         for (int thirdIdx = 0; thirdIdx < thirdRemoveTargetDatas.size(); thirdIdx++) {
+
+                                            logger.info("Step - 68");
                                             String thirdRemoveHostDtStr = (String)thirdRemoveTargetDatas.get(thirdIdx);
                                             String[] thirdRemoveHostDt = thirdRemoveHostDtStr.split("#");
                                             if(!this.removeTargetData(thirdRemoveHostDt[0], Integer.parseInt(thirdRemoveHostDt[1]), thirdRemoveHostDt[2])) {
+                                                logger.info("Step - 69");
                                                 logger.error("KeyNodeOptimizationConsistentHashHelper - removeTargetData - Error target=[" + thirdRemoveHostDt[0] + ":" + thirdRemoveHostDt[1] + " Range[" + thirdRemoveHostDt[2] + "]");
                                             }
                                         }
                                     }
 
+                                    logger.info("Step - 70");
                                     // メモリ上から依頼を消す
                                     super.removeConsistentHashMoveData();
+                                    logger.info("Step - 71");
                                     super.setNowNodeDataOptimization(false);
+                                    logger.info("Step - 72");
                                 }
 
+                                logger.info("Step - 73");
                                 break;
                             } catch (Exception e) {
                                 super.setNowNodeDataOptimization(false);
@@ -588,7 +667,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
     private void getTargetData(int target, String nodeName, int nodePort, String rangStr) throws BatchException {
         StringBuilder buf = null;
         KeyNodeConnector keyNodeConnector = null;
-
+        logger.info("getTargetData - target[" + target + "] nodeName[" + nodeName + "] nodePort[" + nodePort + "] rangStr[" + rangStr + "] - Start");
         try {
             if (!super.isNodeArrival(nodeName + ":" + nodePort)) return ;
             keyNodeConnector = new KeyNodeConnector(nodeName, nodePort, nodeName+":"+nodePort);
@@ -618,11 +697,18 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
 
                 this.thirdKeyNodeConnector = keyNodeConnector;
             }
+            logger.info("getTargetData - target[" + target + "] nodeName[" + nodeName + "] nodePort[" + nodePort + "] rangStr[" + rangStr + "] - End"); 
         } catch (SocketException se) {
+
+            logger.info("getTargetData - Error - SocketException"); 
             super.setDeadNode(nodeName + ":" + nodePort, 39, se);
         } catch (IOException ie) {
+
+            logger.info("getTargetData - Error - IOException");
             super.setDeadNode(nodeName + ":" + nodePort, 40, ie);
         } catch(Exception e) {
+
+            logger.info("getTargetData - Error - Exception");
             throw new BatchException(e);
         } 
     }

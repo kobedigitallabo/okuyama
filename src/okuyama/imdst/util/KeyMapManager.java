@@ -613,16 +613,16 @@ public class KeyMapManager extends Thread {
 
 
                         if (tmp != null) {
-							if (keyNoddes.length > 1) {
-	                            String[] tmps = tmp.split(ImdstDefine.setTimeParamSep);
-	                            if (keyNoddes[1].equals("0")) {
-	                                data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (Long.parseLong(tmps[1]) + 1);
-	                            } else {
-	                                data = keyNode;
-	                            }
-							} else {
-								data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
-							}
+                            if (keyNoddes.length > 1) {
+                                String[] tmps = tmp.split(ImdstDefine.setTimeParamSep);
+                                if (keyNoddes[1].equals("0")) {
+                                    data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (Long.parseLong(tmps[1]) + 1);
+                                } else {
+                                    data = keyNode;
+                                }
+                            } else {
+                                data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
+                            }
                         } else {
 
                             data = keyNode;
@@ -1847,7 +1847,7 @@ public class KeyMapManager extends Thread {
                         String checkKey = key.substring(startIdx, endIdx);
                         sendTagKey = key.substring(startIdx, endIdx);
 
-						// プレフィックスを外すために位置確認
+                        // プレフィックスを外すために位置確認
                         int lastIdx = checkKey.lastIndexOf("_");
 
                         // マッチするか確認
@@ -1873,7 +1873,7 @@ public class KeyMapManager extends Thread {
 
                     // 送信すべきデータのみ送る
                     if (sendFlg) {
-						SystemUtil.debugLine("outputNoMatchKeyMapKey2Stream - MoveTargetKey[" + key + "]");
+                        SystemUtil.debugLine("outputNoMatchKeyMapKey2Stream - MoveTargetKey[" + key + "]");
                         String data = this.keyMapObjGet(key);
 
                         if (data != null) {
@@ -1894,7 +1894,7 @@ public class KeyMapManager extends Thread {
                                     allDataBuf.append(KeyMapManager.workFileSeq);
                                     allDataBuf.append(tagDatas[idx]);
                                     allDataBuf.append(ImdstDefine.setTimeParamSep);
-                                    allDataBuf.append("0");							// 保存バージョンNoは0固定
+                                    allDataBuf.append("0");                         // 保存バージョンNoは0固定
 
                                     allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
                                     counter++;
@@ -1987,7 +1987,7 @@ public class KeyMapManager extends Thread {
                         String checkKey = key.substring(startIdx, endIdx);
                         sendTagKey = key.substring(startIdx, endIdx);
 
-						// プレフィックスを外すために位置確認
+                        // プレフィックスを外すために位置確認
                         int lastIdx = checkKey.lastIndexOf("_");
 
                         // 対象データ判定
@@ -2001,7 +2001,7 @@ public class KeyMapManager extends Thread {
 
                     // 送信すべきデータのみ送る
                     if (sendFlg) {
-						SystemUtil.debugLine("outputConsistentHashMoveData2Stream - MoveTargetKey[" + key + "]");
+                        SystemUtil.debugLine("outputConsistentHashMoveData2Stream - MoveTargetKey[" + key + "]");
 
                         String data = this.keyMapObjGet(key);
                         if (data != null) {
@@ -2079,6 +2079,7 @@ public class KeyMapManager extends Thread {
 
         if (!blocking) {
             try {
+
                 this.moveAdjustmentDataMap = new ConcurrentHashMap(1024, 1000, 512);
 
                 int i = 0;
@@ -2203,7 +2204,7 @@ public class KeyMapManager extends Thread {
 
                         String checkKey = key.substring(startIdx, endIdx);
 
-						// プレフィックスを外すために位置確認
+                        // プレフィックスを外すために位置確認
                         int lastIdx = checkKey.lastIndexOf("_");
 
                         // 対象データ判定
@@ -2346,7 +2347,7 @@ public class KeyMapManager extends Thread {
  
                 key = key.substring(startIdx, endIdx);
 
-				// プレフィックスを外すために位置確認
+                // プレフィックスを外すために位置確認
                 int lastIdx = key.lastIndexOf("_");
 
                 key = key.substring(0, lastIdx);
