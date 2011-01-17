@@ -10,33 +10,94 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
-[[リリース Ver 0.8.5 - (2011/XX/XX)]]
-1.保存データサイズの合計値取得
-  1.1. ImdstDefine.calcSizeFlgをtrueにする
-  1.2. DataNodeに接続
-  1.3. "60,all"と送信:全体値が取れる
-  1.4. "60,"#" + Isolationの5文字Prefix"と送信:Isolation単位で取れる
+[[リリース Ver 0.8.5 - (2011/01/18)]]
+  ■MasterNode単位でのIsolation機能を追加
+    Isolation機能とはokuyamaのマルチテナント化を実現する機能である。
+    今までのokuyamaは保存するKeyはすべてのDataNode内でユニークな値であった(レプリケーションは除く)
+    そのため、DataNodeを複数のアプリケーションや、複数のユーザが利用する場合は、Key値にプレフィックスを
+    付加するなど工夫が必要であった。
+    本機能は、DataNodeを共有して、独立したデータ空間を作成する機能となる。
+    独立単位は、MasterNodeの設定で指定する。
+    MasterNode.propertiesの"IsolationMode"と"IsolationPrefix"を利用する。
+    以下の設定をMasterNode.propertiesに設定し、起動すると同様の設定をして
+    起動したMasterNodeは値を共有できるが、設定をしていないMasterNodeからは取得出来なくなる。
+    ------------ MasterNode.properties --------------------
+    IsolationMode=true
+    IsolationPrefix=XC45G
+    -------------------------------------------------------
 
-2.有効期限切れデータ自動削除
-  2.1. ImdstDefine.vacuumInvalidDataFlgをtrueにする
-  2.2. Key、Value両方がMemoryの場合のみ実行される
-  2.3. 有効期限切れ自動パージは30分に1回実行され、かつチェック時に有効期限を5分切れているデータが物理削除対象
+	IsolationMode=falseを指定すると、共有的な領域にアクセスすることになる。ただし、別のMasterNodeが
+    指定しているIsolation空間にはアクセスできない。
 
-3.デバッグオプションを追加。通信ログを標準出力に出力するように機能追加
-  3.1. DataNode、MasterNodeともに起動時の第3引数に"-debug"を付加して起動すると、標準出力に通信内容が出力される
-  3.2. 当然レスポンスは落ちるので注意
 
-4.ServerControllerにコマンドの種類追加
-  4.1. いままでは接続したら即サーバShutdownだったが種類を追加した
-       "shutdown" : サーバ停止
-       "debug" : デバッグオプションtrueに動的に変更
-       "nodebug" : デバッグオプションfalseに動的に変更
+  ■有効期限切れデータ自動削除
+    memcachedクライアントによってexpire Timeを指定され、有効期限が切れたデータを自動的に削除する機能を追加
+    実行される前提条件は"ImdstDefine.java"の"vacuumInvalidDataFlg"変数が"true"で(デフォルト"true")
+    Key、Value両方がメモリの場合のみ実行される。
+    ●DataNode.propertiesの設定が以下の場合のみである
+    -------------- DataNode.properties --------------
+    KeyManagerJob1.memoryMode=true
+    KeyManagerJob1.dataMemory=true
+    KeyManagerJob1.keyMemory=true
 
-5.truncateを実装
-  5.1. データ削除機能として、Isolation単位および、全体を一度に消す
-       DataNodeの通常ポートに接続
-       ・"61,#all"と送信:DataNodeのすべてが消える
-       ・"61,"#"+IoslationPrefix文字列"と送信:DataNodeからIsolation単位で消す
+                     or                      
+
+    -------------- DataNode.properties --------------
+    KeyManagerJob1.memoryMode=false
+    KeyManagerJob1.dataMemory=true
+    KeyManagerJob1.keyMemory=true
+
+                     or                      
+
+    -------------- DataNode.properties --------------
+    KeyManagerJob1.memoryMode=false
+    KeyManagerJob1.dataMemory=true
+    KeyManagerJob1.keyMemory=true
+
+    ※有効期限切れ自動パージは30分に1回実行され、かつチェック時に有効期限を5分切れているデータが物理削除対象
+
+
+  ■保存データサイズ(DataNodeが保存しているサイズ)を取得する機能を追加
+    DataNodeが保存している値の合計バイトサイズを取得できる機能を追加
+    1.1. DataNodeに接続
+         "60,all"と送信:そのDataNodeが保有する全値の合計サイズが取得できる
+         "60,"#" + Isolationの5文字Prefix"と送信:Isolation単位で取得できる
+     ※試験的に実装しているため、DataNodeに直接接続する必要がある
+
+
+  ■デバッグオプションを追加。通信ログを標準出力に出力するように機能追加
+    DataNdoe、MasterNode共にすべての通信内容を標準出力にダンプする機能を追加
+    1.1. 起動方法 
+	     DataNode、MasterNodeともに起動時の第3引数に"-debug"を付加して起動すると、標準出力に通信内容が出力される
+         例)DataNode
+         java -cp ./classes;./lib/log4j-1.2.14.jar;./lib/javamail-1.4.1.jar;./lib/commons-codec-1.4.jar -Xmx128m -Xms128m okuyama.base.JavaMain /Main.properties /DataNode.properties -debug
+         例)MasterNode
+         java -cp ./classes;./lib/log4j-1.2.14.jar;./lib/javamail-1.4.1.jar;./lib/commons-codec-1.4.jar -Xmx256m -Xms128m okuyama.base.JavaMain /Main.properties /MasterNode.properties  -debug
+
+     ※性能は落ちるので注意
+
+
+  ■ServerControllerにコマンドの種類追加
+    1.1. サーバコントロールコマンドを追加
+         従来はMasterNode.propertiesおよび、MasterNode.propertiesの"ServerControllerHelper.Init="で
+         定義されているポートに接続すると即Shutdownだったが、変更し種類を追加
+
+         追加した機能は以下
+         "shutdown" : サーバ停止
+         "debug" : デバッグオプションtrueに動的に変更
+         "nodebug" : デバッグオプションfalseに動的に変更
+
+
+  ■データ全削除機能を追加
+    1.1. データ削除機能として、Isolation単位および、全体を一度に消す機能を追加
+         DataNodeの通常ポート(添付の設定ファイルでは5553や5554)に接続
+        ・"61,#all"と送信:DataNodeのすべてが消える
+        ・"61,"#"+IoslationPrefix文字列"と送信:DataNodeからIsolation単位で消える
+
+     ※一度消したデータは復旧できないので注意が必要
+     ※試験的に実装しているため、DataNodeに直接接続する必要がある
+
+  ■Tagデータに関係する不具合修正
 
 
 ========================================================================================================
