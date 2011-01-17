@@ -8,6 +8,6 @@ if [ $1 = "start" ]; then
     fi
 
 elif [ $1 = "stop" ]; then
-    telnet 127.0.0.1 $2
+    sh $OKUYAMA_HOME/bin/stop.sh | telnet 127.0.0.1 $2
 fi
 
