@@ -12,6 +12,7 @@ import okuyama.base.util.LoggerFactory;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.io.NodeDnsUtil;
 
 /**
  * KeyNodeの監視を行うHelperクラス<br>
@@ -347,7 +348,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             logger.info("Data Recover Schedule [" + masterNodeInfo + " => " + nodeInfo + "]");
             // コピー先KeyNodeとの接続を確立
-            socket = new Socket(nodeName, nodePort);
+            socket = new Socket(NodeDnsUtil.getNameToReal(nodeName), nodePort);
             socket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
 
@@ -358,7 +359,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             br = new BufferedReader(isr);
 
             // コピー元KeyNodeとの接続を確立
-            msocket = new Socket(masterNodeName, masterNodePort);
+            msocket = new Socket(NodeDnsUtil.getNameToReal(masterNodeName), masterNodePort);
             msocket.setSoTimeout(ImdstDefine.recoverConnectionTimeout);
 
             OutputStreamWriter mosw = new OutputStreamWriter(msocket.getOutputStream() , ImdstDefine.keyHelperClientParamEncoding);

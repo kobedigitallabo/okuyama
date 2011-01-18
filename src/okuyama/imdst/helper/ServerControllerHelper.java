@@ -14,6 +14,8 @@ import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.io.NodeDnsUtil;
+
 
 /**
  * <br>
@@ -93,6 +95,35 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
 
                         StatusUtil.setDebugOption(false);
                         pw.println(command + " Suuccess");
+                        pw.flush();
+
+                        br.close();
+                        pw.close();
+                        Thread.sleep(1500);
+                        soc.close();
+                    } else if (command.equals("name")) {
+
+                        String nameLine = br.readLine();
+
+                        String[] nameInfo = nameLine.split("=");
+
+                        if (nameInfo.length != 2) {
+
+                            pw.println(nameLine + " Error");
+                        } else {
+                            NodeDnsUtil.setNameMap(nameInfo[0], nameInfo[1]);
+                            pw.println(command + " Suuccess Setting.. [" + nameInfo[0] + "] to [" + nameInfo[1] + "]");
+                        }
+
+                        pw.flush();
+                        br.close();
+                        pw.close();
+                        Thread.sleep(1500);
+                        soc.close();
+                    } else if (command.equals("jobs")) {
+
+                        pw.println(command + " Suuccess");
+                        pw.println(StatusUtil.getMethodExecuteCount());
                         pw.flush();
 
                         br.close();

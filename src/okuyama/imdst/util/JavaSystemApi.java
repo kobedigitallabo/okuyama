@@ -31,6 +31,8 @@ public class JavaSystemApi {
     // この値を超えると、gcを発行する
     public transient static long currentTimeMillis = System.currentTimeMillis();
 
+    public transient static int currentDateHour = 0;
+
 
     /**
      * 自動でgcを発行する.<br>

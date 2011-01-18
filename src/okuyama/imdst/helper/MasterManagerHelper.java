@@ -79,11 +79,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // Isolation用
     private StringBuilder isolationBuffer = null;
 
-	// SlaveDataNode 遅延書き込みモード(通常のsetValueのみ有効)
-	private boolean slaveNodeDelayWriteMode = false;
+    // SlaveDataNode 遅延書き込みモード(通常のsetValueのみ有効)
+    private boolean slaveNodeDelayWriteMode = false;
 
-	// ThirdDataNode 遅延書き込みモード(通常のsetValueのみ有効)
-	private boolean thridNodeDelayWriteMode = false;
+    // ThirdDataNode 遅延書き込みモード(通常のsetValueのみ有効)
+    private boolean thridNodeDelayWriteMode = false;
 
 
     // クライアントからのinitメソッド用返却パラメータ
@@ -274,6 +274,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         }
                     }
 
+
+                    // 呼び出しをカウント
+                    StatusUtil.incrementMethodExecuteCount();
 
                     // 本体処理開始
                     // 処理番号で処理を分岐
@@ -2794,41 +2797,41 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // 処理種別判別
                         if (type.equals("1")) {
-							if (true || mainNodeSave == false) {
+                            if (true || mainNodeSave == false) {
 
-		                        // 送信
-		                        slaveKeyNodeConnector.println(sendStr);
-		                        slaveKeyNodeConnector.flush();
+                                // 送信
+                                slaveKeyNodeConnector.println(sendStr);
+                                slaveKeyNodeConnector.flush();
 
-		                        // 返却値取得
-		                        retParam = slaveKeyNodeConnector.readLine(sendStr);
+                                // 返却値取得
+                                retParam = slaveKeyNodeConnector.readLine(sendStr);
 
-	                            // Key値でValueを保存
-	                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-	                            //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-	                            if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
-	                                subNodeSave = true;
-	                            } else {
-	                                // 論理的に登録失敗
-	                                super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 3, null);
-	                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
-	                            }
-							} else {
+                                // Key値でValueを保存
+                                // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                                //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                                if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
+                                    subNodeSave = true;
+                                } else {
+                                    // 論理的に登録失敗
+                                    super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 3, null);
+                                    logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
+                                }
+                            } else {
 
-								// 遅延書き込み
-		                        // 送信
-		                        slaveKeyNodeConnector.print("10");
-		                        slaveKeyNodeConnector.println(sendStr);
-		                        slaveKeyNodeConnector.flush();
-								subNodeSave = true;
-							}
+                                // 遅延書き込み
+                                // 送信
+                                slaveKeyNodeConnector.print("10");
+                                slaveKeyNodeConnector.println(sendStr);
+                                slaveKeyNodeConnector.flush();
+                                subNodeSave = true;
+                            }
                         } else if (type.equals("3")) {
-	                        // 送信
-	                        slaveKeyNodeConnector.println(sendStr);
-	                        slaveKeyNodeConnector.flush();
+                            // 送信
+                            slaveKeyNodeConnector.println(sendStr);
+                            slaveKeyNodeConnector.flush();
 
-	                        // 返却値取得
-	                        retParam = slaveKeyNodeConnector.readLine(sendStr);
+                            // 返却値取得
+                            retParam = slaveKeyNodeConnector.readLine(sendStr);
 
                             // Tag値でキー値を保存
 

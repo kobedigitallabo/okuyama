@@ -4,6 +4,7 @@ import java.util.*;
 import java.io.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
@@ -41,7 +42,6 @@ public class StatusUtil {
     private static String nowCpuStatus = null;
 
     private static boolean memoryLimitOver = false;
-
 
     // 全体ステータス
     // 0:正常 1:異常 2:終了 3:一時停止
@@ -85,6 +85,19 @@ public class StatusUtil {
 
     // Debugモードで起動しているかを設定
     private static boolean debugMode = false;
+
+
+    // アクセスを時間帯単位でサマリーするリスト
+    private static AtomicLong[] accessCountList = new AtomicLong[24];
+
+
+
+    // 初期化
+    static {
+        for (int i = 0; i < 24;i++) {
+            accessCountList[i] = new AtomicLong();
+        }
+    }
 
 
     /**
@@ -549,6 +562,28 @@ public class StatusUtil {
     // 振り分けアルゴリズムを返す
     public static String getDistributionAlgorithm() {
         return distributionAlgorithm;
+    }
+
+
+    // クライアントからの呼び出しのたびに回数をカウントする
+    public static void incrementMethodExecuteCount() {
+        ((AtomicLong)accessCountList[JavaSystemApi.currentDateHour]).getAndIncrement();
+    }
+
+
+    // クライアントからの呼び出しのたびに回数をカウントする
+    public static String getMethodExecuteCount() {
+        StringBuffer strBuf = new StringBuffer(100);
+        for (int i = 0; i < 24;i++) {
+            strBuf.append("Hour=");
+            strBuf.append(i);
+            strBuf.append("");
+
+            strBuf.append(" Count=[");
+            strBuf.append(((AtomicLong)accessCountList[i]).toString());
+            strBuf.append("], ");
+        }
+        return strBuf.toString();
     }
 
 

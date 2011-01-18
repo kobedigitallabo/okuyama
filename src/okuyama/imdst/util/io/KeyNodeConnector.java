@@ -66,7 +66,7 @@ public class KeyNodeConnector {
         InetSocketAddress inetAddr = null;
 
         try {
-            inetAddr = new InetSocketAddress(this.nodeName, this.nodePort);
+            inetAddr = new InetSocketAddress(NodeDnsUtil.getNameToReal(this.nodeName), this.nodePort);
             this.socket = new Socket();
             this.socket.connect(inetAddr, connectOpenTime);
 

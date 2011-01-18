@@ -46,7 +46,14 @@ public class ServerTimerHelper extends AbstractHelper {
 
             while (true) {
                 Thread.sleep(this.timerInterval);
+                // 現在のミリ秒をセット
                 JavaSystemApi.currentTimeMillis = System.currentTimeMillis();
+
+                // 現在の時間(Hour)をセット
+                Calendar cal = Calendar.getInstance(); 
+                int hour = cal.get(cal.HOUR_OF_DAY);
+                JavaSystemApi.currentDateHour = hour;
+
                 if(StatusUtil.getStatus() != 0) break;
             }
         } catch(Exception e) {
