@@ -250,7 +250,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                             break;
-						case 101 :
+                        case 101 :
 
                             // Key値とDataNode名を格納する
                             requestHashCode = clientParameterList[1];
@@ -375,6 +375,24 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append("Save Data Count=[" + keyMapManager.getSaveDataCount() + "]");
                             retParamBuf.append(";");
                             retParamBuf.append("Last Data Change Time=[" + keyMapManager.getLastDataChangeTime() + "]");
+                            retParamBuf.append(";");
+                            retParamBuf.append("Save Data Size=[");
+
+                             String[] allSaveSize = this.keyMapManager.getAllSaveDataSize();
+
+                            StringBuilder sizeListStr = new StringBuilder(40);
+                            if (allSaveSize != null) {
+                                String sep = "";
+                                for (int i = 0; i < allSaveSize.length; i++) {
+                                    if (allSaveSize[i] != null && !allSaveSize[i].equals("")) {
+                                        sizeListStr.append(sep);
+                                        sizeListStr.append(allSaveSize[i]);
+                                        sep = ":";
+                                    }
+                                }
+                            }
+                            retParamBuf.append(sizeListStr.toString());
+                            retParamBuf.append("]");
                             break;
                         case 11 :
 
@@ -589,6 +607,27 @@ public class KeyManagerHelper extends AbstractHelper {
                                 retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                                 retParamBuf.append("0");
                             }
+                            break;
+                        case 62 : 
+
+                             String[] mAllSaveSize = this.keyMapManager.getAllSaveDataSize();
+
+                            StringBuilder mSizeListStr = new StringBuilder(40);
+                            if (mAllSaveSize != null) {
+                                String sep = "";
+                                for (int i = 0; i < mAllSaveSize.length; i++) {
+                                    if (mAllSaveSize[i] != null && !mAllSaveSize[i].equals("")) {
+                                        mSizeListStr.append(sep);
+                                        mSizeListStr.append(mAllSaveSize[i]);
+                                        sep = ",";
+                                    }
+                                }
+                            } 
+                            retParamBuf.append("62");
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append("true");
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(mSizeListStr.toString());
                             break;
                         case 100 :
 

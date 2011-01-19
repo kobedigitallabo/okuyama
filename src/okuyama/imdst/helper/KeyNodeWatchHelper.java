@@ -111,7 +111,9 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                         logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
 
                         pingRet = this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue(), logger);
-                        if (pingRet[1] != null) this.nodeStatusStr = pingRet[1];
+                        if (pingRet[1] != null) {
+                            this.nodeStatusStr = pingRet[1];
+                        }
 
                         if(pingRet[0].equals("false")) {
                             // ノードダウン

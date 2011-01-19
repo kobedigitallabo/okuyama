@@ -2312,8 +2312,14 @@ public class KeyMapManager extends Thread {
     }
 
     // 格納データのサイズを返す
+    // ユニークキー指定あり
     public long getSaveDataSize(String uniqueKey) {
         return this.keyMapObj.getDataUseSize(uniqueKey);
+    }
+
+    // 格納データのサイズのユニークキー別の全てのサイズを返す
+    public String[] getAllSaveDataSize() {
+        return this.keyMapObj.getAllDataUseSize();
     }
 
     // 自身のステータスがエラーでないかを返す

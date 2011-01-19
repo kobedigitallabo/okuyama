@@ -72,11 +72,12 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
 
                     String command = br.readLine();
                     if (command.equals("shutdown")) {
+
                         pw.println("Commond Success");
                         pw.flush();
                         pw.println("Shutdown ...");
                         pw.flush();
-                        Thread.sleep(1500);
+                        Thread.sleep(500);
                         soc.close();
                         JavaMain.shutdownMainProccess();
                         break;
@@ -86,7 +87,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         pw.println(command + " Suuccess");
                         pw.flush();
 
-                        Thread.sleep(1500);
+                        Thread.sleep(500);
 
                         br.close();
                         pw.close();
@@ -99,9 +100,9 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
 
                         br.close();
                         pw.close();
-                        Thread.sleep(1500);
+                        Thread.sleep(500);
                         soc.close();
-                    } else if (command.equals("name")) {
+                    } else if (command.equals("cname")) {
 
                         String nameLine = br.readLine();
 
@@ -118,7 +119,19 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         pw.flush();
                         br.close();
                         pw.close();
-                        Thread.sleep(1500);
+                        Thread.sleep(500);
+                        soc.close();
+                    } else if (command.equals("rname")) {
+
+                        String name = br.readLine();
+
+                        NodeDnsUtil.removeNameMap(name);
+                        pw.println(command + " Suuccess Remove Setting.. [" + name + "]");
+
+                        pw.flush();
+                        br.close();
+                        pw.close();
+                        Thread.sleep(500);
                         soc.close();
                     } else if (command.equals("jobs")) {
 
@@ -128,15 +141,27 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
 
                         br.close();
                         pw.close();
-                        Thread.sleep(1500);
+                        Thread.sleep(500);
+                        soc.close();
+
+                    } else if (command.equals("size")) {
+
+                        pw.println(command + " Suuccess");
+                        pw.println(StatusUtil.getMethodExecuteCount());
+                        pw.flush();
+
+                        br.close();
+                        pw.close();
+                        Thread.sleep(500);
                         soc.close();
                     } else {
+
                         pw.println(command + " Command Not Found");
                         pw.flush();
 
                         br.close();
                         pw.close();
-                        Thread.sleep(1500);
+                        Thread.sleep(500);
                         soc.close();
                     }
                 } catch(Exception innerE) {

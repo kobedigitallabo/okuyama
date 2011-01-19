@@ -275,9 +275,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
 
-                    // 呼び出しをカウント
-                    StatusUtil.incrementMethodExecuteCount();
-
                     // 本体処理開始
                     // 処理番号で処理を分岐
                     // 実行許可も判定
@@ -507,8 +504,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         pw.print("\r\n");
                     }
 
-                    // 書き出し
+                    // クライアントへ結果書き出し
                     pw.flush();
+
+                    // 呼び出しをカウント
+                    StatusUtil.incrementMethodExecuteCount();
 
 
                     // 処理待機中のHelper数が閾値と同じかもしくは大きい場合は同様のクライアントを処理

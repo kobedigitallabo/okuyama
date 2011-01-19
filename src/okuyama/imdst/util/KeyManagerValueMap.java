@@ -568,6 +568,30 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     }
 
 
+    public String[] getAllDataUseSize() {
+
+        if (dataSizeMap == null || dataSizeMap.size() == 0) return null;
+
+        String[] sizeList = new String[dataSizeMap.size()];
+        Set entrySet = dataSizeMap.entrySet();
+        Iterator entryIte = entrySet.iterator(); 
+        int idx = 0;
+        while(entryIte.hasNext()) {
+
+            Map.Entry obj = (Map.Entry)entryIte.next();
+            if (obj == null) continue;
+
+            String key = (String)obj.getKey();
+            AtomicLong size = (AtomicLong)obj.getValue();
+
+            sizeList[idx] = key + "=" + size.toString();
+            idx++;
+        }
+
+        return sizeList;
+    }
+
+
     /**
      * データファイルの不要領域を掃除して新たなファイルを作りなおす.<br>
      * 方法はMapを一時Mapをつくり出して、現在のsuperクラスのMapから全てのKeyを取り出し、<br>
