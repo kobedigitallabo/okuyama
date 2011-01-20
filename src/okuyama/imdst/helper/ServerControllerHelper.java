@@ -146,7 +146,10 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
 
                     } else if (command.equals("size")) {
 
+
+                        
                         pw.println(command + " Suuccess");
+
                         pw.println(StatusUtil.getMethodExecuteCount());
                         pw.flush();
 

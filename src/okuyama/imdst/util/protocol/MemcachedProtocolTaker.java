@@ -30,6 +30,8 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
     private String requestLine = null;
     private String[] requestSplit = null;
 
+    private int mgetReturnIndex = 1;
+
     private StringBuilder retGetBuf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
 
     private String clientInfo = null;
@@ -44,6 +46,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
         this.methodMatch = true;
         this.requestLine = null;
         this.requestSplit = null;
+        this.mgetReturnIndex = 1;
     }
 
 
@@ -194,6 +197,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
             String[] executeMethods = executeMethodStr.split(ImdstDefine.memcacheExecuteMethodSep);
             this.requestSplit = executeMethods;
+            
 
             // memcacheの処理方法で分岐
             if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodSet)) {
@@ -286,19 +290,49 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 }
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodGet)) {
 
-                // Get
+                // Get or Mget
                 // 分解すると コマンド,key
                 // 命令文字列の数をチェック
-                if (executeMethods.length != 2) {
+                if (executeMethods.length == 1) {
                     pw.println(ImdstDefine.memcacheMethodReturnErrorComn);
                     pw.flush();
                     return retStrs;
                 }
 
                 // okuyamaプロトコルに変更
-                retStrs = new String[2];
-                retStrs[0] = "2";
-                retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
+                if (executeMethods.length == 2) {
+
+                    // get
+                    retStrs = new String[2];
+                    retStrs[0] = "2";
+                    retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
+                } else {
+
+                    // mget 
+                    // okuyamaプロトコルに変更
+                    this.mgetReturnIndex = 1;
+
+                    ArrayList requestWorkList = new ArrayList();
+                    ArrayList replaceRequestWorkList = new ArrayList();
+                    requestWorkList.add("22");
+                    replaceRequestWorkList.add("22");
+
+                    for (int i = 1; i < executeMethods.length; i++) {
+                        if (executeMethods[i].length() > 0) {
+                            replaceRequestWorkList.add(executeMethods[i]);
+                            requestWorkList.add(new String(BASE64EncoderStream.encode(executeMethods[i].getBytes())));
+                        }
+                    }
+
+                    retStrs = new String[requestWorkList.size()];
+                    this.requestSplit = new String[requestWorkList.size()];
+
+                    for (int idx = 0; idx < requestWorkList.size(); idx++) {
+
+                        retStrs[idx] = (String)requestWorkList.get(idx);
+                        requestSplit[idx] = (String)replaceRequestWorkList.get(idx);
+                    }
+                }
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodGets)) {
 
                 // Gets
@@ -451,6 +485,93 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                     retGetBuf.append("VALUE");
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
                     retGetBuf.append(this.requestSplit[1]);
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+
+                    if (valueSplit.length < 2) {
+                        retGetBuf.append("0");
+                    } else {
+                        retGetBuf.append(metaColumns[0]);
+                    }
+
+                    valueByte = BASE64DecoderStream.decode(valueSplit[0].getBytes());
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    retGetBuf.append(valueByte.length);
+                    retGetBuf.append("\r\n");
+                    retGetBuf.append(new String(valueByte, "UTF-8"));
+                    retGetBuf.append("\r\n");
+                }
+            }
+            retGetBuf.append("END");
+
+            retStr = retGetBuf.toString();
+            retGetBuf = null;
+        } else if (retParams[0].equals("22")) {
+
+            // Mget
+            // 返却値は"VALUE キー値 hashcode byteサイズ \r\n 値 \r\n
+            String[] valueSplit = null;
+            retGetBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
+            byte[] valueByte = null;
+            String[] metaColumns = null;
+
+            if (retParams[1].equals("true")) {
+
+                valueSplit = retParams[2].split(ImdstDefine.keyHelperClientParamSep);
+
+                if (valueSplit.length > 1) 
+                    metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
+
+                // 有効期限チェックも同時に行う(memcachedのみ)
+                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+
+                    retGetBuf.append("VALUE");
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    retGetBuf.append(this.requestSplit[this.mgetReturnIndex]);
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+
+                    if (valueSplit.length < 2) {
+                        retGetBuf.append("0");
+                    } else {
+                        retGetBuf.append(metaColumns[0]);
+                    }
+
+                    valueByte = BASE64DecoderStream.decode(valueSplit[0].getBytes());
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    retGetBuf.append(valueByte.length);
+                    retGetBuf.append("\r\n");
+                    retGetBuf.append(new String(valueByte, "UTF-8"));
+                    retGetBuf.append("\r\n");
+                }
+            }
+            //retGetBuf.append("END");
+
+            retStr = retGetBuf.toString();
+            retGetBuf = null;
+            this.mgetReturnIndex++;
+        } else if (retParams[0].equals("22-f")) {
+
+            // MGetの最終値
+            // 返却値は"VALUE キー値 hashcode byteサイズ \r\n 値 \r\n END
+            String[] valueSplit = null;
+            retGetBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
+            byte[] valueByte = null;
+            String[] metaColumns = null;
+
+            if (retParams[1].equals("true")) {
+
+                valueSplit = retParams[2].split(ImdstDefine.keyHelperClientParamSep);
+
+                if (valueSplit.length > 1) 
+                    metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
+
+                // 有効期限チェックも同時に行う(memcachedのみ)
+                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+
+                    retGetBuf.append("VALUE");
+                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    retGetBuf.append(this.requestSplit[this.mgetReturnIndex]);
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
 
                     if (valueSplit.length < 2) {

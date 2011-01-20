@@ -124,9 +124,9 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                                 socket.setSoTimeout(ImdstDefine.nodeConnectiontReadShortTimeout);
 
                                 pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
-                                                                                                                ImdstDefine.keyHelperClientParamEncoding)));
+                                                                                               ImdstDefine.keyHelperClientParamEncoding)));
                                 br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
-                                                                                                ImdstDefine.keyHelperClientParamEncoding));
+                                                                              ImdstDefine.keyHelperClientParamEncoding));
 
                                 // 文字列バッファ初期化
                                 StringBuilder serverRequestBuf = new StringBuilder();

@@ -378,6 +378,34 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // KeyでValueを更新(バージョンチェック込)
                             retParams = this.setKeyValueVersionCheck(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5]);
                             break;
+                        case 22 :
+
+                            // 複数Key値を指定することで、紐付くValueを一度に取得する(memcachedのmget)
+                            int mIdx = 1;
+                            for (; mIdx < (clientParameterList.length - 1); mIdx++) {
+System.out.println("keyyyyyyyyyy[" + clientParameterList[mIdx] + "]");
+                                // Takerで返却値を作成
+                                // プロトコルがマッチしていたかをチェック
+                                // 設定通りのプロトコルの場合はそのまま処理。そうでない場合はokuyamaで処理
+                                String mRetParamStr = "";
+                                String[] mRetParams = this.getKeyValue(clientParameterList[mIdx]);
+                                if(mRetParams != null) mRetParams[0] = "22";
+                                if (this.porotocolTaker.isMatchMethod()) {
+
+                                    mRetParamStr = this.porotocolTaker.takeResponseLine(mRetParams);
+                                } else {
+                                    okuyamaPorotocolTaker.setClientInfo(socketString);
+                                    mRetParamStr = okuyamaPorotocolTaker.takeResponseLine(mRetParams);
+                                }
+
+                                // クライアントへ結果書き出し
+                                pw.print(mRetParamStr);
+                                pw.flush();
+                            }
+
+                            retParams = this.getKeyValue(clientParameterList[mIdx]);
+                            if (retParams != null && retParams[0].equals("2")) retParams[0] = "22-f";   
+                            break;
                         case 30 :
 
                             // 各キーノードへデータロック依頼
@@ -1080,7 +1108,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // Isolation変換実行
             keyStr = this.encodeIsolationConvert(keyStr);
 
-            if (!this.checkKeyLength(keyStr))  {
+            if (!this.checkKeyLength(keyStr)) {
                 // 保存失敗
                 retStrs[0] = "2";
                 retStrs[1] = "false";
