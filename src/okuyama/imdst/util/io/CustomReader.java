@@ -33,7 +33,6 @@ public class CustomReader {
                 break;
             }
         }
-System.out.println(bos.toString());
         return bos.toString();
     }
 

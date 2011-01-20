@@ -383,7 +383,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // 複数Key値を指定することで、紐付くValueを一度に取得する(memcachedのmget)
                             int mIdx = 1;
                             for (; mIdx < (clientParameterList.length - 1); mIdx++) {
-System.out.println("keyyyyyyyyyy[" + clientParameterList[mIdx] + "]");
                                 // Takerで返却値を作成
                                 // プロトコルがマッチしていたかをチェック
                                 // 設定通りのプロトコルの場合はそのまま処理。そうでない場合はokuyamaで処理
