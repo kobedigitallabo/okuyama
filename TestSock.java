@@ -40,8 +40,7 @@ public class TestSock {
 
                 // マスタサーバに接続
                 okuyamaClient.connect(args[1], port);
-
-
+                
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     // データ登録
@@ -899,6 +898,64 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } else if (args[0].equals("22")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] ret = null;
+                String[] multiKeys = null;
+                
+                if (args.length > 4) {
+                    multiKeys = new String[Integer.parseInt(args[3])];
+                    for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                        multiKeys[i] = "datasavekey_" + args[4] + "_" + new Integer(i).toString();
+                    }
+                } else {
+                    multiKeys = new String[Integer.parseInt(args[3])];
+                    for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                        multiKeys[i] = "datasavekey_" + new Integer(i).toString();
+                    }
+                }
+                
+                long start = new Date().getTime();
+                Map retMap = okuyamaClient.getMultiValue(multiKeys);
+                long end = new Date().getTime();
+                if (retMap == null) {
+                    System.out.println(retMap);
+                } else {
+                    System.out.println(retMap);
+                    System.out.println("ResultSize = [" + retMap.size() + "]");
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();                
+            } else if (args[0].equals("22.1")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] ret = null;
+                String[] multiKeys = null;
+                
+                String targetKeysStr = args[3];
+                // Key配列作成
+                multiKeys = targetKeysStr.split(" ");
+                
+                long start = new Date().getTime();
+                Map retMap = okuyamaClient.getMultiValue(multiKeys);
+                long end = new Date().getTime();
+                if (retMap == null) {
+                    System.out.println(retMap);
+                } else {
+                    System.out.println(retMap);
+                    System.out.println("ResultSize = [" + retMap.size() + "]");
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close(); 
             } 
 
 

@@ -83,6 +83,9 @@ public class ImdstDefine {
     // データノードに対するLock取得状況の確認の成否の返却文字列の先頭部分
     public static final String hasKeyNodeLockSuccessStr = "32,true";
 
+    // MasterNodeのgetMultiValueを呼び出した際のClientへの戻り値
+    public static final String getMultiEndOfDataStr = "END";
+
     // memcacheモード時の命令コマンドの区切り文字
     public static final String memcacheExecuteMethodSep = " ";
 
@@ -258,7 +261,7 @@ public class ImdstDefine {
     public static final int saveKeyMaxSize = 486;
 
     // 共通のデータファイルに書き出す最大サイズ
-    public static final int dataFileWriteMaxSize = 1024 * 27;
+    public static final int dataFileWriteMaxSize = 8192;
 
 
     public static final int stringBufferSmallSize = 128;
