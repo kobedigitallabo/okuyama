@@ -24,7 +24,7 @@ import okuyama.imdst.util.io.KeyNodeConnector;
 public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManagerHelper {
 
     // ノードの監視サイクル時間(ミリ秒)
-    private int checkCycle = 10000 * 1;
+    private int checkCycle = 10000 * 6;
 
     private KeyNodeConnector mainKeyNodeConnector = null;
 
