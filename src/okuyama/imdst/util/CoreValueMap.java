@@ -231,9 +231,9 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
             this.urgentSaveMapConverter = new AllFileModeCoreValueCnv();
             if (this.allDataMemory) {
-                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 1000000, 0.10, (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1));
+                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 10000, 0.005, (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1));
             } else {
-                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 1000000, 0.10);
+                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 10000, 0.005);
             }
             this.urgentSaveMode = true;
         }

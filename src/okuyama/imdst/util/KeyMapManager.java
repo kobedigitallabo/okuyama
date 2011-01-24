@@ -1587,6 +1587,12 @@ public class KeyMapManager extends Thread {
 
                         // KeyManagerValueMapのインスタンスを再作成
                         this.keyMapObj = null;
+
+                        // 一旦フルGC
+                        JavaSystemApi.manualGc();
+                        Thread.sleep(30000); 
+
+                        // 新たにKeyManagerValueMapを作成
                         if (!this.allDataForFile) {
                             this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs);
                         } else {

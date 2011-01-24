@@ -1297,7 +1297,6 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
                 // Keyファイルのディレクトリ範囲ないで適当に記録ファイルを分散させる
                 File file = new File(this.fileDirs[i % this.fileDirs.length] + i + ".data");
 
-                file.delete();
                 dataFileList[i] = file;
             }
 
