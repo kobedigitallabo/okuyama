@@ -6,16 +6,19 @@ import java.util.StringTokenizer;
 //import org.csvdb.io.DataDefineConfig;
 
 public class CsvSQLMain {
+
     public static void main(String[] args) {
         CsvSQLMain me = new CsvSQLMain();
         me.exec(args);
     }
+
     public void exec(String[] args) {
         try {
             String[] work = args[0].split(";");
-            
+
             StatementCompileData statementCompileData = new StatementCompileData(work[0]);
             statementCompileData.compile();
+            
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -307,6 +307,23 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } else if (args[0].equals("2.33")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] ret = null;
+
+                long start = new Date().getTime();
+                for (int i = 0; i < Integer.parseInt(args[3]); i++) {
+                    ret = okuyamaClient.getValueScript("datasavekey_" + new Integer(i).toString(), "var dataValue; var retValue = ''; var execRet = '0'; if (dataValue.indexOf('99') != -1) {   retValue = dataValue;   execRet = '1';}");
+                    //if (ret[0].equals("true")) System.out.println(ret[1]);
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
             } else if (args[0].equals("2.4")) {
                 
                 int port = Integer.parseInt(args[2]);

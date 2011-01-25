@@ -60,7 +60,7 @@ public class ResponseTestThread extends Thread {
                     while(true &&  ResponseTest.startFlg){
 
                         int appendInt = rnd.nextInt(rndVal);
-                        if(!okuyamaClient.setValue(key + appendInt, value + appendInt)) {
+                        if(!System.out.println(System.out.prokuyamaClient.setValue(key + appendInt, value + appendInt)) {
                             System.out.println("Error");
                         }
                         this.execCounter++;

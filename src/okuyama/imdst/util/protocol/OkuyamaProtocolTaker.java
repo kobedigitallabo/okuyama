@@ -241,6 +241,64 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
                 }
                 this.retParamBuf.append("\n");
                 this.retParamBuf.append(ImdstDefine.getMultiEndOfDataStr);
+            } else if (retParams[0].equals("23")) {
+
+                String[] metaColumns = null;
+                String[] valueSplit = retParams[3].split(ImdstDefine.keyHelperClientParamSep);
+
+                if (valueSplit.length > 1) 
+                    metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
+
+                // 有効期限チェックも同時に行う
+                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                    this.retParamBuf.append(retParams[0]);
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                    this.retParamBuf.append(retParams[1]);
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                    this.retParamBuf.append(retParams[2]);
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+
+                    // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
+                    if (retParams.length > 3 && retParams[3] != null) {
+                        this.retParamBuf.append(((String[])retParams[3].split(ImdstDefine.keyHelperClientParamSep))[0]);
+                    }
+                    this.retParamBuf.append("\n");
+                } else {
+                    this.retParamBuf.append("");
+                }
+
+            } else if (retParams[0].equals("23-f")) {
+                String[] metaColumns = null;
+                String[] valueSplit = retParams[3].split(ImdstDefine.keyHelperClientParamSep);
+                
+                retParams[0] = "23";
+                if (valueSplit.length > 1) 
+                    metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
+
+                // 有効期限チェックも同時に行う
+                if (!retParams[1].equals("true")) {
+
+                    this.retParamBuf.append("");
+                } else if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+
+                    this.retParamBuf.append(retParams[0]);
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                    this.retParamBuf.append(retParams[1]);
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                    this.retParamBuf.append(retParams[2]);
+                    this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+
+                    // 返却値に区切り文字が入っている場合は区切り文字より左辺のみ返す
+                    if (retParams.length > 3 && retParams[3] != null) {
+                        this.retParamBuf.append(((String[])retParams[3].split(ImdstDefine.keyHelperClientParamSep))[0]);
+                    }
+                    this.retParamBuf.append("\n");
+                } else {
+
+                    this.retParamBuf.append("");
+                }
+
+                this.retParamBuf.append(ImdstDefine.getMultiEndOfDataStr);
             } else {
                 this.retParamBuf.append(retParams[0]);
                 this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);

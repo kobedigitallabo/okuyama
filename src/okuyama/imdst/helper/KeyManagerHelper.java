@@ -57,6 +57,10 @@ public class KeyManagerHelper extends AbstractHelper {
     // 保存可能なデータの最大サイズ
     private static int setDatanodeMaxSize = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
 
+    // Scriptエンジン
+    private ScriptEngineManager manager = null;
+    private ScriptEngine engine = null;
+
 
     /**
      * Logger.<br>
@@ -88,6 +92,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
         String[] retParams = null;
         StringBuilder retParamBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
 
         try{
 
@@ -988,9 +993,10 @@ public class KeyManagerHelper extends AbstractHelper {
                             !(new String(BASE64DecoderStream.decode(scriptStr.getBytes())).equals(ImdstDefine.imdstBlankStrData))) {
 
                             // TODO:エンジンの初期化に時間がかかるので他の影響を考えここで初期化
-                            ScriptEngineManager manager = new ScriptEngineManager();
-                            ScriptEngine engine = manager.getEngineByName("JavaScript");
-
+                            if (manager == null) {
+                                manager = new ScriptEngineManager();
+                                engine = manager.getEngineByName("JavaScript");
+                            }
 
                             // 引数設定
                             // Key値を設定

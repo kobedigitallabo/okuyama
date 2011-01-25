@@ -405,6 +405,57 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParams = this.getKeyValue(clientParameterList[mIdx]);
                             if (retParams != null && retParams[0].equals("2")) retParams[0] = "22-f";   
                             break;
+                        case 23 :
+
+                            // Tag値でValue値群を取得する
+                            retParams = this.getTagKeys(clientParameterList[1], true);
+                            String[] keys = new String[0];
+                            if (retParams[1].equals("true")) {
+
+                                keys = retParams[2].split(ImdstDefine.imdstTagKeyAppendSep);
+                            }
+
+                            int tagkeysIdx = 0;
+
+                            for (; tagkeysIdx < (keys.length - 1); tagkeysIdx++) {
+                                // Takerで返却値を作成
+                                // プロトコルがマッチしていたかをチェック
+                                // 設定通りのプロトコルの場合はそのまま処理。そうでない場合はokuyamaで処理
+                                String mRetParamStr = "";
+                                String[] mRetParams = this.getKeyValue(keys[tagkeysIdx]);
+                                
+                                if(mRetParams != null) mRetParams[0] = "23";
+                                if (mRetParams[1].equals("true")) {
+                                    String[] realRetParams = new String[mRetParams.length+1];
+                                    realRetParams[0] = mRetParams[0];
+                                    realRetParams[1] = mRetParams[1];
+                                    realRetParams[2] = keys[tagkeysIdx];
+                                    realRetParams[3] = mRetParams[2];
+                                    if (this.porotocolTaker.isMatchMethod()) {
+
+                                        mRetParamStr = this.porotocolTaker.takeResponseLine(realRetParams);
+                                    } else {
+                                        okuyamaPorotocolTaker.setClientInfo(socketString);
+                                        mRetParamStr = okuyamaPorotocolTaker.takeResponseLine(realRetParams);
+                                    }
+
+                                    // クライアントへ結果書き出し
+                                    pw.print(mRetParamStr);
+                                    pw.flush();
+                                }
+                            }
+
+                            retParams = this.getKeyValue(keys[tagkeysIdx]);
+
+                            String[] realRetParams = new String[4];
+                            realRetParams[0] = retParams[0];
+                            realRetParams[1] = retParams[1];
+                            realRetParams[2] = keys[tagkeysIdx];
+                            realRetParams[3] = retParams[2];
+                            retParams = realRetParams;
+
+                            if (retParams != null && retParams[0].equals("2")) retParams[0] = "23-f";
+                            break;
                         case 30 :
 
                             // 各キーノードへデータロック依頼

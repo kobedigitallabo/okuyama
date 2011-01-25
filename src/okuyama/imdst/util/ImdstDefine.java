@@ -311,7 +311,7 @@ public class ImdstDefine {
 
 
    // Recoverのコネクションタイムアウト時間(ミリ秒)
-    public static final int recoverConnectionTimeout = 60000 * 60;
+    public static final int recoverConnectionTimeout = 60000 * 180;
 
 
     // ---- 分散アルゴリズム系 ---------------------------------------------------
