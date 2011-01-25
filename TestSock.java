@@ -973,6 +973,25 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close(); 
+            } else if (args[0].equals("23")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                Map retMap = okuyamaClient.getTagValues(args[3]);
+                long end = new Date().getTime();
+                if (retMap == null) {
+                    System.out.println(retMap);
+                } else {
+                    System.out.println(retMap);
+                    System.out.println("ResultSize = [" + retMap.size() + "]");
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
             } 
 
 

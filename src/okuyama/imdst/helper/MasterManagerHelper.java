@@ -381,6 +381,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         case 22 :
 
                             // 複数Key値を指定することで、紐付くValueを一度に取得する(memcachedのmget)
+                            // 本処理は大量のValue値を扱うため、クライアントに逐次値を返す
                             int mIdx = 1;
                             for (; mIdx < (clientParameterList.length - 1); mIdx++) {
                                 // Takerで返却値を作成
@@ -408,6 +409,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         case 23 :
 
                             // Tag値でValue値群を取得する
+                            // 本処理は大量のValue値を扱うため、クライアントに逐次値を返す
                             retParams = this.getTagKeys(clientParameterList[1], true);
                             String[] keys = new String[0];
                             if (retParams[1].equals("true")) {
@@ -418,6 +420,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             int tagkeysIdx = 0;
 
                             for (; tagkeysIdx < (keys.length - 1); tagkeysIdx++) {
+
                                 // Takerで返却値を作成
                                 // プロトコルがマッチしていたかをチェック
                                 // 設定通りのプロトコルの場合はそのまま処理。そうでない場合はokuyamaで処理
@@ -455,11 +458,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 realRetParams[3] = retParams[2];
                                 retParams = realRetParams;
                             } else {
-
+                            
                                 // Tag取得の結果1件もKeyが紐付いていない場合
-
-                                retParams = new String[1];
+                                retParams = new String[2];
                                 retParams[0] = "23-f";
+                                retParams[1] = "false";
                             }
 
                             if (retParams != null && retParams[0].equals("2")) retParams[0] = "23-f";

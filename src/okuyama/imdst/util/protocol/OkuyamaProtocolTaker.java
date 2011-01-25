@@ -268,9 +268,11 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
                 }
 
             } else if (retParams[0].equals("23-f")) {
-                if (retParams.length < 4) {
+                if (retParams.length < 4 || retParams[1].equals("false")) {
+
                     this.retParamBuf.append(ImdstDefine.getMultiEndOfDataStr);
                 } else {
+
                     String[] metaColumns = null;
                     String[] valueSplit = retParams[3].split(ImdstDefine.keyHelperClientParamSep);
                     
