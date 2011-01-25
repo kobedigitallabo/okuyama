@@ -445,14 +445,22 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 }
                             }
 
-                            retParams = this.getKeyValue(keys[tagkeysIdx]);
+                            if (keys.length > 0) {
+                                retParams = this.getKeyValue(keys[tagkeysIdx]);
 
-                            String[] realRetParams = new String[4];
-                            realRetParams[0] = retParams[0];
-                            realRetParams[1] = retParams[1];
-                            realRetParams[2] = keys[tagkeysIdx];
-                            realRetParams[3] = retParams[2];
-                            retParams = realRetParams;
+                                String[] realRetParams = new String[4];
+                                realRetParams[0] = retParams[0];
+                                realRetParams[1] = retParams[1];
+                                realRetParams[2] = keys[tagkeysIdx];
+                                realRetParams[3] = retParams[2];
+                                retParams = realRetParams;
+                            } else {
+
+                                // Tag取得の結果1件もKeyが紐付いていない場合
+
+                                retParams = new String[1];
+                                retParams[0] = "23-f";
+                            }
 
                             if (retParams != null && retParams[0].equals("2")) retParams[0] = "23-f";
                             break;
