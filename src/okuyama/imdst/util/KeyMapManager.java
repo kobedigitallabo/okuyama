@@ -906,6 +906,9 @@ public class KeyMapManager extends Thread {
                 String lastTagCnv = null;
                 int dataPutCounter = 0;
                 boolean firsrtRegist = true;
+                
+                counter = (((key.hashCode() << 1) >>> 1) % 10) * 5000000;
+                dataPutCounter = counter;
 
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.tagSetParallelSyncObjs[((tag.hashCode() << 1) >>> 1) % KeyMapManager.tagSetParallelSize]) {
@@ -930,7 +933,7 @@ public class KeyMapManager extends Thread {
                         } else {
 
                             // Tag値のデータそのものがないもしくは、登録連番の中にはデータがない
-                            if (counter > 0) {
+                            if (counter > ((((key.hashCode() << 1) >>> 1) % 10) * 5000000)) {
                                 dataPutCounter = counter - 1;
                             } else {
                                 // 該当領域にデータを登録する
@@ -961,6 +964,8 @@ public class KeyMapManager extends Thread {
                                 counter++;
 
                                 tagCnv = KeyMapManager.tagStartStr + tag + "_" + (dataPutCounter + 1) + KeyMapManager.tagEndStr;
+                                
+                                
                                 this.setKeyPair(tagCnv, key, transactionCode);
                             } else{
 
@@ -968,6 +973,7 @@ public class KeyMapManager extends Thread {
                                 tagCnv = KeyMapManager.tagStartStr + tag + "_" + dataPutCounter + KeyMapManager.tagEndStr;
 
                                 keyStrs = keyStrs + KeyMapManager.tagKeySep + key;
+                                
                                 this.setKeyPair(tagCnv, keyStrs, transactionCode);
                             }
                         }
@@ -994,53 +1000,82 @@ public class KeyMapManager extends Thread {
         String tmpStr = null;
         String tmpSep = "";
         String lastSetTime = "";
-
+        String counterSep = "";
+        StringBuilder ret = new StringBuilder();
+        
         if (!blocking) {
 
             int counter = 0;
+
+            
             // Tagのキー値を連結
-            while(true) {
-
-                String tagCnv = KeyMapManager.tagStartStr + tag + "_" + counter + KeyMapManager.tagEndStr;
-
-                if (this.containsKeyPair(tagCnv)) {
-
-                    tmpStr = (String)this.getKeyPair(tagCnv);
-
-                    if (tmpStr != null) {
-
-                        isMatch = true;
-                        tmpBuf.append(tmpSep);
-
-                        setTimeSplitWork = tmpStr.split(ImdstDefine.setTimeParamSep);
-
-                        if (setTimeSplitWork.length > 1) lastSetTime = setTimeSplitWork[1];
-
-                        tmpBuf.append(setTimeSplitWork[0]);
-                        tmpSep = KeyMapManager.tagKeySep;
+            for (int idx = 0; idx < 45000001; idx=idx+5000000) {
+                keyStrs = "";
+                setTimeSplitWork = null;                
+                isMatch = false;
+                tmpBuf = new StringBuilder(ImdstDefine.stringBufferLarge_2Size);
+                tmpStr = null;
+                tmpSep = "";
+                
+                
+                counter = idx;
+                while(true) {
+        
+                    String tagCnv = KeyMapManager.tagStartStr + tag + "_" + counter + KeyMapManager.tagEndStr;
+                    
+                    if (this.containsKeyPair(tagCnv)) {
+        
+                        tmpStr = (String)this.getKeyPair(tagCnv);
+        
+                        if (tmpStr != null) {
+        
+                            isMatch = true;
+                            tmpBuf.append(tmpSep);
+        
+                            setTimeSplitWork = tmpStr.split(ImdstDefine.setTimeParamSep);
+        
+                            if (setTimeSplitWork.length > 1) lastSetTime = setTimeSplitWork[1];
+        
+                            tmpBuf.append(setTimeSplitWork[0]);
+                            tmpSep = KeyMapManager.tagKeySep;
+                        } else {
+        
+                            if (!isMatch) {
+        
+                                keyStrs = null;
+                            } else {
+        
+                                keyStrs = tmpBuf.toString();
+                            }
+                            break;
+                        }
                     } else {
-
+        
                         if (!isMatch) {
-
                             keyStrs = null;
                         } else {
-
-                            keyStrs = tmpBuf.append(ImdstDefine.setTimeParamSep).append(lastSetTime).toString();
+                            keyStrs = tmpBuf.toString();
                         }
                         break;
                     }
-                } else {
-
-                    if (!isMatch) {
-                        keyStrs = null;
-                    } else {
-                        keyStrs = tmpBuf.append(ImdstDefine.setTimeParamSep).append(lastSetTime).toString();
-                    }
-                    break;
+                    counter++;
                 }
-                counter++;
+                
+                if (keyStrs != null) {
+                    
+                    ret.append(counterSep);
+                    ret.append(keyStrs);
+                    counterSep = KeyMapManager.tagKeySep;
+                }
             }
         }
+        
+        if (ret.toString().equals("")) {
+            keyStrs = null;
+        } else {
+            ret.append(ImdstDefine.setTimeParamSep).append(lastSetTime);
+            keyStrs = ret.toString();
+        } 
         return keyStrs;
     }
 
@@ -1060,9 +1095,13 @@ public class KeyMapManager extends Thread {
     public boolean containsTagPair(String tag) {
         boolean ret = false;
         if (!blocking) {
-            String tagCnv = KeyMapManager.tagStartStr + tag + "_0" + KeyMapManager.tagEndStr;
 
-            ret =  this.containsKeyPair(tagCnv);
+            for (int idx = 0; idx < 45000001; idx=idx+5000000) {
+
+                String tagCnv = KeyMapManager.tagStartStr + tag + "_" + idx + KeyMapManager.tagEndStr;
+                ret =  this.containsKeyPair(tagCnv);
+                if (ret) break;
+            }
         }
         return ret;
     }
