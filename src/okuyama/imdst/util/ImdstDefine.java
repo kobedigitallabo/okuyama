@@ -314,6 +314,11 @@ public class ImdstDefine {
     public static final int recoverConnectionTimeout = 60000 * 180;
 
 
+    // MasterConfigurationManagerHelperが設定情報を確認する時間間隔
+    public static final int configurationCheckCycle = 1000 * 20;
+
+
+
     // ---- 分散アルゴリズム系 ---------------------------------------------------
     // 分散アルゴリズムにConsistentHashを使用した場合の仮想ノードの数
     public static final int consistentHashVirtualNode = 50;

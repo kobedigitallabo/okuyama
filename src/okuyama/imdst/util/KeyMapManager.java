@@ -1629,7 +1629,7 @@ public class KeyMapManager extends Thread {
 
                         // 一旦フルGC
                         JavaSystemApi.manualGc();
-                        Thread.sleep(30000); 
+                        Thread.sleep(1000); 
 
                         // 新たにKeyManagerValueMapを作成
                         if (!this.allDataForFile) {
@@ -2028,7 +2028,7 @@ public class KeyMapManager extends Thread {
                         tagFlg = true;
                         int startIdx = 15;
                         int endIdx = key.lastIndexOf(ImdstDefine.imdstTagEndStr);
-         
+
                         String checkKey = key.substring(startIdx, endIdx);
                         sendTagKey = key.substring(startIdx, endIdx);
 
@@ -2059,6 +2059,7 @@ public class KeyMapManager extends Thread {
                                 String[] tagDatas = data.split(ImdstDefine.imdstTagKeyAppendSep);
                                 for (int idx = 0; idx < tagDatas.length; idx++) {
 
+                                    if (tagDatas[idx].indexOf(ImdstDefine.setTimeParamSep) == -1) tagDatas[idx] = tagDatas[idx] + "!0";
                                     // 送信するTag値とTagのValue(実際のKey値群)
                                     //System.out.println(sendTagKey);
                                     //System.out.println(tagDatas[idx]);
