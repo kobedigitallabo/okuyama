@@ -251,7 +251,7 @@ public class ImdstDefine {
     // ---- プログラム規定数値 -------------------------------------------------------------
     // 保存出来る、Key、Tag、Valueの最大長
     // Valueの最大長
-    public static final int saveDataMaxSize = 1572864;
+    public volatile static int saveDataMaxSize = 1572864;
 
     // 大きいデータ保存する場合は以下の数値の用に最も保存する回数の多いサイズに合わせると
     // レスポンスが向上す。下記の場合は512KB
@@ -261,7 +261,7 @@ public class ImdstDefine {
     public static final int saveKeyMaxSize = 486;
 
     // 共通のデータファイルに書き出す最大サイズ
-    public static final int dataFileWriteMaxSize = 8192;
+    public volatile static int dataFileWriteMaxSize = 8192;
 
 
     public static final int stringBufferSmallSize = 128;
@@ -314,14 +314,17 @@ public class ImdstDefine {
     public static final int recoverConnectionTimeout = 60000 * 180;
 
 
+    // MasterNodeとの無操作コネクションタイムアウト時間(ミリ秒)
+    public volatile static int masterNodeMaxConnectTime = 60000 * 60 * 12;
+
+
     // MasterConfigurationManagerHelperが設定情報を確認する時間間隔
     public static final int configurationCheckCycle = 1000 * 20;
 
 
-
     // ---- 分散アルゴリズム系 ---------------------------------------------------
     // 分散アルゴリズムにConsistentHashを使用した場合の仮想ノードの数
-    public static final int consistentHashVirtualNode = 50;
+    public volatile static int consistentHashVirtualNode = 50;
 
 
     // ---- KeyMapManager系 ------------------------------------------------------
