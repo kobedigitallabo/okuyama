@@ -3976,8 +3976,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             buf.append(transactionCode);                         // Transaction値
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append(calcValue);                               // Value値
-            buf.append(ImdstDefine.setTimeParamSep);
-            buf.append(setTime);                                 // 保存バージョン
             sendStr = buf.toString();
 
             // KeyNodeとの接続を確立
@@ -4010,8 +4008,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     // 使用済みの接続を戻す
-
                     super.addKeyNodeCacheConnectionPool(keyNodeConnector);
+
                 } catch (SocketException se) {
 
                     //se.printStackTrace();

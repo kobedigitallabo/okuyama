@@ -1080,6 +1080,94 @@ public class KeyMapManager extends Thread {
     }
 
 
+    /**
+     * キーを指定することで紐付くValueに計算を行う.<br>
+     *
+     * @param key キー値
+     * @param calcVal 計算値(数値)
+     * @param transactionCode
+     */
+    public String calcValue(String key, int calcVal, String transactionCode) throws BatchException {
+        String ret = null;
+        if (!blocking) {
+            try {
+
+                //logger.debug("setKeyPair - synchronized - start");
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.parallelSyncObjs[((keyNode.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
+
+                    String data = null;
+                    boolean containsKeyRet = containsKeyPair(key);
+                    if (!containsKeyRet) {
+
+                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+                        
+                        if (keyNoddes.length > 1) {
+                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + keyNoddes[1];
+                        } else {
+                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
+                        }
+                    } else if (containsKeyRet) {
+
+                        String tmp = keyMapObjGet(key);
+                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+
+
+                        if (tmp != null) {
+                            if (keyNoddes.length > 1) {
+                                String[] tmps = tmp.split(ImdstDefine.setTimeParamSep);
+                                if (keyNoddes[1].equals("0")) {
+                                    data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (Long.parseLong(tmps[1]) + 1);
+                                } else {
+                                    data = keyNode;
+                                }
+                            } else {
+                                data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
+                            }
+                        } else {
+
+                            data = keyNode;
+                        }
+                    } 
+
+                    // 登録
+                    keyMapObjPut(key, data);
+
+                    // データ操作履歴ファイルに追記
+                    if (this.workFileMemory == false) {
+                        synchronized(this.lockWorkFileSync) {
+                            this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                            this.bw.flush();
+                        }
+                    }
+
+                    // Diffモードでかつsync後は再度モードを確認後、addする
+                    if (this.diffDataPoolingFlg) {
+                        synchronized (diffSync) {
+                            if (this.diffDataPoolingFlg) {
+
+                                this.diffDataPoolingListForFileBase.add("+" + KeyMapManager.workFileSeq + key + KeyMapManager.workFileSeq +  data);
+                            }
+                        }
+                    }
+                }
+
+                // データの書き込みを指示
+                this.writeMapFileFlg = true;
+
+                //logger.debug("setKeyPair - synchronized - end");
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("setKeyPair - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "setKeyPair - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+        return ret;
+    }
+
+
     // キーを指定することでキーが存在するかを返す
     public boolean containsKeyPair(String key) {
         boolean ret = false;

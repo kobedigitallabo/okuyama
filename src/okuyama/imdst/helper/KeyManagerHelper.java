@@ -416,15 +416,8 @@ public class KeyManagerHelper extends AbstractHelper {
                             transactionCode = clientParameterList[2];
                             requestDataNode = clientParameterList[3];
 
-                            // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
-                            if (clientParameterList.length > 4) {
-                                requestDataNode = requestDataNode + 
-                                    ImdstDefine.keyHelperClientParamSep + 
-                                        clientParameterList[4];
-                            }
-
                             // メソッド呼び出し
-                            retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
+                            retParams = this.calcValue(requestHashCode, requestDataNode, transactionCode);
                             retParamBuf.append(retParams[0]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[1]);
@@ -891,6 +884,53 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[2] = "NG:KeyManagerHelper - setDatanodeVersionCheck - Exception - " + be.toString();
         }
         //logger.debug("KeyManagerHelper - setDatanodeVersionCheck - end");
+        return retStrs;
+    }
+
+
+    // Key値で特定した値を渡された値で計算する
+    // 計算ルールは以下
+    // 1.送信された値をintに変換する。変換できない場合はfalseで返す.<br>
+    // 2.送信された値をintに変換する。変換した値を足しこむ.<br>
+    // 3.送信されたKey値で値がとれない。falseで返す.<br>
+    // 4.送信されたKey値で取得した値が数値ではない。0で更新.<br>
+    private String[] calcValue(String key, String dataNodeStr, String transactionCode) {
+        //logger.debug("KeyManagerHelper - calcValue - start");
+        String[] retStrs = new String[3];
+        try {
+            int calcVal = Integer.parseInt(dataNodeStr);
+            if(!this.keyMapManager.checkError()) {
+                String retVal = null;
+                if((retVal = this.keyMapManager.calcValue(key, calcVal)) != null) {
+
+                    retStrs[0] = "13";
+                    retStrs[1] = "true";
+                    retStrs[2] = retVal;
+                } else {
+
+                    retStrs[0] = "13";
+                    retStrs[1] = "false";
+                    retStrs[2] = "";
+                }
+            } else {
+
+                retStrs[0] = "13";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:KeyMapManager - calcValue - Check Error - NG";
+            }
+        } catch (NumberFormatException nfe) {
+
+            retStrs[0] = "13";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - calcValue - NumberFormatException";
+        } catch (BatchException be) {
+
+            logger.debug("KeyManagerHelper - calcValue - Error", be);
+            retStrs[0] = "13";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - calcValue - Exception - " + be.toString();
+        }
+        //logger.debug("KeyManagerHelper - calcValue - end");
         return retStrs;
     }
 
