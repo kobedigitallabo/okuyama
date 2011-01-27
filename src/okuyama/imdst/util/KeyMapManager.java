@@ -13,6 +13,7 @@ import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.JavaSystemApi;
 
 import com.sun.mail.util.BASE64DecoderStream;
+import com.sun.mail.util.BASE64EncoderStream;
 
 /**
  * DataNodeが使用するKey-Valueを管理するモジュール.<br>
@@ -1089,71 +1090,66 @@ public class KeyMapManager extends Thread {
      */
     public String calcValue(String key, int calcVal, String transactionCode) throws BatchException {
         String ret = null;
+        String data = null;
+        
         if (!blocking) {
             try {
 
-                //logger.debug("setKeyPair - synchronized - start");
+                //logger.debug("calcValue - synchronized - start");
                 // このsynchroの方法は正しくないきがするが。。。
-                synchronized(this.parallelSyncObjs[((keyNode.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
-
-                    String data = null;
+                synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     boolean containsKeyRet = containsKeyPair(key);
-                    if (!containsKeyRet) {
-
-                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
-                        
-                        if (keyNoddes.length > 1) {
-                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + keyNoddes[1];
-                        } else {
-                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
-                        }
-                    } else if (containsKeyRet) {
+                    if (containsKeyRet) {
 
                         String tmp = keyMapObjGet(key);
-                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+                        String[] keyNoddes = tmp.split(ImdstDefine.setTimeParamSep);
 
 
                         if (tmp != null) {
-                            if (keyNoddes.length > 1) {
-                                String[] tmps = tmp.split(ImdstDefine.setTimeParamSep);
-                                if (keyNoddes[1].equals("0")) {
-                                    data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (Long.parseLong(tmps[1]) + 1);
-                                } else {
-                                    data = keyNode;
-                                }
-                            } else {
-                                data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
+                            String nowData = new String(BASE64DecoderStream.decode(keyNoddes[0].getBytes()));
+                            int nowDataInt = 0;
+                            try {
+                                nowDataInt = Integer.parseInt(nowData);
+                                nowDataInt = nowDataInt + calcVal;
+                                if (nowDataInt < 0) nowDataInt = 0; 
+                            } catch (Exception e){
                             }
-                        } else {
 
-                            data = keyNode;
+                            if (keyNoddes.length > 1) {
+                                data = nowDataInt + ImdstDefine.setTimeParamSep + (Long.parseLong(keyNoddes[1]) + 1);
+                            } else {
+                                data = nowDataInt + ImdstDefine.setTimeParamSep + "0";
+                            }
                         }
                     } 
+                    
+                    if (data != null) {
+                        // 登録
+                        keyMapObjPut(key, data);
 
-                    // 登録
-                    keyMapObjPut(key, data);
-
-                    // データ操作履歴ファイルに追記
-                    if (this.workFileMemory == false) {
-                        synchronized(this.lockWorkFileSync) {
-                            this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                            this.bw.flush();
-                        }
-                    }
-
-                    // Diffモードでかつsync後は再度モードを確認後、addする
-                    if (this.diffDataPoolingFlg) {
-                        synchronized (diffSync) {
-                            if (this.diffDataPoolingFlg) {
-
-                                this.diffDataPoolingListForFileBase.add("+" + KeyMapManager.workFileSeq + key + KeyMapManager.workFileSeq +  data);
+                        // データ操作履歴ファイルに追記
+                        if (this.workFileMemory == false) {
+                            synchronized(this.lockWorkFileSync) {
+                                        this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                                this.bw.flush();
                             }
                         }
+                        
+                        // Diffモードでかつsync後は再度モードを確認後、addする
+                        if (this.diffDataPoolingFlg) {
+                            synchronized (diffSync) {
+                                if (this.diffDataPoolingFlg) {
+    
+                                    this.diffDataPoolingListForFileBase.add("+" + KeyMapManager.workFileSeq + key + KeyMapManager.workFileSeq +  data);
+                                }
+                            }
+                        }
+                        // データの書き込みを指示
+                        this.writeMapFileFlg = true;
+                        ret = ((String[])data.split(ImdstDefine.setTimeParamSep))[0];
                     }
+                    
                 }
-
-                // データの書き込みを指示
-                this.writeMapFileFlg = true;
 
                 //logger.debug("setKeyPair - synchronized - end");
             } catch (Exception e) {

@@ -901,7 +901,7 @@ public class KeyManagerHelper extends AbstractHelper {
             int calcVal = Integer.parseInt(dataNodeStr);
             if(!this.keyMapManager.checkError()) {
                 String retVal = null;
-                if((retVal = this.keyMapManager.calcValue(key, calcVal)) != null) {
+                if((retVal = this.keyMapManager.calcValue(key, calcVal, transactionCode)) != null) {
 
                     retStrs[0] = "13";
                     retStrs[1] = "true";
@@ -1193,45 +1193,6 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[1] = "false";
         }
         //logger.debug("KeyManagerHelper - removeDatanode - end");
-        return retStrs;
-    }
-
-
-    // Value値の演算を行う
-    private String[] calcValue(String key, String calcValue, String transactionCode) {
-        //logger.debug("KeyManagerHelper - calcValue - start = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
-        String[] retStrs = new String[3];
-/*        try {
-
-            if (key.length() < setDatanodeMaxSize) {
-                if(!this.keyMapManager.checkError()) {
-
-                    this.keyMapManager.setKeyPair(key, dataNodeStr, transactionCode);
-                    retStrs[0] = "1";
-                    retStrs[1] = "true";
-                    retStrs[2] = "OK";
-                } else {
-
-                    retStrs[0] = "1";
-                    retStrs[1] = "false";
-                    retStrs[2] = "NG:KeyMapManager - setDatanode - CheckError - NG";
-                }
-            } else {
-
-                retStrs[0] = "1";
-                retStrs[1] = "false";
-                retStrs[2] = "NG:Max Data Size Over";
-            }
-
-        } catch (BatchException be) {
-
-            logger.debug("KeyManagerHelper - calcValue - Error = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]", be);
-            retStrs[0] = "1";
-            retStrs[1] = "false";
-            retStrs[2] = "NG:KeyManagerHelper - calcValue - Exception - " + be.toString();
-        }
-*/
-        //logger.debug("KeyManagerHelper - calcValue - end = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
         return retStrs;
     }
 
