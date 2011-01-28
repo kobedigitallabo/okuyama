@@ -89,6 +89,12 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
                         if (execMethods[i].equals("gets-cas")) 
                             retMap.put("cas", execGetsCas(okuyamaClient, start, count));
+
+                        if (execMethods[i].equals("incr")) 
+                            retMap.put("incr", execIncr(okuyamaClient, start, count));
+
+                        if (execMethods[i].equals("decr")) 
+                            retMap.put("decr", execDecr(okuyamaClient, start, count));
                     }
 
                     System.out.println("ErrorMap=" + retMap.toString());
@@ -598,6 +604,97 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             throw e;
         }
         System.out.println("execCas - End");
+        return errorFlg;
+    }
+
+
+    private boolean execIncr(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execIncr - Start");
+
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+            long startTime = new Date().getTime();
+            String[] work = okuyamaClient.setNewValue("calcKeyIncr", "0");
+
+
+            for (int i = start; i < count; i++) {
+                Object[] ret = okuyamaClient.incrValue("calcKeyIncr", 1);
+                if (ret[0].equals("false")) {
+                    errorFlg = true;
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+            }
+
+            long endTime = new Date().getTime();
+            String[] nowVal = okuyamaClient.getValue("calcKeyIncr");
+            System.out.println("IncrValue Method= " + (endTime - startTime) + " milli second Value=[" + nowVal[1] + "]");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execAdd - End");
+        return errorFlg;
+    }
+
+    private boolean execDecr(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execDecr - Start");
+
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+            long startTime = new Date().getTime();
+            String[] work = okuyamaClient.setNewValue("calcKeyDecr", "1000000");
+
+
+            for (int i = start; i < count; i++) {
+                Object[] ret = okuyamaClient.decrValue("calcKeyDecr", 1);
+                if (ret[0].equals("false")) {
+                    errorFlg = true;
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+            }
+
+            long endTime = new Date().getTime();
+            String[] nowVal = okuyamaClient.getValue("calcKeyDecr");
+            System.out.println("DecrValue Method= " + (endTime - startTime) + " milli second Value=[" + nowVal[1] + "]");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execDecr - End");
         return errorFlg;
     }
 

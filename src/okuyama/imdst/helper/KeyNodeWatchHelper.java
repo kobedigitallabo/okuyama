@@ -67,14 +67,17 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
         String[] pingRet = null;
 
         HashMap rebootNodeMap = new HashMap(128);
+        
 
         while (serverRunning) {
             try{
                 HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
+
                 this.mainNodeList = (ArrayList)allNodeInfo.get("main");
                 this.subNodeList = (ArrayList)allNodeInfo.get("sub");
                 this.thirdNodeList = (ArrayList)allNodeInfo.get("third");
 
+                int nodeCount = this.mainNodeList.size();
                 // サードノードが存在する場合はマージする
                 if (this.thirdNodeList != null && this.thirdNodeList.size() > 0) {
                     ArrayList newMainNodeList = new ArrayList();
@@ -178,6 +181,17 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
                             logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
                             StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "[" + this.nodeStatusStr + "]");
+
+                            // データサイズが転送されていれば格納
+                            if (i < nodeCount) {
+                                if(this.nodeStatusStr != null) {
+                                    String[] sizeWork = this.nodeStatusStr.split("Save Data Size=");
+                                    if(sizeWork.length > 1) {
+
+                                        StatusUtil.setNodeDataSize(new Integer(i), sizeWork[1].trim().substring(1,sizeWork[1].length()-1).trim().split(":"));
+                                    }
+                                }
+                            }
                         }
                         logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
 
@@ -244,6 +258,17 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Arrival");
                                 logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
                                 StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "[" + this.nodeStatusStr + "]");
+
+                                // データサイズが転送されていれば格納
+                                if (i < nodeCount) {
+                                    if(this.nodeStatusStr != null) {
+                                        String[] sizeWork = this.nodeStatusStr.split("Save Data Size=");
+                                        if(sizeWork.length > 1) {
+
+                                            StatusUtil.setNodeDataSize(new Integer(i), sizeWork[1].trim().substring(1,sizeWork[1].length()-1).trim().split(":"));
+                                        }
+                                    }
+                                }
                             }
                             logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
                             logger.info("************************************************************");

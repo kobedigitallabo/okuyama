@@ -37,6 +37,10 @@ public class StatusUtil {
     // ノードの最新の状態詳細を管理
     private static ConcurrentHashMap nodeStatusDtMap = new ConcurrentHashMap(50, 40, 300);
 
+    // ノードの最新の保存データサイズを管理(Nodeの番号がKeyとなる) 0=0番目のDataNodeのすべてのIsolation単位のデータサイズリスト{"X7HY6=12343","all=98768"}
+    private static ConcurrentHashMap nodeDataSizeDtMap = new ConcurrentHashMap(50, 40, 300);
+
+
     private static String nowMemoryStatus = null;
 
     private static String nowCpuStatus = null;
@@ -277,6 +281,38 @@ public class StatusUtil {
         return checkTargetMasterNodes;
     }
 
+
+    /**
+     * DataNodeの格納して格納しているデータサイズをセットする
+     */
+    public static void setNodeDataSize(Integer nodeNo, String[] sizeList) {
+        StatusUtil.nodeDataSizeDtMap.put(nodeNo, sizeList);
+    }
+
+
+    /**
+     * DataNodeの格納して格納しているデータサイズを返す
+     */
+    public static Map getNodeDataSize() {
+        Map allDataMap = new HashMap();
+        for (int i = 0; i < StatusUtil.nodeDataSizeDtMap.size(); i++) {
+            String[] sizeList = (String[])nodeDataSizeDtMap.get(new Integer(i));
+            for (int t = 0; t < sizeList.length; t++) {
+
+                String[] sizeDt = sizeList[t].split("=");
+                Long size = (Long)allDataMap.get(sizeDt[0]);
+
+                if(size == null) {
+                    allDataMap.put(sizeDt[0], new Long(sizeDt[1]));
+                } else {
+                    long calcLong = size.longValue();
+                    calcLong = calcLong + new Long(sizeDt[1]).longValue();
+                    allDataMap.put(sizeDt[0], new Long(calcLong));
+                }
+            }
+        }
+        return allDataMap;
+    }
 
     /**
      * ノードの生存を確認

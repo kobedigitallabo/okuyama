@@ -14,11 +14,14 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   ■複数Value一括取得機能を追加(memcachedのgetに複数のKey値を並べるのと同等)
      OkuyamaClientでは、getMultiValue(String[])になる。結果は連想配列にKeyとValueで格納されて返却される
 	 =>実装済み
-	 
+
   ■Tagを指定するとそれに紐付くValueを同時に返却する機能を追加
-      =>limit、offsetを渡せるようにする
-      =>未実装
-	  
+      =>実装済み
+      =>limit、offsetを渡せるようにする =>未実装
+     OkuyamaClientでは、getTagValues(String tag)になる。結果は連想配列にKeyとValueで格納されて返却される
+
+
+
   ■Tagを指定するとそれに紐付くValueに同時にJavaScriptを実行する機能を追加
       =>limit、offsetを渡せるようにする
 	  =>内部実装としては、シーケンシャルにJavaScriptを実行するのではなく、一定の並列数を決めて連続的に依頼を投げる(DataNodeに通信する)
@@ -32,11 +35,33 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 	  =>未実装
 	  
   ■TagのDataNode側のset、get処理の効率化
-  	  =>未実装
+  	  =>実装済み
+        =>1つのTagは内部では10個の分割されたレコード領域でさらに分割されて管理
 		
   ■memcachedのincr、decr、append相当の機能を追加
-  	  =>未実装
-	  
+  	  =>incr => 実装済み
+        =>OkuyamaClientではincrValue(String key, long val)
+  	  =>incr => 実装済み
+        =>OkuyamaClientではdecrValue(String key, long val)
+  	  =>append => 未実装
+
+  ■ServerControllerにコマンドの種類追加
+    1.1. サーバコントロールコマンドを追加
+         追加した機能は以下
+         "cname" : okuyamaのDNS機能を設定する => DataNodeの設定上の名前と実際の名前のMappingを変えることが出来る
+                   datanode001=datanodeserver01
+                   上記のように指定すると、okuyamaは"datanode001"という名前のDataNode設定を"datanodeserver01"と読み変えてアクセスする
+                   ※関係を変更したい場合は再度実行すれば上書きされる
+
+         "rname" : okuyamaのDNSMappingを削除する
+
+         "jobs" : 時間別の総アクセス数を返す
+
+         "allsize" : すべてのIsolation別の保存データサイズを返す
+
+         "size" : Isolation名をしてすることで個別のサイズを返す
+                  IsolationPrefixを渡す
+
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.5 - (2011/01/18)]]

@@ -74,8 +74,6 @@ for (int i = 0; i < serverlist.length; i++) {
 
             pool.initialize();
 
-            Thread.sleep(10000);
-
             ResponseTestThreadMem[] threads = new ResponseTestThreadMem[threadCount];
 
             for (int i= 0; i < threadCount; i++) {

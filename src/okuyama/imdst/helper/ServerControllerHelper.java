@@ -144,13 +144,31 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         Thread.sleep(500);
                         soc.close();
 
-                    } else if (command.equals("size")) {
+                    } else if (command.equals("allsize")) {
 
 
-                        
                         pw.println(command + " Suuccess");
 
-                        pw.println(StatusUtil.getMethodExecuteCount());
+                        pw.println(((Map)StatusUtil.getNodeDataSize()).toString());
+                        pw.flush();
+
+                        br.close();
+                        pw.close();
+                        Thread.sleep(500);
+                        soc.close();
+                    } else if (command.equals("size")) {
+
+                        String name = br.readLine();
+                        pw.println(command + " Suuccess");
+                        Map sizeMap = StatusUtil.getNodeDataSize();
+                        String size = "";
+                        if (sizeMap != null && sizeMap.containsKey(name)) {
+                            size = ((Long)sizeMap.get(name)).toString();
+                        } else {
+                            size = name + " NOT_FOUND";
+                        }
+
+                        pw.println(size);
                         pw.flush();
 
                         br.close();
@@ -169,6 +187,10 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                     }
                 } catch(Exception innerE) {
                     logger.info("ServerControllerHelper - executeHelper - Inner-Error", innerE);
+                    innerE.printStackTrace();
+                    try {
+                        if(soc != null) soc.close();
+                    } catch(Exception e2){}
                 }
             }
         } catch(Exception e) {
