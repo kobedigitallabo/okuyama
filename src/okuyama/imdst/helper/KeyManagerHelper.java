@@ -423,6 +423,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(retParams[1]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
+
                             break;
                         case 16 :
 
@@ -898,7 +899,7 @@ public class KeyManagerHelper extends AbstractHelper {
         //logger.debug("KeyManagerHelper - calcValue - start");
         String[] retStrs = new String[3];
         try {
-            int calcVal = Integer.parseInt(dataNodeStr);
+            int calcVal = Integer.parseInt(new String(BASE64DecoderStream.decode(dataNodeStr.getBytes())));
             if(!this.keyMapManager.checkError()) {
                 String retVal = null;
                 if((retVal = this.keyMapManager.calcValue(key, calcVal, transactionCode)) != null) {

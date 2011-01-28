@@ -72,7 +72,7 @@ public class ImdstDefine {
     public static final String keyNodeKeyRemoveNotFoundStr = "5,false";
 
     // データノードに対するKeyデータ演算時に成功した場合の返却文字列の先頭部分
-    public static final String keyNodeKeyCalcSuccessStr = "13,true";
+    public static final String keyNodeKeyCalcSuccessStr = "13,";
 
     // データノードに対するLock取得に成功した場合の返却文字列の先頭部分
     public static final String keyNodeLockingSuccessStr = "30,true";

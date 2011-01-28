@@ -2336,6 +2336,252 @@ public class OkuyamaClient {
 
 
     /**
+     * MasterNodeへデータの加算を要求する.<br>
+     *
+     * @param keyStr Key値
+     * @param value 加算値
+     * @return Object[] 要素1(処理成否):Boolean true/false,要素2(演算後の結果):Long 数値
+     * @throws OkuyamaClientException
+     */
+    public Object[] incrValue(String keyStr, long value) throws OkuyamaClientException {
+        Object[] ret = new Object[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        String valueStr = null;
+
+        // 文字列バッファ初期化
+
+        StringBuilder incrValueServerReqBuf = new StringBuilder();
+
+        try {
+            // Byte Lenghtチェック
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.trim().equals(""))
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+
+            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+
+            // ValueをBase64でエンコード
+            valueStr = new String(this.dataEncoding(new Long(value).toString().getBytes()));
+
+
+            // 処理番号連結
+            incrValueServerReqBuf.append("13");
+            // セパレータ連結
+            incrValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            incrValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            // セパレータ連結
+            incrValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            incrValueServerReqBuf.append(this.transactionCode);
+            // セパレータ連結
+            incrValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // Value連結
+            incrValueServerReqBuf.append(valueStr);
+
+            // サーバ送信
+            pw.println(incrValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet.length == 3 && serverRet[0].equals("13")) {
+                if (serverRet[1].equals("true")) {
+
+                    // 処理成功
+                    ret[0] = new Boolean(true);
+                    ret[1] = new Long(new String(BASE64DecoderStream.decode(serverRet[2].getBytes())));
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = new Boolean(false);
+                    ret[1] = null;
+                } else if (serverRet[1].equals("error")){
+
+                    // 処理失敗(メッセージ格納)
+                    throw new OkuyamaClientException(serverRet[2]);
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRetStr + "]");
+            }
+
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.incrValue(keyStr, value);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.incrValue(keyStr, value);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.incrValue(keyStr, value);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * MasterNodeへデータの減算を要求する.<br>
+     *
+     * @param keyStr Key値
+     * @param value 減算値
+     * @return Object[] 要素1(処理成否):Boolean true/false,要素2(演算後の結果):Long 数値
+     * @throws OkuyamaClientException
+     */
+    public Object[] decrValue(String keyStr, long value) throws OkuyamaClientException {
+        Object[] ret = new Object[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        String valueStr = null;
+
+        // 文字列バッファ初期化
+
+        StringBuilder decrValueServerReqBuf = new StringBuilder();
+
+        try {
+            // Byte Lenghtチェック
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.trim().equals(""))
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+
+            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+
+            // ValueをBase64でエンコード
+            valueStr = new String(this.dataEncoding(new Long(value).toString().getBytes()));
+
+
+            // 処理番号連結
+            decrValueServerReqBuf.append("14");
+            // セパレータ連結
+            decrValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            decrValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            // セパレータ連結
+            decrValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            decrValueServerReqBuf.append(this.transactionCode);
+            // セパレータ連結
+            decrValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // Value連結
+            decrValueServerReqBuf.append(valueStr);
+
+            // サーバ送信
+            pw.println(decrValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet.length == 3 && serverRet[0].equals("14")) {
+                if (serverRet[1].equals("true")) {
+
+                    // 処理成功
+                    ret[0] = new Boolean(true);
+                    ret[1] = new Long(new String(BASE64DecoderStream.decode(serverRet[2].getBytes())));
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = new Boolean(false);
+                    ret[1] = null;
+                } else if (serverRet[1].equals("error")){
+
+                    // 処理失敗(メッセージ格納)
+                    throw new OkuyamaClientException(serverRet[2]);
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRetStr + "]");
+            }
+
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.decrValue(keyStr, value);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.decrValue(keyStr, value);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.decrValue(keyStr, value);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
      * MasterNodeからKeyでValueを取得する.<br>
      * Scriptを同時に実行する.<br>
      * 文字列エンコーディング指定なし.<br>

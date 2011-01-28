@@ -23,6 +23,8 @@ import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.io.CustomReader;
 
 import com.sun.mail.util.BASE64DecoderStream;
+import com.sun.mail.util.BASE64EncoderStream;
+
 
 /**
  * MasterNodeのメイン実行部分<br>
@@ -1710,20 +1712,27 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * 2.正しく処理を完了した場合は加算後の値が帰ってくるのでその値を使用して後続ノードに値を登録<br>
      *
      * @param keyStr key値の文字列
-     * @param decrValue 減算値
      * @param transactionCode 
+     * @param decrValue 減算値
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] decrValue(String keyStr, String decrValue, String transactionCode) throws BatchException {
+    private String[] decrValue(String keyStr, String transactionCode, String decrValue) throws BatchException {
+
         //logger.debug("MasterManagerHelper - decrValue - start");
         String[] retStrs = new String[3];
 
         try {
             // Isolation変換はしない
             // incrValueに処理を移譲しているだけなので
+            String decodeData = new String(BASE64DecoderStream.decode(decrValue.getBytes()));
+            String minus = "";
+            if (decodeData.indexOf("-") != 0) minus = "-";
 
-            retStrs = this.incrValue(keyStr, "-" + decrValue, transactionCode);
+            retStrs = this.incrValue(keyStr, transactionCode, new String(BASE64EncoderStream.encode((minus + decodeData).getBytes())));
+
+            // 処理番号変更
+            retStrs[0] = "14";
         } catch (BatchException be) {
 
             logger.info("MasterManagerHelper - decrValue - Error", be);
@@ -1746,12 +1755,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * 2.正しく処理を完了した場合は加算後の値が帰ってくるのでその値を使用して後続ノードに値を登録<br>
      *
      * @param keyStr key値の文字列
-     * @param incrValue 加算値
      * @param transactionCode 
+     * @param incrValue 加算値
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] incrValue(String keyStr, String incrValue, String transactionCode) throws BatchException {
+    private String[] incrValue(String keyStr, String transactionCode, String incrValue) throws BatchException {
+
         //logger.debug("MasterManagerHelper - incrValue - start");
         String[] retStrs = new String[3];
 
@@ -1789,6 +1799,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     calcFixValue = new String[2];
                     calcFixValue[0] = keyStr;
                     calcFixValue[1] = calcRet[2];
+                    break;
+                } else if (calcRet != null && calcRet[1].equals("false")){
+                    // 論理的に失敗した場合は即break
+                    calcFixValue = null;
                     break;
                 }
             }
@@ -3986,14 +4000,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // 接続結果と、現在の保存先状況で処理を分岐
                 try {
 
-
                     // 送信
+                    // 演算処理をReadTimeoutになってもすぐに再送すると2重で計算してしますので、
+                    // ReadTimeout時間を長く設定する。
+                    // 特にRecover時の挙動に合わせて長く設定している。
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
                     keyNodeConnector.println(sendStr);
                     keyNodeConnector.flush();
 
                     // 返却値取得
                     retParam = keyNodeConnector.readLine(sendStr);
-
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
 
                     // Key値でValueを保存
                     // 特定文字列で返却値が始まるかをチェックし始まる場合は登録成功

@@ -992,7 +992,96 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();  
-            } 
+            } else if (args[0].equals("24")) {
+
+                // OkuyamaClientを使用してデータの加算を行う
+                int port = Integer.parseInt(args[2]);
+
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                Object[] ret = okuyamaClient.incrValue(args[3], 1);
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println(ret[1]);
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("24.1")) {
+
+                // OkuyamaClientを使用してデータの加算を行う
+                int port = Integer.parseInt(args[2]);
+
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                Object[] ret = null;
+                for (int i = 0; i < Integer.parseInt(args[3]); i++) {
+                    ret = okuyamaClient.incrValue(args[4], 1);
+                }
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println(ret[1]);
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("25")) {
+
+                // OkuyamaClientを使用してデータの減算を行う
+                int port = Integer.parseInt(args[2]);
+
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                Object[] ret = okuyamaClient.decrValue(args[3], 1);
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println(ret[1]);
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("25.1")) {
+
+                // OkuyamaClientを使用してデータの加算を行う
+                int port = Integer.parseInt(args[2]);
+
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                Object[] ret = null;
+                for (int i = 0; i < Integer.parseInt(args[3]); i++) {
+                    ret = okuyamaClient.decrValue(args[4], 1);
+                }
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println(ret[1]);
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            }
+            
+
+
 
 
         } catch (Exception e) {

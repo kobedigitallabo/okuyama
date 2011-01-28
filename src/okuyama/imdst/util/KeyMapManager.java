@@ -1103,26 +1103,30 @@ public class KeyMapManager extends Thread {
 
                         String tmp = keyMapObjGet(key);
                         String[] keyNoddes = tmp.split(ImdstDefine.setTimeParamSep);
-
+                        String setDataStr = null;
 
                         if (tmp != null) {
                             String nowData = new String(BASE64DecoderStream.decode(keyNoddes[0].getBytes()));
                             int nowDataInt = 0;
+
                             try {
+
                                 nowDataInt = Integer.parseInt(nowData);
                                 nowDataInt = nowDataInt + calcVal;
                                 if (nowDataInt < 0) nowDataInt = 0; 
+                                setDataStr = new Integer(nowDataInt).toString();
                             } catch (Exception e){
+                                setDataStr = new Integer(nowDataInt).toString();
                             }
 
                             if (keyNoddes.length > 1) {
-                                data = nowDataInt + ImdstDefine.setTimeParamSep + (Long.parseLong(keyNoddes[1]) + 1);
+                                data = new String(BASE64EncoderStream.encode(setDataStr.getBytes())) + ImdstDefine.setTimeParamSep + (Long.parseLong(keyNoddes[1]) + 1);
                             } else {
-                                data = nowDataInt + ImdstDefine.setTimeParamSep + "0";
+                                data = new String(BASE64EncoderStream.encode(setDataStr.getBytes())) + ImdstDefine.setTimeParamSep + "0";
                             }
                         }
                     } 
-                    
+
                     if (data != null) {
                         // 登録
                         keyMapObjPut(key, data);
