@@ -1106,7 +1106,14 @@ public class KeyMapManager extends Thread {
                         String setDataStr = null;
 
                         if (tmp != null) {
-                            String nowData = new String(BASE64DecoderStream.decode(keyNoddes[0].getBytes()));
+
+                            String targetData = keyNoddes[0];
+
+                            if (keyNoddes[0].indexOf(",") != -1) {
+                                String[] workSplitData = keyNoddes[0].split(",");
+                                targetData = workSplitData[0];
+                            }
+                            String nowData = new String(BASE64DecoderStream.decode(targetData.getBytes()));
                             int nowDataInt = 0;
 
                             try {
@@ -1114,16 +1121,24 @@ public class KeyMapManager extends Thread {
                                 nowDataInt = Integer.parseInt(nowData);
                                 nowDataInt = nowDataInt + calcVal;
                                 if (nowDataInt < 0) nowDataInt = 0; 
-                                setDataStr = new Integer(nowDataInt).toString();
+                                setDataStr = new Long(nowDataInt).toString();
                             } catch (Exception e){
-                                setDataStr = new Integer(nowDataInt).toString();
+
+                                if (calcVal > 0) {
+                                    setDataStr = new Long(calcVal).toString();
+                                } else {
+                                    setDataStr = new Long(nowDataInt).toString();
+                                }
                             }
 
                             if (keyNoddes.length > 1) {
+
                                 data = new String(BASE64EncoderStream.encode(setDataStr.getBytes())) + ImdstDefine.setTimeParamSep + (Long.parseLong(keyNoddes[1]) + 1);
                             } else {
+
                                 data = new String(BASE64EncoderStream.encode(setDataStr.getBytes())) + ImdstDefine.setTimeParamSep + "0";
                             }
+
                         }
                     } 
 

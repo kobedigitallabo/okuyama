@@ -72,7 +72,7 @@ public class ImdstDefine {
     public static final String keyNodeKeyRemoveNotFoundStr = "5,false";
 
     // データノードに対するKeyデータ演算時に成功した場合の返却文字列の先頭部分
-    public static final String keyNodeKeyCalcSuccessStr = "13,";
+    public static final String keyNodeKeyCalcSuccessStr = "13,true";
 
     // データノードに対するLock取得に成功した場合の返却文字列の先頭部分
     public static final String keyNodeLockingSuccessStr = "30,true";
@@ -99,6 +99,13 @@ public class ImdstDefine {
 
     // memcacheモード時の命令コマンドのdelete命令文字
     public static final String memcacheExecuteMethodDelete = "delete";
+
+    // memcacheモード時の命令コマンドのincr命令文字
+    public static final String memcacheExecuteMethodIncr = "incr";
+
+    // memcacheモード時の命令コマンドのdecr命令文字
+    public static final String memcacheExecuteMethodDecr = "decr";
+
 
     // memcacheモード時の命令コマンドのversion命令文字
     public static final String memcacheExecuteMethodVersion = "version";

@@ -414,6 +414,40 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 retStrs[0] = "5";
                 retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
                 retStrs[2] = "0"; // TransactionCode("0"固定)
+            } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodIncr)) {
+
+                // Incr
+                // 分解すると コマンド,key
+                // 命令文字列の数をチェック
+                if (executeMethods.length != 3) {
+                    pw.println(ImdstDefine.memcacheMethodReturnErrorComn);
+                    pw.flush();
+                    return retStrs;
+                }
+
+                // okuyamaプロトコルに変更
+                retStrs = new String[4];
+                retStrs[0] = "13";
+                retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
+                retStrs[2] = "0"; // TransactionCode("0"固定)
+                retStrs[3] = new String(BASE64EncoderStream.encode(executeMethods[2].getBytes()));
+            } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodDecr)) {
+
+                // Decr
+                // 分解すると コマンド,key
+                // 命令文字列の数をチェック
+                if (executeMethods.length != 3) {
+                    pw.println(ImdstDefine.memcacheMethodReturnErrorComn);
+                    pw.flush();
+                    return retStrs;
+                }
+
+                // okuyamaプロトコルに変更
+                retStrs = new String[4];
+                retStrs[0] = "14";
+                retStrs[1] = new String(BASE64EncoderStream.encode(executeMethods[1].getBytes()));
+                retStrs[2] = "0"; // TransactionCode("0"固定)
+                retStrs[3] = new String(BASE64EncoderStream.encode(executeMethods[2].getBytes()));
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodVersion)) {
             
                 // version
@@ -670,6 +704,28 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 retStr = ImdstDefine.memcacheMethodReturnErrorDelete;
             } else {
                 retStr = ImdstDefine.memcacheMethodRetrunServerError;
+            }
+        } else if (retParams[0].equals("13")) {
+
+            // Incr
+            // 返却値は"数値 or NOT_FOUND"
+
+            if (retParams[1].equals("true")) {
+
+                retStr = new String(BASE64DecoderStream.decode(retParams[2].getBytes()));
+            } else if (retParams[1].equals("false") || retParams[1].equals("error")) {
+                retStr = ImdstDefine.memcacheMethodReturnErrorDelete;
+            }
+        } else if (retParams[0].equals("14")) {
+
+            // Decr
+            // 返却値は"数値 or NOT_FOUND"
+
+            if (retParams[1].equals("true")) {
+
+                retStr = new String(BASE64DecoderStream.decode(retParams[2].getBytes()));
+            } else if (retParams[1].equals("false") || retParams[1].equals("error")) {
+                retStr = ImdstDefine.memcacheMethodReturnErrorDelete;
             }
         } else if (retParams[0].equals("999")) {
 
