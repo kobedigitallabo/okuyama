@@ -328,6 +328,11 @@ public class ImdstDefine {
     // MasterConfigurationManagerHelperが設定情報を確認する時間間隔
     public static final int configurationCheckCycle = 1000 * 20;
 
+    // FileでValueを保持する際のValueキャッシの利用指定
+    public volatile static boolean useValueCache = true;
+    // FileでValueを保持する際のValueキャッシュサイズ(キャッシュデータ数)
+    public volatile static int valueCacheMaxSize = 8192;
+
 
     // ---- 分散アルゴリズム系 ---------------------------------------------------
     // 分散アルゴリズムにConsistentHashを使用した場合の仮想ノードの数

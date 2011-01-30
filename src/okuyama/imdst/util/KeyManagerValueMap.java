@@ -4,13 +4,16 @@ package okuyama.imdst.util;
 import java.util.*;
 import java.io.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
 import okuyama.base.lang.BatchException;
 import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.io.*;
+
+
 import org.apache.commons.codec.digest.DigestUtils;
-import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -106,8 +109,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.fos = new FileOutputStream(new File(lineFile), true);
             this.osw = new OutputStreamWriter(this.fos, ImdstDefine.keyWorkFileEncoding);
             this.bw = new BufferedWriter (osw);
-            this.raf = new RandomAccessFile(new File(lineFile) , "rw");
-
+            //this.raf = new RandomAccessFile(new File(lineFile) , "rw");
+            this.raf = new CustomRandomAccessFile(new File(lineFile) , "rw");
+            
             FileInputStream fis = new FileInputStream(new File(lineFile));
             InputStreamReader isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
             BufferedReader br = new BufferedReader(isr);

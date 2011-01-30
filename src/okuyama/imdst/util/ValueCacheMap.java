@@ -2,17 +2,16 @@ package okuyama.imdst.util;
 
 import java.util.concurrent.locks.*;
 import java.util.*;
-
+    
 
 /**
  * LinkedHashMapを継承してLRUキャッシュを実現.<br>
+ * 主にFileMode時のValueのキャッシュに利用.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
 public class ValueCacheMap extends LinkedHashMap {
-
-    private boolean fileWrite = false;
 
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private final Lock r = rwl.readLock();
@@ -22,11 +21,10 @@ public class ValueCacheMap extends LinkedHashMap {
 
     private int maxCacheSize = 8192;
 
-    private boolean putCall = false;
 
     // コンストラクタ
     public ValueCacheMap() {
-        super(8192, 0.75f, true);
+        super(1024, 0.75f, true);
     }
 
 
@@ -172,8 +170,9 @@ public class ValueCacheMap extends LinkedHashMap {
      * 削除指標実装.<br>
      */
     protected boolean removeEldestEntry(Map.Entry eldest) {
-
+        if (maxCacheSize < super.size()) return true;
         int nowJvmUseMem = JavaSystemApi.getUseMemoryPercentCache();
+        
         return nowJvmUseMem > upperCacheMemSize;
     }
 }
