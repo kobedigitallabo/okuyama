@@ -52,7 +52,9 @@ public class CustomRandomAccessFile extends RandomAccessFile {
             }
         }
 
-        return super.read(data, start, size);
+        int ret = super.read(data, start, size);
+        this.cache.put(new Long(this.nowSeekPoint), data);
+        return ret;
     }
     
     public void close() throws IOException {
