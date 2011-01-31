@@ -25,7 +25,7 @@ import okuyama.imdst.util.io.NodeDnsUtil;
  */
 public class ServerControllerHelper extends AbstractMasterManagerHelper {
 
-    private String statusCommandBindIp = "127.0.0.1";
+    private String statusCommandBindIp = null;
 
     private int statusCommandPortNo = 8881;
 
@@ -58,8 +58,13 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
         try{
             // コントロール用のServerSocketを起動
 
+            InetSocketAddress bindAddress  = null;
+            if (this.statusCommandBindIp != null) {
 
-            InetSocketAddress bindAddress= new InetSocketAddress(this.statusCommandBindIp, this.statusCommandPortNo);
+                bindAddress = new InetSocketAddress(this.statusCommandBindIp, this.statusCommandPortNo);
+            } else {
+                bindAddress = new InetSocketAddress(this.statusCommandPortNo);
+            }
             ServerSocket svSoc = new ServerSocket();
             svSoc.bind(bindAddress);
 

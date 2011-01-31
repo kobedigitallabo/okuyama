@@ -10,10 +10,12 @@ import okuyama.base.job.AbstractHelper;
 import okuyama.base.job.IJob;
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
+
+import okuyama.imdst.util.JavaSystemApi;
 import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.StatusUtil;
-
+import okuyama.imdst.util.JavaSystemApi;
 
 /**
  * keyとValueの関係を管理するJob、自身でポートを上げて待ち受ける.<br>
@@ -313,6 +315,13 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                 this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode, memoryLimitSizeInt, virtualStorageDirs);
             }
             this.keyMapManager.start();
+
+            // 設定情報以外の値が入っている場合は一旦停止
+            if (this.keyMapManager.getSaveDataCount() > 50) {
+                JavaSystemApi.manualGc();
+                Thread.sleep(60000);
+            }
+
         } catch(Exception e) {
                 e.printStackTrace();
         }
@@ -367,23 +376,23 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             }
 
 
-			// KeyManagerHelper設定
-			Object[] helperShareParams = new Object[(this.maxWorkerParallelQueue * 2)];
+            // KeyManagerHelper設定
+            Object[] helperShareParams = new Object[(this.maxWorkerParallelQueue * 2)];
 
-			queueIndex = 0;
+            queueIndex = 0;
             for (int i = 0; i < (this.maxWorkerParallelQueue * 2); i=i+2) {
-				helperShareParams[i] = "Bind-KeyManagerHelper" + this.myPrefix + queueIndex;
-				helperShareParams[i+1] = new AtomicInteger(0);
-				queueIndex++;
-			}
+                helperShareParams[i] = "Bind-KeyManagerHelper" + this.myPrefix + queueIndex;
+                helperShareParams[i+1] = new AtomicInteger(0);
+                queueIndex++;
+            }
 
-			queueIndex = 0;
+            queueIndex = 0;
             for (int i = 0; i < this.maxWorkerParallelExecution; i++) {
                 queueIndex = (i+1) % this.maxWorkerParallelQueue;
-				AtomicInteger queueBindHelperCount = (AtomicInteger)helperShareParams[(new Long(queueIndex).intValue()*2)+1];
-				queueBindHelperCount.getAndIncrement();
-				helperShareParams[(new Long(queueIndex).intValue()*2)+1] = queueBindHelperCount;
-			}
+                AtomicInteger queueBindHelperCount = (AtomicInteger)helperShareParams[(new Long(queueIndex).intValue()*2)+1];
+                queueBindHelperCount.getAndIncrement();
+                helperShareParams[(new Long(queueIndex).intValue()*2)+1] = queueBindHelperCount;
+            }
 
             for (int i = 0; i < maxWorkerParallelExecution; i++) {
                 queueIndex = (i+1) % this.maxWorkerParallelQueue;
@@ -394,12 +403,12 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                 queueParam[2] = this.maxAcceptParallelQueueNames;
                 queueParam[3] = "Bind-KeyManagerHelper" + this.myPrefix + queueIndex;
 
-				if (i == 0) {
+                if (i == 0) {
 
-	                super.executeHelper("KeyManagerHelper", queueParam, true, helperShareParams);
-				} else {
-	                super.executeHelper("KeyManagerHelper", queueParam, true);
-				}
+                    super.executeHelper("KeyManagerHelper", queueParam, true, helperShareParams);
+                } else {
+                    super.executeHelper("KeyManagerHelper", queueParam, true);
+                }
             }
         } catch(Exception e) {
                 e.printStackTrace();

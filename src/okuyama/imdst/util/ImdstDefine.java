@@ -268,7 +268,7 @@ public class ImdstDefine {
     public static final int saveKeyMaxSize = 486;
 
     // 共通のデータファイルに書き出す最大サイズ
-    public volatile static int dataFileWriteMaxSize = 8192;
+    public volatile static int dataFileWriteMaxSize = 8192 * 2;
 
 
     public static final int stringBufferSmallSize = 128;
@@ -301,11 +301,11 @@ public class ImdstDefine {
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenTimeout = 4000;
+    public static final int nodeConnectionOpenTimeout = 2500;
     //public static final int nodeConnectionOpenTimeout = 10000;
 
     // Node間のコネクションReadタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionTimeout = 8000;
+    public static final int nodeConnectionTimeout = 5000;
     //public static final int nodeConnectionTimeout = 15000;
 
     public static final int nodeConnectionTimeout4RecoverMode = 60000 * 5;
@@ -314,7 +314,7 @@ public class ImdstDefine {
     public static final int nodeConnectionOpenPingTimeout = 2500;
 
     // Node間のコネクションReadタイムアウト時間(PING)(ミリ秒)
-    public static final int nodeConnectionPingTimeout = 4000;
+    public static final int nodeConnectionPingTimeout = 3500;
 
 
    // Recoverのコネクションタイムアウト時間(ミリ秒)

@@ -24,7 +24,7 @@ import okuyama.imdst.client.*;
  */
 public class NodeStatusChangeJob extends AbstractJob implements IJob {
 
-    private int execCount = 10;
+    private int execCount = 5;
     private String testScriptPath = "C:";
 
 
@@ -54,11 +54,11 @@ public class NodeStatusChangeJob extends AbstractJob implements IJob {
                 testScriptPath = optionParam;
             }
 
-            Thread.sleep(30000);
+            Thread.sleep(20000);
 
             for (int t = 0; t < this.execCount; t++) {
                 execRestart();
-                Thread.sleep(300000);
+                Thread.sleep(360000);
             }
 
 
