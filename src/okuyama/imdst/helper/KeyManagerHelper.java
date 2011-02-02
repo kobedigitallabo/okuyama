@@ -255,9 +255,10 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                             break;
-                        case 101 :
+                        case -1 :
 
                             // Key値とDataNode名を格納する
+                            // 遅延書き込みメソッド
                             requestHashCode = clientParameterList[1];
                             transactionCode = clientParameterList[2];
                             requestDataNode = clientParameterList[3];
@@ -270,7 +271,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             }
 
                             // メソッド呼び出し
-                            retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
+                            this.setDatanode(requestHashCode, requestDataNode, transactionCode);
                             break;
                         case 2 :
 
@@ -299,6 +300,16 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(retParams[0]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[1]);
+                            break;
+                        case -3 :
+
+                            // Tag値とキー値を格納する
+                            requestTag = clientParameterList[1];
+                            transactionCode = clientParameterList[2];         // TransactionCode
+                            requestKey = clientParameterList[3];
+
+                            // メソッド呼び出し
+                            this.setTagdata(requestTag, requestKey, transactionCode);
                             break;
                         case 4 :
 

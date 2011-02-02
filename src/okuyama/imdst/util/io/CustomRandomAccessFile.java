@@ -38,7 +38,7 @@ public class CustomRandomAccessFile extends RandomAccessFile {
     
     
     public int read(byte[] data, int start, int size) throws IOException {
-        
+
         if (this.cache != null && this.realSeek == false) {
             byte[] tmpData = (byte[])this.cache.get(new Long(this.nowSeekPoint));
             if (tmpData != null) {
@@ -53,7 +53,10 @@ public class CustomRandomAccessFile extends RandomAccessFile {
         }
 
         int ret = super.read(data, start, size);
-        this.cache.put(new Long(this.nowSeekPoint), data);
+
+        if (cache != null)
+            this.cache.put(new Long(this.nowSeekPoint), data);
+
         return ret;
     }
     

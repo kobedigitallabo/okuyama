@@ -156,7 +156,9 @@ public class ImdstDefine {
 
 
     // --  設定ファイルの固定文字列系定数  ---------------------------------------------
+
     public static final String Prop_KeyMapNodesRule = "KeyMapNodesRule";
+    public static final String Prop_KeyMapDelayWrite = "KeyMapDelayWrite";
     public static final String Prop_KeyMapNodesInfo = "KeyMapNodesInfo";
     public static final String Prop_SubKeyMapNodesInfo = "SubKeyMapNodesInfo";
     public static final String Prop_ThirdKeyMapNodesInfo = "ThirdKeyMapNodesInfo";
@@ -301,7 +303,7 @@ public class ImdstDefine {
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenTimeout = 2500;
+    public static final int nodeConnectionOpenTimeout = 3000;
     //public static final int nodeConnectionOpenTimeout = 10000;
 
     // Node間のコネクションReadタイムアウト時間(ミリ秒)
@@ -331,7 +333,11 @@ public class ImdstDefine {
     // FileでValueを保持する際のValueキャッシの利用指定
     public volatile static boolean useValueCache = true;
     // FileでValueを保持する際のValueキャッシュサイズ(キャッシュデータ数)
-    public volatile static int valueCacheMaxSize = 8192;
+    public volatile static int valueCacheMaxSize = 128;
+
+
+    // DataNodeに保存するさいの遅延指定
+    public volatile static boolean delayWriteFlg = false;
 
 
     // ---- 分散アルゴリズム系 ---------------------------------------------------

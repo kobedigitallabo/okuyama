@@ -108,6 +108,13 @@ public class MasterManagerJob extends AbstractJob implements IJob {
         }
 
 
+        // 遅延書き込み指定
+        String keyMapDelayWrite = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyMapDelayWrite);
+        if (keyMapDelayWrite != null && keyMapDelayWrite.equals("true")) {
+            ImdstDefine.delayWriteFlg = true;
+        }
+
+
         // メソッド実行許可初期化
         String executionMethodsStr = (String)super.getPropertiesValue(ImdstDefine.Prop_ExecutionMethods);
         if (executionMethodsStr != null && !executionMethodsStr.trim().equals("")) {

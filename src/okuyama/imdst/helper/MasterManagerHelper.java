@@ -780,9 +780,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     if (tagKeyNodeInfo.length == 3) {
                         keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], null, null, null, "3", tagKeyPair, transactionCode);
                     } else if (tagKeyNodeInfo.length == 6) {
-                        keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], "3", tagKeyPair, transactionCode);
+                        keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], "3", tagKeyPair, transactionCode, ImdstDefine.delayWriteFlg);
                     } else if (tagKeyNodeInfo.length == 9) {
-                        keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], tagKeyNodeInfo[6], tagKeyNodeInfo[7], tagKeyNodeInfo[8], "3", tagKeyPair, transactionCode);
+                        keyNodeSaveRet = this.setKeyNodeValue(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], tagKeyNodeInfo[6], tagKeyNodeInfo[7], tagKeyNodeInfo[8], "3", tagKeyPair, transactionCode, ImdstDefine.delayWriteFlg);
                     }
 
 
@@ -811,9 +811,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
            if (keyNodeInfo.length == 3) {
                 keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "1", keyDataNodePair, transactionCode);
             } else if (keyNodeInfo.length == 6) {
-                keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "1", keyDataNodePair, transactionCode);
+                keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "1", keyDataNodePair, transactionCode, ImdstDefine.delayWriteFlg);
             } else if (keyNodeInfo.length == 9) {
-                keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "1", keyDataNodePair, transactionCode);
+                keyNodeSaveRet = this.setKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "1", keyDataNodePair, transactionCode, ImdstDefine.delayWriteFlg);
             }
 
 
@@ -2695,6 +2695,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
+
     /**
      * KeyNodeに対してデータを保存する.<br>
      * 
@@ -2702,12 +2703,32 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @param keyNodePort マスターデータノードのアクセスポート番号
      * @param subKeyNodeName スレーブデータノードの名前(IPなど)
      * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param thirdKeyNodeName サードデータノードの名前(IPなど)
+     * @param thirdKeyNodePort サードデータノードのアクセスポート番号
      * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加, 30=ロックを取得, 31=ロックを解除)
      * @param values 送信データ
      * @return String[] 結果
      * @throws BatchException
      */
     private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
+        return setKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort,  subKeyNodeFullName, thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, type, values, transactionCode, false);
+    }
+
+    /**
+     * KeyNodeに対してデータを保存する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param thirdKeyNodeName サードデータノードの名前(IPなど)
+     * @param thirdKeyNodePort サードデータノードのアクセスポート番号
+     * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加, 30=ロックを取得, 31=ロックを解除)
+     * @param values 送信データ
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String[] values, String transactionCode, boolean delayFlg) throws BatchException {
         boolean exceptionFlg = false;
         String[] ret = null;
         String[] thirdRet = null;
@@ -2715,7 +2736,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-            ret = this.setKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values, transactionCode);
+            ret = this.setKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values, transactionCode, delayFlg);
         } catch (BatchException be) {
 
             retBe = be;
@@ -2727,8 +2748,21 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } finally {
 
             try {
-                
-                thirdRet = this.setKeyNodeValue(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, values, transactionCode);
+                // 遅延書き込みに合わせて処理
+                if (!delayFlg) {
+                    // 遅延させない
+                    thirdRet = this.setKeyNodeValue(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, values, transactionCode);
+                } else {
+                    // 遅延指定だが、Exceptionの発生状況に合わせて処理
+                    if (exceptionFlg) {
+                        // Exceptionが出ているので遅延させない
+                        thirdRet = this.setKeyNodeValue(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, values, transactionCode);
+                    } else {
+
+                        // 自身よりも前のノードが保存に成功しているので、遅延させる
+                        thirdRet = this.setKeyNodeValue(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, values, transactionCode, true);
+                    }
+                }
                 if (exceptionFlg) ret = thirdRet;
             } catch (Exception e) {
                 if (exceptionFlg) throw retBe;
@@ -2749,10 +2783,29 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @param subKeyNodePort スレーブデータノードのアクセスポート番号
      * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加, 30=ロックを取得, 31=ロックを解除)
      * @param values 送信データ
+     * @param delayFlg　遅延書き込み指定
      * @return String[] 結果
      * @throws BatchException
      */
     private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode) throws BatchException {
+        return setKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values, transactionCode, false);
+    }
+
+
+    /**
+     * KeyNodeに対してデータを保存する.<br>
+     * 遅延指定あり.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加, 30=ロックを取得, 31=ロックを解除)
+     * @param values 送信データ
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode, boolean delayFlg) throws BatchException {
         KeyNodeConnector keyNodeConnector = null;
         KeyNodeConnector slaveKeyNodeConnector = null;
 
@@ -2817,39 +2870,56 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 try {
 
                     // 送信
-                    keyNodeConnector.println(sendStr);
-                    keyNodeConnector.flush();
+                    // 遅延指定確認
+                    // Subが指定だれていてdelay指定がtrueの場合
+                    if (!delayFlg) {
 
-                    // 返却値取得
-                    retParam = keyNodeConnector.readLine(sendStr);
+                        // 同期
+                        keyNodeConnector.println(sendStr);
+                        keyNodeConnector.flush();
+                        // 返却値取得
+                        retParam = keyNodeConnector.readLine(sendStr);
 
-                    // 処理種別判別
-                    if (type.equals("1")) {
+                        // 処理種別判別
+                        if (type.equals("1")) {
 
-                        // Key値でValueを保存
-                        // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-                        //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                        if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
+                            // Key値でValueを保存
+                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                            if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
 
-                            mainNodeSave = true;
-                        } else {
+                                mainNodeSave = true;
+                            } else {
 
-                            // 論理的に登録失敗
-                            super.setDeadNode(nodeName + ":" + nodePort, 3, null);
-                            logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
+                                // 論理的に登録失敗
+                                super.setDeadNode(nodeName + ":" + nodePort, 3, null);
+                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
+                            }
+                        } else if (type.equals("3")) {
+
+                            // Tag値でキー値を保存
+
+                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                            if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
+                                mainNodeSave = true;
+                            } else {
+                                // 論理的に登録失敗
+                                super.setDeadNode(nodeName + ":" + nodePort, 4, null);
+                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
+                            }
                         }
-                    } else if (type.equals("3")) {
+                    } else {
 
-                        // Tag値でキー値を保存
-
-                        // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-                        //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                        if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
-                            mainNodeSave = true;
-                        } else {
-                            // 論理的に登録失敗
-                            super.setDeadNode(nodeName + ":" + nodePort, 4, null);
-                            logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
+                        // 遅延
+                        // 遅延の場合は結果が送られてこないのでNetworkから読みださない
+                        keyNodeConnector.print("-");
+                        keyNodeConnector.println(sendStr);
+                        keyNodeConnector.flush();
+                        mainNodeSave = true;
+                        // 結果を作りだす
+                        if (type.equals("1")) {
+                            retParam = "1,true,OK";
+                        } else if (type.equals("3")) {
+                            retParam = "3,true,OK";
                         }
                     }
 
@@ -2897,10 +2967,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 接続結果と、現在の保存先状況で処理を分岐
                     try {
 
-
                         // 処理種別判別
-                        if (type.equals("1")) {
-                            if (true || mainNodeSave == false) {
+                        // Subが指定されてる
+                        // 遅延設定がないもしくは、mainが失敗している場合
+                        if (!delayFlg || mainNodeSave == false) {
+
+                            if (type.equals("1")) {
 
                                 // 送信
                                 slaveKeyNodeConnector.println(sendStr);
@@ -2919,36 +2991,43 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                     super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 3, null);
                                     logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
                                 }
-                            } else {
-
-                                // 遅延書き込み
+                            } else if (type.equals("3")) {
                                 // 送信
-                                slaveKeyNodeConnector.print("10");
                                 slaveKeyNodeConnector.println(sendStr);
                                 slaveKeyNodeConnector.flush();
-                                subNodeSave = true;
+
+                                // 返却値取得
+                                retParam = slaveKeyNodeConnector.readLine(sendStr);
+
+                                // Tag値でキー値を保存
+
+                                // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                                //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                                if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
+                                    subNodeSave = true;
+                                } else {
+                                    // 論理的に登録失敗
+                                    super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 4, null);
+                                    logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
+                                }
                             }
-                        } else if (type.equals("3")) {
+                        }else {
+
+                            // 遅延
                             // 送信
+                            // 遅延の場合は結果が送られてこないのでNetworkから読みださない
+                            slaveKeyNodeConnector.print("-");
                             slaveKeyNodeConnector.println(sendStr);
                             slaveKeyNodeConnector.flush();
 
-                            // 返却値取得
-                            retParam = slaveKeyNodeConnector.readLine(sendStr);
-
-                            // Tag値でキー値を保存
-
-                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-                            //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
-                            if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
-                                subNodeSave = true;
-                            } else {
-                                // 論理的に登録失敗
-                                super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 4, null);
-                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
+                            subNodeSave = true;
+                            // 結果を作りだす
+                            if (type.equals("1")) {
+                                retParam = "1,true,OK";
+                            } else if (type.equals("3")) {
+                                retParam = "3,true,OK";
                             }
                         }
-
                         // 使用済みの接続を戻す
                         super.addKeyNodeCacheConnectionPool(slaveKeyNodeConnector);
                     } catch (SocketException se) {

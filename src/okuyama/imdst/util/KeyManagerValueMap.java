@@ -830,6 +830,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * 読み込み開始位置を渡すことでデータファイルからValue値を読み込む.<br>
      * 返却値は読み込んだデータ数.<br>
      * 1Valueが終端に達していない場合は、読み込み指定された値の+1を返す.<br>
+     * 1データが限界に達していないかの判定用
      * 読み込みに失敗した場合は-1を返す.<br>
      *
      * @param buf 読み込み用Buffer
