@@ -2,68 +2,72 @@ package okuyama.imdst.util.io;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.locks.*;
 
 import okuyama.imdst.util.*;
 
-public class CustomRandomAccessFile extends RandomAccessFile {
-    
-    private ValueCacheMap cache = null;
-    
-    private long nowSeekPoint = -1;
-    
-    private boolean realSeek = false;
-    
+public class CustomRandomAccessFile {
+
+    private ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+    private Lock r = rwl.readLock();
+    private Lock w = rwl.writeLock();
+
+    private RandomAccessFile[] rafs = null;
+
     public CustomRandomAccessFile(File target, String type) throws FileNotFoundException {
-        super(target, type);
-        if (ImdstDefine.useValueCache) this.cache = new ValueCacheMap(ImdstDefine.valueCacheMaxSize);
+        this.rafs = new RandomAccessFile[new Long(ImdstDefine.maxParallelRandomAccess).intValue()];
+
+        for (int i = 0; i < new Long(ImdstDefine.maxParallelRandomAccess).intValue(); i++) {
+            this.rafs[i] = new RandomAccessFile(target, type);
+        }
     }
 
+    public void seekAndWrite(long seekPoint, byte[] data, int start, int size) throws IOException {
 
-    public void seek(long seekPoint) throws IOException {
-        this.realSeek = false;
-        this.nowSeekPoint = seekPoint;
-        if (this.cache != null && this.cache.containsKey(new Long(seekPoint)))
-            return;
-
-        super.seek(seekPoint);
-        this.realSeek = true;
-    }
-    
-    
-    public void write(byte[] data, int start, int size) throws IOException {
-        if (!this.realSeek) super.seek(this.nowSeekPoint);
-        if (this.cache != null) this.cache.put(new Long(this.nowSeekPoint), data);
-        super.write(data, start, size);
-    }
-    
-    
-    public int read(byte[] data, int start, int size) throws IOException {
-
-        if (this.cache != null && this.realSeek == false) {
-            byte[] tmpData = (byte[])this.cache.get(new Long(this.nowSeekPoint));
-            if (tmpData != null) {
-                int i = 0;
-                for (i = 0; i < size; i++) {
-                    data[start+i] = tmpData[i]; 
+        this.rafs[new Long(seekPoint % ImdstDefine.maxParallelRandomAccess).intValue()].seek(seekPoint);
+        this.r.lock();
+        try { 
+            int radIdx = new Long(seekPoint % ImdstDefine.maxParallelRandomAccess).intValue();
+            if (this.rafs[radIdx] != null) {
+                synchronized (this.rafs[radIdx]) {
+                    this.rafs[radIdx].seek(seekPoint);
+                    this.rafs[radIdx].write(data, start, size);
                 }
-                return i;
-            } else {
-                super.seek(this.nowSeekPoint);
             }
+        } finally { 
+            this.r.unlock(); 
         }
 
-        int ret = super.read(data, start, size);
+    }
 
-        if (cache != null)
-            this.cache.put(new Long(this.nowSeekPoint), data);
-
+    public int seekAndRead(long seekPoint, byte[] data, int start, int size) throws IOException {
+        int ret = 0;
+        this.r.lock();
+        try { 
+            int radIdx = new Long(seekPoint % ImdstDefine.maxParallelRandomAccess).intValue();
+            if (this.rafs[radIdx] != null) {
+                synchronized (this.rafs[radIdx]) {
+                    this.rafs[radIdx].seek(seekPoint);
+                    ret = this.rafs[radIdx].read(data, start, size);
+                }
+            }
+        } finally { 
+            this.r.unlock(); 
+        }
         return ret;
     }
-    
+
     public void close() throws IOException {
-        if (this.cache != null) this.cache.clear();
-        this.cache = null;
-        super.close();
+        this.w.lock();
+        try { 
+
+            for (int i = 0; i < ImdstDefine.maxParallelRandomAccess; i++) {
+                this.rafs[i].close();
+                this.rafs[i] = null;
+            }
+        } finally { 
+            this.w.unlock(); 
+        }
     }
 }
 

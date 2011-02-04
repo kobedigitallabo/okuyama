@@ -114,7 +114,8 @@ public class KeyMapManager extends Thread {
     private long lastAccess = 0L;
 
     // データファイルのバキューム実行指定
-    private boolean vacuumExec = true;
+    private boolean vacuumExec = ImdstDefine.dataFileVacuumExec;
+
 
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う候補となる
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
@@ -1732,7 +1733,7 @@ public class KeyMapManager extends Thread {
 
                         // 一旦フルGC
                         JavaSystemApi.manualGc();
-                        Thread.sleep(1000); 
+                        Thread.sleep(5000); 
 
                         // 新たにKeyManagerValueMapを作成
                         if (!this.allDataForFile) {

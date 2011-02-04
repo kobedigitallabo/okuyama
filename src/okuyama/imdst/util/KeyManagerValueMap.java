@@ -5,6 +5,8 @@ import java.util.*;
 import java.io.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.*;
+
 
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
@@ -34,8 +36,12 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private transient FileOutputStream fos = null;
     private transient OutputStreamWriter osw = null;
     private transient BufferedWriter bw = null;
-    private transient RandomAccessFile raf = null;
+    private transient CustomRandomAccessFile raf = null;
     private transient Object sync = new Object();
+    private transient ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+    private transient Lock r = rwl.readLock();
+    private transient Lock w = rwl.writeLock();
+
     private transient boolean vacuumExecFlg = false;
     private transient List vacuumDiffDataList = null;
 
@@ -57,6 +63,10 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private Object[] overSizeDataParallelSyncs = new Object[overSizeDataParallelSize];
     // キャッシュ
     private ValueCacheMap valueCacheMap = null;
+
+    // 共有データファイルの中ですでに削除されているデータの保存位置を保持し再利用する
+    private ArrayList deletedDataPointList = null;
+
 
 
     // コンストラクタ
@@ -82,8 +92,12 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      */
     public void initNoMemoryModeSetting(String lineFile) {
         try {
-            if (sync == null) 
+            if (sync == null) {
                 sync = new Object();
+                rwl = new ReentrantReadWriteLock();
+                r = rwl.readLock();
+                w = rwl.writeLock();
+            }
 
             readObjectFlg  = true;
 
@@ -111,7 +125,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.bw = new BufferedWriter (osw);
             //this.raf = new RandomAccessFile(new File(lineFile) , "rw");
             this.raf = new CustomRandomAccessFile(new File(lineFile) , "rw");
-            
+            this.deletedDataPointList = new ArrayList(ImdstDefine.numberOfDeletedDataPoint);
+
             FileInputStream fis = new FileInputStream(new File(lineFile));
             InputStreamReader isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
             BufferedReader br = new BufferedReader(isr);
@@ -158,7 +173,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 // seek値取得
                 if ((seekPoint = this.calcSeekDataPoint(key)) == -1) return null;
 
-                synchronized (sync) {
+                this.w.lock();
+                try {
                     // Vacuum中の場合はデータの格納先が変更されている可能性があるので、
                     // ここでチェック
                     if (vacuumExecFlg) {
@@ -169,6 +185,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     }
 
                     this.readDataFile(buf, seekPoint, this.oneDataLength);
+                } finally {
+                    this.w.unlock();
                 }
 
                 ret = new String(buf, ImdstDefine.keyWorkFileEncoding);
@@ -209,10 +227,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     // seek値取得
                     if ((seekPoint = this.calcSeekDataPoint(key)) == -1) return null;
 
-                    synchronized (sync) {
+                    this.r.lock();
+                    try {
                         readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
                         if (readRet == -1) 
                                 return null;
+                    } finally {
+                        this.r.unlock();
                     }
 
                     if (readRet > this.oneDataLength) {
@@ -285,7 +306,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             long seekPoint = 0L;
             int readRet = 0;
 
-            synchronized (sync) {
+            this.w.lock();
+            try {
 
                 // Vacuum中はMap内の行数指定と実際のデータファイルでの位置が異なる場合があるため、
                 // Vacuum中で且つ、Mapを更新中の場合はここで同期化する。
@@ -339,6 +361,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 }
 
                 buf = null;
+            } finally {
+                this.w.unlock();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -397,11 +421,12 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     writeBuf.append(new String(appendDatas));
                     writeBuf.append("\n");
 
-
-                    if ((seekPoint = this.calcSeekDataPoint(key)) == -1) {
+                    this.w.lock();
+                    if ((seekPoint = this.calcSeekRegistDataPoint(key)) == -1) {
 
                         // 書き込む行を決定
-                        synchronized (sync) {
+
+                        try {
 
                             if (vacuumExecFlg) {
                                 // Vacuum差分にデータを登録
@@ -414,21 +439,27 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             this.lineCount++;
                             super.put(key, new Integer(this.lineCount));
                             this.nowKeySize = super.size();
+                        } finally {
+                            this.w.unlock();
                         }
                     } else {
-
+                        this.w.unlock();
                         // すでにファイル上に存在する
-                        synchronized (sync) {
+                        this.r.lock();
+                        try {
+
                             if (vacuumExecFlg) {
                                 // Vacuum差分にデータを登録
                                 Object[] diffObj = {"1", key, value};
                                 this.vacuumDiffDataList.add(diffObj);
                             }
 
-                            if (raf != null) {
-                                raf.seek(seekPoint);
-                                raf.write(writeBuf.toString().getBytes(), 0, this.oneDataLength);
+                            if (this.raf != null) {
+
+                                this.raf.seekAndWrite(seekPoint, writeBuf.toString().getBytes(), 0, this.oneDataLength);
                             }
+                        } finally {
+                            this.r.unlock();
                         }
                     }
 
@@ -481,10 +512,17 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      */
     public Object remove(Object key) {
         Object ret = null;
-
-        synchronized (sync) {
+        this.w.lock();
+        try {
             this.totalDataSizeCalc(key, null);
             ret = super.remove(key);
+
+            // 再利用可能なデータの場所を保持
+            if (!this.memoryMode) {
+                if (this.deletedDataPointList.size() < ImdstDefine.numberOfDeletedDataPoint)
+                    this.deletedDataPointList.add(ret);
+            }
+
             this.nowKeySize = super.size();
 
             if (vacuumExecFlg) {
@@ -492,6 +530,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 Object diffObj[] = {"2", (String)key};
                 this.vacuumDiffDataList.add(diffObj);
             }
+        } finally {
+            this.w.unlock();
         }
 
         return ret;
@@ -506,8 +546,11 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      */
     public boolean containsKey(Object key) {
         if (vacuumExecFlg) {
-            synchronized (sync) {
+            this.r.lock();
+            try {
                 return super.containsKey(key);
+            } finally {
+                this.r.unlock();
             }
         }
 
@@ -622,7 +665,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         int putCounter = 0;
 
 
-        synchronized (sync) {
+        this.w.lock();
+        try {
 
             if (this.vacuumDiffDataList != null) {
                 this.vacuumDiffDataList.clear();
@@ -631,6 +675,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
             this.vacuumDiffDataList = new FileBaseDataList(this.tmpVacuumeLineFile);
             vacuumExecFlg = true;
+        } finally {
+            this.w.unlock();
         }
 
         //vacuumWorkMap = new ConcurrentHashMap(super.size());
@@ -679,7 +725,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     tmpOsw.close();
                     tmpFos.close();
 
-                    synchronized (sync) {
+                    this.w.lock();
+                    try {
 
                         raf.close();
 
@@ -753,6 +800,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         // Vacuum終了をマーク
                         vacuumExecFlg = false;
                         ret = true;
+                    } finally {
+                        this.w.unlock();
                     }
                 }
             } catch(Exception e2) {
@@ -775,14 +824,16 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
 
     public void close() {
+        this.w.lock();
         try {
-            synchronized (sync) {
-                if(this.raf != null) this.raf.close();
-                if(this.bw != null) this.bw.close();
-                if(this.osw != null) this.osw.close();
-                if(this.fos != null) this.fos.close();
-            }
+
+            if(this.raf != null) this.raf.close();
+            if(this.bw != null) this.bw.close();
+            if(this.osw != null) this.osw.close();
+            if(this.fos != null) this.fos.close();
         } catch(Exception e3) {
+        } finally {
+            this.w.unlock();
         }
     }
 
@@ -792,36 +843,38 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * @throw Exception
      */
     public void deleteMapDataFile() throws Exception{
+        this.w.lock();
         try {
-            synchronized (sync) {
-                if(this.raf != null) {
-                    this.raf.close();
-                    this.raf = null;
-                }
 
-                if(this.bw != null) {
-                    this.bw.close();
-                    this.bw = null;
-                }
+            if(this.raf != null) {
+                this.raf.close();
+                this.raf = null;
+            }
 
-                if(this.osw != null) {
-                    this.osw.close();
-                    this.osw = null;
-                }
+            if(this.bw != null) {
+                this.bw.close();
+                this.bw = null;
+            }
 
-                if(this.fos != null) {
-                    this.fos.close();
-                    this.fos = null;
-                }
+            if(this.osw != null) {
+                this.osw.close();
+                this.osw = null;
+            }
 
-                File dataFile = new File(this.lineFile);
-                if(dataFile.exists()) {
-                    dataFile.delete();
-                }
+            if(this.fos != null) {
+                this.fos.close();
+                this.fos = null;
+            }
+
+            File dataFile = new File(this.lineFile);
+            if(dataFile.exists()) {
+                dataFile.delete();
             }
         } catch(Exception e3) {
             e3.printStackTrace();
             throw e3;
+        } finally {
+            this.w.unlock();
         }
     }
 
@@ -843,8 +896,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         if (raf != null) {
 
-            raf.seek(seekPoint);
-            raf.read(buf, 0, this.oneDataLength);
+            this.raf.seekAndRead(seekPoint, buf, 0, this.oneDataLength);
         } else {
             return -1;
         }
@@ -871,6 +923,49 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             line = lineInteger.intValue();
         } else {
             return -1;
+        }
+
+        // seek計算
+        return new Long(this.seekOneDataLength).longValue() * new Long((line - 1)).longValue();
+    }
+
+
+
+    /**
+     * Key値を渡すことでそのKeyの対となるValueがデータファイルのどこにあるかを.<br>
+     * データファイル中のバイト位置で返す.<br>
+     *
+     * @param key Key値
+     * @return long ファイル中の開始位置 データが存在しない場合は-1が返却される
+     */
+    private long calcSeekRegistDataPoint(Object key) {
+
+        Integer lineInteger = (Integer)super.get(key);
+        int line = 0;
+        if (lineInteger != null) {
+            line = lineInteger.intValue();
+        } else {
+            
+            if (this.deletedDataPointList.size() > 0) {
+                this.w.lock();
+                try {
+                    if (this.deletedDataPointList.size() > 0) {
+
+                        line = ((Integer)this.deletedDataPointList.remove(0)).intValue();
+                        super.put(key, new Integer(line));
+                        this.nowKeySize = super.size() + 1;
+                    } else {
+
+                        return -1;
+                    }
+                } catch(Throwable e){
+                } finally {
+                    this.w.unlock();
+                }
+            } else {
+
+                return -1;
+            }
         }
 
         // seek計算

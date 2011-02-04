@@ -159,6 +159,8 @@ public class StatusUtil {
             isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIE1haW5NYXN0ZXJOb2RlSW5mbw==", null);
             isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIEFsbE1hc3Rlck5vZGVJbmZv", null);
             isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIERpc3RyaWJ1dGlvbkFsZ29yaXRobQ==", null);
+            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIERpc3RyaWJ1dGlvbkFsZ29yaXRobQ==", null);
+
         }
     }
 

@@ -270,7 +270,7 @@ public class ImdstDefine {
     public static final int saveKeyMaxSize = 486;
 
     // 共通のデータファイルに書き出す最大サイズ
-    public volatile static int dataFileWriteMaxSize = 8192 * 2;
+    public volatile static int dataFileWriteMaxSize = 4096;
 
 
     public static final int stringBufferSmallSize = 128;
@@ -330,14 +330,16 @@ public class ImdstDefine {
     // MasterConfigurationManagerHelperが設定情報を確認する時間間隔
     public static final int configurationCheckCycle = 1000 * 20;
 
-    // FileでValueを保持する際のValueキャッシの利用指定
-    public volatile static boolean useValueCache = true;
-    // FileでValueを保持する際のValueキャッシュサイズ(キャッシュデータ数)
-    public volatile static int valueCacheMaxSize = 128;
+    // 共有DataFileに対して複数のアクセッサでアクセスする場合の同アクセス数
+    public volatile static long maxParallelRandomAccess = 13;
 
+    // 共有DataFile中の削除済みデータが保存してあった場所を保持する(再利用用)
+    public volatile static int numberOfDeletedDataPoint = 1000;
 
     // DataNodeに保存するさいの遅延指定
     public volatile static boolean delayWriteFlg = false;
+
+
 
 
     // ---- 分散アルゴリズム系 ---------------------------------------------------
@@ -346,6 +348,9 @@ public class ImdstDefine {
 
 
     // ---- KeyMapManager系 ------------------------------------------------------
+    // 共有データファイルのVacuum実行可否(現在Vacuumの必要はないのでfalse)
+    public static final boolean dataFileVacuumExec = false;
+
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う候補となる
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     public static final int vacuumStartLimit = 100000;
