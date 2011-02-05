@@ -2933,7 +2933,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         keyNodeConnector = null;
                     }
                     super.setDeadNode(nodeName + ":" + nodePort, 5, se);
-                    logger.error(se);
+                    logger.error("", se);
                 } catch (IOException ie) {
 
                     //ie.printStackTrace();
@@ -2942,7 +2942,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         keyNodeConnector = null;
                     }
                     super.setDeadNode(nodeName + ":" + nodePort, 6, ie);
-                    logger.error(ie);
+                    logger.error("", ie);
                 } catch (Exception ee) {
 
                     //ee.printStackTrace();
@@ -2951,7 +2951,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         keyNodeConnector.close();
                         keyNodeConnector = null;
                     }
-                    logger.error(ee);
+                    logger.error("", ee);
                 }
 
             }
@@ -4528,7 +4528,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             super.setDeadNode(keyNodeFullName, 9, null);
         } catch (Exception e) {
 
-            logger.error(e);
+            logger.error("", e);
         } finally {
             retParams = new String[3];
             retParams[0] = "95";
@@ -4674,7 +4674,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 socket = null;
             }
         } catch (Exception e) {
-            logger.error(e);
+            logger.error("", e);
         }
     }
 

@@ -959,7 +959,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                         }
                     } catch(Exception e1) {
                         // 無視
-                        logger.error(e1);
+                        logger.error("", e1);
                     }
                     break;
                 }
@@ -974,7 +974,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                     if (keyNodeConnector != null) keyNodeConnector.close();
                 } catch(Exception e2) {
                     // 無視
-                    logger.error(e2);
+                    logger.error("", e2);
                 }
             }
         }

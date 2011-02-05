@@ -231,7 +231,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                         logger.info("KeyManagerJob - executeJob - ServerEnd");
                         break;
                     }
-                    logger.error(e);
+                    logger.error("", e);
                 }
             }
         } catch(Exception e) {

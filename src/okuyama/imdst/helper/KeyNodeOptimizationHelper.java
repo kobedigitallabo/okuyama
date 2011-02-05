@@ -265,7 +265,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             }
         } catch(SocketException se) {
             // 切断とみなす
-            logger.error(se);
+            logger.error("", se);
             throw new BatchException(se);
         } catch(Exception e) {
             throw new BatchException(e);
@@ -341,7 +341,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
 
         } catch (Exception e) {
             e.printStackTrace();
-            logger.error(e);
+            logger.error("", e);
         } finally {
 
             // 使用終了をマーク
@@ -568,7 +568,7 @@ public class KeyNodeOptimizationHelper extends AbstractMasterManagerHelper {
             this.connectMap = new HashMap();
         } catch(Exception e2) {
             // 無視
-            logger.error(e2);
+            logger.error("", e2);
         } finally {
         }
     }

@@ -630,7 +630,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         } catch (Exception e) {
 
-            logger.error(e);
+            logger.error("", e);
         } finally {
             try {
 
@@ -638,7 +638,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                     imdstKeyValueClient.close();
                 }
             } catch(Exception e) {
-                logger.error(e);
+                logger.error("", e);
             }
         }
     }

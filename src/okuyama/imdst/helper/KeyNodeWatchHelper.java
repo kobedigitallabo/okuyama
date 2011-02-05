@@ -490,7 +490,11 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             // データを送信
             String diffDataStr = null;
+			int diffCount = 0;
             while((diffDataStr = mbr.readLine()) != null) {
+				diffCount++;
+				if ((diffCount % 10) == 0) 
+		            logger.info("Recover Step - 11 - DiffSendCount[" + diffCount + "]");
 
                 if (diffDataStr.equals("-1")) break;
                 pw.println(diffDataStr);
@@ -535,7 +539,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             logger.info("Recover Step - 18");
         } catch (Exception e) {
 
-            logger.error(e);
+            logger.error("", e);
             ret = false;
         } finally {
             try {
@@ -565,7 +569,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             } catch(Exception e2) {
                 // 無視
-                logger.error(e2);
+                logger.error("", e2);
             }
         }
         return ret;

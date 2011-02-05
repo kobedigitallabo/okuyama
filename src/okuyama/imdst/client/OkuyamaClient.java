@@ -2287,7 +2287,7 @@ public class OkuyamaClient {
                     ret[0] = serverRet[1];
                     ret[1] = serverRet[2];
 
-                    if (serverRet.length > 2)
+                    if (serverRet.length > 3)
                         ret[2] = serverRet[3];
                 }
             } else {

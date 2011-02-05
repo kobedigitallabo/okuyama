@@ -436,7 +436,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                         logger.info("MasterManagerJob - executeJob - ServerEnd");
                         break;
                     }
-                    logger.error(e);
+                    logger.error("", e);
                 }
             }
         } catch(Exception e) {
