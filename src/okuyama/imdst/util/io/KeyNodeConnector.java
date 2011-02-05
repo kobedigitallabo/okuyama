@@ -114,6 +114,14 @@ public class KeyNodeConnector {
                 if(!this.br.ready()) Thread.sleep(500);
             }
 
+			// 状況に合わせてタイムアウトを設定
+            if (recoverMode && recoverTarget.equals(this.nodeFullName)) {
+                this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
+            } else {
+                this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+            }
+
+
             ret = this.br.readLine();
             if (ret == null) throw new IOException("readLine Ret = null");
             retry = false;
@@ -156,6 +164,7 @@ public class KeyNodeConnector {
                     }
 
                     ret = this.readLine();
+		            retry = false;
                 } catch(Exception ee) {
                     throw e;
                 }
