@@ -1696,10 +1696,6 @@ public class KeyMapManager extends Thread {
                         pw.println("-1");
                         pw.flush();
 
-                        if (this.diffDataPoolingListForFileBase != null) {
-                            this.diffDataPoolingListForFileBase.clear();
-                            this.diffDataPoolingListForFileBase = null;
-                        }
 
                         allDataBuf = null;
                         // 取り込み完了をまつ
@@ -1715,9 +1711,9 @@ public class KeyMapManager extends Thread {
                         this.diffDataMode(false);
                     }
                 }
-                //logger.debug("outputDiffKeyMapObj2Stream - synchronized - end");
+                logger.info("outputDiffKeyMapObj2Stream - synchronized - end");
             } catch (Exception e) {
-                logger.error("outputDiffKeyMapObj2Stream - Error [" + e.getMessage() + "]");
+                logger.error("outputDiffKeyMapObj2Stream - Error [" + e.getMessage() + "]", e);
                 this.diffDataMode(false);
                 //blocking = true;
                 //StatusUtil.setStatusAndMessage(1, "outputDiffKeyMapObj2Stream - Error [" + e.getMessage() + "]");
