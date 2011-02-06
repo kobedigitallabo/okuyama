@@ -1635,7 +1635,7 @@ public class KeyMapManager extends Thread {
             try {
 
                 synchronized(poolKeyLock) {
-
+                    String nextWrite = null;
 
                     logger.info("outputDiffKeyMapObj2Stream - synchronized - start");
                     String allDataSep = "";
@@ -1643,26 +1643,36 @@ public class KeyMapManager extends Thread {
 
                     // 差分データの全内容を1行文字列として書き出し
 					int i = 0;
-                    for (; i < this.diffDataPoolingListForFileBase.size() - 50; i++) {
+                    for (; i < this.diffDataPoolingListForFileBase.size() - 10; i++) {
 
                         allDataBuf.append(allDataSep);
                         allDataBuf.append(this.diffDataPoolingListForFileBase.get(i));
                         allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
 
-                        if (i > 0 && (i % 40) == 0) {
-
+                        if (i > 0 && (i % 30) == 0) {
+		                    logger.info("outputDiffKeyMapObj2Stream - Diff Data Normal Send Count[" + i + "]");
                             pw.println(allDataBuf.toString());
                             pw.flush();
                             allDataBuf = null;
                             allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
                             allDataSep = "";
+
+							// 送信後結果を待つ
+	                        nextWrite = br.readLine();
+	                        if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("NextWriteMessage= [" + nextWrite + "]");
+							nextWrite = null;
                         }
                     }
 
                     String lastSendData = allDataBuf.toString();
                     if (!lastSendData.equals("")) {
+	                    logger.info("outputDiffKeyMapObj2Stream - Diff Data Normal Send2 Count[" + i + "]");
                         pw.println(lastSendData);
                         pw.flush();
+						// 送信後結果を待つ
+                        nextWrite = br.readLine();
+                        if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("NextWriteMessage= [" + nextWrite + "]");
+						nextWrite = null;
                     }
 
 
@@ -1677,13 +1687,18 @@ public class KeyMapManager extends Thread {
 	                        allDataBuf.append(this.diffDataPoolingListForFileBase.get(i));
 	                        allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
 
-	                        if (i > 0 && (i % 40) == 0) {
-
+	                        if (i > 0 && (i % 20) == 0) {
+			                    logger.info("outputDiffKeyMapObj2Stream - Diff Data Last Send Count[" + i + "]");
 	                            pw.println(allDataBuf.toString());
 	                            pw.flush();
 	                            allDataBuf = null;
 	                            allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
 	                            allDataSep = "";
+
+								// 送信後結果を待つ
+		                        nextWrite = br.readLine();
+		                        if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("Erro Target Read End Message= [" + nextWrite + "]");
+								nextWrite = null;
 	                        }
 	                    }
 
@@ -1691,6 +1706,10 @@ public class KeyMapManager extends Thread {
                         if (!lastSendData.equals("")) {
                             pw.println(lastSendData);
                             pw.flush();
+							// 送信後結果を待つ
+	                        nextWrite = br.readLine();
+	                        if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("Erro Target Read End Message= [" + nextWrite + "]");
+							nextWrite = null;
                         }
 
                         pw.println("-1");
@@ -1943,6 +1962,8 @@ public class KeyMapManager extends Thread {
                                 if (this.workFileMemory == false) this.bw.flush();
                                 allDataLines = null;
                             }
+							pw.println("2");
+							pw.flush();
                         }
 
                         // トランザクションログモードがONの場合のみflush

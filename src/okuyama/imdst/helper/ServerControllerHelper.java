@@ -29,6 +29,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
 
     private int statusCommandPortNo = 8881;
 
+	private ServerSocket svSoc = null;
 
     /**
      * Logger.<br>
@@ -65,7 +66,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
             } else {
                 bindAddress = new InetSocketAddress(this.statusCommandPortNo);
             }
-            ServerSocket svSoc = new ServerSocket();
+            svSoc = new ServerSocket();
             svSoc.bind(bindAddress);
 
             while (true) {
@@ -202,7 +203,11 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
             e.printStackTrace();
             logger.error("ServerControllerHelper - executeHelper - Error", e);
             throw new BatchException(e);
-        }
+        } finally {
+			try {
+				if (svSoc != null) svSoc.close();
+			} catch (Exception e) {}
+		}
 
         logger.debug("ServerControllerHelper - executeHelper - end");
         return ret;

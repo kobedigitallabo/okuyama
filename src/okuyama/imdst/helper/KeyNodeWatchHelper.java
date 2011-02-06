@@ -499,6 +499,11 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 if (diffDataStr.equals("-1")) break;
                 pw.println(diffDataStr);
                 pw.flush();
+				// 転送先の取り込み完了を待つ
+				String inputEnd = br.readLine();
+
+				mpw.println(inputEnd);
+                mpw.flush();
             }
 
             pw.println("-1");

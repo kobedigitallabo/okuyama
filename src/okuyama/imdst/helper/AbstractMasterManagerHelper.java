@@ -972,6 +972,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 try {
 
                     if (keyNodeConnector != null) keyNodeConnector.close();
+
                 } catch(Exception e2) {
                     // 無視
                     logger.error("", e2);
