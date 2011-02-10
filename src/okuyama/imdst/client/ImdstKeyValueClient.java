@@ -27,7 +27,20 @@ public class ImdstKeyValueClient extends OkuyamaClient {
      *
      */
     public ImdstKeyValueClient() {
-		super();
+        super();
+    }
+
+
+    /**
+     * 接続処理.<br>
+     * エンコーディング指定なし.<br>
+     *
+     * @param server サーバ名
+     * @param port ポート番号
+     * @throws OkuyamaClientException
+     */
+    public void connect(String server, int port) throws OkuyamaClientException {
+        this.connect(server, port, OkuyamaClient.connectDefaultEncoding, ImdstDefine.clientConnectionOpenTimeout * 3, ImdstDefine.clientConnectionTimeout * 3);
     }
 
 

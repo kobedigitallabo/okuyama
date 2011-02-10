@@ -335,12 +335,13 @@ public class ImdstDefine {
     // FileでValueを保持する際のValueキャッシュサイズ(キャッシュデータ数)
     public volatile static int valueCacheMaxSize = 128;
 
-	// 削除済みデータの共有データファイルのどこ存在していたかを保持する最大数
-	public volatile static int numberOfDeletedDataPoint = 200000;
+    // 削除済みデータの共有データファイルのどこ存在していたかを保持する最大数
+    public volatile static int numberOfDeletedDataPoint = 200000;
 
     // DataNodeに保存するさいの遅延指定
     public volatile static boolean delayWriteFlg = false;
 
+    public volatile static boolean retryClientReadFlg = true;
 
     // ---- 分散アルゴリズム系 ---------------------------------------------------
     // 分散アルゴリズムにConsistentHashを使用した場合の仮想ノードの数

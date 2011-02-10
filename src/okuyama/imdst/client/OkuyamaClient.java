@@ -312,7 +312,20 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public void connect(String server, int port) throws OkuyamaClientException {
-        this.connect(server, port, OkuyamaClient.connectDefaultEncoding);
+        this.connect(server, port, OkuyamaClient.connectDefaultEncoding, ImdstDefine.clientConnectionOpenTimeout, ImdstDefine.clientConnectionTimeout);
+    }
+
+
+    /**
+     * 接続処理.<br>
+     * エンコーディング指定なし.<br>
+     *
+     * @param server サーバ名
+     * @param port ポート番号
+     * @throws OkuyamaClientException
+     */
+    public void connect(String server, int port, String encoding) throws OkuyamaClientException {
+        this.connect(server, port, encoding, ImdstDefine.clientConnectionOpenTimeout, ImdstDefine.clientConnectionTimeout);
     }
 
 
@@ -325,7 +338,7 @@ public class OkuyamaClient {
      * @param encoding サーバとのストリームエンコーディング指定(デフォルトUTF-8)
      * @throws OkuyamaClientException
      */
-    public void connect(String server, int port, String encoding) throws OkuyamaClientException {
+    public void connect(String server, int port, String encoding, int openTimeout, int connectionTimeout) throws OkuyamaClientException {
         try {
             this.socket = new Socket();
             InetSocketAddress inetAddr = new InetSocketAddress(server, port);

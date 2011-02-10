@@ -674,7 +674,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
                     // 処理待機中のHelper数が閾値と同じかもしくは大きい場合は同様のクライアントを処理
-                    if (numberOfQueueBindWaitCounter.get() >= returnProccessingCount) {
+                    if (ImdstDefine.retryClientReadFlg == true && numberOfQueueBindWaitCounter.get() >= returnProccessingCount) {
 
                         try {
 
@@ -780,11 +780,20 @@ public class KeyManagerHelper extends AbstractHelper {
     private String[] setDatanode(String key, String dataNodeStr, String transactionCode) {
         //logger.debug("KeyManagerHelper - setDatanode - start = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
         String[] retStrs = new String[3];
+        //long start = System.nanoTime();
+        //long end = System.nanoTime();
+        long ret1 = 0L;
+        long ret2 = 0L;
+        long ret3 = 0L;
         try {
             if (dataNodeStr.length() < setDatanodeMaxSize) {
                 if(!this.keyMapManager.checkError()) {
-
+//end = System.nanoTime();
+//ret1 = end - start;
                     this.keyMapManager.setKeyPair(key, dataNodeStr, transactionCode);
+//end = System.nanoTime();
+//ret2 = end - start;
+
                     retStrs[0] = "1";
                     retStrs[1] = "true";
                     retStrs[2] = "OK";
@@ -802,13 +811,14 @@ public class KeyManagerHelper extends AbstractHelper {
             }
         } catch (BatchException be) {
 
-            logger.debug("KeyManagerHelper - setDatanode - Error = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]", be);
+            logger.debug("KeyManagerHelper - setDatanode - Error = [" + key + "]", be);
             //logger.debug("KeyManagerHelper - setDatanode - Error", be);
             retStrs[0] = "1";
             retStrs[1] = "false";
             retStrs[2] = "NG:KeyManagerHelper - setDatanode - Exception - " + be.toString();
         }
         //logger.debug("KeyManagerHelper - setDatanode - end = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
+//System.out.println("ret1[" + ret1 + "] ret2[" + ret2 + "]")
         return retStrs;
     }
 

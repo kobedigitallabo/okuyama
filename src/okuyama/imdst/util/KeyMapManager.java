@@ -114,7 +114,7 @@ public class KeyMapManager extends Thread {
     private long lastAccess = 0L;
 
     // データファイルのバキューム実行指定
-	// 現在Vacuumの必要はないのでOff
+    // 現在Vacuumの必要はないのでOff
     private boolean vacuumExec = false;
 
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う候補となる
@@ -565,6 +565,9 @@ public class KeyMapManager extends Thread {
                 logger.info("TruncateData - TotalRemoveCount [" + truncateTagetData + "]");
             }
             logger.info("truncateData - End");
+        } catch (BatchException be) {
+            logger.error("truncateData - InnerError", be);
+            be.printStackTrace();
         } catch (Exception e) {
             logger.error("truncateData - Error" + e);
             e.printStackTrace();
@@ -657,6 +660,9 @@ public class KeyMapManager extends Thread {
                 this.writeMapFileFlg = true;
 
                 //logger.debug("setKeyPair - synchronized - end");
+            } catch (BatchException be) {
+
+                throw be;
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("setKeyPair - Error");
@@ -741,6 +747,8 @@ public class KeyMapManager extends Thread {
 
                 // データの書き込みを指示
                 this.writeMapFileFlg = true;
+            } catch (BatchException be) {
+                throw be;
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("setKeyPairOnlyOnce - Error");
@@ -815,9 +823,11 @@ public class KeyMapManager extends Thread {
 
                 // データの書き込みを指示
                 this.writeMapFileFlg = true;
+            } catch (BatchException be) {
+                throw be;
             } catch (Exception e) {
                 e.printStackTrace();
-                logger.error("setKeyPairVersionCheck - Error");
+                logger.error("setKeyPairVersionCheck - Error", e);
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "setKeyPairVersionCheck - Error [" + e.getMessage() + "]");
                 throw new BatchException(e);
@@ -831,7 +841,11 @@ public class KeyMapManager extends Thread {
     public String getKeyPair(String key) {
         String ret = null;
         if (!blocking) {
-            ret =  (String)keyMapObjGet(key);
+            try {
+                ret =  (String)keyMapObjGet(key);
+            } catch (BatchException be) {
+                ret = null;
+            }
         }
 
         return ret;
@@ -884,6 +898,8 @@ public class KeyMapManager extends Thread {
 
                 // データの書き込みを指示
                 this.writeMapFileFlg = true;
+            } catch (BatchException be) {
+                throw be;
             } catch (Exception e) {
                 logger.error("removeKeyPair - Error");
                 blocking = true;
@@ -981,6 +997,9 @@ public class KeyMapManager extends Thread {
                         }
                     }
                 }
+            } catch (BatchException be) {
+                logger.error("setTagPair - InnerError", be);
+                throw be;
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("setTagPair - Error");
@@ -1013,7 +1032,7 @@ public class KeyMapManager extends Thread {
             // Tagのキー値を連結
             for (int idx = 0; idx < 45000001; idx=idx+5000000) {
                 keyStrs = "";
-                setTimeSplitWork = null;                
+                setTimeSplitWork = null;
                 isMatch = false;
                 tmpBuf = new StringBuilder(ImdstDefine.stringBufferLarge_2Size);
                 tmpStr = null;
@@ -1172,6 +1191,10 @@ public class KeyMapManager extends Thread {
                 }
 
                 //logger.debug("setKeyPair - synchronized - end");
+
+            } catch (BatchException be) {
+                logger.error("calcValue - InnerError", be);
+                throw be;
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("setKeyPair - Error");
@@ -1189,7 +1212,7 @@ public class KeyMapManager extends Thread {
         boolean ret = false;
         if (!blocking) {
             if (key != null) {
-                ret =  this.keyMapObj.containsKey(key);
+                if(this.keyMapObj != null) ret =  this.keyMapObj.containsKey(key);
             }
         }
         return ret;
@@ -1336,8 +1359,12 @@ public class KeyMapManager extends Thread {
      */
     public String getLockedTransactionCode (String key) {
         synchronized(this.lockKeyLock) {
-            if (!this.containsKeyPair(key)) return null;
-            return ((String[])((String)this.keyMapObjGet(key)).split(this.lockKeyTimeSep))[0];
+            try {
+                if (!this.containsKeyPair(key)) return null;
+                return ((String[])((String)this.keyMapObjGet(key)).split(this.lockKeyTimeSep))[0];
+            } catch (Exception e) {
+                return null;
+            }
         }
     }
 
@@ -1406,14 +1433,18 @@ public class KeyMapManager extends Thread {
      * keyMapObjに対するアクセスメソッド.<br>
      * TODO:登録のValueのサイズが最大サイズを超えている場合は無条件で登録しない.<br>
      */
-    private void keyMapObjPut(String key, String val) {
-        if (val.length() < putValueMaxSize) {
-            if (key != null && val != null) {
-                this.keyMapObj.put(key, val);
-                this.keyMapObj.setKLastDataChangeTime(JavaSystemApi.currentTimeMillis);
+    private void keyMapObjPut(String key, String val) throws BatchException {
+        try {
+            if (val.length() < putValueMaxSize) {
+                if (key != null && val != null) {
+                    this.keyMapObj.put(key, val);
+                    this.keyMapObj.setKLastDataChangeTime(JavaSystemApi.currentTimeMillis);
+                }
             }
+            this.lastAccess = JavaSystemApi.currentTimeMillis;
+        } catch (Exception e) {
+            throw new BatchException(e);
         }
-        this.lastAccess = JavaSystemApi.currentTimeMillis;
     }
 
     private void setLastDataChangeTime() {
@@ -1453,12 +1484,16 @@ public class KeyMapManager extends Thread {
      * keyMapObjに対するアクセスメソッド.<br>
      * get<br>
      */
-    private String keyMapObjGet(String key) {
-        this.lastAccess = JavaSystemApi.currentTimeMillis;
-        if (key != null) {
-            return (String)this.keyMapObj.get(key);
-        } else {
-            return null;
+    private String keyMapObjGet(String key) throws BatchException {
+        try {
+            this.lastAccess = JavaSystemApi.currentTimeMillis;
+            if (key != null) {
+                return (String)this.keyMapObj.get(key);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            throw new BatchException(e);
         }
     }
 
@@ -1466,11 +1501,16 @@ public class KeyMapManager extends Thread {
      * keyMapObjに対するアクセスメソッド.<br>
      * 
      */
-    private void keyMapObjRemove(String key) {
-        if (key != null) {
-            this.keyMapObj.remove(key);
-            this.keyMapObj.setKLastDataChangeTime(JavaSystemApi.currentTimeMillis);
-            this.lastAccess = JavaSystemApi.currentTimeMillis;
+    private void keyMapObjRemove(String key) throws BatchException {
+        try {
+
+            if (key != null) {
+                this.keyMapObj.remove(key);
+                this.keyMapObj.setKLastDataChangeTime(JavaSystemApi.currentTimeMillis);
+                this.lastAccess = JavaSystemApi.currentTimeMillis;
+            }
+        } catch (Exception e) {
+            throw new BatchException(e);
         }
     }
 
@@ -1642,7 +1682,7 @@ public class KeyMapManager extends Thread {
                     StringBuilder allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
 
                     // 差分データの全内容を1行文字列として書き出し
-					int i = 0;
+                    int i = 0;
                     for (; i < this.diffDataPoolingListForFileBase.size() - 10; i++) {
 
                         allDataBuf.append(allDataSep);
@@ -1650,29 +1690,29 @@ public class KeyMapManager extends Thread {
                         allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
 
                         if (i > 0 && (i % 30) == 0) {
-		                    logger.info("outputDiffKeyMapObj2Stream - Diff Data Normal Send Count[" + i + "]");
+                            logger.info("outputDiffKeyMapObj2Stream - Diff Data Normal Send Count[" + i + "]");
                             pw.println(allDataBuf.toString());
                             pw.flush();
                             allDataBuf = null;
                             allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
                             allDataSep = "";
 
-							// 送信後結果を待つ
-	                        nextWrite = br.readLine();
-	                        if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("NextWriteMessage= [" + nextWrite + "]");
-							nextWrite = null;
+                            // 送信後結果を待つ
+                            nextWrite = br.readLine();
+                            if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("NextWriteMessage= [" + nextWrite + "]");
+                            nextWrite = null;
                         }
                     }
 
                     String lastSendData = allDataBuf.toString();
                     if (!lastSendData.equals("")) {
-	                    logger.info("outputDiffKeyMapObj2Stream - Diff Data Normal Send2 Count[" + i + "]");
+                        logger.info("outputDiffKeyMapObj2Stream - Diff Data Normal Send2 Count[" + i + "]");
                         pw.println(lastSendData);
                         pw.flush();
-						// 送信後結果を待つ
+                        // 送信後結果を待つ
                         nextWrite = br.readLine();
                         if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("NextWriteMessage= [" + nextWrite + "]");
-						nextWrite = null;
+                        nextWrite = null;
                     }
 
 
@@ -1681,35 +1721,35 @@ public class KeyMapManager extends Thread {
                         allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
                         allDataSep = "";
 
-	                    for (; i < this.diffDataPoolingListForFileBase.size(); i++) {
+                        for (; i < this.diffDataPoolingListForFileBase.size(); i++) {
 
-	                        allDataBuf.append(allDataSep);
-	                        allDataBuf.append(this.diffDataPoolingListForFileBase.get(i));
-	                        allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                            allDataBuf.append(allDataSep);
+                            allDataBuf.append(this.diffDataPoolingListForFileBase.get(i));
+                            allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
 
-	                        if (i > 0 && (i % 20) == 0) {
-			                    logger.info("outputDiffKeyMapObj2Stream - Diff Data Last Send Count[" + i + "]");
-	                            pw.println(allDataBuf.toString());
-	                            pw.flush();
-	                            allDataBuf = null;
-	                            allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
-	                            allDataSep = "";
+                            if (i > 0 && (i % 20) == 0) {
+                                logger.info("outputDiffKeyMapObj2Stream - Diff Data Last Send Count[" + i + "]");
+                                pw.println(allDataBuf.toString());
+                                pw.flush();
+                                allDataBuf = null;
+                                allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
+                                allDataSep = "";
 
-								// 送信後結果を待つ
-		                        nextWrite = br.readLine();
-		                        if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("Erro Target Read End Message= [" + nextWrite + "]");
-								nextWrite = null;
-	                        }
-	                    }
+                                // 送信後結果を待つ
+                                nextWrite = br.readLine();
+                                if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("Erro Target Read End Message= [" + nextWrite + "]");
+                                nextWrite = null;
+                            }
+                        }
 
                         lastSendData = allDataBuf.toString();
                         if (!lastSendData.equals("")) {
                             pw.println(lastSendData);
                             pw.flush();
-							// 送信後結果を待つ
-	                        nextWrite = br.readLine();
-	                        if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("Erro Target Read End Message= [" + nextWrite + "]");
-							nextWrite = null;
+                            // 送信後結果を待つ
+                            nextWrite = br.readLine();
+                            if (nextWrite == null || (!nextWrite.equals("-1") && !nextWrite.equals("2"))) throw new Exception("Erro Target Read End Message= [" + nextWrite + "]");
+                            nextWrite = null;
                         }
 
                         pw.println("-1");
@@ -1962,8 +2002,8 @@ public class KeyMapManager extends Thread {
                                 if (this.workFileMemory == false) this.bw.flush();
                                 allDataLines = null;
                             }
-							pw.println("2");
-							pw.flush();
+                            pw.println("2");
+                            pw.flush();
                         }
 
                         // トランザクションログモードがONの場合のみflush
@@ -2525,42 +2565,46 @@ public class KeyMapManager extends Thread {
     }
 
     public void dump() {
-        System.out.println("-------------------------------------- Dump Start ------------------------------------");
-        System.out.println("ALL Data Count = [" + this.getSaveDataCount() + "]");
-        System.out.println("======================================================================================");
-        // keyMapObjの内容を1行文字列として書き出し
-        Set entrySet = this.keyMapObj.entrySet();
+        try {
+            System.out.println("-------------------------------------- Dump Start ------------------------------------");
+            System.out.println("ALL Data Count = [" + this.getSaveDataCount() + "]");
+            System.out.println("======================================================================================");
+            // keyMapObjの内容を1行文字列として書き出し
+            Set entrySet = this.keyMapObj.entrySet();
 
-        // KeyMapObject内のデータを1件づつ対象になるか確認
-        Iterator entryIte = entrySet.iterator(); 
+            // KeyMapObject内のデータを1件づつ対象になるか確認
+            Iterator entryIte = entrySet.iterator(); 
 
-        // キー値を1件づつレンジに含まれているか確認
-        while(entryIte.hasNext()) {
-            Map.Entry obj = (Map.Entry)entryIte.next();
-            if (obj == null) continue;
-            String key = null;
+            // キー値を1件づつレンジに含まれているか確認
+            while(entryIte.hasNext()) {
+                Map.Entry obj = (Map.Entry)entryIte.next();
+                if (obj == null) continue;
+                String key = null;
 
-            // キー値を取り出し
-            key = (String)obj.getKey();
-            if (key.indexOf(ImdstDefine.imdstTagStartStr) == 0) {
+                // キー値を取り出し
+                key = (String)obj.getKey();
+                if (key.indexOf(ImdstDefine.imdstTagStartStr) == 0) {
 
-                String tag = key;
-                int startIdx = 15;
-                int endIdx = key.lastIndexOf(ImdstDefine.imdstTagEndStr);
- 
-                key = key.substring(startIdx, endIdx);
+                    String tag = key;
+                    int startIdx = 15;
+                    int endIdx = key.lastIndexOf(ImdstDefine.imdstTagEndStr);
+     
+                    key = key.substring(startIdx, endIdx);
 
-                // プレフィックスを外すために位置確認
-                int lastIdx = key.lastIndexOf("_");
+                    // プレフィックスを外すために位置確認
+                    int lastIdx = key.lastIndexOf("_");
 
-                key = key.substring(0, lastIdx);
+                    key = key.substring(0, lastIdx);
 
-                System.out.println("Tag=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(tag) + "]");
+                    System.out.println("Tag=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(tag) + "]");
 
-            } else {
-                System.out.println("Key=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(key) + "]");
+                } else {
+                    System.out.println("Key=[" + new String(BASE64DecoderStream.decode(key.getBytes())) + "], Value=[" + this.keyMapObjGet(key) + "]");
+                }
             }
+            System.out.println("-------------------------------------- Dump End --------------------------------------");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        System.out.println("-------------------------------------- Dump End --------------------------------------");
     }
 }
