@@ -267,10 +267,10 @@ public class ImdstDefine {
     //public static final int saveDataMaxSize =524288;
 
     // Key,Tagの最大長
-    public static final int saveKeyMaxSize = 486;
+    public static final int saveKeyMaxSize = 196;
 
     // 共通のデータファイルに書き出す最大サイズ
-    public volatile static int dataFileWriteMaxSize = 8192 * 2;
+    public volatile static int dataFileWriteMaxSize = 4096 * 3;
 
 
     public static final int stringBufferSmallSize = 128;
@@ -367,7 +367,6 @@ public class ImdstDefine {
     // 保存データサイズの合計値演算設定
     // true:計算する
     // false:計算しない
-    //public static final boolean calcSizeFlg = true;
     public static final boolean calcSizeFlg = true;
 
     // 有効期限切れデータバキューム実行指定

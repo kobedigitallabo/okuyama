@@ -769,7 +769,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     // Tag値保存先を問い合わせ
-                    String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i], this.reverseAccess);
+                    String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i], false);
                     tagKeyPair = new String[2];
 
                     tagKeyPair[0] = tags[i];
@@ -799,7 +799,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // キー値とデータを保存
             // 保存先問い合わせ
-            String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess);
+            String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, false);
 
             // KeyNodeに接続して保存 //
             keyDataNodePair = new String[2];
@@ -902,7 +902,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // キー値とデータを保存
             // 保存先問い合わせ
-            String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess);
+            String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, false);
 
             // KeyNodeに接続して保存 //
             keyDataNodePair = new String[2];
@@ -950,7 +950,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     // Tag値保存先を問い合わせ
-                    String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i], this.reverseAccess);
+                    String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i], false);
                     tagKeyPair = new String[2];
 
                     tagKeyPair[0] = tags[i];
@@ -1049,7 +1049,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // キー値とデータを保存
             // 保存先問い合わせ
-            String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess);
+            String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, false);
 
             // KeyNodeに接続して保存 //
             keyDataNodePair = new String[2];
@@ -1098,7 +1098,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     // Tag値保存先を問い合わせ
-                    String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i], this.reverseAccess);
+                    String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i], false);
                     tagKeyPair = new String[2];
 
                     tagKeyPair[0] = tags[i];
@@ -2792,6 +2792,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
+
     /**
      * KeyNodeに対してデータを保存する.<br>
      * 遅延指定あり.<br>
@@ -2805,6 +2806,334 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
+    private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode, boolean delayFlg) throws BatchException {
+        KeyNodeConnector keyNodeConnector = null;
+        KeyNodeConnector slaveKeyNodeConnector = null;
+
+        String nodeName = keyNodeName;
+        String nodePort = keyNodePort;
+        String nodeFullName = keyNodeFullName;
+
+        String[] retParams = null;
+
+        int counter = 0;
+
+        String tmpSaveHost = null;
+        String[] tmpSaveData = null;
+        String retParam = null;
+
+        boolean mainNodeSave = false;
+        boolean subNodeSave = false;
+
+		boolean slaveSendEnd = false;
+
+        // 文字列Buffer
+        this.setSendData.delete(0, Integer.MAX_VALUE);
+        String sendStr = null;
+        boolean subNodeConnect = false;
+
+        try {
+
+            // TransactionModeの状態に合わせてLock状態を確かめる
+            if (transactionMode) {
+                while (true) {
+
+                    // TransactionMode時
+                    // TransactionManagerに処理を依頼
+                    String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], values[0]);
+
+                    // 取得結果確認
+                    if (keyNodeLockRet[1].equals("true")) {
+
+                        if (keyNodeLockRet[2].equals(transactionCode)) break;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            // 送信パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
+            this.setSendData.append(type);
+            this.setSendData.append(ImdstDefine.keyHelperClientParamSep);
+            this.setSendData.append(this.stringCnv(values[0]));               // Key値
+            this.setSendData.append(ImdstDefine.keyHelperClientParamSep);
+            this.setSendData.append(transactionCode);                         // Transaction値
+            this.setSendData.append(ImdstDefine.keyHelperClientParamSep);
+            this.setSendData.append(values[1]);                               // Value値
+            this.setSendData.append(ImdstDefine.setTimeParamSep);
+            this.setSendData.append(setTime);                                 // 保存バージョン
+            sendStr = this.setSendData.toString();
+
+            // KeyNodeとの接続を確立
+            keyNodeConnector = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+
+
+            // DataNodeに送信
+            if (keyNodeConnector != null) {
+                // 接続結果と、現在の保存先状況で処理を分岐
+                try {
+
+                    // 送信
+                    // 遅延指定確認
+                    // Subが指定だれていてdelay指定がtrueの場合
+                    if (!delayFlg) {
+
+                        // 同期
+                        keyNodeConnector.println(sendStr);
+                        keyNodeConnector.flush();
+
+			            // スレーブノードが存在する場合は送信まで済ませておく
+			            if (subKeyNodeName != null) {
+
+			                // SubDataNodeに送信
+			                slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+							if (slaveKeyNodeConnector != null) {
+					                // 送信
+	                                slaveKeyNodeConnector.println(sendStr);
+	                                slaveKeyNodeConnector.flush();
+									slaveSendEnd = true;
+							}
+						}
+
+                        // 返却値取得
+                        retParam = keyNodeConnector.readLine(sendStr);
+
+                        // 処理種別判別
+                        if (type.equals("1")) {
+
+                            // Key値でValueを保存
+                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                            if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
+
+                                mainNodeSave = true;
+                            } else {
+
+                                // 論理的に登録失敗
+                                super.setDeadNode(nodeName + ":" + nodePort, 3, null);
+                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
+                            }
+                        } else if (type.equals("3")) {
+
+                            // Tag値でキー値を保存
+
+                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                            if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
+                                mainNodeSave = true;
+                            } else {
+                                // 論理的に登録失敗
+                                super.setDeadNode(nodeName + ":" + nodePort, 4, null);
+                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
+                            }
+                        }
+                    } else {
+
+                        // 遅延
+			            // スレーブノード接続処理だけ終わらしておく処理
+			            if (subKeyNodeName != null) {
+			                // SubDataNodeに送信
+			                slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+						}
+
+                        // 遅延の場合は結果が送られてこないのでNetworkから読みださない
+                        keyNodeConnector.print("-");
+                        keyNodeConnector.println(sendStr);
+                        keyNodeConnector.flush();
+                        mainNodeSave = true;
+                        // 結果を作りだす
+                        if (type.equals("1")) {
+                            retParam = "1,true,OK";
+                        } else if (type.equals("3")) {
+                            retParam = "3,true,OK";
+                        }
+                    }
+
+                    // 使用済みの接続を戻す
+                    super.addKeyNodeCacheConnectionPool(keyNodeConnector);
+                } catch (SocketException se) {
+
+                    //se.printStackTrace();
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
+                    super.setDeadNode(nodeName + ":" + nodePort, 5, se);
+                    logger.error("", se);
+                } catch (IOException ie) {
+
+                    //ie.printStackTrace();
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
+                    super.setDeadNode(nodeName + ":" + nodePort, 6, ie);
+                    logger.error("", ie);
+                } catch (Exception ee) {
+
+                    //ee.printStackTrace();
+                    super.setDeadNode(nodeName + ":" + nodePort, 7, ee);
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
+                    logger.error("", ee);
+                }
+
+            }
+
+
+            // スレーブノード処理
+            if (subKeyNodeName != null) {
+
+				if (slaveKeyNodeConnector == null) {
+	                // SubDataNodeに送信
+	                slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+				}
+
+                if (slaveKeyNodeConnector != null) {
+                    // 接続結果と、現在の保存先状況で処理を分岐
+                    try {
+
+                        // 処理種別判別
+                        // Subが指定されてる
+                        // 遅延設定がないもしくは、mainが失敗している場合
+                        if (!delayFlg || mainNodeSave == false) {
+
+							if (!slaveSendEnd) {
+	                            // 未送信の場合は送信
+	                            slaveKeyNodeConnector.println(sendStr);
+	                            slaveKeyNodeConnector.flush();
+							}
+
+                            if (type.equals("1")) {
+
+                                // 返却値取得
+                                retParam = slaveKeyNodeConnector.readLine(sendStr);
+
+                                // Key値でValueを保存
+                                // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                                //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                                if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
+                                    subNodeSave = true;
+                                } else {
+                                    // 論理的に登録失敗
+                                    super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 3, null);
+                                    logger.error("setKeyNodeValue Logical Error Node =["  + subKeyNodeName + ":" + subKeyNodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
+                                }
+                            } else if (type.equals("3")) {
+
+                                // 返却値取得
+                                retParam = slaveKeyNodeConnector.readLine(sendStr);
+
+                                // Tag値でキー値を保存
+
+                                // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                                //retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                                if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
+                                    subNodeSave = true;
+                                } else {
+                                    // 論理的に登録失敗
+                                    super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 4, null);
+                                    logger.error("setKeyNodeValue Logical Error Node =["  + subKeyNodeName + ":" + subKeyNodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
+                                }
+                            }
+                        }else {
+
+                            // 遅延
+                            // 送信
+                            // 遅延の場合は結果が送られてこないのでNetworkから読みださない
+                            slaveKeyNodeConnector.print("-");
+                            slaveKeyNodeConnector.println(sendStr);
+                            slaveKeyNodeConnector.flush();
+
+                            subNodeSave = true;
+                            // 結果を作りだす
+                            if (type.equals("1")) {
+                                retParam = "1,true,OK";
+                            } else if (type.equals("3")) {
+                                retParam = "3,true,OK";
+                            }
+                        }
+                        // 使用済みの接続を戻す
+                        super.addKeyNodeCacheConnectionPool(slaveKeyNodeConnector);
+                    } catch (SocketException se) {
+                        //se.printStackTrace();
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
+                        super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 5, se);
+                        logger.debug(se);
+                    } catch (IOException ie) {
+                        //ie.printStackTrace();
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
+                        super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 6, ie);
+                        logger.debug(ie);
+                    } catch (Exception ee) {
+                        //ee.printStackTrace();
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
+                        super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 7, ee);
+                        logger.debug(ee);
+                    }
+                }
+            }
+
+            // ノードへの保存状況を確認
+            if (mainNodeSave == false && subNodeSave == false) {
+                if (retParam == null) {
+                    throw new BatchException("Key Node IO Error: detail info for log file");
+                }
+            }
+
+        } catch (BatchException be) {
+            //be.printStackTrace();
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
+            throw be;
+        } catch (Exception e) {
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
+            throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            if (subKeyNodeName != null) 
+                super.execNodeUseEnd(subKeyNodeFullName);
+
+            // 返却地値をパースする
+            if (retParam != null) {
+                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+            }
+        }
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeに対してデータを保存する.<br>
+     * 遅延指定あり.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(1=Keyとデータノード設定, 3=Tagにキーを追加, 30=ロックを取得, 31=ロックを解除)
+     * @param values 送信データ
+     * @return String[] 結果
+     * @throws BatchException
+     */
+/*
     private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode, boolean delayFlg) throws BatchException {
         KeyNodeConnector keyNodeConnector = null;
         KeyNodeConnector slaveKeyNodeConnector = null;
@@ -2989,7 +3318,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 } else {
                                     // 論理的に登録失敗
                                     super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 3, null);
-                                    logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
+                                    logger.error("setKeyNodeValue Logical Error Node =["  + subKeyNodeName + ":" + subKeyNodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
                                 }
                             } else if (type.equals("3")) {
                                 // 送信
@@ -3008,7 +3337,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 } else {
                                     // 論理的に登録失敗
                                     super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 4, null);
-                                    logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
+                                    logger.error("setKeyNodeValue Logical Error Node =["  + subKeyNodeName + ":" + subKeyNodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + slaveKeyNodeConnector.connectorDump() + "]");
                                 }
                             }
                         }else {
@@ -3093,6 +3422,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         return retParams;
     }
+*/
 
 
     /**

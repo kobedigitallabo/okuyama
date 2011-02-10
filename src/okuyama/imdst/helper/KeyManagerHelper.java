@@ -782,17 +782,18 @@ public class KeyManagerHelper extends AbstractHelper {
         String[] retStrs = new String[3];
         //long start = System.nanoTime();
         //long end = System.nanoTime();
-        long ret1 = 0L;
-        long ret2 = 0L;
-        long ret3 = 0L;
+        //long ret1 = 0L;
+        //long ret2 = 0L;
+        //long ret3 = 0L;
+
         try {
             if (dataNodeStr.length() < setDatanodeMaxSize) {
                 if(!this.keyMapManager.checkError()) {
-//end = System.nanoTime();
-//ret1 = end - start;
+					//end = System.nanoTime();
+					//ret1 = end - start;
                     this.keyMapManager.setKeyPair(key, dataNodeStr, transactionCode);
-//end = System.nanoTime();
-//ret2 = end - start;
+					//end = System.nanoTime();
+					//ret2 = end - start;
 
                     retStrs[0] = "1";
                     retStrs[1] = "true";
@@ -817,8 +818,9 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[1] = "false";
             retStrs[2] = "NG:KeyManagerHelper - setDatanode - Exception - " + be.toString();
         }
+
         //logger.debug("KeyManagerHelper - setDatanode - end = [" + new String(BASE64DecoderStream.decode(key.getBytes())) + "]");
-//System.out.println("ret1[" + ret1 + "] ret2[" + ret2 + "]")
+		//System.out.println("ret1[" + ret1 + "] ret2[" + ret2 + "]")
         return retStrs;
     }
 
