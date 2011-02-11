@@ -10,33 +10,75 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
-[[リリース Ver 0.8.6 - (2011/XX/XX)]]
+[[リリース Ver 0.8.6 - (2011/02/11)]]
   ■複数Value一括取得機能を追加(memcachedのgetに複数のKey値を並べるのと同等)
-     OkuyamaClientでは、getMultiValue(String[])になる。結果は連想配列にKeyとValueで格納されて返却される
-	 =>実装済み
-	 
+     複数の取得したいKeyを配列で渡すことでまとめてValueを取得可能。返却される値はKeyとValueのMapで返される
+	 同様のKeyを複数指定した場合は束ねて返される。
+	 OkuyamaClientでは<Map>getMultiValue(String[])メソッドになる。
+     memcachedプロトコルではgetの後にkey値を並べる
+	 !!注意!!:PHPクライアントは未対応。
+
+
   ■Tagを指定するとそれに紐付くValueを同時に返却する機能を追加
-      =>limit、offsetを渡せるようにする
-      =>未実装
+     Tagを指定することで従来はKeyの配列を取得可能だったが、KeyとValueのMapを取得する機能を追加。
+	 Tagを指定する意外は、<Map>getMultiValue(String[])と同様の挙動となる。
+	 OkuyamaClientでは、<Map>getTagValues(String tag)メソッドになる。
+	 !!注意!!:PHPクライアントは未対応。
+
 	  
-  ■Tagを指定するとそれに紐付くValueに同時にJavaScriptを実行する機能を追加
-      =>limit、offsetを渡せるようにする
-	  =>内部実装としては、シーケンシャルにJavaScriptを実行するのではなく、一定の並列数を決めて連続的に依頼を投げる(DataNodeに通信する)
-	  =>未実装
-	  
-  ■指定したTagに何件のKey値が紐付くか返す機能を追加
-      =>この場合は削除されているKey-Valueペアは無視されるようにする
-	  =>未実装
-	  
-  ■KeyとTagを指定することで該当KeyからTagを外せる機能を追加
-	  =>未実装
-	  
-  ■TagのDataNode側のset、get処理の効率化
-  	  =>未実装
+  ■Tagを登録、更新する際の処理性能を向上
+
+	
+  ■値の演算機能を追加。演算できる種類はインクリメント、デクリメントであ(memcachedのincr、decr、append相当)
+  	  =>インクリメント処理
+        =>OkuyamaClientではincrValue(String key, long val)
+		=>memcachedプロトコルではincr
 		
-  ■memcachedのincr、decr、append相当の機能を追加
-  	  =>未実装
-	  
+  	  =>デクリメント処理
+        =>OkuyamaClientではdecrValue(String key, long val)
+		=>memcachedプロトコルではdecr
+
+
+  ■ServerControllerにコマンドの種類追加
+    1.1. サーバコントロールコマンドを追加
+         追加した機能は以下
+         "cname" : okuyamaのDNS機能を設定する => DataNodeの設定上の名前と実際の名前のMappingを変えることが出来る
+                          >datanode001=datanodeserver01
+                          上記のように指定すると、okuyamaは"datanode001"という名前のDataNode設定を"datanodeserver01"と読み変えてアクセスする
+                          ※関係を変更したい場合は再度実行すれば上書きされる
+
+         "rname" : okuyamaのDNSMappingを削除する
+		                  rname改行後、現在の設定名を入力
+                          >datanode001 
+
+         "jobs" : 時間別の総アクセス数を返す
+                       >jobs
+					   
+         "allsize" : すべてのIsolation別の保存データサイズを返す
+                          単位はバイトになる
+						  >allsize
+ 
+         "size" : Isolation名を指定することで個別のサイズを返す
+                      >size
+					  >IsolationPrefix
+
+
+  ■レプリケーション登録未確認機能追加
+    DataNodeのレプリケーション先を設定している場合に、レプリケーションのデータを転送後、データノードで登録が正しく完了しているかを確認
+	せずにクラインとには成功として返す。
+    レプリケーション先の書き込み速度に依存しないので、書き込み処理が高速化される反面、ノードダウン時にデータ整合性が失われる可能性が高い。
+	MasterNode.propertiesの以下の項目を変更する
+	--------------------------------
+	#書き込み完了確認をしない
+	KeyMapDelayWrite=true
+	
+	#書き込み完了確認をする
+	KeyMapDelayWrite=false
+　--------------------------------
+
+
+  ■いくつかの処理性能向上と不具合の修正
+  	  
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.5 - (2011/01/18)]]
