@@ -25,10 +25,10 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 	 OkuyamaClientでは、<Map>getTagValues(String tag)メソッドになる。
 	 !!注意!!:PHPクライアントは未対応。
 
-	  
+
   ■Tagを登録、更新する際の処理性能を向上
 
-	
+
   ■値の演算機能を追加。演算できる種類はインクリメント、デクリメントであ(memcachedのincr、decr、append相当)
   	  =>インクリメント処理
         =>OkuyamaClientではincrValue(String key, long val)
@@ -38,6 +38,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
         =>OkuyamaClientではdecrValue(String key, long val)
 		=>memcachedプロトコルではdecr
 
+    !!注意!!:PHPクライアントは未対応。
 
   ■ServerControllerにコマンドの種類追加
     1.1. サーバコントロールコマンドを追加
