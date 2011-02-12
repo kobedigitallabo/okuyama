@@ -336,7 +336,7 @@ public class ImdstDefine {
     public volatile static int valueCacheMaxSize = 128;
 
 	// 共有データファイルへの書き込み遅延の最大数(指定した値はdataFileWriteMaxSizeの倍数分のメモリ容量が必要になる)
-	public volatile static int dataFileWriteDelayMaxSize = 16000;
+	public volatile static int dataFileWriteDelayMaxSize = 40000;
 
     // 削除済みデータの共有データファイルのどこ存在していたかを保持する最大数
     public volatile static int numberOfDeletedDataPoint = 400000;

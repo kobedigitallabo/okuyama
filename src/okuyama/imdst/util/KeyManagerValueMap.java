@@ -61,6 +61,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     // キャッシュ
     private ValueCacheMap valueCacheMap = null;
 
+	private ConcurrentHashMap nowAllDataSizeMap = null;
 
     // コンストラクタ
     public KeyManagerValueMap(int size, boolean memoryMode, String[] virtualStoreDirs) {
@@ -87,6 +88,10 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         try {
             if (sync == null) 
                 sync = new Object();
+
+			if (nowAllDataSizeMap == null) 
+				this.nowAllDataSizeMap = new ConcurrentHashMap(500000, 490000, 64);
+
 
             readObjectFlg  = true;
 
@@ -364,7 +369,11 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * @return Object 返却値(Fileモード時は返却値は常にnull)
      */
     public Object put(Object key, Object value) {
-
+long start0 = 0L;
+long start1 = 0L;
+long end0 = 0L;
+long end1 = 0L;
+//start0 = System.nanoTime();
         Object ret = null;
         this.totalDataSizeCalc(key, value);
 
@@ -401,7 +410,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                     writeBuf.append(new String(appendDatas));
                     writeBuf.append("\n");
-
+//end0 = System.nanoTime();
+//start1 = System.nanoTime();
 
                     if ((seekPoint = this.calcSeekDataPoint(key)) == -1) {
 
@@ -443,12 +453,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                                 this.vacuumDiffDataList.add(diffObj);
                             }
 
+//end1 = System.nanoTime();
                             if (raf != null) {
 //long start = System.nanoTime();
                                 raf.seek(seekPoint);
                                 raf.write(writeBuf.toString().getBytes(), 0, this.oneDataLength);
 //long end = System.nanoTime();
-//System.out.println((end - start));
+//System.out.println("Point0[" + (end0 - start0) + "] Point1[" + (end1 - start1) + "] Point2[" + (end - start) + "]");
                             }
                         }
                     }
@@ -546,16 +557,17 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         long addSize = 0L;
 
-        if (value != null) addSize = ((String)key).length() + ((String)value).length();
+        if (value != null) addSize = new Double((((String)key).length() + ((String)value).length()) * 0.8).longValue();
 
         if (addSize != 0L)
-            addSize = 2 * (addSize) + 38 + 2 + 32;
+            addSize = addSize + 20;
 
         String unique = null;
         String keyStr = (String)key;
         int beforeSize = 0;
         AtomicLong size = null;
-        Object val = this.get(key);
+		int nowValLen = 0;
+
 
        if(keyStr.indexOf("#") == 0) {
 
@@ -564,12 +576,22 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             unique = "all";
         }
 
-        if (val != null) {
-            beforeSize = ((String)val).length();
-            beforeSize = beforeSize + ((String)key).length();
-            beforeSize = 2 * (beforeSize) + 38 + 2 + 32;
-            beforeSize = beforeSize * -1;
+
+
+		if (this.memoryMode) {
+        	Object val = this.get(key);
+			if (val != null) {
+				nowValLen = new Double((((String)key).length() + ((String)val).length()) * 0.8).intValue() + 20;
+			}
+		} else {
+			Integer lenInteger = (Integer)this.nowAllDataSizeMap.get(key.hashCode());
+			if (lenInteger != null) nowValLen = lenInteger.intValue();
+		}
+
+        if (nowValLen != 0) {
+            beforeSize = nowValLen * -1;
         }
+
 
         if(!dataSizeMap.containsKey(unique)) {
             size = new AtomicLong(0L);
@@ -580,6 +602,14 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         size.getAndAdd(beforeSize);
         size.getAndAdd(addSize);
+
+		if (!this.memoryMode) {
+			if (value != null) {
+				this.nowAllDataSizeMap.put(key.hashCode(), new Integer(new Long(addSize).intValue()));
+			} else {
+				this.nowAllDataSizeMap.remove(key.hashCode());
+			}
+		}
     }
 
 

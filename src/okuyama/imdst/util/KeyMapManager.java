@@ -586,12 +586,14 @@ public class KeyMapManager extends Thread {
      */
     public void setKeyPair(String key, String keyNode, String transactionCode) throws BatchException {
 //long start = System.nanoTime();
-//long start2 = 0L;
-//long start3 = 0L;
-//long start4 = 0L;
-//long end2 = 0L;
-//long end3 = 0L;
-//long end4 = 0L;
+long start2 = 0L;
+long start3 = 0L;
+long start4 = 0L;
+long start5 = 0L;
+long end2 = 0L;
+long end3 = 0L;
+long end4 = 0L;
+long end5 = 0L;
         if (!blocking) {
             try {
 
@@ -657,7 +659,8 @@ public class KeyMapManager extends Thread {
 //start4 = System.nanoTime();
                     // 登録
                     keyMapObjPut(key, data);
-
+//end4 = System.nanoTime();
+//start5 = System.nanoTime();
                     // データ操作履歴ファイルに追記
                     if (this.workFileMemory == false) {
                         synchronized(this.lockWorkFileSync) {
@@ -679,7 +682,7 @@ public class KeyMapManager extends Thread {
 
                 // データの書き込みを指示
                 this.writeMapFileFlg = true;
-//end4 = System.nanoTime();
+//end5 = System.nanoTime();
                 //logger.debug("setKeyPair - synchronized - end");
             } catch (BatchException be) {
 
@@ -695,8 +698,9 @@ public class KeyMapManager extends Thread {
 //		long end = System.nanoTime();
 //		System.out.println("111111111[" + (end - start) + "]");
 //		System.out.println("222222222[" + (end2 - start2) + "]");
-//		System.out.println("333333333[" + (end3 - start3) + "]");
+// 		System.out.println("333333333[" + (end3 - start3) + "]");
 //		System.out.println("444444444[" + (end4 - start4) + "]");
+//		System.out.println("555555555[" + (end5 - start5) + "]");
     }
 
 
