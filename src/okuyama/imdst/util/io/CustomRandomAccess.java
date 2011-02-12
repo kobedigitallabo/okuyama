@@ -86,9 +86,9 @@ class InnerCustomRandomAccessFile extends Thread {
 
 
 	public void run() {
-		int continuousnessWrite = 0;
+		long continuousnessWrite = 0;
 		int writeTimingCount = ImdstDefine.dataFileWriteDelayMaxSize / 2;
-		int waitTimingCount = new Double(writeTimingCount * 0.50).intValue();
+		int waitTimingCount = new Double(writeTimingCount * 0.40).intValue();
 
 		boolean nowWrite = false;
 
@@ -110,10 +110,7 @@ class InnerCustomRandomAccessFile extends Thread {
 						nowWrite = true;
 					}
 
-					if ((continuousnessWrite % 100) == 0) {
-						System.out.println(this.delayWriteQueue.size());
-						Thread.sleep(50);
-					}
+					if ((continuousnessWrite % 20) == 0) Thread.sleep(30);
 
 		            seekPoint = (Long)this.delayWriteQueue.poll(500, TimeUnit.MILLISECONDS);
 					if (seekPoint == null) continue;
@@ -150,6 +147,7 @@ class InnerCustomRandomAccessFile extends Thread {
 
 
     public void seekAndWrite(long seekPoint, byte[] data, int start, int size) throws IOException {
+
 		if (throwExceptionFlg) throw new IOException("delayDataFileWriteError [" +  throwException.getMessage() + "]");
 		Long seekPointObj = new Long(seekPoint);
 		this.delayWriteDifferenceMap.put(seekPointObj, data);
@@ -163,7 +161,7 @@ class InnerCustomRandomAccessFile extends Thread {
 
     public int seekAndRead(long seekPoint, byte[] data, int start, int size) throws IOException {
         int ret = 0;
-
+long startT = System.nanoTime();
         try {
 			Long seekPointObj = new Long(seekPoint);
 			byte[] readData = (byte[])this.delayWriteDifferenceMap.get(seekPointObj);
@@ -182,8 +180,9 @@ class InnerCustomRandomAccessFile extends Thread {
 		} catch (IOException ie) {
 			throw ie;
 		}
+long endT = System.nanoTime();
+System.out.println("Read[" + (endT - startT) + "]");
         return ret;
-
     }
 
     public void close() throws IOException {

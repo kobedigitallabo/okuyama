@@ -117,8 +117,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.fos = new FileOutputStream(new File(lineFile), true);
             this.osw = new OutputStreamWriter(this.fos, ImdstDefine.keyWorkFileEncoding);
             this.bw = new BufferedWriter (osw);
-            //this.raf = new RandomAccessFile(new File(lineFile) , "rw");
-            this.raf = new CustomRandomAccess(new File(lineFile) , "rw");
+            this.raf = new RandomAccessFile(new File(lineFile) , "rw");
+            //this.raf = new CustomRandomAccess(new File(lineFile) , "rw");
             this.deletedDataPointList = new ArrayBlockingQueue(ImdstDefine.numberOfDeletedDataPoint);
             
 
@@ -369,11 +369,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * @return Object 返却値(Fileモード時は返却値は常にnull)
      */
     public Object put(Object key, Object value) {
-long start0 = 0L;
-long start1 = 0L;
-long end0 = 0L;
-long end1 = 0L;
-//start0 = System.nanoTime();
+
         Object ret = null;
         this.totalDataSizeCalc(key, value);
 
@@ -410,8 +406,8 @@ long end1 = 0L;
 
                     writeBuf.append(new String(appendDatas));
                     writeBuf.append("\n");
-//end0 = System.nanoTime();
-//start1 = System.nanoTime();
+
+
 
                     if ((seekPoint = this.calcSeekDataPoint(key)) == -1) {
 
@@ -445,6 +441,7 @@ long end1 = 0L;
                         }
                     } else {
 
+
                         // すでにファイル上に存在する
                         synchronized (sync) {
                             if (vacuumExecFlg) {
@@ -453,13 +450,11 @@ long end1 = 0L;
                                 this.vacuumDiffDataList.add(diffObj);
                             }
 
-//end1 = System.nanoTime();
+
                             if (raf != null) {
-//long start = System.nanoTime();
+
                                 raf.seek(seekPoint);
                                 raf.write(writeBuf.toString().getBytes(), 0, this.oneDataLength);
-//long end = System.nanoTime();
-//System.out.println("Point0[" + (end0 - start0) + "] Point1[" + (end1 - start1) + "] Point2[" + (end - start) + "]");
                             }
                         }
                     }
