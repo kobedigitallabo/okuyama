@@ -585,7 +585,13 @@ public class KeyMapManager extends Thread {
      * @param boolean 移行データ指定
      */
     public void setKeyPair(String key, String keyNode, String transactionCode) throws BatchException {
-
+//long start = System.nanoTime();
+//long start2 = 0L;
+//long start3 = 0L;
+//long start4 = 0L;
+//long end2 = 0L;
+//long end3 = 0L;
+//long end4 = 0L;
         if (!blocking) {
             try {
 
@@ -601,7 +607,10 @@ public class KeyMapManager extends Thread {
                     }
 
                     String data = null;
+//start2 = System.nanoTime();
                     boolean containsKeyRet = containsKeyPair(key);
+//end2 = System.nanoTime();
+//start3 = System.nanoTime();
                     if (!containsKeyRet) {
 
                         String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
@@ -613,15 +622,15 @@ public class KeyMapManager extends Thread {
                         }
                     } else if (containsKeyRet) {
 
-                        String tmp = keyMapObjGet(key);
+                        //String tmp = keyMapObjGet(key);
                         String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
 
 
-                        if (tmp != null) {
+						/*if (tmp != null) {
                             if (keyNoddes.length > 1) {
-                                String[] tmps = tmp.split(ImdstDefine.setTimeParamSep);
+                                //String[] tmps = tmp.split(ImdstDefine.setTimeParamSep);
                                 if (keyNoddes[1].equals("0")) {
-                                    data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (Long.parseLong(tmps[1]) + 1);
+                                    data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (System.nanoTime() + 1);
                                 } else {
                                     data = keyNode;
                                 }
@@ -631,9 +640,21 @@ public class KeyMapManager extends Thread {
                         } else {
 
                             data = keyNode;
+                        }*/
+
+                        if (keyNoddes.length > 1) {
+                            //String[] tmps = tmp.split(ImdstDefine.setTimeParamSep);
+                            if (keyNoddes[1].equals("0")) {
+                                data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (System.nanoTime() + 1);
+                            } else {
+                                data = keyNode;
+                            }
+                        } else {
+                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
                         }
                     } 
-
+//end3 = System.nanoTime();
+//start4 = System.nanoTime();
                     // 登録
                     keyMapObjPut(key, data);
 
@@ -658,7 +679,7 @@ public class KeyMapManager extends Thread {
 
                 // データの書き込みを指示
                 this.writeMapFileFlg = true;
-
+//end4 = System.nanoTime();
                 //logger.debug("setKeyPair - synchronized - end");
             } catch (BatchException be) {
 
@@ -671,6 +692,11 @@ public class KeyMapManager extends Thread {
                 throw new BatchException(e);
             }
         }
+//		long end = System.nanoTime();
+//		System.out.println("111111111[" + (end - start) + "]");
+//		System.out.println("222222222[" + (end2 - start2) + "]");
+//		System.out.println("333333333[" + (end3 - start3) + "]");
+//		System.out.println("444444444[" + (end4 - start4) + "]");
     }
 
 

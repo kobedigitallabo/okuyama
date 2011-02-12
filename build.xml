@@ -6,7 +6,7 @@
 	<property name="src.dir"		value="src" />
 	<property name="build.dir"		value="classes" />
 	<property name="install.dir"	value="install" />
-	<property name="version"		value="0.8.5" />
+	<property name="version"		value="0.8.6" />
 	<property name="javadoc.dir"	value="javadoc"/>
 	<property name="lib.dir"	    value="lib"/>
 
@@ -81,9 +81,10 @@
 	</target>
 
 	<target name="datanode_small">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="256m">
 			<arg value="/Main.properties"/>
 			<arg value="/DataNode_small.properties"/>
+			<arg value="-s 2048"/>
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>
@@ -331,7 +332,7 @@
 		<parallel>
 			<ant target='datanode_small' />
 			<sequential>
-				<sleep seconds="10" />
+				<sleep seconds="20" />
 				<ant target='masternode_small' />
 			</sequential>
 		</parallel>
