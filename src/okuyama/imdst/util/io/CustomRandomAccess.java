@@ -88,7 +88,7 @@ class InnerCustomRandomAccessFile extends Thread {
 	public void run() {
 		long continuousnessWrite = 0;
 		int writeTimingCount = ImdstDefine.dataFileWriteDelayMaxSize / 2;
-		int waitTimingCount = new Double(writeTimingCount * 0.40).intValue();
+		int waitTimingCount = new Double(writeTimingCount * 0.70).intValue();
 
 		boolean nowWrite = false;
 
@@ -161,7 +161,7 @@ class InnerCustomRandomAccessFile extends Thread {
 
     public int seekAndRead(long seekPoint, byte[] data, int start, int size) throws IOException {
         int ret = 0;
-long startT = System.nanoTime();
+
         try {
 			Long seekPointObj = new Long(seekPoint);
 			byte[] readData = (byte[])this.delayWriteDifferenceMap.get(seekPointObj);
@@ -180,8 +180,6 @@ long startT = System.nanoTime();
 		} catch (IOException ie) {
 			throw ie;
 		}
-long endT = System.nanoTime();
-System.out.println("Read[" + (endT - startT) + "]");
         return ret;
     }
 

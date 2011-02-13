@@ -110,6 +110,34 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             this.portNo = Integer.parseInt(initValue);
         }
 
+
+		// 設定反映 //
+
+		// データ永続化トランザクションファイルの遅延設定
+        String transactionFileCommit = (String)super.getPropertiesValue(ImdstDefine.Prop_DataSaveTransactionFileEveryCommit);
+		if (transactionFileCommit != null &&  transactionFileCommit.equals("false")) {
+			// 遅延させる
+			ImdstDefine.dataTransactionFileFlushTiming = false;
+		}
+
+		// 共有データファイルの書き換え遅延設定
+        String shareDataFileDelay = (String)super.getPropertiesValue(ImdstDefine.Prop_ShareDataFileWriteDelayFlg);
+		if (shareDataFileDelay != null &&  shareDataFileDelay.equals("true")) {
+			ImdstDefine.dataFileWriteDelayFlg = true;
+	        String shareDataFileMaxDelayStr = (String)super.getPropertiesValue(ImdstDefine.Prop_ShareDataFileMaxDelayCount);
+			if (shareDataFileMaxDelayStr != null) {
+				try {
+					int shareDataFileMaxDelayInt = new Integer(shareDataFileMaxDelayStr).intValue();
+					if (shareDataFileMaxDelayInt > 0 && shareDataFileMaxDelayInt < 1000000) {
+						ImdstDefine.dataFileWriteDelayMaxSize = shareDataFileMaxDelayInt;
+					}
+				} catch (Exception ce) {
+				}
+			}
+		}
+
+
+		// 自身のJOB名取出し
         this.myPrefix = super.getJobName();
 
         String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyNodeMaxConnectParallelExecution);

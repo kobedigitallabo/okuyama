@@ -117,10 +117,18 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.fos = new FileOutputStream(new File(lineFile), true);
             this.osw = new OutputStreamWriter(this.fos, ImdstDefine.keyWorkFileEncoding);
             this.bw = new BufferedWriter (osw);
-            this.raf = new RandomAccessFile(new File(lineFile) , "rw");
-            //this.raf = new CustomRandomAccess(new File(lineFile) , "rw");
+
+			// 共有データファイルの再書き込み遅延指定
+			if (ImdstDefine.dataFileWriteDelayFlg) {
+				// 遅延あり
+	            this.raf = new CustomRandomAccess(new File(lineFile) , "rw");
+			} else {
+				// 遅延なし
+	            this.raf = new RandomAccessFile(new File(lineFile) , "rw");
+			}
+
+			// 削除済みデータ位置保持領域構築
             this.deletedDataPointList = new ArrayBlockingQueue(ImdstDefine.numberOfDeletedDataPoint);
-            
 
             FileInputStream fis = new FileInputStream(new File(lineFile));
             InputStreamReader isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);

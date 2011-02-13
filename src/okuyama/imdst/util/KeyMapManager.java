@@ -95,7 +95,7 @@ public class KeyMapManager extends Thread {
     private Object lockWorkFileSync = new Object();
 
 	// トランザクションログflushタイミング(true:都度, false:一定間隔)
-    private boolean workFileFlushTiming = false;
+    private boolean workFileFlushTiming = ImdstDefine.dataTransactionFileFlushTiming;
 	// トランザクションログ書き込みデーモン
 	private DataTransactionFileFlushDaemon dataTransactionFileFlushDaemon = null;
 
@@ -389,6 +389,27 @@ public class KeyMapManager extends Thread {
                     }
 
                     Thread.sleep(KeyMapManager.updateInterval);
+
+
+
+					if ((count % 4) == 0 && this.workFileMemory == false && this.workFileFlushTiming == false && this.dataTransactionFileFlushDaemon.getExecuteEnd() == true) {
+						try {
+		                    synchronized(this.poolKeyLock) {
+								synchronized(this.lockWorkFileSync) {
+									if (this.dataTransactionFileFlushDaemon != null && this.dataTransactionFileFlushDaemon.getExecuteEnd() == true) {
+
+										DataTransactionFileFlushDaemon dataTransactionFileFlushDaemonRe = new DataTransactionFileFlushDaemon();
+										dataTransactionFileFlushDaemonRe.tBw = this.bw;
+										dataTransactionFileFlushDaemonRe.setDataTransactionFileQueue(this.dataTransactionFileFlushDaemon.getDataTransactionFileQueue());
+										dataTransactionFileFlushDaemonRe.start();
+										this.dataTransactionFileFlushDaemon = dataTransactionFileFlushDaemonRe;
+									}
+								}
+							}
+						} catch(Exception reE) {
+							reE.printStackTrace();
+						}
+					}
                 }
 
 
@@ -413,14 +434,24 @@ public class KeyMapManager extends Thread {
                                 synchronized(this.lockWorkFileSync) {
 
                                     logger.debug("Transaction Log File Change - Start");
-                                    this.fos.close();
-                                    this.fos = null;
-                                    this.osw.close();
-                                    this.osw = null;
-									this.bw.flush();
-                                    this.bw.close();
-									this.dataTransactionFileFlushDaemon.close();
-                                    this.bw = null;
+									if (this.workFileFlushTiming == false) {
+										this.bw.flush();
+	                                    this.bw.close();
+	                                    this.bw = null;
+	                                    this.osw.close();
+	                                    this.osw = null;
+	                                    this.fos.close();
+	                                    this.fos = null;
+									} else {
+
+										// 遅延書き込み時
+										this.dataTransactionFileFlushDaemon.close();
+	                                    this.osw.close();
+	                                    this.osw = null;
+	                                    this.fos.close();
+	                                    this.fos = null;
+									}
+
 
                                     int nextWorkFileName = 0;
                                     File checkWorkKeyFile = null;
@@ -441,8 +472,8 @@ public class KeyMapManager extends Thread {
                                     this.bw.newLine();
                                     this.bw.flush();
 
-									if (this.workFileMemory == false && this.workFileFlushTiming == false) {
-										this.dataTransactionFileFlushDaemon.close();
+									// 遅延書き込み時
+									if (this.workFileFlushTiming == false) {
 										this.dataTransactionFileFlushDaemon.tBw = this.bw;
 									}
 
@@ -638,30 +669,11 @@ public class KeyMapManager extends Thread {
                         }
                     } else if (containsKeyRet) {
 
-                        //String tmp = keyMapObjGet(key);
                         String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
-
-
-						/*if (tmp != null) {
-                            if (keyNoddes.length > 1) {
-                                //String[] tmps = tmp.split(ImdstDefine.setTimeParamSep);
-                                if (keyNoddes[1].equals("0")) {
-                                    data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (System.nanoTime() + 1);
-                                } else {
-                                    data = keyNode;
-                                }
-                            } else {
-                                data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
-                            }
-                        } else {
-
-                            data = keyNode;
-                        }*/
 
 
                         if (keyNoddes.length > 1) {
 
-                            //String[] tmps = tmp.split(ImdstDefine.setTimeParamSep);
                             if (keyNoddes[1].equals("0")) {
 
                                 data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (System.nanoTime() + 1);
@@ -2711,11 +2723,13 @@ public class KeyMapManager extends Thread {
 
 class DataTransactionFileFlushDaemon extends Thread {
 
-    private volatile ArrayBlockingQueue delayWriteQueue = new ArrayBlockingQueue(ImdstDefine.dataFileWriteDelayMaxSize);
+    private volatile ArrayBlockingQueue delayWriteQueue = new ArrayBlockingQueue(4096);
 
 	public volatile boolean execFlg = true;
 
 	public volatile BufferedWriter tBw= null;
+
+	public volatile boolean executeEnd = false;
 
 	public void run() {
 		int writeCount = 0;
@@ -2733,8 +2747,22 @@ class DataTransactionFileFlushDaemon extends Thread {
 				}
 			} catch (Throwable te) {
 				te.printStackTrace();
-			}
+			} 
 		}
+		this.executeEnd = true;
+	}
+
+
+	public ArrayBlockingQueue getDataTransactionFileQueue() {
+		return this.delayWriteQueue;
+	}
+
+	public void setDataTransactionFileQueue(ArrayBlockingQueue queue) {
+		this.delayWriteQueue = queue;
+	}
+
+	public boolean getExecuteEnd() {
+		return this.executeEnd;
 	}
 
 	public void addDataTransaction(String str) {

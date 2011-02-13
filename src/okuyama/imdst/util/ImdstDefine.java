@@ -197,6 +197,9 @@ public class ImdstDefine {
     public static final String Prop_MemoryLimitSize = ".memoryLimitSize";
     public static final String Prop_VirtualStoreDirs = ".virtualStoreDirs";
     public static final String Prop_KeyStoreDirs = ".keyStoreDirs";
+    public static final String Prop_DataSaveTransactionFileEveryCommit = "DataSaveTransactionFileEveryCommit";
+    public static final String Prop_ShareDataFileWriteDelayFlg = "ShareDataFileWriteDelayFlg";
+    public static final String Prop_ShareDataFileMaxDelayCount = "ShareDataFileMaxDelayCount";
 
     public static final String Prop_PacketBalancerParallelExecution = "PacketBalancerParallelExecution";
     public static final String Prop_PacketBalancerParallelQueue = "PacketBalancerParallelQueue";
@@ -270,7 +273,7 @@ public class ImdstDefine {
     public static final int saveKeyMaxSize = 486;
 
     // 共通のデータファイルに書き出す最大サイズ
-    public volatile static int dataFileWriteMaxSize = 8192;
+    public volatile static int dataFileWriteMaxSize = 12888;
 
 
     public static final int stringBufferSmallSize = 128;
@@ -335,16 +338,27 @@ public class ImdstDefine {
     // FileでValueを保持する際のValueキャッシュサイズ(キャッシュデータ数)
     public volatile static int valueCacheMaxSize = 128;
 
-	// 共有データファイルへの書き込み遅延の最大数(指定した値はdataFileWriteMaxSizeの倍数分のメモリ容量が必要になる)
-	public volatile static int dataFileWriteDelayMaxSize = 200000;
 
-    // 削除済みデータの共有データファイルのどこ存在していたかを保持する最大数
+
+	// データ永続化トランザクションログへの書き込みタイミング(true:都度, false:一定間隔)
+    public volatile static boolean dataTransactionFileFlushTiming = true;
+
+	// 共有データファイルへの書き込み遅延の指定。遅延にした場合新規データは常に共有データファイルに書き込まれるが、既存の値の書き直しや
+	// 過去の削除データ領域の再利用時などは一旦メモリに書き込んで順次共有データファイルに反映されていく。
+	public volatile static boolean dataFileWriteDelayFlg = false;
+	// 共有データファイルへの書き込み遅延の最大数(指定した値はdataFileWriteMaxSizeの倍数分のメモリ容量が必要になる)
+	public volatile static int dataFileWriteDelayMaxSize = 4000;
+
+
+    // 削除済みデータが共有データファイルのどこ存在していたかを保持する最大数(ここで保持できる数だけ削除した領域が再利用される。実際保持するのはIntegerの値)
     public volatile static int numberOfDeletedDataPoint = 400000;
 
     // DataNodeに保存するさいの遅延指定
     public volatile static boolean delayWriteFlg = false;
 
+	// ネットワークI/O時に処理直後に同様のクライアントからの処理を一定時間ブロックにて待ち受けるかの設定(true:待ち受ける false:待ち受けない)
     public volatile static boolean retryClientReadFlg = true;
+
 
     // ---- 分散アルゴリズム系 ---------------------------------------------------
     // 分散アルゴリズムにConsistentHashを使用した場合の仮想ノードの数
