@@ -64,7 +64,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private static final int returnProccessingCount = 2;
 
     // 更新時間
-    private short setTime = 0;
+    private long setTime = 0;
 
     // get用文字列Buffer
     private StringBuilder getSendData = new StringBuilder(ImdstDefine.stringBufferSmallSize);
@@ -277,6 +277,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
 
+					// 保存バージョン確定
+					this.setTime = System.nanoTime();
                     // 本体処理開始
                     // 処理番号で処理を分岐
                     // 実行許可も判定
@@ -3783,10 +3785,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
     /**
-     * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  引数にcas値が足りていない !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     * 取り合え合ずsetKeyNodeValueOnlyOnceをコピーしただけ。まだ何もしていない
      * KeyNodeに対してデータを保存する.<br>
-     * 既に登録されている場合は失敗する.<br>
+     * 同時に排他制御を行う(cas相当).<br>
      * 
      * @param keyNodeName マスターデータノードの名前(IPなど)
      * @param keyNodePort マスターデータノードのアクセスポート番号
@@ -3841,10 +3841,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
     /**
-     * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  引数にcas値が足りていない !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     * 取り合え合ずsetKeyNodeValueOnlyOnceをコピーしただけ。まだ何もしていない
      * KeyNodeに対してデータを保存する.<br>
-     * 既に登録されている場合は失敗する.<br>
+     * 同時に排他制御を行う(cas相当).<br>
      * 
      * @param keyNodeName マスターデータノードの名前(IPなど)
      * @param keyNodePort マスターデータノードのアクセスポート番号
