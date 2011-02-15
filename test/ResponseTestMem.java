@@ -37,7 +37,7 @@ public class ResponseTestMem {
 
             
             if (args.length != 7) {
-                System.out.println("0=実行指定(1=set 2=get)");
+                System.out.println("0=実行指定(set get delete)");
                 System.out.println("1=MasterServers(IP:PORT,IP:PORT)");
                 System.out.println("2=プレフィックス");
                 System.out.println("3=同時スレッド数");
@@ -59,15 +59,13 @@ public class ResponseTestMem {
 
 
             // initialize the pool for memcache servers
-System.out.println(servers);
+            System.out.println("ConnectServer[" + servers + "]");
             String[] serverlist = servers.split(",");
-for (int i = 0; i < serverlist.length; i++) {
-    System.out.println(serverlist[i]);
-}
+
             SockIOPool pool = SockIOPool.getInstance();
             pool.setServers( serverlist );
 
-            pool.setInitConn(100); // 初期接続数
+            pool.setInitConn(50); // 初期接続数
             pool.setMaxConn(200); // 最大接続数
             pool.setSocketTO(30000); // 読み取りタイムアウト
             pool.setSocketConnectTO(0); // 接続タイムアウト
@@ -92,11 +90,11 @@ for (int i = 0; i < serverlist.length; i++) {
 
             System.out.println("  ------- Start -------");
 
-            if (execMethod.equals("1")) {
+            if (execMethod.equals("set")) {
                 if (rndFlg) {
                     for(int i = 0; i < (executeTime / 5); i++) {
                         Thread.sleep(4980);
-                        System.out.println("-- " + ((i + 1) * 5) + "秒");
+                        System.out.println("-- " + ((i + 1) * 5) + " second");
                         for (int ii= 0; ii < threads.length; ii++) {
                             System.out.println(threads[ii].getExecCounter());
                         }
@@ -121,12 +119,12 @@ for (int i = 0; i < serverlist.length; i++) {
                         inCnt++;
                     }
                 }
-            } else if (execMethod.equals("2")) {
+            } else if (execMethod.equals("get")) {
 
                 if (rndFlg) {
                     for(int i = 0; i < (executeTime / 5); i++) {
                         Thread.sleep(4980);
-                        System.out.println("-- " + ((i + 1) * 5) + "秒");
+                        System.out.println("-- " + ((i + 1) * 5) + " second");
                         for (int ii= 0; ii < threads.length; ii++) {
                             System.out.println(threads[ii].getExecCounter());
                         }
@@ -150,6 +148,26 @@ for (int i = 0; i < serverlist.length; i++) {
                         Thread.sleep(250);
                         inCnt++;
                     }
+                }
+            } else if (execMethod.equals("delete")) {
+
+
+                boolean execFlg = true;
+                int inCnt = 0;
+
+                while(execFlg) {
+                    execFlg = false;
+                    for (int i= 0; i < threads.length; i++) {
+                        if ((inCnt % 20) == 0) {
+                            System.out.println(threads[i].getExecCounter());
+                            inCnt = 0;
+                        }
+                        if(!threads[i].getEndFlg()) execFlg = true;
+                    }
+
+                    if (!execFlg) break;
+                    Thread.sleep(250);
+                    inCnt++;
                 }
             }
 

@@ -14,6 +14,7 @@ public class Main extends Thread {
     public static FileHashMap[] fileHashMaps = null;
 
     public static void main(String[] args) {
+        
         fileHashMaps = new FileHashMap[2];
         String[] dirs1 = {"/usr/local/okuyama/work1/data1/","/usr/local/okuyama/work1/data2/","/usr/local/okuyama/work1/data3/","/usr/local/okuyama/work1/data4/","/usr/local/okuyama/work1/data5/","/usr/local/okuyama/work1/data6/","/usr/local/okuyama/work1/data7/","/usr/local/okuyama/work1/data8/"};
         String[] dirs2 = {"/usr/local/okuyama/work2/data1/","/usr/local/okuyama/work2/data2/","/usr/local/okuyama/work2/data3/","/usr/local/okuyama/work2/data4/","/usr/local/okuyama/work2/data5/","/usr/local/okuyama/work2/data6/","/usr/local/okuyama/work2/data7/","/usr/local/okuyama/work2/data8/"};
@@ -24,6 +25,8 @@ public class Main extends Thread {
 
 
         try {
+            String a = null;
+            a.toString();
             long start2 = System.nanoTime();
 
 
