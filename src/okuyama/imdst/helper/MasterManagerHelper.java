@@ -277,8 +277,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
 
-					// 保存バージョン確定
-					this.setTime = System.nanoTime();
+                    // 保存バージョン確定
+                    this.setTime = System.nanoTime();
                     // 本体処理開始
                     // 処理番号で処理を分岐
                     // 実行許可も判定
@@ -748,6 +748,41 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[1] = "false";
                 retStrs[2] = "Value Length Error";
                 return retStrs;
+            }
+
+
+            // Test
+            if (false) {
+
+                String appendTagSep = "";
+
+                byte[] testBytes = BASE64DecoderStream.decode(keyStr.getBytes());
+
+                String sIdx1 = null;
+                String sIdx2 = null;
+                String sIdx3 = null;
+                String strIdx = "";
+
+                try {
+
+                    sIdx1 = new String(BASE64EncoderStream.encode(new String(testBytes).substring(0, 1).getBytes()));
+                    strIdx = strIdx + appendTagSep + sIdx1;
+                    appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
+
+                    sIdx2 = new String(BASE64EncoderStream.encode(new String(testBytes).substring(0, 2).getBytes()));
+                    strIdx = strIdx + appendTagSep + sIdx2;
+
+                    sIdx3 = new String(BASE64EncoderStream.encode(new String(testBytes).substring(0, 3).getBytes()));
+                    strIdx = strIdx + appendTagSep + sIdx3;
+
+                } catch (Exception inE) {
+                }
+
+                if (tagStr != null && !tagStr.equals("")) {
+                    tagStr = tagStr + ImdstDefine.imdstTagKeyAppendSep + strIdx;
+                } else {
+                    tagStr = strIdx;
+                }
             }
 
 
@@ -2827,7 +2862,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         boolean mainNodeSave = false;
         boolean subNodeSave = false;
 
-		boolean slaveSendEnd = false;
+        boolean slaveSendEnd = false;
 
         // 文字列Buffer
         this.setSendData.delete(0, Integer.MAX_VALUE);
@@ -2884,18 +2919,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         keyNodeConnector.println(sendStr);
                         keyNodeConnector.flush();
 
-			            // スレーブノードが存在する場合は送信まで済ませておく
-			            if (subKeyNodeName != null) {
+                        // スレーブノードが存在する場合は送信まで済ませておく
+                        if (subKeyNodeName != null) {
 
-			                // SubDataNodeに送信
-			                slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
-							if (slaveKeyNodeConnector != null) {
-					                // 送信
-	                                slaveKeyNodeConnector.println(sendStr);
-	                                slaveKeyNodeConnector.flush();
-									slaveSendEnd = true;
-							}
-						}
+                            // SubDataNodeに送信
+                            slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                            if (slaveKeyNodeConnector != null) {
+                                    // 送信
+                                    slaveKeyNodeConnector.println(sendStr);
+                                    slaveKeyNodeConnector.flush();
+                                    slaveSendEnd = true;
+                            }
+                        }
 
                         // 返却値取得
                         retParam = keyNodeConnector.readLine(sendStr);
@@ -2930,11 +2965,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } else {
 
                         // 遅延
-			            // スレーブノード接続処理だけ終わらしておく処理
-			            if (subKeyNodeName != null) {
-			                // SubDataNodeに送信
-			                slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
-						}
+                        // スレーブノード接続処理だけ終わらしておく処理
+                        if (subKeyNodeName != null) {
+                            // SubDataNodeに送信
+                            slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                        }
 
                         // 遅延の場合は結果が送られてこないのでNetworkから読みださない
                         keyNodeConnector.print("-");
@@ -2986,10 +3021,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             // スレーブノード処理
             if (subKeyNodeName != null) {
 
-				if (slaveKeyNodeConnector == null) {
-	                // SubDataNodeに送信
-	                slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
-				}
+                if (slaveKeyNodeConnector == null) {
+                    // SubDataNodeに送信
+                    slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                }
 
                 if (slaveKeyNodeConnector != null) {
                     // 接続結果と、現在の保存先状況で処理を分岐
@@ -3000,11 +3035,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 遅延設定がないもしくは、mainが失敗している場合
                         if (!delayFlg || mainNodeSave == false) {
 
-							if (!slaveSendEnd) {
-	                            // 未送信の場合は送信
-	                            slaveKeyNodeConnector.println(sendStr);
-	                            slaveKeyNodeConnector.flush();
-							}
+                            if (!slaveSendEnd) {
+                                // 未送信の場合は送信
+                                slaveKeyNodeConnector.println(sendStr);
+                                slaveKeyNodeConnector.flush();
+                            }
 
                             if (type.equals("1")) {
 

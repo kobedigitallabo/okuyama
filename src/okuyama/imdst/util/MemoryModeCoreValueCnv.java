@@ -22,6 +22,7 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
      */
     public Object convertEncodeKey(Object key) {
         if (key == null) return null;
+        //System.out.println("Encode Key[" + key + "]");
         return new CoreMapKey(((String)key).getBytes());
     }
 
@@ -31,6 +32,7 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
      *
      */
     public Object convertEncodeValue(Object value) {
+        //System.out.println("Encode Value[" + value + "]");
         if (value == null) return null;
         return ((String)value).getBytes();
     }

@@ -1006,7 +1006,7 @@ public class KeyMapManager extends Thread {
 
                 // Key値をValueのように扱うため、バージョン番号(ユニーク値)が付加されているので取り外す
                 key = ((String[])key.split(ImdstDefine.setTimeParamSep))[0] + ImdstDefine.setTimeParamSep +"0";
-                counter = (((key.hashCode() << 1) >>> 1) % 30) * 5000000;
+                counter = (((key.hashCode() << 1) >>> 1) % 300) * 500000;
                 dataPutCounter = counter;
 
                 // このsynchroの方法は正しくないきがするが。。。
@@ -1032,7 +1032,7 @@ public class KeyMapManager extends Thread {
                         } else {
 
                             // Tag値のデータそのものがないもしくは、登録連番の中にはデータがない
-                            if (counter > ((((key.hashCode() << 1) >>> 1) % 30) * 5000000)) {
+                            if (counter > ((((key.hashCode() << 1) >>> 1) % 300) * 500000)) {
 
                                 dataPutCounter = counter - 1;
                             } else {
@@ -1113,7 +1113,7 @@ public class KeyMapManager extends Thread {
 
             
             // Tagのキー値を連結
-            for (int idx = 0; idx < 145000001; idx=idx+5000000) {
+            for (int idx = 0; idx < 145000001; idx=idx+500000) {
                 keyStrs = "";
                 setTimeSplitWork = null;
                 isMatch = false;
@@ -1313,7 +1313,7 @@ public class KeyMapManager extends Thread {
         boolean ret = false;
         if (!blocking) {
 
-            for (int idx = 0; idx < 145000001; idx=idx+5000000) {
+            for (int idx = 0; idx < 145000001; idx=idx+500000) {
 
                 String tagCnv = KeyMapManager.tagStartStr + tag + "_" + idx + KeyMapManager.tagEndStr;
                 ret =  this.containsKeyPair(tagCnv);
