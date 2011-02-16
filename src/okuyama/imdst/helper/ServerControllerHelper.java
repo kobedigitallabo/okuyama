@@ -77,7 +77,10 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                 try {
                     BufferedReader br = new BufferedReader(new InputStreamReader(soc.getInputStream(), "UTF-8"));
                     PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(soc.getOutputStream() , "UTF-8")));
-
+                    pw.println("Sending -help Show All ControllCommand");
+                    pw.flush();
+                    
+                    
                     String command = br.readLine();
                     if (command.equals("shutdown")) {
 
@@ -213,6 +216,26 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         StatusUtil.setDebugOption(false);
                         SystemUtil.netDebugPrinter = null;
 
+                        br.close();
+                        pw.close();
+                        soc.close();
+                    } else if (command.equals("-help")) {
+                        pw.println(command + " Suuccess");
+                        pw.println("");
+                        pw.println("shutdown");
+                        pw.println("debug");
+                        pw.println("nodebug");
+                        pw.println("jobs");
+                        pw.println("size");
+                        pw.println("allsize");
+                        pw.println("cname");
+                        pw.println("rname");
+                        pw.println("fullgc");
+                        pw.println("netdebug");
+                        pw.println("");
+
+                        pw.flush();
+                        
                         br.close();
                         pw.close();
                         soc.close();
