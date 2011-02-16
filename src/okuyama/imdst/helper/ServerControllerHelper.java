@@ -12,6 +12,8 @@ import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
 import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.ImdstDefine;
+import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.io.NodeDnsUtil;
@@ -180,6 +182,39 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         br.close();
                         pw.close();
                         Thread.sleep(500);
+                        soc.close();
+                    } else if (command.equals("fullgc")) {
+
+                        pw.println(command + " Suuccess");
+                        JavaSystemApi.manualGc();
+                        
+                        pw.println("Execute GC");
+                        pw.flush();
+
+                        br.close();
+                        pw.close();
+                        Thread.sleep(500);
+                        soc.close();
+                    } else if (command.equals("netdebug")) {
+                        
+                        pw.println(command + " Suuccess");
+                        pw.println("");
+                        pw.println("Please transmit changing line to end debugging"); 
+                        pw.println("Net Debug Start ...");                        
+                        pw.flush();
+                        Thread.sleep(3000);
+
+                        SystemUtil.netDebugPrinter = pw;
+                        StatusUtil.setDebugOption(true);
+                        try {
+                            br.readLine(); 
+                        } catch(Exception e){}
+                        
+                        StatusUtil.setDebugOption(false);
+                        SystemUtil.netDebugPrinter = null;
+
+                        br.close();
+                        pw.close();
                         soc.close();
                     } else {
 

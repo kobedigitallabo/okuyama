@@ -1,6 +1,7 @@
 package okuyama.imdst.util;
 
 import java.util.Date;
+import java.io.*;
 
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
@@ -12,7 +13,10 @@ import okuyama.base.util.LoggerFactory;
  * @license GPL(Lv3)
  */
 public class SystemUtil {
-
+    
+    public static PrintWriter netDebugPrinter = null;
+    
+    
     /**
      * 指定の文字を指定の桁数で特定文字列で埋める.<br>
      *
@@ -112,7 +116,19 @@ public class SystemUtil {
             strBuf.append(" DebugLine \"");
             strBuf.append(outputStr);
             strBuf.append("\"");
-            System.out.println(strBuf.toString());
+            if (SystemUtil.netDebugPrinter == null) { 
+                System.out.println(strBuf.toString());
+            } else {
+                try {
+                    SystemUtil.netDebugPrinter.println(strBuf.toString());
+                    SystemUtil.netDebugPrinter.flush();
+                } catch (Exception e) {
+                    
+                    StatusUtil.setDebugOption(false);
+                    SystemUtil.netDebugPrinter = null;
+                }
+            }
+            
             strBuf = null;
         }
     }
