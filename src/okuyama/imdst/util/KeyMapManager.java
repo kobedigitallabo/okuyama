@@ -543,6 +543,7 @@ public class KeyMapManager extends Thread {
                             String[] valStrSplit = valStr.split(ImdstDefine.setTimeParamSep);
                             valStr = valStrSplit[0];
 
+
                             // 有効期限チェックを行う(有効期限を1分過ぎているデータが対象)
                             String[] checkValueSplit = valStr.split(ImdstDefine.keyHelperClientParamSep);
 

@@ -293,37 +293,37 @@ public class ImdstDefine {
     public static final int defaultDeadPingCount = 3;
 
     // クライアントのコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int clientConnectionOpenTimeout = 5000;
+    public static final int clientConnectionOpenTimeout = 10000;
 
     // クライアントのコネクションタイムアウト時間(ミリ秒)
     public static final int clientConnectionTimeout = 60000 * 2;
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenShortTimeout = 1500;
+    public static final int nodeConnectionOpenShortTimeout = 2500;
 
-    public static final int nodeConnectiontReadShortTimeout = 2000;
+    public static final int nodeConnectiontReadShortTimeout = 4000;
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenTimeout = 3000;
+    public static final int nodeConnectionOpenTimeout = 5000;
     //public static final int nodeConnectionOpenTimeout = 10000;
 
     // Node間のコネクションReadタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionTimeout = 5000;
+    public static final int nodeConnectionTimeout = 7000;
     //public static final int nodeConnectionTimeout = 15000;
 
     public static final int nodeConnectionTimeout4RecoverMode = 60000 * 5;
 
     // Node間のコネクションオープンタイムアウト時間(PING)(ミリ秒)
-    public static final int nodeConnectionOpenPingTimeout = 2500;
+    public static final int nodeConnectionOpenPingTimeout = 3500;
 
     // Node間のコネクションReadタイムアウト時間(PING)(ミリ秒)
-    public static final int nodeConnectionPingTimeout = 3500;
+    public static final int nodeConnectionPingTimeout = 4500;
 
 
    // Recoverのコネクションタイムアウト時間(ミリ秒)
-    public static final int recoverConnectionTimeout = 60000 * 180;
+    public static final int recoverConnectionTimeout = 60000 * 360;
 
 
     // MasterNodeとの無操作コネクションタイムアウト時間(ミリ秒)
@@ -331,7 +331,7 @@ public class ImdstDefine {
 
 
     // MasterConfigurationManagerHelperが設定情報を確認する時間間隔
-    public static final int configurationCheckCycle = 1000 * 20;
+    public static final int configurationCheckCycle = 1000 * 60;
 
     // FileでValueを保持する際のValueキャッシの利用指定
     public volatile static boolean useValueCache = true;
@@ -340,23 +340,23 @@ public class ImdstDefine {
 
 
 
-	// データ永続化トランザクションログへの書き込みタイミング(true:都度, false:一定間隔)
+    // データ永続化トランザクションログへの書き込みタイミング(true:都度, false:一定間隔)
     public volatile static boolean dataTransactionFileFlushTiming = true;
 
-	// 共有データファイルへの書き込み遅延の指定。遅延にした場合新規データは常に共有データファイルに書き込まれるが、既存の値の書き直しや
-	// 過去の削除データ領域の再利用時などは一旦メモリに書き込んで順次共有データファイルに反映されていく。
-	public volatile static boolean dataFileWriteDelayFlg = false;
-	// 共有データファイルへの書き込み遅延の最大数(指定した値はdataFileWriteMaxSizeの倍数分のメモリ容量が必要になる)
-	public volatile static int dataFileWriteDelayMaxSize = 4000;
+    // 共有データファイルへの書き込み遅延の指定。遅延にした場合新規データは常に共有データファイルに書き込まれるが、既存の値の書き直しや
+    // 過去の削除データ領域の再利用時などは一旦メモリに書き込んで順次共有データファイルに反映されていく。
+    public volatile static boolean dataFileWriteDelayFlg = false;
+    // 共有データファイルへの書き込み遅延の最大数(指定した値はdataFileWriteMaxSizeの倍数分のメモリ容量が必要になる)
+    public volatile static int dataFileWriteDelayMaxSize = 4000;
 
 
     // 削除済みデータが共有データファイルのどこ存在していたかを保持する最大数(ここで保持できる数だけ削除した領域が再利用される。実際保持するのはIntegerの値)
-    public volatile static int numberOfDeletedDataPoint = 400000;
+    public volatile static int numberOfDeletedDataPoint = 600000;
 
     // DataNodeに保存するさいの遅延指定
     public volatile static boolean delayWriteFlg = false;
 
-	// ネットワークI/O時に処理直後に同様のクライアントからの処理を一定時間ブロックにて待ち受けるかの設定(true:待ち受ける false:待ち受けない)
+    // ネットワークI/O時に処理直後に同様のクライアントからの処理を一定時間ブロックにて待ち受けるかの設定(true:待ち受ける false:待ち受けない)
     public volatile static boolean retryClientReadFlg = true;
 
 
