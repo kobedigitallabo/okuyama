@@ -1,5 +1,7 @@
 package okuyama.imdst.util;
 
+import java.util.zip.Deflater;
+
 /**
  * 定数をまとめる.<br>
  *
@@ -9,7 +11,7 @@ package okuyama.imdst.util;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.8.6";
+    public static final String okuyamaVersion = "VERSION okuyama-0.8.7";
 
     // -- KeyMapファイルに関係する定数 -------------------------------------------------
     // KeyNodeのWorkファイルでのセパレータ
@@ -339,6 +341,21 @@ public class ImdstDefine {
     public volatile static int valueCacheMaxSize = 128;
 
 
+    // Valueをメモリに保存する際に圧縮を行う指定
+    public volatile static boolean saveValueCompress = true;
+
+    // Valueをメモリに保存する際に圧縮に利用するコンプレッサーをいくつプールしておくかの設定
+    public volatile static int valueCompresserPoolSize = 10;
+    
+    // Valueをメモリに保存する際に圧縮する個別単位サイズ
+    public volatile static int valueCompresserCompressSize = 1024;
+
+    // Valueをメモリに保存する際に圧縮する場合の圧縮レベル
+    //public volatile static int valueCompresserLevel = Deflater.BEST_COMPRESSION;
+    public volatile static int valueCompresserLevel = Deflater.BEST_SPEED;
+    //public volatile static int valueCompresserLevel = Deflater.FILTERED;
+    //public volatile static int valueCompresserLevel = Deflater.DEFAULT_COMPRESSION;
+    
 
     // データ永続化トランザクションログへの書き込みタイミング(true:都度, false:一定間隔)
     public volatile static boolean dataTransactionFileFlushTiming = true;

@@ -42,7 +42,6 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
 
         byte[] registorData = null;
 
-
         String[] timeSepSplit = ((String)value).split("!");
 
         String timeVal = timeSepSplit[1];
@@ -163,11 +162,10 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
         //System.out.println("-------------------");
         //System.out.println(((byte[])",".getBytes())[0]); 44 
         //System.out.println(((byte[])"!".getBytes())[0]); 33
-
-        return registorData;
+        //System.out.println(registorData.length + " => " + SystemUtil.valueCompress(registorData).length);
+        return SystemUtil.valueCompress(registorData);
     }
-
-
+    
 
     /**
      * 引数のObjectはCoreMapKey
@@ -189,10 +187,9 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
         if (value == null) return null;
         boolean tagMatch = false;
 
-        byte[] decodeBytes =  (byte[])value;
+        byte[] decodeBytes =  SystemUtil.valueDecompress((byte[])value);
+
         int decodeDataLen = decodeBytes.length;
-
-
 
         // タグの場合はここで終了
         if (decodeBytes[0] == 0) {

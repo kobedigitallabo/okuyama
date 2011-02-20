@@ -1,7 +1,9 @@
 package okuyama.imdst.util;
 
-import java.util.Date;
 import java.io.*;
+import java.util.Date;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.zip.*;
 
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
@@ -14,7 +16,30 @@ import okuyama.base.util.LoggerFactory;
  */
 public class SystemUtil {
     
+    private static ConcurrentLinkedQueue valueCompresserPool = null;    
+    
+    private static ConcurrentLinkedQueue valueDecompresserPool = null;
+    
+    
     public static PrintWriter netDebugPrinter = null;
+    
+    
+    static {
+        if (ImdstDefine.saveValueCompress) {
+            
+            valueCompresserPool = new ConcurrentLinkedQueue();
+            valueDecompresserPool = new ConcurrentLinkedQueue();
+            
+            for (int i = 0; i < ImdstDefine.valueCompresserPoolSize; i++) {
+                Deflater compresser = new Deflater();
+                compresser.setLevel(ImdstDefine.valueCompresserLevel);
+                valueCompresserPool.add(compresser);
+                
+                Inflater decompresser = new Inflater();
+                valueDecompresserPool.add(decompresser);
+            }
+        } 
+    }
     
     
     /**
@@ -103,7 +128,86 @@ public class SystemUtil {
         return ret;
     }
 
+    
+    /**
+     * 圧縮処理.<br>
+     *
+     * @param src
+     * @return byte[]
+     */
+    public static byte[] valueCompress(byte[] src) {
+        if (!ImdstDefine.saveValueCompress) return src;
 
+
+        Deflater compresser = (Deflater)valueCompresserPool.poll();
+        if (compresser == null) {
+            compresser = new Deflater();
+            compresser.setLevel(ImdstDefine.valueCompresserLevel);
+        }
+
+        ByteArrayOutputStream compos = new ByteArrayOutputStream(src.length);
+
+        try {
+            compresser.setInput(src);
+            compresser.finish();
+
+            byte[] buf = new byte[ImdstDefine.valueCompresserCompressSize];
+            int count = 0;
+            while (!compresser.finished()) {
+                count = compresser.deflate(buf);
+                compos.write(buf, 0, count);
+            }
+            return compos.toByteArray();
+        } catch (Exception e) {
+            e.printStackTrace();
+            compresser = null;
+        } finally {
+            if (compresser != null) { 
+                compresser.reset();
+                valueCompresserPool.add(compresser);
+            }
+        }
+        return null;
+    }
+    
+    
+    /**
+     * 圧縮解除処理.<br>
+     *
+     * @param src
+     * @return byte[]
+     */
+    public static byte[] valueDecompress(byte[] src) {
+        if (!ImdstDefine.saveValueCompress) return src;
+        Inflater decompresser = (Inflater)valueDecompresserPool.poll();
+        if (decompresser == null) {
+            decompresser = new Inflater();
+        }
+        
+        ByteArrayOutputStream decompos = new ByteArrayOutputStream();
+        try {
+            
+            decompresser.setInput(src);
+
+            byte[] buf = new byte[ImdstDefine.valueCompresserCompressSize];
+            int count = 0;
+            while (!decompresser.finished()) {
+                count = decompresser.inflate(buf);
+                decompos.write(buf, 0, count);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            decompresser = null;
+        } finally {
+            if (decompresser != null) {
+                decompresser.reset();
+                valueDecompresserPool.add(decompresser);
+            }
+        }
+        return decompos.toByteArray();
+    }
+    
+    
     /**
      * -debugオプションを利用した際に、標準出力への出力を行う.<br>
      *
