@@ -21,8 +21,8 @@ public class ResponseTestThreadMem extends Thread {
 
 
     private static final String tmpKey = "DataSaveKey910111213";
-    private static final String tmpValue = "DataSaveValue123456789101112131415161718192021222324252627282930313233343536373839404142quyrt_";
-
+//    private static final String tmpValue = "DataSaveValue123456789101112131415161718192021222324252627282930313233343536373839404142quyrt_";
+    private static final String tmpValue = "{'ret':'success','message','','list':[{'地域':'20101111 153525125','天気':'','降水確率':'','気温':'','湿度':'','洗濯指数':''},{'地域':'20101212 181545','天気':'','降水確率':'','気温':'5','湿度':'','洗濯指数':''},{'地域':'20101215 195030','天気':'','降水確率':'','気温':'8','湿度':'','洗濯指数':''},{'地域':'20101215195030','天気':'','降水確率':'','気温':'8','湿度':'','洗濯指数':''}]}";
 
 
     public ResponseTestThreadMem(int threadNo, String prefix, boolean rndFlg, long endCounter) {
@@ -96,8 +96,7 @@ public class ResponseTestThreadMem extends Thread {
                     int rndVal = new Long(this.endCounter).intValue();
 
                     while(true &&  ResponseTestMem.startFlg){
-                        rndVal = rnd.nextInt(rndVal);
-                        Object ret2 = memcachedClient.get(key + rndVal);
+                        Object ret2 = memcachedClient.get(key + rnd.nextInt(rndVal));
                         if (ret2 != null) {
                             //System.out.println(ret2);
                         } else {
