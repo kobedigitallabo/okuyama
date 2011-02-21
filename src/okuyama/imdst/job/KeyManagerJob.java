@@ -1,6 +1,7 @@
 package okuyama.imdst.job;
 
 import java.io.*;
+import java.util.zip.Deflater;
 import java.net.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -86,6 +87,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         logger.info("okuyama DataNode Initialization Start ...");
         System.out.println("okuyama DataNode Initialization Start ...");
 
+        // BindするIP及び、Port、Backlog設定
         if (initValue.indexOf(":") != -1) {
 
             String[] splitInitVal = initValue.split(":");
@@ -111,33 +113,51 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         }
 
 
-		// 設定反映 //
+        // 設定反映 //
 
-		// データ永続化トランザクションファイルの遅延設定
+        // データ圧縮設定
+        String saveDataCompress = (String)super.getPropertiesValue(ImdstDefine.Prop_SaveDataCompress);
+        if (saveDataCompress != null &&  saveDataCompress.equals("false")) {
+            // 圧縮しない
+            ImdstDefine.saveValueCompress = false;
+        } else {
+
+            String saveDataCompressType = (String)super.getPropertiesValue(ImdstDefine.Prop_SaveDataCompressType);
+            if (saveDataCompress != null && !saveDataCompressType.equals("")) { 
+                if (saveDataCompressType.equals("1")) {
+                    ImdstDefine.valueCompresserLevel = Deflater.BEST_SPEED;
+                } else if (saveDataCompressType.equals("9")) {
+                    ImdstDefine.valueCompresserLevel = Deflater.BEST_COMPRESSION;
+                }
+            }
+        }
+
+
+        // データ永続化トランザクションファイルの遅延設定
         String transactionFileCommit = (String)super.getPropertiesValue(ImdstDefine.Prop_DataSaveTransactionFileEveryCommit);
-		if (transactionFileCommit != null &&  transactionFileCommit.equals("false")) {
-			// 遅延させる
-			ImdstDefine.dataTransactionFileFlushTiming = false;
-		}
+        if (transactionFileCommit != null &&  transactionFileCommit.equals("false")) {
+            // 遅延させる
+            ImdstDefine.dataTransactionFileFlushTiming = false;
+        }
 
-		// 共有データファイルの書き換え遅延設定
+        // 共有データファイルの書き換え遅延設定
         String shareDataFileDelay = (String)super.getPropertiesValue(ImdstDefine.Prop_ShareDataFileWriteDelayFlg);
-		if (shareDataFileDelay != null &&  shareDataFileDelay.equals("true")) {
-			ImdstDefine.dataFileWriteDelayFlg = true;
-	        String shareDataFileMaxDelayStr = (String)super.getPropertiesValue(ImdstDefine.Prop_ShareDataFileMaxDelayCount);
-			if (shareDataFileMaxDelayStr != null) {
-				try {
-					int shareDataFileMaxDelayInt = new Integer(shareDataFileMaxDelayStr).intValue();
-					if (shareDataFileMaxDelayInt > 0 && shareDataFileMaxDelayInt < 1000000) {
-						ImdstDefine.dataFileWriteDelayMaxSize = shareDataFileMaxDelayInt;
-					}
-				} catch (Exception ce) {
-				}
-			}
-		}
+        if (shareDataFileDelay != null &&  shareDataFileDelay.equals("true")) {
+            ImdstDefine.dataFileWriteDelayFlg = true;
+            String shareDataFileMaxDelayStr = (String)super.getPropertiesValue(ImdstDefine.Prop_ShareDataFileMaxDelayCount);
+            if (shareDataFileMaxDelayStr != null) {
+                try {
+                    int shareDataFileMaxDelayInt = new Integer(shareDataFileMaxDelayStr).intValue();
+                    if (shareDataFileMaxDelayInt > 0 && shareDataFileMaxDelayInt < 1000000) {
+                        ImdstDefine.dataFileWriteDelayMaxSize = shareDataFileMaxDelayInt;
+                    }
+                } catch (Exception ce) {
+                }
+            }
+        }
 
 
-		// 自身のJOB名取出し
+        // 自身のJOB名取出し
         this.myPrefix = super.getJobName();
 
         String sizeStr = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyNodeMaxConnectParallelExecution);

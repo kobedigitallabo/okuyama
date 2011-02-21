@@ -202,6 +202,11 @@ public class ImdstDefine {
     public static final String Prop_DataSaveTransactionFileEveryCommit = "DataSaveTransactionFileEveryCommit";
     public static final String Prop_ShareDataFileWriteDelayFlg = "ShareDataFileWriteDelayFlg";
     public static final String Prop_ShareDataFileMaxDelayCount = "ShareDataFileMaxDelayCount";
+    public static final String Prop_SaveDataCompress = "SaveDataCompress";
+    public static final String Prop_SaveDataCompressType = "SaveDataCompressType";
+
+
+
 
     public static final String Prop_PacketBalancerParallelExecution = "PacketBalancerParallelExecution";
     public static final String Prop_PacketBalancerParallelQueue = "PacketBalancerParallelQueue";
@@ -345,7 +350,7 @@ public class ImdstDefine {
     public volatile static boolean saveValueCompress = true;
 
     // Valueをメモリに保存する際に圧縮に利用するコンプレッサーをいくつプールしておくかの設定
-    public volatile static int valueCompresserPoolSize = 10;
+    public volatile static int valueCompresserPoolSize = 25;
     
     // Valueをメモリに保存する際に圧縮する個別単位サイズ
     public volatile static int valueCompresserCompressSize = 1024;

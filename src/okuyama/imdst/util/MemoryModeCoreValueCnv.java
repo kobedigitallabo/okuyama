@@ -31,6 +31,7 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
         return new CoreMapKey(((String)key).getBytes());
     }
 
+
     /**
      * 引数のObjectはBase64でエンコードされた文字とメタ情報の連結文字列
      * 返却値はbyte配列
@@ -40,7 +41,7 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
         if (value == null) return null;
         boolean tagMatch = false;
 
-        byte[] registorData = null;
+        byte[] registerData = null;
 
         String[] timeSepSplit = ((String)value).split("!");
 
@@ -63,12 +64,15 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
         byte[] realValBytes = realVal.getBytes();
 
         // タグチェック
-        int chackSize = realValBytes.length;
-        if (chackSize > ImdstDefine.saveKeyMaxSize) {
-            chackSize = ImdstDefine.saveKeyMaxSize;
+        int checkSize = realValBytes.length;
+        if (checkSize > ImdstDefine.saveKeyMaxSize) {
+            checkSize = ImdstDefine.saveKeyMaxSize;
         }
 
-        for (int realValBytesIdx = 0; realValBytesIdx < chackSize; realValBytesIdx++) {
+        // Tagの場合は":"が含まれるのでそれを調べる
+        for (int realValBytesIdx = 0; realValBytesIdx < checkSize; realValBytesIdx++) {
+
+            // ":"(58)チェック
             if (realValBytes[realValBytesIdx] == 58) {
                 tagMatch = true;
                 break;
@@ -77,93 +81,38 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
 
         // タグの場合はここで終了
         if (tagMatch) {
-            // Tagとわかるようにbyte配列の先頭をブランクとする
+
             byte[] tagBytes = ((String)value).getBytes();
             
             byte[] returnTagBytes = new byte[tagBytes.length + 1];
             for (int i = 0; i < tagBytes.length; i++) {
                 returnTagBytes[i+1] = tagBytes[i];
             }
-            return returnTagBytes;
+
+            return new MemoryDataEntry(SystemUtil.valueCompress(tagBytes), null, null, true, true);
         }
 
         byte[] realDecodeValBytes = BASE64DecoderStream.decode(realValBytes);
 
-        int size = 0;
+        // 圧縮の場合
+        if (ImdstDefine.saveValueCompress) {
+            byte[] compressData = SystemUtil.valueCompress(realDecodeValBytes);
 
-        int realDecodeValBytesLen = realDecodeValBytes.length;
+            // 圧縮したがデータが大きくなった場合は圧縮していない元データを保存する
+            if (compressData.length < realDecodeValBytes.length) {
 
-        if (metaVal == null) {
-
-            int secIdx = 0;
-            int idx = 0;
-
-            size = realDecodeValBytesLen + 2 + timeValBytes.length;
-            registorData = new byte[size];
-
-            for (; idx < realDecodeValBytesLen; idx++) {
-                registorData[idx] = realDecodeValBytes[idx];
-            }
-
-            // 1つ空白開けてデータとメタ情報との切れ目を示す
-            idx++;
-
-            // "!"を代入(メタデータ(Unique値)の切れ目)
-            registorData[idx] = 33;
-            idx++;
-
-            for (; secIdx < timeValBytes.length; secIdx++) {
-                registorData[idx] = timeValBytes[secIdx];
-                idx++;
-            }
-
-        } else {
-
-            int secIdx = 0;
-            int thrIdx = 0;
-            int idx = 0;
-
-            size = realDecodeValBytesLen + 2 + metaValBytes.length + 1 + timeValBytes.length;
-            registorData = new byte[size];
-
-            for (; idx < realDecodeValBytesLen; idx++) {
-                registorData[idx] = realDecodeValBytes[idx];
-            }
-
-            // 1つ空白開けてデータとメタ情報との切れ目を示す
-            idx++;
-
-            // ","を代入(メタデータ(Flagsと有効期限の切れ目)の切れ目)
-            registorData[idx] = 44;
-            idx++;
-
-            for (; secIdx < metaValBytes.length; secIdx++) {
-                registorData[idx] = metaValBytes[secIdx];
-                idx++;
-            }
-
-            // "!"を代入(メタデータ(Unique値)の切れ目)
-            registorData[idx] = 33;
-            idx++;
-
-            for (; thrIdx < timeValBytes.length; thrIdx++) {
-                registorData[idx] = timeValBytes[thrIdx];
-                idx++;
+                // 圧縮データ
+                return new MemoryDataEntry(compressData, timeValBytes, metaValBytes, false, true);
             }
         }
 
+        // 非圧縮データ
+        return new MemoryDataEntry (realDecodeValBytes, timeValBytes, metaValBytes, false, false);
 
-        timeSepSplit = null;
-        timeVal = null;
-        timeValBytes = null;
-        metaSep =  null;
-        metaVal = null;
-        metaValBytes = null;
         //System.out.println("-------------------");
         //System.out.println(((byte[])",".getBytes())[0]); 44 
         //System.out.println(((byte[])"!".getBytes())[0]); 33
-        //System.out.println(registorData.length + " => " + SystemUtil.valueCompress(registorData).length);
-        return SystemUtil.valueCompress(registorData);
+        //System.out.println(registerData.length + " => " + SystemUtil.valueCompress(registerData).length);
     }
     
 
@@ -185,55 +134,63 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
      */
     public Object convertDecodeValue(Object value) {
         if (value == null) return null;
-        boolean tagMatch = false;
 
-        byte[] decodeBytes =  SystemUtil.valueDecompress((byte[])value);
+        MemoryDataEntry memoryDataEntry = (MemoryDataEntry)value;
 
-        int decodeDataLen = decodeBytes.length;
+        // タグの場合はそのまま返却
+        if (memoryDataEntry.isTag) {
 
-        // タグの場合はここで終了
-        if (decodeBytes[0] == 0) {
-            ByteArrayOutputStream tagBytes = new ByteArrayOutputStream(decodeDataLen - 1);
-            tagBytes.write(decodeBytes, 1, decodeBytes.length - 1);
-            return tagBytes.toString();
+            return new String(SystemUtil.valueDecompress(memoryDataEntry.value));
         }
 
+        // Tagではない
+        StringBuilder workBuf = new StringBuilder(memoryDataEntry.value.length + 30);
 
-        // タグ以外
-        ByteArrayOutputStream workBytes = new ByteArrayOutputStream(decodeDataLen);
-        int idx = 0;
-        int metaLen = 0;
-
-        StringBuilder workBuf = new StringBuilder(decodeDataLen + (decodeDataLen / 3) + (decodeDataLen / 30));
-
-        for (; idx < decodeDataLen; idx++) {
-
-            // 全てのバイト表記が見れる
-            //System.out.println(decodeBytes[idx]);
-
-            if (decodeBytes[idx] != 0) {
-                workBytes.write(decodeBytes[idx]);
+        // valueを復元
+        if (memoryDataEntry.value != null) {
+            if (memoryDataEntry.compress) {
+                workBuf.append(new String(BASE64EncoderStream.encode(SystemUtil.valueDecompress(memoryDataEntry.value))));
             } else {
-
-                workBuf.append(new String(BASE64EncoderStream.encode(workBytes.toByteArray())));
-
-                metaLen = decodeDataLen - idx;
-                workBytes = null;
-                break;
+                workBuf.append(new String(BASE64EncoderStream.encode(memoryDataEntry.value)));
             }
         }
 
-        idx++;
-        workBytes = new ByteArrayOutputStream(metaLen);
-
-        for (; idx < decodeDataLen; idx++) {
-            workBytes.write(decodeBytes[idx]);
+        // 期限(Flags)を復元
+        if (memoryDataEntry.metaData != null) {
+            workBuf.append(",");
+            workBuf.append(new String(memoryDataEntry.metaData));
         }
 
-        workBuf.append(workBytes.toString());
-        workBytes = null;
-        decodeBytes = null;
+        // 登録日時を復元
+        if (memoryDataEntry.registerDate != null) {
+            workBuf.append("!");
+            workBuf.append(new String(memoryDataEntry.registerDate));
+        }
 
         return workBuf.toString();
+    }
+
+
+    // メモリ上に保存するインナークラス
+    class MemoryDataEntry {
+
+        protected byte[] value = null;
+
+        protected byte[] registerDate = null;
+
+        protected byte[] metaData = null;
+
+        protected boolean isTag = false;
+
+        protected boolean compress = false;
+
+
+        protected MemoryDataEntry (byte[] value, byte[] registerDate, byte[] metaData, boolean isTag, boolean compress) {
+            this.value = value;
+            this.registerDate = registerDate;
+            this.metaData = metaData;
+            this.isTag = isTag;
+            this.compress = compress;
+        }
     }
 }

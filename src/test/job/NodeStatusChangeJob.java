@@ -58,7 +58,7 @@ public class NodeStatusChangeJob extends AbstractJob implements IJob {
 
             for (int t = 0; t < this.execCount; t++) {
                 execRestart();
-                Thread.sleep(600000);
+                Thread.sleep(240000);
             }
 
 

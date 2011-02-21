@@ -15,33 +15,14 @@ import okuyama.base.util.LoggerFactory;
  * @license GPL(Lv3)
  */
 public class SystemUtil {
-    
-    private static ConcurrentLinkedQueue valueCompresserPool = null;    
-    
+
+    private static Object compressSync = new Object();
+    private static ConcurrentLinkedQueue valueCompresserPool = null;
     private static ConcurrentLinkedQueue valueDecompresserPool = null;
-    
-    
+
     public static PrintWriter netDebugPrinter = null;
-    
-    
-    static {
-        if (ImdstDefine.saveValueCompress) {
-            
-            valueCompresserPool = new ConcurrentLinkedQueue();
-            valueDecompresserPool = new ConcurrentLinkedQueue();
-            
-            for (int i = 0; i < ImdstDefine.valueCompresserPoolSize; i++) {
-                Deflater compresser = new Deflater();
-                compresser.setLevel(ImdstDefine.valueCompresserLevel);
-                valueCompresserPool.add(compresser);
-                
-                Inflater decompresser = new Inflater();
-                valueDecompresserPool.add(decompresser);
-            }
-        } 
-    }
-    
-    
+
+
     /**
      * 指定の文字を指定の桁数で特定文字列で埋める.<br>
      *
@@ -128,7 +109,35 @@ public class SystemUtil {
         return ret;
     }
 
-    
+
+    /**
+     * Value圧縮関係を初期化
+     *
+     */
+    public static void initValueCompress() {
+        if (valueCompresserPool != null) return;
+
+        synchronized (compressSync) {
+            if (valueCompresserPool == null) {
+                if (ImdstDefine.saveValueCompress) {
+                    
+                    valueCompresserPool = new ConcurrentLinkedQueue();
+                    valueDecompresserPool = new ConcurrentLinkedQueue();
+                    
+                    for (int i = 0; i < ImdstDefine.valueCompresserPoolSize; i++) {
+                        Deflater compresser = new Deflater();
+                        compresser.setLevel(ImdstDefine.valueCompresserLevel);
+                        valueCompresserPool.add(compresser);
+                        
+                        Inflater decompresser = new Inflater();
+                        valueDecompresserPool.add(decompresser);
+                    }
+                } 
+            }
+        }
+    }
+
+
     /**
      * 圧縮処理.<br>
      *
@@ -138,6 +147,9 @@ public class SystemUtil {
     public static byte[] valueCompress(byte[] src) {
         if (!ImdstDefine.saveValueCompress) return src;
 
+        if (valueCompresserPool == null) initValueCompress();
+
+        byte[] ret = null;
 
         Deflater compresser = (Deflater)valueCompresserPool.poll();
         if (compresser == null) {
@@ -145,32 +157,24 @@ public class SystemUtil {
             compresser.setLevel(ImdstDefine.valueCompresserLevel);
         }
 
-        ByteArrayOutputStream compos = new ByteArrayOutputStream(src.length);
-
         try {
-            compresser.setInput(src);
-            compresser.finish();
-
-            byte[] buf = new byte[ImdstDefine.valueCompresserCompressSize];
-            int count = 0;
-            while (!compresser.finished()) {
-                count = compresser.deflate(buf);
-                compos.write(buf, 0, count);
-            }
-            return compos.toByteArray();
+            // 圧縮
+            ret = compress(src, compresser, ImdstDefine.valueCompresserCompressSize);
         } catch (Exception e) {
+
             e.printStackTrace();
             compresser = null;
         } finally {
+
             if (compresser != null) { 
                 compresser.reset();
                 valueCompresserPool.add(compresser);
             }
         }
-        return null;
+        return ret;
     }
-    
-    
+
+
     /**
      * 圧縮解除処理.<br>
      *
@@ -183,18 +187,11 @@ public class SystemUtil {
         if (decompresser == null) {
             decompresser = new Inflater();
         }
-        
-        ByteArrayOutputStream decompos = new ByteArrayOutputStream();
-        try {
-            
-            decompresser.setInput(src);
 
-            byte[] buf = new byte[ImdstDefine.valueCompresserCompressSize];
-            int count = 0;
-            while (!decompresser.finished()) {
-                count = decompresser.inflate(buf);
-                decompos.write(buf, 0, count);
-            }
+        byte[] ret = null;
+        try {
+            // 圧縮解除
+            ret = decompress(src, decompresser, ImdstDefine.valueCompresserCompressSize);
         } catch (Exception e) {
             e.printStackTrace();
             decompresser = null;
@@ -204,10 +201,54 @@ public class SystemUtil {
                 valueDecompresserPool.add(decompresser);
             }
         }
-        return decompos.toByteArray();
+        return ret;
     }
-    
-    
+
+
+    // 圧縮処理だけ共通化
+    private static byte[] compress(byte[] src, Deflater compresser, int compressCycleSize) throws Exception {
+
+        ByteArrayOutputStream compos = new ByteArrayOutputStream();
+
+        try {
+            compresser.setInput(src);
+            compresser.finish();
+
+            byte[] buf = new byte[compressCycleSize];
+            int count = 0;
+            while (!compresser.finished()) {
+                count = compresser.deflate(buf);
+                compos.write(buf, 0, count);
+            }
+            return compos.toByteArray();
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    // 圧縮解除処理だけ共通化
+    private static byte[] decompress(byte[] src, Inflater decompresser, int compressCycleSize) throws Exception {
+
+        ByteArrayOutputStream decompos = new ByteArrayOutputStream();
+
+        try {
+
+            decompresser.setInput(src);
+
+            byte[] buf = new byte[compressCycleSize];
+            int count = 0;
+            while (!decompresser.finished()) {
+                count = decompresser.inflate(buf);
+                decompos.write(buf, 0, count);
+            }
+            return decompos.toByteArray();
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+
+
     /**
      * -debugオプションを利用した際に、標準出力への出力を行う.<br>
      *
