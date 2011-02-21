@@ -10,6 +10,23 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
+[[リリース Ver 0.8.7 - (2011/XX/XX)]]
+  ■メモリへのデータを圧縮して保存
+    =>実装済み
+    // Valueをメモリに保存する際に圧縮を行う指定
+    public volatile static boolean saveValueCompress = true;
+    // Valueをメモリに保存する際に圧縮に利用するコンプレッサーをいくつプールしておくかの設定
+    public volatile static int valueCompresserPoolSize = 10;
+    // Valueをメモリに保存する際に圧縮する個別単位サイズ
+    public volatile static int valueCompresserCompressSize = 1024;
+    // Valueをメモリに保存する際に圧縮する場合の圧縮レベル
+    public volatile static int valueCompresserLevel = Deflater.BEST_SPEED;
+
+    DataNode.propertiesでは、
+
+
+========================================================================================================
+[New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.6 - (2011/02/11)]]
   ■複数Value一括取得機能を追加(memcachedのgetに複数のKey値を並べるのと同等)
      複数の取得したいKeyを配列で渡すことでまとめてValueを取得可能。返却される値はKeyとValueのMapで返される
