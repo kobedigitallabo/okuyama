@@ -19,6 +19,7 @@ import com.sun.mail.util.BASE64EncoderStream;
  */
 public class MemoryModeCoreValueCnv implements ICoreValueConverter {
 
+    private static int compressUnderLimitSize = 128;
 
     /**
      * 引数のObjectはBase64でエンコード後のString
@@ -39,75 +40,21 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
      */
     public Object convertEncodeValue(Object value) {
         if (value == null) return null;
-        boolean tagMatch = false;
 
-        byte[] registerData = null;
+        byte[] valueBytes = ((String)value).getBytes();
 
-        String[] timeSepSplit = ((String)value).split("!");
-
-        String timeVal = timeSepSplit[1];
-
-        byte[] timeValBytes = timeVal.getBytes();
-
-        String[] metaSep = timeSepSplit[0].split(",");
-
-        String metaVal = null;
-        byte[] metaValBytes = null;
-
-        String realVal = metaSep[0];
-        if (metaSep.length > 1) {
-            metaVal = metaSep[1];
-            metaValBytes = metaVal.getBytes();
-        }
-
-        // 真のValueの部分だけバイト化
-        byte[] realValBytes = realVal.getBytes();
-
-        // タグチェック
-        int checkSize = realValBytes.length;
-        if (checkSize > ImdstDefine.saveKeyMaxSize) {
-            checkSize = ImdstDefine.saveKeyMaxSize;
-        }
-
-        // Tagの場合は":"が含まれるのでそれを調べる
-        for (int realValBytesIdx = 0; realValBytesIdx < checkSize; realValBytesIdx++) {
-
-            // ":"(58)チェック
-            if (realValBytes[realValBytesIdx] == 58) {
-                tagMatch = true;
-                break;
-            }
-        }
-
-        // タグの場合はここで終了
-        if (tagMatch) {
-
-            byte[] tagBytes = ((String)value).getBytes();
+        // 圧縮対象以下の場合は非圧縮
+        if (valueBytes.length < MemoryModeCoreValueCnv.compressUnderLimitSize) {
+            int size = valueBytes.length+1;
+            byte[] returnBytes = new byte[size];
             
-            byte[] returnTagBytes = new byte[tagBytes.length + 1];
-            for (int i = 0; i < tagBytes.length; i++) {
-                returnTagBytes[i+1] = tagBytes[i];
+            for (int i = 1; i < size; i++) {
+                returnBytes[i] = valueBytes[i-1];
             }
-
-            return new MemoryDataEntry(SystemUtil.valueCompress(tagBytes), null, null, true, true);
+            return returnBytes;
         }
 
-        byte[] realDecodeValBytes = BASE64DecoderStream.decode(realValBytes);
-
-        // 圧縮の場合
-        if (ImdstDefine.saveValueCompress) {
-            byte[] compressData = SystemUtil.valueCompress(realDecodeValBytes);
-
-            // 圧縮したがデータが大きくなった場合は圧縮していない元データを保存する
-            if (compressData.length < realDecodeValBytes.length) {
-
-                // 圧縮データ
-                return new MemoryDataEntry(compressData, timeValBytes, metaValBytes, false, true);
-            }
-        }
-
-        // 非圧縮データ
-        return new MemoryDataEntry (realDecodeValBytes, timeValBytes, metaValBytes, false, false);
+        return SystemUtil.valueCompress(valueBytes);
 
         //System.out.println("-------------------");
         //System.out.println(((byte[])",".getBytes())[0]); 44 
@@ -135,62 +82,19 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
     public Object convertDecodeValue(Object value) {
         if (value == null) return null;
 
-        MemoryDataEntry memoryDataEntry = (MemoryDataEntry)value;
+        byte[] valueBytes = (byte[])value;
+        String returnStr = null;
 
-        // タグの場合はそのまま返却
-        if (memoryDataEntry.isTag) {
+        if (valueBytes[0] == 0) {
 
-            return new String(SystemUtil.valueDecompress(memoryDataEntry.value));
+            // 非圧縮
+            returnStr = new String(valueBytes, 1, (valueBytes.length - 1));
+        } else {
+
+            // 非圧縮
+            returnStr = new String(SystemUtil.valueDecompress(valueBytes));
         }
 
-        // Tagではない
-        StringBuilder workBuf = new StringBuilder(memoryDataEntry.value.length + 30);
-
-        // valueを復元
-        if (memoryDataEntry.value != null) {
-            if (memoryDataEntry.compress) {
-                workBuf.append(new String(BASE64EncoderStream.encode(SystemUtil.valueDecompress(memoryDataEntry.value))));
-            } else {
-                workBuf.append(new String(BASE64EncoderStream.encode(memoryDataEntry.value)));
-            }
-        }
-
-        // 期限(Flags)を復元
-        if (memoryDataEntry.metaData != null) {
-            workBuf.append(",");
-            workBuf.append(new String(memoryDataEntry.metaData));
-        }
-
-        // 登録日時を復元
-        if (memoryDataEntry.registerDate != null) {
-            workBuf.append("!");
-            workBuf.append(new String(memoryDataEntry.registerDate));
-        }
-
-        return workBuf.toString();
-    }
-
-
-    // メモリ上に保存するインナークラス
-    class MemoryDataEntry {
-
-        protected byte[] value = null;
-
-        protected byte[] registerDate = null;
-
-        protected byte[] metaData = null;
-
-        protected boolean isTag = false;
-
-        protected boolean compress = false;
-
-
-        protected MemoryDataEntry (byte[] value, byte[] registerDate, byte[] metaData, boolean isTag, boolean compress) {
-            this.value = value;
-            this.registerDate = registerDate;
-            this.metaData = metaData;
-            this.isTag = isTag;
-            this.compress = compress;
-        }
+        return returnStr;
     }
 }

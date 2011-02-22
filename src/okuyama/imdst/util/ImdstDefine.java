@@ -350,10 +350,10 @@ public class ImdstDefine {
     public volatile static boolean saveValueCompress = true;
 
     // Valueをメモリに保存する際に圧縮に利用するコンプレッサーをいくつプールしておくかの設定
-    public volatile static int valueCompresserPoolSize = 25;
+    public volatile static int valueCompresserPoolSize = 30;
     
     // Valueをメモリに保存する際に圧縮する個別単位サイズ
-    public volatile static int valueCompresserCompressSize = 1024;
+    public volatile static int valueCompresserCompressSize = 2048;
 
     // Valueをメモリに保存する際に圧縮する場合の圧縮レベル
     //public volatile static int valueCompresserLevel = Deflater.BEST_COMPRESSION;
