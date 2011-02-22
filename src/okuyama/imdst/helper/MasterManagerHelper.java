@@ -751,7 +751,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
 
-            // Test
+            // TODO:Test
             if (false) {
 
                 String appendTagSep = "";
@@ -760,20 +760,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 String sIdx1 = null;
                 String sIdx2 = null;
-                String sIdx3 = null;
                 String strIdx = "";
 
                 try {
-
-                    sIdx1 = new String(BASE64EncoderStream.encode(new String(testBytes).substring(0, 1).getBytes()));
+                    String prefix = (((keyStr.hashCode() << 1) >>> 1) % 10) + "_";
+                    String realKeyStr = new String(testBytes);
+                    sIdx1 = new String(BASE64EncoderStream.encode((prefix + realKeyStr.substring(0, 2)).getBytes()));
                     strIdx = strIdx + appendTagSep + sIdx1;
                     appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
 
-                    sIdx2 = new String(BASE64EncoderStream.encode(new String(testBytes).substring(0, 2).getBytes()));
+                    sIdx2 = new String(BASE64EncoderStream.encode((prefix + realKeyStr.substring(0, 3)).getBytes()));
                     strIdx = strIdx + appendTagSep + sIdx2;
-
-                    sIdx3 = new String(BASE64EncoderStream.encode(new String(testBytes).substring(0, 3).getBytes()));
-                    strIdx = strIdx + appendTagSep + sIdx3;
 
                 } catch (Exception inE) {
                 }
