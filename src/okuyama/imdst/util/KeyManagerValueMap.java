@@ -58,8 +58,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     private int overSizeDataParallelSize = 2000;
     private Object[] overSizeDataParallelSyncs = new Object[overSizeDataParallelSize];
-    // キャッシュ
-    private ValueCacheMap valueCacheMap = null;
 
     private ConcurrentHashMap nowAllDataSizeMap = null;
 
