@@ -299,17 +299,19 @@ public class StatusUtil {
         Map allDataMap = new HashMap();
         for (int i = 0; i < StatusUtil.nodeDataSizeDtMap.size(); i++) {
             String[] sizeList = (String[])nodeDataSizeDtMap.get(new Integer(i));
-            for (int t = 0; t < sizeList.length; t++) {
+            if (sizeList != null) {
+                for (int t = 0; t < sizeList.length; t++) {
 
-                String[] sizeDt = sizeList[t].split("=");
-                Long size = (Long)allDataMap.get(sizeDt[0]);
+                    String[] sizeDt = sizeList[t].split("=");
+                    Long size = (Long)allDataMap.get(sizeDt[0]);
 
-                if(size == null) {
-                    allDataMap.put(sizeDt[0], new Long(sizeDt[1]));
-                } else {
-                    long calcLong = size.longValue();
-                    calcLong = calcLong + new Long(sizeDt[1]).longValue();
-                    allDataMap.put(sizeDt[0], new Long(calcLong));
+                    if(size == null) {
+                        allDataMap.put(sizeDt[0], new Long(sizeDt[1]));
+                    } else {
+                        long calcLong = size.longValue();
+                        calcLong = calcLong + new Long(sizeDt[1]).longValue();
+                        allDataMap.put(sizeDt[0], new Long(calcLong));
+                    }
                 }
             }
         }
