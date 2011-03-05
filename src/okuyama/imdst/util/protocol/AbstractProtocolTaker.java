@@ -56,6 +56,22 @@ abstract public class AbstractProtocolTaker {
     }
 
 
+    /**
+     * memcachedのFlagsチェック.<br>
+     * int整数値でない場合は0に変換
+     */
+    protected String checkFlagsVal(String flags) {
+        String ret = "0";
+        try {
+            ret = new Integer(flags).toString();
+        } catch (NumberFormatException e) {
+            ret = "0";
+        }
+
+        return ret;
+    }
+
+
     protected boolean expireCheck(String expirTimeStr) {
         return SystemUtil.expireCheck(expirTimeStr);
     }

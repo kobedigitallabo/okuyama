@@ -65,6 +65,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     // 更新時間
     private long setTime = 0;
+    private Random rnd = new Random();
 
     // get用文字列Buffer
     private StringBuilder getSendData = new StringBuilder(ImdstDefine.stringBufferSmallSize);
@@ -213,6 +214,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // Taker初期化
                     this.porotocolTaker.init();
+                    String rndVerStr1 = new Integer(rnd.nextInt(99)).toString();
+                    String rndVerStr2 = new Integer(rnd.nextInt(99)).toString();
 
                     if (closeFlg == true || reloopSameClient == false) {
 
@@ -278,7 +281,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
                     // 保存バージョン確定
-                    this.setTime = System.nanoTime();
+                    this.setTime = new Long(new StringBuilder(rndVerStr1).append(System.nanoTime()).append(rndVerStr2).toString());
                     // 本体処理開始
                     // 処理番号で処理を分岐
                     // 実行許可も判定

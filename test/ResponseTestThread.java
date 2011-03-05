@@ -22,7 +22,7 @@ public class ResponseTestThread extends Thread {
 
 
     private static final String tmpKey = "DataSaveKey910111213_123456789";
-    private static final String tmpValue = "Da";
+    private static final String tmpValue = "DataSaveValue123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
 
 
 
@@ -60,7 +60,7 @@ public class ResponseTestThread extends Thread {
                     while(true &&  ResponseTest.startFlg){
 
                         int appendInt = rnd.nextInt(rndVal);
-                        if(!System.out.println(System.out.prokuyamaClient.setValue(key + appendInt, value + appendInt)) {
+                        if(!okuyamaClient.setValue(key + appendInt, value + appendInt)) {
                             System.out.println("Error");
                         }
                         this.execCounter++;

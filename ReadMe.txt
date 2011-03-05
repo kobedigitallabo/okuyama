@@ -22,8 +22,41 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     // Valueをメモリに保存する際に圧縮する場合の圧縮レベル
     public volatile static int valueCompresserLevel = Deflater.BEST_SPEED;
 
-    DataNode.propertiesでは、
+    DataNode.propertiesでは、以下の設定になる
+	SaveDataCompress=true
+	SaveDataCompressType=1
 
+  ■データトランザクションログファイル遅延書き込み機能
+	 この設定は"memoryMode=false"の場合のみ有効
+	 !!falseに設定した場合は常に書き込まれないため、不意の障害時にデータをロストする可能性が上がる!!
+	 設定しない場合のデフォルトはtrue
+	 この設定は本設定ファイル上で定義されているDataNode全てに反映される
+
+    DataNode.propertiesでは、以下の設定になる
+	DataSaveTransactionFileEveryCommit=true
+
+
+  ■共有データファイルへの変更書き込みのタイミング設定 ###
+	 この設定は"dataMemory=false"の場合のみ有効
+	 trueにした場合は共有データファイルへの変更(ディスク書き込み)を即時ディスクに反映するのではなく別スレッドで随時行う
+	 書き込みが行われるまでメモリ上に保持されるのでメモリを消費する。その最大書き込みプール数(データ数)を設定するのが、
+	 ShareDataFileMaxDelayCount(数値を指定する)であるここで設定した数値の最大12888倍のバイト数分メモリを消費する
+	 最大遅延保持数は999999(この数だけ蓄積する前にメモリが足りなくなる場合もある)
+	 設定しない場合のデフォルトはfalse
+	 この設定は本設定ファイル上で定義されているDataNode全てに反映される
+
+    DataNode.propertiesでは、以下の設定になる
+	ShareDataFileWriteDelayFlg=true
+	ShareDataFileMaxDelayCount=
+
+
+  ■ServerControllerにコマンドの種類追加
+     サーバコントロールコマンドを追加
+
+     追加した機能は以下
+     "-help" : 全コマンド一覧出力
+     "netdebug" : debug出力を現在のコンソールに出力する。改行送信で停止
+     "fullgc" : gc指示
 
 ========================================================================================================
 [New - 新機能追加、不具合対応]
