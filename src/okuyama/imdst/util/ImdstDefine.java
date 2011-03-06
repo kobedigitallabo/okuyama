@@ -340,6 +340,7 @@ public class ImdstDefine {
     // MasterConfigurationManagerHelperが設定情報を確認する時間間隔
     public static final int configurationCheckCycle = 1000 * 60;
 
+
     // FileでValueを保持する際のValueキャッシの利用指定
     public volatile static boolean useValueCache = true;
     // FileでValueを保持する際のValueキャッシュサイズ(キャッシュデータ数)
@@ -416,4 +417,7 @@ public class ImdstDefine {
 
     // 有効期限切れのデータを実際に物理削除するまでの経過時間(ミリ秒)
     public static final long invalidDataDeleteTime = 60000;
+
+
+
 }
