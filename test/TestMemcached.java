@@ -48,8 +48,8 @@ public class TestMemcached {
 
                 for (int idx = 0; idx < 10000; idx++) {
 
-                    if(!mc.set(prefix+ "key_memcached_XXX=" + idx, "ValueMemcached-TestValue9876543210-XXXXXXXXXXXXXXX="+idx)) {
-                        System.out.println("Set[1] - Error Key=[" + prefix+ "key_memcached_XXX=" + idx + "] Value=[" + "ValueMemcached-TestValue9876543210-XXXXXXXXXXXXXXX="+ idx +"]");
+                    if(!mc.set(prefix+ "key_memcached_XXX=" + idx, "ValueMemcached-TestValueXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZ9876543210-XXXXXXXXXXXXXXX="+idx)) {
+                        System.out.println("Set[1] - Error Key=[" + prefix+ "key_memcached_XXX=" + idx + "] Value=[" + "ValueMemcached-TestValueXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZ9876543210-XXXXXXXXXXXXXXX="+ idx +"]");
                     }
                 }
                 System.out.println("Set[1]=finish");
@@ -57,7 +57,7 @@ public class TestMemcached {
                 for (int idx = 0; idx < 10000; idx++) {
 
                     Object val = mc.get(prefix+ "key_memcached_XXX=" + idx);
-                    if (val == null || !val.equals("ValueMemcached-TestValue9876543210-XXXXXXXXXXXXXXX="+idx)) {
+                    if (val == null || !val.equals("ValueMemcached-TestValueXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZ9876543210-XXXXXXXXXXXXXXX="+idx)) {
                         System.out.println("Get[1] - Error Key=[" + prefix+ "key_memcached_XXX=" + idx + "] Value=[" + val + "]");
                     }
                 }
@@ -65,8 +65,8 @@ public class TestMemcached {
 
                 for (int idx = 10000; idx < 20000; idx++) {
 
-                    if(!mc.set(prefix+ "key_memcached_XXX=" + idx, "ValueMemcached-TestValue9876543210-XXXXXXXXXXXXXXX="+idx)) {
-                        System.out.println("Set[2] - Error Key=[" + prefix+ "key_memcached_XXX=" + idx + "] Value=[" + "ValueMemcached-TestValue9876543210-XXXXXXXXXXXXXXX="+ idx +"]");
+                    if(!mc.set(prefix+ "key_memcached_XXX=" + idx, "ValueMemcached-TestValueXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZ9876543210-XXXXXXXXXXXXXXX="+idx)) {
+                        System.out.println("Set[2] - Error Key=[" + prefix+ "key_memcached_XXX=" + idx + "] Value=[" + "ValueMemcached-TestValueXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZ9876543210-XXXXXXXXXXXXXXX="+ idx +"]");
                     }
                 }
                 System.out.println("Set[2]=finish");
@@ -74,7 +74,7 @@ public class TestMemcached {
                 for (int idx = 10000; idx < 20000; idx++) {
 
                     Object val = mc.get(prefix+ "key_memcached_XXX=" + idx); 
-                    if (val == null || !val.equals("ValueMemcached-TestValue9876543210-XXXXXXXXXXXXXXX="+idx)) {
+                    if (val == null || !val.equals("ValueMemcached-TestValueXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZXXXXXXXXXXYYYYYYYYYYZZZZZZZZZZ9876543210-XXXXXXXXXXXXXXX="+idx)) {
                         System.out.println("Get[2] - Error Key=[" + prefix+ "key_memcached_XXX=" + idx + "] Value=[" + val + "]");
                     }
                 }
