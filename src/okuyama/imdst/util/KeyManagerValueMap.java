@@ -32,17 +32,16 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     private boolean memoryMode = true;
 
-    private transient FileOutputStream fos = null;
-    private transient OutputStreamWriter osw = null;
     private transient BufferedWriter bw = null;
     private transient RandomAccessFile raf = null;
+
     private transient Object sync = new Object();
+
     private transient boolean vacuumExecFlg = false;
     private transient List vacuumDiffDataList = null;
 
     private ConcurrentHashMap dataSizeMap = new ConcurrentHashMap();
     private ArrayBlockingQueue deletedDataPointList = null;
-
 
     private String lineFile = null;
     private String tmpVacuumeLineFile = null;
@@ -112,9 +111,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 this.overSizeDataParallelSyncs[overSizeParallelIdx] = new Object();
             }
 
-            this.fos = new FileOutputStream(new File(lineFile), true);
-            this.osw = new OutputStreamWriter(this.fos, ImdstDefine.keyWorkFileEncoding);
-            this.bw = new BufferedWriter (osw);
+
+            this.bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(lineFile), true), ImdstDefine.keyWorkFileEncoding));
 
             // 共有データファイルの再書き込み遅延指定
             if (ImdstDefine.dataFileWriteDelayFlg) {
@@ -128,9 +126,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             // 削除済みデータ位置保持領域構築
             this.deletedDataPointList = new ArrayBlockingQueue(ImdstDefine.numberOfDeletedDataPoint);
 
-            FileInputStream fis = new FileInputStream(new File(lineFile));
-            InputStreamReader isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
-            BufferedReader br = new BufferedReader(isr);
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(lineFile)) , ImdstDefine.keyWorkFileEncoding));
             this.lineFile = lineFile;
             int counter = 0;
 
@@ -138,10 +134,10 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             while(br.readLine() != null){
                 counter++;
             }
+
             this.lineCount = counter;
             br.close();
-            isr.close();
-            fis.close();
+
             this.nowKeySize = super.size();
         } catch(Exception e) {
             e.printStackTrace();
@@ -414,7 +410,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     writeBuf.append("\n");
 
 
-
                     if ((seekPoint = this.calcSeekDataPoint(key)) == -1) {
 
                         // まだ存在しないデータ
@@ -668,8 +663,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      */
     public boolean vacuumData() {
         boolean ret = false;
-        FileOutputStream tmpFos = null;
-        OutputStreamWriter tmpOsw = null;
+
+
         BufferedWriter tmpBw = null;
         RandomAccessFile raf = null;
         Map vacuumWorkMap = null;
@@ -702,9 +697,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         try {
 
-            tmpFos = new FileOutputStream(new File(this.lineFile + ".tmp"), true);
-            tmpOsw = new OutputStreamWriter(tmpFos, ImdstDefine.keyWorkFileEncoding);
-            tmpBw = new BufferedWriter(tmpOsw);
+            tmpBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.lineFile + ".tmp"), true), ImdstDefine.keyWorkFileEncoding));
             raf = new RandomAccessFile(new File(this.lineFile) , "r");
 
             entrySet = super.entrySet();
@@ -733,19 +726,18 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                     // 新ファイルflush
                     tmpBw.flush();
-                    //
+                    // 新ファイルclose
                     tmpBw.close();
-                    tmpOsw.close();
-                    tmpFos.close();
 
+					// 新ファイルに置き換え
                     synchronized (sync) {
 
                         raf.close();
 
                         if(this.raf != null) this.raf.close();
                         if(this.bw != null) this.bw.close();
-                        if(this.osw != null) this.osw.close();
-                        if(this.fos != null) this.fos.close();
+
+
 
                         File dataFile = new File(this.lineFile);
                         if (dataFile.exists()) {
@@ -841,8 +833,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                 if(this.raf != null) this.raf.close();
                 if(this.bw != null) this.bw.close();
-                if(this.osw != null) this.osw.close();
-                if(this.fos != null) this.fos.close();
+
+
             }
         } catch(Exception e3) {
         }
@@ -867,16 +859,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 if(this.bw != null) {
                     this.bw.close();
                     this.bw = null;
-                }
-
-                if(this.osw != null) {
-                    this.osw.close();
-                    this.osw = null;
-                }
-
-                if(this.fos != null) {
-                    this.fos.close();
-                    this.fos = null;
                 }
 
                 File dataFile = new File(this.lineFile);

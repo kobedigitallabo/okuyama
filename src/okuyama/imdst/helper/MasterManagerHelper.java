@@ -281,7 +281,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
                     // 保存バージョン確定
-                    this.setTime = new Long(new StringBuilder(rndVerStr1).append(System.nanoTime()).append(rndVerStr2).toString());
+					try {
+	                    this.setTime = new Long(new StringBuilder(rndVerStr1).append(System.nanoTime()).append(rndVerStr2).toString());
+					} catch (NumberFormatException ne1) {
+						try {
+							this.setTime = System.nanoTime() + new Integer(rnd.nextInt(99)).intValue();
+						} catch (NumberFormatException ne2) {
+							this.setTime = System.nanoTime();
+						}
+					}
+
                     // 本体処理開始
                     // 処理番号で処理を分岐
                     // 実行許可も判定
