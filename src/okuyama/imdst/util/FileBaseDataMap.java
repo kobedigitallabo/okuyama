@@ -1362,6 +1362,7 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
                 try {
 
                     // Key値の場所を特定する
+
                     long[] dataLineNoRet = this.getLinePoint(key, raf);
 
                     if (dataLineNoRet[0] == -1) {
@@ -1421,11 +1422,17 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
                             raf.write(FileBaseDataMap.paddingSymbolSet);
                         }
 
+
+						byte[] remainderPaddingBytes = new byte[singleWriteCount];
+
                         for (int i = 0; i < singleWriteCount; i++) {
-                            raf.write(fillByte);
+							remainderPaddingBytes[i] = fillByte[0];
                         }
+						if (remainderPaddingBytes.length > 0) raf.write(remainderPaddingBytes);
+
 
                         if (increMentFlg) this.totalSize.getAndIncrement();
+
                     }
 
                     break;
