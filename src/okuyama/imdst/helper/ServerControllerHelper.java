@@ -31,7 +31,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
 
     private int statusCommandPortNo = 8881;
 
-	private ServerSocket svSoc = null;
+    private ServerSocket svSoc = null;
 
     /**
      * Logger.<br>
@@ -77,10 +77,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                 try {
                     BufferedReader br = new BufferedReader(new InputStreamReader(soc.getInputStream(), "UTF-8"));
                     PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(soc.getOutputStream() , "UTF-8")));
-                    pw.println("Sending -help Show All ControllCommand");
-                    pw.flush();
-                    
-                    
+
                     String command = br.readLine();
                     if (command.equals("shutdown")) {
 
@@ -95,7 +92,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                     } else if (command.equals("debug")) {
 
                         StatusUtil.setDebugOption(true);
-                        pw.println(command + " Suuccess");
+                        pw.println(command + " Success");
                         pw.flush();
 
                         Thread.sleep(500);
@@ -106,7 +103,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                     } else if (command.equals("nodebug")) {
 
                         StatusUtil.setDebugOption(false);
-                        pw.println(command + " Suuccess");
+                        pw.println(command + " Success");
                         pw.flush();
 
                         br.close();
@@ -124,7 +121,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                             pw.println(nameLine + " Error");
                         } else {
                             NodeDnsUtil.setNameMap(nameInfo[0], nameInfo[1]);
-                            pw.println(command + " Suuccess Setting.. [" + nameInfo[0] + "] to [" + nameInfo[1] + "]");
+                            pw.println(command + " Success Setting.. [" + nameInfo[0] + "] to [" + nameInfo[1] + "]");
                         }
 
                         pw.flush();
@@ -137,7 +134,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         String name = br.readLine();
 
                         NodeDnsUtil.removeNameMap(name);
-                        pw.println(command + " Suuccess Remove Setting.. [" + name + "]");
+                        pw.println(command + " Success Remove Setting.. [" + name + "]");
 
                         pw.flush();
                         br.close();
@@ -146,7 +143,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         soc.close();
                     } else if (command.equals("jobs")) {
 
-                        pw.println(command + " Suuccess");
+                        pw.println(command + " Success");
                         pw.println(StatusUtil.getMethodExecuteCount());
                         pw.flush();
 
@@ -158,7 +155,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                     } else if (command.equals("allsize")) {
 
 
-                        pw.println(command + " Suuccess");
+                        pw.println(command + " Success");
 
                         pw.println(((Map)StatusUtil.getNodeDataSize()).toString());
                         pw.flush();
@@ -170,7 +167,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                     } else if (command.equals("size")) {
 
                         String name = br.readLine();
-                        pw.println(command + " Suuccess");
+                        pw.println(command + " Success");
                         Map sizeMap = StatusUtil.getNodeDataSize();
                         String size = "";
                         if (sizeMap != null && sizeMap.containsKey(name)) {
@@ -188,7 +185,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         soc.close();
                     } else if (command.equals("fullgc")) {
 
-                        pw.println(command + " Suuccess");
+                        pw.println(command + " Success");
                         JavaSystemApi.manualGc();
                         
                         pw.println("Execute GC");
@@ -200,7 +197,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         soc.close();
                     } else if (command.equals("netdebug")) {
                         
-                        pw.println(command + " Suuccess");
+                        pw.println(command + " Success");
                         pw.println("");
                         pw.println("Please transmit changing line to end debugging"); 
                         pw.println("Net Debug Start ...");                        
@@ -220,7 +217,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         pw.close();
                         soc.close();
                     } else if (command.equals("-help")) {
-                        pw.println(command + " Suuccess");
+                        pw.println(command + " Success");
                         pw.println("");
                         pw.println("shutdown");
                         pw.println("debug");
@@ -262,10 +259,10 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
             logger.error("ServerControllerHelper - executeHelper - Error", e);
             throw new BatchException(e);
         } finally {
-			try {
-				if (svSoc != null) svSoc.close();
-			} catch (Exception e) {}
-		}
+            try {
+                if (svSoc != null) svSoc.close();
+            } catch (Exception e) {}
+        }
 
         logger.debug("ServerControllerHelper - executeHelper - end");
         return ret;
