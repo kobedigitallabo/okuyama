@@ -277,7 +277,7 @@ public class ImdstDefine {
     //public static final int saveDataMaxSize =524288;
 
     // Key,Tagの最大長
-    public static final int saveKeyMaxSize = 168;
+    public static final int saveKeyMaxSize = 468;
 
     // 共通のデータファイルに書き出す最大サイズ
     public volatile static int dataFileWriteMaxSize = 12888;
