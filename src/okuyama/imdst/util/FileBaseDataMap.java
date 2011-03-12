@@ -28,7 +28,7 @@ public class FileBaseDataMap extends AbstractMap {
     private CoreFileBaseKeyMap[] coreFileBaseKeyMaps = null;
     private CoreFileBaseKeyMap coreFileBaseKeyMap4BigData = null;
     private boolean fixMap = false;
-    private int regularSizeLimit = 4096;
+    private int regularSizeLimit = 0;
 
     private String[] dirs = null;
 
@@ -80,6 +80,8 @@ public class FileBaseDataMap extends AbstractMap {
 
     protected static ByteArrayOutputStream fillStream = null;
 
+
+
     /**
      * コンストラクタ.<br>
      *
@@ -106,7 +108,6 @@ public class FileBaseDataMap extends AbstractMap {
         this(baseDirs, numberOfKeyData, cacheMemPercent, 0);
     }
 
-
     /**
      * コンストラクタ.<br>
      *
@@ -118,6 +119,21 @@ public class FileBaseDataMap extends AbstractMap {
      * @throws
      */
     public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent, int numberOfValueLength) {
+        this(baseDirs, numberOfKeyData, cacheMemPercent, numberOfValueLength, 2048);
+    }
+
+    /**
+     * コンストラクタ.<br>
+     *
+     * @param baseDirs
+     * @param numberOfKeyData
+     * @param cacheMemPercent
+     * @param numberOfValueLength
+     * @return 
+     * @throws
+     */
+    public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent, int numberOfValueLength, int regularSizeLimit) {
+        this.regularSizeLimit = regularSizeLimit;
         this.dirs = baseDirs;
         this.numberOfCoreMap = baseDirs.length;
         this.syncObj = new Object();
@@ -137,7 +153,7 @@ public class FileBaseDataMap extends AbstractMap {
 
             if (numberOfValueLength > regularSizeLimit) {
                 fixMap = true;
-                String[] bigDataDir = {baseDirs[0]+"/bigdata1/", baseDirs[0]+"/bigdata2/"};
+                String[] bigDataDir = {baseDirs[0]+"/virtualbigdata1/", baseDirs[0]+"/virtualbigdata2/"};
                 coreFileBaseKeyMap4BigData = new FixWriteCoreFileBaseKeyMap(bigDataDir, oneCacheSizePer / 2, oneMapSizePer / 2, numberOfValueLength);
             }
             this.coreFileBaseKeyMaps = new FixWriteCoreFileBaseKeyMap[baseDirs.length];

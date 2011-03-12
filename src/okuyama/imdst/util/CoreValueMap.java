@@ -14,7 +14,7 @@ import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
 /**
- * ConcurrentHashMap拡張.<br>
+ * データ格納Map.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -43,7 +43,8 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
         if (memoryMode) {
 
-            mainMap  = new ConcurrentHashMap(size, upper, multi);
+            //mainMap  = new ConcurrentHashMap(size, upper, multi);
+            mainMap  = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
             converter = new MemoryModeCoreValueCnv();
             this.allDataMemory = true;
         } else {

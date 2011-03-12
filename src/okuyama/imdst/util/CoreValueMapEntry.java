@@ -47,7 +47,8 @@ public class CoreValueMapEntry implements Map.Entry {
      *
      */
     public Object getValue() {
-        return this.converter.convertDecodeValue(this.map.getValue());
+        throw new UnsupportedOperationException("Nosupporte getValue");
+        //return this.converter.convertDecodeValue(this.map.getValue());
     }
 
     /**
@@ -63,7 +64,8 @@ public class CoreValueMapEntry implements Map.Entry {
      *
      */
     public Object setValue(Object o) {
-        return this.map.setValue(this.converter.convertEncodeValue(o));
+        throw new UnsupportedOperationException("Nosupporte setValue");
+        //return this.map.setValue(this.converter.convertEncodeValue(o));
     }
 
 

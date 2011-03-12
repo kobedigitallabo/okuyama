@@ -35,6 +35,7 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
 
     /**
      * 引数のObjectはBase64でエンコードされた文字とメタ情報の連結文字列
+     * Base64エンコード済み以外のValueは不正な動作とんある可能性がある
      * 返却値はbyte配列
      *
      */
@@ -47,7 +48,9 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
         if (valueBytes.length < MemoryModeCoreValueCnv.compressUnderLimitSize) {
             int size = valueBytes.length+1;
             byte[] returnBytes = new byte[size];
-            
+
+            // 非圧縮判断用に先頭に!を入れる
+            returnBytes[0] = 33;
             for (int i = 1; i < size; i++) {
                 returnBytes[i] = valueBytes[i-1];
             }
@@ -85,13 +88,14 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
         byte[] valueBytes = (byte[])value;
         String returnStr = null;
 
-        if (valueBytes[0] == 0) {
+        // 先頭が33"!"であるか確認
+        if (valueBytes[0] == 33) {
 
             // 非圧縮
             returnStr = new String(valueBytes, 1, (valueBytes.length - 1));
         } else {
 
-            // 非圧縮
+            // 圧縮
             returnStr = new String(SystemUtil.valueDecompress(valueBytes));
         }
 
