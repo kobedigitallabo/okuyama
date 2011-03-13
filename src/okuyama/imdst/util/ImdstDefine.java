@@ -281,7 +281,9 @@ public class ImdstDefine {
 
     // 共通のデータファイルに書き出す最大サイズ
     public volatile static int dataFileWriteMaxSize = 12888;
-    //public volatile static int dataFileWriteMaxSize = 4096;
+
+	// メモリモードで起動時にこのサイズを超えるValueはファイルに書き出され、メモリを使用しない
+	public volatile static int memoryStoreLimitSize = 1024 * 15;
 
     public static final int stringBufferSmallSize = 128;
 

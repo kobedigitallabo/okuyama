@@ -540,6 +540,9 @@ public class KeyMapManager extends Thread {
                             key = obj.getKey();
 
                             String valStr = (String)this.getKeyPair((String)key);
+							// 削除データの可能性があるので確認(FileBaseのMapを使っている場合)
+							if (valStr == null) continue;
+
                             String[] valStrSplit = valStr.split(ImdstDefine.setTimeParamSep);
                             valStr = valStrSplit[0];
 

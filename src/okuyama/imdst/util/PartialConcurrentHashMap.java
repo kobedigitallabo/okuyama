@@ -32,8 +32,8 @@ public class PartialConcurrentHashMap extends ConcurrentHashMap implements Clone
 
         if (bigValueStoreDirs != null) {
             fullMemory = false;
-            String[] bigValueStoreDir = {bigValueStoreDirs[0] + "/partialBigData2/", bigValueStoreDirs[0] + "/partialBigData2/", bigValueStoreDirs[0] + "/partialBigData3/", bigValueStoreDirs[0] + "/partialBigData4/", bigValueStoreDirs[0] + "/partialBigData5/"};
-            this.bigValueStoreMap = new FileBaseDataMap(bigValueStoreDir, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.dataFileWriteMaxSize * 2);
+            String[] bigValueStoreDir = {bigValueStoreDirs[0] + "/partialbigdata1/", bigValueStoreDirs[0] + "/partialbigdata2/", bigValueStoreDirs[0] + "/partialbigdata3/", bigValueStoreDirs[0] + "/partialbigdata4/", bigValueStoreDirs[0] + "/partialbigdata5/"};
+            this.bigValueStoreMap = new FileBaseDataMap(bigValueStoreDir, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.memoryStoreLimitSize * 2);
         }
     }
 
@@ -41,14 +41,16 @@ public class PartialConcurrentHashMap extends ConcurrentHashMap implements Clone
     public Object put(Object key, Object value) {
         // 規定サイズを超える場合でかつ、VirtualStoreのディレクトリが指定してある場合はFileBaseMapに格納
 
+		byte[] valueBytes = (byte[])value;
+			System.out.println(valueBytes.length);
+        if (fullMemory == false && valueBytes.length > ImdstDefine.memoryStoreLimitSize) {
 
-        if (fullMemory == false && ((byte[])value).length > ImdstDefine.dataFileWriteMaxSize) {
-            this.bigValueStoreMap.put(new String(((CoreMapKey)key).getDatas()), new String(BASE64EncoderStream.encode((byte[])value)));
+            this.bigValueStoreMap.put(new String(((CoreMapKey)key).getDatas()), new String(BASE64EncoderStream.encode(valueBytes)));
             // 符号を登録
             super.put(key, PartialConcurrentHashMap.flg);
         } else {
 
-            super.put(key, value);
+            super.put(key, valueBytes);
         }
         return null;
     }
