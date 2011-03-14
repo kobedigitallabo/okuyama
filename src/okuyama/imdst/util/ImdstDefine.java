@@ -204,6 +204,7 @@ public class ImdstDefine {
     public static final String Prop_ShareDataFileMaxDelayCount = "ShareDataFileMaxDelayCount";
     public static final String Prop_SaveDataCompress = "SaveDataCompress";
     public static final String Prop_SaveDataCompressType = "SaveDataCompressType";
+    public static final String Prop_SaveDataMemoryStoreLimitSize = "SaveDataMemoryStoreLimitSize";
 
 
 
@@ -282,8 +283,9 @@ public class ImdstDefine {
     // 共通のデータファイルに書き出す最大サイズ
     public volatile static int dataFileWriteMaxSize = 12888;
 
-	// メモリモードで起動時にこのサイズを超えるValueはファイルに書き出され、メモリを使用しない
-	public volatile static int memoryStoreLimitSize = 1024 * 15;
+    // メモリモードで起動時にこのサイズを超えるValueはファイルに書き出され、メモリを使用しない
+    public volatile static boolean bigValueFileStoreUse = false;
+    public volatile static int memoryStoreLimitSize = 1024 * 64;
 
     public static final int stringBufferSmallSize = 128;
 

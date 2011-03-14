@@ -156,6 +156,13 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             }
         }
 
+        // メモリモードで稼働している場合にメモリに書き出すValue単位のMaxサイズ(byte)
+        String maxMemoryStoreSize = (String)super.getPropertiesValue(ImdstDefine.Prop_SaveDataMemoryStoreLimitSize);
+        if (maxMemoryStoreSize != null && Integer.parseInt(maxMemoryStoreSize) > 0) {
+            ImdstDefine.bigValueFileStoreUse = true;
+            ImdstDefine.memoryStoreLimitSize = Integer.parseInt(maxMemoryStoreSize);
+        }
+
 
         // 自身のJOB名取出し
         this.myPrefix = super.getJobName();

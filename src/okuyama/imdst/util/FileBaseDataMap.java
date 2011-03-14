@@ -119,7 +119,7 @@ public class FileBaseDataMap extends AbstractMap {
      * @throws
      */
     public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent, int numberOfValueLength) {
-        this(baseDirs, numberOfKeyData, cacheMemPercent, numberOfValueLength, 2048);
+        this(baseDirs, numberOfKeyData, cacheMemPercent, numberOfValueLength, 8192);
     }
 
     /**

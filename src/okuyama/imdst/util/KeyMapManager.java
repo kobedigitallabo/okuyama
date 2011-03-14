@@ -516,10 +516,10 @@ public class KeyMapManager extends Thread {
                 logger.info("VacuumCheck - End");
 
 
-
                 // 有効期限切れデータの削除
                 // 実行指定(ImdstDefine.vacuumInvalidDataFlg)がtrueの場合に1時間に1回実行される
                 // このif文に到達するのが1分に1回なので、それを30回繰り返すと削除処理を実行する
+                //if (dataMemory == true && ImdstDefine.vacuumInvalidDataFlg == true && vacuumInvalidDataCount > 1) {
                 if (dataMemory == true && ImdstDefine.vacuumInvalidDataFlg == true && vacuumInvalidDataCount > ImdstDefine.startVaccumInvalidCount) {
                     logger.info("VacuumInvalidData - Start - 1");
 
@@ -530,18 +530,23 @@ public class KeyMapManager extends Thread {
 
                         long counter = 0;
                         while(entryIte.hasNext()) {
+
                             counter++;
-                            if ((counter % 5000) == 0) logger.info("VacuumInvalidData - Exec Count[" + counter + "]");
+                            if ((counter % 2500) == 0) {
+                                logger.info("VacuumInvalidData - Exec Count[" + counter + "]");
+                                Thread.sleep(100);
+                            }
 
                             Map.Entry obj = (Map.Entry)entryIte.next();
                             if (obj == null) continue;
+
                             Object key = null;
 
                             key = obj.getKey();
 
                             String valStr = (String)this.getKeyPair((String)key);
-							// 削除データの可能性があるので確認(FileBaseのMapを使っている場合)
-							if (valStr == null) continue;
+                            // 削除データの可能性があるので確認(FileBaseのMapを使っている場合)
+                            if (valStr == null) continue;
 
                             String[] valStrSplit = valStr.split(ImdstDefine.setTimeParamSep);
                             valStr = valStrSplit[0];

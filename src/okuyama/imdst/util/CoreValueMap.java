@@ -72,7 +72,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      * @param value
      */
     public Object put(Object key, Object value) {
-
+                System.out.println(((String)value).length());
         // メモリファイル共有Mapモードが起動しているかを確認
         if (!this.isUrgentSaveMode()) {
             return mainMap.put(converter.convertEncodeKey(key), converter.convertEncodeValue(value));
@@ -231,9 +231,15 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             if (this.urgentSaveMap != null) return true;
 
             this.urgentSaveMapConverter = new AllFileModeCoreValueCnv();
+
+            // memoryモード判定
             if (this.allDataMemory) {
-                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 100000, 0.01, (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1));
+
+                // memoryモードの場合はリアルValueをFileMapのValueに入れる
+                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 100000, 0.01, (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1), 1024 * 64);
             } else {
+
+                // 非memoryモードの場合をValueの位置をFileMapのValueに入れる
                 this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 100000, 0.01);
             }
             this.urgentSaveMode = true;
