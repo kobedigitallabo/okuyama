@@ -8,6 +8,7 @@ import okuyama.base.lang.BatchException;
 public class TestSock {
     public static void main(String[] args) {
         try {
+
             if (args == null || args.length ==0) {
 
                 System.out.println("{キー値を自動で繰り返し数分変動させて登録}                        コマンド引数{args[0]=1, args[1]=マスタノードサーバIP, args[2]=マスタノードサーバPort番号, args[3]=登録件数}");
@@ -40,14 +41,24 @@ public class TestSock {
 
                 // マスタサーバに接続
                 okuyamaClient.connect(args[1], port);
-                
+                Random rnd = new Random();
+
+                StringBuilder strBuf =null; 
+                if (args.length > 4) {
+                    strBuf = new StringBuilder(6000*10);
+                    for (int i = 0; i < 6000; i++) {
+                        strBuf.append(rnd.nextInt(1999999999));
+                    }
+                }
+
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
                     // データ登録
                     if (args.length > 4) {
 
-                        if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_" + args[4] + "_" + new Integer(i).toString())) {
-                        //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_" + args[4] + "_" + new Integer(i).toString())) {
+                        //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_" + args[4] + "_" + new Integer(i).toString())) {
+                        if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_" + args[4] + "_" + new Integer(i).toString())) {
+                        //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321" + strBuf.toString() + "_" + args[4] + "_" + new Integer(i).toString())) {
                             System.out.println("OkuyamaClient - error");
                         } else {
                             System.out.println("Store[" + "datasavekey_" + args[4] + "_" + new Integer(i).toString() + "]");
@@ -579,15 +590,31 @@ public class TestSock {
                 String[] ret = null;
 
                 long start = new Date().getTime();
-                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                    ret = okuyamaClient.removeValue("datasavekey_" + new Integer(i).toString());
-                    if (ret[0].equals("true")) {
-                        // データ有り
-                        System.out.println(ret[1]);
-                    } else if (ret[0].equals("false")) {
-                        System.out.println("データなし");
-                    } else if (ret[0].equals("error")) {
-                        System.out.println(ret[1]);
+                if (args.length > 4) {
+
+                    for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                        ret = okuyamaClient.removeValue("datasavekey_" + args[4] + "_" + new Integer(i).toString());
+                        if (ret[0].equals("true")) {
+                            // データ有り
+                            System.out.println(ret[1]);
+                        } else if (ret[0].equals("false")) {
+                            System.out.println("データなし");
+                        } else if (ret[0].equals("error")) {
+                            System.out.println(ret[1]);
+                        }
+                    }
+                } else {
+
+                    for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                        ret = okuyamaClient.removeValue("datasavekey_" + new Integer(i).toString());
+                        if (ret[0].equals("true")) {
+                            // データ有り
+                            System.out.println(ret[1]);
+                        } else if (ret[0].equals("false")) {
+                            System.out.println("データなし");
+                        } else if (ret[0].equals("error")) {
+                            System.out.println(ret[1]);
+                        }
                     }
                 }
                 long end = new Date().getTime();
