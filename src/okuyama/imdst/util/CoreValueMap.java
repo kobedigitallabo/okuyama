@@ -72,7 +72,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
      * @param value
      */
     public Object put(Object key, Object value) {
-                System.out.println(((String)value).length());
+
         // メモリファイル共有Mapモードが起動しているかを確認
         if (!this.isUrgentSaveMode()) {
             return mainMap.put(converter.convertEncodeKey(key), converter.convertEncodeValue(value));

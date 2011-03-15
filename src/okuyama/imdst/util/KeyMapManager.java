@@ -1764,6 +1764,7 @@ public class KeyMapManager extends Thread {
                             pw.println(allDataBuf.toString());
                             allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
                             counter = 0;
+                            Thread.sleep(3000);
                         }
                     }
 

@@ -451,8 +451,9 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                     break;
                 } else {
                     pw.println(retParam);
+                    pw.flush();
                 }
-
+                retParam = null;
                 logger.info("Recover Step - 7 [" + i + "]");
             }
 
@@ -490,19 +491,21 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
             // データを送信
             String diffDataStr = null;
-			int diffCount = 0;
+            int diffCount = 0;
             while((diffDataStr = mbr.readLine()) != null) {
-				diffCount++;
-				if ((diffCount % 10) == 0) 
-		            logger.info("Recover Step - 11 - DiffSendCount[" + diffCount + "]");
+                diffCount++;
+                if ((diffCount % 10) == 0) 
+                    logger.info("Recover Step - 11 - DiffSendCount[" + diffCount + "]");
 
                 if (diffDataStr.equals("-1")) break;
                 pw.println(diffDataStr);
                 pw.flush();
-				// 転送先の取り込み完了を待つ
-				String inputEnd = br.readLine();
 
-				mpw.println(inputEnd);
+                diffDataStr = null;
+                // 転送先の取り込み完了を待つ
+                String inputEnd = br.readLine();
+
+                mpw.println(inputEnd);
                 mpw.flush();
             }
 
