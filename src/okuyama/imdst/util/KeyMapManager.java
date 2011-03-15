@@ -1741,6 +1741,7 @@ public class KeyMapManager extends Thread {
                     Iterator entryIte = entrySet.iterator(); 
 
                     long counter = 0;
+                    int sendCounter = 0;
                     while(entryIte.hasNext()) {
 
                         if ((counter % 1000) == 0) logger.info("outputKeyMapObj2Stream - output count[" + counter + "]");
@@ -1761,11 +1762,14 @@ public class KeyMapManager extends Thread {
 
                         counter++;
                         if (counter > (maxLineCount - 1)) {
+                            sendCounter++;
                             pw.println(allDataBuf.toString());
+                            pw.flush();
                             allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
                             counter = 0;
-                            Thread.sleep(3000);
+                            if ((sendCounter % 2) == 0) Thread.sleep(2000);
                         }
+
                     }
 
                     String lastSendStr = allDataBuf.toString();
