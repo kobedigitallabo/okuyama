@@ -37,7 +37,7 @@ public class PartialConcurrentHashMap extends ConcurrentHashMap implements Clone
                                          bigValueStoreDirs[0] + "/partialbigdata3/", 
                                          bigValueStoreDirs[0] + "/partialbigdata4/", 
                                          bigValueStoreDirs[0] + "/partialbigdata5/"};
-            this.bigValueStoreMap = new FileBaseDataMap(bigValueStoreDir, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.memoryStoreLimitSize * 2);
+            this.bigValueStoreMap = new FileBaseDataMap(bigValueStoreDir, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.memoryStoreLimitSize);
         }
     }
 
@@ -46,7 +46,7 @@ public class PartialConcurrentHashMap extends ConcurrentHashMap implements Clone
         // 規定サイズを超える場合でかつ、VirtualStoreのディレクトリが指定してある場合はFileBaseMapに格納
 
         byte[] valueBytes = (byte[])value;
-
+        //System.out.println("Partial= " + valueBytes.length);
         if (fullMemory == false && valueBytes.length > ImdstDefine.memoryStoreLimitSize) {
 
             this.bigValueStoreMap.put(new String(((CoreMapKey)key).getDatas()), new String(BASE64EncoderStream.encode(valueBytes)));

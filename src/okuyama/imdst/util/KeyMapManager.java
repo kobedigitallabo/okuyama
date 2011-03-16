@@ -1723,8 +1723,8 @@ public class KeyMapManager extends Thread {
                     Set entrySet = this.keyMapObj.entrySet();
 
                     int printLineCount = 0;
-                    // 一度に送信するデータ量を算出。空きメモリの50%を使用する
-                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.5) / (ImdstDefine.saveDataMaxSize / 100)).intValue();
+                    // 一度に送信するデータ量を算出。空きメモリの20%を使用する
+                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.2) / (ImdstDefine.saveDataMaxSize / 100)).intValue();
 
                     if (entrySet.size() > 0) {
                         if(maxLineCount == 0) maxLineCount = 1;
@@ -1805,6 +1805,7 @@ public class KeyMapManager extends Thread {
 
                     // 差分データの全内容を1行文字列として書き出し
                     int i = 0;
+                    ((FileBaseDataList)this.diffDataPoolingListForFileBase).waitTime = 300;
                     for (; i < this.diffDataPoolingListForFileBase.size() - 10; i++) {
 
                         allDataBuf.append(allDataSep);

@@ -27,8 +27,10 @@ public class FileBaseDataMap extends AbstractMap {
 
     private CoreFileBaseKeyMap[] coreFileBaseKeyMaps = null;
     private CoreFileBaseKeyMap coreFileBaseKeyMap4BigData = null;
-    private boolean fixMap = false;
+    private CoreFileBaseKeyMap coreFileBaseKeyMap4MiddleData = null;
+    private int coreMapType = 0; //0:Map1つのみ、1:Map2つ、2:Map3つ
     private int regularSizeLimit = 0;
+    private int middleSize = 0;
 
     private String[] dirs = null;
 
@@ -151,15 +153,27 @@ public class FileBaseDataMap extends AbstractMap {
 
         if (numberOfValueLength > 0) {
 
-            if (numberOfValueLength > regularSizeLimit) {
-                fixMap = true;
+            if (numberOfValueLength > (regularSizeLimit*14)) {
+
+                coreMapType = 2;
+                // 最大サイズ用
+                String[] bigDataDir = {baseDirs[0]+"/virtualbigdata1/", baseDirs[0]+"/virtualbigdata2/"};
+                coreFileBaseKeyMap4BigData = new FixWriteCoreFileBaseKeyMap(bigDataDir, oneCacheSizePer / 3, oneMapSizePer / 3, numberOfValueLength);
+
+                // ミドルサイズ用
+                middleSize = regularSizeLimit*10;
+                String[] middleDataDir = {baseDirs[0]+"/virtualmiddledata1/", baseDirs[0]+"/virtualmiddledata2/"};
+                coreFileBaseKeyMap4MiddleData = new FixWriteCoreFileBaseKeyMap(middleDataDir, oneCacheSizePer / 3, oneMapSizePer / 3, middleSize);
+            } else if (numberOfValueLength > regularSizeLimit){
+
+                coreMapType = 1;
+                // 最大サイズ用
                 String[] bigDataDir = {baseDirs[0]+"/virtualbigdata1/", baseDirs[0]+"/virtualbigdata2/"};
                 coreFileBaseKeyMap4BigData = new FixWriteCoreFileBaseKeyMap(bigDataDir, oneCacheSizePer / 2, oneMapSizePer / 2, numberOfValueLength);
             }
             this.coreFileBaseKeyMaps = new FixWriteCoreFileBaseKeyMap[baseDirs.length];
         } else {
 
-            fixMap = true;
             this.coreFileBaseKeyMaps = new DelayWriteCoreFileBaseKeyMap[baseDirs.length];
         }
 
@@ -199,19 +213,43 @@ public class FileBaseDataMap extends AbstractMap {
 
         synchronized (this.syncObj) { 
 
-            if (fixMap) {
+            if (coreMapType != 0) {
                 String valueStr = (String)value;
                 byte[] valueStrBytes = valueStr.getBytes();
 
-                if (valueStrBytes.length > regularSizeLimit) {
+                if (coreMapType == 1) {
+                    if (valueStrBytes.length > regularSizeLimit) {
 
-                    this.coreFileBaseKeyMap4BigData.put((String)key, valueStr, hashCode);
-                    // データが存在するマーカー"*"を設定
-                    this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].put((String)key, "*", hashCode);
-                } else {
+                        this.coreFileBaseKeyMap4BigData.put((String)key, valueStr, hashCode);
+                        // データが存在するマーカー"*"を設定
+                        this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].put((String)key, "*", hashCode);
+                    } else {
 
-                    this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].put((String)key, valueStr, hashCode);
-                    //this.coreFileBaseKeyMap4BigData.remove((String)key, valueStr, hashCode);
+                        this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].put((String)key, valueStr, hashCode);
+                        //this.coreFileBaseKeyMap4BigData.remove((String)key, valueStr, hashCode);
+                    }
+                } else if (coreMapType == 2) {
+                    if (valueStrBytes.length > middleSize) {
+
+                        this.coreFileBaseKeyMap4BigData.put((String)key, valueStr, hashCode);
+
+                        // 設定前に古いデータがあるかもしれないので消す
+                        this.coreFileBaseKeyMap4MiddleData.remove((String)key, hashCode);
+                        // データが存在するマーカー"*"を設定
+                        this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].put((String)key, "*", hashCode);
+                    } else if (valueStrBytes.length > regularSizeLimit) {
+
+                        this.coreFileBaseKeyMap4MiddleData.put((String)key, valueStr, hashCode);
+
+                        // 設定前に古いデータがあるかもしれないので消す
+                        this.coreFileBaseKeyMap4BigData.remove((String)key, hashCode);
+                        // データが存在するマーカー"**"を設定
+                        this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].put((String)key, "**", hashCode);
+                    } else {
+
+                        this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].put((String)key, valueStr, hashCode);
+                        //this.coreFileBaseKeyMap4BigData.remove((String)key, valueStr, hashCode);
+                    }
                 }
             } else {
 
@@ -234,9 +272,11 @@ public class FileBaseDataMap extends AbstractMap {
 
         synchronized (this.syncObj) { 
             ret = this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].get((String)key, hashCode);
-            if (fixMap) {
+            if (coreMapType != 0) {
                 if (ret != null && ret.equals("*")) {
                     ret = this.coreFileBaseKeyMap4BigData.get((String)key, hashCode);
+                } else if (ret != null && ret.equals("**")){
+                    ret = this.coreFileBaseKeyMap4MiddleData.get((String)key, hashCode);
                 }
             }
         }
@@ -255,8 +295,10 @@ public class FileBaseDataMap extends AbstractMap {
 
         synchronized (this.syncObj) { 
             ret = this.coreFileBaseKeyMaps[hashCode % this.numberOfCoreMap].remove((String)key, hashCode);
-            if (fixMap == true && ret != null && ret.equals("*")) {
+            if (coreMapType != 0 && ret != null && ret.equals("*")) {
                 ret = this.coreFileBaseKeyMap4BigData.remove((String)key, hashCode);
+            } else if (coreMapType != 0 && ret != null && ret.equals("**")) {
+                ret = this.coreFileBaseKeyMap4MiddleData.remove((String)key, hashCode);
             }
         }
         return ret;
@@ -312,12 +354,16 @@ public class FileBaseDataMap extends AbstractMap {
             synchronized (this.syncObj) { 
                 this.coreFileBaseKeyMaps[i].clear();
                 this.coreFileBaseKeyMaps[i].init();
-            }
-        }
+                if (coreMapType > 0) {
+                    this.coreFileBaseKeyMap4BigData.clear();
+                    this.coreFileBaseKeyMap4BigData.init();
+                } 
 
-        if (fixMap = true) {
-            this.coreFileBaseKeyMap4BigData.clear();
-            this.coreFileBaseKeyMap4BigData.init();
+                if (coreMapType > 1) {
+                    this.coreFileBaseKeyMap4MiddleData.clear();
+                    this.coreFileBaseKeyMap4MiddleData.init();
+                } 
+            }
         }
     }
 
@@ -334,11 +380,13 @@ public class FileBaseDataMap extends AbstractMap {
 
             synchronized (this.syncObj) { 
                 this.coreFileBaseKeyMaps[i].clear();
+                if (coreMapType > 0) {
+                    this.coreFileBaseKeyMap4BigData.clear();
+                }
+                if (coreMapType > 1) {
+                    this.coreFileBaseKeyMap4MiddleData.clear();
+                }
             }
-        }
-
-        if (fixMap = true) {
-            this.coreFileBaseKeyMap4BigData.clear();
         }
     }
 

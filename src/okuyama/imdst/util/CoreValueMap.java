@@ -85,6 +85,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             } else {
 
                 // メモリファイル共有Map
+                //System.out.println("Virtual[ " + ((String)value).length());
                 return urgentSaveMap.put(urgentSaveMapConverter.convertEncodeKey(key), urgentSaveMapConverter.convertEncodeValue(value));
             }
         }
@@ -236,11 +237,11 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             if (this.allDataMemory) {
 
                 // memoryモードの場合はリアルValueをFileMapのValueに入れる
-                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 100000, 0.01, (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1), 1024 * 64);
+                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 100000, 0.05, (new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue() + 1), 1536);
             } else {
 
                 // 非memoryモードの場合をValueの位置をFileMapのValueに入れる
-                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 100000, 0.01);
+                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 100000, 0.05);
             }
             this.urgentSaveMode = true;
         }

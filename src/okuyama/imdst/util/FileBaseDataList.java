@@ -28,6 +28,10 @@ public class FileBaseDataList extends AbstractList {
 
     private int nowIndex = 0;
 
+    private boolean waitFlg = false;
+
+    public int waitTime = 100;
+
     private static int paddingSymbol = 64;
 
     private static byte[] paddingSymbols = {64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
@@ -110,6 +114,23 @@ public class FileBaseDataList extends AbstractList {
     }
 
 
+    /**
+     * コンストラクタ.<br>
+     * 遅延設定
+     *
+     * @param dataFile
+     * @return 
+     * @throws
+     */
+    public FileBaseDataList(String dataFile, int size, boolean waitFlg) {
+        this.oneDataLength = size;
+        this.dataFileDir = dataFile;
+        this.dataFile = new File(dataFile);
+        this.init();
+        this.waitFlg = waitFlg;
+    }
+
+
     public boolean init() {
         boolean ret = false;
         try {
@@ -163,6 +184,7 @@ public class FileBaseDataList extends AbstractList {
                 this.wr.write(writeStr);
                 this.wr.write("\n");
                 this.wr.flush();
+                if (this.waitFlg) if ((this.size() % 4) == 0)Thread.sleep(this.waitTime);
             }
             writeStr = null;
             writeStrBuf = null;
