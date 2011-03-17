@@ -85,6 +85,13 @@ public class ImdstDefine {
     // データノードに対するLock取得状況の確認の成否の返却文字列の先頭部分
     public static final String hasKeyNodeLockSuccessStr = "32,true";
 
+    // データノードに対するKeyに紐付くTagデータ削除時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeTgaInKeyRemoveSuccessStr = "40,true";
+
+    // データノードに対するKeyに紐付くTagデータ削除時に失敗した場合の返却文字列の先頭部分
+    public static final String keyNodeTgaInKeyRemoveNotFoundStr = "40,false";
+
+
     // MasterNodeのgetMultiValueを呼び出した際のClientへの戻り値
     public static final String getMultiEndOfDataStr = "END";
 

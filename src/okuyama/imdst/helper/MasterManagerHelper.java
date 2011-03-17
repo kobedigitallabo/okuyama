@@ -508,6 +508,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // TransactionのRollbackを行う
                             //retParams = this.rollbackTransaction(clientParameterList[1]);
                             break;
+                        case 40 :
+
+                            // 指定したKey値から指定したTag値を外す
+                            // Protcol Format
+                            // 40,dGFnMw==,dGFnc2FtcGxlZGF0YWtleV80Mg==,0
+                            //    -------- エンコード済み削除指定タグ値
+                            //             ---------------------------- 削除Key値
+                            //                                          -- トランザクションコード
+                            retParams = this.removeTargetTagInKey(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
+                            break;
                         case 90 :
 
                             // KeyNodeの使用停止をマーク
@@ -1747,6 +1757,110 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             retStrs[2] = "NG:MasterManagerHelper - removeKeyValue - Exception - " + e.toString();
         }
         //logger.debug("MasterManagerHelper - removeKeyValue - end");
+        return retStrs;
+    }
+
+
+
+    /**
+     * 指定したKeyから指定したTagを取り外す.<br>
+     * 処理フロー.<br>
+     *
+     * @param keyStr key値の文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] removeTargetTagInKey(String tagStr, String keyStr, String transactionCode) throws BatchException {
+        //logger.debug("MasterManagerHelper - removeTargetTagInKey - start");
+        String[] retStrs = new String[3];
+
+        String[] keyNodeRemoveRet = null;
+
+        String[] oldKeyNodeRemoveRet = null;
+        try {
+
+            // Isolation変換実行
+            keyStr = this.encodeIsolationConvert(keyStr);
+
+            // Key値チェック
+            if (!this.checkKeyLength(keyStr))  {
+                retStrs[0] = "40";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
+
+            // TagをIsolation変換実行
+            tagStr = this.encodeIsolationConvert(tagStr);
+
+            if (!this.checkKeyLength(tagStr))  {
+                // 保存失敗
+                retStrs[0] = "40";
+                retStrs[1] = "false";
+                retStrs[2] = "Tag Data Length Error";
+            }
+
+            // Tag値保存先を問い合わせ
+            String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, false);
+
+
+            // 取得実行
+            if (tagKeyNodeInfo.length == 3) {
+                keyNodeRemoveRet = this.removeTargetTagInKey(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], null, null, null, tagStr, keyStr, transactionCode);
+            } else if (tagKeyNodeInfo.length == 6) {
+                keyNodeRemoveRet = this.removeTargetTagInKey(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], tagStr, keyStr, transactionCode);
+            } else if (tagKeyNodeInfo.length == 9) {
+                keyNodeRemoveRet = this.removeTargetTagInKey(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], tagKeyNodeInfo[6], tagKeyNodeInfo[7], tagKeyNodeInfo[8], tagStr, keyStr, transactionCode);
+            }
+
+
+            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
+            // そちらのルールでも削除する
+            // キー値を使用して取得先を決定
+            for (int i = 0; (tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, false, i)) != null; i++) {
+
+                // 過去ルールを探索
+                // 取得実行
+                if (tagKeyNodeInfo.length == 3) {
+                    oldKeyNodeRemoveRet = this.removeTargetTagInKey(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], null, null, null, tagStr, keyStr, transactionCode);
+                } else if (tagKeyNodeInfo.length == 6) {
+                    oldKeyNodeRemoveRet = this.removeTargetTagInKey(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], tagStr, keyStr, transactionCode);
+                } else if (tagKeyNodeInfo.length == 9) {
+                    oldKeyNodeRemoveRet = this.removeTargetTagInKey(tagKeyNodeInfo[0], tagKeyNodeInfo[1], tagKeyNodeInfo[2], tagKeyNodeInfo[3], tagKeyNodeInfo[4], tagKeyNodeInfo[5], tagKeyNodeInfo[6], tagKeyNodeInfo[7], tagKeyNodeInfo[8], tagStr, keyStr, transactionCode);
+                }
+
+                if (keyNodeRemoveRet == null || keyNodeRemoveRet[1].equals("false")) {
+                    if (oldKeyNodeRemoveRet != null && oldKeyNodeRemoveRet[1].equals("true")) {
+                        keyNodeRemoveRet = oldKeyNodeRemoveRet;
+                    }
+                }
+            }
+
+            // 取得結果確認
+            if (keyNodeRemoveRet == null || keyNodeRemoveRet.length < 1) {
+                throw new BatchException("Key Node IO Error: detail info for log file");
+            } else if (keyNodeRemoveRet[1].equals("false")) {
+
+                // 削除失敗(元データなし)
+                retStrs[0] = keyNodeRemoveRet[0];
+                retStrs[1] = "false";
+                retStrs[2] = "";
+                
+            } else {
+                retStrs[0] = keyNodeRemoveRet[0];
+                retStrs[1] = "true";
+                retStrs[2] = "";
+            }
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - removeTargetTagInKey - Error", be);
+        } catch (Exception e) {
+            logger.error("MasterManagerHelper - removeTargetTagInKey - Error", e);
+            retStrs[0] = "40";
+            retStrs[1] = "error";
+            retStrs[2] = "NG:MasterManagerHelper - removeTargetTagInKey - Exception - " + e.toString();
+        }
+        //logger.debug("MasterManagerHelper - removeTargetTagInKey - end");
         return retStrs;
     }
 
@@ -4372,6 +4486,210 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
                     retParams[2] = cnvConsistencyRet[0];
                 }
+            }
+        }
+
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeに対してKeyに紐付くTagの削除を依頼する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param tag Tagデータ
+     * @param key Keyデータ
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] removeTargetTagInKey(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String tag, String key, String transactionCode) throws BatchException {
+
+        boolean exceptionFlg = false;
+        String[] ret = null;
+        String[] thirdRet = null;
+        BatchException retBe = null;
+
+        try {
+
+            ret = this.removeTargetTagInKey(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, tag, key, transactionCode);
+            if (ret == null) throw new BatchException("removeTargetTagInKey - RetParam = null");
+        } catch (BatchException be) {
+
+            retBe = be;
+            exceptionFlg = true;
+        } catch (Exception e) {
+
+            retBe = new BatchException(e);
+            exceptionFlg = true;
+        } finally {
+            
+            try {
+                thirdRet = this.removeTargetTagInKey(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, tag, key, transactionCode);
+                if (exceptionFlg) ret = thirdRet;
+            } catch (Exception e) {
+                if (exceptionFlg) throw retBe;
+            }
+        }
+
+        return ret;
+    }
+
+
+    /**
+     * KeyNodeに対してデータを削除する.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param tag Tagデータ
+     * @param key Keyデータ
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] removeTargetTagInKey(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String tag, String key, String transactionCode) throws BatchException {
+
+        KeyNodeConnector keyNodeConnector = null;
+
+        String nodeName = keyNodeName;
+        String nodePort = keyNodePort;
+        String nodeFullName = keyNodeFullName;
+
+        String[] retParams = null;
+        String[] cnvConsistencyRet = null;
+
+        int counter = 0;
+
+        String tmpSaveHost = null;
+        String[] tmpSaveData = null;
+        String retParam = null;
+
+        boolean mainNodeSave = false;
+        boolean subNodeSave = false;
+        try {
+            // TransactionModeの状態に合わせてLock状態を確かめる
+            if (transactionMode) {
+                while (true) {
+                    // TransactionMode時
+
+                    // TransactionManagerに処理を依頼
+                    String[] keyNodeLockRet = hasLockKeyNode(transactionManagerInfo[0], transactionManagerInfo[1], tag);
+
+                    // 取得結果確認
+                    if (keyNodeLockRet[1].equals("true")) {
+                        if (keyNodeLockRet[2].equals(transactionCode)) break;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            do {
+                // KeyNodeとの接続を確立
+                keyNodeConnector = this.createKeyNodeConnection(nodeName, nodePort, nodeFullName, false);
+
+
+                // 接続結果と、現在の保存先状況で処理を分岐
+                if (keyNodeConnector != null) {
+                    try {
+
+                        // Key値でデータノード名を保存
+                        StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+                        String sendStr = null;
+                        // パラメータ作成 キー値のハッシュ値文字列[セパレータ]データノード名
+                        buf.append("40");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(this.stringCnv(tag));
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(this.stringCnv(key));
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(transactionCode);
+                        sendStr = buf.toString();
+
+                        // 送信
+                        keyNodeConnector.println(sendStr);
+                        keyNodeConnector.flush();
+
+                        // 返却値取得
+                        retParam = keyNodeConnector.readLine(sendStr);
+
+                        // 使用済みの接続を戻す
+                        super.addKeyNodeCacheConnectionPool(keyNodeConnector);
+
+                        // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                        if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTgaInKeyRemoveSuccessStr) == 0) {
+                            if (counter == 0) mainNodeSave = true;
+                            if (counter == 1) subNodeSave = true;
+                        } else if (retParam == null || retParam.indexOf(ImdstDefine.keyNodeTgaInKeyRemoveNotFoundStr) != 0){
+                            // 論理的に削除失敗
+                            super.setDeadNode(nodeName + ":" + nodePort, 14, null);
+                            logger.error("removeTargetTagInKey Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
+
+                        }
+                    } catch (SocketException se) {
+
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
+                        super.setDeadNode(nodeName + ":" + nodePort, 15, se);
+                        logger.debug(se);
+                    } catch (IOException ie) {
+
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
+                        super.setDeadNode(nodeName + ":" + nodePort, 16, ie);
+                        logger.debug(ie);
+                    } catch (Exception ee) {
+
+                        if (keyNodeConnector != null) {
+                            keyNodeConnector.close();
+                            keyNodeConnector = null;
+                        }
+                        super.setDeadNode(nodeName + ":" + nodePort, 17, ee);
+                        logger.debug(ee);
+                    }
+                }
+
+                // スレーブデータノードの名前を代入
+                nodeName = subKeyNodeName;
+                nodePort = subKeyNodePort;
+                nodeFullName = subKeyNodeFullName;
+
+                counter++;
+                // スレーブデータノードが存在しない場合もしくは、既に2回保存を実施した場合は終了
+            } while(nodeName != null && counter < 2);
+
+        } catch (BatchException be) {
+
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
+            throw be;
+        } catch (Exception e) {
+
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
+            throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            if (subKeyNodeName != null) 
+                super.execNodeUseEnd(subKeyNodeFullName);
+
+            // 返却地値をパースする
+            if (retParam != null) {
+
+                retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
             }
         }
 

@@ -660,7 +660,7 @@ public class KeyMapManager extends Thread {
 
                 //logger.debug("setKeyPair - synchronized - start");
                 // このsynchroの方法は正しくないきがするが。。。
-                synchronized(this.parallelSyncObjs[((keyNode.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
+                synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
 
                     if (this.moveAdjustmentDataMap != null) {
                         synchronized (this.moveAdjustmentSync) {
@@ -967,7 +967,6 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-
                     if (ret != null) {
                         keyMapObjRemove(key);
                     } else {
@@ -1044,15 +1043,23 @@ public class KeyMapManager extends Thread {
 
                             firsrtRegist = false;
                             keyStrs = this.getKeyPair(tagCnv);
+
                             String[] workStrs = keyStrs.split(ImdstDefine.setTimeParamSep);
+                            
                             keyStrs = workStrs[0];
 
-                            if (keyStrs.indexOf(((String[])key.split(ImdstDefine.setTimeParamSep))[0]) != -1) {
+                            String[] tagKeysList = keyStrs.split(KeyMapManager.tagKeySep);
+                            for (int tagKeysListIdx = 0; tagKeysListIdx < tagKeysList.length; tagKeysListIdx++) {
+                                if (tagKeysList[tagKeysListIdx].equals(((String[])key.split(ImdstDefine.setTimeParamSep))[0])) {
 
-                                // 既に登録済み
-                                appendFlg = false;
-                                break;
-                            }
+                                    // 既に登録済み
+                                    appendFlg = false;
+                                    break;
+                                }
+                            } 
+
+                            // 既に登録済み
+                            if (!appendFlg) break;
                         } else {
 
                             // Tag値のデータそのものがないもしくは、登録連番の中にはデータがない
@@ -1089,16 +1096,18 @@ public class KeyMapManager extends Thread {
                                 counter++;
 
                                 tagCnv = KeyMapManager.tagStartStr + tag + "_" + (dataPutCounter + 1) + KeyMapManager.tagEndStr;
-                                
-                                
+
                                 this.setKeyPair(tagCnv, key, transactionCode);
-                            } else{
+                            } else {
 
                                 // アペンド
                                 tagCnv = KeyMapManager.tagStartStr + tag + "_" + dataPutCounter + KeyMapManager.tagEndStr;
 
-                                keyStrs = keyStrs + KeyMapManager.tagKeySep + key;
-                                
+                                if (keyStrs.equals("*")) {
+                                    keyStrs = key;
+                                } else {
+                                    keyStrs = keyStrs + KeyMapManager.tagKeySep + key;
+                                }
                                 this.setKeyPair(tagCnv, keyStrs, transactionCode);
                             }
                         }
@@ -1116,6 +1125,132 @@ public class KeyMapManager extends Thread {
             }
         }
     }
+
+
+    // Tagとキーを指定することでTagとキーをセットする
+    public boolean removeTargetTagInKey(String tag, String key, String transactionCode) throws BatchException {
+        boolean ret = false;
+
+        if (!blocking) {
+
+            try {
+                String keyStrs = null;
+                int counter = 0;
+                boolean appendFlg = true;
+                String tagCnv = null;
+                String lastTagCnv = null;
+                int dataPutCounter = 0;
+                boolean firsrtRegist = true;
+
+                String targetKey = key;
+                key = ((String[])key.split(ImdstDefine.setTimeParamSep))[0] + ImdstDefine.setTimeParamSep +"0";
+                counter = (((key.hashCode() << 1) >>> 1) % 300) * 500000;
+
+
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.tagSetParallelSyncObjs[((tag.hashCode() << 1) >>> 1) % KeyMapManager.tagSetParallelSize]) {
+
+                    while (true) {
+
+                        tagCnv = KeyMapManager.tagStartStr + tag + "_" + new Integer(counter).toString() + KeyMapManager.tagEndStr;
+
+                        if (this.containsKeyPair(tagCnv)) {
+
+                            // データあり
+                            firsrtRegist = false;
+                            keyStrs = this.getKeyPair(tagCnv);
+System.out.println("keyStrs1[" + keyStrs +"]");
+                            String[] workStrs = keyStrs.split(ImdstDefine.setTimeParamSep);
+                            keyStrs = workStrs[0];
+System.out.println("keyStrs2[" + keyStrs +"]");
+System.out.println("targetKey[" + targetKey +"]");
+                            if (keyStrs.indexOf(targetKey) != -1 && 
+                               (keyStrs.equals(targetKey) == true || 
+                                keyStrs.indexOf(":" + targetKey + ":") != -1 ||
+                                keyStrs.indexOf(targetKey + ":") == 0 ||
+                                keyStrs.indexOf(":" + targetKey) == (keyStrs.length() - (":" + targetKey).length())
+                                )) {
+
+                                StringBuilder setNewTagKeysBuf = null;
+
+                                // このTagの組に他のKeyも含まれている場合と、含まれていない場合で処理分岐
+                                if (!keyStrs.equals(targetKey)) {
+
+                                    String[] removedWork = null;
+
+                                    // 分解結果に合わせて処理分岐
+                                    if ((keyStrs.indexOf(":" + targetKey + ":")) != -1) {
+                                        // 結果が中間にあった場合
+                                        removedWork = keyStrs.split(":" + targetKey + ":");
+
+                                        setNewTagKeysBuf = new StringBuilder(removedWork[0].length() + removedWork[1].length() + 2);
+                                        setNewTagKeysBuf.append(removedWork[0]);
+                                        setNewTagKeysBuf.append(":");
+                                        setNewTagKeysBuf.append(removedWork[1]);
+                                        setNewTagKeysBuf.append(ImdstDefine.setTimeParamSep);
+                                        setNewTagKeysBuf.append("0");
+
+                                    } else if ((keyStrs.indexOf(targetKey + ":")) == 0){
+                                        // 結果が先頭にあった場合
+                                        removedWork = keyStrs.split(targetKey + ":");
+
+                                        setNewTagKeysBuf = new StringBuilder(removedWork[0].length() + 2);
+                                        if (removedWork[0].length() > 0) {
+                                            setNewTagKeysBuf.append(removedWork[0]);
+                                        } else {
+                                            setNewTagKeysBuf.append("*");
+                                        }
+                                        setNewTagKeysBuf.append(ImdstDefine.setTimeParamSep);
+                                        setNewTagKeysBuf.append("0");
+
+                                    } else if (keyStrs.indexOf(":" + targetKey) == (keyStrs.length() - (":" + targetKey).length())){
+                                        // 結果が最端にあった場合
+                                        removedWork = keyStrs.split( ":" + targetKey);
+
+                                        setNewTagKeysBuf = new StringBuilder(removedWork[0].length() + 2);
+                                        if (removedWork[0].length() > 0) {
+                                            setNewTagKeysBuf.append(removedWork[0]);
+                                        } else {
+                                            setNewTagKeysBuf.append("*");
+                                        }
+                                        setNewTagKeysBuf.append(ImdstDefine.setTimeParamSep);
+                                        setNewTagKeysBuf.append("0");
+                                    }
+
+                                    // 削除済みデータをset
+                                    this.setKeyPair(tagCnv, setNewTagKeysBuf.toString(), transactionCode);
+                                } else {
+
+                                    // 該当のTagの組を削除する
+                                    this.setKeyPair(tagCnv, "*!0", transactionCode);
+                                }
+
+                                ret = true;
+                                break;
+                            }
+                        } else {
+
+                            // データなし
+                            break;
+                        }
+
+                        counter++;
+                    }
+                }
+            /*} catch (BatchException be) {
+                logger.error("removeTargetTagInKey - InnerError", be);
+                throw be;*/
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("removeTargetTagInKey - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(12, "removeTargetTagInKey - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+        return ret;
+    }
+
 
 
     // Tagを指定することでKeyリストを返す
@@ -1155,7 +1290,7 @@ public class KeyMapManager extends Thread {
         
                         tmpStr = (String)this.getKeyPair(tagCnv);
         
-                        if (tmpStr != null) {
+                        if (tmpStr != null && !tmpStr.equals("*!0")) {
         
                             isMatch = true;
                             tmpBuf.append(tmpSep);
@@ -1166,7 +1301,8 @@ public class KeyMapManager extends Thread {
         
                             tmpBuf.append(setTimeSplitWork[0]);
                             tmpSep = KeyMapManager.tagKeySep;
-                        } else {
+
+                        } else if (tmpStr == null){
         
                             if (!isMatch) {
         
@@ -1204,6 +1340,103 @@ public class KeyMapManager extends Thread {
             ret.append(ImdstDefine.setTimeParamSep).append(lastSetTime);
             keyStrs = ret.toString();
         } 
+        return keyStrs;
+    }
+
+
+    // Tagを指定することでTagを消す
+    public String removeTagRelation(String tag, String transactionCode) throws BatchException {
+        String keyStrs = "";
+        String[] setTimeSplitWork = null;
+
+        boolean isMatch = false;
+        StringBuilder tmpBuf = new StringBuilder(ImdstDefine.stringBufferLarge_2Size);
+        String tmpStr = null;
+        String tmpSep = "";
+        String lastSetTime = "";
+        String counterSep = "";
+        StringBuilder ret = new StringBuilder();
+        try {        
+
+            if (!blocking) {
+                int counter = 0;
+
+                // Tagを消し込む
+                // 返却値として関係するKey値群を返す
+                synchronized(this.tagSetParallelSyncObjs[((tag.hashCode() << 1) >>> 1) % KeyMapManager.tagSetParallelSize]) {
+                    for (int idx = 0; idx < 145000001; idx=idx+500000) {
+                        keyStrs = "";
+                        setTimeSplitWork = null;
+                        isMatch = false;
+                        tmpBuf = new StringBuilder(ImdstDefine.stringBufferLarge_2Size);
+                        tmpStr = null;
+                        tmpSep = "";
+                        
+                        
+                        counter = idx;
+                        while(true) {
+                
+                            String tagCnv = KeyMapManager.tagStartStr + tag + "_" + counter + KeyMapManager.tagEndStr;
+                            
+                            if (this.containsKeyPair(tagCnv)) {
+
+                                tmpStr = (String)this.removeKeyPair(tagCnv, transactionCode);
+                
+                                if (tmpStr != null) {
+                
+                                    isMatch = true;
+                                    tmpBuf.append(tmpSep);
+                
+                                    setTimeSplitWork = tmpStr.split(ImdstDefine.setTimeParamSep);
+                
+                                    if (setTimeSplitWork.length > 1) lastSetTime = setTimeSplitWork[1];
+                
+                                    tmpBuf.append(setTimeSplitWork[0]);
+                                    tmpSep = KeyMapManager.tagKeySep;
+                                } else {
+                
+                                    if (!isMatch) {
+                
+                                        keyStrs = null;
+                                    } else {
+                
+                                        keyStrs = tmpBuf.toString();
+                                    }
+                                    break;
+                                }
+                            } else {
+                
+                                if (!isMatch) {
+                                    keyStrs = null;
+                                } else {
+                                    keyStrs = tmpBuf.toString();
+                                }
+                                break;
+                            }
+                            counter++;
+                        }
+                        
+                        if (keyStrs != null) {
+                            
+                            ret.append(counterSep);
+                            ret.append(keyStrs);
+                            counterSep = KeyMapManager.tagKeySep;
+                        }
+                    }
+                }
+            }
+            
+            if (ret.toString().equals("")) {
+                keyStrs = null;
+            } else {
+                ret.append(ImdstDefine.setTimeParamSep).append(lastSetTime);
+                keyStrs = ret.toString();
+            } 
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new BatchException(e);
+        }
+
         return keyStrs;
     }
 
@@ -1784,7 +2017,6 @@ public class KeyMapManager extends Thread {
                             counter = 0;
                             if ((sendCounter % 2) == 0) Thread.sleep(2000);
                         }
-
                     }
 
                     String lastSendStr = allDataBuf.toString();

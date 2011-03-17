@@ -3039,6 +3039,124 @@ public class OkuyamaClient {
 
 
     /**
+     * MasterNodeへKey値とTag値を指定してTagの紐付きを削除する.<br>
+     * Tagなし.<br>
+     *
+     * @param keyStr Key値
+     * @param tagStr tag値
+     * @return boolean 削除成否
+     * @throws OkuyamaClientException
+     */
+    public boolean removeTagFromKey(String keyStr, String tagStr) throws OkuyamaClientException {
+        boolean ret = false; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        // 文字列バッファ初期化
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            // Byte Lenghtチェック
+            if (tagStr != null) {
+                if (tagStr.getBytes().length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+            }
+
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.trim().equals(""))
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+
+            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+
+            serverRequestBuf = new StringBuilder();
+            // 処理番号連結
+            serverRequestBuf.append("40");
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+
+            // Tag連結
+            serverRequestBuf.append(new String(this.dataEncoding(tagStr.getBytes())));
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+            // Key連結
+            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            serverRequestBuf.append(this.transactionCode);
+
+System.out.println(serverRequestBuf.toString());
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet.length == 2 && serverRet[0].equals("40")) {
+                if (serverRet[1].equals("true")) {
+
+                    // 処理成功
+                    ret = true;
+                } else {
+
+                    // データなし
+                    ret = false;
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRetStr + "]");
+            }
+
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.removeTagFromKey(keyStr, tagStr);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.removeTagFromKey(keyStr, tagStr);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.removeTagFromKey(keyStr, tagStr);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
      * MasterNodeからKeyでValueを取得する(バイナリ).<br>
      * setByteValueで登録したValueはこちらで取得する.<br>
      *

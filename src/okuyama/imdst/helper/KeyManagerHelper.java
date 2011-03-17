@@ -109,6 +109,10 @@ public class KeyManagerHelper extends AbstractHelper {
 
             String transactionCode = null;
 
+            String removeTag = null;
+            String removeTagForKey = null;
+
+
             String accessQueueName = null;
 
             String updateVersionNo = null;
@@ -257,8 +261,8 @@ public class KeyManagerHelper extends AbstractHelper {
                             break;
                         case -1 :
 
+                            // 応答を返さない
                             // Key値とDataNode名を格納する
-                            // 遅延書き込みメソッド
                             requestHashCode = clientParameterList[1];
                             transactionCode = clientParameterList[2];
                             requestDataNode = clientParameterList[3];
@@ -302,7 +306,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(retParams[1]);
                             break;
                         case -3 :
-
+                            // 応答を返さない
                             // Tag値とキー値を格納する
                             requestTag = clientParameterList[1];
                             transactionCode = clientParameterList[2];         // TransactionCode
@@ -557,7 +561,35 @@ public class KeyManagerHelper extends AbstractHelper {
                             pw.flush();
                             //retParamBuf = null;
                             break;
+                        case 40 :
 
+                            // Key値に紐づいている指定のTagを消す
+                            removeTag = clientParameterList[1];
+                            removeTagForKey = clientParameterList[2];
+                            transactionCode = clientParameterList[3];
+
+                            // メソッド呼び出し
+                            retParams = this.removeTargetTagInKey(removeTag, removeTagForKey, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            break;
+                        case 41 :
+
+                            // Tga値を指定する事でTagデータを削除する
+                            removeTag = clientParameterList[1];
+                            transactionCode = clientParameterList[2];
+
+                            // メソッド呼び出し
+                            retParams = this.removeTagdata(removeTag, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
                         case 60 :
 
                             // KeyMapManagerのデータサイズを返す
@@ -1247,6 +1279,74 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[1] = "false";
         }
         //logger.debug("KeyManagerHelper - getTagdata - end");
+        return retStrs;
+    }
+
+
+    // Keyに紐付いている指定のTagを外す
+    private String[] removeTargetTagInKey(String tag, String key, String transactionCode) {
+        //logger.debug("KeyManagerHelper - removeTargetTagInKey - start");
+        String[] retStrs = null;
+        try {
+            if(!this.keyMapManager.checkError()) {
+
+                boolean ret = this.keyMapManager.removeTargetTagInKey(tag, key, transactionCode);
+
+                if (ret == true) {
+                    retStrs = new String[2];
+                    retStrs[0] = "40";
+                    retStrs[1] = "true";
+
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "40";
+                    retStrs[1] = "false";
+                }
+            } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "40";
+                    retStrs[1] = "error";
+            }
+        } catch (Exception e) {
+            logger.error("KeyManagerHelper - removeTargetTagInKey - Error", e);
+            retStrs = new String[2];
+            retStrs[0] = "40";
+            retStrs[1] = "error";
+        }
+        //logger.debug("KeyManagerHelper - removeTargetTagInKey - end");
+        return retStrs;
+    }
+
+
+    // 指定のTagを削除する
+    private String[] removeTagdata(String tag, String transactionCode) {
+        //logger.debug("KeyManagerHelper - removeTagdata - start");
+        String[] retStrs = null;
+        try {
+            if(!this.keyMapManager.checkError()) {
+                if (this.keyMapManager.containsTagPair(tag)) {
+
+                    retStrs = new String[3];
+                    retStrs[0] = "41";
+                    retStrs[1] = "true";
+                    retStrs[2] = this.keyMapManager.removeTagRelation(tag, transactionCode);
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "41";
+                    retStrs[1] = "false";
+                }
+            } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "41";
+                    retStrs[1] = "false";
+            }
+        } catch (Exception e) {
+            logger.error("KeyManagerHelper - removeTagdata - Error", e);
+            retStrs = new String[2];
+            retStrs[0] = "41";
+            retStrs[1] = "false";
+        }
+        //logger.debug("KeyManagerHelper - removeTagdata - end");
         return retStrs;
     }
 
