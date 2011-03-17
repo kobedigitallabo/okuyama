@@ -1107,6 +1107,47 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();  
+            } else if (args[0].equals("26")) {
+
+                // OkuyamaClientを使用してKeyとTagを指定してKeyからTagを外す
+                int port = Integer.parseInt(args[2]);
+
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] tag1 = {"tag1"};
+                String[] tag2 = {"tag1","tag2"};
+                String[] tag3 = {"tag1","tag2","tag3"};
+                String[] tag4 = {"tag4"};
+                String[] setTag = null;
+                int counter = 0;
+
+                long start = new Date().getTime();
+
+                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                    if (counter == 0) {
+                        setTag = tag1;
+                        counter++;
+                    } else if (counter == 1) {
+                        setTag = tag2;
+                        counter++;
+                    } else if (counter == 2) {
+                        setTag = tag3;
+                        counter++;
+                    } else if (counter == 3) {
+                        setTag = tag4;
+                        counter = 0;
+                    }
+
+                    for (int ii = 0; ii < setTag.length; ii++) {
+                        if (!okuyamaClient.removeTagFromKey("tagsampledatakey_" + new Integer(i).toString(), setTag[ii])) {
+                            System.out.println("OkuyamaClient - error Key=[" + "tagsampledatakey_" + new Integer(i) + "] Tag[" + setTag[ii] +"]");
+                           }
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
             }
             
 
