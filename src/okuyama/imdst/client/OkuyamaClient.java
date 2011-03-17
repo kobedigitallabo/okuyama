@@ -3090,7 +3090,6 @@ public class OkuyamaClient {
             // TransactionCode連結
             serverRequestBuf.append(this.transactionCode);
 
-System.out.println(serverRequestBuf.toString());
             // サーバ送信
             pw.println(serverRequestBuf.toString());
             pw.flush();

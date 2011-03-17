@@ -1048,16 +1048,19 @@ public class KeyMapManager extends Thread {
                             
                             keyStrs = workStrs[0];
 
-                            String[] tagKeysList = keyStrs.split(KeyMapManager.tagKeySep);
-                            for (int tagKeysListIdx = 0; tagKeysListIdx < tagKeysList.length; tagKeysListIdx++) {
-                                if (tagKeysList[tagKeysListIdx].equals(((String[])key.split(ImdstDefine.setTimeParamSep))[0])) {
+                            // 含まれてる可能性を検証
+                            if (keyStrs.indexOf(((String[])key.split(ImdstDefine.setTimeParamSep))[0]) != -1) {
+                                String[] tagKeysList = keyStrs.split(KeyMapManager.tagKeySep);
+    
+                                for (int tagKeysListIdx = 0; tagKeysListIdx < tagKeysList.length; tagKeysListIdx++) {
+                                    if (tagKeysList[tagKeysListIdx].equals(((String[])key.split(ImdstDefine.setTimeParamSep))[0])) {
 
-                                    // 既に登録済み
-                                    appendFlg = false;
-                                    break;
-                                }
-                            } 
-
+                                        // 既に登録済み
+                                        appendFlg = false;
+                                        break;
+                                    }
+                                } 
+                            }
                             // 既に登録済み
                             if (!appendFlg) break;
                         } else {
@@ -1159,74 +1162,46 @@ public class KeyMapManager extends Thread {
                             // データあり
                             firsrtRegist = false;
                             keyStrs = this.getKeyPair(tagCnv);
-System.out.println("keyStrs1[" + keyStrs +"]");
+
                             String[] workStrs = keyStrs.split(ImdstDefine.setTimeParamSep);
                             keyStrs = workStrs[0];
-System.out.println("keyStrs2[" + keyStrs +"]");
-System.out.println("targetKey[" + targetKey +"]");
-                            if (keyStrs.indexOf(targetKey) != -1 && 
-                               (keyStrs.equals(targetKey) == true || 
-                                keyStrs.indexOf(":" + targetKey + ":") != -1 ||
-                                keyStrs.indexOf(targetKey + ":") == 0 ||
-                                keyStrs.indexOf(":" + targetKey) == (keyStrs.length() - (":" + targetKey).length())
-                                )) {
 
-                                StringBuilder setNewTagKeysBuf = null;
+                            if (keyStrs.indexOf(targetKey) != -1) {
+                                // 含まれている可能性あり
+                                String[] matchKeys = keyStrs.split(":");
+                                for (int matchKeysIdx = 0; matchKeysIdx < matchKeys.length; matchKeysIdx++) {
+                                    if (matchKeys[matchKeysIdx].equals(targetKey)) {
 
-                                // このTagの組に他のKeyも含まれている場合と、含まれていない場合で処理分岐
-                                if (!keyStrs.equals(targetKey)) {
+                                        StringBuilder setNewTagKeysBuf = new StringBuilder();
+                                        String sep = "";
+                                        //  Tagを探す
+                                        for (int matchKeysIdx2 = 0; matchKeysIdx2 < matchKeys.length; matchKeysIdx2++) {
+                                            if (matchKeysIdx2 != matchKeysIdx) {
+                                                setNewTagKeysBuf.append(sep);
+                                                setNewTagKeysBuf.append(matchKeys[matchKeysIdx2]);
+                                                sep = ":";
+                                            }
+                                        }
 
-                                    String[] removedWork = null;
-
-                                    // 分解結果に合わせて処理分岐
-                                    if ((keyStrs.indexOf(":" + targetKey + ":")) != -1) {
-                                        // 結果が中間にあった場合
-                                        removedWork = keyStrs.split(":" + targetKey + ":");
-
-                                        setNewTagKeysBuf = new StringBuilder(removedWork[0].length() + removedWork[1].length() + 2);
-                                        setNewTagKeysBuf.append(removedWork[0]);
-                                        setNewTagKeysBuf.append(":");
-                                        setNewTagKeysBuf.append(removedWork[1]);
-                                        setNewTagKeysBuf.append(ImdstDefine.setTimeParamSep);
-                                        setNewTagKeysBuf.append("0");
-
-                                    } else if ((keyStrs.indexOf(targetKey + ":")) == 0){
-                                        // 結果が先頭にあった場合
-                                        removedWork = keyStrs.split(targetKey + ":");
-
-                                        setNewTagKeysBuf = new StringBuilder(removedWork[0].length() + 2);
-                                        if (removedWork[0].length() > 0) {
-                                            setNewTagKeysBuf.append(removedWork[0]);
+                                        // このTagの組に他のKeyも含まれている場合と、含まれていない場合で処理分岐
+                                        if (setNewTagKeysBuf.length() > 0) {
+                                            setNewTagKeysBuf.append(ImdstDefine.setTimeParamSep);
+                                            setNewTagKeysBuf.append("0");
                                         } else {
                                             setNewTagKeysBuf.append("*");
+                                            setNewTagKeysBuf.append(ImdstDefine.setTimeParamSep);
+                                            setNewTagKeysBuf.append("0");
                                         }
-                                        setNewTagKeysBuf.append(ImdstDefine.setTimeParamSep);
-                                        setNewTagKeysBuf.append("0");
 
-                                    } else if (keyStrs.indexOf(":" + targetKey) == (keyStrs.length() - (":" + targetKey).length())){
-                                        // 結果が最端にあった場合
-                                        removedWork = keyStrs.split( ":" + targetKey);
+                                        // 削除済みデータをset
+                                        this.setKeyPair(tagCnv, setNewTagKeysBuf.toString(), transactionCode);
 
-                                        setNewTagKeysBuf = new StringBuilder(removedWork[0].length() + 2);
-                                        if (removedWork[0].length() > 0) {
-                                            setNewTagKeysBuf.append(removedWork[0]);
-                                        } else {
-                                            setNewTagKeysBuf.append("*");
-                                        }
-                                        setNewTagKeysBuf.append(ImdstDefine.setTimeParamSep);
-                                        setNewTagKeysBuf.append("0");
+                                        ret = true;
+                                        break;
                                     }
-
-                                    // 削除済みデータをset
-                                    this.setKeyPair(tagCnv, setNewTagKeysBuf.toString(), transactionCode);
-                                } else {
-
-                                    // 該当のTagの組を削除する
-                                    this.setKeyPair(tagCnv, "*!0", transactionCode);
                                 }
-
-                                ret = true;
-                                break;
+                                // Matchsした場合
+                                if (ret == true) break;
                             }
                         } else {
 
@@ -1273,7 +1248,7 @@ System.out.println("targetKey[" + targetKey +"]");
             
             // Tagのキー値を連結
             for (int idx = 0; idx < 145000001; idx=idx+500000) {
-                keyStrs = "";
+                keyStrs = null;
                 setTimeSplitWork = null;
                 isMatch = false;
                 tmpBuf = new StringBuilder(ImdstDefine.stringBufferLarge_2Size);
@@ -1289,8 +1264,8 @@ System.out.println("targetKey[" + targetKey +"]");
                     if (this.containsKeyPair(tagCnv)) {
         
                         tmpStr = (String)this.getKeyPair(tagCnv);
-        
-                        if (tmpStr != null && !tmpStr.equals("*!0")) {
+
+                        if (tmpStr != null && !((String[])tmpStr.split("!"))[0].equals("*")) {
         
                             isMatch = true;
                             tmpBuf.append(tmpSep);
@@ -1302,7 +1277,7 @@ System.out.println("targetKey[" + targetKey +"]");
                             tmpBuf.append(setTimeSplitWork[0]);
                             tmpSep = KeyMapManager.tagKeySep;
 
-                        } else if (tmpStr == null){
+                        } else if (tmpStr == null || ((String[])tmpStr.split("!"))[0].equals("*")){
         
                             if (!isMatch) {
         

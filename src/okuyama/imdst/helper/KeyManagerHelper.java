@@ -1257,11 +1257,18 @@ public class KeyManagerHelper extends AbstractHelper {
         try {
             if(!this.keyMapManager.checkError()) {
                 if (this.keyMapManager.containsTagPair(tag)) {
+                    String keys = this.keyMapManager.getTagPair(tag);
+                    if (keys != null) {
+                        retStrs = new String[3];
+                        retStrs[0] = "4";
+                        retStrs[1] = "true";
+                        retStrs[2] = keys;
+                    } else {
 
-                    retStrs = new String[3];
-                    retStrs[0] = "4";
-                    retStrs[1] = "true";
-                    retStrs[2] = this.keyMapManager.getTagPair(tag);
+                        retStrs = new String[2];
+                        retStrs[0] = "4";
+                        retStrs[1] = "false";
+                    }
                 } else {
                     retStrs = new String[2];
                     retStrs[0] = "4";
