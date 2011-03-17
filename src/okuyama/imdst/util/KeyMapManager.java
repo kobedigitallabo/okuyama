@@ -199,6 +199,11 @@ public class KeyMapManager extends Thread {
             this.dataMemory = dataMemory;
             this.mapSize = keySize;
             this.workKeyFilePath = workKeyMapFilePath;
+            // Tagの1Valu当たりのサイズを決定
+            if (ImdstDefine.bigValueFileStoreUse == true && 
+                    ImdstDefine.tagValueAppendMaxSize > ImdstDefine.memoryStoreLimitSize) {
+                    ImdstDefine.tagValueAppendMaxSize = ImdstDefine.memoryStoreLimitSize  - ImdstDefine.saveKeyMaxSize;
+            }
 
             FileInputStream workKeyFilefis = null;
             InputStreamReader isr = null;
@@ -706,7 +711,17 @@ public class KeyMapManager extends Thread {
 
                         synchronized(this.lockWorkFileSync) {
                             if (this.workFileFlushTiming) {
-                                this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                                this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).
+                                                                append("+").
+                                                                append(KeyMapManager.workFileSeq).
+                                                                append(key).
+                                                                append(KeyMapManager.workFileSeq).
+                                                                append(data).
+                                                                append(KeyMapManager.workFileSeq).
+                                                                append(JavaSystemApi.currentTimeMillis).
+                                                                append(KeyMapManager.workFileSeq).
+                                                                append(KeyMapManager.workFileEndPoint).
+                                                                append("\n").toString());
                                 this.bw.flush();
                             } else {
                                 this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
@@ -1068,7 +1083,7 @@ public class KeyMapManager extends Thread {
 
                             // 既に別のKeyが登録済みなので、そのキーにアペンドしても良いかを確認
                             // 登録時間の長さ(16)もプラス
-                            if ((keyStrs.getBytes().length + KeyMapManager.tagKeySep.getBytes().length + key.getBytes().length + 16) >= ImdstDefine.dataFileWriteMaxSize) {
+                            if ((keyStrs.getBytes().length + KeyMapManager.tagKeySep.getBytes().length + key.getBytes().length + 16) >= ImdstDefine.tagValueAppendMaxSize) {
 
                                 // 既にキー値が最大のサイズに到達しているので別のキーを生み出す
                                 counter++;
@@ -2713,7 +2728,10 @@ public class KeyMapManager extends Thread {
                 String key = null;
 
                 // キー値を取り出し
+
                 key = (String)obj.getKey();
+
+
                 if (key.indexOf(ImdstDefine.imdstTagStartStr) == 0) {
 
                     String tag = key;
@@ -2736,6 +2754,40 @@ public class KeyMapManager extends Thread {
             System.out.println("-------------------------------------- Dump End --------------------------------------");
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+
+    public void dataExport(PrintWriter pw) {
+        try {
+            // 全データをトランザクションログ形式でネットワークに書き出す
+            Set entrySet = this.keyMapObj.entrySet();
+
+            // KeyMapObject内のデータを1件づつ対象になるか確認
+            Iterator entryIte = entrySet.iterator(); 
+
+            // キー値を1件づつレンジに含まれているか確認
+            while(entryIte.hasNext()) {
+                Map.Entry obj = (Map.Entry)entryIte.next();
+                if (obj == null) continue;
+                String key = null;
+
+                // キー値を取り出し
+
+                key = (String)obj.getKey();
+                String value = this.keyMapObjGet(key);
+                pw.println("+" + KeyMapManager.workFileSeq + key + KeyMapManager.workFileSeq + value + KeyMapManager.workFileSeq + JavaSystemApi.currentTimeMillis + KeyMapManager.workFileSeq + KeyMapManager.workFileEndPoint);
+                pw.flush();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                pw.println("-1");
+                pw.flush();
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
         }
     }
 }

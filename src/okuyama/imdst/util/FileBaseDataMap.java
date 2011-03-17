@@ -121,7 +121,7 @@ public class FileBaseDataMap extends AbstractMap {
      * @throws
      */
     public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent, int numberOfValueLength) {
-        this(baseDirs, numberOfKeyData, cacheMemPercent, numberOfValueLength, 8192);
+        this(baseDirs, numberOfKeyData, cacheMemPercent, numberOfValueLength, 1024, 1024*101);
     }
 
     /**
@@ -134,7 +134,7 @@ public class FileBaseDataMap extends AbstractMap {
      * @return 
      * @throws
      */
-    public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent, int numberOfValueLength, int regularSizeLimit) {
+    public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent, int numberOfValueLength, int regularSizeLimit, int middleSizeLimit) {
         this.regularSizeLimit = regularSizeLimit;
         this.dirs = baseDirs;
         this.numberOfCoreMap = baseDirs.length;
@@ -151,9 +151,10 @@ public class FileBaseDataMap extends AbstractMap {
         int oneMapSizePer = numberOfKeyData / numberOfCoreMap;
 
 
+
         if (numberOfValueLength > 0) {
 
-            if (numberOfValueLength > (regularSizeLimit*14)) {
+            if (numberOfValueLength > middleSizeLimit) {
 
                 coreMapType = 2;
                 // 最大サイズ用
@@ -161,7 +162,7 @@ public class FileBaseDataMap extends AbstractMap {
                 coreFileBaseKeyMap4BigData = new FixWriteCoreFileBaseKeyMap(bigDataDir, oneCacheSizePer / 3, oneMapSizePer / 3, numberOfValueLength);
 
                 // ミドルサイズ用
-                middleSize = regularSizeLimit*10;
+                middleSize = middleSizeLimit;
                 String[] middleDataDir = {baseDirs[0]+"/virtualmiddledata1/", baseDirs[0]+"/virtualmiddledata2/"};
                 coreFileBaseKeyMap4MiddleData = new FixWriteCoreFileBaseKeyMap(middleDataDir, oneCacheSizePer / 3, oneMapSizePer / 3, middleSize);
             } else if (numberOfValueLength > regularSizeLimit){

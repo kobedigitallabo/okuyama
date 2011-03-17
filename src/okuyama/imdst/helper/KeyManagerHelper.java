@@ -645,7 +645,13 @@ public class KeyManagerHelper extends AbstractHelper {
                             this.keyMapManager.dump();
                             //retParamBuf = null;
                             break;
+                        case 101 :
 
+                            // KeyMapManager DataExport(For Backup)
+                            this.keyMapManager.dataExport(pw);
+
+                            //retParamBuf = null;
+                            break;
                         default :
 
                             logger.debug("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");

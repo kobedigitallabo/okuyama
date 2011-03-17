@@ -283,6 +283,10 @@ public class ImdstDefine {
     // 共通のデータファイルに書き出す最大サイズ
     public volatile static int dataFileWriteMaxSize = 12888;
 
+    // TagのValueの1つ当たりの長さ(Keyの連結結果長)
+    public volatile static int tagValueAppendMaxSize = 8192 * 3;
+
+
     // メモリモードで起動時にこのサイズを超えるValueはファイルに書き出され、メモリを使用しない
     public volatile static boolean bigValueFileStoreUse = false;
     public volatile static int memoryStoreLimitSize = 1024 * 64;

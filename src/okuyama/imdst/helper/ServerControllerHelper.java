@@ -229,6 +229,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         pw.println("rname");
                         pw.println("fullgc");
                         pw.println("netdebug");
+                        pw.println("backupdata #Only DataNode Command");
                         pw.println("");
 
                         pw.flush();
