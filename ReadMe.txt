@@ -58,6 +58,21 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
      "netdebug" : debug出力を現在のコンソールに出力する。改行送信で停止
      "fullgc" : gc指示
 
+
+  ■仮想メモリの効率化
+    仮想メモリの1ブロック当たりのサイズを複数の種類にして、保存されるサイズに合わせて使い分けるように
+    変更
+
+  ■Valueをメモリに保存する場合に設定したサイズ以上のValueを仮想メモリ空間に保存する機能を追加
+
+
+  ■データバックアップ機能を追加
+    okuyama.imdst.client.UtilClientを作成し、実行時点でのDataNodeのデータをバックアップできるように機能追加
+    この機能で作成したファイルをDataNode.propertiesのKeyManagerJob1.Option=の2個目の引数のファイルとして
+    DataNodeを実行するとデータが復元される
+    使い方)
+    java -classpath ./:./classes okuyama.imdst.client.UtilClient bkup 127.0.0.1 5554 > bkupFor5554.dump
+
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.6 - (2011/02/11)]]
