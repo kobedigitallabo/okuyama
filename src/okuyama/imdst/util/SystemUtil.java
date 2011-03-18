@@ -248,6 +248,20 @@ public class SystemUtil {
     }
 
 
+    // Index作成対象外の場合はtrue
+    public static boolean checkNoIndexCharacter(String checkStr) {
+        if(checkStr.indexOf(" ") > -1 || 
+            checkStr.indexOf("。") > -1 || 
+                checkStr.indexOf("、") > -1 || 
+                    checkStr.indexOf("　") > -1 || 
+                        checkStr.indexOf("「") > -1 || 
+                            checkStr.indexOf("」") > -1 || 
+                                checkStr.indexOf(",") > -1 || 
+                                    checkStr.indexOf(".") > -1 || 
+                                        checkStr.indexOf("/") > -1) return true;
+        return false;
+    }
+
 
     /**
      * -debugオプションを利用した際に、標準出力への出力を行う.<br>
@@ -277,4 +291,7 @@ public class SystemUtil {
             strBuf = null;
         }
     }
+
+    
 }
+

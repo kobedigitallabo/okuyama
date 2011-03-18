@@ -1039,6 +1039,205 @@ public class OkuyamaClient {
         return ret;
     }
 
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * 検索インデックスの作成も同時に依頼
+     * Tagなし.<br>
+     *
+     * @param keyStr Key値
+     * @param value value値
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValueAndCreateIndex(String keyStr, String value) throws OkuyamaClientException {
+        return this.setValueAndCreateIndex(keyStr, null, value, null);
+    }
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * 検索インデックスの作成も同時に依頼
+     * Tagなし.<br>
+     *
+     * @param keyStr Key値
+     * @param value value値
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValueAndCreateIndex(String keyStr, String value, String indexPrefix) throws OkuyamaClientException {
+        return this.setValueAndCreateIndex(keyStr, null, value, indexPrefix);
+    }
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * Tag有り.<br>
+     *
+     * @param keyStr Key値
+     * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
+     * @param value value値
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValueAndCreateIndex(String keyStr, String[] tagStrs, String value, String indexPrefix) throws OkuyamaClientException {
+        boolean ret = false; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        // 文字列バッファ初期化
+        setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        try {
+            // Byte Lenghtチェック
+            if (tagStrs != null) {
+                for (int i = 0; i < tagStrs.length; i++) {
+                    if (tagStrs[i].getBytes().length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+                }
+            }
+
+            if (value != null)
+                if (value.getBytes().length > maxValueSize) 
+                    throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
+
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.trim().equals(""))
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+
+            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+
+            // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
+            if (value == null ||  value.equals("")) {
+                value = OkuyamaClient.blankStr;
+            } else {
+
+                // ValueをBase64でエンコード
+
+                value = new String(this.dataEncoding(value.getBytes()));
+            }
+
+
+            // 処理番号連結
+            setValueServerReqBuf.append("42");
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+
+            // Tag連結
+            // Tag指定の有無を調べる
+            if (tagStrs == null || tagStrs.length < 1) {
+
+                // ブランク規定文字列を連結
+                setValueServerReqBuf.append(OkuyamaClient.blankStr);
+            } else {
+
+                // Tag数分連結
+                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
+                for (int i = 1; i < tagStrs.length; i++) {
+                    setValueServerReqBuf.append(tagKeySep);
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
+                }
+            }
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            setValueServerReqBuf.append(this.transactionCode);
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // Value連結
+            setValueServerReqBuf.append(value);
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // Indexプレフィックス連結
+            // Indexプレフィックス指定の有無を調べる
+            if (indexPrefix == null || indexPrefix.length() < 1) {
+                // ブランク規定文字列を連結
+                setValueServerReqBuf.append(OkuyamaClient.blankStr);
+            } else {
+
+                // Indexプレフィックス連結
+                setValueServerReqBuf.append(new String(this.dataEncoding(indexPrefix.getBytes())));
+            }
+
+
+            // サーバ送信
+            pw.println(setValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet.length == 3 && serverRet[0].equals("42")) {
+                if (serverRet[1].equals("true")) {
+
+                    // 処理成功
+                    ret = true;
+                } else if (serverRet[1].equals("error")){
+
+                    // 処理失敗(メッセージ格納)
+                    throw new OkuyamaClientException(serverRet[2]);
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRetStr + "]");
+            }
+
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setValueAndCreateIndex(keyStr, tagStrs, value, indexPrefix);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setValueAndCreateIndex(keyStr, tagStrs, value, indexPrefix);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setValueAndCreateIndex(keyStr, tagStrs, value, indexPrefix);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
     /**
      * MasterNodeへ新規データを登録要求する.<br>
      * Tagなし.<br>

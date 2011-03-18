@@ -518,6 +518,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             //                                          -- トランザクションコード
                             retParams = this.removeTargetTagInKey(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
                             break;
+
+                        case 42 :
+
+                            // Key値とValueを格納する
+                            // 同時に検索インデックスを作成する
+                            // setKeyValueメソッドにさらにインデックス用のPrefixを最後尾文字列としてAppendしたプロトコル
+                            retParams = this.setKeyValueAndCreateIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5]);
+                            break;
+
                         case 90 :
 
                             // KeyNodeの使用停止をマーク
@@ -725,6 +734,89 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     /**
      * Key-Valueを保存する.<br>
+     * ただし保存時にValueをN-gram(ユニグラム)方式にてインデックスを作成する<br>
+     * インデックスはTagとして保存される<br>
+     * また、転送されうValue値はUTF-8の文字コードとして処理されるので、UTF-8でなない2バイト文字はだたしく処理されない<br>
+     * 
+     * @param keyStr key値の文字列
+     * @param tagStr tag値の文字列
+     * @param transactionCode 
+     * @param dataStr value値の文字列
+     * @param indexPrefix 作成されたIndex(tag値)の先頭に付加する文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyValueAndCreateIndex(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix) throws BatchException {
+        // TODO:Test
+        String[] retStrs = new String[3];
+
+
+        if (true) {
+            // Key値チェック
+            if (!this.checkKeyLength(keyStr)) {
+                // 保存失敗
+                retStrs[0] = "42";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
+            // Value値チェック
+            if (!this.checkValueLength(dataStr)) {
+                // 保存失敗
+                retStrs[0] = "42";
+                retStrs[1] = "false";
+                retStrs[2] = "Value Length Error";
+                return retStrs;
+            }
+
+            // indexPrefixは指定なしの場合はクライアントから規定文字列で送られてくるのでここでindexPrefixなしの扱いとする
+            // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
+            if (indexPrefix.equals(ImdstDefine.imdstBlankStrData)) indexPrefix = "";
+
+            String appendTagSep = "";
+
+            byte[] testBytes = BASE64DecoderStream.decode(dataStr.getBytes());
+
+            String sIdx1 = null;
+            String sIdx2 = null;
+            String strIdx = "";
+
+            try {
+
+                String prefix = (((keyStr.hashCode() << 1) >>> 1) % 50) + "_" + indexPrefix + "_";
+                String realKeyStr = new String(testBytes, ImdstDefine.keyWorkFileEncoding);
+
+
+                for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
+                    String checkStr = realKeyStr.substring(i, i+2);
+
+                    if(SystemUtil.checkNoIndexCharacter(checkStr)) {
+                        continue;
+                    }
+                    sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes()));
+                    strIdx = strIdx + appendTagSep + sIdx1;
+                    appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
+                }
+            } catch (Exception inE) {
+
+            }
+
+            if (tagStr != null && !tagStr.equals("")) {
+                tagStr = tagStr + ImdstDefine.imdstTagKeyAppendSep + strIdx;
+            } else {
+                tagStr = strIdx;
+            }
+        }
+
+        retStrs = setKeyValue(keyStr, tagStr, transactionCode, dataStr);
+        retStrs[0] = "42";
+        return retStrs;
+    }
+
+
+    /**
+     * Key-Valueを保存する.<br>
      * 処理フロー.<br>
      * 1.DataDispatcherに依頼してTagの保存先を問い合わせる。Tag情報を全保存する<br>
      * 2.DataDispatcherに依頼してKeyの保存先を問い合わせる。Tag情報を保存する<br>
@@ -770,37 +862,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[1] = "false";
                 retStrs[2] = "Value Length Error";
                 return retStrs;
-            }
-
-
-            // TODO:Test
-            if (true) {
-
-                String appendTagSep = "";
-
-                byte[] testBytes = BASE64DecoderStream.decode(keyStr.getBytes());
-
-                String sIdx1 = null;
-                String sIdx2 = null;
-                String strIdx = "";
-
-                try {
-                    String prefix = (((keyStr.hashCode() << 1) >>> 1) % 10) + "_";
-                    String realKeyStr = new String(testBytes);
-                    for (int i = 0; i < 500; i++) {
-                        sIdx1 = new String(BASE64EncoderStream.encode((prefix + realKeyStr.substring(i, 2)).getBytes()));
-                        strIdx = strIdx + appendTagSep + sIdx1;
-                        appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
-                    }
-                } catch (Exception inE) {
-                }
-
-                if (tagStr != null && !tagStr.equals("")) {
-                    tagStr = tagStr + ImdstDefine.imdstTagKeyAppendSep + strIdx;
-                } else {
-                    tagStr = strIdx;
-                }
-
             }
 
 
