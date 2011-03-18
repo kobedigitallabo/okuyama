@@ -73,6 +73,11 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     使い方)
     java -classpath ./:./classes okuyama.imdst.client.UtilClient bkup 127.0.0.1 5554 > bkupFor5554.dump
 
+
+  ■Key値に紐付くTagを削除するメソッドを追加
+    Key値とTag値の両方を指定することでKey値からTagの紐付きを削除する
+    OkuyamaClientではremoveTagFromKey(Key, Tag)メソッド
+
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.6 - (2011/02/11)]]

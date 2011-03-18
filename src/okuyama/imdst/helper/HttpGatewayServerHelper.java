@@ -86,6 +86,7 @@ public class HttpGatewayServerHelper extends AbstractHelper {
                                 datas[tt] = new Integer(in.read()).byteValue();
                             }
                             body = new String(datas,"utf-8");
+
                         }
                         break;
                     }

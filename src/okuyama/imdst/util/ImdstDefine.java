@@ -311,6 +311,12 @@ public class ImdstDefine {
     public static final int stringBufferLarge_3Size = 8192;
 
 
+    // Tag値の登録、取得時の最大バケット数
+    public static final int tagRegisterParallelBucket = 150000000;
+    // Tag値の登録、取得時の1バケット当たりの格納Tagリンク数
+    public static final int tagBucketMaxLink = 500000;
+
+
     // ノードのDeadとする際のPing実行回数
     public static final int defaultDeadPingCount = 3;
 

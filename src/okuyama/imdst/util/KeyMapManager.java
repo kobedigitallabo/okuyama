@@ -1030,6 +1030,7 @@ public class KeyMapManager extends Thread {
                 // Key値をValueのように扱うため、バージョン番号(ユニーク値)が付加されているので取り外す
                 key = ((String[])key.split(ImdstDefine.setTimeParamSep))[0] + ImdstDefine.setTimeParamSep +"0";
                 counter = (((key.hashCode() << 1) >>> 1) % 300) * 500000;
+
                 dataPutCounter = counter;
 
                 // このsynchroの方法は正しくないきがするが。。。
@@ -1051,8 +1052,9 @@ public class KeyMapManager extends Thread {
                             // 含まれてる可能性を検証
                             if (keyStrs.indexOf(((String[])key.split(ImdstDefine.setTimeParamSep))[0]) != -1) {
                                 String[] tagKeysList = keyStrs.split(KeyMapManager.tagKeySep);
-    
+
                                 for (int tagKeysListIdx = 0; tagKeysListIdx < tagKeysList.length; tagKeysListIdx++) {
+
                                     if (tagKeysList[tagKeysListIdx].equals(((String[])key.split(ImdstDefine.setTimeParamSep))[0])) {
 
                                         // 既に登録済み
@@ -1247,20 +1249,20 @@ public class KeyMapManager extends Thread {
 
             
             // Tagのキー値を連結
-            for (int idx = 0; idx < 145000001; idx=idx+500000) {
+            for (int idx = 0; idx < ImdstDefine.tagRegisterParallelBucket; idx=idx+ImdstDefine.tagBucketMaxLink) {
                 keyStrs = null;
                 setTimeSplitWork = null;
                 isMatch = false;
                 tmpBuf = new StringBuilder(ImdstDefine.stringBufferLarge_2Size);
                 tmpStr = null;
                 tmpSep = "";
-                
-                
+
+
                 counter = idx;
                 while(true) {
-        
+
                     String tagCnv = KeyMapManager.tagStartStr + tag + "_" + counter + KeyMapManager.tagEndStr;
-                    
+
                     if (this.containsKeyPair(tagCnv)) {
         
                         tmpStr = (String)this.getKeyPair(tagCnv);
@@ -1339,7 +1341,7 @@ public class KeyMapManager extends Thread {
                 // Tagを消し込む
                 // 返却値として関係するKey値群を返す
                 synchronized(this.tagSetParallelSyncObjs[((tag.hashCode() << 1) >>> 1) % KeyMapManager.tagSetParallelSize]) {
-                    for (int idx = 0; idx < 145000001; idx=idx+500000) {
+                    for (int idx = 0; idx < ImdstDefine.tagRegisterParallelBucket; idx=idx+ImdstDefine.tagBucketMaxLink) {
                         keyStrs = "";
                         setTimeSplitWork = null;
                         isMatch = false;
@@ -1545,9 +1547,10 @@ public class KeyMapManager extends Thread {
         boolean ret = false;
         if (!blocking) {
 
-            for (int idx = 0; idx < 145000001; idx=idx+500000) {
+            for (int idx = 0; idx < ImdstDefine.tagRegisterParallelBucket; idx=idx+ImdstDefine.tagBucketMaxLink) {
 
                 String tagCnv = KeyMapManager.tagStartStr + tag + "_" + idx + KeyMapManager.tagEndStr;
+
                 ret =  this.containsKeyPair(tagCnv);
                 if (ret) break;
             }
@@ -1947,7 +1950,7 @@ public class KeyMapManager extends Thread {
 
                     int printLineCount = 0;
                     // 一度に送信するデータ量を算出。空きメモリの20%を使用する
-                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.2) / (ImdstDefine.saveDataMaxSize / 100)).intValue();
+                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.4) / (ImdstDefine.saveDataMaxSize / 100)).intValue();
 
                     if (entrySet.size() > 0) {
                         if(maxLineCount == 0) maxLineCount = 1;
@@ -1990,7 +1993,7 @@ public class KeyMapManager extends Thread {
                             pw.flush();
                             allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
                             counter = 0;
-                            if ((sendCounter % 2) == 0) Thread.sleep(2000);
+                            if ((sendCounter % 4) == 0) Thread.sleep(2000);
                         }
                     }
 

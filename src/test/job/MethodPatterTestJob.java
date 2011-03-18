@@ -95,6 +95,10 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
                         if (execMethods[i].equals("decr")) 
                             retMap.put("decr", execDecr(okuyamaClient, start, count));
+
+                        if (execMethods[i].equals("tagremove")) 
+                            retMap.put("tagremove", execTagRemove(okuyamaClient, start, count));
+
                     }
 
                     System.out.println("ErrorMap=" + retMap.toString());
@@ -297,6 +301,38 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             String[] tag4 = {start+"_" + this.nowCount + "_tag4"};
             String[] setTag = null;
 
+            ArrayList tag1RetList = new ArrayList();
+            ArrayList tag2RetList = new ArrayList();
+            ArrayList tag3RetList = new ArrayList();
+            ArrayList tag4RetList = new ArrayList();
+            int counter = 0;
+            for (int i = start; i < count; i++) {
+                if (counter == 0) {
+
+                    tag1RetList.add(this.nowCount + "tagsampledatakey_" + new Integer(i).toString());
+                    counter++;
+                } else if (counter == 1) {
+
+                    tag1RetList.add(this.nowCount + "tagsampledatakey_" + new Integer(i).toString());
+                    tag2RetList.add(this.nowCount + "tagsampledatakey_" + new Integer(i).toString());
+                    counter++;
+                } else if (counter == 2) {
+
+                    tag1RetList.add(this.nowCount + "tagsampledatakey_" + new Integer(i).toString());
+                    tag2RetList.add(this.nowCount + "tagsampledatakey_" + new Integer(i).toString());
+                    tag3RetList.add(this.nowCount + "tagsampledatakey_" + new Integer(i).toString());
+                    counter++;
+                } else if (counter == 3) {
+
+                    tag4RetList.add(this.nowCount + "tagsampledatakey_" + new Integer(i).toString());
+                    counter = 0;
+                }
+            }
+
+            HashMap getResult1 = new HashMap();
+            HashMap getResult2 = new HashMap();
+            HashMap getResult3 = new HashMap();
+            HashMap getResult4 = new HashMap();
             String[] keys = null;
             long startTime = new Date().getTime();
             Object[] ret = okuyamaClient.getTagKeys(start+"_" + this.nowCount + "_tag1");
@@ -305,20 +341,9 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 // データ有り
                 keys = (String[])ret[1];
 
-                for (int ii = start; ii < keys.length; ii++) {
-                    String[] getRet = okuyamaClient.getValue(keys[ii]);
+                for (int ii = 0; ii < keys.length; ii++) {
+                    getResult1.put(keys[ii], "*");
 
-                    if (getRet[0].equals("true")) {
-                        // データ有り
-                        //System.out.println(getRet[1]);
-                    } else if (getRet[0].equals("false")) {
-                        System.out.println("データなし key=[" + keys[ii] + "]");
-                        logger.error("Tag Get データなし key=[" + keys[ii] + "]");
-                        errorFlg = true;
-                    } else if (getRet[0].equals("error")) {
-                        System.out.println("Error key=[" + keys[ii] + "]");
-                        errorFlg = true;
-                    }
                 }
 
             } else if (ret[0].equals("false")) {
@@ -335,19 +360,10 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 // データ有り
                 keys = (String[])ret[1];
 
-                for (int ii = start; ii < keys.length; ii++) {
-                    String[] getRet = okuyamaClient.getValue(keys[ii]);
 
-                    if (getRet[0].equals("true")) {
-                        // データ有り
-                        //System.out.println(getRet[1]);
-                    } else if (getRet[0].equals("false")) {
-                        System.out.println("データなし key=[" + keys[ii] + "]");
-                        errorFlg = true;
-                    } else if (getRet[0].equals("error")) {
-                        System.out.println("Error key=[" + keys[ii] + "]");
-                        errorFlg = true;
-                    }
+                for (int ii = 0; ii < keys.length; ii++) {
+
+                    getResult2.put(keys[ii], "*");
                 }
 
             } else if (ret[0].equals("false")) {
@@ -358,25 +374,15 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 errorFlg = true;
             }
 
+
             ret = okuyamaClient.getTagKeys(start+"_" + this.nowCount + "_tag3");
 
             if (ret[0].equals("true")) {
                 // データ有り
                 keys = (String[])ret[1];
 
-                for (int ii = start; ii < keys.length; ii++) {
-                    String[] getRet = okuyamaClient.getValue(keys[ii]);
-
-                    if (getRet[0].equals("true")) {
-                        // データ有り
-                        //System.out.println(getRet[1]);
-                    } else if (getRet[0].equals("false")) {
-                        System.out.println("データなし key=[" + keys[ii] + "]");
-                        errorFlg = true;
-                    } else if (getRet[0].equals("error")) {
-                        System.out.println("Error key=[" + keys[ii] + "]");
-                        errorFlg = true;
-                    }
+                for (int ii = 0; ii < keys.length; ii++) {
+                    getResult3.put(keys[ii], "*");
                 }
 
             } else if (ret[0].equals("false")) {
@@ -385,6 +391,59 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             } else if (ret[0].equals("error")) {
                 System.out.println(start+"tag3=Error[" + ret[1] + "]");
                 errorFlg = true;
+            }
+
+
+            ret = okuyamaClient.getTagKeys(start+"_" + this.nowCount + "_tag4");
+
+            if (ret[0].equals("true")) {
+                // データ有り
+                keys = (String[])ret[1];
+
+                for (int ii = 0; ii < keys.length; ii++) {
+                    getResult4.put(keys[ii], "*");
+                }
+
+            } else if (ret[0].equals("false")) {
+                System.out.println(start+"_tag4=データなし");
+                errorFlg = true;
+            } else if (ret[0].equals("error")) {
+                System.out.println(start+"tag4=Error[" + ret[1] + "]");
+                errorFlg = true;
+            }
+
+
+            // 検証
+            // Tag1
+            for (int idx = 0; idx < tag1RetList.size(); idx++) {
+                if (!getResult1.containsKey((String)tag1RetList.get(idx))) {
+                    System.out.println(start+"_tag1=該当データなし Key=[" + (String)tag1RetList.get(idx) +"]");
+                    errorFlg = true;
+                }
+            }
+
+            // Tag2
+            for (int idx = 0; idx < tag2RetList.size(); idx++) {
+                if (!getResult2.containsKey((String)tag2RetList.get(idx))) {
+                    System.out.println(start+"_tag2=該当データなし Key=[" + (String)tag2RetList.get(idx) +"]");
+                    errorFlg = true;
+                }
+            }
+
+            // Tag3
+            for (int idx = 0; idx < tag3RetList.size(); idx++) {
+                if (!getResult3.containsKey((String)tag3RetList.get(idx))) {
+                    System.out.println(start+"_tag3=該当データなし Key=[" + (String)tag3RetList.get(idx) +"]");
+                    errorFlg = true;
+                }
+            }
+
+            // Tag4
+            for (int idx = 0; idx < tag4RetList.size(); idx++) {
+                if (!getResult4.containsKey((String)tag4RetList.get(idx))) {
+                    System.out.println(start+"_tag4=該当データなし Key=[" + (String)tag4RetList.get(idx) +"]");
+                    errorFlg = true;
+                }
             }
 
             long endTime = new Date().getTime();
@@ -696,6 +755,99 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             throw e;
         }
         System.out.println("execDecr - End");
+        return errorFlg;
+    }
+
+    private boolean execTagRemove(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execTagRemove - Start");
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+            String[] tag1 = {start+"_" + this.nowCount + "_tag1"};
+            String[] tag2 = {start+"_" + this.nowCount + "_tag1",start+"_" + this.nowCount + "_tag2"};
+            String[] tag3 = {start+"_" + this.nowCount + "_tag1",start+"_" + this.nowCount + "_tag2",start+"_" + this.nowCount + "_tag3"};
+            String[] tag4 = {start+"_" + this.nowCount + "_tag4"};
+            String[] setTag = null;
+            int counter = 0;
+
+            long startTime = new Date().getTime();
+
+            for (int i = start; i < count; i++) {
+                if (counter == 0) {
+
+                    setTag = tag1;
+                    if (!okuyamaClient.removeTagFromKey(this.nowCount + "tagsampledatakey_" + new Integer(i).toString(), setTag[0])) {
+                        System.out.println("TagRemove - Error=[" + this.nowCount + "tagsampledatakey_" + new Integer(i).toString() + ", TagRemove[" + setTag[0]);
+                        errorFlg = true;
+                    }
+
+                    counter++;
+                } else if (counter == 1) {
+                    setTag = tag2;
+
+                    if (!okuyamaClient.removeTagFromKey(this.nowCount + "tagsampledatakey_" + new Integer(i).toString(), setTag[0])) {
+                        System.out.println("TagRemove - Error=[" + this.nowCount + "tagsampledatakey_" + new Integer(i).toString() + ", TagRemove[" + setTag[0]);
+                        errorFlg = true;
+                    }
+
+                    if (!okuyamaClient.removeTagFromKey(this.nowCount + "tagsampledatakey_" + new Integer(i).toString(), setTag[1])) {
+                        System.out.println("TagRemove - Error=[" + this.nowCount + "tagsampledatakey_" + new Integer(i).toString() + ", TagRemove[" + setTag[1]);
+                        errorFlg = true;
+                    }
+
+                    counter++;
+                } else if (counter == 2) {
+                    setTag = tag3;
+
+                    if (!okuyamaClient.removeTagFromKey(this.nowCount + "tagsampledatakey_" + new Integer(i).toString(), setTag[0])) {
+                        System.out.println("TagRemove - Error=[" + this.nowCount + "tagsampledatakey_" + new Integer(i).toString() + ", TagRemove[" + setTag[0]);
+                        errorFlg = true;
+                    }
+
+                    if (!okuyamaClient.removeTagFromKey(this.nowCount + "tagsampledatakey_" + new Integer(i).toString(), setTag[1])) {
+                        System.out.println("TagRemove - Error=[" + this.nowCount + "tagsampledatakey_" + new Integer(i).toString() + ", TagRemove[" + setTag[1]);
+                        errorFlg = true;
+                    }
+
+                    if (!okuyamaClient.removeTagFromKey(this.nowCount + "tagsampledatakey_" + new Integer(i).toString(), setTag[2])) {
+                        System.out.println("TagRemove - Error=[" + this.nowCount + "tagsampledatakey_" + new Integer(i).toString() + ", TagRemove[" + setTag[2]);
+                        errorFlg = true;
+                    }
+
+                    counter++;
+                } else if (counter == 3) {
+                    setTag = tag4;
+
+                    if (!okuyamaClient.removeTagFromKey(this.nowCount + "tagsampledatakey_" + new Integer(i).toString(), setTag[0])) {
+                        System.out.println("TagRemove - Error=[" + this.nowCount + "tagsampledatakey_" + new Integer(i).toString() + ", TagRemove[" + setTag[0]);
+                        errorFlg = true;
+                    }
+                    counter = 0;
+                }
+
+            }
+            long endTime = new Date().getTime();
+            System.out.println("Tag Remove Method= " + (endTime - startTime) + " milli second");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execTagRemove - End");
         return errorFlg;
     }
 

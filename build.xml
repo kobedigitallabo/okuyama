@@ -346,7 +346,7 @@
 			<ant target='slavedatanode' />
 			<ant target='thirddatanode' />
 			<sequential>
-				<sleep seconds="25" />
+				<sleep seconds="15" />
 				<ant target='masternode' />
 			</sequential>
 		</parallel>
