@@ -58,7 +58,7 @@ public class TestSock {
                     if (args.length > 4) {
 
                         //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_" + args[4] + "_" + new Integer(i).toString())) {
-                        if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_" + args[4] + "_" + new Integer(i).toString())) {
+                        if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol" + args[4] + "_" + new Integer(i).toString())) {
                         //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321" + strBuf.toString() + "_" + args[4] + "_" + new Integer(i).toString())) {
                             System.out.println("OkuyamaClient - error");
                         } else {
@@ -1141,7 +1141,7 @@ public class TestSock {
                     for (int ii = 0; ii < setTag.length; ii++) {
                         if (!okuyamaClient.removeTagFromKey("tagsampledatakey_" + new Integer(i).toString(), setTag[ii])) {
                             System.out.println("OkuyamaClient - error Key=[" + "tagsampledatakey_" + new Integer(i) + "] Tag[" + setTag[ii] +"]");
-                           }
+                        }
                     }
                 }
                 long end = new Date().getTime();
