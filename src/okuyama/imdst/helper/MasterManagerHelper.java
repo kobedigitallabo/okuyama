@@ -802,6 +802,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             }
 
+
+            // Tagは指定なしの場合はクライアントから規定文字列で送られてくるのでここでTagなしの扱いとする
+            // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
+            if (tagStr.equals(ImdstDefine.imdstBlankStrData)) tagStr = null;
+
             if (tagStr != null && !tagStr.equals("")) {
                 tagStr = tagStr + ImdstDefine.imdstTagKeyAppendSep + strIdx;
             } else {
