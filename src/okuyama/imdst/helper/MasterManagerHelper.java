@@ -79,8 +79,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // Isolationモード
     private short isolationPrefixLength = 0;
 
-    // Isolation用
-    private StringBuilder isolationBuffer = null;
 
     // SlaveDataNode 遅延書き込みモード(通常のsetValueのみ有効)
     private boolean slaveNodeDelayWriteMode = false;
@@ -114,7 +112,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             this.isolationMode = true;
             String isolationPrefixStr = StatusUtil.getIsolationPrefix();
             this.isolationPrefixLength = new Integer(isolationPrefixStr.length()).shortValue();
-            this.isolationBuffer = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
         }
 
     }
@@ -1452,7 +1450,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
             HashMap retMap = new HashMap(128);
-
+//long start = System.nanoTime();
             for (int idx = 0; idx < allSearchWordList.size(); idx++) {
                 String[] singleWordList = (String[])allSearchWordList.get(idx);
 
@@ -1468,7 +1466,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
                 }
             }
-
+//long end = System.nanoTime();
+//System.out.println((end - start) + " Time[1]");
+//start = System.nanoTime();
             // 該当データ次第で処理分岐
             if (retMap.size() > 0) {
 
@@ -1479,27 +1479,28 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 Set entrySet = retMap.entrySet();
                 Iterator entryIte = entrySet.iterator(); 
 
+                StringBuilder scriptBuild = new StringBuilder(256);
+                scriptBuild.append(script1);
+
+                String scriptSep = "";
+                for (int idx = 0; idx < workKeywords.length; idx++) {
+                    scriptBuild.append(scriptSep);
+                    scriptBuild.append(" dataValue.indexOf('");
+                    scriptBuild.append((String)decodeWorkKeywords.get(idx));
+                    scriptBuild.append("') != -1 ");
+                    scriptSep = sep;
+                }
+
+                scriptBuild.append(script2);
+                String execScript = new String(BASE64EncoderStream.encode(scriptBuild.toString().getBytes()));
+
                 while(entryIte.hasNext()) {
-                    String scriptSep = "";
 
                     Map.Entry obj = (Map.Entry)entryIte.next();
                     String key = (String)obj.getKey();
-                    
-                    StringBuilder scriptBuild = new StringBuilder(256);
-                    scriptBuild.append(script1);
-
-                    for (int idx = 0; idx < workKeywords.length; idx++) {
-                        scriptBuild.append(scriptSep);
-                        scriptBuild.append(" dataValue.indexOf('");
-                        scriptBuild.append((String)decodeWorkKeywords.get(idx));
-                        scriptBuild.append("') != -1 ");
-                        scriptSep = sep;
-                    }
-
-                    scriptBuild.append(script2);
 
                     // スクリプトを実行して完全一致を確かめる
-                    String[] scriptRet = this.getKeyValueScript(key, new String(BASE64EncoderStream.encode(scriptBuild.toString().getBytes())));
+                    String[] scriptRet = this.getKeyValueScript(key, execScript);
                     if (scriptRet[0].equals("8") && scriptRet[1].equals("true")) {
 
                         // 完全に一致
@@ -1523,6 +1524,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[1] = "false";
                 retStrs[2] = "";
             }
+//end = System.nanoTime();
+//System.out.println((end - start) + " Time[2]");
 
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - searchValueIndex - Error", be);
@@ -5767,15 +5770,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
     // IsolationMode用
     private String encodeIsolationConvert(String str) {
-
+        StringBuilder isolationBuffer = new StringBuilder(ImdstDefine.stringBufferSmallSize);
         if (this.isolationMode) {
 
-            this.isolationBuffer.delete(0, Integer.MAX_VALUE);
+            isolationBuffer.delete(0, Integer.MAX_VALUE);
 
             if (str != null && StatusUtil.isIsolationEncodeTarget(str)) {
-                this.isolationBuffer.append(StatusUtil.getIsolationPrefix());
-                this.isolationBuffer.append(str);
-                return this.isolationBuffer.toString();
+                isolationBuffer.append(StatusUtil.getIsolationPrefix());
+                isolationBuffer.append(str);
+                return isolationBuffer.toString();
             } else {
                 return str;
             }
