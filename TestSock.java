@@ -1188,7 +1188,30 @@ public class TestSock {
             } if (args[0].equals("27.1")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // OkuyamaClientを使用してデータを保存(Tagなし)
+                // OkuyamaClientを使用してデータをIndexを作りながら保存
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+
+                long start = new Date().getTime();
+                // Key, Value, Prefix
+                if (!okuyamaClient.setValueAndCreateIndex(args[3], args[4])) {
+                //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                    System.out.println("OkuyamaClient - error");
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+
+            } if (args[0].equals("27.2")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータをIndexを作りながら保存
 
                 // クライアントインスタンスを作成
                 OkuyamaClient okuyamaClient = new OkuyamaClient();
@@ -1207,10 +1230,10 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
-            } if (args[0].equals("27.2")) {
+            } if (args[0].equals("27.3")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // OkuyamaClientを使用してデータを保存(Tagなし)
+                // OkuyamaClientを使用してデータをIndexを作りながら保存(Prefixあり)
 
                 // クライアントインスタンスを作成
                 OkuyamaClient okuyamaClient = new OkuyamaClient();
@@ -1230,6 +1253,46 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } else if (args[0].equals("28")) {
+
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを取得(Tagでの取得)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] keys = null;
+                String[] searchCharList = args[3].split(":");
+                long start = new Date().getTime();
+
+                Object[] ret = okuyamaClient.searchValue(searchCharList, args[4]);
+                long end = new Date().getTime();
+
+                if (ret[0].equals("true")) {
+                    // データ有り
+                    System.out.println((end - start) + " mille");
+                    keys = (String[])ret[1];
+                    
+                    /*for (int idx = 0; idx < keys.length; idx++) {
+                        System.out.println(keys[idx]);
+                    }*/
+                } else if (ret[0].equals("false")) {
+                    System.out.println("データなし");
+                } else if (ret[0].equals("error")) {
+                    System.out.println(ret[1]);
+                }
+
+/*
+                if (keys != null) {
+                    for (int ii = 0; ii < keys.length; ii++) {
+                        System.out.println("Key=[" + keys[ii] + "]");
+                        ret = okuyamaClient.getValue(keys[ii]);
+                        System.out.println("Value=[" + ret[1] + "]");
+                    }
+                }
+                */
+                end = new Date().getTime();
+                System.out.println((end - start));
+                okuyamaClient.close();
+
             } 
             
 
