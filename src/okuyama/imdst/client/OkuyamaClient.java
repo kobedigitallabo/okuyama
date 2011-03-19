@@ -1161,8 +1161,7 @@ public class OkuyamaClient {
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
-            // Indexプレフィックス連結
-            // Indexプレフィックス指定の有無を調べる
+            // Indexプレフィックス指定の有無を調べてIndexプレフィックス連結
             if (indexPrefix == null || indexPrefix.length() < 1) {
                 // ブランク規定文字列を連結
                 setValueServerReqBuf.append(OkuyamaClient.blankStr);
@@ -3932,6 +3931,167 @@ public class OkuyamaClient {
                 try {
                     this.autoConnect();
                     ret = this.getTagKeys(tagStr);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
+     * 検索可能な文字列は1文字、最低2文字からで、最大は32文字
+     * 
+     * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
+     * @param  searchType 1:AND検索　2:OR検索
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    public Object[] searchValue(String[] searchCharacterList, String searchType) throws OkuyamaClientException {
+        return this.searchValue(searchCharacterList, searchType, OkuyamaClient.blankStr);
+    }
+
+    /**
+     * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
+     * 検索可能な文字列は1文字、最低2文字からで、最大は32文字
+     * 
+     * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
+     * @param  searchType 1:AND検索　2:OR検索
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    public Object[] searchValue(String[] searchCharacterList, String searchType, String prefix) throws OkuyamaClientException {
+
+        Object[] ret = new Object[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (searchCharacterList == null ||  searchCharacterList.length == 0) {
+                throw new OkuyamaClientException("The blank is not admitted on a searchCharacterList");
+            }
+
+            // Tagに対するLengthチェック
+            for (int idx = 0; idx < searchCharacterList.length; idx++) {
+                if (searchCharacterList[idx].length() > 32) throw new OkuyamaClientException("SearchCharacter MaxSize 32Character");
+            }
+
+            // 検索Typeを調整
+            if (searchType == null || !(searchType.equals("1") || searchType.equals("2"))) searchType = "2";
+            // Prefixをチェック
+            if (prefix == null || prefix.length() == 0) prefix = OkuyamaClient.blankStr;
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
+
+            // 処理番号連結
+            serverRequestBuf.append("43");
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+
+            // tag値連結(Keyはデータ送信時には必ず文字列が必要)
+            String sep = "";
+            for (int idx = 0; idx < searchCharacterList.length; idx++) {
+                serverRequestBuf.append(sep);
+                serverRequestBuf.append(new String(this.dataEncoding(searchCharacterList[idx].getBytes())));
+                sep = ":";
+            }
+
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+            // searchType連結
+            serverRequestBuf.append(searchType);
+
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+            // prefix連結
+            serverRequestBuf.append(prefix);
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確
+            if (serverRet[0].equals("43")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    ret[0] = serverRet[1];
+
+                    String[] keys = null;
+
+                    keys = serverRet[2].split(tagKeySep);
+                    String[] decKeys = new String[keys.length];
+                    for (int i = 0; i < keys.length; i++) {
+                        decKeys[i] = new String(this.dataDecoding(keys[i].getBytes()));
+                    }
+                    ret[1] = decKeys;
+
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRet[0] + "]");
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.searchValue(searchCharacterList, searchType, prefix);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.searchValue(searchCharacterList, searchType, prefix);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.searchValue(searchCharacterList, searchType, prefix);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }

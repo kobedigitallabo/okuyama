@@ -523,10 +523,20 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // Key値とValueを格納する
                             // 同時に検索インデックスを作成する
-                            // setKeyValueメソッドにさらにインデックス用のPrefixを最後尾文字列としてAppendしたプロトコル
+                            // setKeyValueメソッドにさらにインデックス用のPrefixを最後尾文字列としてAppendしたプロトコル(指定なしは(B))
                             retParams = this.setKeyValueAndCreateIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5]);
                             break;
+                        case 43 :
 
+                            // 作成したIndexを使って取得を行う
+                            // 送信される検索IndexはUTF-8の文字列のBASE64エンコード文字列
+                            // Protcol Format
+                            // 43,SGVsbG8=:b2t1eWFtYQ==,1,UHJlMQ==
+                            //    --------------------- エンコード済み検索ワード(複数は":"で連結)
+                            //                          --検索タイプ(1=AND 2=OR)
+                            //                            --------- Indexプレフィックス(プレフィックスなしは(B))
+                            retParams = this.searchValueIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
+                            break;
                         case 90 :
 
                             // KeyNodeの使用停止をマーク
@@ -732,93 +742,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
-    /**
-     * Key-Valueを保存する.<br>
-     * ただし保存時にValueをN-gram(ユニグラム)方式にてインデックスを作成する<br>
-     * インデックスはTagとして保存される<br>
-     * また、転送されうValue値はUTF-8の文字コードとして処理されるので、UTF-8でなない2バイト文字はだたしく処理されない<br>
-     * 
-     * @param keyStr key値の文字列
-     * @param tagStr tag値の文字列
-     * @param transactionCode 
-     * @param dataStr value値の文字列
-     * @param indexPrefix 作成されたIndex(tag値)の先頭に付加する文字列
-     * @return String[] 結果
-     * @throws BatchException
-     */
-    private String[] setKeyValueAndCreateIndex(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix) throws BatchException {
-        // TODO:Test
-        String[] retStrs = new String[3];
-
-
-        if (true) {
-            // Key値チェック
-            if (!this.checkKeyLength(keyStr)) {
-                // 保存失敗
-                retStrs[0] = "42";
-                retStrs[1] = "false";
-                retStrs[2] = "Key Length Error";
-                return retStrs;
-            }
-
-            // Value値チェック
-            if (!this.checkValueLength(dataStr)) {
-                // 保存失敗
-                retStrs[0] = "42";
-                retStrs[1] = "false";
-                retStrs[2] = "Value Length Error";
-                return retStrs;
-            }
-
-            // indexPrefixは指定なしの場合はクライアントから規定文字列で送られてくるのでここでindexPrefixなしの扱いとする
-            // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
-            if (indexPrefix.equals(ImdstDefine.imdstBlankStrData)) indexPrefix = "";
-
-            String appendTagSep = "";
-
-            byte[] testBytes = BASE64DecoderStream.decode(dataStr.getBytes());
-
-            String sIdx1 = null;
-            String sIdx2 = null;
-            String strIdx = "";
-
-            try {
-
-                String prefix = (((keyStr.hashCode() << 1) >>> 1) % 50) + "_" + indexPrefix + "_";
-                String realKeyStr = new String(testBytes, ImdstDefine.keyWorkFileEncoding);
-
-
-                for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
-                    String checkStr = realKeyStr.substring(i, i+2);
-
-                    if(SystemUtil.checkNoIndexCharacter(checkStr)) {
-                        continue;
-                    }
-                    sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes()));
-                    strIdx = strIdx + appendTagSep + sIdx1;
-                    appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
-                }
-            } catch (Exception inE) {
-
-            }
-
-
-            // Tagは指定なしの場合はクライアントから規定文字列で送られてくるのでここでTagなしの扱いとする
-            // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
-            if (tagStr.equals(ImdstDefine.imdstBlankStrData)) tagStr = null;
-
-            if (tagStr != null && !tagStr.equals("")) {
-                tagStr = tagStr + ImdstDefine.imdstTagKeyAppendSep + strIdx;
-            } else {
-                tagStr = strIdx;
-            }
-        }
-
-        retStrs = setKeyValue(keyStr, tagStr, transactionCode, dataStr);
-        retStrs[0] = "42";
-        return retStrs;
-    }
-
 
     /**
      * Key-Valueを保存する.<br>
@@ -967,6 +890,98 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             retStrs[2] = "NG:MasterManagerHelper - setKeyValue - Exception - " + e.toString();
         }
         //logger.debug("MasterManagerHelper - setKeyValue - end");
+        return retStrs;
+    }
+
+
+    /**
+     * Key-Valueを保存する.<br>
+     * ただし保存時にValueをN-gram(ユニグラム)方式にてインデックスを作成する<br>
+     * インデックスはTagとして保存される<br>
+     * また、転送されうValue値はUTF-8の文字コードとして処理されるので、UTF-8でなない2バイト文字はだたしく処理されない<br>
+     * 
+     * @param keyStr key値の文字列
+     * @param tagStr tag値の文字列
+     * @param transactionCode 
+     * @param dataStr value値の文字列
+     * @param indexPrefix 作成されたIndex(tag値)の先頭に付加する文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyValueAndCreateIndex(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix) throws BatchException {
+        // TODO:Test
+        String[] retStrs = new String[3];
+
+        try {
+            if (true) {
+                // Key値チェック
+                if (!this.checkKeyLength(keyStr)) {
+                    // 保存失敗
+                    retStrs[0] = "42";
+                    retStrs[1] = "false";
+                    retStrs[2] = "Key Length Error";
+                    return retStrs;
+                }
+
+                // Value値チェック
+                if (!this.checkValueLength(dataStr)) {
+                    // 保存失敗
+                    retStrs[0] = "42";
+                    retStrs[1] = "false";
+                    retStrs[2] = "Value Length Error";
+                    return retStrs;
+                }
+
+                // indexPrefixは指定なしの場合はクライアントから規定文字列で送られてくるのでここでindexPrefixなしの扱いとする
+                // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
+                if (indexPrefix.equals(ImdstDefine.imdstBlankStrData)) indexPrefix = "";
+
+                String appendTagSep = "";
+
+                byte[] testBytes = BASE64DecoderStream.decode(dataStr.getBytes());
+
+                String sIdx1 = null;
+                String sIdx2 = null;
+                String strIdx = "";
+
+
+                String prefix = (((keyStr.hashCode() << 1) >>> 1) % 8) + "_" + indexPrefix + "_";
+                String realKeyStr = new String(testBytes, ImdstDefine.keyWorkFileEncoding);
+
+                // ユニグラム、バイグラムまで
+                // ユニグラムは漢字のみ対象
+                for (int typeIdx = 1; typeIdx < 3; typeIdx++) {
+                    try {
+
+                        for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
+                            String checkStr = realKeyStr.substring(i, i+typeIdx);
+
+                            if(SystemUtil.checkNoIndexCharacter(checkStr)) {
+                                continue;
+                            }
+                            sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes()));
+                            strIdx = strIdx + appendTagSep + sIdx1;
+                            appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
+                        }
+                    } catch (Exception inE) {}
+                }
+
+                // Tagは指定なしの場合はクライアントから規定文字列で送られてくるのでここでTagなしの扱いとする
+                // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
+                if (tagStr.equals(ImdstDefine.imdstBlankStrData)) tagStr = null;
+
+                if (tagStr != null && !tagStr.equals("")) {
+                    tagStr = tagStr + ImdstDefine.imdstTagKeyAppendSep + strIdx;
+                } else {
+                    tagStr = strIdx;
+                }
+            }
+
+            retStrs = setKeyValue(keyStr, tagStr, transactionCode, dataStr);
+            retStrs[0] = "42";
+        } catch (Exception e) {
+            throw new BatchException(e);
+        }
         return retStrs;
     }
 
@@ -1370,6 +1385,164 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         //logger.debug("MasterManagerHelper - getKeyValue - end");
         return retStrs;
     }
+
+
+    /**
+     * 作成済みIndexを利用して対象Key値を取得する.<br>
+     *
+     * @param indexStrs 取得対象文字列群(BASE64エンコード済みでWordの区切りは":")
+     * @param searchType 1=AND 2=OR
+     * @param indexPrefix
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] searchValueIndex(String indexStrs, String searchType, String indexPrefix) throws BatchException {
+        //logger.debug("MasterManagerHelper - searchValueIndex - start");
+        String[] retStrs = new String[3];
+        StringBuilder retKeysBuf = new StringBuilder();
+        String retKeysSep = "";
+        try {
+
+            if (indexStrs.length() < 1)  {
+                // 失敗
+                retStrs[0] = "43";
+                retStrs[1] = "false";
+                retStrs[2] = "Search Keyword Length Error";
+                retStrs[3] = "";
+                return retStrs;
+            }
+
+            String script1 = "var dataValue; var retValue = ''; var execRet = '0'; if(";
+            String script2 = ") {   retValue = '(B)';   execRet = '1';}";
+
+            // Prefixを調整
+            if (indexPrefix.equals(ImdstDefine.imdstBlankStrData)) indexPrefix = "";
+
+            String[] workKeywords = indexStrs.split(":");
+            ArrayList decodeWorkKeywords = new ArrayList(5);
+            ArrayList allSearchWordList = new ArrayList();
+
+            for (int idx = 0; idx < workKeywords.length; idx++) {
+
+                // デコードしてUTF-8で復元
+                String workStr = new String(BASE64DecoderStream.decode(workKeywords[idx].getBytes()), ImdstDefine.keyWorkFileEncoding);
+
+                String keyword = "";
+                if (workStr.length() > 1) {
+                    // バイグラム以上
+                    keyword = workStr.substring(0, 2);
+                } else {
+                    // ユニグラム
+                    keyword = workStr;
+                }
+
+                // 検索対象か調べる
+                if(SystemUtil.checkNoIndexCharacter(keyword)) {
+                    continue;
+                }
+
+                // デコード済みキーワードを蓄える
+                decodeWorkKeywords.add(workStr);
+
+                String[] singleWordList = new String[8];
+                for (int i = 0; i < 8; i++) {
+                    singleWordList[i] = new String(BASE64EncoderStream.encode((i + "_" + indexPrefix + "_" + keyword).getBytes()));
+                }
+                allSearchWordList.add(singleWordList);
+            }
+
+            HashMap retMap = new HashMap(128);
+
+            for (int idx = 0; idx < allSearchWordList.size(); idx++) {
+                String[] singleWordList = (String[])allSearchWordList.get(idx);
+
+                for (int i = 0; i < singleWordList.length; i++) {
+                    String[] ret = this.getTagKeys(singleWordList[i], true);
+                    if (ret[0].equals("4") && ret[1].equals("true")) {
+                        // 該当あり
+                        String targetKeysStr = ret[2];
+                        String[] targetKeyList = targetKeysStr.split(ImdstDefine.imdstTagKeyAppendSep);
+                        for (int ii = 0; ii < targetKeyList.length; ii++) {
+                            retMap.put(targetKeyList[ii], "");
+                        }
+                    }
+                }
+            }
+
+            // 該当データ次第で処理分岐
+            if (retMap.size() > 0) {
+
+                String sep = " || ";
+                if(searchType.equals("1")) sep = " && ";
+
+                // 該当データあり
+                Set entrySet = retMap.entrySet();
+                Iterator entryIte = entrySet.iterator(); 
+
+                while(entryIte.hasNext()) {
+                    String scriptSep = "";
+
+                    Map.Entry obj = (Map.Entry)entryIte.next();
+                    String key = (String)obj.getKey();
+                    
+                    StringBuilder scriptBuild = new StringBuilder(256);
+                    scriptBuild.append(script1);
+
+                    for (int idx = 0; idx < workKeywords.length; idx++) {
+                        scriptBuild.append(scriptSep);
+                        scriptBuild.append(" dataValue.indexOf('");
+                        scriptBuild.append((String)decodeWorkKeywords.get(idx));
+                        scriptBuild.append("') != -1 ");
+                        scriptSep = sep;
+                    }
+
+                    scriptBuild.append(script2);
+System.out.println(scriptBuild);
+System.out.println(key);
+                    // スクリプトを実行して完全一致を確かめる
+                    
+                    String[] scriptRet = this.getKeyValueScript(key, new String(BASE64EncoderStream.encode(scriptBuild.toString().getBytes())));
+System.out.println(scriptRet[0]);
+System.out.println(scriptRet[1]);
+System.out.println(scriptRet[2]);
+                    if (scriptRet[0].equals("8") && scriptRet[1].equals("true")) {
+
+                        // 完全に一致
+System.out.println("AAAAAA");
+                        retKeysBuf.append(retKeysSep);
+                        retKeysBuf.append(key);
+                        retKeysSep = ImdstDefine.imdstTagKeyAppendSep;
+                    }
+                }
+
+                retStrs[0] = "43";
+                if (retKeysBuf.length() > 0) {
+                    retStrs[1] = "true";
+                } else {
+                    retStrs[1] = "false";
+                }
+                retStrs[2] = retKeysBuf.toString();
+            } else {
+            
+                // 該当データなし
+                retStrs[0] = "43";
+                retStrs[1] = "false";
+                retStrs[2] = "";
+            }
+
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - searchValueIndex - Error", be);
+        } catch (Exception e) {
+            logger.error("MasterManagerHelper - searchValueIndex - Exception", e);
+            retStrs[0] = "43";
+            retStrs[1] = "error";
+            retStrs[2] = "NG:MasterManagerHelper - searchValueIndex - Exception - " + e.toString();
+        }
+
+        //logger.debug("MasterManagerHelper - searchValueIndex - end");
+        return retStrs;
+    }
+
 
 
     /**

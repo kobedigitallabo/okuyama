@@ -1,6 +1,7 @@
 package okuyama.imdst.util;
 
 import java.io.*;
+import java.util.*;
 import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.zip.*;
@@ -21,6 +22,242 @@ public class SystemUtil {
     private static ConcurrentLinkedQueue valueDecompresserPool = null;
 
     public static PrintWriter netDebugPrinter = null;
+
+    private static Map checkCharacterMap = new HashMap(64);
+
+    static {
+        checkCharacterMap.put("a", null);
+        checkCharacterMap.put("b", null);
+        checkCharacterMap.put("c", null);
+        checkCharacterMap.put("d", null);
+        checkCharacterMap.put("e", null);
+        checkCharacterMap.put("f", null);
+        checkCharacterMap.put("g", null);
+        checkCharacterMap.put("h", null);
+        checkCharacterMap.put("i", null);
+        checkCharacterMap.put("j", null);
+        checkCharacterMap.put("k", null);
+        checkCharacterMap.put("l", null);
+        checkCharacterMap.put("m", null);
+        checkCharacterMap.put("n", null);
+        checkCharacterMap.put("o", null);
+        checkCharacterMap.put("p", null);
+        checkCharacterMap.put("q", null);
+        checkCharacterMap.put("r", null);
+        checkCharacterMap.put("s", null);
+        checkCharacterMap.put("t", null);
+        checkCharacterMap.put("u", null);
+        checkCharacterMap.put("w", null);
+        checkCharacterMap.put("x", null);
+        checkCharacterMap.put("y", null);
+        checkCharacterMap.put("z", null);
+        checkCharacterMap.put("A", null);
+        checkCharacterMap.put("B", null);
+        checkCharacterMap.put("C", null);
+        checkCharacterMap.put("D", null);
+        checkCharacterMap.put("E", null);
+        checkCharacterMap.put("F", null);
+        checkCharacterMap.put("G", null);
+        checkCharacterMap.put("H", null);
+        checkCharacterMap.put("I", null);
+        checkCharacterMap.put("J", null);
+        checkCharacterMap.put("K", null);
+        checkCharacterMap.put("L", null);
+        checkCharacterMap.put("M", null);
+        checkCharacterMap.put("N", null);
+        checkCharacterMap.put("O", null);
+        checkCharacterMap.put("P", null);
+        checkCharacterMap.put("Q", null);
+        checkCharacterMap.put("R", null);
+        checkCharacterMap.put("S", null);
+        checkCharacterMap.put("T", null);
+        checkCharacterMap.put("U", null);
+        checkCharacterMap.put("W", null);
+        checkCharacterMap.put("X", null);
+        checkCharacterMap.put("Y", null);
+        checkCharacterMap.put("Z", null);
+        checkCharacterMap.put("1", null);
+        checkCharacterMap.put("2", null);
+        checkCharacterMap.put("3", null);
+        checkCharacterMap.put("4", null);
+        checkCharacterMap.put("5", null);
+        checkCharacterMap.put("6", null);
+        checkCharacterMap.put("7", null);
+        checkCharacterMap.put("8", null);
+        checkCharacterMap.put("9", null);
+        checkCharacterMap.put("0", null);
+        checkCharacterMap.put("!", null);
+        checkCharacterMap.put("#", null);
+        checkCharacterMap.put("$", null);
+        checkCharacterMap.put("%", null);
+        checkCharacterMap.put("&", null);
+        checkCharacterMap.put("'", null);
+        checkCharacterMap.put("(", null);
+        checkCharacterMap.put(")", null);
+        checkCharacterMap.put("-", null);
+        checkCharacterMap.put("=", null);
+        checkCharacterMap.put("^", null);
+        checkCharacterMap.put("~", null);
+        checkCharacterMap.put("\\", null);
+        checkCharacterMap.put("|", null);
+        checkCharacterMap.put("@", null);
+        checkCharacterMap.put("`", null);
+        checkCharacterMap.put("[", null);
+        checkCharacterMap.put("{", null);
+        checkCharacterMap.put(";", null);
+        checkCharacterMap.put("+", null);
+        checkCharacterMap.put(":", null);
+        checkCharacterMap.put("*", null);
+        checkCharacterMap.put("]", null);
+        checkCharacterMap.put("}", null);
+        checkCharacterMap.put("/", null);
+        checkCharacterMap.put("?", null);
+        checkCharacterMap.put("_", null);
+        checkCharacterMap.put(",", null);
+        checkCharacterMap.put("<", null);
+        checkCharacterMap.put(".", null);
+        checkCharacterMap.put(">", null);
+        checkCharacterMap.put(" ", null);
+        checkCharacterMap.put("　", null);
+        checkCharacterMap.put("あ", null);
+        checkCharacterMap.put("い", null);
+        checkCharacterMap.put("う", null);
+        checkCharacterMap.put("え", null);
+        checkCharacterMap.put("お", null);
+        checkCharacterMap.put("か", null);
+        checkCharacterMap.put("き", null);
+        checkCharacterMap.put("く", null);
+        checkCharacterMap.put("け", null);
+        checkCharacterMap.put("こ", null);
+        checkCharacterMap.put("さ", null);
+        checkCharacterMap.put("し", null);
+        checkCharacterMap.put("す", null);
+        checkCharacterMap.put("せ", null);
+        checkCharacterMap.put("そ", null);
+        checkCharacterMap.put("た", null);
+        checkCharacterMap.put("ち", null);
+        checkCharacterMap.put("つ", null);
+        checkCharacterMap.put("て", null);
+        checkCharacterMap.put("と", null);
+        checkCharacterMap.put("な", null);
+        checkCharacterMap.put("に", null);
+        checkCharacterMap.put("ぬ", null);
+        checkCharacterMap.put("ね", null);
+        checkCharacterMap.put("の", null);
+        checkCharacterMap.put("は", null);
+        checkCharacterMap.put("ひ", null);
+        checkCharacterMap.put("ふ", null);
+        checkCharacterMap.put("へ", null);
+        checkCharacterMap.put("ほ", null);
+        checkCharacterMap.put("ま", null);
+        checkCharacterMap.put("み", null);
+        checkCharacterMap.put("む", null);
+        checkCharacterMap.put("め", null);
+        checkCharacterMap.put("も", null);
+        checkCharacterMap.put("や", null);
+        checkCharacterMap.put("ゆ", null);
+        checkCharacterMap.put("よ", null);
+        checkCharacterMap.put("わ", null);
+        checkCharacterMap.put("を", null);
+        checkCharacterMap.put("ん", null);
+        checkCharacterMap.put("！", null);
+        checkCharacterMap.put("”", null);
+        checkCharacterMap.put("＃", null);
+        checkCharacterMap.put("＄", null);
+        checkCharacterMap.put("％", null);
+        checkCharacterMap.put("＆", null);
+        checkCharacterMap.put("’", null);
+        checkCharacterMap.put("（", null);
+        checkCharacterMap.put("）", null);
+        checkCharacterMap.put("＝", null);
+        checkCharacterMap.put("～", null);
+        checkCharacterMap.put("｜", null);
+        checkCharacterMap.put("１", null);
+        checkCharacterMap.put("２", null);
+        checkCharacterMap.put("３", null);
+        checkCharacterMap.put("４", null);
+        checkCharacterMap.put("５", null);
+        checkCharacterMap.put("６", null);
+        checkCharacterMap.put("７", null);
+        checkCharacterMap.put("８", null);
+        checkCharacterMap.put("９", null);
+        checkCharacterMap.put("０", null);
+        checkCharacterMap.put("－", null);
+        checkCharacterMap.put("＾", null);
+        checkCharacterMap.put("￥", null);
+        checkCharacterMap.put("ｑ", null);
+        checkCharacterMap.put("ｗ", null);
+        checkCharacterMap.put("ｅ", null);
+        checkCharacterMap.put("ｒ", null);
+        checkCharacterMap.put("ｔ", null);
+        checkCharacterMap.put("ｙ", null);
+        checkCharacterMap.put("ｕ", null);
+        checkCharacterMap.put("ｉ", null);
+        checkCharacterMap.put("ｏ", null);
+        checkCharacterMap.put("ｐ", null);
+        checkCharacterMap.put("＠", null);
+        checkCharacterMap.put("［", null);
+        checkCharacterMap.put("］", null);
+        checkCharacterMap.put("：", null);
+        checkCharacterMap.put("；", null);
+        checkCharacterMap.put("ｌ", null);
+        checkCharacterMap.put("ｋ", null);
+        checkCharacterMap.put("ｊ", null);
+        checkCharacterMap.put("ｈ", null);
+        checkCharacterMap.put("ｇ", null);
+        checkCharacterMap.put("ｆ", null);
+        checkCharacterMap.put("ｄ", null);
+        checkCharacterMap.put("ｓ", null);
+        checkCharacterMap.put("ａ", null);
+        checkCharacterMap.put("ｚ", null);
+        checkCharacterMap.put("ｘ", null);
+        checkCharacterMap.put("ｃ", null);
+        checkCharacterMap.put("ｖ", null);
+        checkCharacterMap.put("ｂ", null);
+        checkCharacterMap.put("ｎ", null);
+        checkCharacterMap.put("ｍ", null);
+        checkCharacterMap.put("，", null);
+        checkCharacterMap.put("．", null);
+        checkCharacterMap.put("／", null);
+        checkCharacterMap.put("￥", null);
+        checkCharacterMap.put("Ｑ", null);
+        checkCharacterMap.put("Ｗ", null);
+        checkCharacterMap.put("Ｅ", null);
+        checkCharacterMap.put("Ｒ", null);
+        checkCharacterMap.put("Ｔ", null);
+        checkCharacterMap.put("Ｙ", null);
+        checkCharacterMap.put("Ｕ", null);
+        checkCharacterMap.put("Ｉ", null);
+        checkCharacterMap.put("Ｏ", null);
+        checkCharacterMap.put("Ｐ", null);
+        checkCharacterMap.put("‘", null);
+        checkCharacterMap.put("｛", null);
+        checkCharacterMap.put("｝", null);
+        checkCharacterMap.put("＊", null);
+        checkCharacterMap.put("＋", null);
+        checkCharacterMap.put("Ｌ", null);
+        checkCharacterMap.put("Ｋ", null);
+        checkCharacterMap.put("Ｊ", null);
+        checkCharacterMap.put("Ｈ", null);
+        checkCharacterMap.put("Ｇ", null);
+        checkCharacterMap.put("Ｆ", null);
+        checkCharacterMap.put("Ｄ", null);
+        checkCharacterMap.put("Ｓ", null);
+        checkCharacterMap.put("Ａ", null);
+        checkCharacterMap.put("Ｚ", null);
+        checkCharacterMap.put("Ｘ", null);
+        checkCharacterMap.put("Ｃ", null);
+        checkCharacterMap.put("Ｖ", null);
+        checkCharacterMap.put("Ｂ", null);
+        checkCharacterMap.put("Ｎ", null);
+        checkCharacterMap.put("Ｍ", null);
+        checkCharacterMap.put("＜", null);
+        checkCharacterMap.put("＞", null);
+        checkCharacterMap.put("？", null);
+        checkCharacterMap.put("＿", null);
+        checkCharacterMap.put("\r", null);
+        checkCharacterMap.put("\n", null);
+    }
 
 
     /**
@@ -250,15 +487,29 @@ public class SystemUtil {
 
     // Index作成対象外の場合はtrue
     public static boolean checkNoIndexCharacter(String checkStr) {
-        if(checkStr.indexOf(" ") > -1 || 
-            checkStr.indexOf("。") > -1 || 
-                checkStr.indexOf("、") > -1 || 
-                    checkStr.indexOf("　") > -1 || 
-                        checkStr.indexOf("「") > -1 || 
-                            checkStr.indexOf("」") > -1 || 
-                                checkStr.indexOf(",") > -1 || 
-                                    checkStr.indexOf(".") > -1 || 
-                                        checkStr.indexOf("/") > -1) return true;
+        if (checkStr.length() > 1) {
+            if(checkStr.indexOf(" ") > -1 || 
+                checkStr.indexOf("。") > -1 || 
+                    checkStr.indexOf("、") > -1 || 
+                        checkStr.indexOf("　") > -1 || 
+                            checkStr.indexOf("「") > -1 || 
+                                checkStr.indexOf("」") > -1 || 
+                                    checkStr.indexOf(",") > -1 || 
+                                        checkStr.indexOf(".") > -1 || 
+                                            checkStr.indexOf("(") > -1 || 
+                                                checkStr.indexOf(")") > -1 || 
+                                                    checkStr.indexOf("[") > -1 || 
+                                                        checkStr.indexOf("]") > -1 || 
+                                                            checkStr.indexOf("（") > -1 || 
+                                                                checkStr.indexOf("）") > -1 || 
+                                                                    checkStr.indexOf("{") > -1 || 
+                                                                        checkStr.indexOf("}") > -1 || 
+                                                                            checkStr.indexOf("｛") > -1 || 
+                                                                                checkStr.indexOf("｝") > -1 || 
+                                                                    checkStr.indexOf("/") > -1) return true;
+        } else {
+            if(checkCharacterMap.containsKey(checkStr)) return true;
+        }
         return false;
     }
 
