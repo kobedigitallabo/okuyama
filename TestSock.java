@@ -1148,7 +1148,89 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
-            }
+            } else if (args[0].equals("27")) {
+
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagなし)
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+                Random rnd = new Random();
+                StringBuilder strBuf =null; 
+                if (args.length > 4) {
+                    strBuf = new StringBuilder(6000*10);
+                    for (int i = 0; i < 3000; i++) {
+                        strBuf.append(rnd.nextInt(1999999999));
+                    }
+                }
+
+                long start = new Date().getTime();
+                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                    // データ登録
+                    
+                    //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_" + args[4] + "_" + new Integer(i).toString())) {
+                    if (!okuyamaClient.setValueAndCreateIndex("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_savedatavaluestr09876543" + args[4] + "_" + new Integer(i).toString())) {
+                    //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321" + strBuf.toString() + "_" + args[4] + "_" + new Integer(i).toString())) {
+                        System.out.println("OkuyamaClient - error");
+                    } else {
+                        System.out.println("Store[" + "datasavekey_" + args[4] + "_" + new Integer(i).toString() + "]");
+                    }
+                    //if ((i % 1000) == 0) System.out.println(i);
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+            } if (args[0].equals("27.1")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagなし)
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+
+                long start = new Date().getTime();
+                // Key, Value, Prefix
+                if (!okuyamaClient.setValueAndCreateIndex(args[3], args[4], args[5])) {
+                //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                    System.out.println("OkuyamaClient - error");
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+            } if (args[0].equals("27.2")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagなし)
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+
+                long start = new Date().getTime();
+                // Key, Tag, Value, Prefix
+                String[] tags = {args[4]};
+                if (!okuyamaClient.setValueAndCreateIndex(args[3], tags, args[5], args[6])) {
+                //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                    System.out.println("OkuyamaClient - error");
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+            } 
             
 
 
