@@ -1497,18 +1497,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     scriptBuild.append(script2);
-System.out.println(scriptBuild);
-System.out.println(key);
+
                     // スクリプトを実行して完全一致を確かめる
-                    
                     String[] scriptRet = this.getKeyValueScript(key, new String(BASE64EncoderStream.encode(scriptBuild.toString().getBytes())));
-System.out.println(scriptRet[0]);
-System.out.println(scriptRet[1]);
-System.out.println(scriptRet[2]);
                     if (scriptRet[0].equals("8") && scriptRet[1].equals("true")) {
 
                         // 完全に一致
-System.out.println("AAAAAA");
                         retKeysBuf.append(retKeysSep);
                         retKeysBuf.append(key);
                         retKeysSep = ImdstDefine.imdstTagKeyAppendSep;
