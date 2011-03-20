@@ -1050,19 +1050,25 @@ public class KeyMapManager extends Thread {
                             keyStrs = workStrs[0];
 
                             // 含まれてる可能性を検証
-                            if (keyStrs.indexOf(((String[])key.split(ImdstDefine.setTimeParamSep))[0]) != -1) {
-                                String[] tagKeysList = keyStrs.split(KeyMapManager.tagKeySep);
+                            String checkStr = ((String[])key.split(ImdstDefine.setTimeParamSep))[0];
+                            if(keyStrs.indexOf(checkStr + KeyMapManager.tagKeySep) == 0 || 
+                                   keyStrs.indexOf(KeyMapManager.tagKeySep + checkStr + KeyMapManager.tagKeySep) != -1) {
+                                // 既に登録済み
+                                appendFlg = false;
+                            } else if (keyStrs.indexOf(checkStr) != -1) {
 
+                                String[] tagKeysList = keyStrs.split(KeyMapManager.tagKeySep);
                                 for (int tagKeysListIdx = 0; tagKeysListIdx < tagKeysList.length; tagKeysListIdx++) {
 
-                                    if (tagKeysList[tagKeysListIdx].equals(((String[])key.split(ImdstDefine.setTimeParamSep))[0])) {
+                                    if (tagKeysList[tagKeysListIdx].equals(checkStr)) {
 
                                         // 既に登録済み
                                         appendFlg = false;
                                         break;
                                     }
-                                } 
+                                }
                             }
+
                             // 既に登録済み
                             if (!appendFlg) break;
                         } else {
