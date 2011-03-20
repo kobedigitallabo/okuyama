@@ -1177,7 +1177,7 @@ public class TestSock {
                     //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321" + strBuf.toString() + "_" + args[4] + "_" + new Integer(i).toString())) {
                         System.out.println("OkuyamaClient - error");
                     } else {
-                        System.out.println("Store[" + "datasavekey_" + args[4] + "_" + new Integer(i).toString() + "]");
+                        //System.out.println("Store[" + "datasavekey_" + args[4] + "_" + new Integer(i).toString() + "]");
                     }
                     //if ((i % 1000) == 0) System.out.println(i);
                 }
@@ -1270,7 +1270,7 @@ public class TestSock {
                     // データ有り
                     System.out.println((end - start) + " mille");
                     keys = (String[])ret[1];
-                    
+                    System.out.println("Result Count[" + keys.length + "]");
                     /*for (int idx = 0; idx < keys.length; idx++) {
                         System.out.println(keys[idx]);
                     }*/

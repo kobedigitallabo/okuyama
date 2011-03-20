@@ -123,6 +123,7 @@
 		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/MasterNode_small.properties"/>
+			<!--<arg value="-debug" />-->
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>
