@@ -590,6 +590,24 @@ public class KeyManagerHelper extends AbstractHelper {
                                 retParamBuf.append(retParams[2]);
                             }
                             break;
+                        case 50 :
+                                  
+                            // KeyとMatch用文字列を渡すことで、Value該当文字列が含まれるかをチェック
+                            // Protocol
+                            // KeyとMatchCharacterはBase64でエンコードする(UTF-8の文字列限定)
+                            // 50,KEY1:KEY2,MATCHCHAR1:MATCHCHAR2,1
+                            requestHashCode = clientParameterList[1];
+
+                            // メソッド呼び出し
+                            retParams = this.matchTargetKeyPairValueCharacter(requestHashCode, clientParameterList[2], clientParameterList[3]);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
                         case 60 :
 
                             // KeyMapManagerのデータサイズを返す
@@ -1354,6 +1372,116 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[1] = "false";
         }
         //logger.debug("KeyManagerHelper - removeTagdata - end");
+        return retStrs;
+    }
+
+
+    // KeyとMatch用文字列、Match指定(AND,OR)を渡すことで<br>
+    // そのKeyのPairのValueに指定の文字列が含まれているかを返す<br>
+    // 同時に複数のKey値を":"で連結して渡すことで一度に全てチェック可能<br>
+    // 同時に複数のMatch用文字列を":"で連結して渡すことで一度に全てチェック可能<br>
+    // 返却されるKey値はMatchしたKey値のみ":"で連結されて返却される.<br>
+    // チェックする際にValueはUTF-8固定でデコードされる.<br>
+    // チェックする際にMatch用文字列はUTF-8固定でデコードされる.<br>
+    private String[] matchTargetKeyPairValueCharacter(String keys, String matchCharacters, String matchType) {
+        //logger.debug("KeyManagerHelper - matchTargetKeyPairValueCharacter - start");
+
+        String[] retStrs = null;
+        StringBuilder matchKeyList = new StringBuilder();
+        String retSep = "";
+
+        try {
+            if(!this.keyMapManager.checkError()) {
+                String[] targetKeys = keys.split(":");
+                String[] matchCharacterList = matchCharacters.split(":");
+
+                for (int i = 0; i < matchCharacterList.length; i++) {
+                    matchCharacterList[i] = new String(BASE64DecoderStream.decode(matchCharacterList[i].getBytes()), ImdstDefine.keyWorkFileEncoding);
+                }
+
+                for (int idx = 0; idx < targetKeys.length; idx++) {
+
+                    String key = targetKeys[idx];
+
+                    if (this.keyMapManager.containsKeyPair(key)) {
+
+                        String workValueStr = this.keyMapManager.getKeyPair(key);
+                        String[] workValues = null;
+                        String[] setTimeValues = null;
+                        String tmpValue = null;
+                        boolean matchFlg = false;
+
+                        // 取得した値からScriptを実行する部分だけ取り出し
+                        if (workValueStr != null) {
+
+                            // memcachedのプロトコルにより、フラグデータが格納されている可能性があるので左辺のみ取り出し
+                            workValues = workValueStr.split(ImdstDefine.keyHelperClientParamSep);
+
+                            // データ保存日時が記録されている場合があるので左辺のみ取り出し
+                            setTimeValues = workValues[0].split(ImdstDefine.setTimeParamSep);
+                            tmpValue = setTimeValues[0];
+                            String value = null;
+                            // Value値を設定
+                            if (tmpValue == null || tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
+                                value = "";
+                            } else {
+                                value = new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.keyWorkFileEncoding);
+                            }
+                            
+
+                            if (matchType.equals("1")) {
+
+                                // AND
+                                matchFlg = true;
+                                for (int i = 0; i < matchCharacterList.length; i++) {
+                                    if (value.indexOf(matchCharacterList[i]) == -1) {
+                                        matchFlg = false;
+                                        break;
+                                    }
+                                }
+                            } else {
+
+                                // OR
+                                matchFlg = false;
+                                for (int i = 0; i < matchCharacterList.length; i++) {
+                                    if (value.indexOf(matchCharacterList[i]) != -1) {
+                                        matchFlg = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (matchFlg) {
+                            matchKeyList.append(retSep);
+                            matchKeyList.append(key);
+                            retSep = ":";
+                        }
+                    }
+                }
+
+                if (matchKeyList.length() > 0) {
+                    retStrs = new String[3];
+                    retStrs[0] = "50";
+                    retStrs[1] = "true";
+                    retStrs[2] = matchKeyList.toString();
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "50";
+                    retStrs[1] = "false";
+                }
+            } else {
+                retStrs = new String[2];
+                retStrs[0] = "50";
+                retStrs[1] = "false";
+            }
+        } catch (Exception e) {
+            logger.error("KeyManagerHelper - matchTargetKeyPairValueCharacter - Error", e);
+            retStrs = new String[2];
+            retStrs[0] = "50";
+            retStrs[1] = "false";
+        }
+        //logger.debug("KeyManagerHelper - matchTargetKeyPairValueCharacter - end");
         return retStrs;
     }
 
