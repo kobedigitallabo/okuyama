@@ -1207,8 +1207,17 @@ public class KeyManagerHelper extends AbstractHelper {
         try {
             if(!this.keyMapManager.checkError()) {
 
-                this.keyMapManager.setTagPair(tag, key, transactionCode);
+                if (tag.indexOf(ImdstDefine.imdstTagBatchRegisterAppendSep) == -1) {
 
+                    this.keyMapManager.setTagPair(tag, key, transactionCode);
+                } else {
+
+                    String[] regsiterTags = tag.split(ImdstDefine.imdstTagBatchRegisterAppendSep);
+                    
+                    for (int idx = 0; idx < regsiterTags.length; idx++) {
+                        this.keyMapManager.setTagPair(regsiterTags[idx], key, transactionCode);
+                    }
+                }
                 retStrs[0] = "3";
                 retStrs[1] = "true";
                 retStrs[2] = "OK";

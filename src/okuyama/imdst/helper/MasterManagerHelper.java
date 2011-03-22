@@ -800,18 +800,38 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 for (int i = 0; i < tags.length; i++) {
 
-                    // TagをIsolation変換実行
-                    tags[i] = this.encodeIsolationConvert(tags[i]);
+                    // 保存先DataNode情報
+                    String[] tagKeyNodeInfo = null;
 
-                    if (!this.checkKeyLength(tags[i]))  {
-                        // 保存失敗
-                        retStrs[0] = "1";
-                        retStrs[1] = "false";
-                        throw new BatchException("Tag Data Length Error");
+                    // 複数のTagを一括保存指定されている可能性を検証
+                    if (tags[i].indexOf(ImdstDefine.imdstTagBatchRegisterAppendSep) != -1) {
+
+                        // 複数のTagを一括保存指定されている場合は保存先を1件目から決定
+                        // こちらの処理は内部的なsetKeyValueAndCreateIndexからのみ呼び出されるので
+                        // 絶対にLengthチェックをオーバーすることはない
+                        // かつIsolation済みの値が連結されいる
+                        // 複数Tagの連結セパレータは";"
+                        String[] workTags = tags[i].split(ImdstDefine.imdstTagBatchRegisterAppendSep);
+
+                        // Tag値保存先を問い合わせ
+
+                        tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(workTags[0], false);
+                    } else {
+
+                        // TagをIsolation変換実行
+                        tags[i] = this.encodeIsolationConvert(tags[i]);
+
+                        if (!this.checkKeyLength(tags[i]))  {
+                            // 保存失敗
+                            retStrs[0] = "1";
+                            retStrs[1] = "false";
+                            throw new BatchException("Tag Data Length Error");
+                        }
+
+                        // Tag値保存先を問い合わせ
+                        tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i], false);
                     }
 
-                    // Tag値保存先を問い合わせ
-                    String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(tags[i], false);
                     tagKeyPair = new String[2];
 
                     tagKeyPair[0] = tags[i];
@@ -880,12 +900,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             retStrs[0] = "1";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - setKeyValue - Exception - " + be.toString();
+            retStrs[2] = "NG:MasterNode - setKeyValue - Exception - " + be.toString();
         } catch (Exception e) {
             logger.info("MasterManagerHelper - setKeyValue - Error", e);
             retStrs[0] = "1";
             retStrs[1] = "false";
-            retStrs[2] = "NG:MasterManagerHelper - setKeyValue - Exception - " + e.toString();
+            retStrs[2] = "NG:MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - setKeyValue - end");
         return retStrs;
@@ -936,7 +956,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 String appendTagSep = "";
 
-                byte[] testBytes = BASE64DecoderStream.decode(dataStr.getBytes());
+                byte[] testBytes = BASE64DecoderStream.decode(dataStr.getBytes("UTF-8"));
 
                 String sIdx1 = null;
                 String sIdx2 = null;
@@ -957,13 +977,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             if(SystemUtil.checkNoIndexCharacter(checkStr)) {
                                 continue;
                             }
-                            sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes()));
+                            sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes("UTF-8")));
                             strIdx = strIdx + appendTagSep + sIdx1;
                             appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
                         }
                     } catch (Exception inE) {}
                 }
 
+                
                 // Tagは指定なしの場合はクライアントから規定文字列で送られてくるのでここでTagなしの扱いとする
                 // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
                 if (tagStr.equals(ImdstDefine.imdstBlankStrData)) tagStr = null;
@@ -974,6 +995,67 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     tagStr = strIdx;
                 }
             }
+
+
+            if (tagStr.indexOf(ImdstDefine.imdstTagKeyAppendSep) != -1) {
+
+                // 複数のTagを登録しようとしている
+                // Tagを保存DataNode単位でまとめる
+                Map batchTagRegisterMap = new HashMap(8);
+
+                String[] workTagList = tagStr.split(ImdstDefine.imdstTagKeyAppendSep);
+                for (int i = 0; i < workTagList.length; i++) {
+
+                    // TagをIsolation変換実行
+                    workTagList[i] = this.encodeIsolationConvert(workTagList[i]);
+
+                    if (!this.checkKeyLength(workTagList[i]))  {
+                        // 保存失敗
+                        retStrs[0] = "42";
+                        retStrs[1] = "false";
+                        throw new BatchException("Tag Data Length Error");
+                    }
+
+                    // Tag値保存先を問い合わせ
+                    String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(workTagList[i], false);
+
+                    if (batchTagRegisterMap.containsKey(tagKeyNodeInfo[2])) {
+
+                        StringBuilder buildBatchTagBuf = (StringBuilder)batchTagRegisterMap.get(tagKeyNodeInfo[2]);
+                        buildBatchTagBuf.append(ImdstDefine.imdstTagBatchRegisterAppendSep);
+                        buildBatchTagBuf.append(workTagList[i]);
+                        batchTagRegisterMap.put(tagKeyNodeInfo[2], buildBatchTagBuf);
+                    } else {
+
+                        StringBuilder buildBatchTagBuf = new StringBuilder(128);
+                        buildBatchTagBuf.append(workTagList[i]);
+                        batchTagRegisterMap.put(tagKeyNodeInfo[2], buildBatchTagBuf);
+                    }
+                }
+
+                Set batchTagEntrySet = batchTagRegisterMap.entrySet();
+                Iterator batchTagEntryIte = batchTagEntrySet.iterator(); 
+                String registerTagSep = "";
+                StringBuilder registerTagStrBuf = new StringBuilder(256);
+
+                // 再度Isolation済みのタグをDataNode単位でまとめて連結
+                while(batchTagEntryIte.hasNext()) {
+
+                    Map.Entry obj = (Map.Entry)batchTagEntryIte.next();
+                    String keyNodeInfoFullName = (String)obj.getKey();
+
+                    StringBuilder buildBatchTagBuf = (StringBuilder)batchTagRegisterMap.get(keyNodeInfoFullName);
+
+                    registerTagStrBuf.append(registerTagSep);
+                    registerTagStrBuf.append(buildBatchTagBuf.toString());
+
+                    registerTagSep = ImdstDefine.imdstTagKeyAppendSep;
+                }
+
+                // 完成したTag文字列
+                tagStr = registerTagStrBuf.toString();
+            }
+
 
             retStrs = setKeyValue(keyStr, tagStr, transactionCode, dataStr);
             retStrs[0] = "42";
@@ -1121,12 +1203,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             logger.info("MasterManagerHelper - setKeyValueOnlyOnce - Error", be);
             retStrs[0] = "6";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - setKeyValueOnlyOnce - Exception - " + be.toString();
+            retStrs[2] = "NG:MasterNode - Exception";
         } catch (Exception e) {
             logger.info("MasterManagerHelper - setKeyValueOnlyOnce - Error", e);
             retStrs[0] = "6";
             retStrs[1] = "false";
-            retStrs[2] = "NG:MasterManagerHelper - setKeyValueOnlyOnce - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - setKeyValueOnlyOnce - end");
         return retStrs;
@@ -1269,12 +1351,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             logger.info("MasterManagerHelper - setKeyValueVersionCheck - Error", be);
             retStrs[0] = "16";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - setKeyValueVersionCheck - Exception - " + be.toString();
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             logger.info("MasterManagerHelper - setKeyValueVersionCheck - Error", e);
             retStrs[0] = "16";
             retStrs[1] = "false";
-            retStrs[2] = "NG:MasterManagerHelper - setKeyValueVersionCheck - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - setKeyValueVersionCheck - end");
         return retStrs;
@@ -1372,13 +1454,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             retStrs[0] = "2";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - getKeyValue - Exception - " + be.toString();
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             logger.error("MasterManagerHelper - getKeyValue - Error", e);
 
             retStrs[0] = "2";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - getKeyValue - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - getKeyValue - end");
         return retStrs;
@@ -1410,9 +1492,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 return retStrs;
             }
 
-            String script1 = "var dataValue; var retValue = ''; var execRet = '0'; if(";
-            String script2 = ") {   retValue = '(B)';   execRet = '1';}";
-
             // Prefixを調整
             if (indexPrefix.equals(ImdstDefine.imdstBlankStrData)) indexPrefix = "";
 
@@ -1423,13 +1502,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             for (int idx = 0; idx < workKeywords.length; idx++) {
 
                 // デコードしてUTF-8で復元
-                String workStr = new String(BASE64DecoderStream.decode(workKeywords[idx].getBytes()), ImdstDefine.keyWorkFileEncoding);
+                String workStr = new String(BASE64DecoderStream.decode(workKeywords[idx].getBytes("UTF-8")), ImdstDefine.keyWorkFileEncoding);
 
                 String keyword = "";
                 if (workStr.length() > 1) {
+
                     // バイグラム以上
                     keyword = workStr.substring(0, 2);
                 } else {
+
                     // ユニグラム
                     keyword = workStr;
                 }
@@ -1444,7 +1525,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 String[] singleWordList = new String[8];
                 for (int i = 0; i < 8; i++) {
-                    singleWordList[i] = new String(BASE64EncoderStream.encode((i + "_" + indexPrefix + "_" + keyword).getBytes()));
+                    singleWordList[i] = new String(BASE64EncoderStream.encode((i + "_" + indexPrefix + "_" + keyword).getBytes("UTF-8")));
                 }
                 allSearchWordList.add(singleWordList);
             }
@@ -1475,9 +1556,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // 該当データあり
                 Set entrySet = retMap.entrySet();
                 Iterator entryIte = entrySet.iterator(); 
-
+                int nodeNamePrefix = 0;
+                int cnt = 0;
                 while(entryIte.hasNext()) {
-
+                    cnt++;
+                    if ((cnt % 5000) == 0) nodeNamePrefix++;
                     Map.Entry obj = (Map.Entry)entryIte.next();
                     String key = (String)obj.getKey();
 
@@ -1486,19 +1569,20 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // キー値を使用して取得先を決定
                     String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(cnvIsolationKey, this.reverseAccess);
+                    String prefixFullNodeName = nodeNamePrefix + "_" + keyNodeInfo[2];
 
-                    if (targetSumKeysMap.containsKey(keyNodeInfo[2])) {
+                    if (targetSumKeysMap.containsKey(prefixFullNodeName)) {
 
-                        StringBuilder keyBuf = (StringBuilder)targetSumKeysMap.get(keyNodeInfo[2]);
+                        StringBuilder keyBuf = (StringBuilder)targetSumKeysMap.get(prefixFullNodeName);
                         keyBuf.append(":");
                         keyBuf.append(cnvIsolationKey);
-                        targetSumKeysMap.put(keyNodeInfo[2], keyBuf);
+                        targetSumKeysMap.put(prefixFullNodeName, keyBuf);
                     } else {
     
-                        targetNodeInfoMap.put(keyNodeInfo[2], keyNodeInfo);
+                        targetNodeInfoMap.put(prefixFullNodeName, keyNodeInfo);
                         StringBuilder keyBuf = new StringBuilder(256);
                         keyBuf.append(cnvIsolationKey);
-                        targetSumKeysMap.put(keyNodeInfo[2], keyBuf);
+                        targetSumKeysMap.put(prefixFullNodeName, keyBuf);
                     }
                 }
 
@@ -1507,28 +1591,118 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 Set nodeEntrySet = targetSumKeysMap.entrySet();
                 Iterator nodeEntryIte = nodeEntrySet.iterator(); 
                 String matchKeySep = "";
+                String[] keyNodeInfo = null;
+                String[] keyNodeSaveRet = null;
+
+                // RequestをDataNodeへ一旦全台送信
                 while(nodeEntryIte.hasNext()) {
 
                     Map.Entry obj = (Map.Entry)nodeEntryIte.next();
                     String nodeFullName = (String)obj.getKey();
 
                     StringBuilder keys = (StringBuilder)targetSumKeysMap.get(nodeFullName);
-                    String[] keyNodeInfo = (String[])targetNodeInfoMap.get(nodeFullName);
-                    String[] keyNodeSaveRet = null;
+                    keyNodeInfo = (String[])targetNodeInfoMap.get(nodeFullName);
+                    KeyNodeConnector keyNodeConnector = null;
+
+                    int useNodeIdx = 0;
+
+                    // KeyNodeとの接続を確立
+                    try {
+                        useNodeIdx = 1;
+
+                        keyNodeConnector = this.createKeyNodeConnection(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], false);
+
+                        if (keyNodeConnector == null && keyNodeInfo.length > 3) {
+                            useNodeIdx = 2;
+                            keyNodeConnector = this.createKeyNodeConnection(keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], false);
+                        }
+
+                        // 再接続
+                        if (keyNodeConnector == null) {
+                            useNodeIdx = 1;
+                            keyNodeConnector = this.createKeyNodeConnection(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], false);
+                        }
+
+                        if (keyNodeConnector == null && keyNodeInfo.length > 6) {
+                            useNodeIdx = 3;
+                            keyNodeConnector = this.createKeyNodeConnection(keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], false);
+                        }
+
+                        if (keyNodeConnector == null) {
+                            throw new BatchException("DataNode Connect Error");
+                        }
+
+
+                        // Key値でValueを取得
+                        StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
+                        String sendStr = null;
+
+                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
+                        buf.append("50");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(this.stringCnv(keys.toString()));
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(indexStrs);
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(searchType);
+
+                        // 送信
+                        keyNodeConnector.println(buf.toString());
+                        keyNodeConnector.flush();
+                        targetNodeInfoMap.put(nodeFullName + "_CONNECT", keyNodeConnector);
+                    } catch (Exception inEx1) {
+                        keyNodeConnector = null;
+                        targetNodeInfoMap.put(nodeFullName + "_CONNECT", null);
+                        throw inEx1;
+                    }
+                }
+
+
+                // 結果を回収
+                nodeEntrySet = targetSumKeysMap.entrySet();
+                nodeEntryIte = nodeEntrySet.iterator(); 
+                matchKeySep = "";
+
+                while(nodeEntryIte.hasNext()) {
+                    Map.Entry obj = (Map.Entry)nodeEntryIte.next();
+                    String nodeFullName = (String)obj.getKey();
+
+                    StringBuilder keys = (StringBuilder)targetSumKeysMap.get(nodeFullName);
+                    keyNodeInfo = (String[])targetNodeInfoMap.get(nodeFullName);
+                    KeyNodeConnector keyNodeConnector = (KeyNodeConnector)targetNodeInfoMap.get(nodeFullName + "_CONNECT");
 
                     // 実行
                     if (keyNodeInfo.length == 3) {
-                        keyNodeSaveRet = this.matchTargetKeyPairValueCharacter(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  keys.toString(), indexStrs, searchType);
+                        keyNodeSaveRet = this.matchTargetKeyPairValueCharacter(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, keys.toString(), indexStrs, searchType, keyNodeConnector);
                     } else if (keyNodeInfo.length == 6) {
-                        keyNodeSaveRet = this.matchTargetKeyPairValueCharacter(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keys.toString(), indexStrs, searchType);
+                        keyNodeSaveRet = this.matchTargetKeyPairValueCharacter(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keys.toString(), indexStrs, searchType, keyNodeConnector);
                     } else if (keyNodeInfo.length == 9) {
-                        keyNodeSaveRet = this.matchTargetKeyPairValueCharacter(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], keys.toString(), indexStrs, searchType);
+                        keyNodeSaveRet = this.matchTargetKeyPairValueCharacter(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], keys.toString(), indexStrs, searchType, keyNodeConnector);
                     }
 
                     // 取得結果確認
                     if (keyNodeSaveRet[1].equals("true")) {
 
                         retKeysBuf.append(matchKeySep);
+
+                        if (keyNodeSaveRet[2].indexOf(ImdstDefine.imdstTagKeyAppendSep) != -1) {
+
+                            String[] isolationDecodeWorkList = keyNodeSaveRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
+
+                            StringBuilder newDecodeKeyBuf = new StringBuilder(keyNodeSaveRet[2].length());
+                            String newDecodeSep = "";
+                            for (int idx = 0; idx < isolationDecodeWorkList.length; idx++) {
+
+                                newDecodeKeyBuf.append(newDecodeSep);
+                                newDecodeKeyBuf.append(this.decodeIsolationConvert(isolationDecodeWorkList[idx]));
+                                newDecodeSep = ImdstDefine.imdstTagKeyAppendSep;
+                            }
+                            keyNodeSaveRet[2] = newDecodeKeyBuf.toString();
+                            newDecodeKeyBuf = null;
+                        } else {
+
+                            keyNodeSaveRet[2] = this.decodeIsolationConvert(keyNodeSaveRet[2]);
+                        }
                         retKeysBuf.append(keyNodeSaveRet[2]);
                         matchKeySep = ":";
                     }
@@ -1557,7 +1731,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             logger.error("MasterManagerHelper - searchValueIndex - Exception", e);
             retStrs[0] = "43";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - searchValueIndex - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
 
         //logger.debug("MasterManagerHelper - searchValueIndex - end");
@@ -1660,14 +1834,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             retStrs[0] = "15";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - getKeyValueAndVersion - Exception - " + be.toString();
+            retStrs[2] = "MasterNode - Exception";
             retStrs[3] = "";
         } catch (Exception e) {
             logger.error("MasterManagerHelper - getKeyValueAndVersion - Error", e);
 
             retStrs[0] = "15";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - getKeyValueAndVersion - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
             retStrs[3] = "";
         }
 
@@ -1768,7 +1942,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             logger.error("MasterManagerHelper - getKeyValueScript - Error", e);
             retStrs[0] = "8";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - getKeyValueScript - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - getKeyValueScript - end");
         return retStrs;
@@ -1821,7 +1995,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             } catch (Exception e1) {
                 retStrs[0] = "9";
                 retStrs[1] = "error";
-                retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e1.toString();
+                retStrs[2] = "MasterNode - Exception";
             }
 
             // Sub
@@ -1831,7 +2005,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             } catch (Exception e2) {
                 retStrs[0] = "9";
                 retStrs[1] = "error";
-                retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e2.toString();
+                retStrs[2] = "MasterNode - Exception";
             }
 
 
@@ -1842,7 +2016,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             } catch (Exception e3) {
                 retStrs[0] = "9";
                 retStrs[1] = "error";
-                retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e3.toString();
+                retStrs[2] = "MasterNode - Exception";
             }
 
 
@@ -1864,7 +2038,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } catch (Exception e1) {
                         retStrs[0] = "9";
                         retStrs[1] = "error";
-                        retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e1.toString();
+                        retStrs[2] = "MasterNode - Exception";
                     }
 
                     // Sub
@@ -1874,7 +2048,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } catch (Exception e2) {
                         retStrs[0] = "9";
                         retStrs[1] = "error";
-                        retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e2.toString();
+                        retStrs[2] = "MasterNode - Exception";
                     }
 
 
@@ -1885,7 +2059,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } catch (Exception e3) {
                         retStrs[0] = "9";
                         retStrs[1] = "error";
-                        retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e3.toString();
+                        retStrs[2] = "MasterNode - Exception";
                     }
 
                     if (keyNodeSaveRet != null) {
@@ -1918,7 +2092,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             logger.error("MasterManagerHelper - getKeyValueScriptForUpdate - Error", e);
             retStrs[0] = "9";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - getKeyValueScriptForUpdate - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - getKeyValueScriptForUpdate - end");
         return retStrs;
@@ -2013,7 +2187,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             logger.error("MasterManagerHelper - removeKeyValue - Error", e);
             retStrs[0] = "5";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - removeKeyValue - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - removeKeyValue - end");
         return retStrs;
@@ -2117,7 +2291,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             logger.error("MasterManagerHelper - removeTargetTagInKey - Error", e);
             retStrs[0] = "40";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - removeTargetTagInKey - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - removeTargetTagInKey - end");
         return retStrs;
@@ -2160,7 +2334,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             logger.info("MasterManagerHelper - decrValue - Error", e);
             retStrs[0] = "14";
             retStrs[1] = "false";
-            retStrs[2] = "NG:MasterManagerHelper - decrValue - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - decrValue - end");
         return retStrs;
@@ -2264,7 +2438,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             logger.info("MasterManagerHelper - incrValue - Error", e);
             retStrs[0] = "13";
             retStrs[1] = "false";
-            retStrs[2] = "NG:MasterManagerHelper - incrValue - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - incrValue - end");
         return retStrs;
@@ -2335,7 +2509,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (Exception e) {
             retStrs[0] = "30";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - lockingData - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - lockingData - end");;
         return retStrs;
@@ -2403,7 +2577,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (Exception e) {
             retStrs[0] = "31";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - releaseLockingData - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
         //logger.debug("MasterManagerHelper - releaseLockingData - end");
         return retStrs;
@@ -2575,11 +2749,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getTagKeys - Error", be);
+            retStrs[0] = "4";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             logger.error("MasterManagerHelper - getTagKeys - Exception", e);
             retStrs[0] = "4";
             retStrs[1] = "error";
-            retStrs[2] = "NG:MasterManagerHelper - getTagKeys - Exception - " + e.toString();
+            retStrs[2] = "MasterNode - Exception";
         }
 
         //logger.debug("MasterManagerHelper - getTagKeys - end");
@@ -4562,7 +4739,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] matchTargetKeyPairValueCharacter(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String keys, String characters, String type) throws BatchException {
+    private String[] matchTargetKeyPairValueCharacter(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String keys, String characters, String type, KeyNodeConnector keyNodeConnector) throws BatchException {
         boolean exceptionFlg = false;
         String[] ret = null;
         String[] thirdRet = null;
@@ -4570,7 +4747,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         try {
 
-            ret = this.matchTargetKeyPairValueCharacter(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, keys, characters, type);
+            ret = this.matchTargetKeyPairValueCharacter(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, keys, characters, type, keyNodeConnector);
         } catch (BatchException be) {
 
             retBe = be;
@@ -4583,7 +4760,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             
             try {
                 if (exceptionFlg) {
-                    thirdRet = this.matchTargetKeyPairValueCharacter(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, keys, characters, type);
+                    thirdRet = this.matchTargetKeyPairValueCharacter(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, keys, characters, type, keyNodeConnector);
                     ret = thirdRet;
                 } else {
                     // サードノードの使用終了のみマーク
@@ -4612,8 +4789,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] matchTargetKeyPairValueCharacter(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String keys, String characters, String type) throws BatchException {
-        KeyNodeConnector keyNodeConnector = null;
+    private String[] matchTargetKeyPairValueCharacter(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String keys, String characters, String type, KeyNodeConnector keyNodeConnector) throws BatchException {
 
         String[] retParams = null;
         String[] cnvConsistencyRet = null;
@@ -4623,44 +4799,45 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         String nowUseNodeInfo = null;
 
+        String sendStr = null;
+        StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
+
+        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
+        buf.append("50");
+        buf.append(ImdstDefine.keyHelperClientParamSep);
+        buf.append(this.stringCnv(keys));
+        buf.append(ImdstDefine.keyHelperClientParamSep);
+        buf.append(characters);
+        buf.append(ImdstDefine.keyHelperClientParamSep);
+        buf.append(type);
+
+        sendStr = buf.toString();
 
         SocketException se = null;
         IOException ie = null;
-        try {
 
-            // KeyNodeとの接続を確立
-            keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+        try {
 
             while (true) {
 
                 // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
                 // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
                 if (keyNodeConnector == null) {
-                    if (subKeyNodeName != null) keyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
 
-                    if (keyNodeConnector == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                    // KeyNodeとの接続を確立
+                    if (subKeyNodeName != null) {
+                        keyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+                        if (keyNodeConnector == null) throw new BatchException("Key Node IO Error: detail info for log file");
+
+                        // 送信
+                        keyNodeConnector.println(sendStr);
+                        keyNodeConnector.flush();
+                    }
+
                     slaveUse = true;
                 }
 
                 try {
-
-                    // Key値でValueを取得
-                    StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
-                    String sendStr = null;
-                    // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
-                    buf.append("50");
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(this.stringCnv(keys));
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(characters);
-                    buf.append(ImdstDefine.keyHelperClientParamSep);
-                    buf.append(type);
-
-                    sendStr = buf.toString();
-
-                    // 送信
-                    keyNodeConnector.println(buf.toString());
-                    keyNodeConnector.flush();
 
                     // 返却値取得
                     String retParam = keyNodeConnector.readLine(sendStr);
@@ -4701,6 +4878,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // メインKeyNodeとの接続を確立
                         keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
                         if (keyNodeConnector == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                        
+                        // 送信
+                        keyNodeConnector.println(sendStr);
+                        keyNodeConnector.flush();
+
                         mainRetry = true;
                     }
                 } else {

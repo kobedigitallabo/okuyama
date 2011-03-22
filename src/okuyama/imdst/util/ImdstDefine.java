@@ -48,6 +48,7 @@ public class ImdstDefine {
     // Tag値でキーを登録する際にKey値を連結するのでその際のセパレータ文字列
     //public static final String imdstTagKeyAppendSep = "#imdst8417#";
     public static final String imdstTagKeyAppendSep = ":";
+    public static final String imdstTagBatchRegisterAppendSep = ";";
 
     // データノードに対するKeyデータ登録時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeKeyRegistSuccessStr = "1,true";

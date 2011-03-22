@@ -47,6 +47,7 @@ public class SystemUtil {
         checkCharacterMap.put("s", null);
         checkCharacterMap.put("t", null);
         checkCharacterMap.put("u", null);
+        checkCharacterMap.put("v", null);
         checkCharacterMap.put("w", null);
         checkCharacterMap.put("x", null);
         checkCharacterMap.put("y", null);
@@ -72,6 +73,7 @@ public class SystemUtil {
         checkCharacterMap.put("S", null);
         checkCharacterMap.put("T", null);
         checkCharacterMap.put("U", null);
+        checkCharacterMap.put("V", null);
         checkCharacterMap.put("W", null);
         checkCharacterMap.put("X", null);
         checkCharacterMap.put("Y", null);

@@ -396,7 +396,8 @@ public class KeyMapManager extends Thread {
                     Thread.sleep(KeyMapManager.updateInterval);
 
 
-
+                    // TransactionDaemonの死亡確認を行う
+                    // 死亡している場合は、依頼された書き込みQueueからデータを引き抜いて、再度生成したDaemonに渡して実行
                     if ((count % 4) == 0 && this.workFileMemory == false && this.workFileFlushTiming == false && this.dataTransactionFileFlushDaemon.getExecuteEnd() == true) {
                         try {
                             synchronized(this.poolKeyLock) {
@@ -440,17 +441,19 @@ public class KeyMapManager extends Thread {
 
                                     logger.debug("Transaction Log File Change - Start");
                                     if (this.workFileFlushTiming == false) {
-                                        this.bw.flush();
-                                        this.bw.close();
-                                        this.bw = null;
+
+                                        // 遅延書き込み時
+                                        this.dataTransactionFileFlushDaemon.close();
                                         this.osw.close();
                                         this.osw = null;
                                         this.fos.close();
                                         this.fos = null;
                                     } else {
 
-                                        // 遅延書き込み時
-                                        this.dataTransactionFileFlushDaemon.close();
+                                        // 都度書き込み
+                                        this.bw.flush();
+                                        this.bw.close();
+                                        this.bw = null;
                                         this.osw.close();
                                         this.osw = null;
                                         this.fos.close();
