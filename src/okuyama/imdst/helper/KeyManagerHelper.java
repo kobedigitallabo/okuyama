@@ -1405,7 +1405,7 @@ public class KeyManagerHelper extends AbstractHelper {
                 String[] matchCharacterList = matchCharacters.split(":");
 
                 for (int i = 0; i < matchCharacterList.length; i++) {
-                    matchCharacterList[i] = new String(BASE64DecoderStream.decode(matchCharacterList[i].getBytes()), ImdstDefine.keyWorkFileEncoding);
+                    matchCharacterList[i] = new String(BASE64DecoderStream.decode(matchCharacterList[i].getBytes()), ImdstDefine.characterDecodeSetBySearch);
                 }
 
                 for (int idx = 0; idx < targetKeys.length; idx++) {
@@ -1434,7 +1434,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             if (tmpValue == null || tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
                                 value = "";
                             } else {
-                                value = new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.keyWorkFileEncoding);
+                                value = new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.characterDecodeSetBySearch);
                             }
                             
 

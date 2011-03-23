@@ -1090,12 +1090,12 @@ public class OkuyamaClient {
             // Byte Lenghtチェック
             if (tagStrs != null) {
                 for (int i = 0; i < tagStrs.length; i++) {
-                    if (tagStrs[i].getBytes("UTF-8").length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+                    if (tagStrs[i].getBytes(ImdstDefine.characterDecodeSetBySearch).length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
                 }
             }
 
             if (value != null)
-                if (value.getBytes("UTF-8").length > maxValueSize) 
+                if (value.getBytes(ImdstDefine.characterDecodeSetBySearch).length > maxValueSize) 
                     throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
 
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
@@ -1105,7 +1105,7 @@ public class OkuyamaClient {
             if (keyStr == null ||  keyStr.trim().equals(""))
                 throw new OkuyamaClientException("The blank is not admitted on a key");
 
-            if (keyStr.getBytes("UTF-8").length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+            if (keyStr.getBytes(ImdstDefine.characterDecodeSetBySearch).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
@@ -1114,7 +1114,7 @@ public class OkuyamaClient {
 
                 // ValueをBase64でエンコード
 
-                value = new String(this.dataEncoding(value.getBytes("UTF-8")), "UTF-8");
+                value = new String(this.dataEncoding(value.getBytes(ImdstDefine.characterDecodeSetBySearch)), ImdstDefine.characterDecodeSetBySearch);
             }
 
 
@@ -1125,7 +1125,7 @@ public class OkuyamaClient {
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes("UTF-8"))));
+            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes(ImdstDefine.characterDecodeSetBySearch))));
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
@@ -1139,10 +1139,10 @@ public class OkuyamaClient {
             } else {
 
                 // Tag数分連結
-                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes("UTF-8"))));
+                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes(ImdstDefine.characterDecodeSetBySearch))));
                 for (int i = 1; i < tagStrs.length; i++) {
                     setValueServerReqBuf.append(tagKeySep);
-                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes("UTF-8"))));
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes(ImdstDefine.characterDecodeSetBySearch))));
                 }
             }
 
@@ -1168,7 +1168,7 @@ public class OkuyamaClient {
             } else {
 
                 // Indexプレフィックス連結
-                setValueServerReqBuf.append(new String(this.dataEncoding(indexPrefix.getBytes("UTF-8"))));
+                setValueServerReqBuf.append(new String(this.dataEncoding(indexPrefix.getBytes(ImdstDefine.characterDecodeSetBySearch))));
             }
 
 
@@ -4005,7 +4005,7 @@ public class OkuyamaClient {
             String sep = "";
             for (int idx = 0; idx < searchCharacterList.length; idx++) {
                 serverRequestBuf.append(sep);
-                serverRequestBuf.append(new String(this.dataEncoding(searchCharacterList[idx].getBytes("UTF-8"))));
+                serverRequestBuf.append(new String(this.dataEncoding(searchCharacterList[idx].getBytes(ImdstDefine.characterDecodeSetBySearch))));
                 sep = ":";
             }
 
@@ -4043,7 +4043,7 @@ public class OkuyamaClient {
                     keys = serverRet[2].split(tagKeySep);
                     String[] decKeys = new String[keys.length];
                     for (int i = 0; i < keys.length; i++) {
-                        decKeys[i] = new String(this.dataDecoding(keys[i].getBytes("UTF-8")));
+                        decKeys[i] = new String(this.dataDecoding(keys[i].getBytes(ImdstDefine.characterDecodeSetBySearch)));
                     }
                     ret[1] = decKeys;
 

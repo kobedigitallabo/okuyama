@@ -404,6 +404,7 @@ public class ImdstDefine {
     // ネットワークI/O時に処理直後に同様のクライアントからの処理を一定時間ブロックにて待ち受けるかの設定(true:待ち受ける false:待ち受けない)
     public volatile static boolean retryClientReadFlg = true;
 
+    public volatile static String characterDecodeSetBySearch = "UTF-8";
 
     // ---- 分散アルゴリズム系 ---------------------------------------------------
     // 分散アルゴリズムにConsistentHashを使用した場合の仮想ノードの数

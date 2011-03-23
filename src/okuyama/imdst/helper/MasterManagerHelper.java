@@ -956,7 +956,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 String appendTagSep = "";
 
-                byte[] testBytes = BASE64DecoderStream.decode(dataStr.getBytes("UTF-8"));
+                byte[] testBytes = BASE64DecoderStream.decode(dataStr.getBytes(ImdstDefine.characterDecodeSetBySearch));
 
                 String sIdx1 = null;
                 String sIdx2 = null;
@@ -964,7 +964,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
                 String prefix = (((keyStr.hashCode() << 1) >>> 1) % 8) + "_" + indexPrefix + "_";
-                String realKeyStr = new String(testBytes, ImdstDefine.keyWorkFileEncoding);
+                String realKeyStr = new String(testBytes, ImdstDefine.characterDecodeSetBySearch);
 
                 // ユニグラム、バイグラムまで
                 // ユニグラムは漢字のみ対象
@@ -977,7 +977,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             if(SystemUtil.checkNoIndexCharacter(checkStr)) {
                                 continue;
                             }
-                            sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes("UTF-8")));
+                            sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
                             strIdx = strIdx + appendTagSep + sIdx1;
                             appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
                         }
@@ -1501,22 +1501,25 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             for (int idx = 0; idx < workKeywords.length; idx++) {
 
-                // デコードしてUTF-8で復元
-                String workStr = new String(BASE64DecoderStream.decode(workKeywords[idx].getBytes("UTF-8")), ImdstDefine.keyWorkFileEncoding);
+                // デコードして復元
+                String workStr = new String(BASE64DecoderStream.decode(workKeywords[idx].getBytes(ImdstDefine.characterDecodeSetBySearch)), ImdstDefine.characterDecodeSetBySearch);
 
                 String keyword = "";
                 if (workStr.length() > 1) {
 
                     // バイグラム以上
                     keyword = workStr.substring(0, 2);
+
                 } else {
 
                     // ユニグラム
                     keyword = workStr;
+
                 }
 
                 // 検索対象か調べる
                 if(SystemUtil.checkNoIndexCharacter(keyword)) {
+
                     continue;
                 }
 
@@ -1525,7 +1528,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 String[] singleWordList = new String[8];
                 for (int i = 0; i < 8; i++) {
-                    singleWordList[i] = new String(BASE64EncoderStream.encode((i + "_" + indexPrefix + "_" + keyword).getBytes("UTF-8")));
+                    singleWordList[i] = new String(BASE64EncoderStream.encode((i + "_" + indexPrefix + "_" + keyword).getBytes(ImdstDefine.characterDecodeSetBySearch)));
                 }
                 allSearchWordList.add(singleWordList);
             }
