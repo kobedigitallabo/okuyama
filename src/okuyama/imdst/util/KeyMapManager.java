@@ -2002,7 +2002,7 @@ public class KeyMapManager extends Thread {
                             pw.flush();
                             allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
                             counter = 0;
-                            if ((sendCounter % 4) == 0) Thread.sleep(2000);
+                            if ((sendCounter % 10) == 0) Thread.sleep(3000);
                         }
                     }
 

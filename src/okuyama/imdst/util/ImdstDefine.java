@@ -297,7 +297,7 @@ public class ImdstDefine {
 
     // メモリモードで起動時にこのサイズを超えるValueはファイルに書き出され、メモリを使用しない
     public volatile static boolean bigValueFileStoreUse = false;
-    public volatile static int memoryStoreLimitSize = 1024 * 64;
+    public volatile static int memoryStoreLimitSize = 1024 * 128;
 
     public static final int stringBufferSmallSize = 128;
 

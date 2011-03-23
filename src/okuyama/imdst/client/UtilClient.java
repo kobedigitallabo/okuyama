@@ -8,6 +8,9 @@ import java.util.zip.*;
 
 
 /**
+ * okuyama用のUtilityクライアント.<br>
+ * 機能
+ * 1.データbackup
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -19,13 +22,30 @@ public class UtilClient {
      *
      */
     public static void main(String[] args) {
-        if (args.length < 3) {
-            System.out.println("args[0]=Command, args[1]=serverip, args[2]=port");
+        if (args.length < 1) {
+            System.out.println("args[0]=Command");
+            System.out.println("Command1. dataexport args1=dataexport args2=DataNode-IPAdress args3=DataNode-Port");
+            System.out.println("Command2. dataexport \"dataexport\" \"DataNode-IPAdress\" \"DataNode-Port\"");
         }
 
-        if (args[0].equals("bkup")) {
+        if (args[0].equals("dataexport")) {
+            if (args.length != 3) {
+                System.out.println("args[0]=Command, args[1]=serverip, args[2]=port");
+                System.exit(1);
+            }
+
             dataExport(args[1], Integer.parseInt(args[2]));
         }
+
+        if (args[0].equals("fulldataexport")) {
+            if (args.length != 3) {
+                System.out.println("args[0]=Command, args[1]=serverip, args[2]=port");
+                System.exit(1);
+            }
+
+            dataExport(args[1], Integer.parseInt(args[2]));
+        }
+
     }
 
 
@@ -37,8 +57,8 @@ public class UtilClient {
         try {
             socket = new Socket();
             InetSocketAddress inetAddr = new InetSocketAddress(serverip, port);
-            socket.connect(inetAddr, 5000);
-            socket.setSoTimeout(10000);
+            socket.connect(inetAddr, 10000);
+            socket.setSoTimeout(60000);
             pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8")));
             br = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
 
