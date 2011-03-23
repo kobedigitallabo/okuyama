@@ -1253,6 +1253,54 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } else if (args[0].equals("27.4")) {
+
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagなし)
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+                Random rnd = new Random();
+
+
+                long start = new Date().getTime();
+
+                int idx = 0;
+
+                FileInputStream workKeyFilefis = null;
+                InputStreamReader isr = null;
+
+                FileReader fr = null;
+                BufferedReader br = null;
+
+                File dataFile = new File(args[3]);
+                workKeyFilefis = new FileInputStream(dataFile);
+                isr = new InputStreamReader(workKeyFilefis , "UTF-8");
+                br = new BufferedReader(isr);
+
+                String line = null;
+
+
+                while ((line = br.readLine()) != null) {
+                    idx++;
+                    // データ登録
+                    if (!okuyamaClient.setValueAndCreateIndex("key_" + idx, line)) {
+                        System.out.println("OkuyamaClient - error");
+                    } else {
+                        //System.out.println("Store[key_" + idx + "]");
+                    }
+                    if ((idx % 1000) == 0) System.out.println(idx);
+                }
+
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+
             } else if (args[0].equals("28")) {
 
                 int port = Integer.parseInt(args[2]);
