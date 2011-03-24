@@ -64,6 +64,11 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     変更
 
   ■Valueをメモリに保存する場合に設定したサイズ以上のValueを仮想メモリ空間に保存する機能を追加
+    DataNode.propertiesの以下の設定値(SaveDataMemoryStoreLimitSize)
+    設定するサイズはバイト値
+    例)以下の場合は128KB以上
+
+    SaveDataMemoryStoreLimitSize=131072
 
 
   ■データバックアップ機能を追加
@@ -77,6 +82,16 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   ■Key値に紐付くTagを削除するメソッドを追加
     Key値とTag値の両方を指定することでKey値からTagの紐付きを削除する
     OkuyamaClientではremoveTagFromKey(Key, Tag)メソッド
+
+
+  ■転置インデックス作成機能と全文検索機能を追加
+    転置インデックスはN-gram方式とし、OkuyamaClientのsetValueAndCreateIndexでインデックス作成
+    (ユニグラム、バイグラム方式)
+    全文検索はOkuyamaClientのsearchValueを利用する。一度に複数の検索Wordを渡してAND検索とOR検索を指定できる。
+    登録時に作成するIndexにPrefixを付加することが出来る。
+    これにより、同じIndexを登録するデータ単位で別のものとして扱うことが出来る。
+    検索時にPrefixを指定することで、同様のPrefixを指定してIndexを作成したデータのみ取得可能となる
+
 
 ========================================================================================================
 [New - 新機能追加、不具合対応]
