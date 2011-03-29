@@ -954,6 +954,49 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
                 if (indexPrefix.equals(ImdstDefine.imdstBlankStrData)) indexPrefix = "";
 
+
+                // 古いKey－Valueのデータがある場合は取得
+                // 古いValueデータから旧全文検索Wordを作りだして消す
+                if (false) {
+                    String[] oldValueData = this.getKeyValue(keyStr);
+                    if (oldValueData != null && oldValueData[1].equals("true")) {
+
+                        byte[] oldTestBytes = BASE64DecoderStream.decode(oldValueData[1].getBytes(ImdstDefine.characterDecodeSetBySearch));
+
+                        String oldSIdx1 = null;
+                        String oldSIdx2 = null;
+                        String oldStrIdx = "";
+
+
+
+                        String oldPrefix = (((keyStr.hashCode() << 1) >>> 1) % 8) + "_" + indexPrefix + "_";
+
+                        String oldRealKeyStr = new String(oldTestBytes, ImdstDefine.characterDecodeSetBySearch);
+
+                        // ユニグラム、バイグラムまで
+                        // ユニグラムは漢字のみ対象
+                        for (int typeIdx = 1; typeIdx < 3; typeIdx++) {
+                            try {
+
+                                for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
+                                    String checkStr = oldRealKeyStr.substring(i, i+typeIdx);
+
+                                    if(SystemUtil.checkNoIndexCharacter(checkStr)) {
+                                        continue;
+                                    }
+
+                                    oldSIdx1 = new String(BASE64EncoderStream.encode((oldPrefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
+
+
+                                    String[] rmRet = this.removeTargetTagInKey(oldSIdx1, keyStr,"0");
+                                    System.out.println(rmRet[1]);
+                                }
+                            } catch (Exception inE) {}
+                        }
+                    }
+                }
+
+
                 String appendTagSep = "";
 
                 byte[] testBytes = BASE64DecoderStream.decode(dataStr.getBytes(ImdstDefine.characterDecodeSetBySearch));
@@ -978,6 +1021,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 continue;
                             }
                             sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
+                            //System.out.println("[" + sIdx1 + "], [" + keyStr + "]");
                             strIdx = strIdx + appendTagSep + sIdx1;
                             appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
                         }

@@ -81,7 +81,7 @@
 	</target>
 
 	<target name="datanode_small">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="1024m">
 			<arg value="/Main.properties"/>
 			<arg value="/DataNode_small.properties"/>
 			<arg value="-s 2048"/>
