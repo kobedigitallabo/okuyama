@@ -4019,7 +4019,16 @@ public class OkuyamaClient {
             serverRequestBuf.append(OkuyamaClient.sepStr);
 
             // prefix連結
-            serverRequestBuf.append(prefix);
+            // Indexプレフィックス指定の有無を調べてIndexプレフィックス連結
+            if (prefix == null || prefix.length() < 1) {
+                // ブランク規定文字列を連結
+                serverRequestBuf.append(OkuyamaClient.blankStr);
+            } else {
+
+                // Indexプレフィックス連結
+                serverRequestBuf.append(new String(this.dataEncoding(prefix.getBytes(ImdstDefine.characterDecodeSetBySearch))));
+            }
+
 
             // サーバ送信
             pw.println(serverRequestBuf.toString());
