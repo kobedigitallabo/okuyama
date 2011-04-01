@@ -397,24 +397,55 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // 複数Key値を指定することで、紐付くValueを一度に取得する(memcachedのmget)
                             // 本処理は大量のValue値を扱うため、クライアントに逐次値を返す
                             int mIdx = 1;
-                            for (; mIdx < (clientParameterList.length - 1); mIdx++) {
+
+                            for (; mIdx < (clientParameterList.length - 1); mIdx=mIdx+100) {
+
+                                StringBuilder requestKeysBuf = new StringBuilder();
+                                String sep = "";
+                                for (int i = mIdx; i < mIdx+100; i++) {
+                                    requestKeysBuf.append(sep);
+                                    requestKeysBuf.append(clientParameterList[i]);
+                                    sep = ";";
+                                }
                                 // Takerで返却値を作成
                                 // プロトコルがマッチしていたかをチェック
                                 // 設定通りのプロトコルの場合はそのまま処理。そうでない場合はokuyamaで処理
                                 String mRetParamStr = "";
-                                String[] mRetParams = this.getKeyValue(clientParameterList[mIdx]);
-                                if(mRetParams != null) mRetParams[0] = "22";
-                                if (this.porotocolTaker.isMatchMethod()) {
+                                String[] mRetParams = this.getKeyValue(requestKeysBuf.toString(), true);
 
-                                    mRetParamStr = this.porotocolTaker.takeResponseLine(mRetParams);
-                                } else {
-                                    okuyamaPorotocolTaker.setClientInfo(socketString);
-                                    mRetParamStr = okuyamaPorotocolTaker.takeResponseLine(mRetParams);
+                                String[] responseWork = mRetParams[2].split(";");
+                                Map resultMap = new HashMap(100);
+                                for (int i = 0; i < responseWork.length; i++) {
+                                    String[] oneRet = responseWork[i].split(":");
+                                    resultMap.put(oneRet[0], oneRet[1]);
                                 }
+System.out.println(resultMap);
+                                for (int i = mIdx; i < (clientParameterList.length - 1); i++) {
+System.out.println(clientParameterList[i]);
+                                    String retVal = (String)resultMap.get(clientParameterList[i]);
 
-                                // クライアントへ結果書き出し
-                                pw.print(mRetParamStr);
-                                pw.flush();
+                                    String[] oneRetParams = new String[3];
+                                    oneRetParams[0] = "22";
+                                    if (retVal.equals("*")) {
+                                        oneRetParams[1] = "false";
+                                        oneRetParams[2] = "";
+                                    } else {
+                                        oneRetParams[1] = "true";
+                                        oneRetParams[2] = retVal;
+                                    }
+
+
+                                    if (this.porotocolTaker.isMatchMethod()) {
+
+                                        mRetParamStr = this.porotocolTaker.takeResponseLine(oneRetParams);
+                                    } else {
+                                        okuyamaPorotocolTaker.setClientInfo(socketString);
+                                        mRetParamStr = okuyamaPorotocolTaker.takeResponseLine(oneRetParams);
+                                    }
+                                    // クライアントへ結果書き出し
+                                    pw.print(mRetParamStr);
+                                    pw.flush();
+                                }
                             }
 
                             retParams = this.getKeyValue(clientParameterList[mIdx]);
@@ -957,11 +988,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 // 古いKey－Valueのデータがある場合は取得
                 // 古いValueデータから旧全文検索Wordを作りだして消す
-                if (false) {
+                if (true) {
                     String[] oldValueData = this.getKeyValue(keyStr);
                     if (oldValueData != null && oldValueData[1].equals("true")) {
 
-                        byte[] oldTestBytes = BASE64DecoderStream.decode(oldValueData[1].getBytes(ImdstDefine.characterDecodeSetBySearch));
+                        byte[] oldTestBytes = BASE64DecoderStream.decode(oldValueData[2].getBytes(ImdstDefine.characterDecodeSetBySearch));
 
                         String oldSIdx1 = null;
                         String oldSIdx2 = null;
@@ -987,9 +1018,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                                     oldSIdx1 = new String(BASE64EncoderStream.encode((oldPrefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
 
-
                                     String[] rmRet = this.removeTargetTagInKey(oldSIdx1, keyStr,"0");
-                                    System.out.println(rmRet[1]);
                                 }
                             } catch (Exception inE) {}
                         }
@@ -1021,7 +1050,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 continue;
                             }
                             sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
-                            //System.out.println("[" + sIdx1 + "], [" + keyStr + "]");
+
                             strIdx = strIdx + appendTagSep + sIdx1;
                             appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
                         }
@@ -1420,6 +1449,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @throws BatchException
      */
     private String[] getKeyValue(String keyStr) throws BatchException {
+        return getKeyValue(keyStr, false);
+    }
+
+    private String[] getKeyValue(String keyStr, boolean multiGet) throws BatchException {
         //logger.debug("MasterManagerHelper - getKeyValue - start");
         String[] retStrs = new String[3];
 
@@ -1429,68 +1462,123 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             // Isolation変換実行
-            keyStr = this.encodeIsolationConvert(keyStr);
+            if (!multiGet) {
 
-            if (!this.checkKeyLength(keyStr)) {
-                // 保存失敗
-                retStrs[0] = "2";
-                retStrs[1] = "false";
-                retStrs[2] = "Key Length Error";
-                return retStrs;
-            }
+                keyStr = this.encodeIsolationConvert(keyStr);
+                if (!this.checkKeyLength(keyStr)) {
+                    // 保存失敗
+                    retStrs[0] = "2";
+                    retStrs[1] = "false";
+                    retStrs[2] = "Key Length Error";
+                    return retStrs;
+                }
 
-           keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess);
-
-            // 取得実行
-            if (keyNodeInfo.length == 3) {
-                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "2", keyStr);
-            } else if (keyNodeInfo.length == 6) {
-                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
-            } else if (keyNodeInfo.length == 9) {
-                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
-            }
+                keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess);
 
 
-            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
-            // でそちらのルールでのデータ格納場所も調べる
-            if (keyNodeSaveRet[1].equals("false")) {
+                // 取得実行
+                if (keyNodeInfo.length == 3) {
+                    keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "2", keyStr);
+                } else if (keyNodeInfo.length == 6) {
+                    keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
+                } else if (keyNodeInfo.length == 9) {
+                    keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
+                }
 
-                //System.out.println("過去ルールを探索 - get(" + keyNodeInfo[2] + ") =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
-                // キー値を使用して取得先を決定
-                // 過去ルールがなくなれば終了
-                for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess, i)) != null; i++) {
+
+                // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
+                // でそちらのルールでのデータ格納場所も調べる
+                if (keyNodeSaveRet[1].equals("false")) {
+
+                    //System.out.println("過去ルールを探索 - get(" + keyNodeInfo[2] + ") =" + new String(BASE64DecoderStream.decode(keyStr.getBytes())));
+                    // キー値を使用して取得先を決定
+                    // 過去ルールがなくなれば終了
+                    for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess, i)) != null; i++) {
+
+                        // 取得実行
+                        if (keyNodeInfo.length == 3) {
+                            keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "2", keyStr);
+                        } else if (keyNodeInfo.length == 6) {
+                            keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
+                        } else if (keyNodeInfo.length == 9) {
+                            keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
+                        }
+
+
+                        // 過去ルールからデータを発見
+                        if (keyNodeSaveRet[1].equals("true")) {
+                            //System.out.println("過去ルールからデータを発見 =[" + keyNodeInfo[2] + "]");
+                            break;
+                        }
+                    }
+                }
+
+
+                // 取得結果確認
+                if (keyNodeSaveRet[1].equals("false")) {
+
+                    // 取得失敗(データなし)
+                    retStrs[0] = keyNodeSaveRet[0];
+                    retStrs[1] = "false";
+                    retStrs[2] = "";
+                } else {
+
+                    retStrs[0] = keyNodeSaveRet[0];
+                    retStrs[1] = "true";
+                    retStrs[2] = keyNodeSaveRet[2];
+                }
+
+            } else {
+
+                // 複数Key一括取得
+                // 複数一括指定の場合は、Keyを";"で連結してDataNodeへ転送する
+                String[] keys = keyStr.split(",");
+                Map requestKeyMap = new HashMap();
+                Map requestNodeMap = new HashMap();
+                for (int i = 0; i < keys.length; i++) {
+
+                    keys[i] = this.encodeIsolationConvert(keys[i]);
+
+                    keyNodeInfo = DataDispatcher.dispatchKeyNode(keys[i], this.reverseAccess);
+                    StringBuilder buf = (StringBuilder)requestKeyMap.get(keyNodeInfo[2]);
+                    if (buf == null) {
+                        buf = new StringBuilder();
+                        buf.append(keys[i]);
+                    } else {
+
+                        buf.append(";");
+                        buf.append(keys[i]);
+                    }
+                    requestKeyMap.put(keyNodeInfo[2], buf);
+                    requestNodeMap.put(keyNodeInfo[2], keyNodeInfo);
+                }
+
+                Set entrySet = requestNodeMap.entrySet();
+                Iterator entryIte = entrySet.iterator(); 
+
+                while(entryIte.hasNext()) {
+
+                    Map.Entry obj = (Map.Entry)entryIte.next();
+                    String nodeFullName = (String)obj.getKey();
+
+                    keyNodeInfo = (String[])requestNodeMap.get(nodeFullName);
+                    StringBuilder buf = (StringBuilder)requestKeyMap.get(nodeFullName);
 
                     // 取得実行
                     if (keyNodeInfo.length == 3) {
-                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "2", keyStr);
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "2", buf.toString());
                     } else if (keyNodeInfo.length == 6) {
-                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", keyStr);
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "2", buf.toString());
                     } else if (keyNodeInfo.length == 9) {
-                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
+                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", buf.toString());
                     }
 
-
-                    // 過去ルールからデータを発見
-                    if (keyNodeSaveRet[1].equals("true")) {
-                        //System.out.println("過去ルールからデータを発見 =[" + keyNodeInfo[2] + "]");
-                        break;
+                    if (keyNodeSaveRet != null && keyNodeSaveRet[0].equals("2") && keyNodeSaveRet[1].equals("true")) {
+                        retStrs[0] = "2";
+                        retStrs[1] = "true";
+                        retStrs[2] = keyNodeSaveRet[2]; //Key:Value;Key:Value;Key:Value("*"の場合は値が存在しないマーク値)
                     }
                 }
-            }
-
-
-            // 取得結果確認
-            if (keyNodeSaveRet[1].equals("false")) {
-
-                // 取得失敗(データなし)
-                retStrs[0] = keyNodeSaveRet[0];
-                retStrs[1] = "false";
-                retStrs[2] = "";
-            } else {
-
-                retStrs[0] = keyNodeSaveRet[0];
-                retStrs[1] = "true";
-                retStrs[2] = keyNodeSaveRet[2];
             }
 
         } catch (BatchException be) {
@@ -3378,7 +3466,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         BatchException retBe = null;
 
         try {
-
             ret = this.setKeyNodeValue(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, values, transactionCode, delayFlg);
         } catch (BatchException be) {
 
@@ -3452,6 +3539,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private String[] setKeyNodeValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String[] values, String transactionCode, boolean delayFlg) throws BatchException {
         KeyNodeConnector keyNodeConnector = null;
         KeyNodeConnector slaveKeyNodeConnector = null;
+
 
         String nodeName = keyNodeName;
         String nodePort = keyNodePort;

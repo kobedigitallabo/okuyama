@@ -282,14 +282,45 @@ public class KeyManagerHelper extends AbstractHelper {
                             // Key値でDataNode名を返す
                             requestHashCode = clientParameterList[1];
 
-                            // メソッド呼び出し
-                            retParams = this.getDatanode(requestHashCode);
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            if (retParams.length > 2) {
+                            if (requestHashCode.indexOf(";") != -1) {
+
+                                // 複数一括指定
+                                String[] multiKeys = requestHashCode.split(";");
+                                StringBuilder resultBuf = new StringBuilder();
+                                String sep = "";
+
+                                for (int idx = 0; idx < multiKeys.length; idx++) {
+
+                                    retParams = this.getDatanode(multiKeys[idx]);
+                                    resultBuf.append(sep);
+                                    resultBuf.append(multiKeys[idx]);
+                                    resultBuf.append(":");
+                                    if (retParams[1].equals("true")) {
+                                        resultBuf.append(retParams[2]);
+                                    } else {
+                                        resultBuf.append("*");
+                                    }
+                                    sep = ";";
+                                }
+
+                                retParamBuf.append("2");
                                 retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                                retParamBuf.append(retParams[2]);
+                                retParamBuf.append("true");
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(resultBuf.toString());
+                            } else {
+
+                                // メソッド呼び出し
+                                retParams = this.getDatanode(requestHashCode);
+
+
+                                retParamBuf.append(retParams[0]);
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[1]);
+                                if (retParams.length > 2) {
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(retParams[2]);
+                                }
                             }
                             break;
                         case 3 :
