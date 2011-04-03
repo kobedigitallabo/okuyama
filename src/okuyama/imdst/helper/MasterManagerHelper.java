@@ -396,33 +396,61 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // 複数Key値を指定することで、紐付くValueを一度に取得する(memcachedのmget)
                             // 本処理は大量のValue値を扱うため、クライアントに逐次値を返す
+                            int maxGetSize = 100;
                             int mIdx = 1;
+                            int innerIdx = 0;
+                            String sep = "";
+                            StringBuilder requestKeysBuf = new StringBuilder();
+                            ArrayList requestKeyList = new ArrayList();
+                            
+                            for (; mIdx < (clientParameterList.length - 1); mIdx++) {
+                                innerIdx++;
 
-                            for (; mIdx < (clientParameterList.length - 1); mIdx=mIdx+100) {
+                                requestKeysBuf.append(sep);
+                                requestKeysBuf.append(clientParameterList[mIdx]);
+                                sep = ";";
+                                requestKeyList.add(clientParameterList[mIdx]);
+                                // maxGetSize個のKeyをまとめて問い合わせる
+                                if (!(innerIdx == maxGetSize) && !((mIdx+1) >= (clientParameterList.length - 1))) continue;
+                                innerIdx=0;
+                                sep = "";
 
-                                StringBuilder requestKeysBuf = new StringBuilder();
-                                String sep = "";
-                                for (int i = mIdx; i < mIdx+100; i++) {
-                                    requestKeysBuf.append(sep);
-                                    requestKeysBuf.append(clientParameterList[i]);
-                                    sep = ";";
-                                }
                                 // Takerで返却値を作成
                                 // プロトコルがマッチしていたかをチェック
                                 // 設定通りのプロトコルの場合はそのまま処理。そうでない場合はokuyamaで処理
                                 String mRetParamStr = "";
-                                String[] mRetParams = this.getKeyValue(requestKeysBuf.toString(), true);
+
+                                String[] mRetParams = null;
+
+                                if (requestKeysBuf.indexOf(";") != -1) {
+
+                                    // 複数のKeyで問い合わせる
+                                    mRetParams = this.getKeyValue(requestKeysBuf.toString(), true);
+                                } else {
+
+                                    // 1つのKeyで問い合わせる
+                                    // 1つのKeyで以降の処理を正しく動かすために差を補正する
+                                    mRetParams = this.getKeyValue(requestKeysBuf.toString());
+                                    if (mRetParams[1].equals("true")) {
+                                        mRetParams[2] = requestKeysBuf.toString() + ":" + mRetParams[2];
+                                    } else {
+                                        // Valueなしをマーク
+                                        mRetParams[2] = requestKeysBuf.toString() + ":" + "*";
+                                    }
+                                }
 
                                 String[] responseWork = mRetParams[2].split(";");
-                                Map resultMap = new HashMap(100);
+                                Map resultMap = new HashMap(maxGetSize);
                                 for (int i = 0; i < responseWork.length; i++) {
+
                                     String[] oneRet = responseWork[i].split(":");
+
                                     resultMap.put(oneRet[0], oneRet[1]);
                                 }
-System.out.println(resultMap);
-                                for (int i = mIdx; i < (clientParameterList.length - 1); i++) {
-System.out.println(clientParameterList[i]);
-                                    String retVal = (String)resultMap.get(clientParameterList[i]);
+
+                                for (int i = 0; i < requestKeyList.size(); i++) {
+
+                                    String retVal = (String)resultMap.get((String)requestKeyList.get(i));
 
                                     String[] oneRetParams = new String[3];
                                     oneRetParams[0] = "22";
@@ -446,6 +474,8 @@ System.out.println(clientParameterList[i]);
                                     pw.print(mRetParamStr);
                                     pw.flush();
                                 }
+                                requestKeysBuf = new StringBuilder();
+                                requestKeyList = new ArrayList();
                             }
 
                             retParams = this.getKeyValue(clientParameterList[mIdx]);
@@ -1532,7 +1562,8 @@ System.out.println(clientParameterList[i]);
 
                 // 複数Key一括取得
                 // 複数一括指定の場合は、Keyを";"で連結してDataNodeへ転送する
-                String[] keys = keyStr.split(",");
+                // 一括転送されたKey値をセパレート文字である";"で分解して問い合わせ先DataNode単位でまとめる
+                String[] keys = keyStr.split(";");
                 Map requestKeyMap = new HashMap();
                 Map requestNodeMap = new HashMap();
                 for (int i = 0; i < keys.length; i++) {
@@ -1555,6 +1586,8 @@ System.out.println(clientParameterList[i]);
 
                 Set entrySet = requestNodeMap.entrySet();
                 Iterator entryIte = entrySet.iterator(); 
+                StringBuilder lastResultBuf = new StringBuilder(1024);
+                String lastRetSep = "";
 
                 while(entryIte.hasNext()) {
 
@@ -1563,6 +1596,9 @@ System.out.println(clientParameterList[i]);
 
                     keyNodeInfo = (String[])requestNodeMap.get(nodeFullName);
                     StringBuilder buf = (StringBuilder)requestKeyMap.get(nodeFullName);
+                    String getKeysStr = buf.toString();
+                    if (getKeysStr.indexOf(";") == -1) buf.append(";");
+                    getKeysStr = null;
 
                     // 取得実行
                     if (keyNodeInfo.length == 3) {
@@ -1572,13 +1608,32 @@ System.out.println(clientParameterList[i]);
                     } else if (keyNodeInfo.length == 9) {
                         keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", buf.toString());
                     }
-
                     if (keyNodeSaveRet != null && keyNodeSaveRet[0].equals("2") && keyNodeSaveRet[1].equals("true")) {
-                        retStrs[0] = "2";
-                        retStrs[1] = "true";
-                        retStrs[2] = keyNodeSaveRet[2]; //Key:Value;Key:Value;Key:Value("*"の場合は値が存在しないマーク値)
+
+                        // Isolation文字列を外す
+                        String resultStr = keyNodeSaveRet[2];
+
+                        String[] multiresult = resultStr.split(";");
+
+                        for (int idx = 0; idx < multiresult.length; idx++) {
+
+                            String[] isolationWorlRet = multiresult[idx].split(":");
+
+                            isolationWorlRet[0] = this.decodeIsolationConvert(isolationWorlRet[0]);
+                            lastResultBuf.append(lastRetSep);
+                            lastResultBuf.append(isolationWorlRet[0]);
+                            lastResultBuf.append(":");
+                            lastResultBuf.append(isolationWorlRet[1]);
+                            lastRetSep = ";";
+                        }
+
                     }
                 }
+
+                // 最終結果を格納
+                retStrs[0] = "2";
+                retStrs[1] = "true";
+                retStrs[2] = lastResultBuf.toString(); //Key:Value;Key:Value;Key:Value("*"の場合は値が存在しないマーク値)
             }
 
         } catch (BatchException be) {
@@ -3062,6 +3117,7 @@ System.out.println(clientParameterList[i]);
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
                         // value値にセパレータが入っていても無視する
+
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     } else if (type.equals("4")) {
 
@@ -3082,6 +3138,7 @@ System.out.println(clientParameterList[i]);
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
                         // value値にセパレータが入っていても無視する
+
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     }
 
@@ -6150,29 +6207,66 @@ System.out.println(clientParameterList[i]);
      * データノードからの結果文字列を結果値と更新時間の2つに分解する.<br>
      *
      * @param targetStr 対象値
-     * @return String[] 結果 [0]=取り出した結果文字列, [1]=更新時間(登録されていない場合は-1)
+     * @return String[] 結果 [0]=取り出した結果文字列(複数Valueの場合は、Key:Value;Key:Value;....), [1]=更新時間(登録されていない場合は-1)(複数Valueの場合は、Time;Time;...)
      */
     private String[] dataConvert4Consistency(String targetStr) {
+        boolean multiResult = false;
 
         String[] ret = new String[2];
         ret[0] = null;
         ret[1] = "-1";
 
+
         if (targetStr != null) {
+            // 複数のValue値を扱っているかをチェック
+            if (targetStr.indexOf(ImdstDefine.setTimeParamSep) < targetStr.indexOf(";")) multiResult = true;
 
-            String[] setTimeSplitRet = targetStr.split(ImdstDefine.setTimeParamSep);
+            if (!multiResult) {
+                String[] setTimeSplitRet = targetStr.split(ImdstDefine.setTimeParamSep);
 
-            if(setTimeSplitRet.length > 1) {
+                if(setTimeSplitRet.length > 1) {
 
-                ret[0] = setTimeSplitRet[0];
+                    ret[0] = setTimeSplitRet[0];
 
-                if (setTimeSplitRet[1].trim().length() > 0) {
+                    if (setTimeSplitRet[1].trim().length() > 0) {
 
-                    ret[1] = setTimeSplitRet[1];
+                        ret[1] = setTimeSplitRet[1];
+                    }
+                } else {
+
+                    ret[0] = setTimeSplitRet[0];
                 }
             } else {
 
-                ret[0] = setTimeSplitRet[0];
+                // MultiValue
+                String[] multiResultList = targetStr.split(";");
+
+                StringBuilder valueBuf = new StringBuilder(1024);
+                StringBuilder timeBuf = new StringBuilder(1024);
+                String valSep = "";
+                String timeSep = "";
+                for (int idx = 0; idx < multiResultList.length; idx++) {
+                    String[] setTimeSplitRet = multiResultList[idx].split(ImdstDefine.setTimeParamSep);
+
+                    if(setTimeSplitRet.length > 1) {
+                        valueBuf.append(valSep);
+                        valueBuf.append(setTimeSplitRet[0]);
+
+                        if (setTimeSplitRet[1].trim().length() > 0) {
+
+                            timeBuf.append(timeSep);
+                            timeBuf.append(setTimeSplitRet[1]);
+                            timeSep = ";";
+                        }
+                    } else {
+
+                        valueBuf.append(valSep);
+                        valueBuf.append(setTimeSplitRet[0]);
+                    }
+                    valSep = ";";
+                }
+                ret[0] = valueBuf.toString();
+                ret[1] = timeBuf.toString();
             }
         }
         return ret;

@@ -971,6 +971,22 @@ public class TestSock {
                 if (retMap == null) {
                     System.out.println(retMap);
                 } else {
+
+                    if (args.length > 4) {
+                        for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                            String val = (String)retMap.get("datasavekey_" + args[4] + "_" + new Integer(i).toString());
+                            if(val == null || !val.equals("savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol" + args[4] + "_" + new Integer(i).toString())) {
+                                System.out.println("Error - Key=[" + "datasavekey_" + args[4] + "_" + new Integer(i).toString() + " Value=[" + val + "]");
+                            }
+                        }
+                    } else {
+                        for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                           String val = (String)retMap.get("datasavekey_" + new Integer(i).toString());
+                           if(val == null || !val.equals("savedatavaluestr_" + new Integer(i).toString())) {
+                               System.out.println("Error - Key=[" + "datasavekey_" + new Integer(i).toString() + " Value=[" + val + "]");
+                           }
+                        }
+                    }
                     System.out.println(retMap);
                     System.out.println("ResultSize = [" + retMap.size() + "]");
                 }
