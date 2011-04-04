@@ -396,7 +396,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // 複数Key値を指定することで、紐付くValueを一度に取得する(memcachedのmget)
                             // 本処理は大量のValue値を扱うため、クライアントに逐次値を返す
-                            int maxGetSize = 100;
+                            int maxGetSize = 500;
                             int mIdx = 1;
                             int innerIdx = 0;
                             String sep = "";

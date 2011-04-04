@@ -32,3 +32,21 @@ rem cas Tag
 php PhpTestSock.php 13 127.0.0.1 8888 newkey value_cas tag1 2
 rem gets
 php PhpTestSock.php 11 127.0.0.1 8888 newkey
+rem incr
+php PhpTestSock.php 12 127.0.0.1 8888 newkey 1
+rem incr
+php PhpTestSock.php 12 127.0.0.1 8888 newkey 109
+rem decr
+php PhpTestSock.php 13 127.0.0.1 8888 newkey 1
+rem decr
+php PhpTestSock.php 13 127.0.0.1 8888 newkey 109
+rem removeTagFromkey
+php PhpTestSock.php 22 127.0.0.1 8888 datasavekey_46 tag1
+rem setValueAndCreateIndex
+php PhpTestSock.php 42 127.0.0.1 8888 1000
+rem searchValue
+php PhpTestSock.php 43 127.0.0.1 8888 "datavaluestr_716" 1 ""
+rem setValueAndCreateIndex
+php PhpTestSock.php 42.1 127.0.0.1 8888 1000 Prefix1
+rem searchValue
+php PhpTestSock.php 43.1 127.0.0.1 8888 "7" "716" 2 "Prefix1"

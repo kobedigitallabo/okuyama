@@ -13,7 +13,7 @@ import java.util.*;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-class SoftRefCacheMap extends Thread {
+public class SoftRefCacheMap extends Thread {
 
     private ValueCacheMap innerCacheMap = null;
 

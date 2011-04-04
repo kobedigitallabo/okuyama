@@ -58,8 +58,8 @@ public class TestSock {
                     if (args.length > 4) {
 
                         //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_" + args[4] + "_" + new Integer(i).toString())) {
-                        if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol" + args[4] + "_" + new Integer(i).toString())) {
-                        //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321" + strBuf.toString() + "_" + args[4] + "_" + new Integer(i).toString())) {
+                        //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCMKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm654321qazxswedcvfrtgbnhyujmXSWQAZXSWEDCVFRTGBNHY678745savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol" + args[4] + "_" + new Integer(i).toString())) {
+                        if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321" + strBuf.toString() + "_" + args[4] + "_" + new Integer(i).toString())) {
                             System.out.println("OkuyamaClient - error");
                         } else {
                             System.out.println("Store[" + "datasavekey_" + args[4] + "_" + new Integer(i).toString() + "]");
@@ -71,6 +71,23 @@ public class TestSock {
                         }
                     }
                     //if ((i % 1000) == 0) System.out.println(i);
+                }
+
+                if (args.length > 4) {
+
+                    for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                        Object[] ret = okuyamaClient.getValue("datasavekey_" + args[4] + "_" + new Integer(i).toString());
+                        if (ret[0].equals("true")) {
+                            // データ有り
+                            if (!ret[1].equals("savedatavaluestr0987654321" + strBuf.toString() + "_" + args[4] + "_" + new Integer(i).toString())) {
+                                System.out.println("Error - Key=[" + "datasavekey_" + args[4] + "_" + new Integer(i).toString() + "] Value=[" + ret[1] + "]");
+                            }
+                        } else if (ret[0].equals("false")) {
+                            System.out.println("データなし");
+                        } else if (ret[0].equals("error")) {
+                            System.out.println(ret[1]);
+                        }
+                    }
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");

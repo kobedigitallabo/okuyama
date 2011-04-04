@@ -40,8 +40,11 @@ class OkuyamaClient {
     // バイナリデータ分割保存サイズ
     private $saveSize = 2560;
 
-    // 保存できる最大長
+    // 保存できるValue最大長
     private $maxValueSize = 2560;
+
+    // 保存できるKey最大長
+    private $maxKeySize = 386;
 
     // MasterServerへの接続時のタイムアウト時間
     private $connectTimeOut = 10;
@@ -370,7 +373,7 @@ class OkuyamaClient {
             if ($this->transactionCode === "" || $this->transactionCode === "0") throw new OkuyamaClientException("No Start Transaction!!");
 
             // Byte Lenghtチェック
-            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
 
             if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
@@ -476,7 +479,7 @@ class OkuyamaClient {
             if ($this->transactionCode === "" || $this->transactionCode === "0") throw new OkuyamaClientException("No Start Transaction!!");
 
             // Byte Lenghtチェック
-            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
 
             if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
@@ -555,6 +558,7 @@ class OkuyamaClient {
 
     /**
      * マスタサーバへデータを送信する.<br>
+     * データ保存を行う.<br>
      * Tag有り.<br>
      *
      * @param keyStr
@@ -568,12 +572,14 @@ class OkuyamaClient {
         $serverRetStr = null;
         $serverRet = null;
         $serverRequestBuf = null;
+        $encodeValue = "";
+
         try {
             // Byte Lenghtチェック
-            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
             if ($tagStrs != null) {
                 for ($i = 0; $i < count($tagStrs); $i++) {
-                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxValueSize) throw new OkuyamaClientException("Tag Max Size " . $this->maxValueSize . " Byte");
+                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxKeySize) throw new OkuyamaClientException("Tag Max Size " . $this->maxKeySize . " Byte");
                 }
             }
             if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new OkuyamaClientException("Save Value Max Size " . $this->maxValueSize . " Byte");
@@ -589,11 +595,11 @@ class OkuyamaClient {
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if ($value == null ||  $value === "") {
 
-                $value = $this->blankStr;
+                $encodeValue = $this->blankStr;
             } else {
 
                 // ValueをBase64でエンコード
-                $value = $this->dataEncoding($value);
+                $encodeValue = $this->dataEncoding($value);
             }
 
             // 文字列バッファ初期化
@@ -639,7 +645,7 @@ class OkuyamaClient {
             $serverRequestBuf = $serverRequestBuf . $this->sepStr;
 
             // Value連結
-            $serverRequestBuf = $serverRequestBuf . $value;
+            $serverRequestBuf = $serverRequestBuf . $encodeValue;
 
             // サーバ送信
             @fputs($this->socket, $serverRequestBuf . "\n");
@@ -687,6 +693,163 @@ class OkuyamaClient {
     }
 
 
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * 登録と同時にValueの検索Indexを作成する<br>
+     * 検索Indexを作成するので通常のSetに比べて時間がかかる.<br>
+     * 全文Indexが作成されるので、値は検索可能な文字を指定すること。例えばBASE64エンコードの値などの場合は<br>
+     * 検索時も同様にエンコードした値で検索する必要がある.<br>
+     * ※okuyamaは検索Index作成前に、同様のKey値で値が登録されている場合は、そのKey値で登録されているValue値の<br>
+     * 検索インデックスを削除してから登録が行われる.<br>
+     * Tag有り.<br>
+     *
+     * @param keyStr Key値
+     * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
+     * @param value value値
+     * @param indexPrefix 作成する検索IndexをグルーピングするPrefix文字列.この値と同様の値を指定してsearchValueメソッドを呼び出すと、グループに限定して全文検索が可能となる.最大は128文字
+     * @return boolean 登録成否
+     */
+    public function setValueAndCreateIndex($keyStr, $value, $tagStrs = null, $indexPrefix = null) {
+        $ret = false; 
+        $serverRetStr = null;
+        $serverRet = null;
+        $serverRequestBuf = null;
+        $encodeValue = "";
+        try {
+            // Byte Lenghtチェック
+            if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
+            if ($tagStrs != null) {
+                for ($i = 0; $i < count($tagStrs); $i++) {
+                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxKeySize) throw new OkuyamaClientException("Tag Max Size " . $this->maxKeySize . " Byte");
+                }
+            }
+            if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new OkuyamaClientException("Save Value Max Size " . $this->maxValueSize . " Byte");
+
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+            // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
+            if ($value == null ||  $value === "") {
+
+                $encodeValue = $this->blankStr;
+            } else {
+
+                // ValueをBase64でエンコード
+                $encodeValue = $this->dataEncoding($value);
+            }
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+
+            // 処理番号連結
+            $serverRequestBuf = "42";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf. $this->dataEncoding($keyStr);
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+
+            // Tag連結
+            // Tag指定の有無を調べる
+            if ($tagStrs == null || count($tagStrs) < 1) {
+
+                // ブランク規定文字列を連結
+                $serverRequestBuf = $serverRequestBuf . $this->blankStr;
+            } else {
+
+                // Tag数分連結
+                $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($tagStrs[0]);
+                for ($i = 1; $i < count($tagStrs); $i++) {
+                    $serverRequestBuf = $serverRequestBuf . $this->tagKeySep;
+                    $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($tagStrs[$i]);
+                }
+            }
+
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // TransactionCode連結
+            $serverRequestBuf = $serverRequestBuf . $this->transactionCode;
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Value連結
+            $serverRequestBuf = $serverRequestBuf . $encodeValue;
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Indexプレフィックス指定の有無を調べてIndexプレフィックス連結
+            if ($indexPrefix == null || $indexPrefix === "") {
+
+                // ブランク規定文字列を連結
+                $serverRequestBuf = $serverRequestBuf . $this->blankStr;
+            } else {
+
+                // Indexプレフィックス連結
+                $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($indexPrefix);
+            }
+
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if (count($serverRet) == 3 && $serverRet[0] === "42") {
+                if ($serverRet[1] === "true") {
+
+                    // 処理成功
+                    $ret = true;
+                } else if ($serverRet[1] === "error") {
+
+                    // 処理失敗(メッセージ格納)
+                    throw new OkuyamaClientException($serverRet[2]);
+                }
+            }  else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->setValueAndCreateIndex($keyStr, $value, $tagStrs, $indexPrefix);
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+            }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->setValueAndCreateIndex($keyStr, $value, $tagStrs, $indexPrefix);
+                }
+            } else {
+
+                throw $e;
+            }
+        }
+        return $ret;
+    }
+
+
     /**
      * マスタサーバへデータを送信する.<br>
      * 1度のみ登録可能.<br>
@@ -705,10 +868,10 @@ class OkuyamaClient {
         $serverRequestBuf = null;
         try {
             // Byte Lenghtチェック
-            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
             if ($tagStrs != null) {
                 for ($i = 0; $i < count($tagStrs); $i++) {
-                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxValueSize) throw new OkuyamaClientException("Tag Max Size " . $this->maxValueSize . " Byte");
+                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxKeySize) throw new OkuyamaClientException("Tag Max Size " . $this->maxKeySize . " Byte");
                 }
             }
             if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new OkuyamaClientException("Save Value Max Size " . $this->maxValueSize . " Byte");
@@ -724,11 +887,11 @@ class OkuyamaClient {
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if ($value == null ||  $value === "") {
 
-                $value = $this->blankStr;
+                $encodeValue = $this->blankStr;
             } else {
 
                 // ValueをBase64でエンコード
-                $value = $this->dataEncoding($value);
+                $encodeValue = $this->dataEncoding($value);
             }
 
             // 文字列バッファ初期化
@@ -774,7 +937,7 @@ class OkuyamaClient {
             $serverRequestBuf = $serverRequestBuf . $this->sepStr;
 
             // Value連結
-            $serverRequestBuf = $serverRequestBuf . $value;
+            $serverRequestBuf = $serverRequestBuf . $encodeValue;
 
             // サーバ送信
             @fputs($this->socket, $serverRequestBuf . "\n");
@@ -842,10 +1005,10 @@ class OkuyamaClient {
         $serverRequestBuf = null;
         try {
             // Byte Lenghtチェック
-            if ($this->checkStrByteLength($keyStr) > $this->maxValueSize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxValueSize . " Byte");
+            if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
             if ($tagStrs != null) {
                 for ($i = 0; $i < count($tagStrs); $i++) {
-                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxValueSize) throw new OkuyamaClientException("Tag Max Size " . $this->maxValueSize . " Byte");
+                    if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxKeySize) throw new OkuyamaClientException("Tag Max Size " . $this->maxKeySize . " Byte");
                 }
             }
             if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new OkuyamaClientException("Save Value Max Size " . $this->maxValueSize . " Byte");
@@ -861,11 +1024,11 @@ class OkuyamaClient {
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if ($value == null ||  $value === "") {
 
-                $value = $this->blankStr;
+                $encodeValue = $this->blankStr;
             } else {
 
                 // ValueをBase64でエンコード
-                $value = $this->dataEncoding($value);
+                $encodeValue = $this->dataEncoding($value);
             }
 
             // 文字列バッファ初期化
@@ -911,7 +1074,7 @@ class OkuyamaClient {
             $serverRequestBuf = $serverRequestBuf . $this->sepStr;
 
             // Value連結
-            $serverRequestBuf = $serverRequestBuf . $value;
+            $serverRequestBuf = $serverRequestBuf . $encodeValue;
 
             // セパレータ連結
             $serverRequestBuf = $serverRequestBuf . $this->sepStr;
@@ -956,6 +1119,225 @@ class OkuyamaClient {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
                     $ret = $this->setValueVersionCheck($keyStr, $value, $tagStrs, $versionNo);
+                }
+            } else {
+
+                throw $e;
+            }
+        }
+        return $ret;
+    }
+
+
+    /**
+     * MasterNodeへデータの加算を要求する.<br>
+     *
+     * @param keyStr Key値
+     * @param value 加算値
+     * @return 要素1(処理成否):Boolean true/false,要素2(演算後の結果):double 数値
+     * @throws Exception
+     */
+    public function incrValue($keyStr, $value) {
+        $ret = false; 
+        $serverRetStr = null;
+        $serverRet = null;
+        $serverRequestBuf = null;
+        try {
+            // Byte Lenghtチェック
+            if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
+
+            if (!is_int((int)$value)) throw new OkuyamaClientException("Save Value Integer Only");
+
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+            // ValueをBase64でエンコード
+            $encodeValue = $this->dataEncoding($value);
+
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+
+            // 処理番号連結
+            $serverRequestBuf = "13";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf. $this->dataEncoding($keyStr);
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // TransactionCode連結
+            $serverRequestBuf = $serverRequestBuf . $this->transactionCode;
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Value連結
+            $serverRequestBuf = $serverRequestBuf . $encodeValue;
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if (count($serverRet) == 3 && $serverRet[0] === "13") {
+                if ($serverRet[1] === "true") {
+
+                    // データ有り
+                    $ret[0] =$serverRet[1];
+
+                    // Value文字列をBase64でデコード
+                    $ret[1] = (double)$this->dataDecoding($serverRet[2], $encoding);
+                } else if ($serverRet[1] === "false") {
+
+                    // データなし
+                    $ret[0] = "false";
+                    $ret[1] = NULL;
+                } else if ($serverRet[1] === "error") {
+                    // 妥当性違反
+                    throw new OkuyamaClientException($ret[2]);
+                }
+            }  else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->incrValue($keyStr, $value);
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+            }
+
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->incrValue($keyStr, $value);
+                }
+            } else {
+
+                throw $e;
+            }
+        }
+        return $ret;
+    }
+
+
+
+    /**
+     * MasterNodeへデータの減算を要求する.<br>
+     *
+     * @param keyStr Key値
+     * @param value 減算値
+     * @return 要素1(処理成否):Boolean true/false,要素2(演算後の結果):double 数値
+     * @throws Exception
+     */
+    public function decrValue($keyStr, $value) {
+        $ret = false; 
+        $serverRetStr = null;
+        $serverRet = null;
+        $serverRequestBuf = null;
+        try {
+            // Byte Lenghtチェック
+            if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
+
+            if (!is_int((int)$value)) throw new OkuyamaClientException("Save Value Integer Only");
+
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+            // ValueをBase64でエンコード
+            $encodeValue = $this->dataEncoding($value);
+
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+
+            // 処理番号連結
+            $serverRequestBuf = "14";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf. $this->dataEncoding($keyStr);
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // TransactionCode連結
+            $serverRequestBuf = $serverRequestBuf . $this->transactionCode;
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Value連結
+            $serverRequestBuf = $serverRequestBuf . $encodeValue;
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if (count($serverRet) == 3 && $serverRet[0] === "14") {
+                if ($serverRet[1] === "true") {
+
+                    // データ有り
+                    $ret[0] =$serverRet[1];
+
+                    // Value文字列をBase64でデコード
+                    $ret[1] = (double)$this->dataDecoding($serverRet[2], $encoding);
+                } else if ($serverRet[1] === "false") {
+
+                    // データなし
+                    $ret[0] = "false";
+                    $ret[1] = NULL;
+                } else if ($serverRet[1] === "error") {
+                    // 妥当性違反
+                    throw new OkuyamaClientException($ret[2]);
+                }
+            }  else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->decrValue($keyStr, $value);
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+            }
+
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->decrValue($keyStr, $value);
                 }
             } else {
 
@@ -1456,7 +1838,6 @@ class OkuyamaClient {
                         $ret[1] = $tags;
                     } else {
                         $tags = null;
-                        $cnvTags = null;
 
                         $serverRet[2] = str_replace("\n", "", $serverRet[2]);
                         $tags = explode($this->tagKeySep, $serverRet[2]);
@@ -1495,6 +1876,149 @@ class OkuyamaClient {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
                     $ret = $this->getTagKeys($tagStr);
+                }
+            } else {
+
+                throw $e;
+            }
+        }
+        return $ret;
+    }
+
+
+
+    /**
+     * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
+     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * Prefxiあり.<br>
+     * 
+     * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)<文字配列>
+     * @param  searchType 1:AND検索　2:OR検索
+     * @param  prefix 検索Index作成時に指定したPrefix値
+     * @return object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    public function searchValue($searchCharacterList, $searchType, $prefix=null) {
+        $ret = array(); 
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+
+        try {
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            if ($searchCharacterList == null) throw new OkuyamaClientException("The blank is not admitted on a searchCharacterList");
+
+            // エラーチェック
+            // 検索Wordに対するチェック
+            for ($i = 0; $i < count($searchCharacterList); $i++) {
+                if ($this->checkStrByteLength($searchCharacterList[$i]) > 64) throw new OkuyamaClientException("SearchWord Max Size 64 Character");
+            }
+
+            // 検索Typeを調整
+            if ($searchType == null || ($searchType !== "1" && $searchType !== "2")) $searchType = "2";
+
+            // Prefixをチェック
+            if ($prefix == null || $prefix === "") $prefix = null;
+
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = $serverRequestBuf . "43";
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+
+            // 検索ワード値連結
+            // 複数の検索Wordは":"で連結して送る
+            $sep = "";
+            for ($i = 0; $i < count($searchCharacterList); $i++) {
+
+                $serverRequestBuf = $serverRequestBuf . $sep;
+                $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($searchCharacterList[$i]);
+                $sep = ":";
+            }
+
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // SearchType連結
+            $serverRequestBuf = $serverRequestBuf . $searchType;
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // prefix連結
+            // Indexプレフィックス指定の有無を調べてIndexプレフィックス連結
+            if ($prefix == null) {
+
+                // ブランク規定文字列を連結
+                $serverRequestBuf = $serverRequestBuf . $this->blankStr;
+            } else {
+
+                // Indexプレフィックス連結
+                $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($prefix);
+            }
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+
+            // 処理の妥当性確
+            if ($serverRet[0] === "43") {
+                if ($serverRet[1] === "true") {
+
+                    // データ有り
+                    $ret[0] = $serverRet[1];
+
+                    $keys = null;
+
+                    $serverRet[2] = str_replace("\n", "", $serverRet[2]);
+                    $keys = explode($this->tagKeySep, $serverRet[2]);
+
+                    $cnvKeys = array();
+                    for ($i = 0; $i < count($keys); $i++) {
+                        $cnvKeys[$i] = $this->dataDecoding($keys[$i]);
+                    }
+                    $ret[1] = $cnvKeys;
+                } else if($serverRet[1] === "false") {
+
+                    // データなし
+                    $ret[0] = $serverRet[1];
+                    $ret[1] = null;
+                } else if($serverRet[1] === "error") {
+
+                    // エラー発生
+                    $ret[0] = $serverRet[1];
+                    $ret[1] = $serverRet[2];
+                }
+            }  else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->searchValue($searchCharacterList, $searchType, $prefix);
+                    }
+                } else {
+
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+            }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->searchValue($searchCharacterList, $searchType, $prefix);
                 }
             } else {
 
@@ -1594,6 +2118,112 @@ class OkuyamaClient {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
                     $ret = $this->removeValue($keyStr, $encoding);
+                }
+            } else {
+
+                throw $e;
+            }
+        }
+        return $ret;
+    }
+
+
+    /**
+     * MasterNodeへKey値とTag値を指定してTagの紐付きを削除する.<br>
+     *
+     * @param keyStr Key値
+     * @param tagStr tag値
+     * @return boolean 削除成否
+     */
+    public function removeTagFromKey($keyStr, $tagStr) {
+        $ret = false; 
+        $serverRetStr = null;
+        $serverRet = null;
+        $serverRequestBuf = null;
+        try {
+            // Byte Lenghtチェック
+            if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
+            if ($tagStr != null) {
+                if ($this->checkStrByteLength($tagStr) > $this->maxKeySize) throw new OkuyamaClientException("Tag Max Size " . $this->maxKeySize . " Byte");
+            } 
+
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+
+            // エラーチェック
+            // Tagに対する無指定チェック
+            if ($tagStr == null ||  $tagStr === "") {
+                throw new OkuyamaClientException("The blank is not admitted on a tag");
+            }
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+
+            // 処理番号連結
+            $serverRequestBuf = "40";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Tag連結(Tagはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf. $this->dataEncoding($tagStr);
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf. $this->dataEncoding($keyStr);
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // TransactionCode連結
+            $serverRequestBuf = $serverRequestBuf . $this->transactionCode;
+
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if (count($serverRet) == 3 && $serverRet[0] === "40" && $serverRet[2] === "") {
+                if ($serverRet[1] === "true") {
+
+                    // 処理成功
+                    $ret = true;
+                } else{
+
+                    // 処理失敗(データなし)
+                    $ret = false;
+                }
+            }  else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->removeTagFromKey($keyStr, $tagStr);
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+            }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->removeTagFromKey($keyStr, $tagStr);
                 }
             } else {
 

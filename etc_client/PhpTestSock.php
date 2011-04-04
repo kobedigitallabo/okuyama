@@ -55,7 +55,48 @@
         print_r("Regist Error");
       }
 
+    } else if ($argv[1] === "42") {
 
+      // データを引数の回数分登録
+      for ($i = 0; $i < $argv[4]; $i++) {
+        
+        if(!$client->setValueAndCreateIndex("datasavekey_" . $i, "savedatavaluestr_" . $i)) {
+          print_r("Registration failure");
+        }
+      }
+    } else if ($argv[1] === "42.1") {
+
+      // データを引数の回数分登録
+      for ($i = 0; $i < $argv[4]; $i++) {
+        
+        if(!$client->setValueAndCreateIndex("datasavekey_" . $argv[5] . "_" . $i, "savedatavaluestr_" . $argv[5] . "_" . $i, null, $argv[5])) {
+          print_r("Registration failure");
+        }
+      }
+    } else if ($argv[1] === "43") {
+
+
+      // データを検索Wordで取得(検索Word1つ、AND,OR、Prefix指定)
+      $searchWordList = array();
+      $searchWordList[0] = $argv[4];
+
+      var_dump($client->searchValue($searchWordList, $argv[5], $argv[6]));
+    } else if ($argv[1] === "43.1") {
+
+
+      // データを検索Wordで取得(検索Word2つ、AND,OR、Prefix指定)
+      $searchWordList = array();
+      $searchWordList[0] = $argv[4];
+      $searchWordList[1] = $argv[5];
+      var_dump($client->searchValue($searchWordList, $argv[6], $argv[7]));
+    } else if ($argv[1] === "43.2") {
+
+
+      // データを検索Wordで取得(検索Word2つ、AND,OR指定)
+      $searchWordList = array();
+      $searchWordList[0] = $argv[4];
+      $searchWordList[1] = $argv[5];
+      var_dump($client->searchValue($searchWordList, $argv[6]));
     } else if ($argv[1] === "2") {
 
       // データを引数の回数分取得
@@ -253,7 +294,20 @@
       // cas tag付
       var_dump($client->setValueVersionCheck($argv[4], $argv[5], $argv[6], $argv[7]));
 
+    } else if ($argv[1] === "20") {
+
+      // incr
+      var_dump($client->incrValue($argv[4], $argv[5]));
+    } else if ($argv[1] === "21") {
+
+      // decr
+      var_dump($client->decrValue($argv[4], $argv[5]));
+    } else if ($argv[1] === "22") {
+
+      // Tag削除
+      var_dump($client->removeTagFromKey($argv[4], $argv[5]));
     }
+
 
 
 

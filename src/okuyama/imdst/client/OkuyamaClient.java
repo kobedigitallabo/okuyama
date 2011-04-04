@@ -899,7 +899,7 @@ public class OkuyamaClient {
         boolean ret = false; 
         String serverRetStr = null;
         String[] serverRet = null;
-
+        String encodeValue = null;
         // 文字列バッファ初期化
         setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
@@ -926,12 +926,12 @@ public class OkuyamaClient {
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
-                value = OkuyamaClient.blankStr;
+                encodeValue = OkuyamaClient.blankStr;
             } else {
 
                 // ValueをBase64でエンコード
 
-                value = new String(this.dataEncoding(value.getBytes()));
+                encodeValue = new String(this.dataEncoding(value.getBytes()));
             }
 
 
@@ -973,7 +973,7 @@ public class OkuyamaClient {
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
             // Value連結
-            setValueServerReqBuf.append(value);
+            setValueServerReqBuf.append(encodeValue);
 
             // サーバ送信
             pw.println(setValueServerReqBuf.toString());
@@ -1042,8 +1042,14 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeへデータを登録要求する.<br>
-     * 検索インデックスの作成も同時に依頼
+     * 登録と同時にValueの検索Indexを作成する<br>
+     * 検索Indexを作成するので通常のSetに比べて時間がかかる.<br>
+     * 全文Indexが作成されるので、値は検索可能な文字を指定すること。例えばBASE64エンコードの値などの場合は<br>
+     * 検索時も同様にエンコードした値で検索する必要がある.<br>
+     * ※okuyamaは検索Index作成前に、同様のKey値で値が登録されている場合は、そのKey値で登録されているValue値の<br>
+     * 検索インデックスを削除してから登録が行われる.<br>
      * Tagなし.<br>
+     * Prefixなし.<br>
      *
      * @param keyStr Key値
      * @param value value値
@@ -1056,11 +1062,17 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeへデータを登録要求する.<br>
-     * 検索インデックスの作成も同時に依頼
+     * 登録と同時にValueの検索Indexを作成する<br>
+     * 検索Indexを作成するので通常のSetに比べて時間がかかる.<br>
+     * 全文Indexが作成されるので、値は検索可能な文字を指定すること。例えばBASE64エンコードの値などの場合は<br>
+     * 検索時も同様にエンコードした値で検索する必要がある.<br>
+     * ※okuyamaは検索Index作成前に、同様のKey値で値が登録されている場合は、そのKey値で登録されているValue値の<br>
+     * 検索インデックスを削除してから登録が行われる.<br>
      * Tagなし.<br>
      *
      * @param keyStr Key値
      * @param value value値
+     * @param indexPrefix 作成する検索IndexをグルーピングするPrefix文字列.この値と同様の値を指定してsearchValueメソッドを呼び出すと、グループに限定して全文検索が可能となる. 最大は128文字
      * @return boolean 登録成否
      * @throws OkuyamaClientException
      */
@@ -1070,11 +1082,18 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeへデータを登録要求する.<br>
+     * 登録と同時にValueの検索Indexを作成する<br>
+     * 検索Indexを作成するので通常のSetに比べて時間がかかる.<br>
+     * 全文Indexが作成されるので、値は検索可能な文字を指定すること。例えばBASE64エンコードの値などの場合は<br>
+     * 検索時も同様にエンコードした値で検索する必要がある.<br>
+     * ※okuyamaは検索Index作成前に、同様のKey値で値が登録されている場合は、そのKey値で登録されているValue値の<br>
+     * 検索インデックスを削除してから登録が行われる.<br>
      * Tag有り.<br>
      *
      * @param keyStr Key値
      * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
      * @param value value値
+     * @param indexPrefix 作成する検索IndexをグルーピングするPrefix文字列.この値と同様の値を指定してsearchValueメソッドを呼び出すと、グループに限定して全文検索が可能となる. 最大は128文字
      * @return boolean 登録成否
      * @throws OkuyamaClientException
      */
@@ -1082,6 +1101,7 @@ public class OkuyamaClient {
         boolean ret = false; 
         String serverRetStr = null;
         String[] serverRet = null;
+        String encodeValue = null;
 
         // 文字列バッファ初期化
         setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
@@ -1109,12 +1129,11 @@ public class OkuyamaClient {
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
-                value = OkuyamaClient.blankStr;
+                encodeValue = OkuyamaClient.blankStr;
             } else {
 
                 // ValueをBase64でエンコード
-
-                value = new String(this.dataEncoding(value.getBytes(ImdstDefine.characterDecodeSetBySearch)), ImdstDefine.characterDecodeSetBySearch);
+                encodeValue = new String(this.dataEncoding(value.getBytes(ImdstDefine.characterDecodeSetBySearch)), ImdstDefine.characterDecodeSetBySearch);
             }
 
 
@@ -1156,7 +1175,7 @@ public class OkuyamaClient {
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
             // Value連結
-            setValueServerReqBuf.append(value);
+            setValueServerReqBuf.append(encodeValue);
 
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
@@ -1271,6 +1290,8 @@ public class OkuyamaClient {
         String[] ret = null; 
         String serverRetStr = null;
         String[] serverRet = null;
+        String encodeValue = null;
+
 
         // 文字列バッファ初期化
         setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
@@ -1298,11 +1319,11 @@ public class OkuyamaClient {
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
-                value = OkuyamaClient.blankStr;
+                encodeValue = OkuyamaClient.blankStr;
             } else {
 
                 // ValueをBase64でエンコード
-                value = new String(this.dataEncoding(value.getBytes()));
+                encodeValue = new String(this.dataEncoding(value.getBytes()));
             }
 
 
@@ -1344,7 +1365,7 @@ public class OkuyamaClient {
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
             // Value連結
-            setValueServerReqBuf.append(value);
+            setValueServerReqBuf.append(encodeValue);
 
             // サーバ送信
             pw.println(setValueServerReqBuf.toString());
@@ -1451,7 +1472,7 @@ public class OkuyamaClient {
         String[] ret = null; 
         String serverRetStr = null;
         String[] serverRet = null;
-
+        String encodeValue = null;
         // 文字列バッファ初期化
         setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
@@ -1480,11 +1501,11 @@ public class OkuyamaClient {
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
 
-                value = OkuyamaClient.blankStr;
+                encodeValue = OkuyamaClient.blankStr;
             } else {
 
                 // ValueをBase64でエンコード
-                value = new String(this.dataEncoding(value.getBytes()));
+                encodeValue = new String(this.dataEncoding(value.getBytes()));
             }
 
 
@@ -1525,7 +1546,7 @@ public class OkuyamaClient {
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
             // Value連結
-            setValueServerReqBuf.append(value);
+            setValueServerReqBuf.append(encodeValue);
 
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
@@ -3238,7 +3259,6 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeへKey値とTag値を指定してTagの紐付きを削除する.<br>
-     * Tagなし.<br>
      *
      * @param keyStr Key値
      * @param tagStr tag値
@@ -3944,8 +3964,9 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字、最低2文字からで、最大は32文字
-     * 
+     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * Prefxiなし.<br>
+     *
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
      * @param  searchType 1:AND検索　2:OR検索
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
@@ -3957,10 +3978,12 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字、最低2文字からで、最大は32文字
+     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
      * @param  searchType 1:AND検索　2:OR検索
+     * @param  prefix 検索Index作成時に指定したPrefix値
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
      * @throws OkuyamaClientException
      */
@@ -3981,7 +4004,7 @@ public class OkuyamaClient {
                 throw new OkuyamaClientException("The blank is not admitted on a searchCharacterList");
             }
 
-            // Tagに対するLengthチェック
+            // 検索ワードに対するLengthチェック
             for (int idx = 0; idx < searchCharacterList.length; idx++) {
                 if (searchCharacterList[idx].length() > 32) throw new OkuyamaClientException("SearchCharacter MaxSize 32Character");
             }
@@ -4001,7 +4024,8 @@ public class OkuyamaClient {
             serverRequestBuf.append(OkuyamaClient.sepStr);
 
 
-            // tag値連結(Keyはデータ送信時には必ず文字列が必要)
+            // 検索ワード値連結
+            // 複数の検索Wordは":"で連結して送る
             String sep = "";
             for (int idx = 0; idx < searchCharacterList.length; idx++) {
                 serverRequestBuf.append(sep);

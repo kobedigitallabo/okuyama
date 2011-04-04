@@ -219,61 +219,44 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     byte[] buf = new byte[this.oneDataLength];
 
                     // seek値取得
-                    if ((seekPoint = this.calcSeekDataPoint(key)) == -1) return null;
+                    if ((seekPoint = this.calcSeekDataPoint(key)) == -1) {
+// TODO:
+System.out.println("1111111111111111");
+                        return null;
+                    }
 
                     synchronized (sync) {
                         readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
-                        if (readRet == -1) 
-                                return null;
-                    }
+                        if (readRet == -1) {
+// TODO:
+System.out.println("222222222222222");
+                            return null;
+                        }
 
-                    if (readRet > this.oneDataLength) {
-
-                        // データ長が共有データファイルの1データ上限を超えている
-                        // その場合はキー名でファイルが存在するはず
-                        synchronized(this.overSizeDataParallelSyncs[((key.toString().hashCode() << 1) >>> 1) % this.overSizeDataParallelSize]) {
+                        boolean overSizeData = false;
+                        if (readRet > this.oneDataLength) {
+                            overSizeData = true;
 
                             File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
-                            if (overDataFile.exists()) {
-                                FileInputStream fis = null;
-                                InputStreamReader isr = null;
-                                BufferedReader br = null;
-
-                                try {
-
-                                    fis = new FileInputStream(overDataFile);
-                                    isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
-                                    br = new BufferedReader(isr);
-
-                                    StringBuilder retTmpBuf = new StringBuilder(this.oneDataLength);
-                                    retTmpBuf.append(new String(buf, 0, this.oneDataLength, ImdstDefine.keyWorkFileEncoding));
-                                    retTmpBuf.append(br.readLine());
-
-                                    ret = retTmpBuf.toString();
-                                } catch (Exception inE) {
-                                    inE.printStackTrace();
-                                    // 致命的
-                                    StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Read[get] - Error [" + inE.getMessage() + "]");
-                                } finally {
-                                    try {
-                                        if (br != null) br.close();
-                                        if (isr != null) isr.close();
-                                        if (fis != null) fis.close();
-                                    } catch (Exception inE2) {
-                                    }
-                                }
-                            } else { 
-                                return null;
+                            if (!overDataFile.exists()) {
+                                // 共有ファイルの上限と同じ長さの可能性がある
+                                overSizeData = false;
                             }
                         }
-                    } else {
 
-                        for (; i < buf.length; i++) {
-                            if (buf[i] == 38) break;
+                        if (overSizeData) {
+                            // データ長が共有データファイルの1データ上限を超えている
+                            // その場合はキー名でファイルが存在するはず
+                            ret = this.readOverSizeData(key, buf);
+                        } else {
+
+                            for (; i < buf.length; i++) {
+                                if (buf[i] == 38) break;
+                            }
+                            ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
                         }
-                        ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
+                        buf = null;
                     }
-                    buf = null;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -306,42 +289,22 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                 readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
 
+                boolean overSizeData = false;
                 if (readRet > this.oneDataLength) {
+                    overSizeData = true;
 
-                        // データ長が共有データファイルの1データ上限を超えている
-                    // その場合はキー名でファイルが存在するはず
-                    synchronized(this.overSizeDataParallelSyncs[((key.toString().hashCode() << 1) >>> 1) % this.overSizeDataParallelSize]) {
-
-                        File overDataFile = null;
-                        FileInputStream fis = null;
-                        InputStreamReader isr = null;
-                        BufferedReader br = null;
-
-                        try {
-                            overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
-                            fis = new FileInputStream(overDataFile);
-                            isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
-                            br = new BufferedReader(isr);
-                            StringBuilder retTmpBuf = new StringBuilder(this.oneDataLength);
-
-                            retTmpBuf.append(new String(buf, 0, this.oneDataLength, ImdstDefine.keyWorkFileEncoding));
-                            retTmpBuf.append(br.readLine());
-
-                            ret = retTmpBuf.toString();
-                        } catch (Exception inE) {
-                            inE.printStackTrace();
-                            // 致命的
-                            StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - syncGet - Inner File Read Error [" + inE.getMessage() + "]");
-                        } finally {
-                            try {
-                                if (br != null) br.close();
-                                if (isr != null) isr.close();
-                                if (fis != null) fis.close();
-
-                            } catch (Exception inE2) {
-                            }
-                        }
+                    File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
+                    if (!overDataFile.exists()) {
+                        // 共有ファイルの上限と同じ長さの可能性がある
+                        overSizeData = false;
                     }
+                }
+
+                if (overSizeData) {
+
+                    // データ長が共有データファイルの1データ上限を超えている
+                    // その場合はキー名でファイルが存在するはず
+                    ret = this.readOverSizeData(key, buf);
                 } else {
 
                     for (; i < buf.length; i++) {
@@ -439,6 +402,12 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             }
 
                             this.nowKeySize = super.size();
+                            // サイズオーバーの場合
+                            if (overSizeFlg) {
+                                // データ長が共有データファイルの1データ上限を超えている
+                                // その場合はキー名でファイルを作成する
+                                this.writeOverSizeData(key, value);
+                            }
                         }
                     } else {
 
@@ -457,32 +426,11 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                                 raf.seek(seekPoint);
                                 raf.write(writeBuf.toString().getBytes(), 0, this.oneDataLength);
                             }
-                        }
-                    }
-
-                    // サイズオーバーの場合
-                    if (overSizeFlg) {
-
-                        // データ長が共有データファイルの1データ上限を超えている
-                        // その場合はキー名でファイルが存在するはず
-                        synchronized(this.overSizeDataParallelSyncs[((key.toString().hashCode() << 1) >>> 1) % this.overSizeDataParallelSize]) {
-
-                            File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
-                            BufferedWriter overBw = null;
-                            try {
-
-                                overBw = new BufferedWriter (new OutputStreamWriter(new FileOutputStream(overDataFile, false), ImdstDefine.keyWorkFileEncoding));
-                                overBw.write(((String)value).substring(this.oneDataLength, ((String)value).length()));
-                                overBw.flush();
-                            } catch (Exception inE) {
-                                inE.printStackTrace();
-                                // 致命的
-                                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Write - Error [" + inE.getMessage() + "]");
-                            } finally {
-                                try {
-                                    if (overBw != null) overBw.close();
-                                } catch (Exception inE2) {
-                                }
+                            // サイズオーバーの場合
+                            if (overSizeFlg) {
+                                // データ長が共有データファイルの1データ上限を超えている
+                                // その場合はキー名でファイルを作成する
+                                this.writeOverSizeData(key, value);
                             }
                         }
                     }
@@ -729,7 +677,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     // 新ファイルclose
                     tmpBw.close();
 
-					// 新ファイルに置き換え
+                    // 新ファイルに置き換え
                     synchronized (sync) {
 
                         raf.close();
@@ -900,6 +848,74 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         if (buf[buf.length - 1] != 38 && buf[buf.length - 2] != 33 && buf[buf.length - 1] != 48) ret++;
 
+        return ret;
+    }
+
+
+    /**
+     * 共有ファイルに書き出す上限サイズを超えているデータを書き出す.<br>
+     */
+    private void writeOverSizeData(Object key, Object value) {
+        File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
+        BufferedWriter overBw = null;
+        try {
+
+            overBw = new BufferedWriter (new OutputStreamWriter(new FileOutputStream(overDataFile, false), ImdstDefine.keyWorkFileEncoding));
+            overBw.write(((String)value).substring(this.oneDataLength, ((String)value).length()));
+            overBw.flush();
+        } catch (Exception inE) {
+            inE.printStackTrace();
+            // 致命的
+            StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Write - Error [" + inE.getMessage() + "]");
+        } finally {
+            try {
+                if (overBw != null) overBw.close();
+            } catch (Exception inE2) {
+            }
+        }
+    }
+
+
+    /**
+     * 共有ファイルに書き出す上限サイズを超えているデータを読み出す.<br>
+     */
+    private String readOverSizeData(Object key, byte[] buf) {
+        String ret = null;
+        File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
+
+        if (overDataFile.exists()) {
+            FileInputStream fis = null;
+            InputStreamReader isr = null;
+            BufferedReader br = null;
+
+            try {
+
+                fis = new FileInputStream(overDataFile);
+                isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
+                br = new BufferedReader(isr);
+
+                StringBuilder retTmpBuf = new StringBuilder(this.oneDataLength);
+                retTmpBuf.append(new String(buf, 0, this.oneDataLength, ImdstDefine.keyWorkFileEncoding));
+                retTmpBuf.append(br.readLine());
+
+                ret = retTmpBuf.toString();
+            } catch (Exception inE) {
+                inE.printStackTrace();
+                // 致命的
+                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Read[get] - Error [" + inE.getMessage() + "]");
+            } finally {
+                try {
+                    if (br != null) br.close();
+                    if (isr != null) isr.close();
+                    if (fis != null) fis.close();
+                } catch (Exception inE2) {
+                }
+            }
+        } else { 
+            //System.out.println(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
+            System.out.println("33333333333333333");
+            return null;
+        }
         return ret;
     }
 
