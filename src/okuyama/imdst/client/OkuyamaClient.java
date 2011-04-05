@@ -2174,7 +2174,7 @@ public class OkuyamaClient {
             ArrayList sendKeyList = new ArrayList();
             for (int idx = 0; idx < keyStrList.length; idx++){
                 // ブランクは無視
-                if (!keyStrList[idx].equals("")) {
+                if (keyStrList[idx] != null && !keyStrList[idx].equals("")) {
                     // Keyに対するLengthチェック
                     if (keyStrList[idx].getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte Key=[");
 
@@ -2184,7 +2184,6 @@ public class OkuyamaClient {
                     keysSep = OkuyamaClient.sepStr;
                 }
             }
-
             // サーバ送信
             pw.println(getValueServerReqBuf.toString());
             pw.flush();
@@ -2265,6 +2264,7 @@ public class OkuyamaClient {
                     throw new OkuyamaClientException(e);
                 }
             } else {
+                e.printStackTrace();
                 throw new OkuyamaClientException(e);
             }
         }

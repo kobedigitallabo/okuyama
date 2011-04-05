@@ -155,6 +155,7 @@ public class FileBaseDataMap extends AbstractMap {
         if (numberOfValueLength > 0) {
 
             if (numberOfValueLength > middleSizeLimit) {
+System.out.println("aaaaaaaaaaaaaaaaaaaaa");
 
                 coreMapType = 2;
                 // 最大サイズ用
@@ -163,6 +164,7 @@ public class FileBaseDataMap extends AbstractMap {
 
                 // ミドルサイズ用
                 middleSize = middleSizeLimit;
+System.out.println(middleSize);
                 String[] middleDataDir = {baseDirs[0]+"/virtualmiddledata1/", baseDirs[0]+"/virtualmiddledata2/"};
                 coreFileBaseKeyMap4MiddleData = new FixWriteCoreFileBaseKeyMap(middleDataDir, oneCacheSizePer / 3, oneMapSizePer / 3, middleSize);
             } else if (numberOfValueLength > regularSizeLimit){

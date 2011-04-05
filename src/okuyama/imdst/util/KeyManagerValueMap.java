@@ -35,6 +35,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private transient BufferedWriter bw = null;
     private transient RandomAccessFile raf = null;
 
+    private transient FileBaseDataMap overSizeDataStore = null;
+
     private transient Object sync = new Object();
 
     private transient boolean vacuumExecFlg = false;
@@ -54,9 +56,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private int nowKeySize = 0;
 
     private transient boolean readObjectFlg = false;
-
-    private int overSizeDataParallelSize = 2000;
-    private Object[] overSizeDataParallelSyncs = new Object[overSizeDataParallelSize];
 
     private ConcurrentHashMap nowAllDataSizeMap = null;
 
@@ -87,7 +86,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 sync = new Object();
 
             if (nowAllDataSizeMap == null) 
-                this.nowAllDataSizeMap = new ConcurrentHashMap(500000, 490000, 64);
+                this.nowAllDataSizeMap = new ConcurrentHashMap(5000, 4900, 64);
 
 
             readObjectFlg  = true;
@@ -100,18 +99,17 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.tmpVacuumeCopyMapDirs[3] = lineFile + ".cpmapdir4/";
             this.tmpVacuumeCopyMapDirs[4] = lineFile + ".cpmapdir5/";
 
-            // サイズオーバーのValueを格納するディレクトリを作成
-            for (int dirIdx = -19; dirIdx < 20; dirIdx++) {
-                File overDataFileDir = new File(lineFile + "_/" + dirIdx);
-                overDataFileDir.mkdirs();
+            // 共有データファイルサイズオーバーのValueを格納するMapを初期化
+            String[] overSizeDataStoreDirs = new String[1];
+            for (int dirIdx = 0; dirIdx < 1; dirIdx++) {
+                overSizeDataStoreDirs[dirIdx] = lineFile + "_" + dirIdx + "/";
             }
-
-            // サイズオーバーファイルへのパラレルアクセス並列数
-            for (int overSizeParallelIdx = 0; overSizeParallelIdx < this.overSizeDataParallelSize; overSizeParallelIdx++) {
-                this.overSizeDataParallelSyncs[overSizeParallelIdx] = new Object();
-            }
+System.out.println("Size[" + ImdstDefine.dataFileWriteMaxSize*5);
+            if (this.overSizeDataStore == null)
+                this.overSizeDataStore = new FileBaseDataMap(overSizeDataStoreDirs, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.dataFileWriteMaxSize*5, ImdstDefine.dataFileWriteMaxSize*15);
 
 
+            // データ操作記録ファイル用のBufferedWriter
             this.bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(lineFile), true), ImdstDefine.keyWorkFileEncoding));
 
             // 共有データファイルの再書き込み遅延指定
@@ -138,6 +136,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.lineCount = counter;
             br.close();
 
+            // 現在のサイズ格納
             this.nowKeySize = super.size();
         } catch(Exception e) {
             e.printStackTrace();
@@ -232,13 +231,13 @@ System.out.println("1111111111111111");
 System.out.println("222222222222222");
                             return null;
                         }
-
+System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAA");
                         boolean overSizeData = false;
-                        if (readRet > this.oneDataLength) {
+                        if (buf[this.oneDataLength -1] != 38 || readRet > this.oneDataLength) {
+System.out.println("3333333333333333333333");
                             overSizeData = true;
-
-                            File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
-                            if (!overDataFile.exists()) {
+                            if (!overSizeDataStore.containsKey(key)) {
+System.out.println("444444444444444444444");
                                 // 共有ファイルの上限と同じ長さの可能性がある
                                 overSizeData = false;
                             }
@@ -290,11 +289,9 @@ System.out.println("222222222222222");
                 readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
 
                 boolean overSizeData = false;
-                if (readRet > this.oneDataLength) {
+                if (buf[this.oneDataLength -1] != 38 || readRet > this.oneDataLength) {
                     overSizeData = true;
-
-                    File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
-                    if (!overDataFile.exists()) {
+                    if (!overSizeDataStore.containsKey(key)) {
                         // 共有ファイルの上限と同じ長さの可能性がある
                         overSizeData = false;
                     }
@@ -461,6 +458,10 @@ System.out.println("222222222222222");
         synchronized (sync) {
             this.totalDataSizeCalc(key, null);
             ret = super.remove(key);
+            if(this.overSizeDataStore != null && this.overSizeDataStore.containsKey(key)) {
+                this.overSizeDataStore.remove(key);
+            } 
+
             this.nowKeySize = super.size();
 
             // 再利用可能なデータの場所を保持(ValueをFileに保存している場合のみ)
@@ -856,22 +857,22 @@ System.out.println("222222222222222");
      * 共有ファイルに書き出す上限サイズを超えているデータを書き出す.<br>
      */
     private void writeOverSizeData(Object key, Object value) {
-        File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
-        BufferedWriter overBw = null;
+        //File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
+        //BufferedWriter overBw = null;
         try {
-
-            overBw = new BufferedWriter (new OutputStreamWriter(new FileOutputStream(overDataFile, false), ImdstDefine.keyWorkFileEncoding));
-            overBw.write(((String)value).substring(this.oneDataLength, ((String)value).length()));
-            overBw.flush();
+            this.overSizeDataStore.put((String)key, ((String)value).substring(this.oneDataLength, ((String)value).length()));
+            //overBw = new BufferedWriter (new OutputStreamWriter(new FileOutputStream(overDataFile, false), ImdstDefine.keyWorkFileEncoding));
+            //overBw.write(((String)value).substring(this.oneDataLength, ((String)value).length()));
+            //overBw.flush();
         } catch (Exception inE) {
             inE.printStackTrace();
             // 致命的
             StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Write - Error [" + inE.getMessage() + "]");
         } finally {
-            try {
+            /*try {
                 if (overBw != null) overBw.close();
             } catch (Exception inE2) {
-            }
+            }*/
         }
     }
 
@@ -881,6 +882,22 @@ System.out.println("222222222222222");
      */
     private String readOverSizeData(Object key, byte[] buf) {
         String ret = null;
+        try {
+System.out.println("OVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVER");
+            String readStr = (String)this.overSizeDataStore.get((String)key);
+System.out.println(readStr);
+            StringBuilder retTmpBuf = new StringBuilder(this.oneDataLength);
+            retTmpBuf.append(new String(buf, 0, this.oneDataLength, ImdstDefine.keyWorkFileEncoding));
+            retTmpBuf.append(readStr);
+
+            ret = retTmpBuf.toString();
+        } catch (Exception inE) {
+            inE.printStackTrace();
+            // 致命的
+            StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Read[get] - Error [" + inE.getMessage() + "]");
+        }
+        return ret;
+        /*String ret = null;
         File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
 
         if (overDataFile.exists()) {
@@ -916,7 +933,7 @@ System.out.println("222222222222222");
             System.out.println("33333333333333333");
             return null;
         }
-        return ret;
+        return ret;*/
     }
 
 

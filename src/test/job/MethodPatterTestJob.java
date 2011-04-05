@@ -30,6 +30,10 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
     private ILogger logger = LoggerFactory.createLogger(MethodPatterTestJob.class);
 
+    private String bigCharacter = "";
+
+
+
     // 初期化メソッド定義
     public void initJob(String initValue) {
         if (initValue != null && !initValue.equals("")) {
@@ -62,6 +66,13 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             count = count + start;
             for (int cy = 0; cy < 1; cy++) {
                 for (int t = 0; t < Integer.parseInt(execMethods[0]); t++) {
+                    StringBuilder strBuf = new StringBuilder(6000*10);
+                    Random rnd = new Random();
+
+                    for (int i = 0; i < 3000; i++) {
+                        strBuf.append(rnd.nextInt(1999999999));
+                    }
+                    bigCharacter = strBuf.toString();
                     this.nowCount = t;
                     System.out.println("Test Count =[" + t + "]");
                     for (int i = 1; i < execMethods.length; i++) {
@@ -147,6 +158,16 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 }
                 if ((i % 10000) == 0) System.out.println(i);
             }
+
+            for (int i = start; i < start+500; i++) {
+                // データ登録
+
+                if (!okuyamaClient.setValue(this.nowCount + "datasavekey_bigdata_" + new Integer(i).toString(), this.nowCount + "savetestbigdata_" + new Integer(i).toString() + "_" + bigCharacter + "_" + new Integer(i).toString())) {
+                    System.out.println("Set - Error=[" + this.nowCount + "datasavekey_bigdata_" + new Integer(i).toString());
+                    errorFlg = true;
+                }
+                if ((i % 10000) == 0) System.out.println(i);
+            }
             long endTime = new Date().getTime();
             System.out.println("Set Method= " + (endTime - startTime) + " milli second");
 
@@ -201,6 +222,47 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     System.out.println("Error key=[" + this.nowCount + "datasavekey_" + new Integer(i).toString() + "]" + ret[1]);
                     errorFlg = true;
                 }
+            }
+
+
+            for (int i = start; i < start+500; i++) {
+                ret = okuyamaClient.getValue(this.nowCount + "datasavekey_bigdata_" + new Integer(i).toString());
+
+                if (ret[0].equals("true")) {
+                    // データ有り
+                    //System.out.println(ret[1]);
+                    if (!ret[1].equals(this.nowCount + "savetestbigdata_" + new Integer(i).toString() + "_" + bigCharacter + "_" + new Integer(i).toString())) {
+                        System.out.println("データが合っていない key=[" + this.nowCount + "savetestbigdata_" + new Integer(i).toString() + "]  value=[" + ret[1] + "]");
+                        errorFlg = true;
+                    }
+                } else if (ret[0].equals("false")) {
+                    System.out.println("データなし key=[" + this.nowCount + "datasavekey_bigdata_" + new Integer(i).toString() + "]");
+                    logger.error("データなし key=[" + this.nowCount + "datasavekey_bigdata" + new Integer(i).toString() + "]");
+                    errorFlg = true;
+                } else if (ret[0].equals("error")) {
+                    System.out.println("Error key=[" + this.nowCount + "datasavekey_bigdata_" + new Integer(i).toString() + "]" + ret[1]);
+                    errorFlg = true;
+                }
+            }
+
+
+            String[] keys = new String[1000];
+            int idx = 0;
+            Map checkResultMap = new HashMap(1000);
+            for (int i = start; i < start+500; i++) {
+                keys[idx] = this.nowCount + "datasavekey_" + new Integer(i).toString();
+                checkResultMap.put(keys[idx], this.nowCount + "testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + new Integer(i).toString());
+                keys[idx+1] = this.nowCount + "datasavekey_bigdata_" + new Integer(i).toString();
+                checkResultMap.put(keys[idx+1], this.nowCount + "savetestbigdata_" + new Integer(i).toString() + "_" + bigCharacter + "_" + new Integer(i).toString());
+                idx = idx+2;
+            }
+
+            Map multiGetRet = okuyamaClient.getMultiValue(keys);
+
+            if (!checkResultMap.equals(multiGetRet)) {
+                System.out.println("データなし MultiGet=[" + multiGetRet + "]");
+                logger.error("データなし MultiGet=[" + multiGetRet + "]");
+                errorFlg = true;
             }
             long endTime = new Date().getTime();
             System.out.println("Get Method= " + (endTime - startTime) + " milli second");

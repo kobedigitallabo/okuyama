@@ -86,6 +86,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // ThirdDataNode 遅延書き込みモード(通常のsetValueのみ有効)
     private boolean thridNodeDelayWriteMode = false;
 
+    // MultiGetで一度に取得するデータ量
+    private static int maxGetSize = 50;
+
+    private boolean longReadTimeout = false;
+
 
     // クライアントからのinitメソッド用返却パラメータ
     private String[] initReturnParam = {"0", "true", new Integer(ImdstDefine.saveDataMaxSize).toString()};
@@ -289,6 +294,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         }
                     }
 
+                    // ReadTimeout時間設定初期化
+                    longReadTimeout = false;
+
                     // 本体処理開始
                     // 処理番号で処理を分岐
                     // 実行許可も判定
@@ -396,7 +404,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // 複数Key値を指定することで、紐付くValueを一度に取得する(memcachedのmget)
                             // 本処理は大量のValue値を扱うため、クライアントに逐次値を返す
-                            int maxGetSize = 500;
+                            this.longReadTimeout = true;
                             int mIdx = 1;
                             int innerIdx = 0;
                             String sep = "";
@@ -411,7 +419,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 sep = ";";
                                 requestKeyList.add(clientParameterList[mIdx]);
                                 // maxGetSize個のKeyをまとめて問い合わせる
-                                if (!(innerIdx == maxGetSize) && !((mIdx+1) >= (clientParameterList.length - 1))) continue;
+                                if (!(innerIdx == MasterManagerHelper.maxGetSize) && !((mIdx+1) >= (clientParameterList.length - 1))) continue;
                                 innerIdx=0;
                                 sep = "";
 
@@ -440,7 +448,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 }
 
                                 String[] responseWork = mRetParams[2].split(";");
-                                Map resultMap = new HashMap(maxGetSize);
+                                Map resultMap = new HashMap(MasterManagerHelper.maxGetSize);
                                 for (int i = 0; i < responseWork.length; i++) {
 
                                     String[] oneRet = responseWork[i].split(":");
@@ -583,6 +591,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // Key値とValueを格納する
                             // 同時に検索インデックスを作成する
                             // setKeyValueメソッドにさらにインデックス用のPrefixを最後尾文字列としてAppendしたプロトコル(指定なしは(B))
+                            this.longReadTimeout = true;
                             retParams = this.setKeyValueAndCreateIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5]);
                             break;
                         case 43 :
@@ -594,6 +603,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             //    --------------------- エンコード済み検索ワード(複数は":"で連結)
                             //                          --検索タイプ(1=AND 2=OR)
                             //                            --------- Indexプレフィックス(プレフィックスなしは(B))
+                            this.longReadTimeout = true;
                             retParams = this.searchValueIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
                             break;
                         case 90 :
@@ -6124,7 +6134,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 keyNodeConnector.connect();
             }
 
-            if(keyNodeConnector != null) keyNodeConnector.initRetryFlg();
+            if(keyNodeConnector != null) {
+                keyNodeConnector.initRetryFlg();
+                if(this.longReadTimeout) 
+            }
         } catch (Exception e) {
             logger.error(connectionFullName + " " + e);
 
