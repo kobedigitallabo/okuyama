@@ -104,7 +104,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             for (int dirIdx = 0; dirIdx < 1; dirIdx++) {
                 overSizeDataStoreDirs[dirIdx] = lineFile + "_" + dirIdx + "/";
             }
-System.out.println("Size[" + ImdstDefine.dataFileWriteMaxSize*5);
+
             if (this.overSizeDataStore == null)
                 this.overSizeDataStore = new FileBaseDataMap(overSizeDataStoreDirs, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.dataFileWriteMaxSize*5, ImdstDefine.dataFileWriteMaxSize*15);
 
@@ -219,25 +219,23 @@ System.out.println("Size[" + ImdstDefine.dataFileWriteMaxSize*5);
 
                     // seek値取得
                     if ((seekPoint = this.calcSeekDataPoint(key)) == -1) {
-// TODO:
-System.out.println("1111111111111111");
+
                         return null;
                     }
 
                     synchronized (sync) {
                         readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
                         if (readRet == -1) {
-// TODO:
-System.out.println("222222222222222");
+
                             return null;
                         }
-System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAA");
+
                         boolean overSizeData = false;
                         if (buf[this.oneDataLength -1] != 38 || readRet > this.oneDataLength) {
-System.out.println("3333333333333333333333");
+
                             overSizeData = true;
                             if (!overSizeDataStore.containsKey(key)) {
-System.out.println("444444444444444444444");
+
                                 // 共有ファイルの上限と同じ長さの可能性がある
                                 overSizeData = false;
                             }
@@ -883,9 +881,9 @@ System.out.println("444444444444444444444");
     private String readOverSizeData(Object key, byte[] buf) {
         String ret = null;
         try {
-System.out.println("OVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVEROVER");
+
             String readStr = (String)this.overSizeDataStore.get((String)key);
-System.out.println(readStr);
+
             StringBuilder retTmpBuf = new StringBuilder(this.oneDataLength);
             retTmpBuf.append(new String(buf, 0, this.oneDataLength, ImdstDefine.keyWorkFileEncoding));
             retTmpBuf.append(readStr);

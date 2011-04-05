@@ -114,11 +114,10 @@ public class KeyNodeConnector {
                 if(!this.br.ready()) Thread.sleep(500);
             }
 
-			// 状況に合わせてタイムアウトを設定
+            // 状況に合わせてタイムアウトを設定
+            // Recover中のノードの場合は長くする
             if (recoverMode && recoverTarget.equals(this.nodeFullName)) {
                 this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
-            } else {
-                this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
             }
 
 
@@ -164,7 +163,7 @@ public class KeyNodeConnector {
                     }
 
                     ret = this.readLine();
-		            retry = false;
+                    retry = false;
                 } catch(Exception ee) {
                     throw e;
                 }

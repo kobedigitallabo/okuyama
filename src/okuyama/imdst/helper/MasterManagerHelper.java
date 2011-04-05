@@ -6136,7 +6136,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             if(keyNodeConnector != null) {
                 keyNodeConnector.initRetryFlg();
-                if(this.longReadTimeout) 
+                if(this.longReadTimeout) {
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout*2);
+                } else {
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+                }
             }
         } catch (Exception e) {
             logger.error(connectionFullName + " " + e);
