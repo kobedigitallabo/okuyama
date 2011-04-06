@@ -329,17 +329,17 @@ public class ImdstDefine {
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenShortTimeout = 2500;
+    public static final int nodeConnectionOpenShortTimeout = 1000;
 
-    public static final int nodeConnectiontReadShortTimeout = 4000;
+    public static final int nodeConnectiontReadShortTimeout = 1500;
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenTimeout = 4000;
+    public static final int nodeConnectionOpenTimeout = 5000;
     //public static final int nodeConnectionOpenTimeout = 10000;
 
     // Node間のコネクションReadタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionTimeout = 6000;
+    public static final int nodeConnectionTimeout = 10000;
     //public static final int nodeConnectionTimeout = 15000;
 
     public static final int nodeConnectionTimeout4RecoverMode = 60000 * 5;
@@ -441,6 +441,8 @@ public class ImdstDefine {
     // 有効期限切れのデータを実際に物理削除するまでの経過時間(ミリ秒)
     public static final long invalidDataDeleteTime = 60000;
 
+
+    public static Object diskAccessSync = new Object();
 
 
 }

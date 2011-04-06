@@ -812,7 +812,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                             if (dataLineNoRet[0] == -1) {
 
                                 wr.write(buf.toString());
-                                wr.flush();
+                                SystemUtil.diskAccessSync(wr);
 
                                 // The size of an increment
                                 this.totalSize.getAndIncrement();
@@ -933,7 +933,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
 
             raf.seek(0);
             int readLen = -1;
-            while((readLen = raf.read(lineBufs)) != -1) {
+            while((readLen = SystemUtil.diskAccessSync(raf, lineBufs)) != -1) {
 
                 matchFlg = true;
 
@@ -1043,7 +1043,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
 
                         raf.seek(0);
                         int readLen = -1;
-                        while((readLen = raf.read(lineBufs)) != -1) {
+                        while((readLen = SystemUtil.diskAccessSync(raf, lineBufs)) != -1) {
 
                             matchFlg = true;
 
@@ -1224,7 +1224,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
 
                 raf.seek(0);
                 int readLen = -1;
-                readLen = raf.read(datas);
+                readLen = SystemUtil.diskAccessSync(raf, datas);
 
                 if (readLen > 0) {
 
@@ -1418,6 +1418,9 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
 
                 // Keyファイルのディレクトリ範囲ないで適当に記録ファイルを分散させる
                 File file = new File(this.fileDirs[i % this.fileDirs.length] + i + ".data");
+                if (file.exists()) {
+                    file.delete();
+                }
 
                 dataFileList[i] = file;
             }
@@ -1503,9 +1506,9 @@ long end4 = 0L;
                     if (dataLineNoRet[0] == -1) {
 
                         wr.write(buf.toString());
-                        wr.flush();
+                        SystemUtil.diskAccessSync(wr);
                         wr.write(value);
-                        wr.flush();
+                        SystemUtil.diskAccessSync(wr);
 
                         // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
                         int valueSize = value.length();
@@ -1520,9 +1523,9 @@ long end4 = 0L;
                         for (int i = 0; i < writeSetCount; i++) {
 
                             wr.write(FileBaseDataMap.paddingSymbolSetString);
-                            if ((i % 14) == 0) wr.flush();
+                            if ((i % 14) == 0) SystemUtil.diskAccessSync(wr);
                         }
-                        wr.flush();
+                        SystemUtil.diskAccessSync(wr);
 
                         byte[] fillBytes = new byte[singleWriteCount];
                         for (int i = 0; i < singleWriteCount; i++) {
@@ -1530,7 +1533,7 @@ long end4 = 0L;
                         }
 
                         wr.write(new String(fillBytes));
-                        wr.flush();
+                        SystemUtil.diskAccessSync(wr);
 
                         // The size of an increment
                         this.totalSize.getAndIncrement();
@@ -1629,7 +1632,7 @@ long end4 = 0L;
 
             raf.seek(0);
             int readLen = -1;
-            while((readLen = raf.read(lineBufs)) != -1) {
+            while((readLen = SystemUtil.diskAccessSync(raf, lineBufs)) != -1) {
 
                 matchFlg = true;
 
@@ -1729,7 +1732,7 @@ long end4 = 0L;
                 try {
                     raf.seek(0);
                     int readLen = -1;
-                    while((readLen = raf.read(lineBufs)) != -1) {
+                    while((readLen = SystemUtil.diskAccessSync(raf, lineBufs)) != -1) {
 
                         matchFlg = true;
 
@@ -1912,7 +1915,7 @@ long end4 = 0L;
                     datas = new byte[new Long(readSize).intValue()];
 
                     int readLen = -1;
-                    readLen = raf.read(datas);
+                    readLen = SystemUtil.diskAccessSync(raf, datas);
 
                     if (readLen > 0) {
 

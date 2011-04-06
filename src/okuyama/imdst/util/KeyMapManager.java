@@ -334,7 +334,7 @@ public class KeyMapManager extends Thread {
                     this.osw = new OutputStreamWriter(fos , KeyMapManager.workMapFileEnc);
                     this.bw = new BufferedWriter(osw, 8192 * 24);
                     this.bw.newLine();
-                    this.bw.flush();
+                    SystemUtil.diskAccessSync(this.bw);
 
                     if (this.workFileMemory == false && this.workFileFlushTiming == false) {
                         this.dataTransactionFileFlushDaemon = new DataTransactionFileFlushDaemon(); 
@@ -451,7 +451,7 @@ public class KeyMapManager extends Thread {
                                     } else {
 
                                         // 都度書き込み
-                                        this.bw.flush();
+                                        SystemUtil.diskAccessSync(this.bw);
                                         this.bw.close();
                                         this.bw = null;
                                         this.osw.close();
@@ -478,7 +478,7 @@ public class KeyMapManager extends Thread {
                                     this.osw = new OutputStreamWriter(fos , KeyMapManager.workMapFileEnc);
                                     this.bw = new BufferedWriter(osw, 8192 * 24);
                                     this.bw.newLine();
-                                    this.bw.flush();
+                                    SystemUtil.diskAccessSync(this.bw);
 
                                     // 遅延書き込み時
                                     if (this.workFileFlushTiming == false) {
@@ -725,7 +725,7 @@ public class KeyMapManager extends Thread {
                                                                 append(KeyMapManager.workFileSeq).
                                                                 append(KeyMapManager.workFileEndPoint).
                                                                 append("\n").toString());
-                                this.bw.flush();
+                                SystemUtil.diskAccessSync(this.bw);
                             } else {
                                 this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
                             }
@@ -821,7 +821,7 @@ public class KeyMapManager extends Thread {
                             if (this.workFileFlushTiming) {
 
                                 this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                                this.bw.flush();
+                                SystemUtil.diskAccessSync(this.bw);
                             } else {
 
                                 this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
@@ -903,7 +903,7 @@ public class KeyMapManager extends Thread {
                             if (this.workFileFlushTiming) {
 
                                 this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                                this.bw.flush();
+                                SystemUtil.diskAccessSync(this.bw);
                             } else {
 
                                 this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
@@ -984,7 +984,7 @@ public class KeyMapManager extends Thread {
                             if (this.workFileFlushTiming) {
 
                                 this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("-").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                                this.bw.flush();
+                                SystemUtil.diskAccessSync(this.bw);
                             } else {
 
                                 this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("-").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
@@ -1499,7 +1499,7 @@ public class KeyMapManager extends Thread {
                                 if (this.workFileFlushTiming) {
 
                                     this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                                    this.bw.flush();
+                                    SystemUtil.diskAccessSync(this.bw);
                                 } else {
 
                                     this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
@@ -1597,7 +1597,7 @@ public class KeyMapManager extends Thread {
                         if (this.workFileFlushTiming) {
 
                             this.bw.write(new StringBuilder("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(saveTransactionStr).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                            this.bw.flush();
+                            SystemUtil.diskAccessSync(this.bw);
                         } else {
 
                             this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(saveTransactionStr).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
@@ -1657,7 +1657,7 @@ public class KeyMapManager extends Thread {
                         if (this.workFileFlushTiming) {
 
                             this.bw.write(new StringBuilder("-").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                            this.bw.flush();
+                            SystemUtil.diskAccessSync(this.bw);
                         } else {
 
                             this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder("-").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
@@ -1751,7 +1751,7 @@ public class KeyMapManager extends Thread {
                                     if (this.workFileFlushTiming) {
 
                                         this.bw.write(new StringBuilder("-").append(KeyMapManager.workFileSeq).append(keyList[idx]).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                                        this.bw.flush();
+                                        SystemUtil.diskAccessSync(this.bw);
                                     } else {
 
                                         this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder("-").append(KeyMapManager.workFileSeq).append(keyList[idx]).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
@@ -2360,11 +2360,11 @@ public class KeyMapManager extends Thread {
                                                 append("\n").
                                                 toString());
 
-                                            if((counter % 100) == 0) this.bw.flush();
+                                            if((counter % 100) == 0) SystemUtil.diskAccessSync(this.bw);
                                         }
                                     }
                                 }
-                                if (this.workFileMemory == false) this.bw.flush();
+                                if (this.workFileMemory == false) SystemUtil.diskAccessSync(this.bw);
                                 allDataLines = null;
                             }
                             pw.println("2");
@@ -2372,8 +2372,7 @@ public class KeyMapManager extends Thread {
                         }
 
                         // トランザクションログモードがONの場合のみflush
-                        if (this.workFileMemory == false) 
-                            this.bw.flush();
+                        if (this.workFileMemory == false) SystemUtil.diskAccessSync(this.bw);
 
                         // 取り込み終了を送信
                         pw.println("1");
@@ -3032,7 +3031,7 @@ class DataTransactionFileFlushDaemon extends Thread {
 
                 if (this.tBw != null) {
                     this.tBw.write(writeStr);
-                    this.tBw.flush();
+                    SystemUtil.diskAccessSync(this.tBw);
                     writeStr = null;
                 }
             } catch (Throwable te) {
@@ -3068,7 +3067,7 @@ class DataTransactionFileFlushDaemon extends Thread {
     public void close() {
         if (this.tBw != null) {
             try {
-                this.tBw.flush();
+                SystemUtil.diskAccessSync(this.tBw);
             } catch (Throwable te) {
             } finally {
                 try {

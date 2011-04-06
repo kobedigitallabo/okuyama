@@ -183,7 +183,7 @@ public class FileBaseDataList extends AbstractList {
 
                 this.wr.write(writeStr);
                 this.wr.write("\n");
-                this.wr.flush();
+                SystemUtil.diskAccessSync(this.wr);
                 if (this.waitFlg) if ((this.size() % 5) == 0)Thread.sleep(this.waitTime);
             }
             writeStr = null;

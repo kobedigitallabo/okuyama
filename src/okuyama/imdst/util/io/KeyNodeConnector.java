@@ -219,8 +219,8 @@ public class KeyNodeConnector {
 
     public void setSoTimeout(int time) throws Exception {
         try {
-
-            this.socket.setSoTimeout(time);
+            if (this.socket != null)  
+                this.socket.setSoTimeout(time);
         } catch (Exception e) {
             throw e;
         }

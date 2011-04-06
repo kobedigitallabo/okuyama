@@ -900,7 +900,42 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 }
 
             }
+
+            // 削除を検証
+            Object[] ret = okuyamaClient.getTagKeys(start+"_" + this.nowCount + "_tag1");
+
+            if (ret[0].equals("true")) {
+                // データ有り
+                System.out.println("TagRemoveDataExsist[" + start+"_" + this.nowCount + "_tag1]" );
+                errorFlg = true;
+            }
+
+            ret = okuyamaClient.getTagKeys(start+"_" + this.nowCount + "_tag2");
+
+            if (ret[0].equals("true")) {
+                // データ有り
+                System.out.println("TagRemoveDataExsist[" + start+"_" + this.nowCount + "_tag2]" );
+                errorFlg = true;
+            }
+
+
+            ret = okuyamaClient.getTagKeys(start+"_" + this.nowCount + "_tag3");
+
+            if (ret[0].equals("true")) {
+                // データ有り
+                System.out.println("TagRemoveDataExsist[" + start+"_" + this.nowCount + "_tag3]" );
+                errorFlg = true;
+            }
+
+            ret = okuyamaClient.getTagKeys(start+"_" + this.nowCount + "_tag4");
+
+            if (ret[0].equals("true")) {
+                // データ有り
+                System.out.println("TagRemoveDataExsist[" + start+"_" + this.nowCount + "_tag4]" );
+                errorFlg = true;
+            }
             long endTime = new Date().getTime();
+
             System.out.println("Tag Remove Method= " + (endTime - startTime) + " milli second");
 
             if (client == null) {

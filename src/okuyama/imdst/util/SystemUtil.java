@@ -296,6 +296,57 @@ public class SystemUtil {
         return writeBuf.toString();
     }
 
+    /**
+     * RandomAccessFileの利用をSyncする.<br>
+     *
+     */
+    public static int diskAccessSync(RandomAccessFile fileAccessor, byte[] buf) throws Exception {
+        int ret = 0;
+        try {
+
+            synchronized (ImdstDefine.diskAccessSync) {
+                ret = fileAccessor.read(buf);
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
+    /**
+     * RandomAccessFileの利用をSyncする.<br>
+     *
+     */
+    public static int diskAccessSync(RandomAccessFile fileAccessor, byte[] buf, int start, int len) throws Exception {
+        int ret = 0;
+        try {
+
+            synchronized (ImdstDefine.diskAccessSync) {
+                ret = fileAccessor.read(buf, start, len);
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return ret;
+    }
+
+
+    /**
+     * Diskへの書き込みをSyncする.<br>
+     *
+     */
+    public static int diskAccessSync(Object fileAccessor) throws Exception {
+        try {
+            if (fileAccessor instanceof BufferedWriter) {
+                synchronized (ImdstDefine.diskAccessSync) {
+                    ((BufferedWriter)fileAccessor).flush();
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return 0;
+    }
 
     /**
      * 指定された値を時間に置き換えた場合に現在時間を過ぎているかをチェックする.<br>
@@ -515,6 +566,7 @@ public class SystemUtil {
         return false;
     }
 
+    
 
     /**
      * -debugオプションを利用した際に、標準出力への出力を行う.<br>

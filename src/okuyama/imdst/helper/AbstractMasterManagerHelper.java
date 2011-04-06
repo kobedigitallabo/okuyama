@@ -74,10 +74,10 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @param reportMasterNode
      */
     protected void setDeadNode(String nodeInfo, int setPoint, Throwable te, boolean reportMasterNode) {
-
-        /*if (te != null) {
+        System.out.println("setDeadNode - setPoint[" + setPoint + "]");
+        if (te != null) {
             te.printStackTrace();
-        }*/
+        }
 
         // コネクションキャッシュが存在する場合は削除
         if (keyNodeConnectPool.containsKey(nodeInfo)) {
@@ -237,7 +237,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                         BufferedReader br = null;
 
                         try {
-                            Thread.sleep(msIdx * 200);
+                            Thread.sleep(200);
 
                             // Slaveノード名とポートに分解
                             String[] slaveNodeDt = slaveList[i].split(":");

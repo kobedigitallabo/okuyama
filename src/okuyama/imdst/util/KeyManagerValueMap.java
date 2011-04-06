@@ -42,7 +42,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private transient boolean vacuumExecFlg = false;
     private transient List vacuumDiffDataList = null;
 
-    private ConcurrentHashMap dataSizeMap = new ConcurrentHashMap();
+    private ConcurrentHashMap dataSizeMap = new ConcurrentHashMap(20, 16, 16);
     private ArrayBlockingQueue deletedDataPointList = null;
 
     private String lineFile = null;
@@ -385,7 +385,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                             if (deletedLine == null) {
                                 this.bw.write(writeBuf.toString());
-                                this.bw.flush();
+                                SystemUtil.diskAccessSync(this.bw);
                                 this.lineCount++;
                                 super.put(key, new Integer(this.lineCount));
                             } else {
@@ -430,6 +430,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         }
                     }
                 } else {
+
                     super.put(key, value);
                 }
             } catch (Exception e) {
@@ -520,7 +521,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         } else {
             unique = "all";
         }
-
 
 
         if (this.memoryMode) {
@@ -672,7 +672,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 if (StatusUtil.getStatus() == 0)  {
 
                     // 新ファイルflush
-                    tmpBw.flush();
+                    SystemUtil.diskAccessSync(tmpBw);
                     // 新ファイルclose
                     tmpBw.close();
 
@@ -839,7 +839,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         if (raf != null) {
 
             raf.seek(seekPoint);
-            raf.read(buf, 0, this.oneDataLength);
+            SystemUtil.diskAccessSync(raf, buf, 0, this.oneDataLength);
         } else {
             return -1;
         }
@@ -861,7 +861,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.overSizeDataStore.put((String)key, ((String)value).substring(this.oneDataLength, ((String)value).length()));
             //overBw = new BufferedWriter (new OutputStreamWriter(new FileOutputStream(overDataFile, false), ImdstDefine.keyWorkFileEncoding));
             //overBw.write(((String)value).substring(this.oneDataLength, ((String)value).length()));
-            //overBw.flush();
+            //SystemUtil.diskAccessSync(overBw);
         } catch (Exception inE) {
             inE.printStackTrace();
             // 致命的
@@ -895,43 +895,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Read[get] - Error [" + inE.getMessage() + "]");
         }
         return ret;
-        /*String ret = null;
-        File overDataFile = new File(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
-
-        if (overDataFile.exists()) {
-            FileInputStream fis = null;
-            InputStreamReader isr = null;
-            BufferedReader br = null;
-
-            try {
-
-                fis = new FileInputStream(overDataFile);
-                isr = new InputStreamReader(fis , ImdstDefine.keyWorkFileEncoding);
-                br = new BufferedReader(isr);
-
-                StringBuilder retTmpBuf = new StringBuilder(this.oneDataLength);
-                retTmpBuf.append(new String(buf, 0, this.oneDataLength, ImdstDefine.keyWorkFileEncoding));
-                retTmpBuf.append(br.readLine());
-
-                ret = retTmpBuf.toString();
-            } catch (Exception inE) {
-                inE.printStackTrace();
-                // 致命的
-                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - Inner File Read[get] - Error [" + inE.getMessage() + "]");
-            } finally {
-                try {
-                    if (br != null) br.close();
-                    if (isr != null) isr.close();
-                    if (fis != null) fis.close();
-                } catch (Exception inE2) {
-                }
-            }
-        } else { 
-            //System.out.println(this.lineFile + "_/" + (key.toString().hashCode() % 20) + "/" +  DigestUtils.md5Hex(key.toString().getBytes()));
-            System.out.println("33333333333333333");
-            return null;
-        }
-        return ret;*/
     }
 
 
