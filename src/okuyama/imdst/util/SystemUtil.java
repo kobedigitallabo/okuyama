@@ -21,11 +21,20 @@ public class SystemUtil {
     private static ConcurrentLinkedQueue valueCompresserPool = null;
     private static ConcurrentLinkedQueue valueDecompresserPool = null;
 
+    private static Object[] diskAccessSync = null;
+
     public static PrintWriter netDebugPrinter = null;
 
     private static Map checkCharacterMap = new HashMap(64);
 
+
     static {
+        diskAccessSync = new Object[ImdstDefine.parallelDiskAccess];
+
+        for (int i = 0; i < ImdstDefine.parallelDiskAccess; i++) {
+            diskAccessSync[i] = new Object();
+        }
+
         checkCharacterMap.put("a", null);
         checkCharacterMap.put("b", null);
         checkCharacterMap.put("c", null);
@@ -262,6 +271,8 @@ public class SystemUtil {
     }
 
 
+
+
     /**
      * 指定の文字を指定の桁数で特定文字列で埋める.<br>
      *
@@ -303,8 +314,11 @@ public class SystemUtil {
     public static int diskAccessSync(RandomAccessFile fileAccessor, byte[] buf) throws Exception {
         int ret = 0;
         try {
-
-            synchronized (ImdstDefine.diskAccessSync) {
+            int syncIdx = 0;
+            if (ImdstDefine.parallelDiskAccess != 1) {
+                syncIdx = ((fileAccessor.hashCode() << 1) >>> 1) % ImdstDefine.parallelDiskAccess;
+            }
+            synchronized (diskAccessSync[syncIdx]) {
                 ret = fileAccessor.read(buf);
             }
         } catch (Exception e) {
@@ -320,8 +334,12 @@ public class SystemUtil {
     public static int diskAccessSync(RandomAccessFile fileAccessor, byte[] buf, int start, int len) throws Exception {
         int ret = 0;
         try {
+            int syncIdx = 0;
+            if (ImdstDefine.parallelDiskAccess != 1) {
+                syncIdx = ((fileAccessor.hashCode() << 1) >>> 1) % ImdstDefine.parallelDiskAccess;
+            }
 
-            synchronized (ImdstDefine.diskAccessSync) {
+            synchronized (diskAccessSync[syncIdx]) {
                 ret = fileAccessor.read(buf, start, len);
             }
         } catch (Exception e) {
@@ -337,8 +355,15 @@ public class SystemUtil {
      */
     public static int diskAccessSync(Object fileAccessor) throws Exception {
         try {
+            int syncIdx = 0;
+            if (ImdstDefine.parallelDiskAccess != 1) {
+                syncIdx = ((fileAccessor.hashCode() << 1) >>> 1) % ImdstDefine.parallelDiskAccess;
+            }
+
+
+
             if (fileAccessor instanceof BufferedWriter) {
-                synchronized (ImdstDefine.diskAccessSync) {
+                synchronized (diskAccessSync[syncIdx]) {
                     ((BufferedWriter)fileAccessor).flush();
                 }
             }

@@ -442,7 +442,5 @@ public class ImdstDefine {
     public static final long invalidDataDeleteTime = 60000;
 
 
-    public static Object diskAccessSync = new Object();
-
-
+    public volatile static int parallelDiskAccess = 1;
 }
