@@ -442,5 +442,5 @@ public class ImdstDefine {
     public static final long invalidDataDeleteTime = 60000;
 
 
-    public volatile static int parallelDiskAccess = 1;
+    public volatile static int parallelDiskAccess = 2;
 }
