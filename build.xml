@@ -84,7 +84,7 @@
 		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="1024m">
 			<arg value="/Main.properties"/>
 			<arg value="/DataNode_small.properties"/>
-			<arg value="-s 2048"/>
+			<arg value="-s 4096"/>
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>
@@ -171,7 +171,7 @@
 
 	<!-- OkuyamaWebManagerServer(Web Appl) Execute task -->
 	<target name="webmgr">
-		<java classname="okuyama.base.imdst.manager.OkuyamaManagerServer" fork="true" maxmemory="128m">
+		<java classname="okuyama.imdst.manager.OkuyamaManagerServer" fork="true" maxmemory="128m">
 			<arg value="10088"/>
 			<arg value="localhost:8888"/>
 			<classpath refid="project.class.path"/>
