@@ -1481,7 +1481,8 @@ long end4 = 0L;
             if (accessor == null || accessor.isClosed == true) {
 
                 raf = new RandomAccessFile(file, "rwd");
-                wr = new BufferedWriter(new FileWriter(file, true), lineDataSize+10);
+
+                wr = new BufferedWriter(new FileWriter(file, true));
                 accessor = new CacheContainer();
                 accessor.raf = raf;
                 accessor.wr = wr;
@@ -1587,7 +1588,7 @@ long end4 = 0L;
                         if (wr != null) wr.close();
 
                         raf = new RandomAccessFile(file, "rwd");
-                        wr = new BufferedWriter(new FileWriter(file, true), lineDataSize+10);
+                        wr = new BufferedWriter(new FileWriter(file, true));
                         accessor = new CacheContainer();
                         accessor.raf = raf;
                         accessor.wr = wr;
@@ -1715,7 +1716,7 @@ long end4 = 0L;
             if (accessor == null || accessor.isClosed) {
 
                 raf = new RandomAccessFile(file, "rwd");
-                wr = new BufferedWriter(new FileWriter(file, true), lineDataSize+10);
+                wr = new BufferedWriter(new FileWriter(file, true));
                 accessor = new CacheContainer();
                 accessor.raf = raf;
                 accessor.wr = wr;
@@ -1783,7 +1784,7 @@ long end4 = 0L;
                         if (wr != null) wr.close();
 
                         raf = new RandomAccessFile(file, "rwd");
-                        wr = new BufferedWriter(new FileWriter(file, true), lineDataSize+10);
+                        wr = new BufferedWriter(new FileWriter(file, true));
                         accessor = new CacheContainer();
                         accessor.raf = raf;
                         accessor.wr = wr;
@@ -2127,7 +2128,7 @@ class InnerCache extends LinkedHashMap {
     // コンストラクタ
     public InnerCache() {
         super(512, 0.75f, true);
-        maxCacheSize = 512;
+        maxCacheSize = 64;
     }
 
 
