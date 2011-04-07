@@ -10,6 +10,9 @@ import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
 import okuyama.base.lang.BatchException;
 
+import com.sun.mail.util.BASE64EncoderStream;
+
+
 /**
  * システム全般の稼動ステータス管理モジュール.<br>
  *
@@ -145,22 +148,49 @@ public class StatusUtil {
         isolationPrefixStr = "#" + prefix;
         if (isolationMode) {
             isolationCnvExclusionMap = new HashMap(30);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIGFkZE5vZGU0Q29uc2lzdGVudEhhc2hNb2Rl", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIE1haW5NYXN0ZXJOb2RlSW5mbw==", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIEtleU1hcE5vZGVzSW5mbw==", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIFN1YktleU1hcE5vZGVzSW5mbw==", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIFRoaXJkS2V5TWFwTm9kZXNJbmZv", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIEtleU1hcE5vZGVzUnVsZQ==", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIExvYWRCYWxhbmNlTW9kZQ==", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIFRyYW5zYWN0aW9uTW9kZQ==", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIFRyYW5zYWN0aW9uTWFuYWdlckluZm8=", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIE1haW5NYXN0ZXJOb2RlTW9kZQ==", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIFNsYXZlTWFzdGVyTm9kZXM=", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIE1haW5NYXN0ZXJOb2RlSW5mbw==", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIEFsbE1hc3Rlck5vZGVJbmZv", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIERpc3RyaWJ1dGlvbkFsZ29yaXRobQ==", null);
-            isolationCnvExclusionMap.put("TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfIERpc3RyaWJ1dGlvbkFsZ29yaXRobQ==", null);
+            try {
+                // addNode4ConsistentHashMode
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode).getBytes("UTF-8")),"UTF-8"), null);
 
+                // Prop_MainMasterNodeInfo
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+                // Prop_KeyMapNodesInfo
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+                // Prop_SubKeyMapNodesInfo
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+                // Prop_ThirdKeyMapNodesInfo
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_ThirdKeyMapNodesInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+                // Prop_KeyMapNodesRule
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesRule).getBytes("UTF-8")),"UTF-8"), null);
+
+                // Prop_LoadBalanceMode
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_LoadBalanceMode).getBytes("UTF-8")),"UTF-8"), null);
+        
+                // Prop_TransactionMode
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionMode).getBytes("UTF-8")),"UTF-8"), null);
+
+                // Prop_TransactionManagerInfo
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionManagerInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+                // Prop_MainMasterNodeMode
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeMode).getBytes("UTF-8")),"UTF-8"), null);
+
+                // Prop_SlaveMasterNodes
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SlaveMasterNodes).getBytes("UTF-8")),"UTF-8"), null);
+
+                // Prop_AllMasterNodeInfo
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+                // Prop_DistributionAlgorithm
+                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_DistributionAlgorithm).getBytes("UTF-8")),"UTF-8"), null);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

@@ -1481,7 +1481,7 @@ long end4 = 0L;
             if (accessor == null || accessor.isClosed == true) {
 
                 raf = new RandomAccessFile(file, "rwd");
-                wr = new BufferedWriter(new FileWriter(file, true));
+                wr = new BufferedWriter(new FileWriter(file, true), lineDataSize+10);
                 accessor = new CacheContainer();
                 accessor.raf = raf;
                 accessor.wr = wr;
@@ -1587,7 +1587,7 @@ long end4 = 0L;
                         if (wr != null) wr.close();
 
                         raf = new RandomAccessFile(file, "rwd");
-                        wr = new BufferedWriter(new FileWriter(file, true));
+                        wr = new BufferedWriter(new FileWriter(file, true), lineDataSize+10);
                         accessor = new CacheContainer();
                         accessor.raf = raf;
                         accessor.wr = wr;
@@ -1715,7 +1715,7 @@ long end4 = 0L;
             if (accessor == null || accessor.isClosed) {
 
                 raf = new RandomAccessFile(file, "rwd");
-                wr = new BufferedWriter(new FileWriter(file, true));
+                wr = new BufferedWriter(new FileWriter(file, true), lineDataSize+10);
                 accessor = new CacheContainer();
                 accessor.raf = raf;
                 accessor.wr = wr;
@@ -1783,7 +1783,7 @@ long end4 = 0L;
                         if (wr != null) wr.close();
 
                         raf = new RandomAccessFile(file, "rwd");
-                        wr = new BufferedWriter(new FileWriter(file, true));
+                        wr = new BufferedWriter(new FileWriter(file, true), lineDataSize+10);
                         accessor = new CacheContainer();
                         accessor.raf = raf;
                         accessor.wr = wr;

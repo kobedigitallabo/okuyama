@@ -143,7 +143,7 @@ public class FileBaseDataList extends AbstractList {
             // start file stream
             this.raf = new RandomAccessFile(this.dataFile, "rwd");
             this.br = new BufferedReader(new FileReader(this.dataFile));
-            this.wr = new BufferedWriter(new FileWriter(this.dataFile, true));
+            this.wr = new BufferedWriter(new FileWriter(this.dataFile, true), this.oneDataLength+10);
             ret = true;
         } catch(Exception e) {
             e.printStackTrace();

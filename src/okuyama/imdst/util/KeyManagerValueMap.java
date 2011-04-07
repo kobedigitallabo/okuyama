@@ -110,7 +110,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
 
             // データ操作記録ファイル用のBufferedWriter
-            this.bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(lineFile), true), ImdstDefine.keyWorkFileEncoding));
+            this.bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(lineFile), true), ImdstDefine.keyWorkFileEncoding), 1024*256);
 
             // 共有データファイルの再書き込み遅延指定
             if (ImdstDefine.dataFileWriteDelayFlg) {
@@ -644,7 +644,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         try {
 
-            tmpBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.lineFile + ".tmp"), true), ImdstDefine.keyWorkFileEncoding));
+            tmpBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.lineFile + ".tmp"), true), ImdstDefine.keyWorkFileEncoding), 1024*256);
             raf = new RandomAccessFile(new File(this.lineFile) , "r");
 
             entrySet = super.entrySet();

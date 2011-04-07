@@ -16,6 +16,11 @@ import okuyama.imdst.util.*;
  * -S  DataNodeのValueの保存可能最大サイズ(バイト)<br>
  * -s  DataNodeのValueの共通データファイルへの書き出し中間サイズ(バイト)(DataNode用設定ファイルのdataMemory=trueの場合のみ有効)<br>
  * -v  分散モードがConsistentHash時(MasterNode用設定ファイルのDistributionAlgorithm=consistenthashの場合のみ)のVirtualNodeの数
+ * -fa ImdstDefine.parallelDiskAccess /ファイルシステムへの同時アクセス係数(整数)
+ * -ncot ImdstDefine.nodeConnectionOpenTimeout /DataNodeへのSocketコネクションOpenのタイムアウト閾値(ミリ秒)
+ * -nct ImdstDefine.nodeConnectionTimeout /DataNodeへのSocketコネクションreadのタイムアウト閾値(ミリ秒)
+ * -mmgrs ImdstDefine.maxMultiGetRequestSize /getMultiValueの際に一度にDataNodeに問い合わせるRequestKeyの数
+ *
  * <br>
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -63,6 +68,17 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+                    // -ts
+                    if (startOptions[i].trim().equals("-ts")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.tagValueAppendMaxSize = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
+
                     // -v
                     if (startOptions[i].trim().equals("-v")) {
                         if (startOptions.length > (i+1)) {
@@ -72,6 +88,47 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
+
+                    // -fa
+                    if (startOptions[i].trim().equals("-fa")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.parallelDiskAccess = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
+                    // -ncot
+                    if (startOptions[i].trim().equals("-ncot")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.nodeConnectionOpenTimeout = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
+                    // -nct
+                    if (startOptions[i].trim().equals("-nct")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.nodeConnectionTimeout = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
+                    // -mmgrs
+                    if (startOptions[i].trim().equals("-mmgrs")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.maxMultiGetRequestSize = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
 
 
                 }

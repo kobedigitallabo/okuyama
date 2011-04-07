@@ -251,7 +251,6 @@ public class ImdstDefine {
     public static final String configModeNode = "node";
 
     public static final String ConfigSaveNodePrefix = "MasterNode-MasterConfigSettingDataNodeSaveKeyPrefixString#112344%&987$#3# _ ";
-    public static final String ConfigSaveNodePrefixEncodeStr = "TWFzdGVyTm9kZS1NYXN0ZXJDb25maWdTZXR0aW5nRGF0YU5vZGVTYXZlS2V5UHJlZml4U3RyaW5nIzExMjM0NCUmOTg3JCMzIyBfI";
 
     public static final int paramSocket       = 0;
     public static final int paramPw           = 1;
@@ -311,6 +310,9 @@ public class ImdstDefine {
 
     public static final int stringBufferLarge_3Size = 8192;
 
+    // getMultiValueの際に一度にDataNodeに問い合わせるRequestKeyの数
+    // 多きくし過ぎると一度に大量のValueがメモリを占有するので注意!!
+    public volatile static int maxMultiGetRequestSize = 50;
 
     // Tag値の登録、取得時の最大バケット数
     public static final int tagRegisterParallelBucket = 150000000;
@@ -335,12 +337,11 @@ public class ImdstDefine {
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenTimeout = 5000;
-    //public static final int nodeConnectionOpenTimeout = 10000;
+    public volatile static int nodeConnectionOpenTimeout = 5000;
 
     // Node間のコネクションReadタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionTimeout = 10000;
-    //public static final int nodeConnectionTimeout = 15000;
+    public volatile static int nodeConnectionTimeout = 10000;
+
 
     public static final int nodeConnectionTimeout4RecoverMode = 60000 * 5;
 
@@ -427,6 +428,9 @@ public class ImdstDefine {
     // トランザクションログをローテーションする際のサイズ(1.8GB)
     public static final long workFileChangeNewFileSize = 1610612736;
 
+    // ファイルシステムへの同時アクセス係数
+    public volatile static int parallelDiskAccess = 49;
+
     // 保存データサイズの合計値演算設定
     // true:計算する
     // false:計算しない
@@ -441,6 +445,4 @@ public class ImdstDefine {
     // 有効期限切れのデータを実際に物理削除するまでの経過時間(ミリ秒)
     public static final long invalidDataDeleteTime = 60000;
 
-
-    public volatile static int parallelDiskAccess = 2;
 }

@@ -278,6 +278,9 @@ public class MainServlet extends HttpServlet {
     private boolean execModParam (ImdstKeyValueClient imdstKeyValueClient, String updateParamKey, String updateParamVal) throws Exception {
         boolean ret = false;
         try {
+            //System.out.println("-------------------------------------------------------");
+            //System.out.println("updateParamKey[" + updateParamKey + "]");
+            //System.out.println("updateParamVal[" + updateParamVal + "]");
             if (imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + updateParamKey, updateParamVal)) ret = true;
         } catch(Exception e) {
             throw e;

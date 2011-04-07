@@ -33,7 +33,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
     private static ConcurrentHashMap allConnectionMap = new ConcurrentHashMap(40, 30, 64);
 
-    protected static ConcurrentHashMap keyNodeConnectPool = new ConcurrentHashMap(1024, 1000, 512);
+    protected static ConcurrentHashMap keyNodeConnectPool = new ConcurrentHashMap(1024, 1000, 256);
 
     private static HashMap moveData4ConsistentHash = null;
 
@@ -74,10 +74,10 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @param reportMasterNode
      */
     protected void setDeadNode(String nodeInfo, int setPoint, Throwable te, boolean reportMasterNode) {
-        //System.out.println("setDeadNode - setPoint[" + setPoint + "]");
-        /*if (te != null) {
+        System.out.println("setDeadNode - setPoint[" + setPoint + "]");
+        if (te != null) {
             te.printStackTrace();
-        }*/
+        }
 
         // コネクションキャッシュが存在する場合は削除
         if (keyNodeConnectPool.containsKey(nodeInfo)) {
