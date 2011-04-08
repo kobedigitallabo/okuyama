@@ -626,7 +626,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             // KeyとMatch用文字列を渡すことで、Value該当文字列が含まれるかをチェック
                             // Protocol
                             // KeyとMatchCharacterはBase64でエンコードする(UTF-8の文字列限定)
-                            // 50,KEY1:KEY2,MATCHCHAR1:MATCHCHAR2,1
+                            // 50,KEY1:KEY2,MATCHCHAR1#1:MATCHCHAR2#2,1
                             requestHashCode = clientParameterList[1];
 
                             // メソッド呼び出し
@@ -1419,7 +1419,8 @@ public class KeyManagerHelper extends AbstractHelper {
     // KeyとMatch用文字列、Match指定(AND,OR)を渡すことで<br>
     // そのKeyのPairのValueに指定の文字列が含まれているかを返す<br>
     // 同時に複数のKey値を":"で連結して渡すことで一度に全てチェック可能<br>
-    // 同時に複数のMatch用文字列を":"で連結して渡すことで一度に全てチェック可能<br>
+    // 同時に複数のMatch用文字列を":"で連結して渡すことで一度に全てチェック可能。さらに、#でMatch方法を
+    // 連結する。1=完全一致、2=前方一致、3=部分一致<br>
     // 返却されるKey値はMatchしたKey値のみ":"で連結されて返却される.<br>
     // チェックする際にValueはUTF-8固定でデコードされる.<br>
     // チェックする際にMatch用文字列はUTF-8固定でデコードされる.<br>
@@ -1431,12 +1432,20 @@ public class KeyManagerHelper extends AbstractHelper {
         String retSep = "";
 
         try {
+
             if(!this.keyMapManager.checkError()) {
                 String[] targetKeys = keys.split(":");
                 String[] matchCharacterList = matchCharacters.split(":");
+                String[] checkType = new String[matchCharacterList.length];
 
                 for (int i = 0; i < matchCharacterList.length; i++) {
-                    matchCharacterList[i] = new String(BASE64DecoderStream.decode(matchCharacterList[i].getBytes()), ImdstDefine.characterDecodeSetBySearch);
+                    String [] work = matchCharacterList[i].split("#");
+                    matchCharacterList[i] = new String(BASE64DecoderStream.decode(work[0].getBytes()), ImdstDefine.characterDecodeSetBySearch);
+                    if (work.length == 1) {
+                        checkType[i] = "3";
+                    } else {
+                        checkType[i] = work[1];
+                    }
                 }
 
                 for (int idx = 0; idx < targetKeys.length; idx++) {
@@ -1474,9 +1483,30 @@ public class KeyManagerHelper extends AbstractHelper {
                                 // AND
                                 matchFlg = true;
                                 for (int i = 0; i < matchCharacterList.length; i++) {
-                                    if (value.indexOf(matchCharacterList[i]) == -1) {
-                                        matchFlg = false;
-                                        break;
+
+                                    if (checkType[i].equals("1")) {
+                                        // 完全一致
+                                        if(!value.equals(matchCharacterList[i])) {
+                                            matchFlg = false;
+                                            break;
+                                        }
+                                    } else {
+
+                                        // 完全一致以外
+                                        int checkIdx = value.indexOf(matchCharacterList[i]);
+                                        if (checkType[i].equals("2")) {
+                                            // 前方一致
+                                            if (checkIdx != 0) {
+                                                matchFlg = false;
+                                                break;
+                                            }
+                                        } else {
+                                            // 部分一致
+                                            if (checkIdx == -1) {
+                                                matchFlg = false;
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
                             } else {
@@ -1484,10 +1514,35 @@ public class KeyManagerHelper extends AbstractHelper {
                                 // OR
                                 matchFlg = false;
                                 for (int i = 0; i < matchCharacterList.length; i++) {
-                                    if (value.indexOf(matchCharacterList[i]) != -1) {
+                                    if (checkType[i].equals("1")) {
+                                        // 完全一致
+                                        if(value.equals(matchCharacterList[i])) {
+                                            matchFlg = true;
+                                            break;
+                                        }
+                                    } else {
+
+                                        // 完全一致以外
+                                        int checkIdx = value.indexOf(matchCharacterList[i]);
+                                        if (checkType[i].equals("2")) {
+                                            // 前方一致
+                                            if (checkIdx == 0) {
+                                                matchFlg = true;
+                                                break;
+                                            }
+                                        } else {
+                                            // 部分一致
+                                            if (checkIdx != -1) {
+                                                matchFlg = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    /*if (value.indexOf(matchCharacterList[i]) != -1) {
                                         matchFlg = true;
                                         break;
-                                    }
+                                    }*/
                                 }
                             }
                         }

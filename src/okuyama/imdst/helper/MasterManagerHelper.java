@@ -1046,7 +1046,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // ユニグラム、バイグラムまで
                         // ユニグラムは漢字のみ対象
-                        for (int typeIdx = 1; typeIdx < 3; typeIdx++) {
+                        for (int typeIdx = 1; typeIdx < 4; typeIdx++) {
                             try {
 
                                 for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
@@ -1078,9 +1078,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 String prefix = (((keyStr.hashCode() << 1) >>> 1) % 8) + "_" + indexPrefix + "_";
                 String realKeyStr = new String(testBytes, ImdstDefine.characterDecodeSetBySearch);
 
-                // ユニグラム、バイグラムまで
+                // ユニグラム、バイグラム、ヒストグラムまで
                 // ユニグラムは漢字のみ対象
-                for (int typeIdx = 1; typeIdx < 3; typeIdx++) {
+                for (int typeIdx = 1; typeIdx < 4; typeIdx++) {
                     try {
 
                         for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
@@ -1089,6 +1089,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             if(SystemUtil.checkNoIndexCharacter(checkStr)) {
                                 continue;
                             }
+
                             sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
 
                             strIdx = strIdx + appendTagSep + sIdx1;
@@ -1701,8 +1702,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // デコードして復元
                 String workStr = new String(BASE64DecoderStream.decode(workKeywords[idx].getBytes(ImdstDefine.characterDecodeSetBySearch)), ImdstDefine.characterDecodeSetBySearch);
 
+
                 String keyword = "";
-                if (workStr.length() > 1) {
+                if (workStr.length() > 2) {
+
+                    // ヒストグラム以上
+                    keyword = workStr.substring(0, 3);
+                } else if (workStr.length() > 1) {
 
                     // バイグラム以上
                     keyword = workStr.substring(0, 2);
