@@ -592,7 +592,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // 同時に検索インデックスを作成する
                             // setKeyValueメソッドにさらにインデックス用のPrefixを最後尾文字列としてAppendしたプロトコル(指定なしは(B))
                             this.longReadTimeout = true;
-                            retParams = this.setKeyValueAndCreateIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5]);
+                            int createIndexLen = 4;
+                            if (clientParameterList.length > 6) {
+                                try {
+                                    createIndexLen = Integer.parseInt(clientParameterList[6]) + 1;
+                                } catch (NumberFormatException nfe) {
+                                    createIndexLen = 4;
+                                }
+                            }
+
+                            retParams = this.setKeyValueAndCreateIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5], createIndexLen);
                             break;
                         case 43 :
 
@@ -604,7 +613,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             //                          --検索タイプ(1=AND 2=OR)
                             //                            --------- Indexプレフィックス(プレフィックスなしは(B))
                             this.longReadTimeout = true;
-                            retParams = this.searchValueIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
+                            int searchIndexLen = 3;
+                            if (clientParameterList.length > 4) {
+                                try {
+                                    searchIndexLen = Integer.parseInt(clientParameterList[4]);
+                                } catch (NumberFormatException nfe) {
+                                    searchIndexLen = 3;
+                                }
+                            }
+                            retParams = this.searchValueIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], searchIndexLen);
                             break;
                         case 90 :
 
@@ -994,12 +1011,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @param transactionCode 
      * @param dataStr value値の文字列
      * @param indexPrefix 作成されたIndex(tag値)の先頭に付加する文字列
+     * @param indexLength 作成するN-GramのNの部分を指定する
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] setKeyValueAndCreateIndex(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix) throws BatchException {
+    private String[] setKeyValueAndCreateIndex(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix, int indexLength) throws BatchException {
         // TODO:Test
         String[] retStrs = new String[3];
+
 
         try {
             if (true) {
@@ -1046,7 +1065,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // ユニグラム、バイグラムまで
                         // ユニグラムは漢字のみ対象
-                        for (int typeIdx = 1; typeIdx < 4; typeIdx++) {
+                        for (int typeIdx = 1; typeIdx < indexLength; typeIdx++) {
                             try {
 
                                 for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
@@ -1080,7 +1099,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 // ユニグラム、バイグラム、ヒストグラムまで
                 // ユニグラムは漢字のみ対象
-                for (int typeIdx = 1; typeIdx < 4; typeIdx++) {
+                for (int typeIdx = 1; typeIdx < indexLength; typeIdx++) {
                     try {
 
                         for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
@@ -1671,10 +1690,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @param indexStrs 取得対象文字列群(BASE64エンコード済みでWordの区切りは":")
      * @param searchType 1=AND 2=OR
      * @param indexPrefix
+     * @param searchIndexLength ここで指定した長さのN-GramIndexが存在するものとして探す
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] searchValueIndex(String indexStrs, String searchType, String indexPrefix) throws BatchException {
+    private String[] searchValueIndex(String indexStrs, String searchType, String indexPrefix, int searchIndexLength) throws BatchException {
         //logger.debug("MasterManagerHelper - searchValueIndex - start");
         String[] retStrs = new String[3];
         StringBuilder retKeysBuf = new StringBuilder();
@@ -1704,22 +1724,32 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
                 String keyword = "";
-                if (workStr.length() > 2) {
+                
+                if (workStr.length() > searchIndexLength) {
 
-                    // ヒストグラム以上
-                    keyword = workStr.substring(0, 3);
-                } else if (workStr.length() > 1) {
+                    // 指定サイズ
+                    keyword = workStr.substring(0, searchIndexLength);
+                } else if (searchIndexLength > 3 && workStr.length() > 3) {
 
-                    // バイグラム以上
-                    keyword = workStr.substring(0, 2);
-
+                    searchIndexLength = workStr.length();
+                    keyword = workStr.substring(0, searchIndexLength);
                 } else {
+                    if (workStr.length() > 2) {
 
-                    // ユニグラム
-                    keyword = workStr;
+                        // ヒストグラム以上
+                        keyword = workStr.substring(0, 3);
+                    } else if (workStr.length() > 1) {
 
+                        // バイグラム以上
+                        keyword = workStr.substring(0, 2);
+
+                    } else {
+
+                        // ユニグラム
+                        keyword = workStr;
+
+                    }
                 }
-
                 // 検索対象か調べる
                 if(SystemUtil.checkNoIndexCharacter(keyword)) {
 

@@ -200,6 +200,9 @@ public class OkuyamaClient {
     protected StringBuilder getValueServerReqBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
 
+    private boolean sendSearchFlg = false;
+
+
     /**
      * コンストラクタ
      *
@@ -1057,7 +1060,7 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean setValueAndCreateIndex(String keyStr, String value) throws OkuyamaClientException {
-        return this.setValueAndCreateIndex(keyStr, null, value, null);
+        return this.setValueAndCreateIndex(keyStr, null, value, 3);
     }
 
     /**
@@ -1077,7 +1080,28 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean setValueAndCreateIndex(String keyStr, String value, String indexPrefix) throws OkuyamaClientException {
-        return this.setValueAndCreateIndex(keyStr, null, value, indexPrefix);
+        return this.setValueAndCreateIndex(keyStr, null, value, indexPrefix, 3);
+    }
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * 登録と同時にValueの検索Indexを作成する<br>
+     * 検索Indexを作成するので通常のSetに比べて時間がかかる.<br>
+     * 全文Indexが作成されるので、値は検索可能な文字を指定すること。例えばBASE64エンコードの値などの場合は<br>
+     * 検索時も同様にエンコードした値で検索する必要がある.<br>
+     * ※okuyamaは検索Index作成前に、同様のKey値で値が登録されている場合は、そのKey値で登録されているValue値の<br>
+     * 検索インデックスを削除してから登録が行われる.<br>
+     * Tagなし.<br>
+     *
+     * @param keyStr Key値
+     * @param value value値
+     * @param indexPrefix 作成する検索IndexをグルーピングするPrefix文字列.この値と同様の値を指定してsearchValueメソッドを呼び出すと、グループに限定して全文検索が可能となる. 最大は128文字
+     * @param createIndexLen
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValueAndCreateIndex(String keyStr, String value, String indexPrefix, int createIndexLen) throws OkuyamaClientException {
+        return this.setValueAndCreateIndex(keyStr, null, value, indexPrefix, createIndexLen);
     }
 
     /**
@@ -1094,10 +1118,11 @@ public class OkuyamaClient {
      * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
      * @param value value値
      * @param indexPrefix 作成する検索IndexをグルーピングするPrefix文字列.この値と同様の値を指定してsearchValueメソッドを呼び出すと、グループに限定して全文検索が可能となる. 最大は128文字
+     * @param createIndexLen
      * @return boolean 登録成否
      * @throws OkuyamaClientException
      */
-    public boolean setValueAndCreateIndex(String keyStr, String[] tagStrs, String value, String indexPrefix) throws OkuyamaClientException {
+    public boolean setValueAndCreateIndex(String keyStr, String[] tagStrs, String value, String indexPrefix, int createIndexLen) throws OkuyamaClientException {
         boolean ret = false; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -1190,6 +1215,12 @@ public class OkuyamaClient {
                 setValueServerReqBuf.append(new String(this.dataEncoding(indexPrefix.getBytes(ImdstDefine.characterDecodeSetBySearch))));
             }
 
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // createIndexLen連結
+            setValueServerReqBuf.append(createIndexLen);
+
 
             // サーバ送信
             pw.println(setValueServerReqBuf.toString());
@@ -1222,7 +1253,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValueAndCreateIndex(keyStr, tagStrs, value, indexPrefix);
+                    ret = this.setValueAndCreateIndex(keyStr, tagStrs, value, indexPrefix, createIndexLen);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -1233,7 +1264,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValueAndCreateIndex(keyStr, tagStrs, value, indexPrefix);
+                    ret = this.setValueAndCreateIndex(keyStr, tagStrs, value, indexPrefix, createIndexLen);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -1244,7 +1275,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValueAndCreateIndex(keyStr, tagStrs, value, indexPrefix);
+                    ret = this.setValueAndCreateIndex(keyStr, tagStrs, value, indexPrefix, createIndexLen);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
@@ -3979,6 +4010,21 @@ public class OkuyamaClient {
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
      * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * Prefxiなし.<br>
+     *
+     * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
+     * @param  searchType 1:AND検索　2:OR検索
+     * @param searchIndexLen
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    public Object[] searchValue(String[] searchCharacterList, String searchType, int searchIndexLen) throws OkuyamaClientException {
+        return this.searchValue(searchCharacterList, searchType, OkuyamaClient.blankStr, searchIndexLen);
+    }
+
+    /**
+     * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
+     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -3988,6 +4034,80 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public Object[] searchValue(String[] searchCharacterList, String searchType, String prefix) throws OkuyamaClientException {
+
+        try {
+            this.sendSearchValueRequest(searchCharacterList, searchType, prefix, 3);
+            return this.readSearchValueResponse(searchCharacterList, searchType, prefix, 3);
+        } catch (Throwable e) {
+            throw new OkuyamaClientException(e);
+        }
+    }
+
+    /**
+     * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
+     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * Prefxiあり.<br>
+     * 
+     * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
+     * @param  searchType 1:AND検索　2:OR検索
+     * @param  prefix 検索Index作成時に指定したPrefix値
+     * @param searchIndexLen
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    public Object[] searchValue(String[] searchCharacterList, String searchType, String prefix, int searchIndexLen) throws OkuyamaClientException {
+
+        try {
+            this.sendSearchValueRequest(searchCharacterList, searchType, prefix, searchIndexLen);
+            return this.readSearchValueResponse(searchCharacterList, searchType, prefix, searchIndexLen);
+        } catch (Throwable e) {
+            throw new OkuyamaClientException(e);
+        }
+    }
+
+    /**
+     * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
+     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * Prefxiなし.<br>
+     *
+     * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
+     * @param  searchType 1:AND検索　2:OR検索
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    protected void sendSearchValueRequest(String[] searchCharacterList, String searchType) throws OkuyamaClientException {
+        this.sendSearchValueRequest(searchCharacterList, searchType, OkuyamaClient.blankStr, 3);
+    }
+
+
+    /**
+     * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
+     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * Prefxiなし.<br>
+     *
+     * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
+     * @param  searchType 1:AND検索　2:OR検索
+     * @param searchIndexLen
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    protected void sendSearchValueRequest(String[] searchCharacterList, String searchType, int searchIndexLen) throws OkuyamaClientException {
+        this.sendSearchValueRequest(searchCharacterList, searchType, OkuyamaClient.blankStr, searchIndexLen);
+    }
+
+    /**
+     * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
+     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * Prefxiあり.<br>
+     * 
+     * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
+     * @param  searchType 1:AND検索　2:OR検索
+     * @param  prefix 検索Index作成時に指定したPrefix値
+     * @param searchIndexLen
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    protected void sendSearchValueRequest(String[] searchCharacterList, String searchType, String prefix, int searchIndexLen) throws OkuyamaClientException {
 
         Object[] ret = new Object[2]; 
         String serverRetStr = null;
@@ -4053,12 +4173,74 @@ public class OkuyamaClient {
                 serverRequestBuf.append(new String(this.dataEncoding(prefix.getBytes(ImdstDefine.characterDecodeSetBySearch))));
             }
 
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+            // searchType連結
+            serverRequestBuf.append(searchIndexLen);
+
 
             // サーバ送信
             pw.println(serverRequestBuf.toString());
 
             pw.flush();
 
+            this.sendSearchFlg = true;
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    this.sendSearchValueRequest(searchCharacterList, searchType, prefix, searchIndexLen);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+    }
+
+
+    /**
+     * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
+     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * Prefxiあり.<br>
+     * 
+     * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
+     * @param  searchType 1:AND検索　2:OR検索
+     * @param  prefix 検索Index作成時に指定したPrefix値
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    protected Object[] readSearchValueResponse(String[] searchCharacterList, String searchType, String prefix) throws OkuyamaClientException {
+        return readSearchValueResponse(searchCharacterList, searchType, prefix, 3);
+    }
+
+
+    /**
+     * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
+     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * Prefxiあり.<br>
+     * 
+     * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
+     * @param  searchType 1:AND検索　2:OR検索
+     * @param  prefix 検索Index作成時に指定したPrefix値
+     * @param  searchIndexLen
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    protected Object[] readSearchValueResponse(String[] searchCharacterList, String searchType, String prefix, int searchIndexLen) throws OkuyamaClientException {
+
+        Object[] ret = new Object[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+
+            if (this.sendSearchFlg == false) throw new OkuyamaClientException("Not Request Send");
             // サーバから結果受け取り
             serverRetStr = br.readLine();
 
@@ -4102,7 +4284,9 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.searchValue(searchCharacterList, searchType, prefix);
+                    this.sendSearchFlg = false;
+                    this.searchValue(searchCharacterList, searchType, prefix);
+                    ret = this.readSearchValueResponse(searchCharacterList, searchType, prefix, searchIndexLen);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -4113,7 +4297,9 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.searchValue(searchCharacterList, searchType, prefix);
+                    this.sendSearchFlg = false;
+                    this.searchValue(searchCharacterList, searchType, prefix);
+                    ret = this.readSearchValueResponse(searchCharacterList, searchType, prefix, searchIndexLen);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -4124,17 +4310,20 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.searchValue(searchCharacterList, searchType, prefix);
+                    this.sendSearchFlg = false;
+                    this.searchValue(searchCharacterList, searchType, prefix);
+                    ret = this.readSearchValueResponse(searchCharacterList, searchType, prefix, searchIndexLen);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
             } else {
                 throw new OkuyamaClientException(e);
             }
+        } finally {
+            this.sendSearchFlg = false;
         }
         return ret;
     }
-
 
 
     // Base64でエンコード
