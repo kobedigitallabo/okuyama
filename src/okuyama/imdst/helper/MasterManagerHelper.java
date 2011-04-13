@@ -605,13 +605,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             break;
                         case 43 :
 
-                            // 作成したIndexを使って取得を行う
+                            // 作成したIndexを使ってデータ取得を行う
                             // 送信される検索IndexはUTF-8の文字列のBASE64エンコード文字列
                             // Protcol Format
-                            // 43,SGVsbG8=:b2t1eWFtYQ==,1,UHJlMQ==
+                            // 43,SGVsbG8=:b2t1eWFtYQ==,1,UHJlMQ==,5
                             //    --------------------- エンコード済み検索ワード(複数は":"で連結)
                             //                          --検索タイプ(1=AND 2=OR)
                             //                            --------- Indexプレフィックス(プレフィックスなしは(B))
+                            //                                     -- 検索Wordの検索時のLength指定(Default=3)
                             this.longReadTimeout = true;
                             int searchIndexLen = 3;
                             if (clientParameterList.length > 4) {
@@ -1709,6 +1710,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[3] = "";
                 return retStrs;
             }
+            //long start1 = System.nanoTime();
 
             // Prefixを調整
             if (indexPrefix.equals(ImdstDefine.imdstBlankStrData)) indexPrefix = "";
@@ -1716,19 +1718,24 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             String[] workKeywords = indexStrs.split(":");
             ArrayList decodeWorkKeywords = new ArrayList(5);
             ArrayList allSearchWordList = new ArrayList();
+            ArrayList fullMatchList = new ArrayList();
 
             for (int idx = 0; idx < workKeywords.length; idx++) {
-
+                boolean fullMatch = false;
                 // デコードして復元
                 String workStr = new String(BASE64DecoderStream.decode(workKeywords[idx].getBytes(ImdstDefine.characterDecodeSetBySearch)), ImdstDefine.characterDecodeSetBySearch);
 
 
                 String keyword = "";
-                
+
                 if (workStr.length() > searchIndexLength) {
 
                     // 指定サイズ
                     keyword = workStr.substring(0, searchIndexLength);
+                } else if (workStr.length() <= searchIndexLength) {
+
+                    keyword = workStr;
+                    fullMatch = true;
                 } else if (searchIndexLength > 3 && workStr.length() > 3) {
 
                     searchIndexLength = workStr.length();
@@ -1764,12 +1771,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     singleWordList[i] = new String(BASE64EncoderStream.encode((i + "_" + indexPrefix + "_" + keyword).getBytes(ImdstDefine.characterDecodeSetBySearch)));
                 }
                 allSearchWordList.add(singleWordList);
+                fullMatchList.add(new Boolean(fullMatch));
             }
 
-            HashMap retMap = new HashMap(128);
+            HashMap retMap = new HashMap(256);
+            HashMap fullMatchKeyMap = new HashMap(256);
+
+            //long start2 = System.nanoTime();
 
             for (int idx = 0; idx < allSearchWordList.size(); idx++) {
                 String[] singleWordList = (String[])allSearchWordList.get(idx);
+                boolean fullMatchFlg = ((Boolean)fullMatchList.get(idx)).booleanValue();
 
                 for (int i = 0; i < singleWordList.length; i++) {
                     String[] ret = this.getTagKeys(singleWordList[i], true);
@@ -1778,11 +1790,19 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         String targetKeysStr = ret[2];
                         String[] targetKeyList = targetKeysStr.split(ImdstDefine.imdstTagKeyAppendSep);
                         for (int ii = 0; ii < targetKeyList.length; ii++) {
-                            retMap.put(targetKeyList[ii], "");
+
+                            if (!retMap.containsKey(targetKeyList[ii]) && fullMatchFlg == true) {
+                                fullMatchKeyMap.put(targetKeyList[ii], "");
+                            } else {
+                                retMap.put(targetKeyList[ii], "");
+                                if (fullMatchKeyMap.containsKey(targetKeyList[ii])) fullMatchKeyMap.remove(targetKeyList[ii]);
+                            }
                         }
                     }
                 }
             }
+
+            //long end2 = System.nanoTime();
 
             Map targetSumKeysMap = new HashMap();
             Map targetNodeInfoMap = new HashMap();
@@ -1944,7 +1964,66 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
                 }
 
+
+                // 最終的な返却値を作成
                 retStrs[0] = "43";
+
+                // 完全に検索Keywordが一致したものを連結
+                //System.out.println("111111111111111111111");
+                //System.out.println(fullMatchKeyMap);
+
+                if (fullMatchKeyMap.size() > 0) {
+
+                    String fullMatchKeySep = "";
+                    if (retKeysBuf.length() > 0) {
+                        fullMatchKeySep = ":";
+                    }
+
+                    Set fullMatchEntrySet = fullMatchKeyMap.entrySet();
+                    Iterator fullMatchEntryIte = fullMatchEntrySet.iterator(); 
+
+                    while(fullMatchEntryIte.hasNext()) {
+                        Map.Entry obj = (Map.Entry)fullMatchEntryIte.next();
+                        String fullMatchKeyCharacter = (String)obj.getKey();
+                        retKeysBuf.append(fullMatchKeySep);
+                        retKeysBuf.append(fullMatchKeyCharacter);
+                        fullMatchKeySep = ":";
+                    }
+                }
+
+                if (retKeysBuf.length() > 0) {
+                    retStrs[1] = "true";
+                } else {
+                    retStrs[1] = "false";
+                }
+                retStrs[2] = retKeysBuf.toString();
+            } else if (fullMatchKeyMap.size() > 0) {
+
+                // 最終的な返却値を作成
+                retStrs[0] = "43";
+
+                // 完全に検索Keywordが一致したものを連結
+                if (fullMatchKeyMap.size() > 0) {
+
+                    String fullMatchKeySep = "";
+                    if (retKeysBuf.length() > 0) {
+                        fullMatchKeySep = ":";
+                    }
+
+                    //System.out.println("222222222222222222222222");
+                    //System.out.println(fullMatchKeyMap);
+                    Set fullMatchEntrySet = fullMatchKeyMap.entrySet();
+                    Iterator fullMatchEntryIte = fullMatchEntrySet.iterator(); 
+
+                    while(fullMatchEntryIte.hasNext()) {
+                        Map.Entry obj = (Map.Entry)fullMatchEntryIte.next();
+                        String fullMatchKeyCharacter = (String)obj.getKey();
+                        retKeysBuf.append(fullMatchKeySep);
+                        retKeysBuf.append(fullMatchKeyCharacter);
+                        fullMatchKeySep = ":";
+                    }
+                }
+
                 if (retKeysBuf.length() > 0) {
                     retStrs[1] = "true";
                 } else {
@@ -1958,8 +2037,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 retStrs[1] = "false";
                 retStrs[2] = "";
             }
-//end = System.nanoTime();
-//System.out.println((end - start) + " Time[2]");
+            //long end1 = System.nanoTime();
+            //System.out.println("Time2=" + (end2 - start2) + " Time1=" + (end1 - start1));
 
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - searchValueIndex - Error", be);
