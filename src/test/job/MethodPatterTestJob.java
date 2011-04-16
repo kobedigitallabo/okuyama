@@ -972,6 +972,35 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             }
 
             long startTime = new Date().getTime();
+            okuyamaClient.setValueAndCreateIndex(this.nowCount + "test123", "あいうえおかきくけこ");
+            String[] dByteChars = {"うえ","かき"};
+            Object[] dByteRet = okuyamaClient.searchValue(dByteChars, "1");
+            if(((String)dByteRet[0]).equals("true"))  {
+                if (!((String[])dByteRet[1])[0].equals(this.nowCount + "test123")) {
+                    System.out.println("Double Byte Search Test 1 - Error");
+                    errorFlg = true;
+                }
+            }
+
+            okuyamaClient.setValueAndCreateIndex(this.nowCount + "test456", "漢字です。これから難しい試験を行います");
+            String[] dByteChars2 = {"字","い"};
+            dByteRet = okuyamaClient.searchValue(dByteChars2, "1");
+            if(((String)dByteRet[0]).equals("true"))  {
+                if (!((String[])dByteRet[1])[0].equals(this.nowCount + "test456")) {
+                    System.out.println("Double Byte Search Test 2 - Error");
+                    errorFlg = true;
+                }
+            }
+
+
+            String[] dByteChars3 = {"字","夏"};
+            dByteRet = okuyamaClient.searchValue(dByteChars3, "1");
+            if(!((String)dByteRet[0]).equals("false"))  {
+                System.out.println("Double Byte Search Test 3 - Error");
+                System.out.println(((String[])dByteRet[1])[0]);
+                errorFlg = true;
+            }
+
             for (int i = start; i < count; i++) {
                 // データ登録
 

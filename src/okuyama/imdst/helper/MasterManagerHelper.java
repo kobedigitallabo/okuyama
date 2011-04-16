@@ -1835,8 +1835,9 @@ System.out.println("indexLength=[" + indexLength + "]");
             Map targetSumKeysMap = new HashMap();
             Map targetNodeInfoMap = new HashMap();
             // 該当データ次第で処理分岐
-            if (retMap.size() > 0) {
+            if (retMap.size() > 0 || (fullMatchKeyMap.size() > 0 && workKeywords.length > 1 && searchType.equals("1"))) {
 
+                if (fullMatchKeyMap.size() > 0) retMap.putAll(fullMatchKeyMap);
                 // 該当データあり
                 Set entrySet = retMap.entrySet();
                 Iterator entryIte = entrySet.iterator(); 
