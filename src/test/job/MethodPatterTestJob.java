@@ -981,7 +981,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 }
                 if ((i % 10000) == 0) System.out.println(i);
             }
-System.out.println("111111");
+
             // Prefixあり
             String prefix = "Pre" + this.nowCount + "fix";
             for (int i = start; i < count; i++) {
@@ -993,7 +993,7 @@ System.out.println("111111");
                 }
                 if ((i % 10000) == 0) System.out.println(i);
             }
-System.out.println("222222");
+
 
             // データ検索(単)
             for (int i = start; i < count; i++) {
@@ -1024,7 +1024,7 @@ System.out.println("222222");
                 }
             }
 
-System.out.println("3333333");
+
             // データ検索(複数)
             sChars = new String[1];
             sChars[0] = "abc" + this.nowCount + "create";
@@ -1039,7 +1039,6 @@ System.out.println("3333333");
                     errorFlg = true;
                 }
             }
-System.out.println("444444");
 
 
             // データ検索(単)
@@ -1070,7 +1069,7 @@ System.out.println("444444");
                     }
                 }
             }
-System.out.println("555555");
+
 
             // データ検索(複数)
             sChars = new String[1];
@@ -1086,9 +1085,6 @@ System.out.println("555555");
                     errorFlg = true;
                 }
             }
-System.out.println("6666666");
-
-
 
             // Index削除
             for (int i = start; i < count; i++) {
@@ -1098,7 +1094,7 @@ System.out.println("6666666");
                     errorFlg = true;
                 } 
             }
-System.out.println("777777");
+
             sChars = new String[1];
             sChars[0] =  "abc" + this.nowCount + "create";
 
@@ -1107,7 +1103,7 @@ System.out.println("777777");
                 System.out.println("removeValue- 4-1 - Error=[" + sChars[0] + "]");
                 errorFlg = true;
             }
-System.out.println("8888888");
+
 
             // Index削除(Prefix)
             for (int i = start; i < count; i++) {
@@ -1117,7 +1113,7 @@ System.out.println("8888888");
                     errorFlg = true;
                 } 
             }
-System.out.println("9999999");
+
             sChars = new String[1];
             sChars[0] = "abc" + this.nowCount + "create";
 
@@ -1127,7 +1123,7 @@ System.out.println("9999999");
                 errorFlg = true;
             }
 
-System.out.println("10101010");
+
 
             long endTime = new Date().getTime();
             System.out.println("CreateIndex & searchValue & removeIndex Method= " + (endTime - startTime) + " milli second");
