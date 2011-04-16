@@ -110,6 +110,9 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                         if (execMethods[i].equals("tagremove")) 
                             retMap.put("tagremove", execTagRemove(okuyamaClient, start, count));
 
+                        if (execMethods[i].equals("index")) 
+                            retMap.put("createindex", execIndex(okuyamaClient, start, count));
+
                     }
 
                     System.out.println("ErrorMap=" + retMap.toString());
@@ -948,4 +951,195 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
         return errorFlg;
     }
 
+
+    private boolean execIndex(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        boolean errorFlg = false;
+        try {
+            String[] sChars = null;
+            Object[] searchRet = null;
+            System.out.println("execIndex - Start");
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+            long startTime = new Date().getTime();
+            for (int i = start; i < count; i++) {
+                // データ登録
+
+                if (!okuyamaClient.setValueAndCreateIndex(this.nowCount + "createindexKey_" + new Integer(i).toString(), i+ "abc" + this.nowCount + "createindexvalue_" + new Integer(i).toString())) {
+                    System.out.println("setValueAndCreateIndex - Error=[" + this.nowCount + "createindexKey_" + new Integer(i).toString()+"]");
+                    errorFlg = true;
+                }
+                if ((i % 10000) == 0) System.out.println(i);
+            }
+System.out.println("111111");
+            // Prefixあり
+            String prefix = "Pre" + this.nowCount + "fix";
+            for (int i = start; i < count; i++) {
+                // データ登録
+
+                if (!okuyamaClient.setValueAndCreateIndex(this.nowCount + "createindexPrefixKey_" + new Integer(i).toString(), i+ "abc" + this.nowCount + "createindexvalue_" + new Integer(i).toString() , prefix)) {
+                    System.out.println("setValueAndCreateIndex(Prefix) - Error=[" + this.nowCount + "createindexPrefixKey_" + new Integer(i).toString()+"]");
+                    errorFlg = true;
+                }
+                if ((i % 10000) == 0) System.out.println(i);
+            }
+System.out.println("222222");
+
+            // データ検索(単)
+            for (int i = start; i < count; i++) {
+
+                sChars = new String[1];
+                sChars[0] = i + "abc" + this.nowCount + "create";
+                searchRet = okuyamaClient.searchValue(sChars, "1");
+                if (!searchRet[0].equals("true")) {
+                    System.out.println("searchValue - 1-1 - Error=[" + sChars[0] + "]");
+                    errorFlg = true;
+                } else {
+                    if (((String[])searchRet[1]).length != 1) {
+                        String[] keys = (String[])searchRet[1];
+
+                        Map multiGetRet = okuyamaClient.getMultiValue(keys);
+                        for (int i2 = 0; i2 < keys.length; i2++) {
+                            String val = (String)multiGetRet.get(keys[i2]);
+                            if (val.indexOf(sChars[0]) == -1) {
+                                System.out.println("searchValue - 1-2 - Error=[" + sChars[0] + "] Not Value[" + val + "]");
+                                errorFlg = true;
+                            }
+                        }
+
+                    } else if (!((String[])searchRet[1])[0].equals(this.nowCount + "createindexKey_" + new Integer(i).toString())) {
+                        System.out.println("searchValue - 1-3 - Error=[" + sChars[0] + "]");
+                        errorFlg = true;
+                    }
+                }
+            }
+
+System.out.println("3333333");
+            // データ検索(複数)
+            sChars = new String[1];
+            sChars[0] = "abc" + this.nowCount + "create";
+
+            searchRet = okuyamaClient.searchValue(sChars, "1");
+            if (!searchRet[0].equals("true")) {
+                System.out.println("searchValue- 2-1 - Error=[" + sChars[0] + "]");
+                errorFlg = true;
+            } else {
+                if (((String[])searchRet[1]).length != 5000) {
+                    System.out.println("searchValue - 2-2 - Error=[" + sChars[0] + "]");
+                    errorFlg = true;
+                }
+            }
+System.out.println("444444");
+
+
+            // データ検索(単)
+            for (int i = start; i < count; i++) {
+
+                sChars = new String[1];
+                sChars[0] = i + "abc" + this.nowCount + "create";
+                searchRet = okuyamaClient.searchValue(sChars, "1", prefix);
+                if (!searchRet[0].equals("true")) {
+                    System.out.println("searchValue(Prefix) - 1-1 - Error=[" + sChars[0] + "]");
+                    errorFlg = true;
+                } else {
+                    if (((String[])searchRet[1]).length != 1) {
+
+                        String[] keys = (String[])searchRet[1];
+
+                        Map multiGetRet = okuyamaClient.getMultiValue(keys);
+                        for (int i2 = 0; i2 < keys.length; i2++) {
+                            String val = (String)multiGetRet.get(keys[i2]);
+                            if (val.indexOf(sChars[0]) == -1) {
+                                System.out.println("searchValue(Prefix) - 1-2 - Error=[" + sChars[0] + "] Not Value[" + val + "]");
+                                errorFlg = true;
+                            }
+                        }
+                    } else if (!((String[])searchRet[1])[0].equals(this.nowCount + "createindexPrefixKey_" + new Integer(i).toString())) {
+                        System.out.println("searchValue(Prefix) - 1-3 - Error=[" + sChars[0] + "]");
+                        errorFlg = true;
+                    }
+                }
+            }
+System.out.println("555555");
+
+            // データ検索(複数)
+            sChars = new String[1];
+            sChars[0] = "abc" + this.nowCount + "create";
+
+            searchRet = okuyamaClient.searchValue(sChars, "1", prefix);
+            if (!searchRet[0].equals("true")) {
+                System.out.println("searchValue(Prefix)- 2-1 - Error=[" + sChars[0] + "]");
+                errorFlg = true;
+            } else {
+                if (((String[])searchRet[1]).length != 5000) {
+                    System.out.println("searchValue(Prefix) - 2-2 - Error=[" + sChars[0] + "]");
+                    errorFlg = true;
+                }
+            }
+System.out.println("6666666");
+
+
+
+            // Index削除
+            for (int i = start; i < count; i++) {
+
+                if (!okuyamaClient.removeSearchIndex(this.nowCount + "createindexKey_" + new Integer(i).toString())) {
+                    System.out.println("removeValue- 3-1 - Error=[" + this.nowCount + "createindexKey_" + new Integer(i).toString() + "]");
+                    errorFlg = true;
+                } 
+            }
+System.out.println("777777");
+            sChars = new String[1];
+            sChars[0] =  "abc" + this.nowCount + "create";
+
+            searchRet = okuyamaClient.searchValue(sChars, "1");
+            if (!searchRet[0].equals("false")) {
+                System.out.println("removeValue- 4-1 - Error=[" + sChars[0] + "]");
+                errorFlg = true;
+            }
+System.out.println("8888888");
+
+            // Index削除(Prefix)
+            for (int i = start; i < count; i++) {
+
+                if (!okuyamaClient.removeSearchIndex(this.nowCount + "createindexPrefixKey_" + new Integer(i).toString(), prefix)) {
+                    System.out.println("removeValue(Prefix)- 3-1 - Error=[" + this.nowCount + "createindexPrefixKey_" + new Integer(i).toString() + "]");
+                    errorFlg = true;
+                } 
+            }
+System.out.println("9999999");
+            sChars = new String[1];
+            sChars[0] = "abc" + this.nowCount + "create";
+
+            searchRet = okuyamaClient.searchValue(sChars, "1", prefix);
+            if (!searchRet[0].equals("false")) {
+                System.out.println("removeValue(Prefix) - 4-1 - Error=[" + sChars[0] + "]");
+                errorFlg = true;
+            }
+
+System.out.println("10101010");
+
+            long endTime = new Date().getTime();
+            System.out.println("CreateIndex & searchValue & removeIndex Method= " + (endTime - startTime) + " milli second");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execIndex - End");
+
+        return errorFlg;
+    }
 }

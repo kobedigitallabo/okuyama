@@ -624,6 +624,26 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             }
                             retParams = this.searchValueIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], searchIndexLen);
                             break;
+                        case 44 :
+
+                            // 作成したIndexを削除する
+                            // Protcol Format
+                            // 44,Key,0,UHJlMQ==,5
+                            //    --- 削除対象Key
+                            //        --TransactonCode
+                            //          --------- Indexプレフィックス(プレフィックスなしは(B))
+                            //                   -- 検索Wordの検索時のLength指定(Default=3)
+                            this.longReadTimeout = true;
+                            int removeIndexLen = 4;
+                            if (clientParameterList.length > 4) {
+                                try {
+                                    removeIndexLen = Integer.parseInt(clientParameterList[4]) + 1;
+                                } catch (NumberFormatException nfe) {
+                                    removeIndexLen = 4;
+                                }
+                            }
+                            retParams = this.removeSearchIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], removeIndexLen);
+                            break;
                         case 90 :
 
                             // KeyNodeの使用停止をマーク
@@ -1020,7 +1040,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         // TODO:Test
         String[] retStrs = new String[3];
 
-
+/*System.out.println("keyStr=[" + keyStr + "]");
+System.out.println("tagStr=[" + tagStr + "]");
+System.out.println("transactionCode=[" + transactionCode + "]");
+System.out.println("dataStr=[" + dataStr + "]");
+System.out.println("indexPrefix=[" + indexPrefix + "]");
+System.out.println("indexLength=[" + indexLength + "]");
+*/
         try {
             if (true) {
                 // Key値チェック
@@ -1086,6 +1112,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
 
 
+                // 新たにIndexを作成する
                 String appendTagSep = "";
 
                 byte[] testBytes = BASE64DecoderStream.decode(dataStr.getBytes(ImdstDefine.characterDecodeSetBySearch));
@@ -1109,7 +1136,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             if(SystemUtil.checkNoIndexCharacter(checkStr)) {
                                 continue;
                             }
-
                             sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
 
                             strIdx = strIdx + appendTagSep + sIdx1;
@@ -1758,6 +1784,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
                 }
                 // 検索対象か調べる
+
                 if(SystemUtil.checkNoIndexCharacter(keyword)) {
 
                     continue;
@@ -1768,6 +1795,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 String[] singleWordList = new String[8];
                 for (int i = 0; i < 8; i++) {
+
                     singleWordList[i] = new String(BASE64EncoderStream.encode((i + "_" + indexPrefix + "_" + keyword).getBytes(ImdstDefine.characterDecodeSetBySearch)));
                 }
                 allSearchWordList.add(singleWordList);
@@ -2510,6 +2538,99 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
 
+    /**
+     * 作成した検索Indexを削除する.<br>
+     * 削除方式は呼び出し時のValueからIndexを作成しそれを消しにいく.<br>
+     * 
+     * @param keyStr key値の文字列
+     * @param transactionCode 
+     * @param indexPrefix 作成されたIndex(tag値)の先頭に付加する文字列
+     * @param indexLength 作成するN-GramのNの部分を指定する
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] removeSearchIndex(String keyStr, String transactionCode, String indexPrefix, int indexLength) throws BatchException {
+
+        String[] retStrs = new String[3];
+
+        try {
+
+            // Key値チェック
+            if (!this.checkKeyLength(keyStr)) {
+                // 保存失敗
+                retStrs[0] = "44";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
+
+            // indexPrefixは指定なしの場合はクライアントから規定文字列で送られてくるのでここでindexPrefixなしの扱いとする
+            // ブランクなどでクライアントから送信するとsplit時などにややこしくなる為である。
+            if (indexPrefix.equals(ImdstDefine.imdstBlankStrData)) indexPrefix = "";
+
+
+            // 古いKey－Valueのデータがある場合は取得
+            // 古いValueデータから旧全文検索Wordを作りだして消す
+            String[] oldValueData = this.getKeyValue(keyStr);
+            if (oldValueData != null && oldValueData[1].equals("true")) {
+
+                byte[] oldTestBytes = BASE64DecoderStream.decode(oldValueData[2].getBytes(ImdstDefine.characterDecodeSetBySearch));
+
+                String oldSIdx1 = null;
+
+                String oldPrefix = (((keyStr.hashCode() << 1) >>> 1) % 8) + "_" + indexPrefix + "_";
+
+                String oldRealKeyStr = new String(oldTestBytes, ImdstDefine.characterDecodeSetBySearch);
+
+                // ユニグラム、バイグラムまで
+                // ユニグラムは漢字のみ対象
+                for (int typeIdx = 1; typeIdx < indexLength; typeIdx++) {
+                    try {
+
+                        for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
+                            String checkStr = oldRealKeyStr.substring(i, i+typeIdx);
+
+                            if(SystemUtil.checkNoIndexCharacter(checkStr)) {
+                                continue;
+                            }
+
+                            oldSIdx1 = new String(BASE64EncoderStream.encode((oldPrefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
+
+                            try {
+                                this.removeTargetTagInKey(oldSIdx1, keyStr,"0");
+                            } catch (Exception removeE) {
+                                // Exceptionの場合のみエラー
+                                retStrs[0] = "44";
+                                retStrs[1] = "false";
+                                retStrs[2] = "";
+                                return retStrs;
+                            }
+                        }
+                    } catch (Exception inE) {}
+                }
+            }
+
+
+            retStrs[0] = "44";
+            retStrs[1] = "true";
+            retStrs[2] = "";
+        } catch (BatchException be) {
+
+            logger.error("MasterManagerHelper - removeSearchIndex - Error", be);
+        } catch (Exception e) {
+
+            logger.error("MasterManagerHelper - removeSearchIndex - Error", e);
+            retStrs[0] = "44";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
+        }
+        //logger.debug("MasterManagerHelper - removeSearchIndex - end");
+        return retStrs;
+    }
+
+
+    
     /**
      * 指定したKeyから指定したTagを取り外す.<br>
      * 処理フロー.<br>
