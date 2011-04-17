@@ -1838,6 +1838,7 @@ System.out.println("indexLength=[" + indexLength + "]");
             if (retMap.size() > 0 || (fullMatchKeyMap.size() > 0 && workKeywords.length > 1 && searchType.equals("1"))) {
 
                 if (fullMatchKeyMap.size() > 0) retMap.putAll(fullMatchKeyMap);
+                fullMatchKeyMap.clear();
                 // 該当データあり
                 Set entrySet = retMap.entrySet();
                 Iterator entryIte = entrySet.iterator(); 

@@ -976,7 +976,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             String[] dByteChars = {"うえ","かき"};
             Object[] dByteRet = okuyamaClient.searchValue(dByteChars, "1");
             if(((String)dByteRet[0]).equals("true"))  {
-                if (!((String[])dByteRet[1])[0].equals(this.nowCount + "test123")) {
+                if (!((String[])dByteRet[1])[this.nowCount].equals(this.nowCount + "test123")) {
                     System.out.println("Double Byte Search Test 1 - Error");
                     errorFlg = true;
                 }
@@ -986,7 +986,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             String[] dByteChars2 = {"字","い"};
             dByteRet = okuyamaClient.searchValue(dByteChars2, "1");
             if(((String)dByteRet[0]).equals("true"))  {
-                if (!((String[])dByteRet[1])[0].equals(this.nowCount + "test456")) {
+                if (!((String[])dByteRet[1])[this.nowCount].equals(this.nowCount + "test456")) {
                     System.out.println("Double Byte Search Test 2 - Error");
                     errorFlg = true;
                 }
@@ -1000,6 +1000,22 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 System.out.println(((String[])dByteRet[1])[0]);
                 errorFlg = true;
             }
+
+
+            String[] dByteChars4 = {"これから難","試験を行い"};
+            dByteRet = okuyamaClient.searchValue(dByteChars4, "1");
+            if(!((String)dByteRet[0]).equals("true"))  {
+                System.out.println("Double Byte Search Test 4 - Error");
+                errorFlg = true;
+            }
+
+
+            String[] dByteChars5 = {"これから簡単","試験を行い"};
+            dByteRet = okuyamaClient.searchValue(dByteChars5, "1");
+            if(!((String)dByteRet[0]).equals("false"))  {
+                System.out.println("Double Byte Search Teßst 5 - Error");
+                errorFlg = true;
+            }            
 
             for (int i = start; i < count; i++) {
                 // データ登録
