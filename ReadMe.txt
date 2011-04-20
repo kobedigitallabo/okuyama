@@ -10,29 +10,31 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
-[[リリース Ver 0.8.7 - (2011/XX/XX)]]
-  ■メモリへのデータを圧縮して保存
-    =>実装済み
-    // Valueをメモリに保存する際に圧縮を行う指定
-    public volatile static boolean saveValueCompress = true;
-    // Valueをメモリに保存する際に圧縮に利用するコンプレッサーをいくつプールしておくかの設定
-    public volatile static int valueCompresserPoolSize = 10;
-    // Valueをメモリに保存する際に圧縮する個別単位サイズ
-    public volatile static int valueCompresserCompressSize = 1024;
-    // Valueをメモリに保存する際に圧縮する場合の圧縮レベル
-    public volatile static int valueCompresserLevel = Deflater.BEST_SPEED;
+[[リリース Ver 0.8.7 - (2011/04/20)]]
+  ■メモリへのデータ保存時に圧縮を行う
+	この設定はDataNode.propertiesの"dataMemory=true"の場合のみ有効
+	true=圧縮、false=非圧縮
+	圧縮を行えばCPU資源を利用するため圧縮効果が望めないデータを保存する場合はfalseが有効
+	設定しない場合のデフォルトはtrue
+	SaveDataCompressTypeは圧縮指定　1 or 9のどちらかを指定
+	1=高速で低圧縮
+	9=低速で高圧縮
+	設定しない場合のデフォルトは1
 
-    DataNode.propertiesでは、以下の設定になる
+    DataNode.propertiesでの設定は、以下の項目
 	SaveDataCompress=true
 	SaveDataCompressType=1
 
-  ■データトランザクションログファイル遅延書き込み機能
-	 この設定は"memoryMode=false"の場合のみ有効
-	 !!falseに設定した場合は常に書き込まれないため、不意の障害時にデータをロストする可能性が上がる!!
-	 設定しない場合のデフォルトはtrue
-	 この設定は本設定ファイル上で定義されているDataNode全てに反映される
 
-    DataNode.propertiesでは、以下の設定になる
+  ■データトランザクションログファイル遅延書き込み機能
+	この設定はDataNode.propertiesの"memoryMode=false"の場合のみ有効
+	!!falseに設定した場合は常に書き込まれないため、不意の障害時にデータをロストする可能性が上がる!!
+    設定値は"true"遅延しない(常に書き込み)
+    設定値は"false"遅延する
+	設定しない場合のデフォルトはtrue
+	この設定は本設定ファイル上で定義されているDataNode全てに反映される
+
+    DataNode.propertiesでの設定は、以下の項目
 	DataSaveTransactionFileEveryCommit=true
 
 
@@ -43,9 +45,8 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 	 ShareDataFileMaxDelayCount(数値を指定する)であるここで設定した数値の最大12888倍のバイト数分メモリを消費する
 	 最大遅延保持数は999999(この数だけ蓄積する前にメモリが足りなくなる場合もある)
 	 設定しない場合のデフォルトはfalse
-	 この設定は本設定ファイル上で定義されているDataNode全てに反映される
 
-    DataNode.propertiesでは、以下の設定になる
+    DataNode.propertiesでの設定は、以下の項目
 	ShareDataFileWriteDelayFlg=true
 	ShareDataFileMaxDelayCount=
 
@@ -60,37 +61,58 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 
   ■仮想メモリの効率化
-    仮想メモリの1ブロック当たりのサイズを複数の種類にして、保存されるサイズに合わせて使い分けるように
-    変更
+    仮想メモリの1ブロック当たりのサイズを複数の種類にして、保存されるサイズに合わせて使い分けるように変更
+
 
   ■Valueをメモリに保存する場合に設定したサイズ以上のValueを仮想メモリ空間に保存する機能を追加
+    大きなValue値をメモリに保持したくない場合に有効
     DataNode.propertiesの以下の設定値(SaveDataMemoryStoreLimitSize)
-    設定するサイズはバイト値
-    例)以下の場合は128KB以上
+    デフォルトは"0"無効(サイズ制限なしにメモリに保持する)
 
+    DataNode.propertiesでの設定は、以下の項目
+    SaveDataMemoryStoreLimitSize=0
+
+    ※設定するサイズはバイト値
+    例)以下の場合は128KB以上
     SaveDataMemoryStoreLimitSize=131072
 
 
   ■データバックアップ機能を追加
     okuyama.imdst.client.UtilClientを作成し、実行時点でのDataNodeのデータをバックアップできるように機能追加
     この機能で作成したファイルをDataNode.propertiesのKeyManagerJob1.Option=の2個目の引数のファイルとして
-    DataNodeを実行するとデータが復元される
+    DataNodeを起動するとデータが復元される
     使い方)
     java -classpath ./:./classes okuyama.imdst.client.UtilClient bkup 127.0.0.1 5554 > bkupFor5554.dump
 
 
   ■Key値に紐付くTagを削除するメソッドを追加
     Key値とTag値の両方を指定することでKey値からTagの紐付きを削除する
+
     OkuyamaClientではremoveTagFromKey(Key, Tag)メソッド
 
 
-  ■転置インデックス作成機能と全文検索機能を追加
+  ■転置インデックス作成機能と全文検索機能を追加(検索Indexの全削除も含む)
+    !!! 本機能はベータ機能である !!!
     転置インデックスはN-gram方式とし、OkuyamaClientのsetValueAndCreateIndexでインデックス作成
-    (ユニグラム、バイグラム方式)
+    (ユニグラム、バイグラム、ヒストグラム方式。もしくはIndexの長さを指定)
     全文検索はOkuyamaClientのsearchValueを利用する。一度に複数の検索Wordを渡してAND検索とOR検索を指定できる。
     登録時に作成するIndexにPrefixを付加することが出来る。
     これにより、同じIndexを登録するデータ単位で別のものとして扱うことが出来る。
     検索時にPrefixを指定することで、同様のPrefixを指定してIndexを作成したデータのみ取得可能となる
+    ※Index作成、検索時両方とも文字コードはUTF-8のみ対応
+
+    OkuyamaClientでは以下のメソッドで操作する
+    ・Index作成　複数の引数違いのメソッドが存在するので、OkuyamaClientのJavaDocを参照してください。(ant javadoc で作成可能)
+      setValueAndCreateIndex 
+
+    ・Index検索メソッド　複数の引数違いのメソッドが存在するので、OkuyamaClientのJavaDocを参照してください。(ant javadoc で作成可能)
+      searchValue
+
+    ・作成したIndexのみ削除
+      removeSearchIndex　複数の引数違いのメソッドが存在するので、OkuyamaClientのJavaDocを参照してください。(ant javadoc で作成可能)
+
+
+  ■いくつかの処理性能向上と不具合の修正
 
 
 ========================================================================================================

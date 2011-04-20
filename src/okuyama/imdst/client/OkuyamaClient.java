@@ -163,6 +163,10 @@ public class OkuyamaClient {
 
     protected String transactionCode = "0";
 
+    public static final String SEARCH_VALUE_TYPE_AND = "1";
+
+    public static final String SEARCH_VALUE_TYPE_OR = "2";
+
     // データセパレータ文字列
     protected static final String sepStr = ImdstDefine.keyHelperClientParamSep;
 
@@ -1096,7 +1100,7 @@ public class OkuyamaClient {
      * @param keyStr Key値
      * @param value value値
      * @param indexPrefix 作成する検索IndexをグルーピングするPrefix文字列.この値と同様の値を指定してsearchValueメソッドを呼び出すと、グループに限定して全文検索が可能となる. 最大は128文字
-     * @param createIndexLen
+     * @param createIndexLen 作成するN-GramIndxのNの部分は指定(ヒストグラム以上のIndexを作成可能)
      * @return boolean 登録成否
      * @throws OkuyamaClientException
      */
@@ -1118,7 +1122,7 @@ public class OkuyamaClient {
      * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
      * @param value value値
      * @param indexPrefix 作成する検索IndexをグルーピングするPrefix文字列.この値と同様の値を指定してsearchValueメソッドを呼び出すと、グループに限定して全文検索が可能となる. 最大は128文字
-     * @param createIndexLen
+     * @param createIndexLen 作成するN-GramIndxのNの部分は指定(ヒストグラム以上のIndexを作成可能)
      * @return boolean 登録成否
      * @throws OkuyamaClientException
      */
@@ -3423,7 +3427,7 @@ public class OkuyamaClient {
      * 検索Index長さ指定なし<br>
      *
      * @param keyStr Key値
-     * @param indexPrefix
+     * @param indexPrefix 作成時に設定したIndexのPrefix値
      * @return boolean 削除成否
      * @throws OkuyamaClientException
      */
@@ -3437,7 +3441,7 @@ public class OkuyamaClient {
      * 検索Index長さ指定あり<br>
      *
      * @param keyStr Key値
-     * @param indexLength
+     * @param indexLength 作成時に指定した作成Indexの長さ指定
      * @return boolean 削除成否
      * @throws OkuyamaClientException
      */
@@ -3452,8 +3456,8 @@ public class OkuyamaClient {
      * 検索Index長さ指定あり<br>
      *
      * @param keyStr Key値
-     * @param indexPrefix
-     * @param indexLength
+     * @param indexPrefix 作成時に設定したIndexのPrefix値
+     * @param indexLength 作成時に指定した作成Indexの長さ指定
      * @return boolean 削除成否
      * @throws OkuyamaClientException
      */
@@ -4175,11 +4179,11 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
      * Prefxiなし.<br>
      *
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
-     * @param  searchType 1:AND検索　2:OR検索
+     * @param  searchType "1":AND検索　"2":OR検索
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
      * @throws OkuyamaClientException
      */
@@ -4189,12 +4193,12 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
      * Prefxiなし.<br>
      *
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
      * @param  searchType 1:AND検索　2:OR検索
-     * @param searchIndexLen
+     * @param searchIndexLen 検索するIndexをヒストグラムIndex以上にする場合にそのIndexの長さを指定
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
      * @throws OkuyamaClientException
      */
@@ -4204,7 +4208,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -4225,13 +4229,13 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
      * @param  searchType 1:AND検索　2:OR検索
      * @param  prefix 検索Index作成時に指定したPrefix値
-     * @param searchIndexLen
+     * @param searchIndexLen 検索するIndexをヒストグラムIndex以上にする場合にそのIndexの長さを指定
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
      * @throws OkuyamaClientException
      */
@@ -4247,7 +4251,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
      * Prefxiなし.<br>
      *
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -4262,12 +4266,12 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
      * Prefxiなし.<br>
      *
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
      * @param  searchType 1:AND検索　2:OR検索
-     * @param searchIndexLen
+     * @param searchIndexLen 検索するIndexをヒストグラムIndex以上にする場合にそのIndexの長さを指定
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
      * @throws OkuyamaClientException
      */
@@ -4277,13 +4281,13 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
      * @param  searchType 1:AND検索　2:OR検索
      * @param  prefix 検索Index作成時に指定したPrefix値
-     * @param searchIndexLen
+     * @param searchIndexLen 検索するIndexをヒストグラムIndex以上にする場合にそのIndexの長さを指定
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
      * @throws OkuyamaClientException
      */
@@ -4306,7 +4310,7 @@ public class OkuyamaClient {
 
             // 検索ワードに対するLengthチェック
             for (int idx = 0; idx < searchCharacterList.length; idx++) {
-                if (searchCharacterList[idx].length() > 32) throw new OkuyamaClientException("SearchCharacter MaxSize 32Character");
+                if (searchCharacterList[idx].length() > 128) throw new OkuyamaClientException("SearchCharacter MaxSize 128Character");
             }
 
             // 検索Typeを調整
@@ -4382,7 +4386,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -4398,13 +4402,13 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
      * @param  searchType 1:AND検索　2:OR検索
      * @param  prefix 検索Index作成時に指定したPrefix値
-     * @param  searchIndexLen
+     * @param  searchIndexLen 検索するIndexをヒストグラムIndex以上にする場合にそのIndexの長さを指定
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
      * @throws OkuyamaClientException
      */
