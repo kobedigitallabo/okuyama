@@ -2098,7 +2098,7 @@ start4 = System.nanoTime();
 
 end4 = System.nanoTime();
 end1 = System.nanoTime();
-System.out.println("Total=" + (end1 - start1) + " 2=" + (end2 - start2) + " 3=" + (end3 - start3) + "[" + timeList + "] 4=" + (end4 - start4));
+//System.out.println("Total=" + (end1 - start1) + " 2=" + (end2 - start2) + " 3=" + (end3 - start3) + "[" + timeList + "] 4=" + (end4 - start4));
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - searchValueIndex - Error", be);
         } catch (Exception e) {

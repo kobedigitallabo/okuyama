@@ -346,7 +346,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             // メソッド呼び出し
                             this.setTagdata(requestTag, requestKey, transactionCode);
                             break;
-                        case 4 :
+/*                        case 4 :
 
                             // Tag値でKey値を返す
                             requestHashCode = clientParameterList[1];
@@ -359,7 +359,20 @@ public class KeyManagerHelper extends AbstractHelper {
                                 retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                                 retParamBuf.append(retParams[2]);
                             }
+                            break;*/
+                        case 4 :
+
+                            // Tag値でKey値を返す
+                            requestHashCode = clientParameterList[1];
+                            // メソッド呼び出し
+                            retParams = this.getTagdata(requestHashCode, pw);
+                            if (retParams != null) {
+                                retParamBuf.append(retParams[0]);
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[1]);
+                            }
                             break;
+
                         case 5 :
 
                             // Key値を指定する事でデータを削除する
@@ -754,6 +767,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             pw.flush();
 
                         } else {
+
                             pw.println(retParamBuf.toString());
                             pw.flush();
                         }
@@ -1309,7 +1323,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
     // TagでKey値を取得する
-    private String[] getTagdata(String tag) {
+/*    private String[] getTagdata(String tag) {
         //logger.debug("KeyManagerHelper - getTagdata - start");
         String[] retStrs = null;
         try {
@@ -1339,6 +1353,37 @@ public class KeyManagerHelper extends AbstractHelper {
             }
         } catch (Exception e) {
             logger.error("KeyManagerHelper - getTagdata - Error", e);
+            retStrs = new String[2];
+            retStrs[0] = "4";
+            retStrs[1] = "false";
+        }
+        //logger.debug("KeyManagerHelper - getTagdata - end");
+        return retStrs;
+    }
+*/
+
+    // TagでKey値を取得する
+    private String[] getTagdata(String tag, PrintWriter pw) {
+        //logger.debug("KeyManagerHelper - getTagdata - start");
+        String[] retStrs = null;
+        try {
+            if(!this.keyMapManager.checkError()) {
+                if (this.keyMapManager.containsTagPair(tag)) {
+                    this.keyMapManager.getTagPair(tag, pw);
+                } else {
+
+                        retStrs = new String[2];
+                        retStrs[0] = "4";
+                        retStrs[1] = "false";
+                }
+            } else {
+                retStrs = new String[2];
+                retStrs[0] = "4";
+                retStrs[1] = "false";
+            }
+        } catch (Exception e) {
+            logger.error("KeyManagerHelper - getTagdata - Error", e);
+
             retStrs = new String[2];
             retStrs[0] = "4";
             retStrs[1] = "false";

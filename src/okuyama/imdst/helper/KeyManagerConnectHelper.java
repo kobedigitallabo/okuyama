@@ -61,6 +61,7 @@ public class KeyManagerConnectHelper extends AbstractHelper {
 
                 Socket socket = (Socket)param[0];
                 PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
+                //PrintWriter pw = new PrintWriter(socket.getOutputStream());
                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));
 
                 Object[] clientMap = new Object[6];
