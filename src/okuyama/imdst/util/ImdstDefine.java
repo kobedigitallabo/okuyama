@@ -407,6 +407,10 @@ public class ImdstDefine {
 
     public volatile static String characterDecodeSetBySearch = "UTF-8";
 
+
+    // 検索Indexを1箇所のDataNodeに集中させないために同じIndex値であっても分散させる係数
+    public volatile static int searchIndexDistributedCount = 2;
+
     // ---- 分散アルゴリズム系 ---------------------------------------------------
     // 分散アルゴリズムにConsistentHashを使用した場合の仮想ノードの数
     public volatile static int consistentHashVirtualNode = 50;

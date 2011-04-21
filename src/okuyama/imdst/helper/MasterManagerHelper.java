@@ -95,6 +95,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // クライアントからのinitメソッド用返却パラメータ
     private static String[] initReturnParam = {"0", "true", new Integer(ImdstDefine.saveDataMaxSize).toString()};
 
+    // 検索Index作成用の辞書
+    private static ConcurrentHashMap searchIndexDictionary = new ConcurrentHashMap(500, 480, 1024);
+
 
     /**
      * Logger.<br>
@@ -410,8 +413,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             String sep = "";
                             StringBuilder requestKeysBuf = new StringBuilder();
                             ArrayList requestKeyList = new ArrayList();
-                            
+
                             for (; mIdx < (clientParameterList.length - 1); mIdx++) {
+
                                 innerIdx++;
 
                                 requestKeysBuf.append(sep);
@@ -593,6 +597,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // setKeyValueメソッドにさらにインデックス用のPrefixを最後尾文字列としてAppendしたプロトコル(指定なしは(B))
                             this.longReadTimeout = true;
                             int createIndexLen = 4;
+                            int createIndexMinLen = 0;
                             if (clientParameterList.length > 6) {
                                 try {
                                     createIndexLen = Integer.parseInt(clientParameterList[6]) + 1;
@@ -601,7 +606,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 }
                             }
 
-                            retParams = this.setKeyValueAndCreateIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5], createIndexLen);
+                            if (clientParameterList.length > 7) {
+                                try {
+                                    createIndexMinLen = Integer.parseInt(clientParameterList[7]) - 1;
+                                } catch (NumberFormatException nfe) {
+                                    createIndexMinLen = 0;
+                                }
+                            }
+
+                            retParams = this.setKeyValueAndCreateIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5], createIndexLen, createIndexMinLen);
                             break;
                         case 43 :
 
@@ -1033,10 +1046,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @param dataStr value値の文字列
      * @param indexPrefix 作成されたIndex(tag値)の先頭に付加する文字列
      * @param indexLength 作成するN-GramのNの部分を指定する
+     * @param indexMinLength 作成するN-GramのNの部分の最小値
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] setKeyValueAndCreateIndex(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix, int indexLength) throws BatchException {
+    private String[] setKeyValueAndCreateIndex(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix, int indexLength, int indexMinLength) throws BatchException {
         // TODO:Test
         String[] retStrs = new String[3];
 
@@ -1086,15 +1100,17 @@ System.out.println("indexLength=[" + indexLength + "]");
 
 
 
-                        String oldPrefix = (((keyStr.hashCode() << 1) >>> 1) % 8) + "_" + indexPrefix + "_";
+                        String oldPrefix = (((keyStr.hashCode() << 1) >>> 1) % ImdstDefine.searchIndexDistributedCount) + "_" + indexPrefix + "_";
 
                         String oldRealKeyStr = new String(oldTestBytes, ImdstDefine.characterDecodeSetBySearch);
 
                         // ユニグラム、バイグラムまで
                         // ユニグラムは漢字のみ対象
-                        for (int typeIdx = 1; typeIdx < indexLength; typeIdx++) {
+                        // N-GramのNを決めるループ
+                        
+                        for (int typeIdx = indexMinLength; typeIdx < indexLength; typeIdx++) {
                             try {
-
+                                // 文字列の最後まで繰り返すループ
                                 for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
                                     String checkStr = oldRealKeyStr.substring(i, i+typeIdx);
 
@@ -1122,12 +1138,12 @@ System.out.println("indexLength=[" + indexLength + "]");
                 String strIdx = "";
 
 
-                String prefix = (((keyStr.hashCode() << 1) >>> 1) % 8) + "_" + indexPrefix + "_";
+                String prefix = (((keyStr.hashCode() << 1) >>> 1) % ImdstDefine.searchIndexDistributedCount) + "_" + indexPrefix + "_";
                 String realKeyStr = new String(testBytes, ImdstDefine.characterDecodeSetBySearch);
 
                 // ユニグラム、バイグラム、ヒストグラムまで
                 // ユニグラムは漢字のみ対象
-                for (int typeIdx = 1; typeIdx < indexLength; typeIdx++) {
+                for (int typeIdx = indexMinLength; typeIdx < indexLength; typeIdx++) {
                     try {
 
                         for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
@@ -1727,8 +1743,17 @@ System.out.println("indexLength=[" + indexLength + "]");
         StringBuilder retKeysBuf = new StringBuilder();
         String retKeysSep = "";
         try {
-
-            if (indexStrs.length() < 1)  {
+long start1 = 0L;
+long start2 = 0L;
+long start3 = 0L;
+long start4 = 0L;
+long end1 = 0L;
+long end2 = 0L;
+long end3 = 0L;
+long end4 = 0L;
+ArrayList timeList = new ArrayList(5);
+start1 = System.nanoTime();
+           if (indexStrs.length() < 1)  {
                 // 失敗
                 retStrs[0] = "43";
                 retStrs[1] = "false";
@@ -1737,7 +1762,7 @@ System.out.println("indexLength=[" + indexLength + "]");
                 return retStrs;
             }
             //long start1 = System.nanoTime();
-
+start2 = System.nanoTime();
             // Prefixを調整
             if (indexPrefix.equals(ImdstDefine.imdstBlankStrData)) indexPrefix = "";
 
@@ -1793,15 +1818,16 @@ System.out.println("indexLength=[" + indexLength + "]");
                 // デコード済みキーワードを蓄える
                 decodeWorkKeywords.add(workStr);
 
-                String[] singleWordList = new String[8];
-                for (int i = 0; i < 8; i++) {
+                String[] singleWordList = new String[ImdstDefine.searchIndexDistributedCount];
+                for (int i = 0; i < ImdstDefine.searchIndexDistributedCount; i++) {
 
                     singleWordList[i] = new String(BASE64EncoderStream.encode((i + "_" + indexPrefix + "_" + keyword).getBytes(ImdstDefine.characterDecodeSetBySearch)));
                 }
                 allSearchWordList.add(singleWordList);
                 fullMatchList.add(new Boolean(fullMatch));
             }
-
+end2 = System.nanoTime();
+start3 = System.nanoTime();
             HashMap retMap = new HashMap(256);
             HashMap fullMatchKeyMap = new HashMap(256);
 
@@ -1812,7 +1838,10 @@ System.out.println("indexLength=[" + indexLength + "]");
                 boolean fullMatchFlg = ((Boolean)fullMatchList.get(idx)).booleanValue();
 
                 for (int i = 0; i < singleWordList.length; i++) {
+long startXX = System.nanoTime();
                     String[] ret = this.getTagKeys(singleWordList[i], true);
+long endYY = System.nanoTime();
+timeList.add(new Long((endYY - startXX)));
                     if (ret[0].equals("4") && ret[1].equals("true")) {
                         // 該当あり
                         String targetKeysStr = ret[2];
@@ -1829,7 +1858,8 @@ System.out.println("indexLength=[" + indexLength + "]");
                     }
                 }
             }
-
+end3 = System.nanoTime();
+start4 = System.nanoTime();
             //long end2 = System.nanoTime();
 
             Map targetSumKeysMap = new HashMap();
@@ -1999,8 +2029,6 @@ System.out.println("indexLength=[" + indexLength + "]");
                 retStrs[0] = "43";
 
                 // 完全に検索Keywordが一致したものを連結
-                //System.out.println("111111111111111111111");
-                //System.out.println(fullMatchKeyMap);
 
                 if (fullMatchKeyMap.size() > 0) {
 
@@ -2040,8 +2068,6 @@ System.out.println("indexLength=[" + indexLength + "]");
                         fullMatchKeySep = ":";
                     }
 
-                    //System.out.println("222222222222222222222222");
-                    //System.out.println(fullMatchKeyMap);
                     Set fullMatchEntrySet = fullMatchKeyMap.entrySet();
                     Iterator fullMatchEntryIte = fullMatchEntrySet.iterator(); 
 
@@ -2070,6 +2096,9 @@ System.out.println("indexLength=[" + indexLength + "]");
             //long end1 = System.nanoTime();
             //System.out.println("Time2=" + (end2 - start2) + " Time1=" + (end1 - start1));
 
+end4 = System.nanoTime();
+end1 = System.nanoTime();
+System.out.println("Total=" + (end1 - start1) + " 2=" + (end2 - start2) + " 3=" + (end3 - start3) + "[" + timeList + "] 4=" + (end4 - start4));
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - searchValueIndex - Error", be);
         } catch (Exception e) {
@@ -2581,7 +2610,7 @@ System.out.println("indexLength=[" + indexLength + "]");
 
                 String oldSIdx1 = null;
 
-                String oldPrefix = (((keyStr.hashCode() << 1) >>> 1) % 8) + "_" + indexPrefix + "_";
+                String oldPrefix = (((keyStr.hashCode() << 1) >>> 1) % ImdstDefine.searchIndexDistributedCount) + "_" + indexPrefix + "_";
 
                 String oldRealKeyStr = new String(oldTestBytes, ImdstDefine.characterDecodeSetBySearch);
 
@@ -3081,6 +3110,7 @@ System.out.println("indexLength=[" + indexLength + "]");
 
 
             // 取得実行
+
             if (keyNodeInfo.length == 3) {
                 keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
             } else if (keyNodeInfo.length == 6) {
@@ -3088,7 +3118,6 @@ System.out.println("indexLength=[" + indexLength + "]");
             } else if (keyNodeInfo.length == 9) {
                 keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
             }
-
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
             // そちらのルールでのデータ格納場所も調べる
@@ -3377,11 +3406,14 @@ System.out.println("indexLength=[" + indexLength + "]");
                         this.getSendData.append(ImdstDefine.keyHelperClientParamSep);
                         this.getSendData.append(this.stringCnv(key));
                         sendStr = this.getSendData.toString();
+long start = System.nanoTime();
                         keyNodeConnector.println(this.getSendData.toString());
                         keyNodeConnector.flush();
 
                         // 返却値取得
                         String retParam = keyNodeConnector.readLine(sendStr);
+long end = System.nanoTime();
+System.out.println((end - start));
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定

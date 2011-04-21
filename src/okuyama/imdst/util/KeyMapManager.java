@@ -1251,12 +1251,12 @@ public class KeyMapManager extends Thread {
         String lastSetTime = "";
         String counterSep = "";
         StringBuilder ret = new StringBuilder();
-        
+
         if (!blocking) {
 
             int counter = 0;
 
-            
+
             // Tagのキー値を連結
             for (int idx = 0; idx < ImdstDefine.tagRegisterParallelBucket; idx=idx+ImdstDefine.tagBucketMaxLink) {
                 keyStrs = null;
