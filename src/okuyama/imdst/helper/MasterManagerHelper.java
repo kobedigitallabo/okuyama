@@ -1743,17 +1743,7 @@ System.out.println("indexLength=[" + indexLength + "]");
         StringBuilder retKeysBuf = new StringBuilder();
         String retKeysSep = "";
         try {
-long start1 = 0L;
-long start2 = 0L;
-long start3 = 0L;
-long start4 = 0L;
-long end1 = 0L;
-long end2 = 0L;
-long end3 = 0L;
-long end4 = 0L;
-ArrayList timeList = new ArrayList(5);
-start1 = System.nanoTime();
-           if (indexStrs.length() < 1)  {
+            if (indexStrs.length() < 1)  {
                 // 失敗
                 retStrs[0] = "43";
                 retStrs[1] = "false";
@@ -1761,8 +1751,7 @@ start1 = System.nanoTime();
                 retStrs[3] = "";
                 return retStrs;
             }
-            //long start1 = System.nanoTime();
-start2 = System.nanoTime();
+
             // Prefixを調整
             if (indexPrefix.equals(ImdstDefine.imdstBlankStrData)) indexPrefix = "";
 
@@ -1805,43 +1794,39 @@ start2 = System.nanoTime();
 
                         // ユニグラム
                         keyword = workStr;
-
                     }
                 }
+
                 // 検索対象か調べる
-
-                if(SystemUtil.checkNoIndexCharacter(keyword)) {
-
-                    continue;
-                }
+                if(SystemUtil.checkNoIndexCharacter(keyword)) continue;
 
                 // デコード済みキーワードを蓄える
                 decodeWorkKeywords.add(workStr);
 
                 String[] singleWordList = new String[ImdstDefine.searchIndexDistributedCount];
+                StringBuilder workBuf = new StringBuilder(256);
                 for (int i = 0; i < ImdstDefine.searchIndexDistributedCount; i++) {
 
-                    singleWordList[i] = new String(BASE64EncoderStream.encode((i + "_" + indexPrefix + "_" + keyword).getBytes(ImdstDefine.characterDecodeSetBySearch)));
+                    workBuf.delete(0, 256);
+                    workBuf.append(i).append("_").append(indexPrefix).append("_").append(keyword);
+                    singleWordList[i] = new String(BASE64EncoderStream.encode((workBuf.toString()).getBytes(ImdstDefine.characterDecodeSetBySearch)));
                 }
                 allSearchWordList.add(singleWordList);
                 fullMatchList.add(new Boolean(fullMatch));
             }
-end2 = System.nanoTime();
-start3 = System.nanoTime();
-            HashMap retMap = new HashMap(256);
-            HashMap fullMatchKeyMap = new HashMap(256);
 
-            //long start2 = System.nanoTime();
+            HashMap retMap = new HashMap(512);
+            HashMap fullMatchKeyMap = new HashMap(512);
 
             for (int idx = 0; idx < allSearchWordList.size(); idx++) {
+
                 String[] singleWordList = (String[])allSearchWordList.get(idx);
                 boolean fullMatchFlg = ((Boolean)fullMatchList.get(idx)).booleanValue();
 
                 for (int i = 0; i < singleWordList.length; i++) {
-long startXX = System.nanoTime();
+
                     String[] ret = this.getTagKeys(singleWordList[i], true);
-long endYY = System.nanoTime();
-timeList.add(new Long((endYY - startXX)));
+
                     if (ret[0].equals("4") && ret[1].equals("true")) {
                         // 該当あり
                         String targetKeysStr = ret[2];
@@ -1858,12 +1843,10 @@ timeList.add(new Long((endYY - startXX)));
                     }
                 }
             }
-end3 = System.nanoTime();
-start4 = System.nanoTime();
-            //long end2 = System.nanoTime();
 
             Map targetSumKeysMap = new HashMap();
             Map targetNodeInfoMap = new HashMap();
+
             // 該当データ次第で処理分岐
             if (retMap.size() > 0 || (fullMatchKeyMap.size() > 0 && workKeywords.length > 1 && searchType.equals("1"))) {
 
@@ -2093,12 +2076,7 @@ start4 = System.nanoTime();
                 retStrs[1] = "false";
                 retStrs[2] = "";
             }
-            //long end1 = System.nanoTime();
-            //System.out.println("Time2=" + (end2 - start2) + " Time1=" + (end1 - start1));
 
-end4 = System.nanoTime();
-end1 = System.nanoTime();
-//System.out.println("Total=" + (end1 - start1) + " 2=" + (end2 - start2) + " 3=" + (end3 - start3) + "[" + timeList + "] 4=" + (end4 - start4));
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - searchValueIndex - Error", be);
         } catch (Exception e) {
@@ -3406,14 +3384,15 @@ end1 = System.nanoTime();
                         this.getSendData.append(ImdstDefine.keyHelperClientParamSep);
                         this.getSendData.append(this.stringCnv(key));
                         sendStr = this.getSendData.toString();
-long start = System.nanoTime();
+//long start = System.nanoTime();
                         keyNodeConnector.println(this.getSendData.toString());
                         keyNodeConnector.flush();
 
                         // 返却値取得
                         String retParam = keyNodeConnector.readLine(sendStr);
-long end = System.nanoTime();
-System.out.println((end - start));
+
+//long end = System.nanoTime();
+//System.out.println("Time=" + (end - start) + " Length=" + retParam.length());
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
