@@ -1289,9 +1289,10 @@ public class KeyMapManager extends Thread {
 
                             pw.print(tmpSep);
         
+
                             setTimeSplitWork = tmpStr.split(ImdstDefine.setTimeParamSep);
         
-                            if (setTimeSplitWork.length > 1) lastSetTime = setTimeSplitWork[1];
+                            if (lastSetTime != null && setTimeSplitWork.length > 1) lastSetTime = setTimeSplitWork[1];
         
                             pw.print(setTimeSplitWork[0]);
                             tmpSep = KeyMapManager.tagKeySep;
@@ -1307,6 +1308,7 @@ public class KeyMapManager extends Thread {
                     counter++;
                     
                 }
+
                 if (isMatch) pw.flush();
             }
         }

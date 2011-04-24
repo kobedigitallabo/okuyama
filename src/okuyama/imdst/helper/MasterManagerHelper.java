@@ -3384,15 +3384,16 @@ System.out.println("indexLength=[" + indexLength + "]");
                         this.getSendData.append(ImdstDefine.keyHelperClientParamSep);
                         this.getSendData.append(this.stringCnv(key));
                         sendStr = this.getSendData.toString();
-//long start = System.nanoTime();
+
+                        //long start = System.nanoTime();
                         keyNodeConnector.println(this.getSendData.toString());
                         keyNodeConnector.flush();
 
                         // 返却値取得
                         String retParam = keyNodeConnector.readLine(sendStr);
 
-//long end = System.nanoTime();
-//System.out.println("Time=" + (end - start) + " Length=" + retParam.length());
+                        //long end = System.nanoTime();
+                        //System.out.println("Time=" + (end - start) + " Length=" + retParam.length());
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定

@@ -365,7 +365,12 @@ public class KeyManagerHelper extends AbstractHelper {
                             // Tag値でKey値を返す
                             requestHashCode = clientParameterList[1];
                             // メソッド呼び出し
+                            //long start = System.nanoTime();
                             retParams = this.getTagdata(requestHashCode, pw);
+
+                            //long end = System.nanoTime();
+                            //System.out.println("Time=" + (end - start));
+
                             if (retParams != null) {
                                 retParamBuf.append(retParams[0]);
                                 retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
