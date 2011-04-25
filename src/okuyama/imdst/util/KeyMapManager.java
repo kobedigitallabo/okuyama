@@ -1240,7 +1240,7 @@ public class KeyMapManager extends Thread {
 
 
     // Tagを指定することでKeyリストを返す
-    public String getTagPair(String tag, PrintWriter pw) {
+/*    public String getTagPair(String tag, PrintWriter pw) {
         String keyStrs = "";
         String[] setTimeSplitWork = null;
 
@@ -1330,8 +1330,8 @@ public class KeyMapManager extends Thread {
         } 
         return null;
     }
+*/
 
-/*
     public String getTagPair(String tag) {
         String keyStrs = "";
         String[] setTimeSplitWork = null;
@@ -1420,7 +1420,7 @@ public class KeyMapManager extends Thread {
         } 
         return keyStrs;
     }
-*/
+
 
     // Tagを指定することでTagを消す
     public String removeTagRelation(String tag, String transactionCode) throws BatchException {

@@ -434,22 +434,33 @@ public class SystemUtil {
 
         synchronized (compressSync) {
             if (valueCompresserPool == null) {
-                if (ImdstDefine.saveValueCompress) {
+
+                
+                valueCompresserPool = new ConcurrentLinkedQueue();
+                valueDecompresserPool = new ConcurrentLinkedQueue();
+                
+                for (int i = 0; i < ImdstDefine.valueCompresserPoolSize; i++) {
+                    Deflater compresser = new Deflater();
+                    compresser.setLevel(ImdstDefine.valueCompresserLevel);
+                    valueCompresserPool.add(compresser);
                     
-                    valueCompresserPool = new ConcurrentLinkedQueue();
-                    valueDecompresserPool = new ConcurrentLinkedQueue();
-                    
-                    for (int i = 0; i < ImdstDefine.valueCompresserPoolSize; i++) {
-                        Deflater compresser = new Deflater();
-                        compresser.setLevel(ImdstDefine.valueCompresserLevel);
-                        valueCompresserPool.add(compresser);
-                        
-                        Inflater decompresser = new Inflater();
-                        valueDecompresserPool.add(decompresser);
-                    }
-                } 
+                    Inflater decompresser = new Inflater();
+                    valueDecompresserPool.add(decompresser);
+                }
             }
         }
+    }
+
+
+    /**
+     * Value用圧縮処理.<br>
+     *
+     * @param src
+     * @return byte[]
+     */
+    public static byte[] valueCompress(byte[] src) {
+        if (!ImdstDefine.saveValueCompress) return src;
+        return dataCompress(src);
     }
 
 
@@ -459,8 +470,7 @@ public class SystemUtil {
      * @param src
      * @return byte[]
      */
-    public static byte[] valueCompress(byte[] src) {
-        if (!ImdstDefine.saveValueCompress) return src;
+    public static byte[] dataCompress(byte[] src) {
 
         if (valueCompresserPool == null) initValueCompress();
 
@@ -491,13 +501,27 @@ public class SystemUtil {
 
 
     /**
-     * 圧縮解除処理.<br>
+     * Value圧縮解除処理.<br>
      *
      * @param src
      * @return byte[]
      */
     public static byte[] valueDecompress(byte[] src) {
         if (!ImdstDefine.saveValueCompress) return src;
+        return dataDecompress(src);
+    }
+
+
+    /**
+     * 圧縮解除処理.<br>
+     *
+     * @param src
+     * @return byte[]
+     */
+    public static byte[] dataDecompress(byte[] src) {
+
+        if (valueCompresserPool == null) initValueCompress();
+
         Inflater decompresser = (Inflater)valueDecompresserPool.poll();
         if (decompresser == null) {
             decompresser = new Inflater();

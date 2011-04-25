@@ -3390,10 +3390,8 @@ System.out.println("indexLength=[" + indexLength + "]");
                         keyNodeConnector.flush();
 
                         // 返却値取得
-                        String retParam = keyNodeConnector.readLine(sendStr);
-
+                        String retParam = new String(SystemUtil.valueDecompress(BASE64DecoderStream.decode((keyNodeConnector.readLine(sendStr)).getBytes())));
                         //long end = System.nanoTime();
-                        //System.out.println("Time=" + (end - start) + " Length=" + retParam.length());
 
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定

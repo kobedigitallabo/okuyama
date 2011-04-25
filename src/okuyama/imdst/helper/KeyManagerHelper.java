@@ -17,6 +17,7 @@ import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.util.protocol.*;
 import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.SystemUtil;
 
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
@@ -346,7 +347,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             // メソッド呼び出し
                             this.setTagdata(requestTag, requestKey, transactionCode);
                             break;
-/*                        case 4 :
+                        case 4 :
 
                             // Tag値でKey値を返す
                             requestHashCode = clientParameterList[1];
@@ -359,8 +360,9 @@ public class KeyManagerHelper extends AbstractHelper {
                                 retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                                 retParamBuf.append(retParams[2]);
                             }
-                            break;*/
-                        case 4 :
+                            retParamBuf = new StringBuilder(new String(BASE64EncoderStream.encode(SystemUtil.dataCompress(retParamBuf.toString().getBytes()))));
+                            break;
+/*                        case 4 :
 
                             // Tag値でKey値を返す
                             requestHashCode = clientParameterList[1];
@@ -377,7 +379,7 @@ public class KeyManagerHelper extends AbstractHelper {
                                 retParamBuf.append(retParams[1]);
                             }
                             break;
-
+*/
                         case 5 :
 
                             // Key値を指定する事でデータを削除する
@@ -1328,7 +1330,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
     // TagでKey値を取得する
-/*    private String[] getTagdata(String tag) {
+    private String[] getTagdata(String tag) {
         //logger.debug("KeyManagerHelper - getTagdata - start");
         String[] retStrs = null;
         try {
@@ -1365,10 +1367,10 @@ public class KeyManagerHelper extends AbstractHelper {
         //logger.debug("KeyManagerHelper - getTagdata - end");
         return retStrs;
     }
-*/
+
 
     // TagでKey値を取得する
-    private String[] getTagdata(String tag, PrintWriter pw) {
+/*    private String[] getTagdata(String tag, PrintWriter pw) {
         //logger.debug("KeyManagerHelper - getTagdata - start");
         String[] retStrs = null;
         try {
@@ -1396,7 +1398,7 @@ public class KeyManagerHelper extends AbstractHelper {
         //logger.debug("KeyManagerHelper - getTagdata - end");
         return retStrs;
     }
-
+*/
 
     // Keyに紐付いている指定のTagを外す
     private String[] removeTargetTagInKey(String tag, String key, String transactionCode) {
