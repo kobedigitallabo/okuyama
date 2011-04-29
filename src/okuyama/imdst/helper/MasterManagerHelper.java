@@ -1807,7 +1807,7 @@ System.out.println("indexLength=[" + indexLength + "]");
                 StringBuilder workBuf = new StringBuilder(256);
                 for (int i = 0; i < ImdstDefine.searchIndexDistributedCount; i++) {
 
-                    workBuf.delete(0, 256);
+                    workBuf.delete(0, 1024);
                     workBuf.append(i).append("_").append(indexPrefix).append("_").append(keyword);
                     singleWordList[i] = new String(BASE64EncoderStream.encode((workBuf.toString()).getBytes(ImdstDefine.characterDecodeSetBySearch)));
                 }

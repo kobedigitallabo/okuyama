@@ -1132,6 +1132,28 @@ public class OkuyamaClient {
         return this.setValueAndCreateIndex(keyStr, null, value, indexPrefix, createIndexLen, createIndexLenMin);
     }
 
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * 登録と同時にValueの検索Indexを作成する<br>
+     * 検索Indexを作成するので通常のSetに比べて時間がかかる.<br>
+     * 全文Indexが作成されるので、値は検索可能な文字を指定すること。例えばBASE64エンコードの値などの場合は<br>
+     * 検索時も同様にエンコードした値で検索する必要がある.<br>
+     * ※okuyamaは検索Index作成前に、同様のKey値で値が登録されている場合は、そのKey値で登録されているValue値の<br>
+     * 検索インデックスを削除してから登録が行われる.<br>
+     * Tag有り.<br>
+     *
+     * @param keyStr Key値
+     * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
+     * @param value value値
+     * @param indexPrefix 作成する検索IndexをグルーピングするPrefix文字列.この値と同様の値を指定してsearchValueメソッドを呼び出すと、グループに限定して全文検索が可能となる. 最大は128文字
+     * @param createIndexLen 作成するN-GramIndxのNの部分は指定(ヒストグラム以上のIndexを作成可能)
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValueAndCreateIndex(String keyStr, String[] tagStrs, String value, String indexPrefix) throws OkuyamaClientException {
+        return this.setValueAndCreateIndex(keyStr, tagStrs, value,  indexPrefix, 3, 1);
+
+    }
 
     /**
      * MasterNodeへデータを登録要求する.<br>
