@@ -442,10 +442,15 @@ public class TestSock {
 
                 long start = new Date().getTime();
                 for (int i = 0; i < Integer.parseInt(args[3]); i++) {
+
                     Object[] ret = okuyamaClient.getTagKeys(args[4], noExistsData);
+                long end = new Date().getTime();
+                System.out.println((end - start));
+
                     if (ret[0].equals("true")) {
                         // データ有り
                         keys = (String[])ret[1];
+                        System.out.println("ResultCount=" + keys.length);
                         /*for (int idx = 0; idx < keys.length; idx++) {
                             System.out.println(keys[idx]);
                         }*/
@@ -456,15 +461,13 @@ public class TestSock {
                     }
                 }
 
-                if (keys != null) {
+                /*if (keys != null) {
                     for (int ii = 0; ii < keys.length; ii++) {
                         System.out.println("Key=[" + keys[ii] + "]");
                         String[] ret = okuyamaClient.getValue(keys[ii]);
                         System.out.println("Value=[" + ret[1] + "]");
                     }
-                }
-                long end = new Date().getTime();
-                System.out.println((end - start));
+                }*/
                 okuyamaClient.close();
 
             } else if (args[0].equals("5")) {
@@ -1373,7 +1376,45 @@ public class TestSock {
                 end = new Date().getTime();
                 System.out.println((end - start));
                 okuyamaClient.close();
+            } else if (args[0].equals("28.2")) {
 
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを取得(Tagでの取得)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] keys = null;
+                String[] searchCharList = args[3].split(":");
+                long start = new Date().getTime();
+
+                Object[] ret = okuyamaClient.searchValue(searchCharList, args[4], args[5]);
+                long end = new Date().getTime();
+
+                if (ret[0].equals("true")) {
+                    // データ有り
+                    System.out.println((end - start) + " mille");
+                    keys = (String[])ret[1];
+                    System.out.println("Result Count[" + keys.length + "]");
+                    /*for (int idx = 0; idx < keys.length; idx++) {
+                        System.out.println(keys[idx]);
+                    }*/
+                } else if (ret[0].equals("false")) {
+                    System.out.println("データなし");
+                } else if (ret[0].equals("error")) {
+                    System.out.println(ret[1]);
+                }
+
+/*
+                if (keys != null) {
+                    for (int ii = 0; ii < keys.length; ii++) {
+                        System.out.println("Key=[" + keys[ii] + "]");
+                        ret = okuyamaClient.getValue(keys[ii]);
+                        System.out.println("Value=[" + ret[1] + "]");
+                    }
+                }
+                */
+                end = new Date().getTime();
+                System.out.println((end - start));
+                okuyamaClient.close();
             } 
             
 

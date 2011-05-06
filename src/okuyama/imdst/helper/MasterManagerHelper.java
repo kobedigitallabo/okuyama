@@ -1818,10 +1818,12 @@ System.out.println("indexLength=[" + indexLength + "]");
             HashMap retMap = new HashMap(512);
             HashMap fullMatchKeyMap = new HashMap(512);
 
-            for (int idx = 0; idx < allSearchWordList.size(); idx++) {
+            if (searchType.equals("1")) {
 
-                String[] singleWordList = (String[])allSearchWordList.get(idx);
-                boolean fullMatchFlg = ((Boolean)fullMatchList.get(idx)).booleanValue();
+                // AND検索の場合は1つのWordで検索出来たものをベースに検索を行う
+
+                String[] singleWordList = (String[])allSearchWordList.get(0);
+                boolean fullMatchFlg = ((Boolean)fullMatchList.get(0)).booleanValue();
 
                 for (int i = 0; i < singleWordList.length; i++) {
 
@@ -1842,7 +1844,45 @@ System.out.println("indexLength=[" + indexLength + "]");
                         }
                     }
                 }
+
+                if (retMap.size() == 0 && fullMatchKeyMap.size() == 0) {
+
+                    // 該当データなし
+                    retStrs[0] = "43";
+                    retStrs[1] = "false";
+                    retStrs[2] = "";
+                    return retStrs;
+                }
+            } else {
+
+                // OR検索の場合は全てのWordで検索出来たものをマージしてそれをベースに検索を行う
+                for (int idx = 0; idx < allSearchWordList.size(); idx++) {
+
+                    String[] singleWordList = (String[])allSearchWordList.get(idx);
+                    boolean fullMatchFlg = ((Boolean)fullMatchList.get(idx)).booleanValue();
+
+                    for (int i = 0; i < singleWordList.length; i++) {
+
+                        String[] ret = this.getTagKeys(singleWordList[i], true);
+
+                        if (ret[0].equals("4") && ret[1].equals("true")) {
+                            // 該当あり
+                            String targetKeysStr = ret[2];
+                            String[] targetKeyList = targetKeysStr.split(ImdstDefine.imdstTagKeyAppendSep);
+                            for (int ii = 0; ii < targetKeyList.length; ii++) {
+
+                                if (!retMap.containsKey(targetKeyList[ii]) && fullMatchFlg == true) {
+                                    fullMatchKeyMap.put(targetKeyList[ii], "");
+                                } else {
+                                    retMap.put(targetKeyList[ii], "");
+                                    if (fullMatchKeyMap.containsKey(targetKeyList[ii])) fullMatchKeyMap.remove(targetKeyList[ii]);
+                                }
+                            }
+                        }
+                    }
+                }
             }
+
 
             Map targetSumKeysMap = new HashMap();
             Map targetNodeInfoMap = new HashMap();

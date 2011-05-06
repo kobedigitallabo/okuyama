@@ -48,7 +48,7 @@ public class KeyMapManager extends Thread {
     private Integer[] parallelSyncObjs = new Integer[KeyMapManager.parallelSize];
 
     // tagsetのシンクロオブジェクト
-    private static final int tagSetParallelSize = 5000;
+    private static final int tagSetParallelSize = 300;
     private Integer[] tagSetParallelSyncObjs = new Integer[KeyMapManager.tagSetParallelSize];
 
 
@@ -1028,6 +1028,8 @@ public class KeyMapManager extends Thread {
                 String tagCnv = null;
                 String lastTagCnv = null;
                 int dataPutCounter = 0;
+                int dataRegistTarget = -1;
+                String dataRegistTargetTagStr = null;
                 boolean firsrtRegist = true;
 
                 // Key値をValueのように扱うため、バージョン番号(ユニーク値)が付加されているので取り外す
@@ -1070,6 +1072,13 @@ public class KeyMapManager extends Thread {
                                         break;
                                     }
                                 }
+                            } else if (dataRegistTarget == -1) {
+
+                                // データを登録する隙間があるか調べる
+                                if ((keyStrs.getBytes().length + KeyMapManager.tagKeySep.getBytes().length + key.getBytes().length + 16) < ImdstDefine.tagValueAppendMaxSize) {
+                                    dataRegistTarget = counter;
+                                    dataRegistTargetTagStr = keyStrs;
+                                }
                             }
 
                             // 既に登録済み
@@ -1102,9 +1111,21 @@ public class KeyMapManager extends Thread {
                             this.setKeyPair(tagCnv, key, transactionCode);
                         } else {
 
+                            // 登録候補領域があるかどうか確認
+                            if (dataRegistTarget != -1) {
+
+                                tagCnv = KeyMapManager.tagStartStr + tag + "_" + dataRegistTarget + KeyMapManager.tagEndStr;
+
+                                if (dataRegistTargetTagStr.equals("*")) {
+                                    dataRegistTargetTagStr = key;
+                                } else {
+                                    dataRegistTargetTagStr = dataRegistTargetTagStr + KeyMapManager.tagKeySep + key;
+                                }
+                                this.setKeyPair(tagCnv, dataRegistTargetTagStr, transactionCode);
+
                             // 既に別のKeyが登録済みなので、そのキーにアペンドしても良いかを確認
                             // 登録時間の長さ(16)もプラス
-                            if ((keyStrs.getBytes().length + KeyMapManager.tagKeySep.getBytes().length + key.getBytes().length + 16) >= ImdstDefine.tagValueAppendMaxSize) {
+                            } else if ((keyStrs.getBytes().length + KeyMapManager.tagKeySep.getBytes().length + key.getBytes().length + 16) >= ImdstDefine.tagValueAppendMaxSize) {
 
                                 // 既にキー値が最大のサイズに到達しているので別のキーを生み出す
                                 counter++;
