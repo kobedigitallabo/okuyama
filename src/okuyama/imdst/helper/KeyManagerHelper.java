@@ -1522,13 +1522,14 @@ public class KeyManagerHelper extends AbstractHelper {
                             setTimeValues = workValues[0].split(ImdstDefine.setTimeParamSep);
                             tmpValue = setTimeValues[0];
                             String value = null;
+
                             // Value値を設定
                             if (tmpValue == null || tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
                                 value = "";
                             } else {
                                 value = new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.characterDecodeSetBySearch);
                             }
-                            
+
 
                             if (matchType.equals("1")) {
 
@@ -1555,6 +1556,7 @@ public class KeyManagerHelper extends AbstractHelper {
                                         } else {
                                             // 部分一致
                                             if (checkIdx == -1) {
+
                                                 matchFlg = false;
                                                 break;
                                             }

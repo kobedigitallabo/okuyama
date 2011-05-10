@@ -1061,6 +1061,7 @@ System.out.println("dataStr=[" + dataStr + "]");
 System.out.println("indexPrefix=[" + indexPrefix + "]");
 System.out.println("indexLength=[" + indexLength + "]");
 */
+
         try {
             if (true) {
                 // Key値チェック
@@ -1743,6 +1744,9 @@ System.out.println("indexLength=[" + indexLength + "]");
         StringBuilder retKeysBuf = new StringBuilder();
         String retKeysSep = "";
         try {
+
+System.out.println("indexStrs=[" + indexStrs);
+System.out.println("indexPrefix=[" + indexPrefix);
             if (indexStrs.length() < 1)  {
                 // 失敗
                 retStrs[0] = "43";
@@ -1886,7 +1890,8 @@ System.out.println("indexLength=[" + indexLength + "]");
 
             Map targetSumKeysMap = new HashMap();
             Map targetNodeInfoMap = new HashMap();
-
+System.out.println("retMap.size=" + retMap.size());
+System.out.println("fullMatchKeyMap.size=" + fullMatchKeyMap.size());
             // 該当データ次第で処理分岐
             if (retMap.size() > 0 || (fullMatchKeyMap.size() > 0 && workKeywords.length > 1 && searchType.equals("1"))) {
 
@@ -1982,6 +1987,7 @@ System.out.println("indexLength=[" + indexLength + "]");
                         buf.append(this.stringCnv(keys.toString()));
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(indexStrs);
+System.out.println(indexStrs);
                         buf.append(ImdstDefine.keyHelperClientParamSep);
                         buf.append(searchType);
 
@@ -2077,6 +2083,7 @@ System.out.println("indexLength=[" + indexLength + "]");
                 } else {
                     retStrs[1] = "false";
                 }
+
                 retStrs[2] = retKeysBuf.toString();
             } else if (fullMatchKeyMap.size() > 0) {
 

@@ -890,7 +890,20 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean setValue(String keyStr, String value) throws OkuyamaClientException {
-        return this.setValue(keyStr, null, value);
+        return this.setValue(keyStr, null, value, null);
+    }
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * Tagなし.<br>
+     *
+     * @param keyStr Key値
+     * @param value value値
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValue(String keyStr, String value, String encode) throws OkuyamaClientException {
+        return this.setValue(keyStr, null, value, encode);
     }
 
     /**
@@ -904,6 +917,20 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean setValue(String keyStr, String[] tagStrs, String value) throws OkuyamaClientException {
+        return this.setValue(keyStr, null, value, null);
+    }
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * Tag有り.<br>
+     *
+     * @param keyStr Key値
+     * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
+     * @param value value値
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValue(String keyStr, String[] tagStrs, String value, String encode) throws OkuyamaClientException {
         boolean ret = false; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -915,22 +942,35 @@ public class OkuyamaClient {
             // Byte Lenghtチェック
             if (tagStrs != null) {
                 for (int i = 0; i < tagStrs.length; i++) {
-                    if (tagStrs[i].getBytes().length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+                    if (encode == null) {
+                        if (tagStrs[i].getBytes().length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+                    } else {
+                        if (tagStrs[i].getBytes(encode).length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+                    }
                 }
             }
 
             if (value != null)
-                if (value.getBytes().length > maxValueSize) 
-                    throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
-
+                if(encode == null) {
+                    if (value.getBytes().length > maxValueSize) 
+                        throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
+                } else {
+                    if (value.getBytes(encode).length > maxValueSize) 
+                        throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
+                }
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
+
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.trim().equals(""))
                 throw new OkuyamaClientException("The blank is not admitted on a key");
 
-            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+            if (encode == null) {
+                if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+            } else {
+                if (keyStr.getBytes(encode).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+            }
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
@@ -939,7 +979,11 @@ public class OkuyamaClient {
 
                 // ValueをBase64でエンコード
 
-                encodeValue = new String(this.dataEncoding(value.getBytes()));
+                if (encode == null) {
+                    encodeValue = new String(this.dataEncoding(value.getBytes()));
+                } else {
+                    encodeValue = new String(this.dataEncoding(value.getBytes(encode)));
+                }
             }
 
 
@@ -964,10 +1008,18 @@ public class OkuyamaClient {
             } else {
 
                 // Tag数分連結
-                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
+                if (encode == null) {
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
+                } else {
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes(encode))));
+                }
                 for (int i = 1; i < tagStrs.length; i++) {
                     setValueServerReqBuf.append(tagKeySep);
-                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
+                    if (encode == null) {
+                        setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
+                    } else {
+                        setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes(encode))));
+                    }
                 }
             }
 
@@ -1014,7 +1066,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValue(keyStr, tagStrs, value);
+                    ret = this.setValue(keyStr, tagStrs, value, encode);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -1025,7 +1077,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValue(keyStr, tagStrs, value);
+                    ret = this.setValue(keyStr, tagStrs, value, encode);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -1036,7 +1088,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValue(keyStr, tagStrs, value);
+                    ret = this.setValue(keyStr, tagStrs, value, encode);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
