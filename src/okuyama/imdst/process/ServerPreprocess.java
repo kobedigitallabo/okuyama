@@ -129,6 +129,16 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+                    // -sidc
+                    if (startOptions[i].trim().equals("-sidc")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.searchIndexDistributedCount = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
 
 
                 }

@@ -917,7 +917,7 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean setValue(String keyStr, String[] tagStrs, String value) throws OkuyamaClientException {
-        return this.setValue(keyStr, null, value, null);
+        return this.setValue(keyStr, tagStrs, value, null);
     }
 
     /**
@@ -937,7 +937,6 @@ public class OkuyamaClient {
         String encodeValue = null;
         // 文字列バッファ初期化
         setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
-
         try {
             // Byte Lenghtチェック
             if (tagStrs != null) {
@@ -1408,6 +1407,209 @@ public class OkuyamaClient {
                 try {
                     this.autoConnect();
                     ret = this.setValueAndCreateIndex(keyStr, tagStrs, value, indexPrefix, createIndexLen);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * 検索用の辞書Indexを設定する.<br>
+     * 設定した辞書文字列がIndex作成要求を出したValueに存在した場合は作成される<br>
+     * 通常作成はN-Gramなので、ここでN-GramでのN文字以上の辞書文字列を設定すれば<br>
+     * 検索時に高速に検索される.<br>
+     * また検索時に辞書に存在する文字列を指定すれば高速に検索される.<br>
+     * 設定する文字列のエンコードはUTF-8固定<br>
+     *
+     * @param dictionaryStrList
+     * @return boolean true:登録成功 false:登録失敗
+     * @throws OkuyamaClientException
+     */
+    public boolean setDictionaryCharacters(String[] characterList) throws OkuyamaClientException {
+        boolean ret = false;
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            if (characterList == null || characterList.length < 1) {
+                throw new OkuyamaClientException("No Characters");
+            }
+
+
+            StringBuilder dictionaryBuf = new StringBuilder(50);
+            String dictionarySep = "";
+
+            for (int i = 0; i < characterList.length; i++) {
+                dictionaryBuf.append(dictionarySep);
+                dictionaryBuf.append(new String(this.dataEncoding(characterList[i].getBytes("UTF-8"))));
+                dictionarySep = "|";
+            }
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuilder();
+
+
+            // 処理番号連結
+            serverRequestBuf.append("50");
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+            // 辞書文字列結合
+            serverRequestBuf.append(dictionaryBuf.toString());
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("50")) {
+                if (serverRet[1].equals("true")) {
+
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity");
+            }
+        } catch (OkuyamaClientException ice) {
+
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setDictionaryCharacters(characterList);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setDictionaryCharacters(characterList);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setDictionaryCharacters(characterList);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+
+    /**
+     * 検索用の辞書Indexを全てクリアする.<br>
+     *
+     * @param dictionaryStrList
+     * @return boolean true:登録成功 false:登録失敗
+     * @throws OkuyamaClientException
+     */
+    public boolean clearDictionaryCharacters() throws OkuyamaClientException {
+        boolean ret = false;
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuilder();
+
+
+            // 処理番号連結
+            serverRequestBuf.append("50");
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+            // 辞書文字列結合
+            serverRequestBuf.append(OkuyamaClient.blankStr);
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("50")) {
+                if (serverRet[1].equals("true")) {
+
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity");
+            }
+        } catch (OkuyamaClientException ice) {
+
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.clearDictionaryCharacters();
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.clearDictionaryCharacters();
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.clearDictionaryCharacters();
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
@@ -4441,6 +4643,7 @@ public class OkuyamaClient {
 
             // 検索ワードに対するLengthチェック
             for (int idx = 0; idx < searchCharacterList.length; idx++) {
+
                 if (searchCharacterList[idx].length() > 128) throw new OkuyamaClientException("SearchCharacter MaxSize 128Character");
             }
 
@@ -4572,6 +4775,7 @@ public class OkuyamaClient {
                     String[] decKeys = new String[keys.length];
                     for (int i = 0; i < keys.length; i++) {
                         decKeys[i] = new String(this.dataDecoding(keys[i].getBytes(ImdstDefine.characterDecodeSetBySearch)));
+
                     }
                     ret[1] = decKeys;
 

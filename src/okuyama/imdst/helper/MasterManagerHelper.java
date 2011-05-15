@@ -26,6 +26,7 @@ import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
 
+
 /**
  * MasterNodeのメイン実行部分<br>
  *
@@ -96,8 +97,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private static String[] initReturnParam = {"0", "true", new Integer(ImdstDefine.saveDataMaxSize).toString()};
 
     // 検索Index作成用の辞書
-    private static ConcurrentHashMap searchIndexDictionary = new ConcurrentHashMap(500, 480, 1024);
-
+    private static ConcurrentHashMap searchIndexDictionaryMap = new ConcurrentHashMap(500, 480, 1024);
+    private static String[] searchIndexDictionaryList = new String[0];
+    private static boolean initDictionaryFlg = false;
 
     /**
      * Logger.<br>
@@ -105,9 +107,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private static ILogger logger = LoggerFactory.createLogger(MasterManagerHelper.class);
 
 
+
     // 初期化メソッド定義
     public void initHelper(String initValue) {
 
+        // TODO: 辞書テスト
+/*
+        searchIndexDictionaryMap.put("A", "");
+        searchIndexDictionaryMap.put("B", "");
+        searchIndexDictionaryList = new String[2];
+        searchIndexDictionaryList[0] = "A";
+        searchIndexDictionaryList[1] = "B";
+*/
         // データ一貫性モードの設定
         String consistencyModeStr = super.getPropertiesValue(ImdstDefine.Prop_DataConsistencyMode);
 
@@ -117,12 +128,29 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         // Isolationモードの設定
         if (StatusUtil.getIsolationMode()) {
+
             this.isolationMode = true;
             String isolationPrefixStr = StatusUtil.getIsolationPrefix();
             this.isolationPrefixLength = new Integer(isolationPrefixStr.length()).shortValue();
-
         }
 
+
+        // 辞書をセットする
+        // 取りあえずMasterNode.propertiesファイルにする
+        if (initDictionaryFlg == false) {
+
+            initDictionaryFlg = true;
+            String dictonaryStr = super.getPropertiesValue(ImdstDefine.Prop_DictonaryCharacters);
+
+            if (dictonaryStr != null && !dictonaryStr.trim().equals("")) {
+
+                searchIndexDictionaryList = dictonaryStr.split("|");
+
+                for (int i = 0; i < searchIndexDictionaryList.length; i++) {
+                    searchIndexDictionaryMap.put(searchIndexDictionaryList[i], "");
+                }
+            }
+        }
     }
 
 
@@ -657,6 +685,41 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             }
                             retParams = this.removeSearchIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], removeIndexLen);
                             break;
+                        case 50 : 
+
+                            // 辞書をセットする
+                            // 辞書はUTF-8固定でBase64でデコードする
+                            // そのためUTF-8のみ利用可能
+                            // 複数のワードをセットする場合は、"|"区切りとする
+                            // 現在のWordを全てクリアする場合はブランクを転送する(ImdstDefine.imdstBlankStrData)
+                            String dictonaryStr = clientParameterList[1];
+
+                            if (dictonaryStr.trim().length() > 0) {
+
+                                if (dictonaryStr.equals(ImdstDefine.imdstBlankStrData)) {
+
+                                    searchIndexDictionaryMap = new ConcurrentHashMap(500, 480, 1024);
+                                    searchIndexDictionaryList = new String[0];
+                                } else {
+
+                                    byte[] dictionaryBytes = dictonaryStr.getBytes(ImdstDefine.characterDecodeSetBySearch);
+                                    String decodeDictonaryStr = new String(BASE64DecoderStream.decode(dictionaryBytes), ImdstDefine.characterDecodeSetBySearch);
+                                    searchIndexDictionaryList = decodeDictonaryStr.split("|");
+
+                                    for (int i = 0; i < searchIndexDictionaryList.length; i++) {
+                                        searchIndexDictionaryMap.put(searchIndexDictionaryList[i], "");
+                                    }
+                                }
+                                retParams = new String[2];
+                                retParams[0] = "50";
+                                retParams[1] = "true";
+                            } else {
+
+                                retParams = new String[2];
+                                retParams[0] = "50";
+                                retParams[1] = "false";
+                            }
+                            break;
                         case 90 :
 
                             // KeyNodeの使用停止をマーク
@@ -1054,13 +1117,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         // TODO:Test
         String[] retStrs = new String[3];
 
-/*System.out.println("keyStr=[" + keyStr + "]");
-System.out.println("tagStr=[" + tagStr + "]");
-System.out.println("transactionCode=[" + transactionCode + "]");
-System.out.println("dataStr=[" + dataStr + "]");
-System.out.println("indexPrefix=[" + indexPrefix + "]");
-System.out.println("indexLength=[" + indexLength + "]");
-*/
+        /*System.out.println("keyStr=[" + keyStr + "]");
+        System.out.println("tagStr=[" + tagStr + "]");
+        System.out.println("transactionCode=[" + transactionCode + "]");
+        System.out.println("dataStr=[" + dataStr + "]");
+        System.out.println("indexPrefix=[" + indexPrefix + "]");
+        System.out.println("indexLength=[" + indexLength + "]");
+        */
 
         try {
             if (true) {
@@ -1124,6 +1187,18 @@ System.out.println("indexLength=[" + indexLength + "]");
                                     String[] rmRet = this.removeTargetTagInKey(oldSIdx1, keyStr,"0");
                                 }
                             } catch (Exception inE) {}
+
+                            // 辞書情報をマッチ
+                            for (int i = 0; i < searchIndexDictionaryList.length; i++) {
+
+                                if (oldRealKeyStr.indexOf(searchIndexDictionaryList[i]) != -1) {
+
+                                    String checkStr = searchIndexDictionaryList[i];
+                                    oldSIdx1 = new String(BASE64EncoderStream.encode((oldPrefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
+
+                                    String[] rmRet = this.removeTargetTagInKey(oldSIdx1, keyStr,"0");
+                                }
+                            }
                         }
                     }
                 }
@@ -1143,6 +1218,7 @@ System.out.println("indexLength=[" + indexLength + "]");
                 String realKeyStr = new String(testBytes, ImdstDefine.characterDecodeSetBySearch);
 
                 // ユニグラム、バイグラム、ヒストグラムまで
+                // 辞書も行う
                 // ユニグラムは漢字のみ対象
                 for (int typeIdx = indexMinLength; typeIdx < indexLength; typeIdx++) {
                     try {
@@ -1159,6 +1235,20 @@ System.out.println("indexLength=[" + indexLength + "]");
                             appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
                         }
                     } catch (Exception inE) {}
+
+                    // 辞書情報をマッチして含まれる場合は追加
+                    // 辞書マッチの場合は禁則文字も含める
+                    for (int i = 0; i < searchIndexDictionaryList.length; i++) {
+                        if (realKeyStr.indexOf(searchIndexDictionaryList[i]) != -1) {
+
+                            String checkStr = searchIndexDictionaryList[i];
+
+                            sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
+
+                            strIdx = strIdx + appendTagSep + sIdx1;
+                            appendTagSep = ImdstDefine.imdstTagKeyAppendSep;
+                        }
+                    }
                 }
 
                 
@@ -1767,13 +1857,19 @@ System.out.println("indexLength=[" + indexLength + "]");
 
             for (int idx = 0; idx < workKeywords.length; idx++) {
                 boolean fullMatch = false;
+                boolean dictionaryMatch = false;
+
                 // デコードして復元
                 String workStr = new String(BASE64DecoderStream.decode(workKeywords[idx].getBytes(ImdstDefine.characterDecodeSetBySearch)), ImdstDefine.characterDecodeSetBySearch);
 
-
                 String keyword = "";
 
-                if (workStr.length() > searchIndexLength) {
+                // 辞書マッチから調べる
+                if (searchIndexDictionaryMap.containsKey(workStr)) {
+
+                    keyword = workStr;
+                    dictionaryMatch = true;
+                } else if (workStr.length() > searchIndexLength) {
 
                     // 指定サイズ
                     keyword = workStr.substring(0, searchIndexLength);
@@ -1803,7 +1899,8 @@ System.out.println("indexLength=[" + indexLength + "]");
                 }
 
                 // 検索対象か調べる
-                if(SystemUtil.checkNoIndexCharacter(keyword)) continue;
+                // 辞書マッチの場合は必ず対象
+                if(dictionaryMatch == false && SystemUtil.checkNoIndexCharacter(keyword)) continue;
 
                 // デコード済みキーワードを蓄える
                 decodeWorkKeywords.add(workStr);
@@ -1823,10 +1920,20 @@ System.out.println("indexLength=[" + indexLength + "]");
             HashMap retMap = new HashMap(512);
             HashMap fullMatchKeyMap = new HashMap(512);
 
+            // 検索ワードが全て検索除外の場合はここで終了
+            if (allSearchWordList.size() < 1) {
+
+                    // 該当データなし
+                    retStrs[0] = "43";
+                    retStrs[1] = "false";
+                    retStrs[2] = "";
+                    return retStrs;
+            }
+
+            // AND OR に合わせて処理分岐
             if (searchType.equals("1")) {
 
                 // AND検索の場合は1つのWordで検索出来たものをベースに検索を行う
-
                 String[] singleWordList = (String[])allSearchWordList.get(0);
                 boolean fullMatchFlg = ((Boolean)fullMatchList.get(0)).booleanValue();
 

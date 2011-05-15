@@ -183,6 +183,7 @@ public class ImdstDefine {
     public static final String Prop_MainMasterNodeInfo = "MainMasterNodeInfo";
     public static final String Prop_AllMasterNodeInfo = "AllMasterNodeInfo";
     public static final String Prop_DistributionAlgorithm = "DistributionAlgorithm";
+    public static final String Prop_DictonaryCharacters = "DictonaryCharacters";
     public static final String Prop_MasterNodeMaxConnectParallelExecution = "MasterNodeMaxConnectParallelExecution";
     public static final String Prop_MasterNodeMaxConnectParallelQueue = "MasterNodeMaxConnectParallelQueue";
     public static final String Prop_MasterNodeMaxAcceptParallelExecution = "MasterNodeMaxAcceptParallelExecution";
