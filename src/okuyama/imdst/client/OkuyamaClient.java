@@ -392,10 +392,13 @@ public class OkuyamaClient {
 
             this.transactionCode = "0";
             if (this.pw != null) {
-                // 接続切断を通知
-                this.pw.println(connectExitStr);
-                this.pw.flush();
+                try {
 
+                    // 接続切断を通知
+                    this.pw.println(connectExitStr);
+                    this.pw.flush();
+                } catch (Exception e2) {
+                }
                 this.pw.close();
                 this.pw = null;
             }
