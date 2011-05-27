@@ -13,6 +13,7 @@ import okuyama.imdst.util.StatusUtil;
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
+import okuyama.imdst.util.serializemap.*;
 /**
  * データ格納Map.<br>
  *
@@ -29,6 +30,9 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
     private boolean allDataMemory = false;
 
+    private boolean useSerializeMap = true;
+
+
     // メモリ救済用
     // メモリ領域が枯渇した場合に使用する仮想領域
     private boolean urgentSaveMode = false;
@@ -44,12 +48,41 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
         if (memoryMode) {
 
             //mainMap  = new ConcurrentHashMap(size, upper, multi);
-            mainMap  = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
+            if (!ImdstDefine.useSerializeMap) {
+
+                mainMap  = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
+            } else {
+
+                if (size > 999999) {
+                    multi = 199999;
+                } else if (size > 599999) {
+                    multi =  99999;
+                } else {
+                    multi = size / 10 + 1;
+                }
+                mainMap  = new PartialSerializeMap(size, upper, multi, virtualStoreDirs);
+            }
             converter = new MemoryModeCoreValueCnv();
             this.allDataMemory = true;
         } else {
 
-            mainMap  = new ConcurrentHashMap(size, upper, multi);
+            //mainMap  = new ConcurrentHashMap(size, upper, multi);
+
+            if (!ImdstDefine.useSerializeMap) {
+
+                mainMap  = new ConcurrentHashMap(size, upper, multi);
+            } else {
+
+                if (size > 999999) {
+                    multi = 199999;
+                } else if (size > 599999) {
+                    multi =  99999;
+                } else {
+                    multi = size / 10 + 1;
+                }
+                mainMap  = new SerializeMap(size, upper, multi);
+            }
+
             converter = new PartialFileModeCoreValueCnv();
         }
 

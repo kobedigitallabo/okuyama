@@ -277,6 +277,9 @@ public class ImdstDefine {
 
 
     // ---- プログラム規定数値 -------------------------------------------------------------
+    // メモリ保存に利用するMapの種類指定 (true=SerializeMap(遅いが大量のデータ), false=通常のMap(速いが少量のデータ)) 
+    public volatile static boolean useSerializeMap = false;
+
     // 保存出来る、Key、Tag、Valueの最大長
     // Valueの最大長
     public volatile static int saveDataMaxSize = 1572864;

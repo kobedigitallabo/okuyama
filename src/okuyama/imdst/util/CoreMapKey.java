@@ -1,6 +1,6 @@
 package okuyama.imdst.util;
 
-
+import java.io.*;
 import java.util.*;
 
 /**
@@ -11,7 +11,7 @@ import java.util.*;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class CoreMapKey  {
+public class CoreMapKey implements Cloneable, Serializable {
 
     byte[] datas = null;
 

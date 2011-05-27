@@ -13,22 +13,24 @@ import okuyama.imdst.util.StatusUtil;
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
+import okuyama.imdst.util.serializemap.*;
 /**
  * ConcurrentHashMap拡張.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class PartialConcurrentHashMap extends ConcurrentHashMap implements Cloneable, Serializable {
+public class PartialSerializeMap extends SerializeMap implements Cloneable, Serializable {
+//public class PartialConcurrentHashMap extends ConcurrentHashMap implements Cloneable, Serializable {
 
     private boolean fullMemory = true;
 
     private FileBaseDataMap bigValueStoreMap = null;
 
-    static byte[] flg = new byte[1];
 
-    public PartialConcurrentHashMap(int size, int upper, int multi, String[] bigValueStoreDirs) {
+    public PartialSerializeMap(int size, int upper, int multi, String[] bigValueStoreDirs) {
         super(size, upper, multi);
+
 
         if (ImdstDefine.bigValueFileStoreUse == true && bigValueStoreDirs != null) {
             fullMemory = false;
