@@ -52,13 +52,19 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
                 mainMap  = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
             } else {
+                if (size > 5999999) {
 
-                if (size > 999999) {
                     multi = 199999;
-                } else if (size > 599999) {
+                } else if (size > 2999999) {
                     multi =  99999;
+                } else if (size > 999999) {
+                    multi = 39999;
+                } else if (size > 599999) {
+                    multi =  19999;
                 } else {
-                    multi = size / 10 + 1;
+                    size = 100000;
+                    upper = 90000;
+                    multi = 5001;
                 }
                 mainMap  = new PartialSerializeMap(size, upper, multi, virtualStoreDirs);
             }
@@ -73,12 +79,19 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                 mainMap  = new ConcurrentHashMap(size, upper, multi);
             } else {
 
-                if (size > 999999) {
+                if (size > 5999999) {
+
                     multi = 199999;
-                } else if (size > 599999) {
+                } else if (size > 2999999) {
                     multi =  99999;
+                } else if (size > 999999) {
+                    multi = 39999;
+                } else if (size > 599999) {
+                    multi =  19999;
                 } else {
-                    multi = size / 10 + 1;
+                    size = 100000;
+                    upper = 90000;
+                    multi = 5001;
                 }
                 mainMap  = new SerializeMap(size, upper, multi);
             }

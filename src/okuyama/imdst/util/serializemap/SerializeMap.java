@@ -13,8 +13,15 @@ import java.util.zip.*;
 
 import okuyama.imdst.util.*;
 
+
 /**
  * データ格納Map.<br>
+ * 格納されるKeyとValueはKey値のHash値から導き出された、<br>
+ * 特定の集合のHashMapに格納される。そしてそのHashMapはSerializeされさらに圧縮されて<br>
+ * byte配列として、1つのMapに格納される。<br>
+ * Serializeと圧縮を使うことと、全てのKeyとValueを格納するMapの要素数を増やさないことで<br>
+ * メモリ使用量を減らす.<br>
+ * スレッドセーフに並列アクセスが可能なように実装されている<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)

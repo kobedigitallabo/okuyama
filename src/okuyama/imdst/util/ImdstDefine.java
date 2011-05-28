@@ -214,8 +214,8 @@ public class ImdstDefine {
     public static final String Prop_SaveDataCompress = "SaveDataCompress";
     public static final String Prop_SaveDataCompressType = "SaveDataCompressType";
     public static final String Prop_SaveDataMemoryStoreLimitSize = "SaveDataMemoryStoreLimitSize";
-
-
+    public static final String Prop_DataSaveMapType = "DataSaveMapType";
+    public static final String Prop_DataSaveMapTypeSerialize = "serialize";
 
 
     public static final String Prop_PacketBalancerParallelExecution = "PacketBalancerParallelExecution";

@@ -113,11 +113,19 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         }
 
 
-        // 設定反映 //
+        ////// 設定反映 //////
+
+        // データ永続化Mapのタイプを設定(現在はokuyama.imdst.util.serializemap.SerializeMapか通常のConcurrentHashMapベースのMap
+        String dataSaveMapType = (String)super.getPropertiesValue(ImdstDefine.Prop_DataSaveMapType);
+        if (dataSaveMapType != null &&  dataSaveMapType.toLowerCase().equals(ImdstDefine.Prop_DataSaveMapTypeSerialize)) {
+            // SerializeMap
+            ImdstDefine.useSerializeMap = true;
+        }
+
 
         // データ圧縮設定
         String saveDataCompress = (String)super.getPropertiesValue(ImdstDefine.Prop_SaveDataCompress);
-        if (saveDataCompress != null &&  saveDataCompress.equals("false")) {
+        if (saveDataCompress != null &&  saveDataCompress.toLowerCase().equals("false")) {
             // 圧縮しない
             ImdstDefine.saveValueCompress = false;
         } else {
@@ -135,14 +143,14 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
         // データ永続化トランザクションファイルの遅延設定
         String transactionFileCommit = (String)super.getPropertiesValue(ImdstDefine.Prop_DataSaveTransactionFileEveryCommit);
-        if (transactionFileCommit != null &&  transactionFileCommit.equals("false")) {
+        if (transactionFileCommit != null &&  transactionFileCommit.toLowerCase().equals("false")) {
             // 遅延させる
             ImdstDefine.dataTransactionFileFlushTiming = false;
         }
 
         // 共有データファイルの書き換え遅延設定
         String shareDataFileDelay = (String)super.getPropertiesValue(ImdstDefine.Prop_ShareDataFileWriteDelayFlg);
-        if (shareDataFileDelay != null &&  shareDataFileDelay.equals("true")) {
+        if (shareDataFileDelay != null &&  shareDataFileDelay.toLowerCase().equals("true")) {
             ImdstDefine.dataFileWriteDelayFlg = true;
             String shareDataFileMaxDelayStr = (String)super.getPropertiesValue(ImdstDefine.Prop_ShareDataFileMaxDelayCount);
             if (shareDataFileMaxDelayStr != null) {

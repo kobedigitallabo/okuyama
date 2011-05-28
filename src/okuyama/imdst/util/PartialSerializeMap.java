@@ -14,14 +14,15 @@ import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
 import okuyama.imdst.util.serializemap.*;
+
+
 /**
- * ConcurrentHashMap拡張.<br>
+ * SerializeMap拡張.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
 public class PartialSerializeMap extends SerializeMap implements Cloneable, Serializable {
-//public class PartialConcurrentHashMap extends ConcurrentHashMap implements Cloneable, Serializable {
 
     private boolean fullMemory = true;
 

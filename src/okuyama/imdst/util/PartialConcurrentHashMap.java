@@ -39,6 +39,7 @@ public class PartialConcurrentHashMap extends ConcurrentHashMap implements Clone
                                          bigValueStoreDirs[0] + "/partialbigdata5/"};
             this.bigValueStoreMap = new FileBaseDataMap(bigValueStoreDir, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.memoryStoreLimitSize*2, ImdstDefine.memoryStoreLimitSize*6);
         }
+
     }
 
 
