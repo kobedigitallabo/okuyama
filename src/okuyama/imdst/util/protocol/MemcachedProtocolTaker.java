@@ -235,7 +235,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
                 if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
 
-                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(this.checkFlagsVal(executeMethods[2])).append(AbstractProtocolTaker.metaColumnSep).append(this.calcExpireTime(executeMethods[3])).toString();
+                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(this.checkFlagsVal(executeMethods[2])).append(AbstractProtocolTaker.metaColumnSep).append(AbstractProtocolTaker.calcExpireTime(executeMethods[3])).toString();
                 }  else {
 
                     pw.print("CLIENT_ERROR bad data chunk");
@@ -279,7 +279,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
                 if (new Integer(br.read()).byteValue() == 13 && new Integer(br.read()).byteValue() == 10) {
 
-                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(this.checkFlagsVal(executeMethods[2])).append(AbstractProtocolTaker.metaColumnSep).append(this.calcExpireTime(executeMethods[3])).toString();
+                    retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).append(this.checkFlagsVal(executeMethods[2])).append(AbstractProtocolTaker.metaColumnSep).append(AbstractProtocolTaker.calcExpireTime(executeMethods[3])).append(AbstractProtocolTaker.metaColumnSep).append(executeMethods[3]).toString();
                 }  else {
 
                     pw.print("CLIENT_ERROR bad data chunk");
@@ -387,7 +387,9 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                     retStrs[4] = new StringBuilder(new String(BASE64EncoderStream.encode(strs))).append(ImdstDefine.keyHelperClientParamSep).
                                                                                                  append(this.checkFlagsVal(executeMethods[2])).
                                                                                                  append(AbstractProtocolTaker.metaColumnSep).
-                                                                                                 append(this.calcExpireTime(executeMethods[3])).
+                                                                                                 append(AbstractProtocolTaker.calcExpireTime(executeMethods[3])).
+                                                                                                 append(AbstractProtocolTaker.metaColumnSep).
+                                                                                                 append(executeMethods[3]).
                                                                                                  toString();
                 }  else {
 
@@ -514,7 +516,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                     metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
                 // 有効期限チェックも同時に行う(memcachedのみ)
-                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
 
                     retGetBuf.append("VALUE");
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
@@ -557,7 +559,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                     metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
                 // 有効期限チェックも同時に行う(memcachedのみ)
-                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
 
                     retGetBuf.append("VALUE");
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
@@ -601,7 +603,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                     metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
                 // 有効期限チェックも同時に行う(memcachedのみ)
-                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
 
                     retGetBuf.append("VALUE");
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
@@ -654,7 +656,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 if (valueSplit.length > 1) 
                     metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
-                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
 
                     retGetBuf.append("VALUE");
                     retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);

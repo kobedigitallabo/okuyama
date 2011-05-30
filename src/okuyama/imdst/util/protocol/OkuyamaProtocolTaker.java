@@ -155,7 +155,7 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
                     metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
                 // 有効期限チェックも同時に行う
-                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
                     this.retParamBuf.append(retParams[0]);
                     this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                     this.retParamBuf.append(retParams[1]);
@@ -185,7 +185,7 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
                     metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
                 // 有効期限チェックも同時に行う
-                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
                     this.retParamBuf.append(retParams[0]);
                     this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                     this.retParamBuf.append(retParams[1]);
@@ -217,7 +217,7 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
                     metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
                 // 有効期限チェックも同時に行う
-                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
                     this.retParamBuf.append(retParams[0]);
                     this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                     this.retParamBuf.append(retParams[1]);
@@ -250,7 +250,7 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
                     metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
                 // 有効期限チェックも同時に行う
-                if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
                     this.retParamBuf.append(retParams[0]);
                     this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                     this.retParamBuf.append(retParams[1]);
@@ -284,7 +284,7 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
                     if (!retParams[1].equals("true")) {
 
                         this.retParamBuf.append("");
-                    } else if (valueSplit.length < 2 || super.expireCheck(metaColumns[1])) {
+                    } else if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
 
                         this.retParamBuf.append(retParams[0]);
                         this.retParamBuf.append(ImdstDefine.keyHelperClientParamSep);

@@ -101,6 +101,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private static String[] searchIndexDictionaryList = new String[0];
     private static boolean initDictionaryFlg = false;
 
+
+    // Get時にデータの有効期限を更新するフラグ
+    private boolean getAndTimeUpdate = ImdstDefine.GetAndExpireTimeUpdate;
+
+
+
     /**
      * Logger.<br>
      */
@@ -243,6 +249,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     retParams = null;
                     retParamStr = "";
 
+                    // 特殊設定初期化
+                    this.getAndTimeUpdate = ImdstDefine.GetAndExpireTimeUpdate;
+
+
                     // 切断確認
                     if (closeFlg) this.closeClientConnect(pw, br, socket);
 
@@ -346,6 +356,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
                             break;
                         case 2 :
+                            //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
+
+                            // Key値でValueを取得する
+                            retParams = this.getKeyValue(clientParameterList[1]);
+                            break;
+                        case 200 :
+
+                            // 取得と同時に有効日付Update
+                            this.getAndTimeUpdate = true;
                             //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
 
                             // Key値でValueを取得する
@@ -3516,7 +3535,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // Key値でValueを取得
                         // パラメータ作成 処理タイプ[セパレータ]キー値
                         // 送信
-                        this.getSendData.append(type);
+                        if (!this.getAndTimeUpdate) {
+
+                            // 通常のGet処理
+                            this.getSendData.append(type);
+                        } else {
+
+                            // 取得したデータの有効期限を再設定する
+                            this.getSendData.append("200");
+                        }
                         this.getSendData.append(ImdstDefine.keyHelperClientParamSep);
                         this.getSendData.append(this.stringCnv(key));
                         sendStr = this.getSendData.toString();

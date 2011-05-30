@@ -16,9 +16,9 @@ import okuyama.imdst.util.SystemUtil;
  */
 abstract public class AbstractProtocolTaker {
 
-    protected static String metaColumnSep = ImdstDefine.valueMetaColumnSep;
+    public static String metaColumnSep = ImdstDefine.valueMetaColumnSep;
 
-    protected String calcExpireTime(String timeStr) {
+    public static String calcExpireTime(String timeStr) {
         String ret = "0";
         long nowMilliTime = JavaSystemApi.currentTimeMillis;
         long nowSecTime = nowMilliTime / 1000;
@@ -72,7 +72,7 @@ abstract public class AbstractProtocolTaker {
     }
 
 
-    protected boolean expireCheck(String expirTimeStr) {
+    public static boolean expireCheck(String expirTimeStr) {
         return SystemUtil.expireCheck(expirTimeStr);
     }
 

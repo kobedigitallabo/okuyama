@@ -1932,7 +1932,7 @@ public class KeyMapManager extends Thread {
     /**
      * keyMapObjに対するアクセスメソッド.<br>
      * 任意の更新時間をセットする.<br>
-     * TODO:登録のValueのサイズが最大サイズを超えている場合は無条件で登録しない.<br>
+     * 登録のValueのサイズが最大サイズを超えている場合は無条件で登録しない.<br>
      */
     private void keyMapObjPutSetTime(String key, String val, long execTime) {
         if (val.length() < putValueMaxSize) {

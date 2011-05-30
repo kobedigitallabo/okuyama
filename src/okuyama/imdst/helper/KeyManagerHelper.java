@@ -324,6 +324,25 @@ public class KeyManagerHelper extends AbstractHelper {
                                 }
                             }
                             break;
+
+                        case 200 :
+
+                            // Key値でDataNode名を返す
+                            // 取得と同時に有効期限日付Update
+                            requestHashCode = clientParameterList[1];
+
+                            // メソッド呼び出し
+                            retParams = this.getDatanodeAndUpExpireTime(requestHashCode);
+
+
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
                         case 3 :
 
                             // Tag値とキー値を格納する
@@ -892,6 +911,7 @@ public class KeyManagerHelper extends AbstractHelper {
         try {
             if (dataNodeStr.length() < setDatanodeMaxSize) {
                 if(!this.keyMapManager.checkError()) {
+
                     this.keyMapManager.setKeyPair(key, dataNodeStr, transactionCode);
 
                     retStrs[0] = "1";
@@ -1089,6 +1109,81 @@ public class KeyManagerHelper extends AbstractHelper {
             }
         } catch (Exception e) {
             logger.error("KeyManagerHelper - getDatanode - Error", e);
+            retStrs = new String[2];
+            retStrs[0] = "2";
+            retStrs[1] = "false";
+        }
+        //logger.debug("KeyManagerHelper - getDatanode - end");
+        return retStrs;
+    }
+
+
+    // KeyでDataNode値を取得する
+    // 取得と同時に有効期限Updateする
+    // 処理終了時の返却処理コードは2になる
+    private String[] getDatanodeAndUpExpireTime(String key) {
+        //logger.debug("KeyManagerHelper - getDatanodeAndUpExpireTime - start");
+        String[] retStrs = null;
+        try {
+            if(!this.keyMapManager.checkError()) {
+                if (this.keyMapManager.containsKeyPair(key)) {
+                    String ret = this.keyMapManager.getKeyPair(key);
+
+
+                    if (ret != null) {
+
+
+                        // 有効日付をUpdate
+                        String[] valueSplit = ret.split(ImdstDefine.keyHelperClientParamSep);
+                        if (valueSplit.length > 1) {
+                            String[] valueData = valueSplit[1].split("!");
+                            if (valueData.length >1) {
+
+                                String[] metaColumns = valueData[0].split(AbstractProtocolTaker.metaColumnSep);
+
+                                if (metaColumns.length > 1) { 
+
+                                    if (AbstractProtocolTaker.expireCheck(metaColumns[1])) {
+
+                                        if(metaColumns.length > 2) {
+                                            metaColumns[1] = AbstractProtocolTaker.calcExpireTime(metaColumns[2]);
+                                            ret = valueSplit[0] + 
+                                                  ImdstDefine.keyHelperClientParamSep + 
+                                                  metaColumns[0] + 
+                                                  AbstractProtocolTaker.metaColumnSep +
+                                                  metaColumns[1] + 
+                                                  AbstractProtocolTaker.metaColumnSep +
+                                                  metaColumns[2] + 
+                                                  "!" + 
+                                                  valueData[1];
+                                            setDatanode(key, ret, "0");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        retStrs = new String[3];
+                        retStrs[0] = "2";
+                        retStrs[1] = "true";
+                        retStrs[2] = ret;
+                    } else {
+                        retStrs = new String[2];
+                        retStrs[0] = "2";
+                        retStrs[1] = "false";
+                    }
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "2";
+                    retStrs[1] = "false";
+                }
+            } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "2";
+                    retStrs[1] = "false";
+            }
+        } catch (Exception e) {
+            logger.error("KeyManagerHelper - getDatanodeAndUpExpireTime - Error", e);
             retStrs = new String[2];
             retStrs[0] = "2";
             retStrs[1] = "false";

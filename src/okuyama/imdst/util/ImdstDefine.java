@@ -274,6 +274,10 @@ public class ImdstDefine {
     // Value値に含まれるメタ情報の区切り文字
     public static final String valueMetaColumnSep = "-";
 
+    // データ取得時にデータの有効期限をUpdateするかの指定
+    // 起動引数で変更可能
+    public volatile static boolean GetAndExpireTimeUpdate = false;
+
 
 
     // ---- プログラム規定数値 -------------------------------------------------------------
