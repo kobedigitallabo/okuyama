@@ -4805,7 +4805,7 @@ public class OkuyamaClient {
                 try {
                     this.autoConnect();
                     this.sendSearchFlg = false;
-                    this.searchValue(searchCharacterList, searchType, prefix);
+                    this.sendSearchValueRequest(searchCharacterList, searchType, prefix, searchIndexLen);
                     ret = this.readSearchValueResponse(searchCharacterList, searchType, prefix, searchIndexLen);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
@@ -4818,7 +4818,7 @@ public class OkuyamaClient {
                 try {
                     this.autoConnect();
                     this.sendSearchFlg = false;
-                    this.searchValue(searchCharacterList, searchType, prefix);
+                    this.sendSearchValueRequest(searchCharacterList, searchType, prefix, searchIndexLen);
                     ret = this.readSearchValueResponse(searchCharacterList, searchType, prefix, searchIndexLen);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
@@ -4831,7 +4831,7 @@ public class OkuyamaClient {
                 try {
                     this.autoConnect();
                     this.sendSearchFlg = false;
-                    this.searchValue(searchCharacterList, searchType, prefix);
+                    this.sendSearchValueRequest(searchCharacterList, searchType, prefix, searchIndexLen);
                     ret = this.readSearchValueResponse(searchCharacterList, searchType, prefix, searchIndexLen);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
