@@ -444,7 +444,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 // 値を書き出し
                 logger.info("Recover Step - 6 [" + i + "]");
                 retParam = mbr.readLine();
-
+                logger.info("Recover Step - 6.5 [" + i + "]");
                 if (retParam == null || retParam.trim().equals("") || (retParam.length() < 3 && retParam.trim().equals("-1"))) {
                     pw.println("-1");
                     pw.flush();

@@ -499,7 +499,7 @@ public class KeyMapManager extends Thread {
                 logger.info("VacuumCheck - Start");
 
                 // データがメモリーではなくかつ、vacuum実行指定がtrueの場合
-                if (!dataMemory && vacuumExec == true) {
+                if (!dataMemory && vacuumExec == true && diffDataPoolingFlg == false) {
                     logger.debug("vacuumCheck - Start - 1");
                     synchronized(this.poolKeyLock) {
                         logger.debug("VacuumCheck - DifferenceCount = [" + (this.keyMapObj.getAllDataCount() - this.keyMapObj.getKeySize()) + "]");

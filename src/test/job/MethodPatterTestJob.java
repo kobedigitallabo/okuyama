@@ -976,7 +976,15 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             String[] dByteChars = {"うえ","かき"};
             Object[] dByteRet = okuyamaClient.searchValue(dByteChars, "1");
             if(((String)dByteRet[0]).equals("true"))  {
-                if (!((String[])dByteRet[1])[this.nowCount].equals(this.nowCount + "test123")) {
+                String[] retkeys = (String[])dByteRet[1];
+                boolean matchFlg = false;
+                for (int i= 0; i < retkeys.length; i++) {
+                    if (retkeys[i].equals(this.nowCount + "test123")) {
+                        matchFlg = true;
+                    }
+                }
+
+                if (!matchFlg) {
                     System.out.println("Double Byte Search Test 1 - Error");
                     errorFlg = true;
                 }
@@ -986,7 +994,15 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             String[] dByteChars2 = {"字","い"};
             dByteRet = okuyamaClient.searchValue(dByteChars2, "1");
             if(((String)dByteRet[0]).equals("true"))  {
-                if (!((String[])dByteRet[1])[this.nowCount].equals(this.nowCount + "test456")) {
+                String[] retkeys = (String[])dByteRet[1];
+                boolean matchFlg = false;
+                for (int i= 0; i < retkeys.length; i++) {
+                    if (retkeys[i].equals(this.nowCount + "test456")) {
+                        matchFlg = true;
+                    }
+                }
+
+                if (!matchFlg) {
                     System.out.println("Double Byte Search Test 2 - Error");
                     errorFlg = true;
                 }

@@ -324,25 +324,6 @@ public class KeyManagerHelper extends AbstractHelper {
                                 }
                             }
                             break;
-
-                        case 200 :
-
-                            // Key値でDataNode名を返す
-                            // 取得と同時に有効期限日付Update
-                            requestHashCode = clientParameterList[1];
-
-                            // メソッド呼び出し
-                            retParams = this.getDatanodeAndUpExpireTime(requestHashCode);
-
-
-                            retParamBuf.append(retParams[0]);
-                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append(retParams[1]);
-                            if (retParams.length > 2) {
-                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                                retParamBuf.append(retParams[2]);
-                            }
-                            break;
                         case 3 :
 
                             // Tag値とキー値を格納する
