@@ -28,6 +28,7 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
 
     private String clientInfo = null;
 
+    private static char checkSetMethodCode = '1';
 
     /**
      * 初期化
@@ -124,14 +125,67 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
         if (StatusUtil.getDebugOption()) 
             SystemUtil.debugLine(clientInfo + " : Request  : " + retStr);
 
+        
         return retStr;
     }
 
 
     public String[] takeRequestLine4List(CustomReader br, PrintWriter pw) throws Exception {
-        return null;
+        String retStr = null;
+        retStr = br.readLine();
+
+        // 切断指定確認
+        if (retStr == null ||
+                retStr.equals("") ||
+                    retStr.equals(ImdstDefine.imdstConnectExitRequest)) {
+            // 接続を切断
+            this.nextExec = 3;
+        }
+
+        // Debugログ書き出し
+        if (StatusUtil.getDebugOption()) 
+            SystemUtil.debugLine(clientInfo + " : Request  : " + retStr);
+
+        
+        return okuyamaMethodCnv(retStr);
     }
 
+
+    private String[] okuyamaMethodCnv(String executeMethodStr) {
+
+        if (executeMethodStr.charAt(0) == checkSetMethodCode) {
+
+            if (executeMethodStr.charAt(executeMethodStr.length() - 1) == ',') {
+
+                // 有効期限付き
+                String[] retMethod = new String[5] ;
+
+                StringBuilder requestStrBuf = new StringBuilder(executeMethodStr.length() + 20);
+                String[] splitSetValue = executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
+                executeMethodStr = null;
+
+                retMethod[0] = splitSetValue[0];
+                retMethod[1] = splitSetValue[1];
+                retMethod[2] = splitSetValue[2];
+                retMethod[3] = splitSetValue[3];
+
+                requestStrBuf.append(splitSetValue[4]);
+                requestStrBuf.append(ImdstDefine.keyHelperClientParamSep);
+                requestStrBuf.append("0");
+                requestStrBuf.append(AbstractProtocolTaker.metaColumnSep).
+                              append(AbstractProtocolTaker.calcExpireTime(splitSetValue[5])).
+                              append(AbstractProtocolTaker.metaColumnSep).
+                              append(splitSetValue[5]);
+                retMethod[4] = requestStrBuf.toString();
+                return retMethod;
+            } else {
+                return executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
+            }
+        } else {
+            
+            return executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
+        }
+    }
 
     /**
      * okuyama用のレスポンスを作成.<br>
@@ -147,7 +201,7 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
         if (retParams != null && retParams.length > 1) {
 
             // getValue or getValueVerionCheckの場合
-            if (retParams[0].equals("2") || retParams[0].equals("15")) {
+            if (retParams[0].equals("2") || retParams[0].equals("15") || retParams[0].equals("17")) {
                 String[] metaColumns = null;
                 String[] valueSplit = retParams[2].split(ImdstDefine.keyHelperClientParamSep);
 

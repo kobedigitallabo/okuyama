@@ -291,10 +291,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // クライアントからの要求を取得
                     // Takerで会話開始
                     if (isProtocolOkuyama) {
-                        clientParametersStr = this.porotocolTaker.takeRequestLine(br, pw);
+
                         // パラメータ分解
-                        clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
+                        clientParameterList = this.porotocolTaker.takeRequestLine4List(br, pw);
                     } else {
+
                         // パラメータ分解
                         clientParameterList = this.porotocolTaker.takeRequestLine4List(br, pw);
                     }
@@ -355,19 +356,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
 
                             // Key値でValueを取得する
-                            retParams = this.getKeyValue(clientParameterList[1]);
-                            break;
-                        case 200 :
-
-                            // 取得と同時に有効日付Update
-
-                            // KeyでValueを取得(バージョン番号込)
-                            retParams = this.getKeyValueAndVersion(clientParameterList[1]);
-
-                            // KeyでValueを更新(バージョンチェック込)
-                            retParams = this.setKeyValueVersionCheck(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5]);
-
-
                             retParams = this.getKeyValue(clientParameterList[1]);
                             break;
                         case 3 :
@@ -449,6 +437,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // KeyでValueを更新(バージョンチェック込)
                             retParams = this.setKeyValueVersionCheck(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[5]);
+                            break;
+                        case 17 :
+
+                            // 取得と同時に有効日付Update
+                            retParams = this.getValueAndUpdateExpireTime(clientParameterList[1]);
                             break;
                         case 22 :
 
@@ -1836,6 +1829,86 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return retStrs;
     }
 
+    /**
+     * KeyでValueを取得する.<br>
+     * 取得出来た場合はその値が有効期限切れでなければ、有効期限を更新する.<br>
+     *
+     *
+     * @param keyStr key値の文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getValueAndUpdateExpireTime(String keyStr) throws BatchException {
+
+        String[] retStrs = new String[3];
+
+        try {
+            // 値取得
+            String[] getRet = this.getKeyValueAndVersion(keyStr);
+
+            // 取得結果確認
+            if (getRet[1].equals("false")) {
+
+                // 取得失敗(データなし)
+                retStrs[0] = "17";
+                retStrs[1] = "false";
+                retStrs[2] = "";
+
+                return retStrs;
+            } else {
+
+                retStrs[0] = "17";
+                retStrs[1] = "true";
+                retStrs[2] = getRet[2];
+            }
+
+
+            // 有効期限チェック
+            String[] metaColumns = null;
+            String[] valueSplit = getRet[2].split(ImdstDefine.keyHelperClientParamSep);
+
+            if (valueSplit.length > 1) 
+                metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
+
+            // 有効期限チェックも同時に行う
+            if (valueSplit.length > 1 && metaColumns.length > 2 && !metaColumns[2].equals("0") && AbstractProtocolTaker.expireCheck(metaColumns[1])) {
+
+                // 有効期限日付を更新する
+                // 有効期限が設定されているデータのみ対象
+                // 更新は排他的更新を行う
+                // 排他的更新が失敗した場合は誰かが更新を行ったので、値のみ返す
+                String[] newSetValue = new String[4];
+                newSetValue[0] = keyStr;
+                newSetValue[1] = ImdstDefine.imdstBlankStrData;
+                newSetValue[2] = "0";
+                newSetValue[3] = new StringBuilder(valueSplit[0]).
+                                                   append(ImdstDefine.keyHelperClientParamSep).
+                                                   append(metaColumns[0]).
+                                                   append(AbstractProtocolTaker.calcExpireTime(metaColumns[2])).
+                                                   append(AbstractProtocolTaker.metaColumnSep).
+                                                   append(metaColumns[2]).toString();
+                String[] updateRet = this.setKeyValueVersionCheck(newSetValue[0], newSetValue[1], newSetValue[2], newSetValue[3], getRet[3]);
+                // エラーは無視
+                System.out.println(updateRet[1]);
+                System.out.println(updateRet[2]);
+            }
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - getValueAndUpdateExpireTime - Error", be);
+
+            retStrs[0] = "17";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
+        } catch (Exception e) {
+            logger.error("MasterManagerHelper - getValueAndUpdateExpireTime - Error", e);
+
+            retStrs[0] = "17";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
+        }
+
+        return retStrs;
+    }
+    
 
     /**
      * 作成済みIndexを利用して対象Key値を取得する.<br>

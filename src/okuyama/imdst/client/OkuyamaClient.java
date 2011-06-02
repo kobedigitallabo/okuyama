@@ -893,24 +893,60 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean setValue(String keyStr, String value) throws OkuyamaClientException {
-        return this.setValue(keyStr, null, value, null);
+        return this.setValue(keyStr, null, value, null, null);
     }
 
     /**
      * MasterNodeへデータを登録要求する.<br>
+     * 有効期限あり
      * Tagなし.<br>
      *
      * @param keyStr Key値
      * @param value value値
+     * @param expireTime データの有効期限時間(単位/秒)
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValue(String keyStr, String value, Integer expireTime) throws OkuyamaClientException {
+        return this.setValue(keyStr, null, value, null, expireTime);
+    }
+
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * 有効期限なし<br>
+     * Tagなし.<br>
+     *
+     * @param keyStr Key値
+     * @param value value値
+     * @param encode Valueを取得後クライアントに返す際の文字コード
      * @return boolean 登録成否
      * @throws OkuyamaClientException
      */
     public boolean setValue(String keyStr, String value, String encode) throws OkuyamaClientException {
-        return this.setValue(keyStr, null, value, encode);
+        return this.setValue(keyStr, null, value, encode, null);
     }
 
     /**
      * MasterNodeへデータを登録要求する.<br>
+     * 有効期限あり<br>
+     * Tagなし.<br>
+     *
+     * @param keyStr Key値
+     * @param value value値
+     * @param encode Valueを取得後クライアントに返す際の文字コード
+     * @param expireTime データの有効期限時間(単位/秒)
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValue(String keyStr, String value, String encode, Integer expireTime) throws OkuyamaClientException {
+        return this.setValue(keyStr, null, value, encode, expireTime);
+    }
+
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * 有効期限なし<br>
      * Tag有り.<br>
      *
      * @param keyStr Key値
@@ -920,11 +956,29 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean setValue(String keyStr, String[] tagStrs, String value) throws OkuyamaClientException {
-        return this.setValue(keyStr, tagStrs, value, null);
+        return this.setValue(keyStr, tagStrs, value, null, null);
     }
 
     /**
      * MasterNodeへデータを登録要求する.<br>
+     * 有効期限あり<br>
+     * Tag有り.<br>
+     *
+     * @param keyStr Key値
+     * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
+     * @param value value値
+     * @param expireTime データの有効期限時間(単位/秒)
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValue(String keyStr, String[] tagStrs, String value, Integer expireTime) throws OkuyamaClientException {
+        return this.setValue(keyStr, tagStrs, value, null, expireTime);
+    }
+
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * 有効期限なし<br>
      * Tag有り.<br>
      *
      * @param keyStr Key値
@@ -934,6 +988,23 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean setValue(String keyStr, String[] tagStrs, String value, String encode) throws OkuyamaClientException {
+        return this.setValue(keyStr, tagStrs, value, encode, null);
+    }
+
+    /**
+     * MasterNodeへデータを登録要求する.<br>
+     * 有効期限あり<br>
+     * Tag有り.<br>
+     *
+     * @param keyStr Key値
+     * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
+     * @param value value値
+     * @param encode Valueを取得後クライアントに返す際の文字コード
+     * @param expireTime データの有効期限時間(単位/秒)
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setValue(String keyStr, String[] tagStrs, String value, String encode, Integer expireTime) throws OkuyamaClientException {
         boolean ret = false; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -1037,6 +1108,14 @@ public class OkuyamaClient {
             // Value連結
             setValueServerReqBuf.append(encodeValue);
 
+            // 有効期限あり
+            if (expireTime != null) {
+                // セパレータ連結
+                setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                setValueServerReqBuf.append(expireTime);
+                // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
+                setValueServerReqBuf.append(OkuyamaClient.sepStr);
+            }
             // サーバ送信
             pw.println(setValueServerReqBuf.toString());
             pw.flush();
@@ -2636,6 +2715,153 @@ public class OkuyamaClient {
                 }
             } else {
                 e.printStackTrace();
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * MasterNodeからKeyでValueを取得する.<br>
+     * 文字列エンコーディング指定なし.<br>
+     * デフォルトエンコーディングにて復元.<br>
+     * 取得と同時に値の有効期限を取得時から最初に設定した時間分延長更新<br>
+     * 有効期限を設定していない場合は更新されない.<br>
+     * Sessionキャッシュなどでアクセスした時間から所定時間有効などの場合にこちらのメソッドで<br>
+     * 値を取得していれば自動的に有効期限が更新される<br>
+     *
+     * @param keyStr Key値
+     * @return String[] 要素1(データ有無):"true" or "false", 要素2(データ):"データ文字列"
+     * @throws OkuyamaClientException
+     */
+    public String[] getValueAndUpdateExpireTime(String keyStr) throws OkuyamaClientException {
+        return this.getValueAndUpdateExpireTime(keyStr, null);
+    }
+
+
+    /**
+     * MasterNodeからKeyでValueを取得する.<br>
+     * 文字列エンコーディング指定あり.<br>
+     * 取得と同時に値の有効期限を取得時から最初に設定した時間分延長更新<br>
+     * 有効期限を設定していない場合は更新されない.<br>
+     * Sessionキャッシュなどでアクセスした時間から所定時間有効などの場合にこちらのメソッドで<br>
+     * 値を取得していれば自動的に有効期限が更新される<br>
+     *
+     * @param keyStr Key値
+     * @param encoding エンコーディング指定
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
+     * @throws OkuyamaClientException
+     */
+    public String[] getValueAndUpdateExpireTime(String keyStr, String encoding) throws OkuyamaClientException {
+        String[] ret = new String[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.trim().equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+            // Keyに対するLengthチェック
+            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+
+
+            // 処理番号連結
+            getValueServerReqBuf.append("17");
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            getValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+
+
+            // サーバ送信
+            pw.println(getValueServerReqBuf.toString());
+
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("17")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    ret[0] = serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if (serverRet[2].equals(OkuyamaClient.blankStr)) {
+                        ret[1] = "";
+                    } else {
+
+                        // Value文字列をBase64でデコード
+                        if (encoding == null) {
+                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()));
+                        } else {
+                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
+                        }
+                    }
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity");
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getValueAndUpdateExpireTime(keyStr, encoding);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getValueAndUpdateExpireTime(keyStr, encoding);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getValueAndUpdateExpireTime(keyStr, encoding);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
                 throw new OkuyamaClientException(e);
             }
         }
