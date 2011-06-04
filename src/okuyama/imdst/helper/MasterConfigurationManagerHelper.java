@@ -109,6 +109,21 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             // 起動時は設定ファイルから情報取得
             this.parseAllNodesInfo();
 
+            // 現在の設定を標準出力にOutput
+            System.out.println("The current 'okuyama' cluster configuration information");
+
+            System.out.println(" MyNodeInfo = [" + myNodeInfoStr + "]");
+            System.out.println(" MainMasterNodeInfo = [" + mainMasterNodeInfoStr + "]");
+            System.out.println(" AllMasterNodeInfo = [" + allMasterNodeInfoStr + "]");
+
+            System.out.println(" DistributionAlgorithm = [" + dispatchMode + "]");
+            if (dispatchMode.equals("mod")) {
+                System.out.println(" KeyMapNodesRule = [" + ruleStrProp + "]");
+            }
+            System.out.println(" KeyMapNodesInfo = [" + keyMapNodesStr + "]");
+            System.out.println(" SubKeyMapNodesInfo = [" + subKeyMapNodesStr + "]");
+            System.out.println(" ThirdKeyMapNodesInfo = [" + thirdKeyMapNodesStr + "]");
+
             while (serverRunning) {
 
                 try {

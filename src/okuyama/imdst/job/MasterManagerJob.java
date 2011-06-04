@@ -277,6 +277,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
                 // IsolationMode
                 String isolationPrefix = super.getPropertiesValue(ImdstDefine.Prop_IsolationPrefix);
                 if (isolationPrefix != null && isolationPrefix.trim().length() == 5) {
+System.out.println("Isolation Mode Isolation Prefix = [" + isolationPrefix + "]");
 
                     StatusUtil.initIsolationMode(true, isolationPrefix);
                 } else {
