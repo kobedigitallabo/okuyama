@@ -25,10 +25,10 @@ public class UtilClient {
         if (args.length < 1) {
             System.out.println("args[0]=Command");
             System.out.println("Command1. dataexport args1=dataexport args2=DataNode-IPAdress args3=DataNode-Port");
-            System.out.println("Command2. dataexport \"dataexport\" \"DataNode-IPAdress\" \"DataNode-Port\"");
+            //System.out.println("Command2. dataexport \"dataexport\" \"DataNode-IPAdress\" \"DataNode-Port\"");
         }
 
-        if (args[0].equals("dataexport")) {
+        if (args[0].equals("dataexport") || args[0].equals("bkup")) {
             if (args.length != 3) {
                 System.out.println("args[0]=Command, args[1]=serverip, args[2]=port");
                 System.exit(1);
