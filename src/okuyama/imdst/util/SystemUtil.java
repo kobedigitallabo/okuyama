@@ -377,7 +377,7 @@ public class SystemUtil {
      * 指定された値を時間に置き換えた場合に現在時間を過ぎているかをチェックする.<br>
      *
      * @param expirTimeStr
-     * @return boolean
+     * @return boolean true:有効 false:有効期限切れ
      */
     public static boolean expireCheck(String expirTimeStr) {
         boolean ret = true;

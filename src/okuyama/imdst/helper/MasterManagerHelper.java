@@ -1870,6 +1870,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             if (valueSplit.length > 1) 
                 metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
 
+
             // 有効期限チェックも同時に行う
             if (valueSplit.length > 1 && metaColumns.length > 2 && !metaColumns[2].equals("0") && AbstractProtocolTaker.expireCheck(metaColumns[1])) {
 
@@ -1884,13 +1885,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 newSetValue[3] = new StringBuilder(valueSplit[0]).
                                                    append(ImdstDefine.keyHelperClientParamSep).
                                                    append(metaColumns[0]).
+                                                   append(AbstractProtocolTaker.metaColumnSep).
                                                    append(AbstractProtocolTaker.calcExpireTime(metaColumns[2])).
                                                    append(AbstractProtocolTaker.metaColumnSep).
                                                    append(metaColumns[2]).toString();
                 String[] updateRet = this.setKeyValueVersionCheck(newSetValue[0], newSetValue[1], newSetValue[2], newSetValue[3], getRet[3]);
                 // エラーは無視
-                System.out.println(updateRet[1]);
-                System.out.println(updateRet[2]);
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getValueAndUpdateExpireTime - Error", be);

@@ -1147,7 +1147,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValue(keyStr, tagStrs, value, encode);
+                    ret = this.setValue(keyStr, tagStrs, value, encode, expireTime);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -1158,7 +1158,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValue(keyStr, tagStrs, value, encode);
+                    ret = this.setValue(keyStr, tagStrs, value, encode, expireTime);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -1169,7 +1169,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValue(keyStr, tagStrs, value, encode);
+                    ret = this.setValue(keyStr, tagStrs, value, encode, expireTime);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
