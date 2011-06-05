@@ -1441,6 +1441,7 @@ public class OkuyamaClient {
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
+
             serverRet = serverRetStr.split(OkuyamaClient.sepStr);
 
             // 処理の妥当性確認
@@ -2632,6 +2633,7 @@ public class OkuyamaClient {
                 }
             }
             // サーバ送信
+
             pw.println(getValueServerReqBuf.toString());
             pw.flush();
 
@@ -2922,12 +2924,14 @@ public class OkuyamaClient {
             getValueServerReqBuf.append(new String(this.dataEncoding(tagStr.getBytes())));
 
             // サーバ送信
+
             pw.println(getValueServerReqBuf.toString());
             pw.flush();
 
             // サーバから結果受け取り
             int readIdx = 0;
             while (!(serverRetStr = br.readLine()).equals(ImdstDefine.getMultiEndOfDataStr)) {
+
                 serverRet = serverRetStr.split(OkuyamaClient.sepStr);
                 // 処理の妥当性確認
                 if (serverRet[0].equals("23")) {
@@ -2971,7 +2975,7 @@ public class OkuyamaClient {
                 }
                 readIdx++;
             }
-            
+
             if(ret.size() == 0) ret = null;
         } catch (OkuyamaClientException ice) {
             throw ice;
@@ -3217,6 +3221,7 @@ public class OkuyamaClient {
             incrValueServerReqBuf.append(valueStr);
 
             // サーバ送信
+
             pw.println(incrValueServerReqBuf.toString());
             pw.flush();
 
@@ -3346,6 +3351,7 @@ public class OkuyamaClient {
             // サーバから結果受け取り
             serverRetStr = br.readLine();
             serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
 
             // 処理の妥当性確認
             if (serverRet.length == 3 && serverRet[0].equals("14")) {
@@ -4920,13 +4926,12 @@ public class OkuyamaClient {
 
             // セパレータ連結
             serverRequestBuf.append(OkuyamaClient.sepStr);
-            // searchType連結
+            // searchIndexLen連結
             serverRequestBuf.append(searchIndexLen);
 
 
             // サーバ送信
             pw.println(serverRequestBuf.toString());
-
             pw.flush();
 
             this.sendSearchFlg = true;
@@ -4988,7 +4993,6 @@ public class OkuyamaClient {
             if (this.sendSearchFlg == false) throw new OkuyamaClientException("Not Request Send");
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-
             serverRet = serverRetStr.split(OkuyamaClient.sepStr);
 
             // 処理の妥当性確

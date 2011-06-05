@@ -56,6 +56,9 @@ public class ServerManagedJob extends AbstractJob implements IJob {
 
         Object[] shareKeys = null;
         ServerSocket serverSocket = null;
+        boolean firstOver = true;
+        long gcExecuteTime = System.currentTimeMillis();
+        long executeGcInterval = 60000;
 
         try{
 
@@ -64,7 +67,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
 
             while (serverRunning) {
 
-				if (StatusUtil.getStatus() != 0) break;
+                if (StatusUtil.getStatus() != 0) break;
 
                 StringBuilder memBuf = new StringBuilder();
                 memBuf.append("JVM MaxMemory Size =[" + JavaSystemApi.getRuntimeMaxMem("M") + "];");
@@ -81,10 +84,21 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                     logger.info("JVM Use Memory Percent=[" + JavaSystemApi.getUseMemoryPercent() + "]");
                 }
 
-                if (JavaSystemApi.getUseMemoryPercentCache() > this.memoryLimitSize) 
-                    // 限界値を超えている
-                    StatusUtil.useMemoryLimitOver();
+                if (JavaSystemApi.getUseMemoryPercentCache() > this.memoryLimitSize) {
 
+
+                    if ((System.currentTimeMillis() - gcExecuteTime) > executeGcInterval) {
+
+                        JavaSystemApi.manualGc();
+                        gcExecuteTime = System.currentTimeMillis();
+                        Thread.sleep(3000);
+
+                    } else {
+
+                        // 限界値を超えている
+                        StatusUtil.useMemoryLimitOver();
+                    }
+                }
                 // GC発行
                 JavaSystemApi.autoGc();
 
@@ -115,7 +129,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
             // 正常終了ではない
             if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) {
                 logger.error("ServerManagedJob - executeJob - Error End Message=[" + StatusUtil.getStatusMessage() + "]");
-				JavaMain.shutdownMainProccess();
+                JavaMain.shutdownMainProccess();
             }
         }
 

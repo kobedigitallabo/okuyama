@@ -387,11 +387,12 @@ public class KeyMapManager extends Thread {
                     }
 
                     // メモリの限界値をチェック
-                    if(this.memoryLimitSize > 0) {
+                    // ServerManagedJobに任せる
+                    /*if(this.memoryLimitSize > 0) {
                         if (JavaSystemApi.getUseMemoryPercentCache() > this.memoryLimitSize) 
                             // 限界値を超えている
                             StatusUtil.useMemoryLimitOver();
-                    }
+                    }*/
 
                     Thread.sleep(KeyMapManager.updateInterval);
 
