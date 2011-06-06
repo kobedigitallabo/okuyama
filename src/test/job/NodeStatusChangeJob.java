@@ -73,18 +73,34 @@ public class NodeStatusChangeJob extends AbstractJob implements IJob {
     private void execRestart() throws Exception {
         System.out.println("execStop - Start");
         String result = null;
+        String osName = super.getPropertiesValue("OSName");
 
         String[] stop = new String[3];
-        stop[0] = testScriptPath + "\\execTestStopDataNode.bat";
-        stop[1] = testScriptPath + "\\execTestStopSlaveDataNode.bat";
-        stop[2] = testScriptPath + "\\execTestStopThirdDataNode.bat";
-
         String[] start = new String[3];
-        start[0] = testScriptPath + "\\execTestDataNode.bat";
-        start[1] = testScriptPath + "\\execTestSlaveDataNode.bat";
-        start[2] = testScriptPath + "\\execTestThirdDataNode.bat";
 
-        String killCmd = "taskkill /F /PID ";
+        if (osName == null || osName.equals("") || osName.trim().equals("windows")) {
+            stop[0] = testScriptPath + "\\execTestStopDataNode.bat";
+            stop[1] = testScriptPath + "\\execTestStopSlaveDataNode.bat";
+            stop[2] = testScriptPath + "\\execTestStopThirdDataNode.bat";
+
+            start[0] = testScriptPath + "\\execTestDataNode.bat";
+            start[1] = testScriptPath + "\\execTestSlaveDataNode.bat";
+            start[2] = testScriptPath + "\\execTestThirdDataNode.bat";
+        } else {
+            stop[0] = testScriptPath + "/execTestStopDataNode.sh";
+            stop[1] = testScriptPath + "/execTestStopSlaveDataNode.sh";
+            stop[2] = testScriptPath + "/execTestStopThirdDataNode.sh";
+
+            start[0] = testScriptPath + "/execTestDataNode.sh";
+            start[1] = testScriptPath + "/execTestSlaveDataNode.sh";
+            start[2] = testScriptPath + "/execTestThirdDataNode.sh";
+        }
+
+
+        String killCmd = "kill -9 ";
+        if (osName == null || osName.equals("") || osName.trim().equals("windows")) {
+            killCmd = "taskkill /F /PID ";
+        }
         String stopCmd = "";
         String startCmd = "";
 
