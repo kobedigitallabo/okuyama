@@ -69,7 +69,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     StringBuilder strBuf = new StringBuilder(6000*10);
                     Random rnd = new Random();
 
-                    for (int i = 0; i < 3000; i++) {
+                    for (int i = 0; i < 300; i++) {
                         strBuf.append(rnd.nextInt(1999999999));
                     }
                     bigCharacter = strBuf.toString();
@@ -112,6 +112,10 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
                         if (execMethods[i].equals("index")) 
                             retMap.put("createindex", execIndex(okuyamaClient, start, count));
+
+                        if (execMethods[i].equals("setexpireandget")) 
+                            retMap.put("setexpireandget", execSetExpireAndGet(okuyamaClient, start, count));
+
 
                     }
 
@@ -249,10 +253,10 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             }
 
 
-            String[] keys = new String[1000];
+            String[] keys = new String[102];
             int idx = 0;
-            Map checkResultMap = new HashMap(1000);
-            for (int i = start; i < start+500; i++) {
+            Map checkResultMap = new HashMap(50);
+            for (int i = start; i < start+50; i++) {
                 keys[idx] = this.nowCount + "datasavekey_" + new Integer(i).toString();
                 checkResultMap.put(keys[idx], this.nowCount + "testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + new Integer(i).toString());
                 keys[idx+1] = this.nowCount + "datasavekey_bigdata_" + new Integer(i).toString();
@@ -1041,6 +1045,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     errorFlg = true;
                 }
                 if ((i % 10000) == 0) System.out.println(i);
+                if ((i - start) > 100) break;
             }
 
             // Prefixあり
@@ -1053,6 +1058,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     errorFlg = true;
                 }
                 if ((i % 10000) == 0) System.out.println(i);
+                if ((i - start) > 100) break;
             }
 
 
@@ -1083,6 +1089,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                         errorFlg = true;
                     }
                 }
+                if ((i - start) > 100) break;
             }
 
 
@@ -1129,6 +1136,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                         errorFlg = true;
                     }
                 }
+                if ((i - start) > 100) break;
             }
 
 
@@ -1154,6 +1162,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     System.out.println("removeValue- 3-1 - Error=[" + this.nowCount + "createindexKey_" + new Integer(i).toString() + "]");
                     errorFlg = true;
                 } 
+                if ((i - start) > 100) break;
             }
 
             sChars = new String[1];
@@ -1173,6 +1182,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     System.out.println("removeValue(Prefix)- 3-1 - Error=[" + this.nowCount + "createindexPrefixKey_" + new Integer(i).toString() + "]");
                     errorFlg = true;
                 } 
+                if ((i - start) > 100) break;
             }
 
             sChars = new String[1];
@@ -1199,4 +1209,134 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
         return errorFlg;
     }
+
+    private boolean execSetExpireAndGet(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execSetExpireAndGet - Start");
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+            long startTime = new Date().getTime();
+            // データ登録 - 1
+            if (!okuyamaClient.setValue(this.nowCount + "expiredatasavekey_" + new Integer(start).toString(), this.nowCount + "setexpiretestdata123456789_" + new Integer(start).toString(), new Integer(10))) {
+                System.out.println("SetExpireAndGet - Set Error=[" + this.nowCount + "expiredatasavekey_" + new Integer(start).toString() + ", " + this.nowCount + "setexpiretestdata123456789_" + new Integer(start).toString());
+                errorFlg = true;
+            }
+
+            if (!okuyamaClient.setValue(this.nowCount + "expiredatasavekey_" + new Integer(start+1).toString(), this.nowCount + "setexpiretestdata123456789_" + new Integer(start+1).toString(), new Integer(3))) {
+                System.out.println("SetExpireAndGet - Set Error=[" + this.nowCount + "expiredatasavekey_" + new Integer(start+1).toString() + ", " + this.nowCount + "setexpiretestdata123456789_" + new Integer(start+1).toString());
+                errorFlg = true;
+            }
+
+            if (!okuyamaClient.setValue(this.nowCount + "expiredatasavekey_" + new Integer(start+2).toString(), this.nowCount + "setexpiretestdata123456789_" + new Integer(start+2).toString(), new Integer(8))) {
+                System.out.println("SetExpireAndGet - Set Error=[" + this.nowCount + "expiredatasavekey_" + new Integer(start+2).toString() + ", " + this.nowCount + "setexpiretestdata123456789_" + new Integer(start+2).toString());
+                errorFlg = true;
+            }
+
+            Thread.sleep(5000);
+            
+            String[] ret = okuyamaClient.getValue(this.nowCount + "expiredatasavekey_" + new Integer(start).toString());
+
+            if (ret[0].equals("true")) {
+
+            } else if (ret[0].equals("false")) {
+                logger.error("データなし - 1 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 1 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+
+            ret = okuyamaClient.getValue(this.nowCount + "expiredatasavekey_" + new Integer(start+1).toString());
+
+            if (ret[0].equals("true")) {
+                logger.error("データあり - 2 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start+1).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("false")) {
+
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 2 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+
+            ret = okuyamaClient.getValueAndUpdateExpireTime(this.nowCount + "expiredatasavekey_" + new Integer(start+2).toString());
+
+            if (ret[0].equals("true")) {
+
+            } else if (ret[0].equals("false")) {
+                logger.error("データなし - 3 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start+2).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 3 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start+2).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+            Thread.sleep(5000);
+
+            ret = okuyamaClient.getValue(this.nowCount + "expiredatasavekey_" + new Integer(start).toString());
+
+            if (ret[0].equals("true")) {
+
+                logger.error("データあり - 1 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("false")) {
+
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 1 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+
+            ret = okuyamaClient.getValue(this.nowCount + "expiredatasavekey_" + new Integer(start+1).toString());
+
+            if (ret[0].equals("true")) {
+                logger.error("データあり - 2 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start+1).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("false")) {
+
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 2 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+
+            ret = okuyamaClient.getValueAndUpdateExpireTime(this.nowCount + "expiredatasavekey_" + new Integer(start+2).toString());
+
+            if (ret[0].equals("true")) {
+
+            } else if (ret[0].equals("false")) {
+                logger.error("データなし - 3 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start+2).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 3 Key=[" + this.nowCount + "expiredatasavekey_" + new Integer(start+2).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+            long endTime = new Date().getTime();
+            System.out.println("SetExpireAndGet Method= " + (endTime - startTime) + " milli second");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execSetExpireAndGet - End");
+
+        return errorFlg;
+    }
+
 }
