@@ -1149,7 +1149,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 System.out.println("searchValue(Prefix)- 2-1 - Error=[" + sChars[0] + "]");
                 errorFlg = true;
             } else {
-                if (((String[])searchRet[1]).length != 5000) {
+                if (((String[])searchRet[1]).length != 101) {
                     System.out.println("searchValue(Prefix) - 2-2 - Error=[" + sChars[0] + "]");
                     errorFlg = true;
                 }
