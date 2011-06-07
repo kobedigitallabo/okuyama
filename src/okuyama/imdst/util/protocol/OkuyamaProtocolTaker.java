@@ -28,7 +28,10 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
 
     private String clientInfo = null;
 
-    private static char checkSetMethodCode = '1';
+    private static char checkSetMethodCodeSet = '1';
+
+    private static char checkSetMethodCodeAdd = '6';
+
 
     /**
      * 初期化
@@ -153,7 +156,8 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
 
     private String[] okuyamaMethodCnv(String executeMethodStr) {
 
-        if (executeMethodStr.charAt(0) == checkSetMethodCode) {
+        char checkChar = executeMethodStr.charAt(0);
+        if (checkChar == checkSetMethodCodeSet || checkChar == checkSetMethodCodeAdd) {
 
             if (executeMethodStr.charAt(executeMethodStr.length() - 1) == ',') {
 

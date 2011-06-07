@@ -4,6 +4,7 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 import java.util.zip.*;
+import java.nio.charset.Charset;
 
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
@@ -205,6 +206,10 @@ public class OkuyamaClient {
 
 
     private boolean sendSearchFlg = false;
+
+    // Defaultエンコーディング
+    private static String platformDefaultEncoding = Charset.defaultCharset().name();
+
 
 
     /**
@@ -1009,9 +1014,18 @@ public class OkuyamaClient {
         String serverRetStr = null;
         String[] serverRet = null;
         String encodeValue = null;
+        byte[] valueBytes = null;
+        byte[] keyBytes = null;
+
         // 文字列バッファ初期化
         setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+        if (encode == null) encode = platformDefaultEncoding;
+
         try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+
             // Byte Lenghtチェック
             if (tagStrs != null) {
                 for (int i = 0; i < tagStrs.length; i++) {
@@ -1023,27 +1037,25 @@ public class OkuyamaClient {
                 }
             }
 
-            if (value != null)
-                if(encode == null) {
-                    if (value.getBytes().length > maxValueSize) 
-                        throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
-                } else {
-                    if (value.getBytes(encode).length > maxValueSize) 
-                        throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
-                }
-            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+            if (value != null) {
+                valueBytes =value.getBytes(encode);
+                if (valueBytes.length > maxValueSize) 
+                    throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
+            }
 
-            // エラーチェック
+
 
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.trim().equals(""))
                 throw new OkuyamaClientException("The blank is not admitted on a key");
 
-            if (encode == null) {
-                if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
-            } else {
-                if (keyStr.getBytes(encode).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
-            }
+            // バイトコードに変換
+            keyBytes = keyStr.getBytes(encode);
+            if (keyBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+
+            // 処理番号送信
+            pw.print("1");
+            pw.flush();
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
@@ -1051,23 +1063,18 @@ public class OkuyamaClient {
             } else {
 
                 // ValueをBase64でエンコード
-
-                if (encode == null) {
-                    encodeValue = new String(this.dataEncoding(value.getBytes()));
-                } else {
-                    encodeValue = new String(this.dataEncoding(value.getBytes(encode)));
-                }
+                encodeValue = new String(this.dataEncoding(valueBytes));
             }
 
 
             // 処理番号連結
-            setValueServerReqBuf.append("1");
+            //setValueServerReqBuf.append("1");
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            setValueServerReqBuf.append(new String(this.dataEncoding(keyBytes)));
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
@@ -1335,10 +1342,14 @@ public class OkuyamaClient {
         String[] serverRet = null;
         String encodeValue = null;
 
+        byte[] valueBytes = null;
+
         // 文字列バッファ初期化
         setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
         try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
             // Byte Lenghtチェック
             if (tagStrs != null) {
                 for (int i = 0; i < tagStrs.length; i++) {
@@ -1346,11 +1357,13 @@ public class OkuyamaClient {
                 }
             }
 
-            if (value != null)
-                if (value.getBytes(ImdstDefine.characterDecodeSetBySearch).length > maxValueSize) 
+            if (value != null) {
+                valueBytes = value.getBytes(ImdstDefine.characterDecodeSetBySearch);
+                if (valueBytes.length > maxValueSize) 
                     throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
+            }
 
-            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
 
             // エラーチェック
             // Keyに対する無指定チェック
@@ -1359,18 +1372,22 @@ public class OkuyamaClient {
 
             if (keyStr.getBytes(ImdstDefine.characterDecodeSetBySearch).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
 
+            // 処理番号送信
+            pw.print("42");
+            pw.flush();
+
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
                 encodeValue = OkuyamaClient.blankStr;
             } else {
 
                 // ValueをBase64でエンコード
-                encodeValue = new String(this.dataEncoding(value.getBytes(ImdstDefine.characterDecodeSetBySearch)), ImdstDefine.characterDecodeSetBySearch);
+                encodeValue = new String(this.dataEncoding(valueBytes), ImdstDefine.characterDecodeSetBySearch);
             }
 
 
             // 処理番号連結
-            setValueServerReqBuf.append("42");
+            // setValueServerReqBuf.append("42");
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
@@ -1717,13 +1734,94 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public String[] setNewValue(String keyStr, String value) throws OkuyamaClientException {
-        return this.setNewValue(keyStr, null, value);
+        return this.setNewValue(keyStr, null, value, null, null);
+    }
+
+
+    /**
+     * MasterNodeへ新規データを登録要求する.<br>
+     * Tagあり.<br>
+     * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
+     * その場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     *
+     * @param keyStr Key値
+     * @param tagStrs Tag値 例){"tag1","tag2","tag3"}
+     * @param value Value値
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws OkuyamaClientException
+     */
+    public String[] setNewValue(String keyStr, String[] tags, String value) throws OkuyamaClientException {
+        return this.setNewValue(keyStr, tags, value, null, null);
+    }
+
+
+    /**
+     * MasterNodeへ新規データを登録要求する.<br>
+     * Tagなし.<br>
+     * Encodeなし.<br>
+     * 有効期限あり.<br>
+     * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
+     * その場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     *
+     * @param keyStr Key値
+     * @param value Value値
+     * @param expireTime 有効期限(秒/単位)
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws OkuyamaClientException
+     */
+    public String[] setNewValue(String keyStr, String value, Integer expireTime) throws OkuyamaClientException {
+        return this.setNewValue(keyStr, null, value, null, expireTime);
+    }
+
+
+    /**
+     * MasterNodeへ新規データを登録要求する.<br>
+     * Tagなし.<br>
+     * Encode指定あり.<br>
+     * 有効期限なし.<br>
+     * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
+     * その場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     *
+     * @param keyStr Key値
+     * @param value Value値
+     * @param encode Encode指定
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws OkuyamaClientException
+     */
+    public String[] setNewValue(String keyStr, String value, String encode) throws OkuyamaClientException {
+        return this.setNewValue(keyStr, null, value, encode, null);
+    }
+
+    /**
+     * MasterNodeへ新規データを登録要求する.<br>
+     * Tagなし.<br>
+     * Encode指定あり.<br>
+     * 有効期限あり.<br>
+     * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
+     * その場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     *
+     * @param keyStr Key値
+     * @param value Value値
+     * @param encode Encode指定
+     * @param expireTime 有効期限(秒/単位)
+
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws OkuyamaClientException
+     */
+    public String[] setNewValue(String keyStr, String value, String encode, Integer expireTime) throws OkuyamaClientException {
+        return this.setNewValue(keyStr, null, value, encode, expireTime);
     }
 
 
     /**
      * MasterNodeへ新規データを登録要求する.<br>
      * Tag有り.<br>
+     * Encode指定あり.<br>
+     * 有効期限有り.<br>
      * 既にデータが同一のKeyで登録されている場合は失敗する.<br>
      * その場合は、falseが返る<br>
      * 成功の場合は配列の長さは1である。失敗時は2である<br>
@@ -1731,10 +1829,12 @@ public class OkuyamaClient {
      * @param keyStr Key値
      * @param tagStrs Tag値 例){"tag1","tag2","tag3"}
      * @param value Value値
+     * @param encode Encode指定
+     * @param expireTime 有効期限(秒/単位)
      * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
      * @throws OkuyamaClientException
      */
-    public String[] setNewValue(String keyStr, String[] tagStrs, String value) throws OkuyamaClientException {
+    public String[] setNewValue(String keyStr, String[] tagStrs, String value, String encode, Integer expireTime) throws OkuyamaClientException {
         String[] ret = null; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -1744,18 +1844,20 @@ public class OkuyamaClient {
         // 文字列バッファ初期化
         setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
+        if (encode == null) encode = platformDefaultEncoding;
+
         try {
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // Byte Lenghtチェック
             if (tagStrs != null) {
                 for (int i = 0; i < tagStrs.length; i++) {
-                    if (tagStrs[i].getBytes().length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+                    if (tagStrs[i].getBytes(encode).length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
                 }
             }
 
             if (value != null) 
-                if (value.getBytes().length > maxValueSize) 
+                if (value.getBytes(encode).length > maxValueSize) 
                     throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
 
             // エラーチェック
@@ -1763,7 +1865,7 @@ public class OkuyamaClient {
             if (keyStr == null ||  keyStr.trim().equals(""))
                 throw new OkuyamaClientException("The blank is not admitted on a key");
 
-            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+            if (keyStr.getBytes(encode).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
@@ -1771,7 +1873,7 @@ public class OkuyamaClient {
             } else {
 
                 // ValueをBase64でエンコード
-                encodeValue = new String(this.dataEncoding(value.getBytes()));
+                encodeValue = new String(this.dataEncoding(value.getBytes(encode)));
             }
 
 
@@ -1782,7 +1884,7 @@ public class OkuyamaClient {
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes(encode))));
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
@@ -1796,10 +1898,10 @@ public class OkuyamaClient {
             } else {
 
                 // Tag数分連結
-                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
+                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes(encode))));
                 for (int i = 1; i < tagStrs.length; i++) {
                     setValueServerReqBuf.append(tagKeySep);
-                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes(encode))));
                 }
             }
 
@@ -1814,6 +1916,15 @@ public class OkuyamaClient {
 
             // Value連結
             setValueServerReqBuf.append(encodeValue);
+
+            // 有効期限あり
+            if (expireTime != null) {
+                // セパレータ連結
+                setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                setValueServerReqBuf.append(expireTime);
+                // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
+                setValueServerReqBuf.append(OkuyamaClient.sepStr);
+            }
 
             // サーバ送信
             pw.println(setValueServerReqBuf.toString());
@@ -1848,7 +1959,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setNewValue(keyStr, tagStrs, value);
+                    ret = this.setNewValue(keyStr, tagStrs, value, encode, expireTime);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -1859,7 +1970,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setNewValue(keyStr, tagStrs, value);
+                    ret = this.setNewValue(keyStr, tagStrs, value, encode, expireTime);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -1870,7 +1981,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setNewValue(keyStr, tagStrs, value);
+                    ret = this.setNewValue(keyStr, tagStrs, value, encode, expireTime);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
@@ -1897,7 +2008,7 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public String[] setValueVersionCheck(String keyStr, String value, String versionNo) throws OkuyamaClientException {
-        return this.setValueVersionCheck(keyStr, null, value, versionNo);
+        return this.setValueVersionCheck(keyStr, null, value, versionNo, null);
     }
 
 
@@ -1917,6 +2028,26 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, String versionNo) throws OkuyamaClientException {
+        return this.setValueVersionCheck(keyStr, tagStrs, value, versionNo, null);
+    }
+
+    /**
+     * MasterNodeへバージョンチェック付き値登録要求をする.<br>
+     * Tag有り.<br>
+     * バージョン値を使用して更新前チェックを行う.<br>
+     * 失敗した場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     * memcachedのcasに相当.<br>
+     * 
+     * @param keyStr Key値
+     * @param tagStrs Tag値
+     * @param value Value値
+     * @param versionNo getValueVersionCheckメソッドで取得したバージョンNo
+     * @param encode エンコード
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws OkuyamaClientException
+     */
+    public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, String versionNo, String encode) throws OkuyamaClientException {
         String[] ret = null; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -1924,6 +2055,7 @@ public class OkuyamaClient {
         // 文字列バッファ初期化
         setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
+        if (encode == null) encode = platformDefaultEncoding;
         try {
             // エラーチェック
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
@@ -1931,19 +2063,19 @@ public class OkuyamaClient {
             // Byte Lenghtチェック
             if (tagStrs != null) {
                 for (int i = 0; i < tagStrs.length; i++) {
-                    if (tagStrs[i].getBytes().length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+                    if (tagStrs[i].getBytes(encode).length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
                 }
             }
 
             if (value != null)
-                if (value.getBytes().length > maxValueSize) 
+                if (value.getBytes(encode).length > maxValueSize) 
                     throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
 
             // Keyに対する無指定チェック
             if (keyStr == null ||  keyStr.trim().equals(""))
                 throw new OkuyamaClientException("The blank is not admitted on a key");
 
-            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+            if (keyStr.getBytes(encode).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
 
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
@@ -1953,7 +2085,7 @@ public class OkuyamaClient {
             } else {
 
                 // ValueをBase64でエンコード
-                encodeValue = new String(this.dataEncoding(value.getBytes()));
+                encodeValue = new String(this.dataEncoding(value.getBytes(encode)));
             }
 
 
@@ -1963,7 +2095,7 @@ public class OkuyamaClient {
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes(encode))));
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
@@ -1977,10 +2109,10 @@ public class OkuyamaClient {
             } else {
 
                 // Tag数分連結
-                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
+                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes(encode))));
                 for (int i = 1; i < tagStrs.length; i++) {
                     setValueServerReqBuf.append(tagKeySep);
-                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes(encode))));
                 }
             }
 
@@ -2458,11 +2590,14 @@ public class OkuyamaClient {
         String[] ret = new String[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
+        byte[] keyBytes = null;
 
         // 文字列バッファ初期化
         getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
+        if (encoding == null) encoding = platformDefaultEncoding;
         try {
+
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // エラーチェック
@@ -2472,7 +2607,8 @@ public class OkuyamaClient {
             }
 
             // Keyに対するLengthチェック
-            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+            keyBytes = keyStr.getBytes(encoding);
+            if (keyBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
 
 
             // 処理番号連結
@@ -2480,14 +2616,11 @@ public class OkuyamaClient {
             // セパレータ連結
             getValueServerReqBuf.append(OkuyamaClient.sepStr);
 
-
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            getValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
-
+            getValueServerReqBuf.append(new String(this.dataEncoding(keyBytes)));
 
             // サーバ送信
             pw.println(getValueServerReqBuf.toString());
-
             pw.flush();
 
             // サーバから結果受け取り
@@ -2508,11 +2641,7 @@ public class OkuyamaClient {
                     } else {
 
                         // Value文字列をBase64でデコード
-                        if (encoding == null) {
-                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()));
-                        } else {
-                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
-                        }
+                        ret[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
                     }
                 } else if(serverRet[1].equals("false")) {
 
@@ -2601,6 +2730,7 @@ public class OkuyamaClient {
         // 文字列バッファ初期化
         getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
+        if (encoding == null) encoding = platformDefaultEncoding;
         try {
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
@@ -2624,10 +2754,11 @@ public class OkuyamaClient {
                 // ブランクは無視
                 if (keyStrList[idx] != null && !keyStrList[idx].equals("")) {
                     // Keyに対するLengthチェック
-                    if (keyStrList[idx].getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte Key=[");
+                    byte[] keyBytes = keyStrList[idx].getBytes(encoding);
+                    if (keyBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte Key=[");
 
                     getValueServerReqBuf.append(keysSep);
-                    getValueServerReqBuf.append(new String(this.dataEncoding(keyStrList[idx].getBytes())));
+                    getValueServerReqBuf.append(new String(this.dataEncoding(keyBytes)));
                     sendKeyList.add(keyStrList[idx]);
                     keysSep = OkuyamaClient.sepStr;
                 }
@@ -2658,11 +2789,7 @@ public class OkuyamaClient {
                         } else {
     
                             // Value文字列をBase64でデコード
-                            if (encoding == null) {
-                                oneDataRet[1] = new String(this.dataDecoding(serverRet[2].getBytes()));
-                            } else {
-                                oneDataRet[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
-                            }
+                            oneDataRet[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
                         }
                         ret.put(oneDataRet[0], oneDataRet[1]);
                     } else if(serverRet[1].equals("false")) {
@@ -2763,6 +2890,7 @@ public class OkuyamaClient {
         // 文字列バッファ初期化
         getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
+        if (encoding == null) encoding = platformDefaultEncoding;
         try {
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
@@ -2773,7 +2901,7 @@ public class OkuyamaClient {
             }
 
             // Keyに対するLengthチェック
-            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+            if (keyStr.getBytes(encoding).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
 
 
             // 処理番号連結
@@ -2783,7 +2911,7 @@ public class OkuyamaClient {
 
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            getValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            getValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes(encoding))));
 
 
             // サーバ送信
@@ -2809,11 +2937,7 @@ public class OkuyamaClient {
                     } else {
 
                         // Value文字列をBase64でデコード
-                        if (encoding == null) {
-                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()));
-                        } else {
-                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
-                        }
+                        ret[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
                     }
                 } else if(serverRet[1].equals("false")) {
 
@@ -2902,6 +3026,7 @@ public class OkuyamaClient {
         // 文字列バッファ初期化
         getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
+        if (encoding == null) encoding = platformDefaultEncoding;
         try {
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
@@ -2912,7 +3037,7 @@ public class OkuyamaClient {
             }
 
             // Tagに対するLengthチェック
-            if (tagStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Tag Max Size " + maxKeySize + " Byte");
+            if (tagStr.getBytes(encoding).length > maxKeySize) throw new OkuyamaClientException("Save Tag Max Size " + maxKeySize + " Byte");
 
 
             // 処理番号連結
@@ -2921,7 +3046,7 @@ public class OkuyamaClient {
             getValueServerReqBuf.append(OkuyamaClient.sepStr);
 
             // tag値連結(Keyはデータ送信時には必ず文字列が必要)
-            getValueServerReqBuf.append(new String(this.dataEncoding(tagStr.getBytes())));
+            getValueServerReqBuf.append(new String(this.dataEncoding(tagStr.getBytes(encoding))));
 
             // サーバ送信
 
@@ -2940,11 +3065,8 @@ public class OkuyamaClient {
                         // データ有り
                         String[] oneDataRet = new String[2];
 
-                        if (encoding == null) {
-                            oneDataRet[0] = new String(this.dataDecoding(serverRet[2].getBytes()));
-                        } else {
-                            oneDataRet[0] = new String(this.dataDecoding(serverRet[2].getBytes()), encoding);
-                        }
+                        oneDataRet[0] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
+
 
                         // Valueがブランク文字か調べる
                         if (serverRet[3].equals(OkuyamaClient.blankStr)) {
@@ -2952,11 +3074,7 @@ public class OkuyamaClient {
                         } else {
     
                             // Value文字列をBase64でデコード
-                            if (encoding == null) {
-                                oneDataRet[1] = new String(this.dataDecoding(serverRet[3].getBytes()));
-                            } else {
-                                oneDataRet[1] = new String(this.dataDecoding(serverRet[3].getBytes()), encoding);
-                            }
+                            oneDataRet[1] = new String(this.dataDecoding(serverRet[3].getBytes(encoding)), encoding);
                         }
                         ret.put(oneDataRet[0], oneDataRet[1]);
                     } else if(serverRet[1].equals("false")) {
@@ -3052,6 +3170,7 @@ public class OkuyamaClient {
         // 文字列バッファ初期化
         getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
 
+        if (encoding == null) encoding = platformDefaultEncoding;
         try {
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
@@ -3062,7 +3181,7 @@ public class OkuyamaClient {
             }
 
             // Keyに対するLengthチェック
-            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + keyStr + " Byte");
+            if (keyStr.getBytes(encoding).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + keyStr + " Byte");
 
 
             // 処理番号連結
@@ -3071,7 +3190,7 @@ public class OkuyamaClient {
             getValueServerReqBuf.append(OkuyamaClient.sepStr);
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            getValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            getValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes(encoding))));
 
 
             // サーバ送信
@@ -3098,11 +3217,7 @@ public class OkuyamaClient {
                     } else {
 
                         // Value文字列をBase64でデコード
-                        if (encoding == null) {
-                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()));
-                        } else {
-                            ret[1] = new String(this.dataDecoding(serverRet[2].getBytes()), encoding);
-                        }
+                        ret[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
                     }
 
                     if (serverRet.length > 2)

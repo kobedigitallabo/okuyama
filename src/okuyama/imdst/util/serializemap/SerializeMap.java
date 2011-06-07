@@ -116,6 +116,10 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                 if (target != null) {
 
                     Map targetMap = dataDeserialize(target);
+
+                    // sizeを加算
+                    if (!targetMap.containsKey(key)) nowSize.incrementAndGet();
+
                     targetMap.put(key, value);
                     target = dataSerialize(targetMap);
                 } else {
@@ -123,10 +127,12 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                     Map targetMap = new HashMap();
                     targetMap.put(key, value);
                     target = dataSerialize(targetMap);
+
+                    // sizeを加算
+                    nowSize.incrementAndGet();
                 }
 
                 baseMap.put(point, SystemUtil.dataCompress(target));
-                nowSize.incrementAndGet();
             }
         } finally {
             r.unlock(); 
@@ -199,10 +205,12 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
 
                 if (ret != null) {
                     target = dataSerialize(targetMap);
+
+                    // sizeを減算
+                    nowSize.decrementAndGet();
                 }
 
                 baseMap.put(point, SystemUtil.dataCompress(target));
-                nowSize.decrementAndGet();
             }
         } finally {
             r.unlock(); 
@@ -254,7 +262,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
         w.lock();
         try { 
             baseMap.clear();
-            nowSize = new AtomicInteger();
+            nowSize = new AtomicInteger(0);
         } finally {
             w.unlock(); 
         }
