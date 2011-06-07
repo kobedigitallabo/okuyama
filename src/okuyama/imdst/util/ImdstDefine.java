@@ -382,7 +382,7 @@ public class ImdstDefine {
     public volatile static boolean saveValueCompress = true;
 
     // Valueをメモリに保存する際に圧縮に利用するコンプレッサーをいくつプールしておくかの設定
-    public volatile static int valueCompresserPoolSize = 30;
+    public volatile static int valueCompresserPoolSize = 40;
     
     // Valueをメモリに保存する際に圧縮する個別単位サイズ
     public volatile static int valueCompresserCompressSize = 2048;
