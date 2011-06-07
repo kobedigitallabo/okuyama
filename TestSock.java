@@ -47,7 +47,7 @@ public class TestSock {
                 StringBuilder strBuf =null; 
                 if (args.length > 4) {
                     strBuf = new StringBuilder(120*10);
-                    for (int i = 0; i < 3; i++) {
+                    for (int i = 0; i < 3000; i++) {
                         strBuf.append(rnd.nextInt(1999999999));
                     }
                 }
@@ -232,7 +232,11 @@ public class TestSock {
                 String[] ret = null;
 
                 long start = new Date().getTime();
-                ret = okuyamaClient.getValue(args[3]);
+                if (args.length > 4) {
+                    ret = okuyamaClient.getValue(args[3], args[4]);
+                } else {
+                    ret = okuyamaClient.getValue(args[3]);
+                }
                 if (ret[0].equals("true")) {
                     // データ有り
                     System.out.println("Value=[" + ret[1] + "]");
@@ -806,9 +810,18 @@ public class TestSock {
                 // マスタサーバに接続
                 okuyamaClient.connect(args[1], port);
 
-
+                String[] retParam = null;
                 long start = new Date().getTime();
-                String[] retParam = okuyamaClient.setNewValue(args[3], args[4]);
+                
+                if (args.length == 6) {
+                    retParam = okuyamaClient.setNewValue(args[3], args[4], new Integer(args[5]));
+                
+                } else if (args.length == 7) {
+                    retParam = okuyamaClient.setNewValue(args[3], args[4], args[5], new Integer(args[6]));
+                } else {
+                    retParam = okuyamaClient.setNewValue(args[3], args[4]);
+                }
+
                 if(retParam[0].equals("false")) {
                 
                     System.out.println(retParam[1]);
