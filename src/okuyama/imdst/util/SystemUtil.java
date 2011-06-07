@@ -646,6 +646,42 @@ public class SystemUtil {
         }
     }
 
-    
+
+    public static byte[] defaultSerializeMap(Map data) {
+        ByteArrayOutputStream bao = null;
+        ObjectOutput oo = null;
+        try {
+            bao = new ByteArrayOutputStream(1000);
+            oo = new ObjectOutputStream(bao);
+
+            oo.writeObject(data);
+            oo.flush();
+
+            oo.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return bao.toByteArray();
+    }
+
+
+    public static Map defaultDeserializeMap(byte[] data) {
+        Map retData = null;
+        ByteArrayInputStream bio = null;
+        ObjectInputStream ois = null;
+        try {
+            bio = new ByteArrayInputStream(data);
+            ois = new ObjectInputStream(bio);
+
+            retData = (Map)ois.readObject();
+            ois.close();
+            bio.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return retData;
+    }
+
+
 }
 
