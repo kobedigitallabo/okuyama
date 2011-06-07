@@ -6,7 +6,7 @@
 	<property name="src.dir"		value="src" />
 	<property name="build.dir"		value="classes" />
 	<property name="install.dir"	value="install" />
-	<property name="version"		value="0.8.7" />
+	<property name="version"		value="0.8.8" />
 	<property name="javadoc.dir"	value="javadoc"/>
 	<property name="lib.dir"	    value="lib"/>
 
@@ -73,7 +73,7 @@
 
 	<!-- DataNodeServer Execute task -->
 	<target name="datanode">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="368m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
 			<arg value="/Main.properties"/>
 			<arg value="/DataNode.properties"/>
 			<classpath refid="project.class.path"/>
@@ -92,7 +92,7 @@
 
 	<!-- SlaveDataNodeServer Execute task -->
 	<target name="slavedatanode">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="368m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
 			<arg value="/Main.properties"/>
 			<arg value="/SlaveDataNode.properties"/>
 			<classpath refid="project.class.path"/>
@@ -102,7 +102,7 @@
 
 	<!-- ThirdDataNodeServer Execute task -->
 	<target name="thirddatanode">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="368m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
 			<arg value="/Main.properties"/>
 			<arg value="/ThirdDataNode.properties"/>
 			<classpath refid="project.class.path"/>
@@ -120,7 +120,7 @@
 	</target>
 
 	<target name="masternode_small">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
 			<arg value="/Main.properties"/>
 			<arg value="/MasterNode_small.properties"/>
 			<!--<arg value="-debug" />-->
@@ -154,6 +154,7 @@
 		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="128m">
 			<arg value="/Main.properties"/>
 			<arg value="/MasterNodeMemcached.properties"/>
+			<arg value="-gaetu true"/>
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>
