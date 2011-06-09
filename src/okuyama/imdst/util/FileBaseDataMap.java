@@ -145,7 +145,7 @@ public class FileBaseDataMap extends AbstractMap {
         // メモリの上限値をKBで取得してそれの指定した割合から割り出す
         long cacheMem = new Double(maxMem * cacheMemPercent).longValue();
         // 指定メモリ量に幾つのキャッシュが乗るか調べる(1キャッシュ25KB)
-        this.innerCacheSizeTotal = new Long(cacheMem).intValue() / 25;
+        this.innerCacheSizeTotal = new Long(cacheMem).intValue() / 256;
 
         int oneCacheSizePer = innerCacheSizeTotal / numberOfCoreMap;
         int oneMapSizePer = numberOfKeyData / numberOfCoreMap;
