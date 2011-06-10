@@ -68,6 +68,16 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+                    // -KS
+                    if (startOptions[i].trim().equals("-KS")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.saveKeyMaxSize = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
                     // -ts
                     if (startOptions[i].trim().equals("-ts")) {
                         if (startOptions.length > (i+1)) {

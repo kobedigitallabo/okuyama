@@ -106,8 +106,8 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                     // sizeを加算
                     nowSize.incrementAndGet();
                 }
-
                 baseMap.put(point, SystemUtil.dataCompress(target));
+                
             }
         } finally {
             r.unlock(); 

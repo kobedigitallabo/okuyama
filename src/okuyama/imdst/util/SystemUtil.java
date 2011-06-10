@@ -9,6 +9,11 @@ import java.util.zip.*;
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
 
+
+import net.arnx.jsonic.JSON;
+
+
+
 /**
  * okuyamaが使用する共通的なApiに対してアクセスする.<br>
  *
@@ -648,6 +653,22 @@ public class SystemUtil {
 
 
     public static byte[] defaultSerializeMap(Map data) {
+        return normalSerializeMap(data);
+    }
+
+
+    private static byte[] jsonSerializeMap(Map data) {
+        byte[] ret = null;
+        try {
+
+            ret = ((String)JSON.encode(data)).getBytes();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ret;
+    }
+
+    private static byte[] normalSerializeMap(Map data) {
         ByteArrayOutputStream bao = null;
         ObjectOutput oo = null;
         try {
@@ -665,7 +686,32 @@ public class SystemUtil {
     }
 
 
+
     public static Map defaultDeserializeMap(byte[] data) {
+        return normalDeserializeMap(data);
+    }
+
+    private static Map jsonDeserializeMap(byte[] data) {
+        Map ret = null;
+        try {
+            
+            Map tmpMap = (Map)JSON.decode(new String(data));
+
+            ret = new HashMap();
+            for (Iterator ite = tmpMap.entrySet().iterator(); ite.hasNext();) {
+                Map.Entry entry = (Map.Entry) ite.next();
+                String key = (String) entry.getKey();
+                Object value = (Object) entry.getValue();
+                ret.put(new CoreMapKey(key), value);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return ret;
+    }
+
+    private static Map normalDeserializeMap(byte[] data) {
         Map retData = null;
         ByteArrayInputStream bio = null;
         ObjectInputStream ois = null;

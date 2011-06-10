@@ -65,4 +65,8 @@ public class CoreMapKey implements Cloneable, Serializable {
 
         return this.retHashCode;
     }
+
+    public String toString() {
+        return new String(datas);
+    }
 }

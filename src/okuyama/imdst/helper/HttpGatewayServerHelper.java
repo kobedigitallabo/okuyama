@@ -48,7 +48,6 @@ public class HttpGatewayServerHelper extends AbstractHelper {
         Object[] parameters = super.getParameters();
 
         try{
-
             imdstKeyValueClient = new ImdstKeyValueClient();
             imdstKeyValueClient.setConnectionInfos((String[])parameters[1]);
             imdstKeyValueClient.autoConnect();
@@ -70,11 +69,9 @@ public class HttpGatewayServerHelper extends AbstractHelper {
             String addSep = "";
             String body = null;
             int headerCounter = 0;
-
             while ((inputLine = in.readLine()) != null) {
                 StringBuilder dataBuf = new StringBuilder(1024);
                 if (inputLine.trim().equals("")) {
-
                     counter++;
                     if(counter == 1) {
                         // ここからはBody読みこみ
@@ -126,10 +123,9 @@ public class HttpGatewayServerHelper extends AbstractHelper {
                 //imdstKeyValueClient.setCompressMode(true);
                 String key  = ((String[])((String)headerMap.get("get")).split(" "))[0].trim();
                 String[] types = key.split("\\.");
-                 
+                System.out.println(key);
                 ret = imdstKeyValueClient.getByteValue(key);
                 if (ret[0].equals("true")) {
-
                     // データ有り
                     byte[] fileByte = null;
                     fileByte = (byte[])ret[1];
@@ -160,7 +156,6 @@ public class HttpGatewayServerHelper extends AbstractHelper {
                     outStr.flush();*/
                     //outStr.write("\r\n");
                 } else if (ret[0].equals("false")) {
-
                     outStr.write("HTTP/1.1 404 Not Found\r\n");
                     outStr.write("Date: " + new Date().toString() + "\r\n");
                     outStr.write("Server: okuyama kvs web server\r\n");

@@ -59,6 +59,8 @@ public class ServerManagedJob extends AbstractJob implements IJob {
         boolean firstOver = true;
         long gcExecuteTime = System.currentTimeMillis();
         long executeGcInterval = 60000;
+        long memoryLimitOverCount = 0;
+        long maxMemoryLimitOverCount = 3;
 
         try{
 
@@ -78,27 +80,35 @@ public class ServerManagedJob extends AbstractJob implements IJob {
 
                 if (optionParam != null &&  optionParam.equals("true")) {
                     // メモリ関係チェック
-                    logger.info("JVM MaxMemory Size =[" + JavaSystemApi.getRuntimeMaxMem("M") + "]");
-                    logger.info("JVM TotalMemory Size =[" + JavaSystemApi.getRuntimeTotalMem("M") + "]");
-                    logger.info("JVM FreeMemory Size =[" + JavaSystemApi.getRuntimeFreeMem("M") + "]");
-                    logger.info("JVM Use Memory Percent=[" + JavaSystemApi.getUseMemoryPercent() + "]");
+                    logger.debug("JVM MaxMemory Size =[" + JavaSystemApi.getRuntimeMaxMem("M") + "]");
+                    logger.debug("JVM TotalMemory Size =[" + JavaSystemApi.getRuntimeTotalMem("M") + "]");
+                    logger.debug("JVM FreeMemory Size =[" + JavaSystemApi.getRuntimeFreeMem("M") + "]");
+                    logger.debug("JVM Use Memory Percent=[" + JavaSystemApi.getUseMemoryPercent() + "]");
                 }
 
                 if (JavaSystemApi.getUseMemoryPercentCache() > this.memoryLimitSize) {
+                    memoryLimitOverCount++;
+
+                    if (memoryLimitOverCount < maxMemoryLimitOverCount || ((System.currentTimeMillis() - gcExecuteTime) > executeGcInterval)) {
 
 
-                    if ((System.currentTimeMillis() - gcExecuteTime) > executeGcInterval) {
-
+                        logger.info("FullGC - Execute - Start");
                         JavaSystemApi.manualGc();
+                        logger.info("FullGC - Execute - End");
                         gcExecuteTime = System.currentTimeMillis();
-                        Thread.sleep(3000);
-
+                        Thread.sleep(2000);
                     } else {
 
                         // 限界値を超えている
-                        StatusUtil.useMemoryLimitOver();
+                        if (memoryLimitOverCount == maxMemoryLimitOverCount) {
+                            logger.info("JVM Limit MemorySize Over");
+                            StatusUtil.useMemoryLimitOver();
+                        }
                     }
+                } else {
+                    memoryLimitOverCount = 0;
                 }
+
                 // GC発行
                 JavaSystemApi.autoGc();
 

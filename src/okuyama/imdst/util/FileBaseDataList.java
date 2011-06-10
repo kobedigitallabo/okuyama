@@ -32,47 +32,8 @@ public class FileBaseDataList extends AbstractList {
 
     public int waitTime = 100;
 
-    private static int paddingSymbol = 64;
-
-    private static byte[] paddingSymbols = {64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
-                                            64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64};
 
 
-    private static String middlePaddingSymbolStr = new String(paddingSymbols);
-
-    private static String largePaddingSymbolStr = new StringBuilder(8192).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).
-                                                  append(new String(paddingSymbols)).toString();
 
 
     // Total Size
@@ -306,14 +267,4 @@ public class FileBaseDataList extends AbstractList {
         }
     }
 
-
-    /**
-     * 指定の文字を指定の桁数で特定文字列で埋める.<br>
-     *
-     * @param data
-     * @param fixSize
-     */
-    private String fillCharacter(String data, int fixSize) {
-        return SystemUtil.fillCharacter(data, fixSize, FileBaseDataList.paddingSymbol);
-    }
 }

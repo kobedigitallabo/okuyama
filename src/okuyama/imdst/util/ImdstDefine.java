@@ -11,7 +11,7 @@ import java.util.zip.Deflater;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.8.7";
+    public static final String okuyamaVersion = "VERSION okuyama-0.8.8";
 
     // -- KeyMapファイルに関係する定数 -------------------------------------------------
     // KeyNodeのWorkファイルでのセパレータ
@@ -293,7 +293,7 @@ public class ImdstDefine {
     //public static final int saveDataMaxSize =524288;
 
     // Key,Tagの最大長
-    public static final int saveKeyMaxSize = 468;
+    public volatile static int saveKeyMaxSize = 468;
 
     // 共通のデータファイルに書き出す最大サイズ
     public volatile static int dataFileWriteMaxSize = 12888;
