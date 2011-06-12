@@ -105,7 +105,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
     // コンストラクタ
     public CoreValueMap(String[] dirs, int numberOfDataSize) {
-
+System.out.println("ssssssssssssssssssssssss");
         mainMap  = new FileBaseDataMap(dirs, numberOfDataSize);
         converter = new AllFileModeCoreValueCnv();
     }

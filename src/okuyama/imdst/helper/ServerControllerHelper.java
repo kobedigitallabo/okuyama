@@ -234,6 +234,16 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         br.close();
                         pw.close();
                         soc.close();
+                    } else if (command.equals("maptime")) {
+
+                        ImdstDefine.fileBaseMapTimeDebug = !ImdstDefine.fileBaseMapTimeDebug;
+                        pw.println(command + " Success");
+                        pw.println("MapTime = " + ImdstDefine.fileBaseMapTimeDebug);
+                        pw.flush();
+                        br.close();
+                        pw.close();
+                        Thread.sleep(500);
+                        soc.close();
                     } else if (command.equals("-help")) {
                         pw.println(command + " Success");
                         pw.println("");

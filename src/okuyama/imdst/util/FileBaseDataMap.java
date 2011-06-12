@@ -144,8 +144,8 @@ public class FileBaseDataMap extends AbstractMap {
         long maxMem = JavaSystemApi.getRuntimeMaxMem("K");
         // メモリの上限値をKBで取得してそれの指定した割合から割り出す
         long cacheMem = new Double(maxMem * cacheMemPercent).longValue();
-        // 指定メモリ量に幾つのキャッシュが乗るか調べる(1キャッシュ25KB)
-        this.innerCacheSizeTotal = new Long(cacheMem).intValue() / 256;
+        // 指定メモリ量に幾つのキャッシュが乗るか調べる(1キャッシュ当たりのサイズ(可変)(単位:KB))
+        this.innerCacheSizeTotal = new Long(cacheMem).intValue() / 128;
 
         int oneCacheSizePer = innerCacheSizeTotal / numberOfCoreMap;
         int oneMapSizePer = numberOfKeyData / numberOfCoreMap;
@@ -900,11 +900,25 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
         instructionObj[1] = value;
         instructionObj[2] = new Integer(hashCode);
         try {
+long start1 = 0L;
+long start2 = 0L;
+
+long end1 = 0L;
+long end2 = 0L;
+
+start1 = System.nanoTime();
             synchronized (this.delayWriteDifferenceMap) {
                 this.delayWriteDifferenceMap.put(key, value);
             }
+end1 = System.nanoTime();
+start2 = System.nanoTime();
             this.delayWriteQueue.put(instructionObj);
+end2 = System.nanoTime();
             this.delayWriteRequestCount++;
+
+if (ImdstDefine.fileBaseMapTimeDebug) {
+    System.out.println("1="+(end1 - start1) + " 2="+(end2 - start2));
+}
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1451,7 +1465,8 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
      * @param hashCode This is a key value hash code
      */
     public void put(String key, String value, int hashCode) {
-/*long start1 = 0L;
+/*
+long start1 = 0L;
 long start2 = 0L;
 long start3 = 0L;
 long start4 = 0L;
@@ -1603,10 +1618,9 @@ long end4 = 0L;
             e2.printStackTrace();
         }
 //end1 = System.nanoTime();
-//System.out.println("1="+(end1 - start1));
-//System.out.println("2="+(end2 - start2));
-//System.out.println("3="+(end3 - start3));
-//System.out.println("4="+(end4 - start4));
+//if (ImdstDefine.fileBaseMapTimeDebug) {
+//  System.out.println("1="+(end1 - start1) + " 2="+(end2 - start2) + " 3="+(end3 - start3) + " 4="+(end4 - start4));
+//}
 
     }
 

@@ -457,4 +457,6 @@ public class ImdstDefine {
     // 有効期限切れのデータを実際に物理削除するまでの経過時間(ミリ秒)
     public static final long invalidDataDeleteTime = 60000;
 
+
+    public volatile static boolean fileBaseMapTimeDebug = false;
 }
