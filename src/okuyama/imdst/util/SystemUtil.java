@@ -10,7 +10,7 @@ import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
 
 
-import net.arnx.jsonic.JSON;
+//import net.arnx.jsonic.JSON;
 
 
 
@@ -658,7 +658,7 @@ public class SystemUtil {
 
 
     private static byte[] jsonSerializeMap(Map data) {
-        byte[] ret = null;
+/*        byte[] ret = null;
         try {
 
             ret = ((String)JSON.encode(data)).getBytes();
@@ -666,6 +666,8 @@ public class SystemUtil {
             e.printStackTrace();
         }
         return ret;
+*/
+        return null;
     }
 
     private static byte[] normalSerializeMap(Map data) {
@@ -692,7 +694,7 @@ public class SystemUtil {
     }
 
     private static Map jsonDeserializeMap(byte[] data) {
-        Map ret = null;
+/*        Map ret = null;
         try {
             
             Map tmpMap = (Map)JSON.decode(new String(data));
@@ -707,8 +709,9 @@ public class SystemUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return ret;
+*/
+        return null;
     }
 
     private static Map normalDeserializeMap(byte[] data) {
