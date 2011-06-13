@@ -618,7 +618,8 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
 
     // The length of the data read from the file stream at a time(In bytes)
     private int getDataSize = (4096 / lineDataSize) * lineDataSize;
-
+    //private int getDataSize = ((4096 * 8) / lineDataSize) * lineDataSize;
+    
     // The number of data files created
     private int numberOfDataFiles = 1024;
 
