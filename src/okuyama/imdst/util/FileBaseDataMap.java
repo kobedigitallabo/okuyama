@@ -617,7 +617,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
     private int lineDataSize =  keyDataLength + oneDataLength;
 
     // The length of the data read from the file stream at a time(In bytes)
-    private int getDataSize = (4096 / lineDataSize) * lineDataSize;
+    private int getDataSize = (8192 / lineDataSize) * lineDataSize;
     //private int getDataSize = ((4096 * 8) / lineDataSize) * lineDataSize;
     
     // The number of data files created
@@ -1007,10 +1007,15 @@ if (ImdstDefine.fileBaseMapTimeDebug) {
 long start1 = 0L;
 long start2 = 0L;
 long start3 = 0L;
+long start4 = 0L;
+long start5 = 0L;
 
 long end1 = 0L;
 long end2 = 0L;
 long end3 = 0L;
+long end4 = 0L;
+long end5 = 0L;
+List timeList = new ArrayList();
 
 start1 = System.nanoTime();
 
@@ -1066,11 +1071,14 @@ start3 = System.nanoTime();
                 for (int tryIdx = 0; tryIdx < 2; tryIdx++) {
 
                     try {
-
+start4 = System.nanoTime();
                         raf.seek(0);
+end4 = System.nanoTime();
                         int readLen = -1;
+start5 = System.nanoTime();
                         while((readLen = SystemUtil.diskAccessSync(raf, lineBufs)) != -1) {
-
+end5 = System.nanoTime();
+timeList.add((end5 - start5));
                             matchFlg = true;
 
                             int loop = readLen / lineDataSize;
@@ -1107,6 +1115,7 @@ start3 = System.nanoTime();
                                     break;
                                 }
                             }
+ start5 = System.nanoTime();
                             if (matchFlg) break;
                         }
                         break;
@@ -1154,7 +1163,12 @@ start3 = System.nanoTime();
 end3 = System.nanoTime();
 
 if (ImdstDefine.fileBaseMapTimeDebug) {
-    System.out.println("Get 1="+(end1 - start1) + " 2="+(end2 - start2) + " 3="+(end3 - start3));
+    long time5 = 0L;
+    for (int idx = 0; idx < timeList.size(); idx++) {
+        time5 = time5 + (Long)timeList.get(idx);
+    }
+    
+    System.out.println("Get 1="+(end1 - start1) + " 2="+(end2 - start2) + " 3="+(end3 - start3) +" 4=" + (end4 - start4) + " 5=" +timeList + " 5-Total=" + time5);
 }
 
         } catch (Exception e) {
