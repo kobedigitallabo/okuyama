@@ -638,7 +638,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
     private int innerCacheSize = 128;
 
     // 1ファイルに対してどの程度のキー数を保存するかの目安
-    private int numberOfOneFileKey = 7000;
+    private int numberOfOneFileKey = ImdstDefine.fileBaseMapNumberOfOneFileKey;
 
     // 全キー取得時の現在ファイルのインデックス
     private int nowIterationFileIndex = 0;
@@ -728,7 +728,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
      * @throws
      */
     public void init() {
-
+System.out.println(numberOfOneFileKey);
         this.innerCache = new InnerCache(this.innerCacheSize);
         this.totalSize = new AtomicInteger(0);
         this.dataFileList = new File[numberOfDataFiles];
@@ -1347,7 +1347,7 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
     private int innerCacheSize = 128;
 
     // 1ファイルに対してどの程度のキー数を保存するかの目安
-    private int numberOfOneFileKey = 7000;
+    private int numberOfOneFileKey = ImdstDefine.fileBaseMapNumberOfOneFileKey;
 
     // 全キー取得時の現在ファイルのインデックス
     private int nowIterationFileIndex = 0;

@@ -298,6 +298,8 @@ public class ImdstDefine {
     // 共通のデータファイルに書き出す最大サイズ
     public volatile static int dataFileWriteMaxSize = 12888;
 
+    public volatile static int fileBaseMapNumberOfOneFileKey = 7000;
+
     // TagのValueの1つ当たりの長さ(Keyの連結結果長)
     public volatile static int tagValueAppendMaxSize = 8192 * 3;
 

@@ -399,8 +399,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             this.nowKeySize = super.size();
                             // サイズオーバーの場合
                             if (overSizeFlg) {
+
                                 // データ長が共有データファイルの1データ上限を超えている
-                                // その場合はキー名でファイルを作成する
                                 this.writeOverSizeData(key, value);
                             }
                         }

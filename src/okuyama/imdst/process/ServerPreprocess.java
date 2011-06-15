@@ -158,7 +158,17 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+                    // -fbmnk
+                    if (startOptions[i].trim().equals("-fbmnk")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.fileBaseMapNumberOfOneFileKey = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
 
+                
 
                 }
             }
