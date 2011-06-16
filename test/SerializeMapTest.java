@@ -1,6 +1,7 @@
 package test;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
 import okuyama.imdst.util.serializemap.*;
@@ -10,7 +11,9 @@ public class SerializeMapTest extends Thread {
 
     private static boolean status = true;
 
-    private static SerializeMap testMap = new SerializeMap(1000000, 900000, 100000);
+    private static Map testMap = new SerializeMap(1000000, 900000, 100000);
+    //private static Map testMap = new ConcurrentHashMap(1000000, 900000, 64);
+
 
     public static ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     public static Lock r = rwl.readLock();
@@ -42,6 +45,10 @@ public class SerializeMapTest extends Thread {
             }
             
             w.unlock();
+            for (int i = 0; i < 100000; i++) {
+                Thread.sleep(3000);
+                System.out.println(testMap.size());
+            }
             Thread.sleep(60000);
             SerializeMapTest.status = false;
 
