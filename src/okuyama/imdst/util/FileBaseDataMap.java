@@ -617,7 +617,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
     private int lineDataSize =  keyDataLength + oneDataLength;
 
     // The length of the data read from the file stream at a time(In bytes)
-    private int getDataSize = (8192 / lineDataSize) * lineDataSize;
+    private int getDataSize = ((8192 * 4) / lineDataSize) * lineDataSize;
     //private int getDataSize = ((4096 * 8) / lineDataSize) * lineDataSize;
     
     // The number of data files created
@@ -704,7 +704,6 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
             } else {
                 this.getDataSize = this.lineDataSize * 1 * 2;
             }
-
             this.baseFileDirs = dirs;
             this.innerCacheSize = innerCacheSize;
             if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;

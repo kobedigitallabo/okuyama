@@ -41,7 +41,14 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
     private Map baseMap = null;
 
 
-    // コンストラクタ
+    /**
+     * コンストラクタ
+     *
+     *
+     * @param size 予想格納最大数(現在内部的には利用しない)
+     * @param upper 格納上限拡張閾値(現在内部的には利用しない)
+     * @param multi 実際に格納に使用する集合バケット数
+     */
     public SerializeMap(int size, int upper, int multi) {
 
         parallelControl = multi;
@@ -49,7 +56,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
         for (int i = 0; i < parallelControl; i++) {
             syncObjs[i] = new Integer(i);
         }
-        baseMap = new ConcurrentHashMap((size / multi), (upper / multi), multi);
+        baseMap = new ConcurrentHashMap(multi, (multi - 1), 64);
     }
 
 
