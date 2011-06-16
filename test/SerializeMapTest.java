@@ -45,10 +45,11 @@ public class SerializeMapTest extends Thread {
             }
             
             w.unlock();
-            for (int i = 0; i < 100000; i++) {
+            // Comment Out 
+            /*for (int i = 0; i < 100000; i++) {
                 Thread.sleep(3000);
                 System.out.println(testMap.size());
-            }
+            }*/
             Thread.sleep(10000);
             SerializeMapTest.status = false;
 
