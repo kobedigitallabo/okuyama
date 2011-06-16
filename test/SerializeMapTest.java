@@ -11,8 +11,8 @@ public class SerializeMapTest extends Thread {
 
     private static boolean status = true;
 
-    private static Map testMap = new SerializeMap(1000000, 900000, 100000);
-    //private static Map testMap = new ConcurrentHashMap(1000000, 900000, 64);
+    private static Map testMap = new SerializeMap(2000000, 1900000, 1000000);
+    //private static Map testMap = new ConcurrentHashMap(2000000, 1900000, 64);
 
 
     public static ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
@@ -49,14 +49,14 @@ public class SerializeMapTest extends Thread {
                 Thread.sleep(3000);
                 System.out.println(testMap.size());
             }
-            Thread.sleep(60000);
+            Thread.sleep(10000);
             SerializeMapTest.status = false;
 
             for (int idx = 0; idx < maxThreads; idx++) {
                 tList[idx].join();
             }
             System.out.println("TotalExecCount = " + testMap.size());
-            System.out.println("QPS = " + (testMap.size() / 60));
+            System.out.println("QPS = " + (testMap.size() / 10));
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -67,12 +67,15 @@ public class SerializeMapTest extends Thread {
         try {
             r.lock();
             r.unlock();
-            String key = "KeyABCDEFG0123456789_" + threadPrefix + "_";
-            String value = "Value123456789ABCDEFGHIJKLMNOPQRSTUWXYZABCDEFGHIJKLMNOPQRSTUWXYZ_" + threadPrefix + "_";
-          
+            String key = "KeyABCDEFG_" + threadPrefix + "_";
+            String value = "Value123456789ABCDEFGHIJKLMNOPQRSTUWXYZ_" + threadPrefix + "_";
+            Random rnd = new Random();
+
             for (int idx = 0; SerializeMapTest.status; idx++) {
                 //System.out.println(key + idx + "  " + value + idx);
                 testMap.put(key + idx, value + idx);
+                /*int rndInt = rnd.nextInt(2000000);
+                testMap.put(key + rndInt, value + rndInt);*/
             }
         } catch (Exception e) {
             e.printStackTrace();
