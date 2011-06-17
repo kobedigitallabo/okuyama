@@ -900,25 +900,25 @@ System.out.println(numberOfOneFileKey);
         instructionObj[1] = value;
         instructionObj[2] = new Integer(hashCode);
         try {
-long start1 = 0L;
-long start2 = 0L;
+//long start1 = 0L;
+//long start2 = 0L;
 
-long end1 = 0L;
-long end2 = 0L;
+//long end1 = 0L;
+//long end2 = 0L;
 
-start1 = System.nanoTime();
+//start1 = System.nanoTime();
             synchronized (this.delayWriteDifferenceMap) {
                 this.delayWriteDifferenceMap.put(key, value);
             }
-end1 = System.nanoTime();
-start2 = System.nanoTime();
+//end1 = System.nanoTime();
+//start2 = System.nanoTime();
             this.delayWriteQueue.put(instructionObj);
-end2 = System.nanoTime();
+//end2 = System.nanoTime();
             this.delayWriteRequestCount++;
 
-if (ImdstDefine.fileBaseMapTimeDebug) {
-    System.out.println("Set 1="+(end1 - start1) + " 2="+(end2 - start2));
-}
+//if (ImdstDefine.fileBaseMapTimeDebug) {
+//    System.out.println("Set 1="+(end1 - start1) + " 2="+(end2 - start2));
+//}
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1003,7 +1003,7 @@ if (ImdstDefine.fileBaseMapTimeDebug) {
      * @throws
      */
     public String get(String key, int hashCode) {
-long start1 = 0L;
+/*long start1 = 0L;
 long start2 = 0L;
 long start3 = 0L;
 long start4 = 0L;
@@ -1017,7 +1017,7 @@ long end5 = 0L;
 List timeList = new ArrayList();
 
 start1 = System.nanoTime();
-
+*/
         if (this.delayWriteDifferenceMap.containsKey(key)) {
             String retStr = (String)this.delayWriteDifferenceMap.get(key);
             if (retStr ==null) return null;
@@ -1040,9 +1040,9 @@ start1 = System.nanoTime();
 
         equalKeyBytes[equalKeyBytes.length - 1] = new Integer(FileBaseDataMap.paddingSymbol).byteValue();
 
-end1 = System.nanoTime();
+//end1 = System.nanoTime();
         try {
-start2 = System.nanoTime();
+//start2 = System.nanoTime();
             File file = this.dataFileList[hashCode % numberOfDataFiles];
             CacheContainer accessor = null;
             RandomAccessFile raf = null;
@@ -1065,19 +1065,19 @@ start2 = System.nanoTime();
 
                     raf = accessor.raf;
                 }
-end2 = System.nanoTime();
-start3 = System.nanoTime();
+//end2 = System.nanoTime();
+//start3 = System.nanoTime();
                 for (int tryIdx = 0; tryIdx < 2; tryIdx++) {
 
                     try {
-start4 = System.nanoTime();
+//start4 = System.nanoTime();
                         raf.seek(0);
-end4 = System.nanoTime();
+//end4 = System.nanoTime();
                         int readLen = -1;
-start5 = System.nanoTime();
+//start5 = System.nanoTime();
                         while((readLen = SystemUtil.diskAccessSync(raf, lineBufs)) != -1) {
-end5 = System.nanoTime();
-timeList.add((end5 - start5));
+//end5 = System.nanoTime();
+//timeList.add((end5 - start5));
                             matchFlg = true;
 
                             int loop = readLen / lineDataSize;
@@ -1114,7 +1114,7 @@ timeList.add((end5 - start5));
                                     break;
                                 }
                             }
- start5 = System.nanoTime();
+//start5 = System.nanoTime();
                             if (matchFlg) break;
                         }
                         break;
@@ -1159,7 +1159,7 @@ timeList.add((end5 - start5));
                     ret = new String(tmpBytes, keyDataLength, counter, "UTF-8");
                 }
             }
-end3 = System.nanoTime();
+/*end3 = System.nanoTime();
 
 if (ImdstDefine.fileBaseMapTimeDebug) {
     long time5 = 0L;
@@ -1168,7 +1168,7 @@ if (ImdstDefine.fileBaseMapTimeDebug) {
     }
     
     System.out.println("Get 1="+(end1 - start1) + " 2="+(end2 - start2) + " 3="+(end3 - start3) +" 4=" + (end4 - start4) + " 5=" +timeList + " 5-Total=" + time5);
-}
+}*/
 
         } catch (Exception e) {
 
