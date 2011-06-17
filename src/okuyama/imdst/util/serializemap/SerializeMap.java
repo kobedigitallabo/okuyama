@@ -50,7 +50,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
      * @param multi 実際に格納に使用する集合バケット数
      */
     public SerializeMap(int size, int upper, int multi) {
-
+        System.out.println("SerializeMap = " + multi);
         parallelControl = multi;
         syncObjs = new Integer[multi];
         for (int i = 0; i < parallelControl; i++) {
@@ -81,16 +81,18 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
      * @param value
      */
     public Object put(Object key, Object value) {
+
+        boolean incrFlg = false;
         r.lock();
         try { 
 
             int poitnInt = hashPointCalc(key.hashCode());
+            Integer point = new Integer(poitnInt);
+            byte[] target = null;
 
             synchronized(syncObjs[poitnInt]) {
 
-                Integer point = new Integer(poitnInt);
-
-                byte[] target = (byte[])baseMap.get(point);
+               target = (byte[])baseMap.get(point);
 
                 if (target != null)
                    target = SystemUtil.dataDecompress(target);
@@ -100,7 +102,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                     Map targetMap = dataDeserialize(target);
 
                     // sizeを加算
-                    if (!targetMap.containsKey(key)) nowSize.incrementAndGet();
+                    if (!targetMap.containsKey(key)) incrFlg = true;
 
                     targetMap.put(key, value);
                     target = dataSerialize(targetMap);
@@ -111,11 +113,13 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                     target = dataSerialize(targetMap);
 
                     // sizeを加算
-                    nowSize.incrementAndGet();
+                    incrFlg = true;
                 }
                 baseMap.put(point, SystemUtil.dataCompress(target));
-                
             }
+
+            // sizeを加算
+            if (incrFlg)nowSize.incrementAndGet();
         } finally {
             r.unlock(); 
         }
@@ -134,23 +138,23 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
         try { 
 
             int poitnInt = hashPointCalc(key.hashCode());
+            Integer point = new Integer(poitnInt);
+            byte[] target = null;
 
             synchronized(syncObjs[poitnInt]) {
 
-                Integer point = new Integer(poitnInt);
+                target = (byte[])baseMap.get(point);
 
-                byte[] target = (byte[])baseMap.get(point);
-
-                if (target != null){
-                    target = SystemUtil.dataDecompress(target);
-                } else {
-                    return null;
-                }
-
-                Map targetMap = dataDeserialize(target);
-                return targetMap.get(key);
             }
 
+            if (target != null){
+                target = SystemUtil.dataDecompress(target);
+            } else {
+                return null;
+            }
+
+            Map targetMap = dataDeserialize(target);
+            return targetMap.get(key);
         } finally {
             r.unlock(); 
         }
@@ -164,17 +168,18 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
      * @return Object
      */
     public Object remove(Object key) {
+        boolean decrFlg = false;
         Object ret = null;
         r.lock();
 
         try { 
             int poitnInt = hashPointCalc(key.hashCode());
+            Integer point = new Integer(poitnInt);
+            byte[] target = null;
 
             synchronized(syncObjs[poitnInt]) {
 
-                Integer point = new Integer(poitnInt);
-
-                byte[] target = (byte[])baseMap.get(point);
+                target = (byte[])baseMap.get(point);
 
                 if (target != null){
                     target = SystemUtil.dataDecompress(target);
@@ -189,11 +194,13 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                     target = dataSerialize(targetMap);
 
                     // sizeを減算
-                    nowSize.decrementAndGet();
+                    decrFlg = true;
                 }
 
                 baseMap.put(point, SystemUtil.dataCompress(target));
             }
+
+            if (decrFlg) nowSize.decrementAndGet();
         } finally {
             r.unlock(); 
         }
@@ -213,12 +220,12 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
         try { 
 
             int poitnInt = hashPointCalc(key.hashCode());
+            Integer point = new Integer(poitnInt);
+            byte[] target = null;
 
             synchronized(syncObjs[poitnInt]) {
 
-                Integer point = new Integer(poitnInt);
-
-                byte[] target = (byte[])baseMap.get(point);
+                target = (byte[])baseMap.get(point);
 
                 if (target != null){
                     target = SystemUtil.dataDecompress(target);
