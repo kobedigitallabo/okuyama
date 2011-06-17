@@ -53,21 +53,21 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             } else {
 
                 if (size > 19999999) {
-                    multi = 1999999;
+                    multi = 2000000;
                 } else if (size > 9999999) {
-                    multi = 999999;
+                    multi = 1000000;
                 } else if (size > 5999999) {
-                    multi = 499999;
+                    multi = 600000;
                 } else if (size > 2999999) {
-                    multi =  299999;
+                    multi = 400000;
                 } else if (size > 999999) {
-                    multi = 89999;
+                    multi = 200000;
                 } else if (size > 599999) {
-                    multi =  29999;
+                    multi = 100000;
                 } else {
-                    size = 100000;
-                    upper = 90000;
-                    multi =  9991;
+                    size = 200000;
+                    upper =190000;
+                    multi = 50000;
                 }
                 mainMap  = new PartialSerializeMap(size, upper, multi, virtualStoreDirs);
             }
@@ -83,22 +83,22 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             } else {
 
                 if (size > 19999999) {
-                    multi = 1999999;
+                    multi = 2000000;
                 } else if (size > 9999999) {
-                    multi = 999999;
+                    multi = 1000000;
                 } else if (size > 5999999) {
-                    multi = 499999;
+                    multi = 600000;
                 } else if (size > 2999999) {
-                    multi =  299999;
+                    multi = 400000;
                 } else if (size > 999999) {
-                    multi = 89999;
+                    multi = 200000;
                 } else if (size > 599999) {
-                    multi =  29999;
+                    multi = 100000;
                 } else {
 
-                    size = 100000;
-                    upper = 90000;
-                    multi =  9991;
+                    size = 200000;
+                    upper =190000;
+                    multi = 50000;
                 }
                 mainMap  = new SerializeMap(size, upper, multi);
             }

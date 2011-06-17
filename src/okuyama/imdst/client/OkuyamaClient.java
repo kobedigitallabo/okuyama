@@ -1053,10 +1053,6 @@ public class OkuyamaClient {
             keyBytes = keyStr.getBytes(encode);
             if (keyBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
 
-            // 処理番号送信
-            pw.print("1");
-            pw.flush();
-
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
                 encodeValue = OkuyamaClient.blankStr;
@@ -1068,7 +1064,7 @@ public class OkuyamaClient {
 
 
             // 処理番号連結
-            //setValueServerReqBuf.append("1");
+            setValueServerReqBuf.append("1");
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 
@@ -1372,9 +1368,6 @@ public class OkuyamaClient {
 
             if (keyStr.getBytes(ImdstDefine.characterDecodeSetBySearch).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
 
-            // 処理番号送信
-            pw.print("42");
-            pw.flush();
 
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
@@ -1387,7 +1380,7 @@ public class OkuyamaClient {
 
 
             // 処理番号連結
-            // setValueServerReqBuf.append("42");
+            setValueServerReqBuf.append("42");
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
 

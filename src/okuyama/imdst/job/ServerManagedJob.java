@@ -1,5 +1,6 @@
 package okuyama.imdst.job;
 
+import java.util.*;
 import java.io.*;
 import java.net.*;
 
@@ -60,7 +61,8 @@ public class ServerManagedJob extends AbstractJob implements IJob {
         long gcExecuteTime = System.currentTimeMillis();
         long executeGcInterval = 60000;
         long memoryLimitOverCount = 0;
-        long maxMemoryLimitOverCount = 3;
+        long maxMemoryLimitOverCount = 5;
+        boolean gcOff = false;
 
         try{
 
@@ -86,23 +88,24 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                     logger.debug("JVM Use Memory Percent=[" + JavaSystemApi.getUseMemoryPercent() + "]");
                 }
 
-                if (JavaSystemApi.getUseMemoryPercentCache() > this.memoryLimitSize) {
+                if (gcOff == false  && JavaSystemApi.getUseMemoryPercentCache() > this.memoryLimitSize) {
                     memoryLimitOverCount++;
 
                     if (memoryLimitOverCount < maxMemoryLimitOverCount || ((System.currentTimeMillis() - gcExecuteTime) > executeGcInterval)) {
 
 
-                        logger.info("FullGC - Execute - Start");
+                        System.out.println(new Date().toString() + " FullGC - Execute - Start");
                         JavaSystemApi.manualGc();
-                        logger.info("FullGC - Execute - End");
+                        System.out.println(new Date().toString() + " FullGC - Execute - End");
                         gcExecuteTime = System.currentTimeMillis();
-                        Thread.sleep(2000);
+                        //Thread.sleep(2000);
                     } else {
 
                         // 限界値を超えている
                         if (memoryLimitOverCount == maxMemoryLimitOverCount) {
-                            logger.info("JVM Limit MemorySize Over");
+                            System.out.println(new Date().toString() + " JVM Limit MemorySize Over");
                             StatusUtil.useMemoryLimitOver();
+                            gcOff = true;
                         }
                     }
                 } else {
@@ -110,7 +113,8 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                 }
 
                 // GC発行
-                JavaSystemApi.autoGc();
+                if (gcOff == false)
+                    JavaSystemApi.autoGc();
 
                 Thread.sleep(checkCycle);
             }
