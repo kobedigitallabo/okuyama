@@ -409,6 +409,12 @@ public class ImdstDefine {
     // 削除済みデータが共有データファイルのどこ存在していたかを保持する最大数(ここで保持できる数だけ削除した領域が再利用される。実際保持するのはIntegerの値)
     public volatile static int numberOfDeletedDataPoint = 600000;
 
+    // トランザクションログ書き出し用のBufferを何回利用するか
+    public volatile static int maxTransactionLogBufferUseCount = 350000;
+
+    // 共有データファイル書き出し用のBufferを何回利用するか
+    public volatile static int maxDataFileBufferUseCount = 250000;
+
     // DataNodeに保存するさいの遅延指定
     public volatile static boolean delayWriteFlg = false;
 

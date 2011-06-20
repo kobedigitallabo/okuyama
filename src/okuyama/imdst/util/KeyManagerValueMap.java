@@ -6,6 +6,7 @@ import java.io.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
@@ -33,6 +34,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private boolean memoryMode = true;
 
     private transient BufferedWriter bw = null;
+    private transient AtomicInteger dataFileBufferUseCount = null;
     private transient RandomAccessFile raf = null;
 
     private transient FileBaseDataMap overSizeDataStore = null;
@@ -111,6 +113,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
             // データ操作記録ファイル用のBufferedWriter
             this.bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(lineFile), true), ImdstDefine.keyWorkFileEncoding), 1024*256);
+            this.dataFileBufferUseCount = new AtomicInteger(0);
 
             // 共有データファイルの再書き込み遅延指定
             if (ImdstDefine.dataFileWriteDelayFlg) {
@@ -388,6 +391,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                                 SystemUtil.diskAccessSync(this.bw);
                                 this.lineCount++;
                                 super.put(key, new Integer(this.lineCount));
+                                this.checkDataFileWriterLimit(this.dataFileBufferUseCount.incrementAndGet());
                             } else {
 
                                 // 削除済みデータの場所を再利用する
@@ -684,8 +688,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         if(this.raf != null) this.raf.close();
                         if(this.bw != null) this.bw.close();
 
-
-
                         File dataFile = new File(this.lineFile);
                         if (dataFile.exists()) {
                             dataFile.delete();
@@ -771,6 +773,29 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         return ret;
     }
 
+
+    private void checkDataFileWriterLimit(int nowCount) {
+        if (nowCount > ImdstDefine.maxDataFileBufferUseCount) {
+            synchronized (sync) {
+                try {
+
+                    this.bw.flush();
+                    this.bw.close();
+                    this.bw = null;
+                } catch (Exception e) {
+                    this.bw = null;
+                } finally {
+                    try {
+                        this.bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.lineFile), true), ImdstDefine.keyWorkFileEncoding), 1024*256);
+                        this.dataFileBufferUseCount = new AtomicInteger(0);
+
+                    } catch (Exception e) {
+                        this.bw = null;
+                    }
+                }
+            }
+        }
+    }
 
     public void close() {
         try {

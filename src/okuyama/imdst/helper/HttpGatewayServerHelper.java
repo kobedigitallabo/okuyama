@@ -123,7 +123,7 @@ public class HttpGatewayServerHelper extends AbstractHelper {
                 //imdstKeyValueClient.setCompressMode(true);
                 String key  = ((String[])((String)headerMap.get("get")).split(" "))[0].trim();
                 String[] types = key.split("\\.");
-                System.out.println(key);
+
                 ret = imdstKeyValueClient.getByteValue(key);
                 if (ret[0].equals("true")) {
                     // データ有り
