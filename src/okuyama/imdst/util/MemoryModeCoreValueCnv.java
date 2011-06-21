@@ -72,7 +72,12 @@ public class MemoryModeCoreValueCnv implements ICoreValueConverter {
      */
     public Object convertDecodeKey(Object key) {
         if (key == null) return null;
-        return new String(((CoreMapKey)key).getDatas());
+        if (key instanceof CoreMapKey) {
+            return new String(((CoreMapKey)key).getDatas());
+        } else {
+            return key;
+        }
+
     }
 
 

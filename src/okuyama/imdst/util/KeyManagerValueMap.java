@@ -340,6 +340,12 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             ret = super.put(key, value);
         } else {
 
+            this.lineCount++;
+//            super.put(key, new Integer(this.lineCount));
+            if ( true == true) return null;
+
+
+
             StringBuilder writeBuf = new StringBuilder(this.oneDataLength + 2);
             int valueSize = (value.toString()).length();
 

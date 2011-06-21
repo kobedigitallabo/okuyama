@@ -81,7 +81,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
      * @param value
      */
     public Object put(Object key, Object value) {
-
+        
         boolean incrFlg = false;
         r.lock();
         try { 
@@ -144,7 +144,6 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
             synchronized(syncObjs[poitnInt]) {
 
                 target = (byte[])baseMap.get(point);
-
             }
 
             if (target != null){
@@ -155,9 +154,9 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
 
             Map targetMap = dataDeserialize(target);
             return targetMap.get(key);
-        } finally {
+      } finally {
             r.unlock(); 
-        }
+      }
     }
 
 
@@ -173,6 +172,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
         r.lock();
 
         try { 
+
             int poitnInt = hashPointCalc(key.hashCode());
             Integer point = new Integer(poitnInt);
             byte[] target = null;
@@ -226,7 +226,6 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
             synchronized(syncObjs[poitnInt]) {
 
                 target = (byte[])baseMap.get(point);
-
                 if (target != null){
                     target = SystemUtil.dataDecompress(target);
                 } else {
