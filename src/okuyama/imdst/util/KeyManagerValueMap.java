@@ -59,8 +59,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     private transient boolean readObjectFlg = false;
 
-    private ConcurrentHashMap nowAllDataSizeMap = null;
-
     // コンストラクタ
     public KeyManagerValueMap(int size, boolean memoryMode, String[] virtualStoreDirs) {
 
@@ -86,9 +84,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         try {
             if (sync == null) 
                 sync = new Object();
-
-            if (nowAllDataSizeMap == null) 
-                this.nowAllDataSizeMap = new ConcurrentHashMap(5000, 4900, 64);
 
 
             readObjectFlg  = true;
@@ -340,12 +335,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             ret = super.put(key, value);
         } else {
 
-            this.lineCount++;
-//            super.put(key, new Integer(this.lineCount));
-            if ( true == true) return null;
-
-
-
             StringBuilder writeBuf = new StringBuilder(this.oneDataLength + 2);
             int valueSize = (value.toString()).length();
 
@@ -532,15 +521,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             unique = "all";
         }
 
-
-        if (this.memoryMode) {
-            Object val = this.get(key);
-            if (val != null) {
-                nowValLen = new Double((((String)key).length() + ((String)val).length()) * 0.8).intValue() + 20;
-            }
-        } else {
-            Integer lenInteger = (Integer)this.nowAllDataSizeMap.get(key.hashCode());
-            if (lenInteger != null) nowValLen = lenInteger.intValue();
+        Object val = this.get(key);
+        if (val != null) {
+            nowValLen = new Double((((String)key).length() + ((String)val).length()) * 0.8).intValue() + 20;
         }
 
         if (nowValLen != 0) {
@@ -557,14 +540,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         size.getAndAdd(beforeSize);
         size.getAndAdd(addSize);
-
-        if (!this.memoryMode) {
-            if (value != null) {
-                this.nowAllDataSizeMap.put(key.hashCode(), new Integer(new Long(addSize).intValue()));
-            } else {
-                this.nowAllDataSizeMap.remove(key.hashCode());
-            }
-        }
     }
 
 

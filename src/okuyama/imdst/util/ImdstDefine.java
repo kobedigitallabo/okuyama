@@ -410,10 +410,10 @@ public class ImdstDefine {
     public volatile static int numberOfDeletedDataPoint = 600000;
 
     // トランザクションログ書き出し用のBufferを何回利用するか
-    public volatile static int maxTransactionLogBufferUseCount = 350000;
+    public volatile static int maxTransactionLogBufferUseCount = 1000000;
 
     // 共有データファイル書き出し用のBufferを何回利用するか
-    public volatile static int maxDataFileBufferUseCount = 250000;
+    public volatile static int maxDataFileBufferUseCount = 500000;
 
     // DataNodeに保存するさいの遅延指定
     public volatile static boolean delayWriteFlg = false;

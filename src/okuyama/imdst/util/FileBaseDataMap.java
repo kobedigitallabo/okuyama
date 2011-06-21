@@ -727,7 +727,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
      * @throws
      */
     public void init() {
-System.out.println(numberOfOneFileKey);
+
         this.innerCache = new InnerCache(this.innerCacheSize);
         this.totalSize = new AtomicInteger(0);
         this.dataFileList = new File[numberOfDataFiles];

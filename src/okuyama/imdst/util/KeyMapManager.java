@@ -670,6 +670,7 @@ public class KeyMapManager extends Thread {
                     }
 
                     String data = null;
+
                     boolean containsKeyRet = containsKeyPair(key);
 
                     if (!containsKeyRet) {
@@ -701,6 +702,7 @@ public class KeyMapManager extends Thread {
                         }
 
                     } 
+
 
 
                     // 登録
@@ -750,6 +752,7 @@ public class KeyMapManager extends Thread {
             } catch (BatchException be) {
 
                 throw be;
+
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("setKeyPair - Error");
@@ -3022,7 +3025,7 @@ public class KeyMapManager extends Thread {
     private void checkTransactionLogWriterLimit(int nowCount) {
         if (nowCount > ImdstDefine.maxTransactionLogBufferUseCount) {
             try {
-
+                System.out.println(this.bw);
                 this.bw.flush();
                 this.bw.close();
                 this.bw = null;
@@ -3030,7 +3033,10 @@ public class KeyMapManager extends Thread {
                 this.bw = null;
             } finally {
                 try {
+
                     this.bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.workKeyFilePath), true) , KeyMapManager.workMapFileEnc), 8192 * 24);
+                    System.out.println(this.bw);
+                    System.out.println("Change OK");
                     this.tLogWriteCount = new AtomicInteger(0);
                 } catch (Exception e) {
                     this.bw = null;
