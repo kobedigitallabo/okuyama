@@ -14,10 +14,12 @@ public class SerializeMapGetTest extends Thread {
     private static Map testMap = new SerializeMap(2000000, 1900000, 1000000);
     //private static Map testMap = new ConcurrentHashMap(2000000, 1900000, 64);
 
+    private volatile static int testCount = -1;
 
     public static ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     public static Lock r = rwl.readLock();
     public static Lock w = rwl.writeLock();
+
 
     public int execCount = 0;
 
@@ -28,13 +30,14 @@ public class SerializeMapGetTest extends Thread {
         try {
             long totalExecCount = 0L;
             int maxThreads = Integer.parseInt(args[0]);
+            testCount = Integer.parseInt(args[1]);
             w.lock();
             SerializeMap initMap = new SerializeMap(100, 90, 10);
             initMap.put("a", "b");
             initMap.get("a");
             initMap = null;
 
-            for (int i = 0; i < 3000000; i++) {
+            for (int i = 0; i < testCount; i++) {
 
                 testMap.put("KeyABCDEFG_" + i, "Value123456789ABCDEFGHIJKLMNOPQRSTUWXYZ_" + i);
                 if((i % 100000) == 0) System.out.println("Set Count=" + i);
@@ -72,7 +75,7 @@ public class SerializeMapGetTest extends Thread {
             Random rnd = new Random();
 
             while (SerializeMapGetTest.status) {
-                testMap.get(key + rnd.nextInt(3000000));
+                testMap.get(key + rnd.nextInt(testCount));
                 execCount++;
             }
         } catch (Exception e) {
