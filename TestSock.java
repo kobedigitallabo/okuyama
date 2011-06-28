@@ -2,6 +2,7 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
+import okuyama.imdst.util.*;
 import okuyama.imdst.client.OkuyamaClient;
 import okuyama.base.lang.BatchException;
 
@@ -444,6 +445,7 @@ public class TestSock {
                 // OkuyamaClientを使用してデータを取得(Tagでの取得)
                 OkuyamaClient okuyamaClient = new OkuyamaClient();
                 okuyamaClient.connect(args[1], port);
+
                 String[] keys = null;
                 boolean noExistsData = true;
                 if (args.length > 5) noExistsData = new Boolean(args[5]).booleanValue();
@@ -469,13 +471,13 @@ public class TestSock {
                     }
                 }
 
-                /*if (keys != null) {
+                if (keys != null) {
                     for (int ii = 0; ii < keys.length; ii++) {
                         System.out.println("Key=[" + keys[ii] + "]");
                         String[] ret = okuyamaClient.getValue(keys[ii]);
                         System.out.println("Value=[" + ret[1] + "]");
                     }
-                }*/
+                }
                 okuyamaClient.close();
 
             } else if (args[0].equals("5")) {
@@ -1029,7 +1031,7 @@ public class TestSock {
                 }
                 System.out.println((end - start) + "milli second");
 
-                okuyamaClient.close();                
+                okuyamaClient.close(); 
             } else if (args[0].equals("22.1")) {
                 
                 int port = Integer.parseInt(args[2]);
@@ -1470,6 +1472,25 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } else if (args[0].equals("30")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                Map retMap = okuyamaClient.getMultiTagValues(args[3].split(","), true);
+                long end = new Date().getTime();
+                if (retMap == null) {
+                    System.out.println(retMap);
+                } else {
+                    System.out.println(retMap);
+                    System.out.println("ResultSize = [" + retMap.size() + "]");
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
             } 
             
 
