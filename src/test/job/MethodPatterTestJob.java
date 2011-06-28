@@ -116,6 +116,9 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                         if (execMethods[i].equals("setexpireandget")) 
                             retMap.put("setexpireandget", execSetExpireAndGet(okuyamaClient, start, count));
 
+                        if (execMethods[i].equals("getmultitagvalues")) 
+                            retMap.put("getmultitagvalues", execGetMultiTagValues(okuyamaClient, start, count));
+
 
                     }
 
@@ -1037,6 +1040,8 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 errorFlg = true;
             }            
 
+            
+            int normalSetCount = 0;
             for (int i = start; i < count; i++) {
                 // データ登録
 
@@ -1044,11 +1049,13 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     System.out.println("setValueAndCreateIndex - Error=[" + this.nowCount + "createindexKey_" + new Integer(i).toString()+"]");
                     errorFlg = true;
                 }
+                normalSetCount++;
                 if ((i % 10000) == 0) System.out.println(i);
                 if ((i - start) > 100) break;
             }
 
             // Prefixあり
+            int prefixSetCount = 0;
             String prefix = "Pre" + this.nowCount + "fix";
             for (int i = start; i < count; i++) {
                 // データ登録
@@ -1057,6 +1064,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     System.out.println("setValueAndCreateIndex(Prefix) - Error=[" + this.nowCount + "createindexPrefixKey_" + new Integer(i).toString()+"]");
                     errorFlg = true;
                 }
+                prefixSetCount++;
                 if ((i % 10000) == 0) System.out.println(i);
                 if ((i - start) > 100) break;
             }
@@ -1102,8 +1110,8 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 System.out.println("searchValue- 2-1 - Error=[" + sChars[0] + "]");
                 errorFlg = true;
             } else {
-                if (((String[])searchRet[1]).length != 5000) {
-                    System.out.println("searchValue - 2-2 - Error=[" + sChars[0] + "]");
+                if (((String[])searchRet[1]).length != normalSetCount) {
+                    System.out.println("searchValue - 2-2 - rror=[" + sChars[0] + "] Length=[" + ((String[])searchRet[1]).length + "] TrueCount=[" + normalSetCount + "]");
                     errorFlg = true;
                 }
             }
@@ -1149,8 +1157,8 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 System.out.println("searchValue(Prefix)- 2-1 - Error=[" + sChars[0] + "]");
                 errorFlg = true;
             } else {
-                if (((String[])searchRet[1]).length != 101) {
-                    System.out.println("searchValue(Prefix) - 2-2 - Error=[" + sChars[0] + "]");
+                if (((String[])searchRet[1]).length != prefixSetCount) {
+                    System.out.println("searchValue(Prefix) - 2-2 - Error=[" + sChars[0] + "] Length=[" + ((String[])searchRet[1]).length + "] TrueCount=[" + prefixSetCount + "]");
                     errorFlg = true;
                 }
             }
@@ -1339,4 +1347,95 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
         return errorFlg;
     }
 
+
+    private boolean execGetMultiTagValues(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execGetMultiTagValues - Start");
+
+            long startTime = new Date().getTime();
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+            String[] tag1 = {start+"_" + this.nowCount + "_tag1_m"};
+            String[] tag2 = {start+"_" + this.nowCount + "_tag1_m",start+"_" + this.nowCount + "_tag2_m"};
+            String[] tag3 = {start+"_" + this.nowCount + "_tag1_m",start+"_" + this.nowCount + "_tag2_m",start+"_" + this.nowCount + "_tag3_m"};
+            String[] tag4 = {start+"_" + this.nowCount + "_tag4_m"};
+            String[] tag5 = {start+"_" + this.nowCount + "_tag4_m", start+"_" + this.nowCount + "_tag1_m"};
+            String[] setTag = null;
+
+            ArrayList tag1RetList = new ArrayList();
+            ArrayList tag2RetList = new ArrayList();
+            ArrayList tag3RetList = new ArrayList();
+            ArrayList tag4RetList = new ArrayList();
+            int counter = 0;
+            for (int i = 0; i < 100; i++) {
+
+                if (counter == 0) {
+
+                    okuyamaClient.setValue(this.nowCount + "tagsampledatakey_m_" + new Integer(i).toString() + "]", tag1, "tagsampledatakey_m_" + new Integer(i).toString() + "]");
+                    counter++;
+                } else if (counter == 1) {
+
+                    okuyamaClient.setValue(this.nowCount + "tagsampledatakey_m_" + new Integer(i).toString() + "]", tag2, "tagsampledatakey_m_" + new Integer(i).toString() + "]");
+                    counter++;
+                } else if (counter == 2) {
+
+                    okuyamaClient.setValue(this.nowCount + "tagsampledatakey_m_" + new Integer(i).toString() + "]", tag3, "tagsampledatakey_m_" + new Integer(i).toString() + "]");
+                    counter++;
+                } else {
+
+                    okuyamaClient.setValue(this.nowCount + "tagsampledatakey_m_" + new Integer(i).toString() + "]", tag4, "tagsampledatakey_m_" + new Integer(i).toString() + "]");
+                    counter = 0;
+                }
+            }
+
+            Map ret = null;
+
+            ret = okuyamaClient.getMultiTagValues(tag1, true);
+            if(ret.size() != 75) {
+                System.out.println(start+"_" + this.nowCount + "_tag1_m - Error");
+                errorFlg = true;
+            }
+
+            ret = okuyamaClient.getMultiTagValues(tag2, true);
+            if(ret.size() != 50) {
+                System.out.println(start+"_" + this.nowCount + "_tag1_m, AND _tag2_m  - Error");
+                errorFlg = true;
+            }
+
+            ret = okuyamaClient.getMultiTagValues(tag3, true);
+            if(ret.size() != 25) {
+                System.out.println(start+"_" + this.nowCount + "_tag1_m, AND _tag2_m, AND _tag3_m  - Error");
+                errorFlg = true;
+            }
+
+            ret = okuyamaClient.getMultiTagValues(tag5, false);
+            if(ret.size() != 100) {
+                System.out.println(start+"_" + this.nowCount + "_tag1_m, OR _tag4_m - Error");
+                errorFlg = true;
+            }
+
+            long endTime = new Date().getTime();
+            System.out.println("Tag Multi Get Method= " + (endTime - startTime) + " milli second");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execGetMultiTagValues - End");
+        return errorFlg;
+    }
 }

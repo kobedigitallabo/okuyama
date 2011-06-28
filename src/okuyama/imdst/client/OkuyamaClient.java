@@ -2650,7 +2650,7 @@ public class OkuyamaClient {
             } else {
 
                 // 妥当性違反
-                throw new OkuyamaClientException("Execute Violation of validity");
+                throw new OkuyamaClientException("Execute Violation of validity " + serverRet);
             }
         } catch (OkuyamaClientException ice) {
             throw ice;
@@ -2797,7 +2797,7 @@ public class OkuyamaClient {
                 } else {
     
                     // 妥当性違反
-                    throw new OkuyamaClientException("Execute Violation of validity");
+                    throw new OkuyamaClientException("Execute Violation of validity " + serverRetStr);
                 }
                 readIdx++;
             }
@@ -3122,6 +3122,108 @@ public class OkuyamaClient {
                 }
             } else {
                 throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * MasterNodeからTag値を渡すことで紐付くValue値の集合を取得する.<br>
+     * 複数のTagを指定することで、一度に関連する値を取得可能.<br>
+     * 複数のTagに紐付く値はマージされて1つとなる.<br>
+     * AND指定.<br>
+     * 文字列エンコーディング指定なし.<br>
+     * デフォルトエンコーディングにて復元.<br>
+     *
+     * @param tagList Tag値のリスト
+     * @return Map 取得データのMap 取得キーに同一の値を複数指定した場合は束ねられる Mapのキー値は指定されたKeyとなりValueは取得した値となる
+     * @throws OkuyamaClientException
+     */
+    public Map getMultiTagValues(String[] tagList) throws OkuyamaClientException {
+        return this.getMultiTagValues(tagList, true, null);
+    }
+
+    /**
+     * MasterNodeからTag値を渡すことで紐付くValue値の集合を取得する<br>
+     * 複数のTagを指定することで、一度に関連する値を取得可能<br>
+     * 複数のTagに紐付く値はマージされて1つとなる<br>
+     * 引数のmargeTypeを指定することで、ANDとORを切り替えることが出来る<br>
+     * 文字列エンコーディング指定なし.<br>
+     * デフォルトエンコーディングにて復元.<br>
+     *
+     * @param tagList Tag値のリスト
+     * @param margeType 取得方法指定(true = AND、false=OR)
+     * @return Map 取得データのMap 取得キーに同一の値を複数指定した場合は束ねられる Mapのキー値は指定されたKeyとなりValueは取得した値となる
+     * @throws OkuyamaClientException
+     */
+    public Map getMultiTagValues(String[] tagList, boolean margeType) throws OkuyamaClientException {
+        return this.getMultiTagValues(tagList, margeType, null);
+    }
+
+
+    /**
+     * MasterNodeからTag値を渡すことで紐付くValue値の集合を取得する<br>
+     * 複数のTagを指定することで、一度に関連する値を取得可能<br>
+     * 複数のTagに紐付く値はマージされて1つとなる<br>
+     * 引数のmargeTypeを指定することで、ANDとORを切り替えることが出来る<br>
+     *
+     * @param tagList Tag値のリスト
+     * @param margeType 取得方法指定(true = AND、false=OR)
+     * @param encoding エンコーディング指定
+     * @return Map 取得データのMap 取得キーに同一の値を複数指定した場合は束ねられる Mapのキー値は指定されたKeyとなりValueは取得した値となる
+     * @throws OkuyamaClientException
+     */
+    public Map getMultiTagValues(String[] tagList, boolean margeType, String encoding) throws OkuyamaClientException {
+        Map ret = null;
+        Map tagRet = null;
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+
+        if (encoding == null) encoding = platformDefaultEncoding;
+        if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+        for (int i = 0; i < tagList.length; i++) {
+            String tagStr = tagList[i];
+            tagRet = null;
+
+            tagRet = getTagValues(tagStr, encoding);
+
+            // 結果をマージする
+            if (tagRet != null && tagRet.size() > 0) {
+
+                if (margeType) {
+
+                    // AND
+                    if (tagRet == null || tagRet.size() < 1) return null;
+                    if (ret == null) ret = new HashMap();
+
+
+                    if (ret.size() > 0) {
+
+                        Set entrySet = ret.entrySet();
+                        Iterator entryIte = entrySet.iterator(); 
+                        while(entryIte.hasNext()) {
+
+                            Map.Entry obj = (Map.Entry)entryIte.next();
+                            if (!tagRet.containsKey((String)obj.getKey())) entryIte.remove();
+                        }
+                    } else {
+
+                        ret.putAll(tagRet);
+                    }
+                } else {
+
+                    // OR
+                    if (ret == null) ret = new HashMap();
+                    ret.putAll(tagRet);
+                }
+            } else if (margeType == true) {
+                return null;
             }
         }
         return ret;
@@ -3884,8 +3986,6 @@ public class OkuyamaClient {
 
             // サーバ送信
             pw.println(serverRequestBuf.toString());
-
-
             pw.flush();
 
             // サーバから結果受け取り
