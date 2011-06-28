@@ -688,7 +688,6 @@ public class SystemUtil {
     }
 
 
-
     public static Map defaultDeserializeMap(byte[] data) {
         return normalDeserializeMap(data);
     }

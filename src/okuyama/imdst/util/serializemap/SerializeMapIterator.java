@@ -44,7 +44,7 @@ public class SerializeMapIterator implements Iterator {
                 byte[] childMapBytes = (byte[])entry.getValue();
                 if (childMapBytes == null) continue;
 
-                this.nowChildMap = SerializeMap.dataDeserialize(SystemUtil.dataDecompress(childMapBytes));
+                this.nowChildMap = SerializeMap.dataDeserialize(childMapBytes);
 
                 Set childSet = this.nowChildMap.entrySet();
 
@@ -74,6 +74,7 @@ public class SerializeMapIterator implements Iterator {
 
         if (this.nowEntry == null) return null;
 
+        Object key = this.nowEntry.getKey();
         return this.nowEntry;
     }
 

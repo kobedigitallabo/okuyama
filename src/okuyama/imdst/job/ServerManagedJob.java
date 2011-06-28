@@ -62,7 +62,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
         long executeGcInterval = 60000;
         long memoryLimitOverCount = 0;
         long maxMemoryLimitOverCount = 5;
-        boolean gcOff = false;
+        boolean gcOff = true;
 
         try{
 

@@ -66,11 +66,49 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
 
 
     public static byte[] dataSerialize(Map data) {
-        return SystemUtil.defaultSerializeMap(data);
+        /*String strTypeSep = "=:=";
+        String nowSep = "";
+        String dataSep = "=/=";
+        int serializeType = 0;
+        
+        
+        StringBuilder serializeStrBuf = new StringBuilder(1024);
+        Set entrySet = data.entrySet();
+        Iterator entryIte = entrySet.iterator(); 
+
+        while(entryIte.hasNext()) {
+        
+            Map.Entry obj = (Map.Entry)entryIte.next();
+            if (obj == null) continue;
+            if (serializeType == 0) {
+                String key = null;
+                String value = null;
+                key = (String)obj.getKey();
+                value = (String)obj.getValue();
+                serializeStrBuf.append(nowSep);
+                serializeStrBuf.append(key);
+                serializeStrBuf.append(strTypeSep);
+                serializeStrBuf.append(value);
+                
+                nowSep = dataSep;
+            }
+        }
+        return serializeStrBuf.toString().getBytes();*/
+        return SystemUtil.dataCompress(SystemUtil.defaultSerializeMap(data));
     }
 
     public static Map dataDeserialize(byte[] data) {
-        return SystemUtil.defaultDeserializeMap(data);
+        /*Map retMap = new HashMap(8);
+        if (data == null) return null; 
+        String[] dataListStrs = new String(data).split("=/=");
+        String[] dataWork = null;
+        for (int i = 0; i < dataListStrs.length; i++) {
+
+            dataWork = dataListStrs[i].split("=:=");
+            retMap.put(dataWork[0], dataWork[1]);
+        }
+        return retMap;*/
+        return SystemUtil.defaultDeserializeMap(SystemUtil.dataDecompress(data));
     }
     
 
@@ -81,7 +119,8 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
      * @param value
      */
     public Object put(Object key, Object value) {
-        
+        //System.out.println(key.getClass().getName());
+        //System.out.println(value.getClass().getName());
         boolean incrFlg = false;
         r.lock();
         try { 
@@ -94,8 +133,6 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
 
                target = (byte[])baseMap.get(point);
 
-                if (target != null)
-                   target = SystemUtil.dataDecompress(target);
 
                 if (target != null) {
 
@@ -115,7 +152,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                     // sizeを加算
                     incrFlg = true;
                 }
-                baseMap.put(point, SystemUtil.dataCompress(target));
+                baseMap.put(point, target);
             }
 
             // sizeを加算
@@ -146,9 +183,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                 target = (byte[])baseMap.get(point);
             }
 
-            if (target != null){
-                target = SystemUtil.dataDecompress(target);
-            } else {
+            if (target == null) {
                 return null;
             }
 
@@ -181,9 +216,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
 
                 target = (byte[])baseMap.get(point);
 
-                if (target != null){
-                    target = SystemUtil.dataDecompress(target);
-                } else {
+                if (target == null){
                     return null;
                 }
 
@@ -197,7 +230,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                     decrFlg = true;
                 }
 
-                baseMap.put(point, SystemUtil.dataCompress(target));
+                baseMap.put(point, target);
             }
 
             if (decrFlg) nowSize.decrementAndGet();
@@ -226,9 +259,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
             synchronized(syncObjs[poitnInt]) {
 
                 target = (byte[])baseMap.get(point);
-                if (target != null){
-                    target = SystemUtil.dataDecompress(target);
-                } else {
+                if (target == null) {
                     return false;
                 }
 
