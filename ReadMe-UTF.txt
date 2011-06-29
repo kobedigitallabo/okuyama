@@ -10,23 +10,6 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.8 - (2011/07/3)]]
 
-■okuyamaクライアントからも有効期限を設定可能に
-  OkuyamaClientのsetValue及び、setNewValueにexpireTimeを渡すことで有効期限(単位は秒)を設定可能
-  上限時間は、Integerの限界値
-  例)
-  okuyamaClient.setValue("Key_XXX", "Value_YYY", new Integer(300));
-  上記の場合有効期限は300秒
-
-
-■データ取得と同時にそのデータに設定されている有効期限を登録時に設定した期限分延長するメソッドを
-  okuyamaクライアントに追加。メソッド名はgetValueAndUpdateExpireTime
-  ※有効期限が設定させていないデータは何も起こらない
-  例)
-  okuyamaClient.setValue("Key_XXX", "Value_YYY", new Integer(300));
-  String[] getResult = okuyamaClient.getValueAndUpdateExpireTime("Key_XXX");
-  ※上記のsetValue時に設定された300秒という有効期限が、getValueAndUpdateExpireTime呼び出し時に再度300秒で
-    自動的に延長される。
-
 ■ストレージ機能にSerializeMapを追加
   データ格納時にメモリ空間を有効利用するSerializeMapという機能を追加。
   アクセスレスポンスは低下するがメモリ上に格納できるデータ量は向上する。
@@ -47,6 +30,23 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   ※上記で通常のConcurrentHashMapを内部で利用
 
 
+■okuyamaクライアントからも有効期限を設定可能に
+  OkuyamaClientのsetValue及び、setNewValueにexpireTimeを渡すことで有効期限(単位は秒)を設定可能
+  上限時間は、Integerの限界値
+  例)
+  okuyamaClient.setValue("Key_XXX", "Value_YYY", new Integer(300));
+  上記の場合有効期限は300秒
+
+
+■データ取得と同時にそのデータに設定されている有効期限を登録時に設定した期限分延長するメソッドを
+  okuyamaクライアントに追加。メソッド名はgetValueAndUpdateExpireTime
+  ※有効期限が設定させていないデータは何も起こらない
+  例)
+  okuyamaClient.setValue("Key_XXX", "Value_YYY", new Integer(300));
+  String[] getResult = okuyamaClient.getValueAndUpdateExpireTime("Key_XXX");
+  ※上記のsetValue時に設定された300秒という有効期限が、getValueAndUpdateExpireTime呼び出し時に再度300秒で
+    自動的に延長される。
+
 ■複数Tagを指定して紐付くKeyとValueを取得する機能を追加
   okuyamaクライアントでは、getMultiTagValues
 
@@ -57,6 +57,17 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
    String[] getTags = {"Tag1","Tag2","Tag3"};
    Map retAndMap = okuyamaClient.getMultiTagValues(getTags, true) //<=AND指定
    Map retOrMap = okuyamaClient.getMultiTagValues(getTags, false) //<=OR指定
+
+
+■データ一括削除機能を追加
+  Isolation単位もしくは全てのデータを一括で削除する機能をokuyama.imdst.client.UtilClientに追加
+  利用方法は以下
+  利用方法)
+  java -classpath ./:./classes okuyama.imdst.client.UtilClient truncatedata 192.168.1.1 8888 all
+  第1引数 = 'truncatedata' <=固定
+  第2引数 = '192.168.1.1'  <=MainMasterNodeのIPアドレス
+  第3引数 = '8888'         <=MainMasterNodeの起動ポート番号
+  第4引数 = 'all'          <=全ての削除を指定する'all'もしくは削除するIsolationPrefix名
 
 
 ■いくつかの処理性能向上と不具合の修正
