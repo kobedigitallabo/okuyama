@@ -18,6 +18,7 @@ import okuyama.imdst.client.*;
 /**
  * DataNodeの停止、起動のテストを実行.<br>
  * このテストケースはWindows環境にCygwinをインストールし、PATHを設定した想定です.<br>
+ * Linuxの場合はjpsが利用できれば稼働します。
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -48,6 +49,8 @@ public class NodeStatusChangeJob extends AbstractJob implements IJob {
         String startCmd1 = null;
         String startCmd2 = null;
 
+        long nodeRecoverWaitTime = 300000;
+
         try{
             // パス初期化
             if(optionParam != null && !optionParam.equals("")) {
@@ -55,10 +58,14 @@ public class NodeStatusChangeJob extends AbstractJob implements IJob {
             }
 
             Thread.sleep(10000);
+            String recoverTimeStr = super.getPropertiesValue("RecoverTime");
+            if (recoverTimeStr != null && !recoverTimeStr.trim().equals("")) {
+                nodeRecoverWaitTime = Long.parseLong(recoverTimeStr);
+            }
 
             for (int t = 0; t < this.execCount; t++) {
                 execRestart();
-                Thread.sleep(600000);
+                Thread.sleep(nodeRecoverWaitTime);
             }
 
 

@@ -1292,7 +1292,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 errorFlg = true;
             }
 
-            Thread.sleep(5000);
+            Thread.sleep(5500);
 
             ret = okuyamaClient.getValue(this.nowCount + "expiredatasavekey_" + new Integer(start).toString());
 
