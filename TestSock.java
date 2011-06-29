@@ -1491,8 +1491,25 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();  
-            } 
-            
+            } else if (args[0].equals("999")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                String[] ret = okuyamaClient.getOkuyamaVersion();
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println(ret[1]);
+                } else {
+                    System.out.println(ret[0]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            }
 
 
 
