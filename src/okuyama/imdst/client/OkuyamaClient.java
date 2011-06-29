@@ -156,6 +156,9 @@ public class OkuyamaClient {
     // 現在接続中のMasterServer
     protected String nowConnectServerInfo = "";
 
+    // 接続中のokuyamaのバージョンNo
+    protected double okuyamaVersionNo = 0;
+
     // サーバへの出力用
     protected PrintWriter pw = null;
 
@@ -476,6 +479,22 @@ public class OkuyamaClient {
                 throw new OkuyamaClientException("Execute Violation of validity");
             }
 
+            String[] okuyamaVersionRet = this.getOkuyamaVersion();
+
+            if (okuyamaVersionRet[0].equals("true")) {
+                String[] versionWork = okuyamaVersionRet[1].split("okuyama\\-");
+                String[] versionNoWork = versionWork[1].split("\\.");
+
+                StringBuilder versionBuf = new StringBuilder(5);
+                versionBuf.append(versionNoWork[0]);
+                versionBuf.append(".");
+
+                for (int i = 1; i < versionNoWork.length; i++) {
+                    versionBuf.append(versionNoWork[i]);
+                }
+                okuyamaVersionNo = Double.parseDouble(versionBuf.toString());
+            }
+
         } catch (OkuyamaClientException ice) {
 
             throw ice;
@@ -516,6 +535,88 @@ public class OkuyamaClient {
         return ret;
     }
 
+    /**
+     * クライアントが接続しているokuyamaのバージョン名を返す.<br>
+     * 
+     * @return String[] 要素1(データ有無):"true" or "false", 要素2(Version文字列):"Version文字列"
+     * @throws OkuyamaClientException
+     */
+    public String[] getOkuyamaVersion() throws OkuyamaClientException {
+        String[] ret = new String[2];
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuilder();
+
+            // 処理番号連結
+            serverRequestBuf.append("999");
+
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("999")) {
+
+                ret[0] = "true";
+                ret[1] = serverRet[1];
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity");
+            }
+
+        } catch (OkuyamaClientException ice) {
+
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getOkuyamaVersion();
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getOkuyamaVersion();
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getOkuyamaVersion();
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
 
     /**
      * Transactionを開始する.<br>
@@ -1113,11 +1214,16 @@ public class OkuyamaClient {
 
             // 有効期限あり
             if (expireTime != null) {
-                // セパレータ連結
-                setValueServerReqBuf.append(OkuyamaClient.sepStr);
-                setValueServerReqBuf.append(expireTime);
-                // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
-                setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                if (0.880 > this.okuyamaVersionNo) {
+
+                    throw new OkuyamaClientException("The version of the server is old [The expiration date can be used since version 0.8.8]");
+                } else {
+                    // セパレータ連結
+                    setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                    setValueServerReqBuf.append(expireTime);
+                    // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
+                    setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                } 
             }
             // サーバ送信
             pw.println(setValueServerReqBuf.toString());
@@ -1345,6 +1451,10 @@ public class OkuyamaClient {
 
         try {
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            if (0.87 > this.okuyamaVersionNo) {
+                throw new OkuyamaClientException("The version of the server is old [The 'setValueAndCreateIndex' method can be used since version 0.8.7]");
+            }
 
             // Byte Lenghtチェック
             if (tagStrs != null) {
@@ -4085,6 +4195,10 @@ public class OkuyamaClient {
         StringBuilder serverRequestBuf = null;
 
         try {
+            if (0.87 > this.okuyamaVersionNo ) {
+                throw new OkuyamaClientException("The version of the server is old [The 'removeTagFromKey' method can be used since version 0.8.7]");
+            }
+
             // Byte Lenghtチェック
             if (tagStr != null) {
                 if (tagStr.getBytes().length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
@@ -4249,6 +4363,11 @@ public class OkuyamaClient {
         try {
 
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            if (0.87 > this.okuyamaVersionNo) {
+                throw new OkuyamaClientException("The version of the server is old [The 'removeSearchIndex' method can be used since version 0.8.7]");
+            }
+
 
             // エラーチェック
             // Keyに対する無指定チェック
@@ -5077,6 +5196,10 @@ public class OkuyamaClient {
 
         try {
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            if (0.87 > this.okuyamaVersionNo) {
+                throw new OkuyamaClientException("The version of the server is old [The 'searchValue' method can be used since version 0.8.7]");
+            }
 
             // エラーチェック
             // Keyに対する無指定チェック
