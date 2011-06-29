@@ -48,6 +48,19 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   DataSaveMapType=
   ※上記で通常のConcurrentHashMapを内部で利用
 
+
+■複数Tagを指定して紐付くKeyとValueを取得する機能を追加
+  okuyamaクライアントでは、getMultiTagValues
+
+  取得方法を複数のTagが全てに紐付いているANDと、どれかにだけ紐付くORを指定できる。
+  返却される形式はMapとなり、KeyとValueのセットになる。
+  そのため、複数のTagに紐付いているKeyは束ねられる。
+  例)
+   String[] getTags = {"Tag1","Tag2","Tag3"};
+   Map retAndMap = okuyamaClient.getMultiTagValues(getTags, true) //<=AND指定
+   Map retOrMap = okuyamaClient.getMultiTagValues(getTags, false) //<=OR指定
+
+
 ■いくつかの処理性能向上と不具合の修正
 
 ========================================================================================================

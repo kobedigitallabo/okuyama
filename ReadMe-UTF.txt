@@ -46,6 +46,61 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   DataSaveMapType=
   ※上記で通常のConcurrentHashMapを内部で利用
 
+
+■複数Tagを指定して紐付くKeyとValueを取得する機能を追加
+  okuyamaクライアントでは、getMultiTagValues
+
+  取得方法を複数のTagが全てに紐付いているANDと、どれかにだけ紐付くORを指定できる。
+  返却される形式はMapとなり、KeyとValueのセットになる。
+  そのため、複数のTagに紐付いているKeyは束ねられる。
+  例)
+   String[] getTags = {"Tag1","Tag2","Tag3"};
+   Map retAndMap = okuyamaClient.getMultiTagValues(getTags, true) //<=AND指定
+   Map retOrMap = okuyamaClient.getMultiTagValues(getTags, false) //<=OR指定
+
+
+■いくつかの処理性能向上と不具合の修正
+
+========================================================================================================
+[New - 新機能追加、不具合対応]
+[[リリース Ver 0.8.8 - (2011/07/3)]]
+
+■okuyamaクライアントからも有効期限を設定可能に
+  OkuyamaClientのsetValue及び、setNewValueにexpireTimeを渡すことで有効期限(単位は秒)を設定可能
+  上限時間は、Integerの限界値
+  例)
+  okuyamaClient.setValue("Key_XXX", "Value_YYY", new Integer(300));
+  上記の場合有効期限は300秒
+
+
+■データ取得と同時にそのデータに設定されている有効期限を登録時に設定した期限分延長するメソッドを
+  okuyamaクライアントに追加。メソッド名はgetValueAndUpdateExpireTime
+  ※有効期限が設定させていないデータは何も起こらない
+  例)
+  okuyamaClient.setValue("Key_XXX", "Value_YYY", new Integer(300));
+  String[] getResult = okuyamaClient.getValueAndUpdateExpireTime("Key_XXX");
+  ※上記のsetValue時に設定された300秒という有効期限が、getValueAndUpdateExpireTime呼び出し時に再度300秒で
+    自動的に延長される。
+
+■ストレージ機能にSerializeMapを追加
+  データ格納時にメモリ空間を有効利用するSerializeMapという機能を追加。
+  アクセスレスポンスは低下するがメモリ上に格納できるデータ量は向上する。
+  詳しくは以下のBlogを参照
+  http://d.hatena.ne.jp/okuyamaoo/20110616
+  http://d.hatena.ne.jp/okuyamaoo/20110623
+
+  設定はDataNode.propertiesに以下の項目が追加された
+  "DataSaveMapType"
+
+  設定なしは、ConcurrentHashMapを利用する。DefaultはConcurrentHashMap
+
+  設定方法)
+  DataSaveMapType=serialize
+  ※上記でSerializeMapを内部で利用
+
+  DataSaveMapType=
+  ※上記で通常のConcurrentHashMapを内部で利用
+
 ■いくつかの処理性能向上と不具合の修正
 
 ========================================================================================================
