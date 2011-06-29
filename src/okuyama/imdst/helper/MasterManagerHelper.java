@@ -732,6 +732,49 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 retParams[1] = "false";
                             }
                             break;
+                        case 61 :
+
+                            if (StatusUtil.isMainMasterNode()) {
+
+                                if (!super.getRecoverProcessed()) {
+
+                                    // データを全て削除する
+                                    // リスクを伴う処理のため、MainMasterNodeの場合のみ処理可能とする
+                                    // DataNode復旧中は削除できない
+
+                                    if (clientParameterList.length == 2 && (clientParameterList[1].length() == 5 || clientParameterList[1].length() == 3)) {
+                                        if (this.truncateAllData(clientParameterList[1])) {
+
+                                            retParams = new String[2];
+                                            retParams[0] = "61";
+                                            retParams[1] = "true";
+                                        } else {
+
+                                            retParams = new String[2];
+                                            retParams[0] = "61";
+                                            retParams[1] = "false";
+                                        }
+                                    } else {
+
+                                        retParams = new String[3];
+                                        retParams[0] = "61";
+                                        retParams[1] = "error";
+                                        retParams[2] = "The mistake is found in the deletion specification";
+                                    }
+                                } else {
+
+                                    retParams = new String[3];
+                                    retParams[0] = "61";
+                                    retParams[1] = "error";
+                                    retParams[2] = "DataNode cannot be executed while processing the return";
+                                }
+                            } else {
+                                retParams = new String[3];
+                                retParams[0] = "61";
+                                retParams[1] = "error";
+                                retParams[2] = "It is executable only by MainMasterNode";
+                            }
+                            break;
                         case 90 :
 
                             // KeyNodeの使用停止をマーク
@@ -3301,6 +3344,93 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return retStrs;
     }
 
+
+    /**
+     * DataNodeに全てのデータの削除を依頼する.<br>
+     *
+     * @param truncateKey 削除指定するIsolationの値(全て削除する場合は"all"と指定)
+     * @return boolean true:削除成功 false:削除失敗
+     */
+    private boolean truncateAllData(String truncateKey) throws BatchException {
+        KeyNodeConnector keyNodeConnector = null;
+
+        String[] retParams = null;
+        String[] cnvConsistencyRet = null;
+
+        boolean slaveUse = false;
+        boolean mainRetry = false;
+
+        String nowUseNodeInfo = null;
+
+
+        SocketException se = null;
+        IOException ie = null;
+        try {
+
+            HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
+
+            List mainNodeList = (ArrayList)allNodeInfo.get("main");
+            List subNodeList = (ArrayList)allNodeInfo.get("sub");
+            List thirdNodeList = (ArrayList)allNodeInfo.get("third");
+
+            for (int idx = 0; idx < mainNodeList.size(); idx++) {
+
+                // DataNode
+                String mainDataNodeInfo = (String)mainNodeList.get(idx);
+                String[] workDataNodeInfo = mainDataNodeInfo.split(":");
+
+                keyNodeConnector = this.createKeyNodeConnection(workDataNodeInfo[0], workDataNodeInfo[1], mainDataNodeInfo, false);
+                if (keyNodeConnector != null) {
+
+                    keyNodeConnector.println("61,#" + truncateKey);
+                    keyNodeConnector.flush();
+
+                    // 返却値取得
+                    String retParam = keyNodeConnector.readLine("61,#" + truncateKey);
+                }
+                super.addKeyNodeCacheConnectionPool(keyNodeConnector);
+
+                // SlaveDataNode
+                if (subNodeList != null && subNodeList.size() > idx) {
+                    String subDataNodeInfo = (String)subNodeList.get(idx);
+                    String[] subWorkDataNodeInfo = subDataNodeInfo.split(":");
+
+                    keyNodeConnector = this.createKeyNodeConnection(subWorkDataNodeInfo[0], subWorkDataNodeInfo[1], subDataNodeInfo, false);
+                    if (keyNodeConnector != null) {
+
+                        keyNodeConnector.println("61,#" + truncateKey);
+                        keyNodeConnector.flush();
+
+                        // 返却値取得
+                        String retParam = keyNodeConnector.readLine("61,#" + truncateKey);
+                    }
+                    super.addKeyNodeCacheConnectionPool(keyNodeConnector);
+                }
+
+                // ThirdDataNode
+                if (thirdNodeList != null && thirdNodeList.size() > idx) {
+                    String thirdDataNodeInfo = (String)thirdNodeList.get(idx);
+                    String[] thirdWorkDataNodeInfo = thirdDataNodeInfo.split(":");
+
+                    keyNodeConnector = this.createKeyNodeConnection(thirdWorkDataNodeInfo[0], thirdWorkDataNodeInfo[1], thirdDataNodeInfo, false);
+                    if (keyNodeConnector != null) {
+
+                        keyNodeConnector.println("61,#" + truncateKey);
+                        keyNodeConnector.flush();
+
+                        // 返却値取得
+                        String retParam = keyNodeConnector.readLine("61,#" + truncateKey);
+                    }
+                    super.addKeyNodeCacheConnectionPool(keyNodeConnector);
+                }
+            }
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - truncateAllData - Error", be);
+        } catch (Exception e) {
+            logger.error("MasterManagerHelper - truncateAllData - Error", e);
+        }
+        return true;
+    }
 
     /**
      * TagでKey値群を取得する.<br>

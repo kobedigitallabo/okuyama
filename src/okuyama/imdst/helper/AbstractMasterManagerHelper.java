@@ -41,6 +41,19 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
     private static boolean nowNodeDataOptimization = false;
 
+    protected static boolean recoverProcessed = false;
+
+
+
+    protected void setRecoverProcessed(boolean flg) {
+        recoverProcessed = flg;
+    }
+
+    protected boolean getRecoverProcessed() {
+        return recoverProcessed;
+    }
+
+
     /**
      * ノードの生存を確認
      *

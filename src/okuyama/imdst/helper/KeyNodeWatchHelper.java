@@ -340,6 +340,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
      * @return boolean 成否
      */
     protected boolean nodeDataRecover(String nodeInfo, String masterNodeInfo, boolean noDataCheck, ILogger logger) throws BatchException {
+        super.setRecoverProcessed(true);
 
         boolean ret = true;
 
@@ -579,6 +580,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 // 無視
                 logger.error("", e2);
             }
+            super.setRecoverProcessed(false);
         }
         return ret;
     }
