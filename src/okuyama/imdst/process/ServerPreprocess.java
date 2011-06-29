@@ -72,7 +72,9 @@ public class ServerPreprocess implements IProcess {
                     if (startOptions[i].trim().equals("-KS")) {
                         if (startOptions.length > (i+1)) {
                             try {
+                                
                                 ImdstDefine.saveKeyMaxSize = Integer.parseInt(startOptions[i+1]);
+                                if (ImdstDefine.saveKeyMaxSize < 200) ImdstDefine.saveKeyMaxSize = 200;
                             } catch(NumberFormatException nfe) {
                             }
                         }
