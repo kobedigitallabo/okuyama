@@ -182,6 +182,8 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                                 }
                             } catch(Exception e) {
                                 logger.info("Master Node = [" + checkMasterNodes[idx] +  "] Check Error");
+                                System.out.println("Master Node = [" + checkMasterNodes[idx] +  "] Check Error");
+                                e.printStackTrace();
                             } finally {
                                 if (imdstKeyValueClient != null) {
                                     imdstKeyValueClient.close();
@@ -215,6 +217,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                                     imdstKeyValueClient = new ImdstKeyValueClient();
                                     imdstKeyValueClient.connect(node, Integer.parseInt(port));
 
+                                    System.out.println("Change MainMasterNode = [" + StatusUtil.getMyNodeInfo() + "]");
                                     imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
                                 } catch(Exception e) {
                                     logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
