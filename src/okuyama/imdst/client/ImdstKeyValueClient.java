@@ -174,8 +174,6 @@ public class ImdstKeyValueClient extends OkuyamaClient {
 
             // 処理番号連結
             serverRequestBuf.append("12");
-            // セパレータ連結
-            serverRequestBuf.append(OkuyamaClient.sepStr);
 
 
             // サーバ送信
