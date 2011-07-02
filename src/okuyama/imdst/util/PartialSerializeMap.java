@@ -30,7 +30,7 @@ public class PartialSerializeMap extends SerializeMap implements Cloneable, Seri
 
 
     public PartialSerializeMap(int size, int upper, int multi, String[] bigValueStoreDirs) {
-        super(size, upper, multi);
+        super(size, upper, multi, ImdstDefine.serializerClassName);
 
 
         if (ImdstDefine.bigValueFileStoreUse == true && bigValueStoreDirs != null) {

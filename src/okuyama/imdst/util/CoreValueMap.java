@@ -69,7 +69,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                     upper =190000;
                     multi = 50000;
                 }
-                System.out.println("PartialSerializeMap Use");
+                //System.out.println("PartialSerializeMap Use");
                 mainMap  = new PartialSerializeMap(size, upper, multi, virtualStoreDirs);
             }
             converter = new MemoryModeCoreValueCnv();
@@ -101,8 +101,8 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                     upper =190000;
                     multi = 50000;
                 }
-                System.out.println("SerializeMap Use");
-                mainMap  = new SerializeMap(size, upper, multi);
+                //System.out.println("SerializeMap Use");
+                mainMap  = new SerializeMap(size, upper, multi, ImdstDefine.serializerClassName);
             }
 
             converter = new PartialFileModeCoreValueCnv();

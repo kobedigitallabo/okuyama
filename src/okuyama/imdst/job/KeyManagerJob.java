@@ -120,6 +120,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
         if (dataSaveMapType != null &&  dataSaveMapType.toLowerCase().equals(ImdstDefine.Prop_DataSaveMapTypeSerialize)) {
             // SerializeMap
             ImdstDefine.useSerializeMap = true;
+            ImdstDefine.serializerClassName = (String)super.getPropertiesValue(ImdstDefine.Prop_SerializerClassName);
         }
 
 

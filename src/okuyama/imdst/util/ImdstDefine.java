@@ -216,7 +216,7 @@ public class ImdstDefine {
     public static final String Prop_SaveDataMemoryStoreLimitSize = "SaveDataMemoryStoreLimitSize";
     public static final String Prop_DataSaveMapType = "DataSaveMapType";
     public static final String Prop_DataSaveMapTypeSerialize = "serialize";
-
+    public static final String Prop_SerializerClassName = "SerializerClassName";
 
     public static final String Prop_PacketBalancerParallelExecution = "PacketBalancerParallelExecution";
     public static final String Prop_PacketBalancerParallelQueue = "PacketBalancerParallelQueue";
@@ -283,6 +283,7 @@ public class ImdstDefine {
     // ---- プログラム規定数値 -------------------------------------------------------------
     // メモリ保存に利用するMapの種類指定 (true=SerializeMap(遅いが大量のデータ), false=通常のMap(速いが少量のデータ)) 
     public volatile static boolean useSerializeMap = false;
+    public volatile static String serializerClassName = null;
 
     // 保存出来る、Key、Tag、Valueの最大長
     // Valueの最大長

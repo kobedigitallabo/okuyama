@@ -40,6 +40,11 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
 
     private Map baseMap = null;
 
+    private ISerializer serializer = null;
+
+    private boolean classFix = false;
+    private Class keyClass = null;
+    private Class valueClass = null;
 
     /**
      * コンストラクタ
@@ -49,14 +54,22 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
      * @param upper 格納上限拡張閾値(現在内部的には利用しない)
      * @param multi 実際に格納に使用する集合バケット数
      */
-    public SerializeMap(int size, int upper, int multi) {
-        System.out.println("SerializeMap = " + multi);
+    public SerializeMap(int size, int upper, int multi, String serializeClassName) {
+        System.out.println("SerializeMap BucketSize= " + multi);
+        System.out.println("SerializeMap SerializerClassName= " + serializeClassName);
         parallelControl = multi;
         syncObjs = new Integer[multi];
         for (int i = 0; i < parallelControl; i++) {
             syncObjs[i] = new Integer(i);
         }
         baseMap = new ConcurrentHashMap(multi, (multi - 1), 64);
+
+        // シリアライザインスタンス化
+        try {
+            this.serializer = (ISerializer)((Class)Class.forName(serializeClassName)).newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -65,50 +78,14 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
     }
 
 
-    public static byte[] dataSerialize(Map data) {
-        /*String strTypeSep = "=:=";
-        String nowSep = "";
-        String dataSep = "=/=";
-        int serializeType = 0;
-        
-        
-        StringBuilder serializeStrBuf = new StringBuilder(1024);
-        Set entrySet = data.entrySet();
-        Iterator entryIte = entrySet.iterator(); 
+    public byte[] dataSerialize(Map data, Class keyClazz, Class valueClazz) {
 
-        while(entryIte.hasNext()) {
-        
-            Map.Entry obj = (Map.Entry)entryIte.next();
-            if (obj == null) continue;
-            if (serializeType == 0) {
-                String key = null;
-                String value = null;
-                key = (String)obj.getKey();
-                value = (String)obj.getValue();
-                serializeStrBuf.append(nowSep);
-                serializeStrBuf.append(key);
-                serializeStrBuf.append(strTypeSep);
-                serializeStrBuf.append(value);
-                
-                nowSep = dataSep;
-            }
-        }
-        return serializeStrBuf.toString().getBytes();*/
-        return SystemUtil.dataCompress(SystemUtil.defaultSerializeMap(data));
+        return this.serializer.serialize(data, keyClazz, valueClazz);
     }
 
-    public static Map dataDeserialize(byte[] data) {
-        /*Map retMap = new HashMap(8);
-        if (data == null) return null; 
-        String[] dataListStrs = new String(data).split("=/=");
-        String[] dataWork = null;
-        for (int i = 0; i < dataListStrs.length; i++) {
+    public Map dataDeserialize(byte[] data) {
 
-            dataWork = dataListStrs[i].split("=:=");
-            retMap.put(dataWork[0], dataWork[1]);
-        }
-        return retMap;*/
-        return SystemUtil.defaultDeserializeMap(SystemUtil.dataDecompress(data));
+        return this.serializer.deSerialize(data);
     }
     
 
@@ -119,10 +96,15 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
      * @param value
      */
     public Object put(Object key, Object value) {
-        //System.out.println(key.getClass().getName());
-        //System.out.println(value.getClass().getName());
+
         boolean incrFlg = false;
         r.lock();
+        if (!this.classFix) {
+            this.classFix = true;
+            this.keyClass = key.getClass();
+            this.valueClass = value.getClass();
+        }
+
         try { 
 
             int poitnInt = hashPointCalc(key.hashCode());
@@ -142,12 +124,12 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                     if (!targetMap.containsKey(key)) incrFlg = true;
 
                     targetMap.put(key, value);
-                    target = dataSerialize(targetMap);
+                    target = dataSerialize(targetMap, this.keyClass, this.valueClass);
                 } else {
 
                     Map targetMap = new HashMap();
                     targetMap.put(key, value);
-                    target = dataSerialize(targetMap);
+                    target = dataSerialize(targetMap, this.keyClass, this.valueClass);
 
                     // sizeを加算
                     incrFlg = true;
@@ -224,7 +206,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                 ret = targetMap.remove(key);
 
                 if (ret != null) {
-                    target = dataSerialize(targetMap);
+                    target = dataSerialize(targetMap, this.keyClass, this.valueClass);
 
                     // sizeを減算
                     decrFlg = true;
