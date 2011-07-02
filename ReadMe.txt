@@ -2,7 +2,8 @@
 Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ダウンロード頂きありがとうございます。
 
-※起動方法は本テキストの「■機能説明とサンプルの実行方法」をご覧ください。
+※起動方法はhttp://thinkit.co.jp/story/2011/02/17/2010をご覧頂くか、
+  本テキストの「■機能説明とサンプルの実行方法」をご覧ください。
   同時に「okuyama構成図.gif」もご参照ください。
   blog:http://d.hatena.ne.jp/okuyamaoo/
 
@@ -10,26 +11,34 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
-[[リリース Ver 0.8.8 - (2011/07/2)]]
+[[リリース Ver 0.8.8 - (2011/07/3)]]
 
 ■ストレージ機能にSerializeMapを追加
   データ格納時にメモリ空間を有効利用するSerializeMapという機能を追加。
-  アクセスレスポンスは低下するがメモリ上に格納できるデータ量は向上する。
+  データを格納するMapに登録するKeyとValueを(デ)シリアライザ外部から自由に指定できるように機能追加
   詳しくは以下のBlogを参照
   http://d.hatena.ne.jp/okuyamaoo/20110616
   http://d.hatena.ne.jp/okuyamaoo/20110623
 
   設定はDataNode.propertiesに以下の項目が追加された
   "DataSaveMapType"
+  "SerializerClassName"
 
+  "DataSaveMapType"はSerializeMapの利用を指定
+  "SerializerClassName"は(デ)シリアライザのクラスを指定
+  SerializerClassNameで指定するクラスはokuyama.imdst.util.serializemap.ISerializerをインプリメンツする
   設定なしは、ConcurrentHashMapを利用する。DefaultはConcurrentHashMap
 
   設定方法)
   DataSaveMapType=serialize
+  SerializerClassName=okuyama.imdst.util.serializemap.ObjectStreamSerializer
+  ObjectStreamSerializerは現在実装済みの(デ)シリアライザクラス。リリース物に同梱。
   ※上記でSerializeMapを内部で利用
 
   DataSaveMapType=
+  SerializerClassName=
   ※上記で通常のConcurrentHashMapを内部で利用
+
 
 
 ■okuyamaクライアントからも有効期限を設定可能に
@@ -41,13 +50,15 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 
 ■データ取得と同時にそのデータに設定されている有効期限を登録時に設定した期限分延長するメソッドを
-  okuyamaクライアントに追加。メソッド名はgetValueAndUpdateExpireTime
+  okuyamaクライアントに追加。
+  メソッド名はgetValueAndUpdateExpireTime
   ※有効期限が設定させていないデータは何も起こらない
   例)
   okuyamaClient.setValue("Key_XXX", "Value_YYY", new Integer(300));
   String[] getResult = okuyamaClient.getValueAndUpdateExpireTime("Key_XXX");
   ※上記のsetValue時に設定された300秒という有効期限が、getValueAndUpdateExpireTime呼び出し時に再度300秒で
     自動的に延長される。
+
 
 ■複数Tagを指定して紐付くKeyとValueを取得する機能を追加
   okuyamaクライアントでは、getMultiTagValues
