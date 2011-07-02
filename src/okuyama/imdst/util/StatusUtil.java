@@ -62,11 +62,18 @@ public class StatusUtil {
     // MainMasterNodeである場合はtrueとなる
     private static Boolean mainMasterNode = null;
 
+    // MainMasterNodeの情報
+    private static String mainMasterNodeInfo = null;
+
     // SlaveMainMasterNodeの情報
     private static String slaveMainMasterNodeInfo = null;
 
+    // 全てMasterNodeの情報
+    private static String allMasterNodeInfo = null;
+        
     // 自身がチェックしなければいけないマスターノードのIP群
     private static String checkTargetMasterNodes = null;
+
 
 
     // Transactionの使用有無
@@ -293,6 +300,13 @@ public class StatusUtil {
         return myNodeInfo;
     }
 
+    public static void setAllMasterNodeInfo(String str) {
+        allMasterNodeInfo = str;
+    }
+
+    public static String getAllMasterNodeInfo() {
+        return allMasterNodeInfo;
+    }
 
     /**
      * 自身がチェックしなければいけないMasterNodeを登録.<br>
@@ -521,6 +535,17 @@ public class StatusUtil {
 
     public static String getNowCpuStatus() {
         return  nowCpuStatus;
+    }
+
+   // MainMasterNodeの情報をSet
+    public static void setMainMasterNodeInfo(String str) {
+        mainMasterNodeInfo = str;
+    }
+
+
+   // MainMasterNodeの情報をGet
+    public static String getMainMasterNodeInfo() {
+        return mainMasterNodeInfo;
     }
 
 

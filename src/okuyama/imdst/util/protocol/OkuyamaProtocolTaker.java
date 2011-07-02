@@ -28,9 +28,9 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
 
     private String clientInfo = null;
 
-    private static char checkSetMethodCodeSet = '1';
+    private static String checkSetMethodCodeSet = "1";
 
-    private static char checkSetMethodCodeAdd = '6';
+    private static String checkSetMethodCodeAdd = "6";
 
 
     /**
@@ -155,39 +155,40 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
 
 
     private String[] okuyamaMethodCnv(String executeMethodStr) {
+        int methodLen = executeMethodStr.length();
+        String[] splitMethodSet = executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
 
-        char checkChar = executeMethodStr.charAt(0);
-        if (checkChar == checkSetMethodCodeSet || checkChar == checkSetMethodCodeAdd) {
-
-            if (executeMethodStr.charAt(executeMethodStr.length() - 1) == ',') {
+        if (splitMethodSet[0].equals(checkSetMethodCodeSet) || splitMethodSet[0].equals(checkSetMethodCodeAdd)) {
+            
+            if (executeMethodStr.charAt(methodLen - 1) == ',') {
 
                 // 有効期限付き
                 String[] retMethod = new String[5] ;
 
-                StringBuilder requestStrBuf = new StringBuilder(executeMethodStr.length() + 20);
-                String[] splitSetValue = executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
+                StringBuilder requestStrBuf = new StringBuilder(methodLen + 20);
+                
                 executeMethodStr = null;
 
-                retMethod[0] = splitSetValue[0];
-                retMethod[1] = splitSetValue[1];
-                retMethod[2] = splitSetValue[2];
-                retMethod[3] = splitSetValue[3];
+                retMethod[0] = splitMethodSet[0];
+                retMethod[1] = splitMethodSet[1];
+                retMethod[2] = splitMethodSet[2];
+                retMethod[3] = splitMethodSet[3];
 
-                requestStrBuf.append(splitSetValue[4]);
+                requestStrBuf.append(splitMethodSet[4]);
                 requestStrBuf.append(ImdstDefine.keyHelperClientParamSep);
                 requestStrBuf.append("0");
                 requestStrBuf.append(AbstractProtocolTaker.metaColumnSep).
-                              append(AbstractProtocolTaker.calcExpireTime(splitSetValue[5])).
+                              append(AbstractProtocolTaker.calcExpireTime(splitMethodSet[5])).
                               append(AbstractProtocolTaker.metaColumnSep).
-                              append(splitSetValue[5]);
+                              append(splitMethodSet[5]);
                 retMethod[4] = requestStrBuf.toString();
                 return retMethod;
             } else {
-                return executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
+                return splitMethodSet;
             }
         } else {
             
-            return executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
+            return splitMethodSet;
         }
     }
 

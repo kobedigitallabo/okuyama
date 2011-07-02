@@ -829,6 +829,25 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParams[1] = "true";
                             retParams[2] = "";
                             break;
+                        case 998:
+                        
+                            // 自信の現時点での設定情報を全て出力
+                            if (isProtocolOkuyama) {
+                                String dataNodeString = ((Map)DataDispatcher.getAllDataNodeInfo()).toString();
+                                dataNodeString = dataNodeString.replaceAll(","," ");
+                                retParams = new String[3];
+                                retParams[0] = "998";
+                                retParams[1] = "true";
+                                retParams[2] = "MainMasterNode=[" + StatusUtil.isMainMasterNode() +
+                                               "]- MyInfo=[" + StatusUtil.getMyNodeInfo() +
+                                               "]- MainMasterNodeInfo=[" + StatusUtil.getMainMasterNodeInfo() +
+                                               "]- AllMasterNodeInfo=[" + ((String)StatusUtil.getAllMasterNodeInfo()).replaceAll(",", " ") +
+                                               "]- CheckMasterNodeTargetInfo=[" + ((String)StatusUtil.getCheckTargetMasterNodes()).replaceAll(",", " ") +
+                                               "]- Algorithm [0]:mod [1]:consistenthash=[" + DataDispatcher.getDispatchMode() +
+                                               "]- AllDataNodeInfo=[" + dataNodeString + "]";
+                            
+                            }
+                            break;
                         case 999 :
 
                             // okuyamaのバージョンを返す
@@ -850,6 +869,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         default :
 
                             logger.info("MasterManagerHelper No Method =[" + clientParameterList[0] + "]");
+                            
+                            retParams = new String[3];
+                            retParams[0] = "-1";
+                            retParams[1] = "error";
+                            retParams[2] = "Request Pattern Not Found";
+                            
                             break;
                     }
 
@@ -923,9 +948,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         super.addSmallSizeParameterQueue(addQueueNames, queueParam);
                         reloopSameClient = false;
                     }
+                } catch (ArrayIndexOutOfBoundsException aiobe) {
+
+                    pw.println("-1,false,ERROR,ArgumentException");
+                    pw.flush();
+                    closeFlg = true;
+                    reloopSameClient = false;                
                 } catch (NumberFormatException e) {
 
-                    pw.println("-1,false,ERROR");
+                    pw.println("-1,false,ERROR,Request Parameter Error");
                     pw.flush();
                     closeFlg = true;
                     reloopSameClient = false;

@@ -219,6 +219,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
                                     System.out.println("Change MainMasterNode = [" + StatusUtil.getMyNodeInfo() + "]");
                                     imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
+                                    StatusUtil.setMainMasterNodeInfo(StatusUtil.getMyNodeInfo());
                                 } catch(Exception e) {
                                     logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
 
@@ -275,6 +276,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                                 imdstKeyValueClient.connect(node, Integer.parseInt(port));
 
                                 imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, StatusUtil.getMyNodeInfo());
+                                StatusUtil.setMainMasterNodeInfo(StatusUtil.getMyNodeInfo());
                             } catch(Exception e) {
 
                                 logger.error(node + ":" + port + " MasterNode Regist Error" + e.toString());
@@ -571,8 +573,8 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 if (mainMasterNodeInfoStr != null && !mainMasterNodeInfoStr.trim().equals("")) {
 
                     // 設定情報の枠がない場合は自身の情報を登録
-
                     imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo, mainMasterNodeInfoStr);
+                    StatusUtil.setMainMasterNodeInfo(mainMasterNodeInfoStr);
                 }
             } else if (nodeRet[0].equals("error")) {
                 // 何もしない
@@ -682,6 +684,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         }
 
         StatusUtil.setSlaveMasterNodes(slaveMasterNodeInfoStr);
+        StatusUtil.setAllMasterNodeInfo(allMasterNodeInfoStr);
 
         // 新設定を解析
         // 新設定が設定されている場合はこちらを優先とする
@@ -843,6 +846,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         }
 
         StatusUtil.setSlaveMasterNodes(slaveMasterNodeInfoStr);
+        StatusUtil.setAllMasterNodeInfo(allMasterNodeInfoStr);
 
         // 新設定を解析
         // 新設定が設定されている場合はこちらを優先とする
