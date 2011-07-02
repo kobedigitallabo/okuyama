@@ -1359,7 +1359,7 @@ public class TestSock {
             } else if (args[0].equals("28")) {
 
                 int port = Integer.parseInt(args[2]);
-                // OkuyamaClientを使用してデータを取得(Tagでの取得)
+                // OkuyamaClientを使用してValueを検索
                 OkuyamaClient okuyamaClient = new OkuyamaClient();
                 okuyamaClient.connect(args[1], port);
                 String[] keys = null;
@@ -1398,7 +1398,7 @@ public class TestSock {
             } else if (args[0].equals("28.2")) {
 
                 int port = Integer.parseInt(args[2]);
-                // OkuyamaClientを使用してデータを取得(Tagでの取得)
+                // OkuyamaClientを使用してValueを検索
                 OkuyamaClient okuyamaClient = new OkuyamaClient();
                 okuyamaClient.connect(args[1], port);
                 String[] keys = null;
@@ -1437,7 +1437,7 @@ public class TestSock {
             } else if (args[0].equals("29")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                // OkuyamaClientを使用してデータを取得して有効期限を更新
                 OkuyamaClient okuyamaClient = new OkuyamaClient();
                 okuyamaClient.connect(args[1], port);
                 String[] ret = null;
@@ -1475,7 +1475,7 @@ public class TestSock {
             } else if (args[0].equals("30")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                // OkuyamaClientを使用して複数Tag指定でKeyとValueのMapを取得
                 OkuyamaClient okuyamaClient = new OkuyamaClient();
                 okuyamaClient.connect(args[1], port);
                 
@@ -1494,7 +1494,7 @@ public class TestSock {
             } else if (args[0].equals("999")) {
                 
                 int port = Integer.parseInt(args[2]);
-                // OkuyamaClientを使用してデータを取得(Keyのみ)
+                // OkuyamaClientを使用してokuyamaのバージョンを取得
                 OkuyamaClient okuyamaClient = new OkuyamaClient();
                 okuyamaClient.connect(args[1], port);
                 
