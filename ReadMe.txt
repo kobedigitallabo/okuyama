@@ -10,7 +10,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
-[[リリース Ver 0.8.8 - (2011/07/3)]]
+[[リリース Ver 0.8.8 - (2011/07/2)]]
 
 ■ストレージ機能にSerializeMapを追加
   データ格納時にメモリ空間を有効利用するSerializeMapという機能を追加。
@@ -72,8 +72,22 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   第4引数 = 'all'          <=全ての削除を指定する'all'もしくは削除するIsolationPrefix名
 
 
-■いくつかの処理性能向上と不具合の修正
+■現在のMasterNodeを指定してそのMasterNodeが現在どのような設定情報で稼働しているかを取得する機能をUtilClientに追加
+   利用方法)
+   java -classpath ./:./classes okuyama.imdst.client.UtilClient masterconfig 192.168.1.1 8888
+   第1引数 = 'masterconfig' <=固定
+   第2引数 = '192.168.1.1'  <=MainMasterNodeのIPアドレス
+   第3引数 = '8888'         <=MainMasterNodeの起動ポート番号
+   ※出力例)
+   998,true,MainMasterNode=[true]- MyInfo=[127.0.0.1:8888]- MainMasterNodeInfo=[127.0.0.1:8888]- AllMasterNodeInfo=[127.0.0.1:8888 127.0.0.1:8889 127.0.0.1:11211]- 
+   CheckMasterNodeTargetInfo=[]- Algorithm [0]:mod [1]:consistenthash=[1]- AllDataNodeInfo=[{third=[localhost:7553  localhost:7554]  sub=[localhost:6553  localhost:6554]  
+   main=[localhost:5553  localhost:5554]}]
 
+
+■いくつかの処理性能向上と不具合の修正
+   1.Key-Valueの両方もしくはどちらかをメモリに展開する場合にデータを登録し続けるとメモリを使いすぎる現象を改善。
+   2.MasterNodeの不正な呼び出し番号(プロトコルの先頭)を渡した場合に応答がなくなってしまう問題を解決
+   
 ========================================================================================================
 [New - リリースファイル不備]
 [[リリース Ver 0.8.7.2 - (2011/05/12)]]
