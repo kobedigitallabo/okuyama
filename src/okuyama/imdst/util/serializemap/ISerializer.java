@@ -29,7 +29,6 @@ public interface ISerializer {
      *
      * @param deserializeTarget デシリアライズターゲット値(serializeメソッドで返却した値)
      * @return デシリアライズ済み返却値
-     * @throw Exception
      */
     public Map deSerialize(byte[] deserializeTarget);
 }   
