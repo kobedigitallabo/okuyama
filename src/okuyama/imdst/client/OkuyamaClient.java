@@ -2316,8 +2316,24 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean setByteValue(String keyStr, byte[] values) throws OkuyamaClientException {
-        return this.setByteValue(keyStr, null, values);
+        return this.setByteValue(keyStr, null, values, null);
     }
+
+
+    /**
+     * MasterNodeへデータを登録要求する(バイナリデータ).<br>
+     * Tagなし.<br>
+     *
+     * @param keyStr Key値
+     * @param values Value値(byte配列)
+     * @param expireTime 有効期限(単位は秒)
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setByteValue(String keyStr, byte[] values, Integer expireTime) throws OkuyamaClientException {
+        return this.setByteValue(keyStr, null, values, expireTime);
+    }
+
 
 
     /**
@@ -2335,6 +2351,25 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean setByteValue(String keyStr, String[] tagStrs, byte[] values) throws OkuyamaClientException {
+            return this.setByteValue(keyStr, tagStrs, values, null);
+    }
+    
+    /**
+     * MasterNodeへデータを登録要求する(バイナリデータ).<br>
+     * Tag有り.<br>
+     * 処理の流れとしては、まずvalueを一定の容量で区切り、その単位で、<br>
+     * Key値にプレフィックスを付けた値を作成し、かつ、特定のセパレータで連結して、<br>
+     * 渡されたKeyを使用して連結文字を保存する<br>
+     * 
+     *
+     * @param keyStr Key値
+     * @param tagStrs Tag値
+     * @param values Value値(byte配列)
+     * @param expireTime 有効期限(単位は秒)
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setByteValue(String keyStr, String[] tagStrs, byte[] values, Integer expireTime) throws OkuyamaClientException {
 
         boolean ret = false;
 
@@ -2398,7 +2433,7 @@ public class OkuyamaClient {
                 tmpKey = keyStr.hashCode() + "_" + i;
 
                 // ノードにバイナリデータ保存
-                if(!this.sendByteData(tmpKey, workData)) throw new OkuyamaClientException("Byte Data Save Node Error");
+                if(!this.sendByteData(tmpKey, workData, expireTime)) throw new OkuyamaClientException("Byte Data Save Node Error");
             }
 
             firstKey = keyStr.hashCode() + "_" + 0;
@@ -2412,7 +2447,7 @@ public class OkuyamaClient {
                 saveKeys.append(tmpKey);
             }
 
-            ret = this.setValue(keyStr, tagStrs, saveKeys.toString());
+            ret = this.setValue(keyStr, tagStrs, saveKeys.toString(), expireTime);
 
         } catch (Exception e) {
             throw new OkuyamaClientException(e);
@@ -2426,13 +2461,15 @@ public class OkuyamaClient {
      *
      * @param keyStr
      * @param values
+     * @param expireTime 
      * @return boolean
      * @throws OkuyamaClientException
      */
-    private boolean sendByteData(String keyStr, byte[] values) throws OkuyamaClientException {
+    private boolean sendByteData(String keyStr, byte[] values, Integer expireTime) throws OkuyamaClientException {
         boolean ret = false; 
         String serverRetStr = null;
         String[] serverRet = null;
+
         String value = null;
         StringBuilder serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
 
@@ -2470,6 +2507,20 @@ public class OkuyamaClient {
             // Value連結
             serverRequestBuf.append(value);
 
+            // 有効期限あり
+            if (expireTime != null) {
+                if (0.880 > this.okuyamaVersionNo) {
+
+                    throw new OkuyamaClientException("The version of the server is old [The expiration date can be used since version 0.8.8]");
+                } else {
+                    // セパレータ連結
+                    serverRequestBuf.append(OkuyamaClient.sepStr);
+                    serverRequestBuf.append(expireTime);
+                    // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
+                    serverRequestBuf.append(OkuyamaClient.sepStr);
+                } 
+            }
+
             // サーバ送信
             pw.println(serverRequestBuf.toString());
             pw.flush();
@@ -2501,7 +2552,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.sendByteData(keyStr, values);
+                    ret = this.sendByteData(keyStr, values, expireTime);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -2512,7 +2563,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.sendByteData(keyStr, values);
+                    ret = this.sendByteData(keyStr, values,expireTime);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -2523,7 +2574,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.sendByteData(keyStr, values);
+                    ret = this.sendByteData(keyStr, values, expireTime);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
