@@ -653,7 +653,7 @@ public class SystemUtil {
 
 
     public static byte[] defaultSerializeMap(Map data) {
-        return normalSerializeMap(data);
+        return normalObjectSerialize(data);
     }
 
 
@@ -670,7 +670,8 @@ public class SystemUtil {
         return null;
     }
 
-    private static byte[] normalSerializeMap(Map data) {
+
+    public static byte[] normalObjectSerialize(Object data) {
         ByteArrayOutputStream bao = null;
         ObjectOutput oo = null;
         try {
@@ -687,9 +688,8 @@ public class SystemUtil {
         return bao.toByteArray();
     }
 
-
     public static Map defaultDeserializeMap(byte[] data) {
-        return normalDeserializeMap(data);
+        return (Map)normalObjectDeserialize(data);
     }
 
     private static Map jsonDeserializeMap(byte[] data) {
@@ -713,15 +713,15 @@ public class SystemUtil {
         return null;
     }
 
-    private static Map normalDeserializeMap(byte[] data) {
-        Map retData = null;
+    public static Object normalObjectDeserialize(byte[] data) {
+        Object retData = null;
         ByteArrayInputStream bio = null;
         ObjectInputStream ois = null;
         try {
             bio = new ByteArrayInputStream(data);
             ois = new ObjectInputStream(bio);
 
-            retData = (Map)ois.readObject();
+            retData = ois.readObject();
             ois.close();
             bio.close();
         } catch (Exception e) {

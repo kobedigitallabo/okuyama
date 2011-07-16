@@ -10,6 +10,7 @@ import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
 
 import okuyama.imdst.util.ImdstDefine;
+import okuyama.imdst.util.SystemUtil;
 
 
 /**
@@ -2705,6 +2706,254 @@ public class OkuyamaClient {
                 try {
                     this.autoConnect();
                     ret = this.sendByteValue(keyStr, values);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+
+    /**
+     * MasterNodeへデータを送信する(Object).<br>
+     * 引数のObjectを自動的にシリアライズし保存する<br>
+     * そのため保存出来るObjectはシリアライズ可能な型である必要がある.<br>
+     * Tagなし
+     *
+     * @param keyStr Key値
+     * @param objValues Value値
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setObjectValue(String keyStr, Object objValue) throws OkuyamaClientException {
+        return setObjectValue(keyStr, null, objValue, null);
+    }
+
+
+
+    /**
+     * MasterNodeへデータを送信する(Object).<br>
+     * 引数のObjectを自動的にシリアライズし保存する<br>
+     * そのため保存出来るObjectはシリアライズ可能な型である必要がある.<br>
+     * Tagあり
+     *
+     * @param keyStr Key値
+     * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
+     * @param objValues Value値
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setObjectValue(String keyStr, String[] tagStrs, Object objValue) throws OkuyamaClientException {
+        return setObjectValue(keyStr, tagStrs, objValue, null);
+    }
+
+
+    /**
+     * MasterNodeへデータを送信する(Object).<br>
+     * 引数のObjectを自動的にシリアライズし保存する<br>
+     * そのため保存出来るObjectはシリアライズ可能な型である必要がある.<br>
+     * 有効期限あり
+     * Tagなし
+     *
+     * @param keyStr Key値
+     * @param objValues Value値
+     * @param expireTime 有効期限(単位は秒)
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setObjectValue(String keyStr, Object objValue, Integer expireTime) throws OkuyamaClientException {
+        return setObjectValue(keyStr, null, objValue, expireTime);
+    }
+
+
+
+    /**
+     * MasterNodeへデータを送信する(Object).<br>
+     * 引数のObjectを自動的にシリアライズし保存する<br>
+     * そのため保存出来るObjectはシリアライズ可能な型である必要がある.<br>
+     * 有効期限あり
+     * Tagあり
+     *
+     * @param keyStr Key値
+     * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
+     * @param objValues Value値
+     * @param expireTime 有効期限(単位は秒)
+     * @return boolean 登録成否
+     * @throws OkuyamaClientException
+     */
+    public boolean setObjectValue(String keyStr, String[] tagStrs, Object objValue, Integer expireTime) throws OkuyamaClientException {
+        boolean ret = false; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        String encodeValue = null;
+        byte[] valueBytes = null;
+        byte[] keyBytes = null;
+
+        // 文字列バッファ初期化
+        setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+        String encode = platformDefaultEncoding;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+
+            // Byte Lenghtチェック
+            if (tagStrs != null) {
+                for (int i = 0; i < tagStrs.length; i++) {
+                    if (encode == null) {
+                        if (tagStrs[i].getBytes().length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+                    } else {
+                        if (tagStrs[i].getBytes(encode).length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+                    }
+                }
+            }
+
+
+            // valueに対するサイズ、無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
+            if (objValue != null) {
+                valueBytes = SystemUtil.normalObjectSerialize(objValue);
+                if (valueBytes.length > maxValueSize) 
+                    throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
+            } else {
+                
+                throw new OkuyamaClientException("The null is not admitted on a Value");
+            }
+
+
+
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.trim().equals(""))
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+
+            // バイトコードに変換
+            keyBytes = keyStr.getBytes(encode);
+            if (keyBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+            
+            // ValueをBase64でエンコード
+            encodeValue = new String(this.dataEncoding(valueBytes));
+        
+
+
+            // 処理番号連結
+            setValueServerReqBuf.append("1");
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            setValueServerReqBuf.append(new String(this.dataEncoding(keyBytes)));
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+
+            // Tag連結
+            // Tag指定の有無を調べる
+            if (tagStrs == null || tagStrs.length < 1) {
+
+                // ブランク規定文字列を連結
+                setValueServerReqBuf.append(OkuyamaClient.blankStr);
+            } else {
+
+                // Tag数分連結
+                if (encode == null) {
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes())));
+                } else {
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes(encode))));
+                }
+                for (int i = 1; i < tagStrs.length; i++) {
+                    setValueServerReqBuf.append(tagKeySep);
+                    if (encode == null) {
+                        setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes())));
+                    } else {
+                        setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes(encode))));
+                    }
+                }
+            }
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            setValueServerReqBuf.append(this.transactionCode);
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // Value連結
+            setValueServerReqBuf.append(encodeValue);
+
+            // 有効期限あり
+            if (expireTime != null) {
+                if (0.880 > this.okuyamaVersionNo) {
+
+                    throw new OkuyamaClientException("The version of the server is old [The expiration date can be used since version 0.8.8]");
+                } else {
+                    // セパレータ連結
+                    setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                    setValueServerReqBuf.append(expireTime);
+                    // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
+                    setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                } 
+            }
+            // サーバ送信
+            pw.println(setValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet.length == 3 && serverRet[0].equals("1")) {
+                if (serverRet[1].equals("true")) {
+
+                    // 処理成功
+                    ret = true;
+                } else if (serverRet[1].equals("error")){
+
+                    // 処理失敗(メッセージ格納)
+                    throw new OkuyamaClientException(serverRet[2]);
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRetStr + "]");
+            }
+
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setObjectValue(keyStr, tagStrs, objValue, expireTime);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setObjectValue(keyStr, tagStrs, objValue, expireTime);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setObjectValue(keyStr, tagStrs, objValue, expireTime);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
