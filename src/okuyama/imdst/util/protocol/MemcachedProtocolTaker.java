@@ -405,7 +405,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 // Delete
                 // 分解すると コマンド,key
                 // 命令文字列の数をチェック
-                if (executeMethods.length != 2) {
+                if (executeMethods.length != 3 && executeMethods.length != 2) {
                     pw.println(ImdstDefine.memcacheMethodReturnErrorComn);
                     pw.flush();
                     return retStrs;

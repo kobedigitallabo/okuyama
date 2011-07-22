@@ -461,10 +461,10 @@ public class ImdstDefine {
     public static boolean vacuumInvalidDataFlg = true;
 
     // 有効期限切れデータ削除チェックサイクル(単位:分)
-    public static int startVaccumInvalidCount = 30;
+    public static int startVaccumInvalidCount = 10;
 
     // 有効期限切れのデータを実際に物理削除するまでの経過時間(ミリ秒)
-    public static final long invalidDataDeleteTime = 60000;
+    public static final long invalidDataDeleteTime = 6000;
 
 
     public volatile static boolean fileBaseMapTimeDebug = false;

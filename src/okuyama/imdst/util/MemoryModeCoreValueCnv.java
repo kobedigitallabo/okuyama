@@ -19,7 +19,7 @@ import com.sun.mail.util.BASE64EncoderStream;
  */
 public class MemoryModeCoreValueCnv implements ICoreValueConverter {
 
-    private static int compressUnderLimitSize = 128;
+    public volatile static int compressUnderLimitSize = 128;
 
     /**
      * 引数のObjectはBase64でエンコード後のString

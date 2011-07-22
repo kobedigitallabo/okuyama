@@ -100,7 +100,36 @@ public class TransactionManagerHelper extends AbstractHelper {
                     // 処理番号を取り出し
                     retParamBuf = new StringBuilder();
 
-                    if(clientParameterList[0].equals("30")) {
+                    if(clientParameterList[0].equals("10")) {
+                        retParamBuf.append("10");
+                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        retParamBuf.append("true");
+                        // エラーの場合は以下でエラーメッセメッセージも連結
+                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                        retParamBuf.append(StatusUtil.getNowMemoryStatus());
+                        retParamBuf.append(";");
+                        retParamBuf.append("Save Data Count=[" + keyMapManager.getSaveDataCount() + "]");
+                        retParamBuf.append(";");
+                        retParamBuf.append("Last Data Change Time=[" + keyMapManager.getLastDataChangeTime() + "]");
+                        retParamBuf.append(";");
+                        retParamBuf.append("Save Data Size=[");
+
+                         String[] allSaveSize = this.keyMapManager.getAllSaveDataSize();
+
+                        StringBuilder sizeListStr = new StringBuilder(40);
+                        if (allSaveSize != null) {
+                            String sep = "";
+                            for (int i = 0; i < allSaveSize.length; i++) {
+                                if (allSaveSize[i] != null && !allSaveSize[i].equals("")) {
+                                    sizeListStr.append(sep);
+                                    sizeListStr.append(allSaveSize[i]);
+                                    sep = ":";
+                                }
+                            }
+                        }
+                        retParamBuf.append(sizeListStr.toString());
+                        retParamBuf.append("]");
+                    } else if(clientParameterList[0].equals("30")) {
 
                         // Key値とTransactionCodeを使用してLockを取得する
                         requestKeyCode = clientParameterList[1];

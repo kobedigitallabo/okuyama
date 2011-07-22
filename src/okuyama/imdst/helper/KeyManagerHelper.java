@@ -740,6 +740,10 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(mSizeListStr.toString());
                             break;
+                        case 71 : 
+
+                            //this.triggerStreamManager.setTriggerTarget(pw, clientParameterList[1]);
+                            continue;
                         case 100 :
 
                             // KeyMapManager Dump

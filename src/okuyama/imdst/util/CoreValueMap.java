@@ -49,6 +49,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             //mainMap  = new ConcurrentHashMap(size, upper, multi);
             if (!ImdstDefine.useSerializeMap) {
 
+                System.out.println("PartialConcurrentHashMap Use");
                 mainMap  = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
             } else {
 
@@ -69,9 +70,12 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                     upper =190000;
                     multi = 50000;
                 }
-                //System.out.println("PartialSerializeMap Use");
+
+                System.out.println("PartialSerializeMap Use");
+                MemoryModeCoreValueCnv.compressUnderLimitSize = 1024 * 1024 * 1024;
                 mainMap  = new PartialSerializeMap(size, upper, multi, virtualStoreDirs);
             }
+
             converter = new MemoryModeCoreValueCnv();
             this.allDataMemory = true;
         } else {
@@ -80,6 +84,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
             if (!ImdstDefine.useSerializeMap) {
 
+                System.out.println("ConcurrentHashMap Use");
                 mainMap  = new ConcurrentHashMap(size, upper, multi);
             } else {
 
@@ -101,8 +106,8 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                     upper =190000;
                     multi = 50000;
                 }
-                //System.out.println("SerializeMap Use");
-                mainMap  = new SerializeMap(size, upper, multi, ImdstDefine.serializerClassName);
+                System.out.println("SerializeMap Use");
+                mainMap = new SerializeMap(size, upper, multi, ImdstDefine.serializerClassName);
             }
 
             converter = new PartialFileModeCoreValueCnv();
