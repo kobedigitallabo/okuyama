@@ -334,7 +334,7 @@ public class OkuyamaClient {
 
     /**
      * 接続処理.<br>
-     * エンコーディング指定なし.<br>
+     * エンコーディング指定あり.<br>
      *
      * @param server サーバ名
      * @param port ポート番号
