@@ -276,7 +276,8 @@ public class ImdstDefine {
 
     // データ取得時にデータの有効期限をUpdateするかの指定
     // 起動引数で変更可能
-    public volatile static boolean GetAndExpireTimeUpdate = false;
+    // TODO:未実装
+    public volatile static boolean getAndExpireTimeUpdate = false;
 
 
 
@@ -299,6 +300,11 @@ public class ImdstDefine {
     // 共通のデータファイルに書き出す最大サイズ
     public volatile static int dataFileWriteMaxSize = 12888;
 
+    // FileBaseDataMapで1KeyファイルにどれだけのKey値を保存するかの指定
+    // 少なければKeyの特定が高速になるので、1つのKey-Valueへのアクセスは高速化するが、
+    // 同時アクセスが複数のKeyに発生した場合ディスク全体にかかる負荷は高くなる
+    // SSDなどランダムReadが高速なディスクの場合は高めに調整すると高速になる可能性が高い
+    // 起動引数の"-fbmnk"で調整可能
     public volatile static int fileBaseMapNumberOfOneFileKey = 7000;
 
     // TagのValueの1つ当たりの長さ(Keyの連結結果長)
@@ -397,7 +403,7 @@ public class ImdstDefine {
     //public volatile static int valueCompresserLevel = Deflater.DEFAULT_COMPRESSION;
     
 
-    // データ永続化トランザクションログへの書き込みタイミング(true:都度, false:一定間隔)
+    // データ永続化WALログへの書き込みタイミング(true:都度, false:一定間隔)
     public volatile static boolean dataTransactionFileFlushTiming = true;
 
     // 共有データファイルへの書き込み遅延の指定。遅延にした場合新規データは常に共有データファイルに書き込まれるが、既存の値の書き直しや
@@ -410,7 +416,7 @@ public class ImdstDefine {
     // 削除済みデータが共有データファイルのどこ存在していたかを保持する最大数(ここで保持できる数だけ削除した領域が再利用される。実際保持するのはIntegerの値)
     public volatile static int numberOfDeletedDataPoint = 600000;
 
-    // トランザクションログ書き出し用のBufferを何回利用するか
+    // WALログ書き出し用のBufferを何回利用するか
     public volatile static int maxTransactionLogBufferUseCount = 1000000;
 
     // 共有データファイル書き出し用のBufferを何回利用するか
@@ -446,11 +452,15 @@ public class ImdstDefine {
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     public static final int vacuumExecAfterAccessTime = 200;
 
-    // トランザクションログをローテーションする際のサイズ(1.8GB)
+    // WALログをローテーションする際のサイズ(1.8GB)
     public static final long workFileChangeNewFileSize = 1610612736;
 
     // ファイルシステムへの同時アクセス係数
     public volatile static int parallelDiskAccess = 49;
+
+    // WALログのファイルシステムへのfsync係数(0=OSでの自動sync制御、1=fsync回数低、2=fsync回数中、3=fsync回数高、4=常にfsync
+    public volatile static int transactionLogFsyncType = 0;
+
 
     // 保存データサイズの合計値演算設定
     // true:計算する

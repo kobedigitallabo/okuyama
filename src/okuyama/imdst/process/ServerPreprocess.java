@@ -20,6 +20,10 @@ import okuyama.imdst.util.*;
  * -ncot ImdstDefine.nodeConnectionOpenTimeout /DataNodeへのSocketコネクションOpenのタイムアウト閾値(ミリ秒)
  * -nct ImdstDefine.nodeConnectionTimeout /DataNodeへのSocketコネクションreadのタイムアウト閾値(ミリ秒)
  * -mmgrs ImdstDefine.maxMultiGetRequestSize /getMultiValueの際に一度にDataNodeに問い合わせるRequestKeyの数
+ * -sidc ImdstDefine.searchIndexDistributedCount /検索Indexを並列に作成する場合の並列数
+ * -gaetu ImdstDefine.getAndExpireTimeUpdate /データの有効期限をGetメソッドで更新するかの指定(未実装)
+ * -fbmnk ImdstDefine.fileBaseMapNumberOfOneFileKey /FileBaseDataMapで1KeyファイルにどれだけのKey値を保存するかの指定
+ * -tlft  ImdstDefine.transactionLogFsyncType /WALログのファイルシステムへのfsync係数(0=OSでの自動sync制御、1=fsync回数低、2=fsync回数中、3=fsync回数高、4=常にfsync
  *
  * <br>
  * @author T.Okuyama
@@ -152,10 +156,11 @@ public class ServerPreprocess implements IProcess {
                     }
 
                     // -gaetu
+                    // TODO:未実装
                     if (startOptions[i].trim().equals("-gaetu")) {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
-                                ImdstDefine.GetAndExpireTimeUpdate = true;
+                                ImdstDefine.getAndExpireTimeUpdate = true;
                             }
                         }
                     }
@@ -170,7 +175,16 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
-                
+                    // -tlft
+                    if (startOptions[i].trim().equals("-tlft")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.fileBaseMapNumberOfOneFileKey = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
 
                 }
             }

@@ -3105,11 +3105,10 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからKeyでValueを取得する.<br>
-     * Objectを取得する.<br>
-     * 文字列エンコーディング指定あり.<br>
+     * setObjectValueで登録した値を取得する.<br>
      *
      * @param keyStr Key値
-     * @return String[] 要素1(データ有無(String)):"true" or "false",要素2(データ):Object型(データ有無がfalseの場合のみエラーメッセージ文字列(String型固定))
+     * @return Object[] 要素1(データ有無(String)):"true" or "false",要素2(データ):Object型(データ有無がfalseの場合のみエラーメッセージ文字列(String型固定))
      * @throws OkuyamaClientException
      */
     public Object[] getObjectValue(String keyStr) throws OkuyamaClientException {

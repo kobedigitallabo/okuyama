@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.zip.*;
 
+import okuyama.imdst.util.io.*;
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
 
@@ -27,6 +28,7 @@ public class SystemUtil {
     private static ConcurrentLinkedQueue valueDecompresserPool = null;
 
     private static Object[] diskAccessSync = null;
+    private static int[] diskAccessSyncCount = null;
 
     public static PrintWriter netDebugPrinter = null;
 
@@ -35,9 +37,11 @@ public class SystemUtil {
 
     static {
         diskAccessSync = new Object[ImdstDefine.parallelDiskAccess];
+        diskAccessSyncCount = new int[ImdstDefine.parallelDiskAccess];
 
         for (int i = 0; i < ImdstDefine.parallelDiskAccess; i++) {
             diskAccessSync[i] = new Object();
+            diskAccessSyncCount[i] = 0;
         }
 
         checkCharacterMap.put("a", null);
@@ -353,12 +357,34 @@ public class SystemUtil {
         return ret;
     }
 
+    /**
+     * Diskへの書き込みをSyncする.<br>
+     * 
+     * @param fileAccessor FileアクセスStream
+     * @param type Streamの種類 1=BufferedWriter
+     * @throw Exception
+     */
+    public static int diskAccessSync(Object fileAccessor) throws Exception {
+        if (fileAccessor instanceof BufferedWriter) {
+            return diskAccessSync(fileAccessor, 1);
+        }
+        if (fileAccessor instanceof CustomBufferedWriter) {
+            return diskAccessSync(fileAccessor, 2);
+        }
+
+        return 0;
+    }
+
+
 
     /**
      * Diskへの書き込みをSyncする.<br>
-     *
+     * 
+     * @param fileAccessor FileアクセスStream
+     * @param type Streamの種類 1=BufferedWriter 2=CustomBufferedWriter
+     * @throw Exception
      */
-    public static int diskAccessSync(Object fileAccessor) throws Exception {
+    public static int diskAccessSync(Object fileAccessor, int type) throws Exception {
         try {
             int syncIdx = 0;
             if (ImdstDefine.parallelDiskAccess != 1) {
@@ -366,12 +392,57 @@ public class SystemUtil {
             }
 
 
-
-            if (fileAccessor instanceof BufferedWriter) {
+            if (type == 1) {
                 synchronized (diskAccessSync[syncIdx]) {
                     ((BufferedWriter)fileAccessor).flush();
                 }
             }
+
+            if (type == 2) {
+                synchronized (diskAccessSync[syncIdx]) {
+                    CustomBufferedWriter customBufferedWriter = (CustomBufferedWriter)fileAccessor;
+                    customBufferedWriter.flush();
+                    if (ImdstDefine.transactionLogFsyncType > 0) {
+                        diskAccessSyncCount[syncIdx]++;
+                        FileDescriptor fd = null;
+
+                        switch (ImdstDefine.transactionLogFsyncType) {
+                            case 4 :
+
+                                fd = ((CustomBufferedWriter)fileAccessor).getFD();
+                                fd.sync();
+                                break;
+
+                            case 3 :
+                                if (diskAccessSyncCount[syncIdx] > 5) {
+                                    fd = ((CustomBufferedWriter)fileAccessor).getFD();
+                                    fd.sync();
+                                    diskAccessSyncCount[syncIdx] = 0;
+                                }
+                                break;
+
+                            case 2 :
+                                if (diskAccessSyncCount[syncIdx] > 25) {
+
+                                    fd = ((CustomBufferedWriter)fileAccessor).getFD();
+                                    fd.sync();
+                                    diskAccessSyncCount[syncIdx] = 0;
+                                }
+                                break;
+
+                            case 1 :
+                                if (diskAccessSyncCount[syncIdx] > 50) {
+
+                                    fd = ((CustomBufferedWriter)fileAccessor).getFD();
+                                    fd.sync();
+                                    diskAccessSyncCount[syncIdx] = 0;
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+
         } catch (Exception e) {
             throw e;
         }
