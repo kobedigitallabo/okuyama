@@ -1490,7 +1490,88 @@ public class TestSock {
                 }
                 System.out.println((end - start) + "milli second");
 
-                okuyamaClient.close();  
+                okuyamaClient.close();
+            } if (args[0].equals("31")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagなし)
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+
+                long start = new Date().getTime();
+                for (int idx = 0; idx < Integer.parseInt(args[3]); idx++) {
+                    Map objData = new HashMap();
+                    objData.put("key" + idx, "value" + idx);
+                    objData.put("key_x_" + idx, "value_x_" + idx);
+                    if (!okuyamaClient.setObjectValue("ObjectSetKey_" + idx, objData)) {
+                        System.out.println("OkuyamaClient - error");
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+            } if (args[0].equals("32")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータ取得
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+
+                long start = new Date().getTime();
+                for (int idx = 0; idx < Integer.parseInt(args[3]); idx++) {
+                    Object[] retData = okuyamaClient.getObjectValue("ObjectSetKey_" + idx);
+                    if (retData[0].equals("true")) {
+                        Map objData = (Map)retData[1];
+                        System.out.println(objData);
+                    } else if (retData[0].equals("false")) {
+                        System.out.println("ObjectSetKey_" + idx + " Not Found");
+                    } else if (retData[0].equals("error")) {
+                        System.out.println("ObjectSetKey_" + idx + " Error Message[" + retData[1] + "]");
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+            } if (args[0].equals("32.11")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータ取得
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+
+                long start = new Date().getTime();
+                for (int idx = 0; idx < Integer.parseInt(args[3]); idx++) {
+                    Object[] retData = okuyamaClient.getObjectValue("ObjectSetKey_" + idx);
+                    if (retData[0].equals("true")) {
+                        Map objData = (Map)retData[1];
+                    } else if (retData[0].equals("false")) {
+                        System.out.println("ObjectSetKey_" + idx + " Not Found");
+                    } else if (retData[0].equals("error")) {
+                        System.out.println("ObjectSetKey_" + idx + " Error Message[" + retData[1] + "]");
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+
             } else if (args[0].equals("999")) {
                 
                 int port = Integer.parseInt(args[2]);

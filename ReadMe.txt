@@ -11,6 +11,47 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
+[[リリース Ver 0.8.9 - (2011/XX/XX)]]
+
+■OkuyamaClientにsetObjectValueとgetObjectValueメソッドを追加
+  JavaでクラスでSerializableをimplementsしているクラスのオブジェクトをそのまま登録、
+  取得出来るメソッドを追加
+  メソッドは以下
+   ・Setメソッド
+     boolean setObjectValue(String keyStr, Object objValue)
+     boolean setObjectValue(String keyStr, String[] tagStrs, Object objValue)
+     boolean setObjectValue(String keyStr, Object objValue, Integer expireTime)
+     boolean setObjectValue(String keyStr, String[] tagStrs, Object objValue, Integer expireTime) 
+    返却値のbooleanはtrueの場合は登録成功、falseの場合は登録失敗
+
+   ・Getメソッド
+     Object[] getObjectValue(String keyStr)
+    返却値のObject配列の要素は
+    Object[0] = 要素1 データ有無(String型) : "true"=データ有 or "false"=データ無
+    Object[1] = 要素2 取得データ(Object型) : データ有無が"false"の場合のみエラーメッセージ文字列(String型固定))それ以外は、登録したObject
+
+
+■トランザクションログ(WALログ)のディスクへのfsyncの頻度を調整可能に
+  トランザクションログのディスクへのfsyncは従来OS任せだったが、頻度を調整可能に変更
+  ImdstDefine.transactionLogFsyncTypeの値を変更するか、DataNodeの起動引数に"tlft"付加し係数を
+  指定することで変更可能。係数の説明は以下
+   0=OS任せ
+   1=fsync頻度小
+   2=fsync頻度中
+   3=fsync頻度高
+   4=トランザクションログ書き込み毎にfsync(データへの変更毎に)
+
+   DataNode起動例)
+    java -cp ./classes;./lib/log4j-1.2.14.jar;./lib/javamail-1.4.1.jar;./lib/commons-codec-1.4.jar -Xmx128m -Xms128m okuyama.base.JavaMain /Main.properties /DataNode.properties -tlft 4
+
+
+■いくつかの処理性能向上と不具合の修正
+  ・memcachedモードでMasterNodeを起動した場合にdeleteメソッドで特定のクライアントがkey以外にパラメータを
+    転送してくるため、その際エラーになっていたため修正
+
+
+========================================================================================================
+[New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.8 - (2011/07/3)]]
 
 ■ストレージ機能にSerializeMapを追加
