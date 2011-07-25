@@ -179,7 +179,7 @@ public class ServerPreprocess implements IProcess {
                     if (startOptions[i].trim().equals("-tlft")) {
                         if (startOptions.length > (i+1)) {
                             try {
-                                ImdstDefine.fileBaseMapNumberOfOneFileKey = Integer.parseInt(startOptions[i+1]);
+                                ImdstDefine.transactionLogFsyncType = Integer.parseInt(startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
