@@ -115,14 +115,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // 初期化メソッド定義
     public void initHelper(String initValue) {
 
-        // TODO: 辞書テスト
-/*
-        searchIndexDictionaryMap.put("A", "");
-        searchIndexDictionaryMap.put("B", "");
-        searchIndexDictionaryList = new String[2];
-        searchIndexDictionaryList[0] = "A";
-        searchIndexDictionaryList[1] = "B";
-*/
+
         // データ一貫性モードの設定
         String consistencyModeStr = super.getPropertiesValue(ImdstDefine.Prop_DataConsistencyMode);
 
@@ -246,8 +239,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 結果格納用String
                     retParams = null;
                     retParamStr = "";
-
-
 
                     // 切断確認
                     if (closeFlg) this.closeClientConnect(pw, br, socket);
