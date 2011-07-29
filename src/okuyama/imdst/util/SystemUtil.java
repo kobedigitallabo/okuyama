@@ -666,25 +666,37 @@ public class SystemUtil {
     // Index作成対象外の場合はtrue
     public static boolean checkNoIndexCharacter(String checkStr) {
         if (checkStr.length() > 1) {
-            if(checkStr.indexOf(" ") > -1 || 
-                checkStr.indexOf("。") > -1 || 
-                    checkStr.indexOf("、") > -1 || 
-                        checkStr.indexOf("　") > -1 || 
-                            checkStr.indexOf("「") > -1 || 
-                                checkStr.indexOf("」") > -1 || 
-                                    checkStr.indexOf(",") > -1 || 
-                                        checkStr.indexOf(".") > -1 || 
-                                            checkStr.indexOf("(") > -1 || 
-                                                checkStr.indexOf(")") > -1 || 
-                                                    checkStr.indexOf("[") > -1 || 
-                                                        checkStr.indexOf("]") > -1 || 
-                                                            checkStr.indexOf("（") > -1 || 
-                                                                checkStr.indexOf("）") > -1 || 
-                                                                    checkStr.indexOf("{") > -1 || 
-                                                                        checkStr.indexOf("}") > -1 || 
-                                                                            checkStr.indexOf("｛") > -1 || 
-                                                                                checkStr.indexOf("｝") > -1 || 
-                                                                    checkStr.indexOf("/") > -1) return true;
+            int checkCount = 0;
+            int matchCount = 0;
+
+            for (int i = 0; i < checkStr.length(); i++) {
+
+                String str = checkStr.substring(i, i+1);
+
+                checkCount++;
+
+                if(str.indexOf(" ") > -1 || 
+                    str.indexOf("。") > -1 || 
+                        str.indexOf("、") > -1 || 
+                            str.indexOf("　") > -1 || 
+                                str.indexOf("「") > -1 || 
+                                    str.indexOf("」") > -1 || 
+                                        str.indexOf(",") > -1 || 
+                                            str.indexOf(".") > -1 || 
+                                                str.indexOf("(") > -1 || 
+                                                    str.indexOf(")") > -1 || 
+                                                        str.indexOf("[") > -1 || 
+                                                            str.indexOf("]") > -1 || 
+                                                                str.indexOf("（") > -1 || 
+                                                                    str.indexOf("）") > -1 || 
+                                                                        str.indexOf("{") > -1 || 
+                                                                            str.indexOf("}") > -1 || 
+                                                                                str.indexOf("｛") > -1 || 
+                                                                                    str.indexOf("｝") > -1 || 
+                                                                        str.indexOf("/") > -1) matchCount++;
+            }
+
+            if (checkCount == matchCount) return true;
         } else {
             if(checkCharacterMap.containsKey(checkStr)) return true;
         }
