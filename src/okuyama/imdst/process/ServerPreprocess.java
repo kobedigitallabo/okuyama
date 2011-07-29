@@ -24,7 +24,7 @@ import okuyama.imdst.util.*;
  * -gaetu ImdstDefine.getAndExpireTimeUpdate /データの有効期限をGetメソッドで更新するかの指定(未実装)
  * -fbmnk ImdstDefine.fileBaseMapNumberOfOneFileKey /FileBaseDataMapで1KeyファイルにどれだけのKey値を保存するかの指定
  * -tlft  ImdstDefine.transactionLogFsyncType /WALログのファイルシステムへのfsync係数(0=OSでの自動sync制御、1=fsync回数低、2=fsync回数中、3=fsync回数高、4=常にfsync
- *
+ * -vidf  ImdstDefine.vacuumInvalidDataFlg /有効期限切れのデータのクリーニングを行うかどうかの設定 true=行う false=行わない
  * <br>
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -185,7 +185,13 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
-
+                    if (startOptions[i].trim().equals("-vidf")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
+                                ImdstDefine.vacuumInvalidDataFlg = false;
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {

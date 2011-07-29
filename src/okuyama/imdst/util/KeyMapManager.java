@@ -80,7 +80,7 @@ public class KeyMapManager extends Thread {
     // 起動時にトランザクションログから復旧
     // Mapファイル本体を更新する時間間隔(ミリ秒)(時間間隔の合計 = updateInterval × intervalCount)
     private static int updateInterval = 1000;
-    private static int intervalCount =  40;
+    private static int intervalCount =  60;
 
     // workMap(トランザクションログ)ファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
@@ -529,8 +529,8 @@ public class KeyMapManager extends Thread {
                 // 有効期限切れデータの削除
                 // 実行指定(ImdstDefine.vacuumInvalidDataFlg)がtrueの場合に1時間に1回実行される
                 // このif文に到達するのが1分に1回なので、それを30回繰り返すと削除処理を実行する
-                //if (dataMemory == true && ImdstDefine.vacuumInvalidDataFlg == true && vacuumInvalidDataCount > 1) {
-                if (dataMemory == true && ImdstDefine.vacuumInvalidDataFlg == true && vacuumInvalidDataCount > ImdstDefine.startVaccumInvalidCount) {
+                // 差分データ取集中は行わない
+                if (dataMemory == true && ImdstDefine.vacuumInvalidDataFlg == true && vacuumInvalidDataCount > ImdstDefine.startVaccumInvalidCount && diffDataPoolingFlg == false) {
                     logger.info("VacuumInvalidData - Start - 1");
 
                     synchronized(this.poolKeyLock) {
