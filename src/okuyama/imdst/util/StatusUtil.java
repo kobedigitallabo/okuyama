@@ -94,6 +94,9 @@ public class StatusUtil {
 
     private static Map isolationCnvExclusionMap = null;
 
+    public static Map configDataKeyMap = null;
+
+
     // 実行許可メソッドリスト
     private static int[] methodList = null;
 
@@ -110,6 +113,50 @@ public class StatusUtil {
     static {
         for (int i = 0; i < 24;i++) {
             accessCountList[i] = new AtomicLong();
+        }
+
+        try {
+            configDataKeyMap = new HashMap();
+            // addNode4ConsistentHashMode
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_MainMasterNodeInfo
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_KeyMapNodesInfo
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_SubKeyMapNodesInfo
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_ThirdKeyMapNodesInfo
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_ThirdKeyMapNodesInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_KeyMapNodesRule
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesRule).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_LoadBalanceMode
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_LoadBalanceMode).getBytes("UTF-8")),"UTF-8"), null);
+    
+            // Prop_TransactionMode
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionMode).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_TransactionManagerInfo
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionManagerInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_MainMasterNodeMode
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeMode).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_SlaveMasterNodes
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SlaveMasterNodes).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_AllMasterNodeInfo
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo).getBytes("UTF-8")),"UTF-8"), null);
+
+            // Prop_DistributionAlgorithm
+            configDataKeyMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_DistributionAlgorithm).getBytes("UTF-8")),"UTF-8"), null);
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -154,50 +201,7 @@ public class StatusUtil {
         isolationMode = mode;
         isolationPrefixStr = "#" + prefix;
         if (isolationMode) {
-            isolationCnvExclusionMap = new HashMap(30);
-            try {
-                // addNode4ConsistentHashMode
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_MainMasterNodeInfo
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_KeyMapNodesInfo
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_SubKeyMapNodesInfo
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_ThirdKeyMapNodesInfo
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_ThirdKeyMapNodesInfo).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_KeyMapNodesRule
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesRule).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_LoadBalanceMode
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_LoadBalanceMode).getBytes("UTF-8")),"UTF-8"), null);
-        
-                // Prop_TransactionMode
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionMode).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_TransactionManagerInfo
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_TransactionManagerInfo).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_MainMasterNodeMode
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeMode).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_SlaveMasterNodes
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SlaveMasterNodes).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_AllMasterNodeInfo
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo).getBytes("UTF-8")),"UTF-8"), null);
-
-                // Prop_DistributionAlgorithm
-                isolationCnvExclusionMap.put(new String(BASE64EncoderStream.encode((ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_DistributionAlgorithm).getBytes("UTF-8")),"UTF-8"), null);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            isolationCnvExclusionMap = configDataKeyMap;
         }
     }
 

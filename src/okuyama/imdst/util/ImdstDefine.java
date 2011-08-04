@@ -116,9 +116,11 @@ public class ImdstDefine {
     // memcacheモード時の命令コマンドのdecr命令文字
     public static final String memcacheExecuteMethodDecr = "decr";
 
-
     // memcacheモード時の命令コマンドのversion命令文字
     public static final String memcacheExecuteMethodVersion = "version";
+
+    // memcacheモード時の命令コマンドのflush_all命令文字
+    public static final String memcacheExecuteMethodFlushall = "flush_all";
 
     // memcacheモード時の命令コマンドのget命令文字
     public static final String memcacheExecuteMethodGet = "get";

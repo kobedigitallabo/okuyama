@@ -455,6 +455,11 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 // version
                 retStrs = new String[1];
                 retStrs[0] = "999";
+            } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodFlushall)) {
+            
+                // version
+                retStrs = new String[1];
+                retStrs[0] = "61";
             } else {
 
                 // 存在しないプロトコルはokuyama用として処理する。
@@ -734,6 +739,15 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
             // version
             // 返却値は"okuyama-?-?-?
             retStr = retParams[1];
+        } else if (retParams[0].equals("61")) {
+
+            // flush_all
+            // 返却値は"OK or ERROR
+            if (retParams.length < 2 || !retParams[1].equals("true")) {
+                retStr = "ERROR";
+            } else if (retParams[1].equals("true")) {
+                retStr = "OK";
+            }
         } else {
             StringBuilder retParamBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 

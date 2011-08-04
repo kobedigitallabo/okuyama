@@ -1159,16 +1159,16 @@ start1 = System.nanoTime();
                     ret = new String(tmpBytes, keyDataLength, counter, "UTF-8");
                 }
             }
-/*end3 = System.nanoTime();
+            /*end3 = System.nanoTime();
 
-if (ImdstDefine.fileBaseMapTimeDebug) {
-    long time5 = 0L;
-    for (int idx = 0; idx < timeList.size(); idx++) {
-        time5 = time5 + (Long)timeList.get(idx);
-    }
-    
-    System.out.println("Get 1="+(end1 - start1) + " 2="+(end2 - start2) + " 3="+(end3 - start3) +" 4=" + (end4 - start4) + " 5=" +timeList + " 5-Total=" + time5);
-}*/
+            if (ImdstDefine.fileBaseMapTimeDebug) {
+                long time5 = 0L;
+                for (int idx = 0; idx < timeList.size(); idx++) {
+                    time5 = time5 + (Long)timeList.get(idx);
+                }
+                
+                System.out.println("Get 1="+(end1 - start1) + " 2="+(end2 - start2) + " 3="+(end3 - start3) +" 4=" + (end4 - start4) + " 5=" +timeList + " 5-Total=" + time5);
+            }*/
 
         } catch (Exception e) {
 

@@ -616,7 +616,6 @@ public class KeyMapManager extends Thread {
                 Set entrySet = this.keyMapObj.entrySet();
                 Iterator entryIte = entrySet.iterator(); 
 
-
                 long counter = 0;
                 while(entryIte.hasNext()) {
                     counter++;
@@ -630,9 +629,13 @@ public class KeyMapManager extends Thread {
 
                     if (uniqueKey.equals("#all") || (key.indexOf(uniqueKey) == 0 || key.indexOf(tagUniqueKey) == 0)) {
 
-                        // 削除対象データ
-                        this.removeKeyPair((String)key, "0");
-                        truncateTagetData++;
+                        if (!StatusUtil.configDataKeyMap.containsKey(key)) {
+                            // 削除対象データ
+                            this.removeKeyPair((String)key, "0");
+                            truncateTagetData++;
+                        } else {
+
+                        }
                     }
                 }
                 logger.info("TruncateData - TotalTargetCount [" + counter + "]");

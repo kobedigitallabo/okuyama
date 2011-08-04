@@ -730,9 +730,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 if (!super.getRecoverProcessed()) {
 
                                     // データを全て削除する
-                                    // リスクを伴う処理のため、MainMasterNodeの場合のみ処理可能とする
+                                    // リスクを伴う処理のため、Isolationをまたいだ削除はMainMasterNodeの場合のみ処理可能とする
+                                    // Isolationを設定されている場合は、そのIsolationの範囲のみ削除可能
                                     // DataNode復旧中は削除できない
-
                                     if (clientParameterList.length == 2 && (clientParameterList[1].length() == 5 || clientParameterList[1].length() == 3)) {
                                         if (this.truncateAllData(clientParameterList[1])) {
 
@@ -751,6 +751,34 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                         retParams[0] = "61";
                                         retParams[1] = "error";
                                         retParams[2] = "The mistake is found in the deletion specification";
+                                    }
+                                } else {
+
+                                    retParams = new String[3];
+                                    retParams[0] = "61";
+                                    retParams[1] = "error";
+                                    retParams[2] = "DataNode cannot be executed while processing the return";
+                                }
+                            } else if (this.isolationMode == true) {
+
+                                if (!super.getRecoverProcessed()) {
+
+                                    // データを全て削除する
+                                    // リスクを伴う処理のため、Isolationをまたいだ削除はMainMasterNodeの場合のみ処理可能とする
+                                    // Isolationを設定されている場合は、そのIsolationの範囲のみ削除可能
+                                    // DataNode復旧中は削除できない
+                                    String isolationPrefixWork = StatusUtil.getIsolationPrefix();
+                                    
+                                    if (this.truncateAllData(isolationPrefixWork.substring(1,6))) {
+
+                                        retParams = new String[2];
+                                        retParams[0] = "61";
+                                        retParams[1] = "true";
+                                    } else {
+
+                                        retParams = new String[2];
+                                        retParams[0] = "61";
+                                        retParams[1] = "false";
                                     }
                                 } else {
 
@@ -2162,7 +2190,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // 該当データ次第で処理分岐
             if (retMap.size() > 0 || (fullMatchKeyMap.size() > 0 && workKeywords.length > 1 && searchType.equals("1"))) {
-
                 if (fullMatchKeyMap.size() > 0) retMap.putAll(fullMatchKeyMap);
                 fullMatchKeyMap.clear();
                 // 該当データあり
@@ -2354,7 +2381,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 retStrs[2] = retKeysBuf.toString();
             } else if (fullMatchKeyMap.size() > 0) {
-
                 // 最終的な返却値を作成
                 retStrs[0] = "43";
 
@@ -2385,7 +2411,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
                 retStrs[2] = retKeysBuf.toString();
             } else {
-            
                 // 該当データなし
                 retStrs[0] = "43";
                 retStrs[1] = "false";
@@ -3376,6 +3401,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      */
     private boolean truncateAllData(String truncateKey) throws BatchException {
         KeyNodeConnector keyNodeConnector = null;
+
+        logger.info("TruncateAllData Execute Date[" + new Date().toString() + "] IsolationKey[" + truncateKey + "]");
 
         String[] retParams = null;
         String[] cnvConsistencyRet = null;

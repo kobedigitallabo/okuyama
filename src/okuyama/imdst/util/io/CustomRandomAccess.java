@@ -112,7 +112,7 @@ class InnerCustomRandomAccessFile extends Thread {
                         nowWrite = true;
                     }
 
-                    if ((continuousnessWrite % 20) == 0) Thread.sleep(30);
+                    if ((continuousnessWrite % 100) == 0) Thread.sleep(30);
 
                     seekPoint = (Long)this.delayWriteQueue.poll(500, TimeUnit.MILLISECONDS);
                     if (seekPoint == null) continue;
@@ -123,6 +123,7 @@ class InnerCustomRandomAccessFile extends Thread {
                         byte[] data = null;
                         data = (byte[])this.delayWriteDifferenceMap.remove(seekPoint);
                         if (data != null) {
+
                             this.writeRaf.seek(longSeekPoint);
                             this.writeRaf.write(data, this.defaultStart, this.defaultSize);
                         }
