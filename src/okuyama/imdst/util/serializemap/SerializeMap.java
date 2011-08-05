@@ -1,6 +1,7 @@
 package okuyama.imdst.util.serializemap;
 
 
+import java.lang.reflect.Constructor;
 import java.util.*;
 import java.io.*;
 import java.util.concurrent.atomic.*;
@@ -66,7 +67,21 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
 
         // シリアライザインスタンス化
         try {
-            this.serializer = (ISerializer)((Class)Class.forName(serializeClassName)).newInstance();
+            if (serializeClassName.indexOf(":") == -1) {
+                this.serializer = (ISerializer)((Class)Class.forName(serializeClassName)).newInstance();
+            } else {
+
+                Class[] constructorTypes = {String.class};
+                Object[] constructorArgs = new Object[1];
+                String[] classCreateWork = serializeClassName.split(":");
+                String className = classCreateWork[0];
+                String  constructorParam = classCreateWork[1];
+                constructorArgs[0] = constructorParam;
+
+                Class serializeClazz = (Class)Class.forName(className);
+                Constructor constructor = serializeClazz.getConstructor(constructorTypes);
+                this.serializer = (ISerializer)constructor.newInstance(constructorArgs);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -210,7 +225,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
 
                     // sizeを減算
                     decrFlg = true;
-                }
+                } 
 
                 baseMap.put(point, target);
             }

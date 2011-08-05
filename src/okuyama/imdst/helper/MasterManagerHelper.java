@@ -3430,6 +3430,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 String[] workDataNodeInfo = mainDataNodeInfo.split(":");
 
                 keyNodeConnector = this.createKeyNodeConnection(workDataNodeInfo[0], workDataNodeInfo[1], mainDataNodeInfo, false);
+                keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
+
                 if (keyNodeConnector != null) {
 
                     keyNodeConnector.println("61,#" + truncateKey);
@@ -3438,6 +3440,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 返却値取得
                     String retParam = keyNodeConnector.readLine("61,#" + truncateKey);
                 }
+                keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
                 super.addKeyNodeCacheConnectionPool(keyNodeConnector);
 
                 // SlaveDataNode
@@ -3446,6 +3449,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     String[] subWorkDataNodeInfo = subDataNodeInfo.split(":");
 
                     keyNodeConnector = this.createKeyNodeConnection(subWorkDataNodeInfo[0], subWorkDataNodeInfo[1], subDataNodeInfo, false);
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
+    
                     if (keyNodeConnector != null) {
 
                         keyNodeConnector.println("61,#" + truncateKey);
@@ -3454,6 +3459,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 返却値取得
                         String retParam = keyNodeConnector.readLine("61,#" + truncateKey);
                     }
+
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
                     super.addKeyNodeCacheConnectionPool(keyNodeConnector);
                 }
 
@@ -3463,6 +3470,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     String[] thirdWorkDataNodeInfo = thirdDataNodeInfo.split(":");
 
                     keyNodeConnector = this.createKeyNodeConnection(thirdWorkDataNodeInfo[0], thirdWorkDataNodeInfo[1], thirdDataNodeInfo, false);
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
+
                     if (keyNodeConnector != null) {
 
                         keyNodeConnector.println("61,#" + truncateKey);
@@ -3471,6 +3480,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 返却値取得
                         String retParam = keyNodeConnector.readLine("61,#" + truncateKey);
                     }
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
                     super.addKeyNodeCacheConnectionPool(keyNodeConnector);
                 }
             }

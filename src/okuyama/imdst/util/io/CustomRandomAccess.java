@@ -89,7 +89,7 @@ class InnerCustomRandomAccessFile extends Thread {
 
     public void run() {
         long continuousnessWrite = 0;
-        int writeTimingCount = ImdstDefine.dataFileWriteDelayMaxSize / 2;
+        int writeTimingCount = ImdstDefine.dataFileWriteDelayMaxSize / 10;
         int waitTimingCount = new Double(writeTimingCount * 0.70).intValue();
 
         boolean nowWrite = false;
@@ -112,7 +112,11 @@ class InnerCustomRandomAccessFile extends Thread {
                         nowWrite = true;
                     }
 
-                    if ((continuousnessWrite % 100) == 0) Thread.sleep(30);
+                    if ((continuousnessWrite % 1000) == 0) {
+
+                        FileDescriptor fd = this.writeRaf.getFD();
+                        fd.sync();
+                    }
 
                     seekPoint = (Long)this.delayWriteQueue.poll(500, TimeUnit.MILLISECONDS);
                     if (seekPoint == null) continue;
@@ -121,7 +125,7 @@ class InnerCustomRandomAccessFile extends Thread {
 
                     synchronized (this.syncObjList[new Long(seekPoint % this.parallelSize).intValue()]) {
                         byte[] data = null;
-                        data = (byte[])this.delayWriteDifferenceMap.remove(seekPoint);
+                        data = (byte[])this.delayWriteDifferenceMap.get(seekPoint);
                         if (data != null) {
 
                             this.writeRaf.seek(longSeekPoint);
@@ -129,6 +133,7 @@ class InnerCustomRandomAccessFile extends Thread {
                         }
                         continuousnessWrite++;
                     }
+                   this.delayWriteDifferenceMap.remove(seekPoint);
                 } else {
                     continuousnessWrite = 0;
                     Thread.sleep(500);

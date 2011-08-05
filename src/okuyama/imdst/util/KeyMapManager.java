@@ -684,7 +684,7 @@ public class KeyMapManager extends Thread {
                     if (!containsKeyRet) {
 
                         String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
-                        
+
                         if (keyNoddes.length > 1) {
                             data = keyNoddes[0] + ImdstDefine.setTimeParamSep + keyNoddes[1];
                         } else {
@@ -693,7 +693,6 @@ public class KeyMapManager extends Thread {
                     } else if (containsKeyRet) {
 
                         String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
-
 
                         if (keyNoddes.length > 1) {
 
@@ -720,6 +719,7 @@ public class KeyMapManager extends Thread {
                     if (this.workFileMemory == false) {
 
                         synchronized(this.lockWorkFileSync) {
+
                             if (this.workFileFlushTiming) {
                                 this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).
                                                                 append("+").
@@ -732,7 +732,9 @@ public class KeyMapManager extends Thread {
                                                                 append(KeyMapManager.workFileSeq).
                                                                 append(KeyMapManager.workFileEndPoint).
                                                                 append("\n").toString());
+
                                 SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+
                                 // 現在の利用回数をチェック
                                 this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                             } else {

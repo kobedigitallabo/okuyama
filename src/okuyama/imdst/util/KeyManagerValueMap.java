@@ -329,6 +329,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     public Object put(Object key, Object value) {
 
         Object ret = null;
+
         this.totalDataSizeCalc(key, value);
 
         if (this.memoryMode) {
@@ -382,11 +383,17 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             }
 
                             if (deletedLine == null) {
+
                                 this.bw.write(writeBuf.toString());
+
                                 SystemUtil.diskAccessSync(this.bw);
+
                                 this.lineCount++;
+
                                 super.put(key, new Integer(this.lineCount));
+
                                 this.checkDataFileWriterLimit(this.dataFileBufferUseCount.incrementAndGet());
+
                             } else {
 
                                 // 削除済みデータの場所を再利用する
@@ -401,19 +408,20 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                                 // データ長が共有データファイルの1データ上限を超えている
                                 this.writeOverSizeData(key, value);
+
                             }
+
                         }
                     } else {
 
-
                         // すでにファイル上に存在する
                         synchronized (sync) {
+
                             if (vacuumExecFlg) {
                                 // Vacuum差分にデータを登録
                                 Object[] diffObj = {"1", key, value};
                                 this.vacuumDiffDataList.add(diffObj);
                             }
-
 
                             if (raf != null) {
 
@@ -522,6 +530,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         }
 
         Object val = this.get(key);
+
         if (val != null) {
             nowValLen = new Double((((String)key).length() + ((String)val).length()) * 0.8).intValue() + 20;
         }
