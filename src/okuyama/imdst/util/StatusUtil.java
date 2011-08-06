@@ -50,6 +50,8 @@ public class StatusUtil {
 
     private static boolean memoryLimitOver = false;
 
+    private static Integer memoryLimitMinSize = new Integer(90);
+
     // 全体ステータス
     // 0:正常 1:異常 2:終了 3:一時停止
     private static int status = 0;
@@ -221,6 +223,22 @@ public class StatusUtil {
         return memoryLimitOver;
     }
 
+
+    /**
+     * メモリ使用量の規定限界値を設定する.<br>
+     */
+    public static void setMemoryLimitMinSize(int limitSize) {
+        synchronized(memoryLimitMinSize) {
+            if (memoryLimitMinSize.intValue() > limitSize)
+            memoryLimitMinSize = new Integer(limitSize);
+        }
+    }
+
+    public static int getMemoryLimitMinSize() {
+        return memoryLimitMinSize.intValue();
+    }
+    
+    
     /**
      * 全体ステータスを設定
      */

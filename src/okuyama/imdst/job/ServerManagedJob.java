@@ -15,6 +15,7 @@ import okuyama.base.util.LoggerFactory;
 import okuyama.imdst.util.KeyMapManager;
 import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.ImdstDefine;
 
 /**
  * Serverのリソース全般を管理する.<br>
@@ -28,9 +29,7 @@ import okuyama.imdst.util.JavaSystemApi;
 public class ServerManagedJob extends AbstractJob implements IJob {
 
     // 停止ファイルの監視サイクル時間(ミリ秒)
-    private int checkCycle = 2000;
-
-    private int memoryLimitSize = 90;
+    private int checkCycle = 4000;
 
     /**
      * Logger.<br>
@@ -40,9 +39,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
     // 初期化メソッド定義
     public void initJob(String initValue) {
         logger.debug("ServerManagedJob - initJob - start");
-        if (initValue != null && !initValue.equals("")) {
-            this.memoryLimitSize = Integer.parseInt(initValue);
-        }
+
         logger.debug("ServerManagedJob - initJob - end");
     }
 
@@ -59,7 +56,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
         ServerSocket serverSocket = null;
         boolean firstOver = true;
         long gcExecuteTime = System.currentTimeMillis();
-        long executeGcInterval = 60000;
+        long executeGcInterval = 10000;
         long memoryLimitOverCount = 0;
         long maxMemoryLimitOverCount = 5;
         boolean gcOff = false;
@@ -87,12 +84,10 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                     logger.debug("JVM FreeMemory Size =[" + JavaSystemApi.getRuntimeFreeMem("M") + "]");
                     logger.debug("JVM Use Memory Percent=[" + JavaSystemApi.getUseMemoryPercent() + "]");
                 }
-
-                if (gcOff == false  && JavaSystemApi.getUseMemoryPercentCache() > this.memoryLimitSize) {
+                if (gcOff == false  && JavaSystemApi.getUseMemoryPercentCache() > StatusUtil.getMemoryLimitMinSize()) {
                     memoryLimitOverCount++;
 
                     if (memoryLimitOverCount < maxMemoryLimitOverCount || ((System.currentTimeMillis() - gcExecuteTime) > executeGcInterval)) {
-
 
                         System.out.println(new Date().toString() + " FullGC - Execute - Start");
                         JavaSystemApi.manualGc();
@@ -100,9 +95,8 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                         gcExecuteTime = System.currentTimeMillis();
                         //Thread.sleep(2000);
                     } else {
-
                         // 限界値を超えている
-                        if (memoryLimitOverCount == maxMemoryLimitOverCount) {
+                        if (memoryLimitOverCount >= maxMemoryLimitOverCount) {
                             System.out.println(new Date().toString() + " JVM Limit MemorySize Over");
                             StatusUtil.useMemoryLimitOver();
                             gcOff = true;
@@ -111,7 +105,6 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                 } else {
                     memoryLimitOverCount = 0;
                 }
-
                 // GC発行
                 if (gcOff == false)
                     JavaSystemApi.autoGc();

@@ -366,6 +366,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                     if (virtualStorageDirsStr != null && !virtualStorageDirsStr.trim().equals("")) {
                         memoryLimitSizeInt = new Integer(memoryLimitSize).intValue();
                         virtualStorageDirs = virtualStorageDirsStr.split(",");
+                        StatusUtil.setMemoryLimitMinSize(memoryLimitSizeInt);
                     }
                 }
             }

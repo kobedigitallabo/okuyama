@@ -80,7 +80,7 @@ public class ToStringSerializer implements ISerializer {
             
             if (!dataStrList[idx].trim().equals("")) {
                 int lastIndex = dataStrList[idx].lastIndexOf("=");
-                retMap.put(new CoreMapKey(dataStrList[idx].substring(0, lastIndex)), new Integer(dataStrList[idx].substring(lastIndex+1)));
+                retMap.put(new CoreMapKey(dataStrList[idx].substring(0, lastIndex)), dataStrList[idx].substring(lastIndex+1));
             }
         }
 

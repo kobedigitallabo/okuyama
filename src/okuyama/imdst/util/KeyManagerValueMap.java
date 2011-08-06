@@ -59,12 +59,16 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     private transient boolean readObjectFlg = false;
 
+    private boolean mapValueInSize = false;
+
+
     // コンストラクタ
     public KeyManagerValueMap(int size, boolean memoryMode, String[] virtualStoreDirs) {
 
         super(size, new Double(size * 0.9).intValue(), 512, memoryMode, virtualStoreDirs);
 
         this.memoryMode = memoryMode;
+        if (!this.memoryMode) this.mapValueInSize = true;
     }
 
 
@@ -374,7 +378,15 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         synchronized (sync) {
 
                             // 削除済みデータが使用していた場所をまずは調べる
-                            Integer deletedLine = (Integer)this.deletedDataPointList.poll();
+                            Integer deletedLine = null;
+                            if (mapValueInSize) {
+                                String deletedLineStr = (String)this.deletedDataPointList.poll();
+                                if (deletedLineStr != null) {
+                                    deletedLine = new Integer(((String[])deletedLineStr.split(":"))[0]);
+                                }
+                            } else {
+                                deletedLine = (Integer)this.deletedDataPointList.poll();
+                            }
 
                             if (vacuumExecFlg) {
                                 // Vacuum差分にデータを登録
@@ -390,7 +402,11 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                                 this.lineCount++;
 
-                                super.put(key, new Integer(this.lineCount));
+                                if (mapValueInSize) {
+                                    super.put(key, new Integer(this.lineCount) + ":" + valueSize);
+                                } else {
+                                    super.put(key, new Integer(this.lineCount));
+                                }
 
                                 this.checkDataFileWriterLimit(this.dataFileBufferUseCount.incrementAndGet());
 
@@ -399,7 +415,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                                 // 削除済みデータの場所を再利用する
                                 raf.seek(this.convertLineToSeekPoint(deletedLine));
                                 raf.write(writeBuf.toString().getBytes(), 0, this.oneDataLength);
-                                super.put(key, new Integer(deletedLine));
+
+
+                                if (mapValueInSize) {
+                                    super.put(key, new Integer(deletedLine) + ":" + valueSize);
+                                } else {
+                                    super.put(key, new Integer(deletedLine));
+                                }
                             }
 
                             this.nowKeySize = super.size();
@@ -438,7 +460,11 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     }
                 } else {
 
-                    super.put(key, value);
+                    if (mapValueInSize) {
+                        super.put(key, value + ":" + valueSize);
+                    } else {
+                        super.put(key, value);
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -529,12 +555,20 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             unique = "all";
         }
 
-        Object val = this.get(key);
+        if (mapValueInSize) {
+            String val = (String)super.get(key);
 
-        if (val != null) {
-            nowValLen = new Double((((String)key).length() + ((String)val).length()) * 0.8).intValue() + 20;
+            if (val != null) {
+                nowValLen = new Double((((String)key).length() + new Integer(((String[])val.split(":"))[1]).intValue()) * 0.8).intValue() + 20;
+            }
+        } else {
+
+            Object val = this.get(key);
+
+            if (val != null) {
+                nowValLen = new Double((((String)key).length() + ((String)val).length()) * 0.8).intValue() + 20;
+            }
         }
-
         if (nowValLen != 0) {
             beforeSize = nowValLen * -1;
         }
@@ -652,7 +686,12 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     tmpBw.write(dataStr);
                     tmpBw.write("\n");
                     putCounter++;
-                    vacuumWorkMap.put(key, new Integer(putCounter).toString());
+                    
+                    if (mapValueInSize) {
+                        vacuumWorkMap.put(key, new Integer(putCounter).toString() + ":" +  dataStr.length());
+                    } else {
+                        vacuumWorkMap.put(key, new Integer(putCounter).toString());
+                    }
                 }
             }
 
@@ -701,8 +740,12 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             Map.Entry obj = (Map.Entry)workEntryIte.next();
                             workKey = (String)obj.getKey();
                             if (workKey != null) {
-                                workMapData = new Integer((String)vacuumWorkMap.get(workKey));
-                                super.put(workKey, workMapData);
+
+                                if (mapValueInSize) {
+                                    super.put(key, (String)vacuumWorkMap.get(workKey));
+                                } else {
+                                    super.put(workKey, new Integer((String)vacuumWorkMap.get(workKey)));
+                                }
                             }
                         }
 
@@ -922,7 +965,15 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      */
     private long calcSeekDataPoint(Object key) {
 
-        Integer lineInteger = (Integer)super.get(key);
+        Integer lineInteger = null;
+        if (mapValueInSize) {
+            String lineIntegerMix = (String)super.get(key);
+            if (lineIntegerMix != null) {
+                lineInteger = new Integer(((String[])lineIntegerMix.split(":"))[0]);
+            }
+        } else {
+            lineInteger = (Integer)super.get(key);
+        } 
         return this.convertLineToSeekPoint(lineInteger);
     }
 
