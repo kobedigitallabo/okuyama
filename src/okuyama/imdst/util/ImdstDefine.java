@@ -264,6 +264,7 @@ public class ImdstDefine {
     public static final int paramCheckCount   = 5;
     public static final int paramCheckCountMaster = 6;
     public static final int paramBis           = 7;
+    public static final int paramBos           = 8;
 
     public static final int dispatchModeModInt = 0;
     public static final int dispatchModeConsistentHashInt = 1;

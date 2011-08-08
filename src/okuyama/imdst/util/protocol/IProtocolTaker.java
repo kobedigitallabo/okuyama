@@ -35,6 +35,8 @@ public interface IProtocolTaker {
 
     public String takeResponseLine(String[] retParams) throws Exception;
 
+    public String takeResponseLine(String[] retParams, BufferedOutputStream bos) throws Exception;
+
     public int nextExecution();
 
     public boolean isMatchMethod();

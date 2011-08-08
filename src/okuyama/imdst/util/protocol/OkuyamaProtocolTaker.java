@@ -199,6 +199,17 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
      * @return String
      * @throw Exception
      */
+    public String takeResponseLine(String[] retParams,  BufferedOutputStream bos) throws Exception {
+        return this.takeResponseLine(retParams);
+    }
+
+    /**
+     * okuyama用のレスポンスを作成.<br>
+     *
+     * @param retParams
+     * @return String
+     * @throw Exception
+     */
     public String takeResponseLine(String[] retParams) throws Exception {
         if (this.retParamBuf.length() > 0)
             this.retParamBuf.delete(0, Integer.MAX_VALUE);

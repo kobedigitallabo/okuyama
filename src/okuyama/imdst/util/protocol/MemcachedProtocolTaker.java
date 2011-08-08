@@ -147,7 +147,31 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
         if (retParams != null && retParams.length > 1) {
 
-            retStr = this.memcacheReturnCnv(retParams);
+            retStr = this.memcacheReturnCnv(retParams, null);
+            this.nextExec = 1;
+        }
+
+        // Debugログ書き出し
+        if (StatusUtil.getDebugOption()) 
+            SystemUtil.debugLine(clientInfo + " : Response  : " + retStr);
+
+        return retStr;
+    }
+
+    /**
+     * memcached用のレスポンスを作成.<br>
+     * 対応しているメソッドははset,get,delete,add,versionのみ.<br>
+     *
+     * @param retParams
+     * @return String
+     * @throw Exception
+     */
+    public String takeResponseLine(String[] retParams, BufferedOutputStream bos) throws Exception {
+        String retStr = "";
+
+        if (retParams != null && retParams.length > 1) {
+
+            retStr = this.memcacheReturnCnv(retParams, bos);
             this.nextExec = 1;
         }
 
@@ -488,7 +512,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
     /**
      * memcache用に返却文字を加工する
      */
-    private String memcacheReturnCnv(String[] retParams) throws Exception{
+    private String memcacheReturnCnv(String[] retParams, BufferedOutputStream bos) throws Exception{
         String retStr = null;
 
         if (retParams[0] == null) {
@@ -523,23 +547,26 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 // 有効期限チェックも同時に行う(memcachedのみ)
                 if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
 
-                    retGetBuf.append("VALUE");
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                    retGetBuf.append(this.requestSplit[1]);
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    this.writeStreamData("VALUE", bos);
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
+                    this.writeStreamData(this.requestSplit[1], bos);
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
 
                     if (valueSplit.length < 2) {
-                        retGetBuf.append("0");
+                        this.writeStreamData("0", bos);
                     } else {
-                        retGetBuf.append(metaColumns[0]);
+                        this.writeStreamData(metaColumns[0], bos);
                     }
 
                     valueByte = BASE64DecoderStream.decode(valueSplit[0].getBytes());
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                    retGetBuf.append(valueByte.length);
-                    retGetBuf.append("\r\n");
-                    retGetBuf.append(new String(valueByte, "UTF-8"));
-                    retGetBuf.append("\r\n");
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
+                    this.writeStreamData(valueByte.length, bos);
+                    this.writeStreamData("\r\n", bos);
+
+                    this.writeStreamData(valueByte, bos);
+                    this.writeStreamData("\r\n", bos);
+                    bos.flush();
+    
                 }
             }
             retGetBuf.append("END");
@@ -566,23 +593,24 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 // 有効期限チェックも同時に行う(memcachedのみ)
                 if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
 
-                    retGetBuf.append("VALUE");
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                    retGetBuf.append(this.requestSplit[this.mgetReturnIndex]);
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    this.writeStreamData("VALUE", bos);
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
+                    this.writeStreamData(this.requestSplit[this.mgetReturnIndex], bos);
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
 
                     if (valueSplit.length < 2) {
-                        retGetBuf.append("0");
+                        this.writeStreamData("0", bos);
                     } else {
-                        retGetBuf.append(metaColumns[0]);
+                        this.writeStreamData(metaColumns[0], bos);
                     }
 
                     valueByte = BASE64DecoderStream.decode(valueSplit[0].getBytes());
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                    retGetBuf.append(valueByte.length);
-                    retGetBuf.append("\r\n");
-                    retGetBuf.append(new String(valueByte, "UTF-8"));
-                    retGetBuf.append("\r\n");
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
+                    this.writeStreamData(valueByte.length, bos);
+                    this.writeStreamData("\r\n", bos);
+                    this.writeStreamData(valueByte, bos);
+                    this.writeStreamData("\r\n", bos);
+                    bos.flush();
                 }
             }
             //retGetBuf.append("END");
@@ -610,23 +638,24 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 // 有効期限チェックも同時に行う(memcachedのみ)
                 if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
 
-                    retGetBuf.append("VALUE");
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                    retGetBuf.append(this.requestSplit[this.mgetReturnIndex]);
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    this.writeStreamData("VALUE", bos);
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
+                    this.writeStreamData(this.requestSplit[this.mgetReturnIndex], bos);
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
 
                     if (valueSplit.length < 2) {
-                        retGetBuf.append("0");
+                        this.writeStreamData("0", bos);
                     } else {
-                        retGetBuf.append(metaColumns[0]);
+                        this.writeStreamData(metaColumns[0], bos);
                     }
 
                     valueByte = BASE64DecoderStream.decode(valueSplit[0].getBytes());
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                    retGetBuf.append(valueByte.length);
-                    retGetBuf.append("\r\n");
-                    retGetBuf.append(new String(valueByte, "UTF-8"));
-                    retGetBuf.append("\r\n");
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
+                    this.writeStreamData(valueByte.length, bos);
+                    this.writeStreamData("\r\n", bos);
+                    this.writeStreamData(valueByte, bos);
+                    this.writeStreamData("\r\n", bos);
+                    bos.flush();
                 }
             }
             retGetBuf.append("END");
@@ -663,25 +692,26 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
                 if (valueSplit.length < 2 || AbstractProtocolTaker.expireCheck(metaColumns[1])) {
 
-                    retGetBuf.append("VALUE");
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                    retGetBuf.append(this.requestSplit[1]);
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
+                    this.writeStreamData("VALUE", bos);
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
+                    this.writeStreamData(this.requestSplit[1], bos);
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
 
                     if (valueSplit.length < 2) {
-                        retGetBuf.append("0");
+                        this.writeStreamData("0", bos);
                     } else {
-                        retGetBuf.append(metaColumns[0]);
+                        this.writeStreamData(metaColumns[0], bos);
                     }
 
                     valueByte = BASE64DecoderStream.decode(valueSplit[0].getBytes());
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                    retGetBuf.append(valueByte.length);
-                    retGetBuf.append(ImdstDefine.memcacheExecuteMethodSep);
-                    retGetBuf.append(retParams[3]);
-                    retGetBuf.append("\r\n");
-                    retGetBuf.append(new String(valueByte, "UTF-8"));
-                    retGetBuf.append("\r\n");
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
+                    this.writeStreamData(valueByte.length, bos);
+                    this.writeStreamData(ImdstDefine.memcacheExecuteMethodSep, bos);
+                    this.writeStreamData(retParams[3], bos);
+                    this.writeStreamData("\r\n", bos);
+                    this.writeStreamData(valueByte, bos);
+                    this.writeStreamData("\r\n", bos);
+                    bos.flush();
                 }
             }
             retGetBuf.append("END");
@@ -768,4 +798,20 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
         return retStr;
     }
 
+    private void writeStreamData(int num, BufferedOutputStream bos) throws Exception {
+        this.writeStreamData(new Integer(num).toString().getBytes(), bos);
+    }
+
+    private void writeStreamData(String str, BufferedOutputStream bos) throws Exception {
+        this.writeStreamData(str.getBytes(), bos);
+    }
+
+    private void writeStreamData(byte[] data, BufferedOutputStream bos) throws Exception {
+        try {
+            if (data.length > 0)
+                bos.write(data, 0, data.length);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
 }

@@ -67,6 +67,7 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                 logger.info("Accept : " + socket.toString());
                 SystemUtil.debugLine("Accept : " + socket.toString());
 
+                BufferedOutputStream bos = new BufferedOutputStream(socket.getOutputStream());
 
                 PrintWriter pw = new PrintWriter(
                                     new BufferedWriter(
@@ -74,9 +75,10 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                                                                 ImdstDefine.keyHelperClientParamEncoding)));
                 InputStream is = socket.getInputStream();
 
+
                 CustomReader cr = new CustomReader(is);
 
-                Object[] clientMap = new Object[8];
+                Object[] clientMap = new Object[9];
                 clientMap[ImdstDefine.paramSocket] = socket;
                 clientMap[ImdstDefine.paramPw] = pw;
                 clientMap[ImdstDefine.paramBr] = cr;
@@ -85,7 +87,7 @@ public class MasterManagerConnectHelper extends AbstractMasterManagerHelper {
                 clientMap[ImdstDefine.paramBalance] = param[1];
                 clientMap[ImdstDefine.paramCheckCountMaster] = new Integer(0);
                 clientMap[ImdstDefine.paramBis] = cr;
-
+                clientMap[ImdstDefine.paramBos] = bos;
                 Object[] queueParam = new Object[1];
                 queueParam[0] = clientMap;
 

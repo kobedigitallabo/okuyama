@@ -183,6 +183,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         PrintWriter pw = null;
         CustomReader br = null;
         BufferedInputStream bis = null;
+        BufferedOutputStream bos = null;
+
         Socket socket = null;
         String socketString = null;
 
@@ -241,7 +243,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     retParamStr = "";
 
                     // 切断確認
-                    if (closeFlg) this.closeClientConnect(pw, br, socket);
+                    if (closeFlg) this.closeClientConnect(pw, br, bos, socket);
 
                     // Taker初期化
                     this.porotocolTaker.init();
@@ -266,8 +268,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         pw = (PrintWriter)queueMap[ImdstDefine.paramPw];
                         br = (CustomReader)queueMap[ImdstDefine.paramBr];
                         socket = (Socket)queueMap[ImdstDefine.paramSocket];
+                        bos = (BufferedOutputStream)queueMap[ImdstDefine.paramBos];
                         socket.setSoTimeout(0);
                         socketString = socket.toString();
+                        
                         this.porotocolTaker.setClientInfo(socketString);
                         closeFlg = false;
                     }
@@ -508,10 +512,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                                     if (this.porotocolTaker.isMatchMethod()) {
 
-                                        mRetParamStr = this.porotocolTaker.takeResponseLine(oneRetParams);
+                                        mRetParamStr = this.porotocolTaker.takeResponseLine(oneRetParams, bos);
                                     } else {
                                         okuyamaPorotocolTaker.setClientInfo(socketString);
-                                        mRetParamStr = okuyamaPorotocolTaker.takeResponseLine(oneRetParams);
+                                        mRetParamStr = okuyamaPorotocolTaker.takeResponseLine(oneRetParams, bos);
                                     }
                                     // クライアントへ結果書き出し
                                     pw.print(mRetParamStr);
@@ -554,10 +558,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                     realRetParams[3] = mRetParams[2];
                                     if (this.porotocolTaker.isMatchMethod()) {
 
-                                        mRetParamStr = this.porotocolTaker.takeResponseLine(realRetParams);
+                                        mRetParamStr = this.porotocolTaker.takeResponseLine(realRetParams, bos);
                                     } else {
                                         okuyamaPorotocolTaker.setClientInfo(socketString);
-                                        mRetParamStr = okuyamaPorotocolTaker.takeResponseLine(realRetParams);
+                                        mRetParamStr = okuyamaPorotocolTaker.takeResponseLine(realRetParams, bos);
                                     }
 
                                     // クライアントへ結果書き出し
@@ -902,10 +906,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 設定通りのプロトコルの場合はそのまま処理。そうでない場合はokuyamaで処理
                     if (this.porotocolTaker.isMatchMethod()) {
 
-                        retParamStr = this.porotocolTaker.takeResponseLine(retParams);
+                        retParamStr = this.porotocolTaker.takeResponseLine(retParams, bos);
                     } else {
                         okuyamaPorotocolTaker.setClientInfo(socketString);
-                        retParamStr = okuyamaPorotocolTaker.takeResponseLine(retParams);
+                        retParamStr = okuyamaPorotocolTaker.takeResponseLine(retParams, bos);
                     }
 
                     // クライアントに結果送信
@@ -957,7 +961,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         } catch (Throwable te) {
 
                             // エラーの場合はクローズ
-                            this.closeClientConnect(pw, br, socket);
+                            this.closeClientConnect(pw, br, bos, socket);
                             reloopSameClient = false;
                         }
                     } else {
@@ -6563,7 +6567,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * Clientとの接続を切断する.<br>
      *
      */
-    private void closeClientConnect(PrintWriter pw, CustomReader br, Socket socket) {
+    private void closeClientConnect(PrintWriter pw, CustomReader br, BufferedOutputStream bos, Socket socket) {
 
         try {
             if(pw != null) {
@@ -6574,6 +6578,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             if(br != null) {
                 br.close();
                 br = null;
+            }
+
+            if(bos != null) {
+                bos.close();
+                 bos = null;
             }
 
             if(socket != null) {

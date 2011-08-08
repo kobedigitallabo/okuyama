@@ -117,6 +117,18 @@ public class MemcachedProtocolTaker4Data  extends AbstractProtocolTaker implemen
      * @return String
      * @throw Exception
      */
+    public String takeResponseLine(String[] retParams, BufferedOutputStream bos) throws Exception {
+        return this.takeResponseLine(retParams);
+    }
+
+    /**
+     * memcache用のレスポンスを作成.<br>
+     * 対応しているメソッドはset,get,deleteのみ.<br>
+     *
+     * @param retParams
+     * @return String
+     * @throw Exception
+     */
     public String takeResponseLine(String[] retParams) throws Exception {
         String retStr = "";
 
