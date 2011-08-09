@@ -1,7 +1,6 @@
 package okuyama.imdst.util.serializemap;
 
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 import okuyama.imdst.util.*;
 
@@ -34,13 +33,44 @@ public class ToStringSerializer implements ISerializer {
 
         if (typeInteger) {
             try {
+
                 return SystemUtil.dataCompress(serializeTarget.toString().getBytes("UTF-8"));
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
             }
         } else {
-            return SystemUtil.dataCompress(SystemUtil.defaultSerializeMap(serializeTarget));
+            
+
+            String sep = "";
+            StringBuilder strBuf = new StringBuilder(128);
+            strBuf.append("{");
+            
+            Set entrySet = serializeTarget.entrySet();
+            Iterator entryIte = entrySet.iterator(); 
+            try {
+
+                while(entryIte.hasNext()) {
+
+                    Map.Entry obj = (Map.Entry)entryIte.next();
+                    if (obj == null) continue;
+
+                    CoreMapKey key = (CoreMapKey)obj.getKey();
+                    
+                    String data = new String((byte[])obj.getValue(), "UTF-8");
+                    strBuf.append(sep);
+                    strBuf.append(key.toString());
+                    strBuf.append("=");
+                    strBuf.append(data);
+                    sep = ", ";
+                }
+                strBuf.append("}");
+
+                return SystemUtil.dataCompress(strBuf.toString().getBytes("UTF-8"));
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
         }
     }
 
@@ -55,19 +85,21 @@ public class ToStringSerializer implements ISerializer {
      */
     public Map deSerialize(byte[] deserializeTarget) {
 
-        if (typeInteger) {
-            byte[] decompressData = SystemUtil.dataDecompress(deserializeTarget);
-            try {
-                String serializeStr = new String(decompressData, "UTF-8");
+        byte[] decompressData = SystemUtil.dataDecompress(deserializeTarget);
+        try {
+
+            String serializeStr = new String(decompressData, "UTF-8");
+            if (typeInteger) {
+
                 return this.deserializeStringToMap(serializeStr.substring(1, (serializeStr.length() - 1)));
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
+            } else {
+                return this.deserializeStringToMapByByteData(serializeStr.substring(1, (serializeStr.length() - 1)));
             }
-            
-        } else {
-            return SystemUtil.defaultDeserializeMap(SystemUtil.dataDecompress(deserializeTarget));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
+            
     }
 
 
@@ -82,6 +114,27 @@ public class ToStringSerializer implements ISerializer {
                 int lastIndex = dataStrList[idx].lastIndexOf("=");
                 retMap.put(new CoreMapKey(dataStrList[idx].substring(0, lastIndex)), dataStrList[idx].substring(lastIndex+1));
             }
+        }
+
+        return retMap;
+    }
+
+    private Map deserializeStringToMapByByteData(String serializeStr) {
+
+        Map retMap = new HashMap();
+        String[] dataStrList = serializeStr.split(", ");
+        try {
+
+            for (int idx = 0; idx < dataStrList.length; idx++) {
+                
+                if (!dataStrList[idx].trim().equals("")) {
+                    int lastIndex = dataStrList[idx].lastIndexOf("=");
+                    retMap.put(new CoreMapKey(dataStrList[idx].substring(0, lastIndex)), ((String)dataStrList[idx].substring(lastIndex+1)).getBytes("UTF-8"));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
 
         return retMap;

@@ -342,7 +342,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
             StringBuilder writeBuf = new StringBuilder(this.oneDataLength + 2);
             int valueSize = (value.toString()).length();
-
+            int realValueSize = valueSize;
             try {
 
                 if (readObjectFlg == true) {
@@ -403,7 +403,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                                 this.lineCount++;
 
                                 if (mapValueInSize) {
-                                    super.put(key, new Integer(this.lineCount) + ":" + valueSize);
+                                    super.put(key, new Integer(this.lineCount) + ":" + realValueSize);
                                 } else {
                                     super.put(key, new Integer(this.lineCount));
                                 }
@@ -418,7 +418,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
 
                                 if (mapValueInSize) {
-                                    super.put(key, new Integer(deletedLine) + ":" + valueSize);
+                                    super.put(key, new Integer(deletedLine) + ":" + realValueSize);
                                 } else {
                                     super.put(key, new Integer(deletedLine));
                                 }
@@ -461,7 +461,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 } else {
 
                     if (mapValueInSize) {
-                        super.put(key, value + ":" + valueSize);
+                        super.put(key, value + ":" + realValueSize);
                     } else {
                         super.put(key, value);
                     }
