@@ -517,9 +517,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                         okuyamaPorotocolTaker.setClientInfo(socketString);
                                         mRetParamStr = okuyamaPorotocolTaker.takeResponseLine(oneRetParams, bos);
                                     }
-                                    // クライアントへ結果書き出し
-                                    pw.print(mRetParamStr);
-                                    pw.flush();
+
+                                    if (mRetParamStr != null && !mRetParamStr.equals("")) {
+                                        // クライアントへ結果書き出し
+                                        pw.print(mRetParamStr);
+                                        pw.flush();
+                                    }
                                 }
                                 requestKeysBuf = new StringBuilder();
                                 requestKeyList = new ArrayList();
@@ -564,9 +567,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                         mRetParamStr = okuyamaPorotocolTaker.takeResponseLine(realRetParams, bos);
                                     }
 
-                                    // クライアントへ結果書き出し
-                                    pw.print(mRetParamStr);
-                                    pw.flush();
+                                    if (mRetParamStr != null && !mRetParamStr.equals("")) {
+
+                                        // クライアントへ結果書き出し
+                                        pw.print(mRetParamStr);
+                                        pw.flush();
+                                    }
                                 }
                             }
 
@@ -917,16 +923,19 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // Okuyama
                         pw.println(retParamStr);
+                        // クライアントへ結果書き出し
+                        pw.flush();
                     } else{
 
                         // Okuyama以外の場合
-
-                        pw.print(retParamStr);
-                        pw.print("\r\n");
+                        if (retParamStr != null && !retParamStr.equals("")) {
+                            pw.print(retParamStr);
+                            pw.print("\r\n");
+                            // クライアントへ結果書き出し
+                            pw.flush();
+                        }
                     }
 
-                    // クライアントへ結果書き出し
-                    pw.flush();
 
                     // 呼び出しをカウント
                     StatusUtil.incrementMethodExecuteCount();

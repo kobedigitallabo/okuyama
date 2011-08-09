@@ -532,7 +532,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
             // Get
             // 返却値は"VALUE キー値 hashcode byteサイズ \r\n 値 \r\n END
             String[] valueSplit = null;
-            retGetBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
 
             byte[] valueByte = null;
             String[] metaColumns = null;
@@ -565,20 +565,19 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
                     this.writeStreamData(valueByte, bos);
                     this.writeStreamData("\r\n", bos);
-                    bos.flush();
-    
                 }
             }
-            retGetBuf.append("END");
+            this.writeStreamData("END\r\n", bos);
+            bos.flush();
 
-            retStr = retGetBuf.toString();
-            retGetBuf = null;
+            // ブランクを返却することで、上位レイヤでflushをさせないように制御
+            retStr = "";
+
         } else if (retParams[0].equals("22")) {
 
             // Mget
             // 返却値は"VALUE キー値 hashcode byteサイズ \r\n 値 \r\n
             String[] valueSplit = null;
-            retGetBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
             byte[] valueByte = null;
             String[] metaColumns = null;
@@ -613,17 +612,15 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                     bos.flush();
                 }
             }
-            //retGetBuf.append("END");
 
-            retStr = retGetBuf.toString();
-            retGetBuf = null;
+            // ブランクを返却することで、上位レイヤでflushをさせないように制御
+            retStr = "";
             this.mgetReturnIndex++;
         } else if (retParams[0].equals("22-f")) {
 
             // MGetの最終値
             // 返却値は"VALUE キー値 hashcode byteサイズ \r\n 値 \r\n END
             String[] valueSplit = null;
-            retGetBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
             byte[] valueByte = null;
             String[] metaColumns = null;
@@ -655,13 +652,14 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                     this.writeStreamData("\r\n", bos);
                     this.writeStreamData(valueByte, bos);
                     this.writeStreamData("\r\n", bos);
-                    bos.flush();
+
                 }
             }
-            retGetBuf.append("END");
+            this.writeStreamData("END\r\n", bos);
+            bos.flush();
 
-            retStr = retGetBuf.toString();
-            retGetBuf = null;
+            // ブランクを返却することで、上位レイヤでflushをさせないように制御
+            retStr = "";
         } else if (retParams[0].equals("6")) {
 
             // Add
@@ -678,7 +676,6 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
             // Gets
             // 返却値は"VALUE キー値 hashcode byteサイズ casユニーク値 \r\n 値 \r\n END
             String[] valueSplit = null;
-            retGetBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
             byte[] valueByte = null;
             String[] metaColumns = null;
@@ -714,10 +711,12 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                     bos.flush();
                 }
             }
-            retGetBuf.append("END");
 
-            retStr = retGetBuf.toString();
-            retGetBuf = null;
+            this.writeStreamData("END\r\n", bos);
+            bos.flush();
+
+            // ブランクを返却することで、上位レイヤでflushをさせないように制御
+            retStr = "";
         } else if (retParams[0].equals("16")) {
 
             // cas
