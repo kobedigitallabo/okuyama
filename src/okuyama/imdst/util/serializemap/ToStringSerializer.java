@@ -6,23 +6,23 @@ import okuyama.imdst.util.*;
 
 public class ToStringSerializer implements ISerializer {
 
-    private boolean typeInteger = false;
+    private boolean typeNum = false;
 
     private int count = 0;
+
+    private static String keyToValueSep = "+";
 
     public ToStringSerializer() {
     }
 
     public ToStringSerializer(String type) {
-        if (type != null && type.equals("Integer")) {
-            typeInteger = true;
+        if (type != null && type.equals("num")) {
+            typeNum = true;
         }
     }
 
     /**
      * シリアライザ.<br>
-     * 内部ではObjectOutputStreamを利用している.<br>
-     * スピードにやや難有り.<br>
      * 
      * @param serializeTarget シリアライズするターゲットオブジェクト(具象クラスはHashMap)
      * @param mapKeyClazz シリアライズするターゲットオブジェクトのMapがKey値として持つクラス(シリアライス、デシリアライズ時の指標)
@@ -31,7 +31,7 @@ public class ToStringSerializer implements ISerializer {
      */
     public byte[] serialize(Map serializeTarget, Class mapKeyClazz, Class mapValueClazz) {
 
-        if (typeInteger) {
+        if (typeNum) {
             try {
 
                 return SystemUtil.dataCompress(serializeTarget.toString().getBytes("UTF-8"));
@@ -60,12 +60,11 @@ public class ToStringSerializer implements ISerializer {
                     String data = new String((byte[])obj.getValue(), "UTF-8");
                     strBuf.append(sep);
                     strBuf.append(key.toString());
-                    strBuf.append("=");
+                    strBuf.append(keyToValueSep);
                     strBuf.append(data);
                     sep = ", ";
                 }
                 strBuf.append("}");
-
                 return SystemUtil.dataCompress(strBuf.toString().getBytes("UTF-8"));
             } catch (Exception e) {
                 e.printStackTrace();
@@ -89,7 +88,7 @@ public class ToStringSerializer implements ISerializer {
         try {
 
             String serializeStr = new String(decompressData, "UTF-8");
-            if (typeInteger) {
+            if (typeNum) {
 
                 return this.deserializeStringToMap(serializeStr.substring(1, (serializeStr.length() - 1)));
             } else {
@@ -128,7 +127,7 @@ public class ToStringSerializer implements ISerializer {
             for (int idx = 0; idx < dataStrList.length; idx++) {
                 
                 if (!dataStrList[idx].trim().equals("")) {
-                    int lastIndex = dataStrList[idx].lastIndexOf("=");
+                    int lastIndex = dataStrList[idx].lastIndexOf(keyToValueSep);
                     retMap.put(new CoreMapKey(dataStrList[idx].substring(0, lastIndex)), ((String)dataStrList[idx].substring(lastIndex+1)).getBytes("UTF-8"));
                 }
             }

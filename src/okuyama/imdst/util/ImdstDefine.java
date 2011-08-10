@@ -458,6 +458,7 @@ public class ImdstDefine {
     // WALログをローテーションする際のサイズ(1.8GB)
     public static final long workFileChangeNewFileSize = 1610612736;
 
+
     // ファイルシステムへの同時アクセス係数
     public volatile static int parallelDiskAccess = 49;
 

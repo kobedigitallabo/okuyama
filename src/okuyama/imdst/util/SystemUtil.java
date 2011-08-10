@@ -365,11 +365,12 @@ public class SystemUtil {
      * @throw Exception
      */
     public static int diskAccessSync(Object fileAccessor) throws Exception {
-        if (fileAccessor instanceof BufferedWriter) {
-            return diskAccessSync(fileAccessor, 1);
-        }
         if (fileAccessor instanceof CustomBufferedWriter) {
             return diskAccessSync(fileAccessor, 2);
+        }
+
+        if (fileAccessor instanceof BufferedWriter) {
+            return diskAccessSync(fileAccessor, 1);
         }
 
         return 0;
@@ -389,6 +390,18 @@ public class SystemUtil {
             int syncIdx = 0;
             if (ImdstDefine.parallelDiskAccess != 1) {
                 syncIdx = ((fileAccessor.hashCode() << 1) >>> 1) % ImdstDefine.parallelDiskAccess;
+            }
+
+            boolean checkEnd = false;
+
+            if (fileAccessor instanceof CustomBufferedWriter) {
+                type = 2;
+                checkEnd = true;
+            }
+
+            if (checkEnd == false && fileAccessor instanceof BufferedWriter) {
+                type = 1;
+                checkEnd = true;
             }
 
 

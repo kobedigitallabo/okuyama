@@ -3206,7 +3206,7 @@ class DataTransactionFileFlushDaemon extends Thread {
 
                 if (this.tBw != null) {
                     this.tBw.write(writeStr);
-                    SystemUtil.diskAccessSync(this.tBw, KeyMapManager.accessorTypeBw);
+                    SystemUtil.diskAccessSync(this.tBw);
                     writeStr = null;
                     bufferUseCount++;
                     if (bufferUseCount > maxBufferUseCount) {
