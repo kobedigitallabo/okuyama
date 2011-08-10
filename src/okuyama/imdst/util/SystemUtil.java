@@ -357,26 +357,6 @@ public class SystemUtil {
         return ret;
     }
 
-    /**
-     * Diskへの書き込みをSyncする.<br>
-     * 
-     * @param fileAccessor FileアクセスStream
-     * @param type Streamの種類 1=BufferedWriter
-     * @throw Exception
-     */
-    public static int diskAccessSync(Object fileAccessor) throws Exception {
-        if (fileAccessor instanceof CustomBufferedWriter) {
-            return diskAccessSync(fileAccessor, 2);
-        }
-
-        if (fileAccessor instanceof BufferedWriter) {
-            return diskAccessSync(fileAccessor, 1);
-        }
-
-        return 0;
-    }
-
-
 
     /**
      * Diskへの書き込みをSyncする.<br>
@@ -385,8 +365,9 @@ public class SystemUtil {
      * @param type Streamの種類 1=BufferedWriter 2=CustomBufferedWriter
      * @throw Exception
      */
-    public static int diskAccessSync(Object fileAccessor, int type) throws Exception {
+    public static int diskAccessSync(Object fileAccessor) throws Exception {
         try {
+            int type = 0;
             int syncIdx = 0;
             if (ImdstDefine.parallelDiskAccess != 1) {
                 syncIdx = ((fileAccessor.hashCode() << 1) >>> 1) % ImdstDefine.parallelDiskAccess;

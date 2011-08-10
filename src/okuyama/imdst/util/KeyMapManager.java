@@ -339,7 +339,7 @@ public class KeyMapManager extends Thread {
                     FileOutputStream newFos = new FileOutputStream(new File(this.workKeyFilePath), true);
                     this.bw = new CustomBufferedWriter(new OutputStreamWriter(newFos , KeyMapManager.workMapFileEnc), 8192 * 24, newFos);
                     this.bw.newLine();
-                    SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                    SystemUtil.diskAccessSync(this.bw);
 
                     if (this.workFileMemory == false && this.workFileFlushTiming == false) {
                         this.dataTransactionFileFlushDaemon = new DataTransactionFileFlushDaemon(); 
@@ -455,7 +455,7 @@ public class KeyMapManager extends Thread {
                                     } else {
 
                                         // 都度書き込み
-                                        SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                                        SystemUtil.diskAccessSync(this.bw);
                                         this.bw.close();
                                         this.bw = null;
                                     }
@@ -478,7 +478,7 @@ public class KeyMapManager extends Thread {
                                     FileOutputStream newFos = new FileOutputStream(new File(this.workKeyFilePath), true);
                                     this.bw = new CustomBufferedWriter(new OutputStreamWriter(newFos , KeyMapManager.workMapFileEnc), 8192 * 24, newFos);
                                     this.bw.newLine();
-                                    SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                                    SystemUtil.diskAccessSync(this.bw);
 
                                     // 遅延書き込み時
                                     if (this.workFileFlushTiming == false) {
@@ -733,7 +733,7 @@ public class KeyMapManager extends Thread {
                                                                 append(KeyMapManager.workFileEndPoint).
                                                                 append("\n").toString());
 
-                                SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                                SystemUtil.diskAccessSync(this.bw);
 
                                 // 現在の利用回数をチェック
                                 this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
@@ -833,7 +833,7 @@ public class KeyMapManager extends Thread {
                             if (this.workFileFlushTiming) {
 
                                 this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                                SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                                SystemUtil.diskAccessSync(this.bw);
                                 this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                             } else {
 
@@ -916,7 +916,7 @@ public class KeyMapManager extends Thread {
                             if (this.workFileFlushTiming) {
 
                                 this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                                SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                                SystemUtil.diskAccessSync(this.bw);
                                 this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                             } else {
 
@@ -998,7 +998,7 @@ public class KeyMapManager extends Thread {
                             if (this.workFileFlushTiming) {
 
                                 this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("-").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                                SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                                SystemUtil.diskAccessSync(this.bw);
                                 this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                             } else {
 
@@ -1627,7 +1627,7 @@ public class KeyMapManager extends Thread {
                                 if (this.workFileFlushTiming) {
 
                                     this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                                    SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                                    SystemUtil.diskAccessSync(this.bw);
                                     this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                                 } else {
 
@@ -1726,7 +1726,7 @@ public class KeyMapManager extends Thread {
                         if (this.workFileFlushTiming) {
 
                             this.bw.write(new StringBuilder("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(saveTransactionStr).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                            SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                            SystemUtil.diskAccessSync(this.bw);
                             this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                         } else {
 
@@ -1787,7 +1787,7 @@ public class KeyMapManager extends Thread {
                         if (this.workFileFlushTiming) {
 
                             this.bw.write(new StringBuilder("-").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                            SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                            SystemUtil.diskAccessSync(this.bw);
                             this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                         } else {
 
@@ -1882,7 +1882,7 @@ public class KeyMapManager extends Thread {
                                     if (this.workFileFlushTiming) {
 
                                         this.bw.write(new StringBuilder("-").append(KeyMapManager.workFileSeq).append(keyList[idx]).append(KeyMapManager.workFileSeq).append(" ").append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
-                                        SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                                        SystemUtil.diskAccessSync(this.bw);
                                         this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                                     } else {
 
@@ -2499,14 +2499,14 @@ public class KeyMapManager extends Thread {
                                                 toString());
 
                                             if((counter % 100) == 0) {
-                                                SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                                                SystemUtil.diskAccessSync(this.bw);
                                                 this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                                             }
                                         }
                                     }
                                 }
                                 if (this.workFileMemory == false) {
-                                    SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                                    SystemUtil.diskAccessSync(this.bw);
                                     this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                                 }
                                 allDataLines = null;
@@ -2517,7 +2517,7 @@ public class KeyMapManager extends Thread {
 
                         // トランザクションログモードがONの場合のみflush
                         if (this.workFileMemory == false) {
-                            SystemUtil.diskAccessSync(this.bw, KeyMapManager.accessorTypeBw);
+                            SystemUtil.diskAccessSync(this.bw);
                             this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
                         }
 
@@ -3249,7 +3249,7 @@ class DataTransactionFileFlushDaemon extends Thread {
     public void close() {
         if (this.tBw != null) {
             try {
-                SystemUtil.diskAccessSync(this.tBw, KeyMapManager.accessorTypeBw);
+                SystemUtil.diskAccessSync(this.tBw);
             } catch (Throwable te) {
             } finally {
                 try {
