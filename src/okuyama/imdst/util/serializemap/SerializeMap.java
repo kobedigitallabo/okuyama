@@ -93,14 +93,14 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
     }
 
 
-    public byte[] dataSerialize(Map data, Class keyClazz, Class valueClazz) {
+    public byte[] dataSerialize(Map data, Class keyClazz, Class valueClazz, Object key, int uniqueNo) {
 
-        return this.serializer.serialize(data, keyClazz, valueClazz);
+        return this.serializer.serialize(data, keyClazz, valueClazz, key, uniqueNo);
     }
 
-    public Map dataDeserialize(byte[] data) {
+    public Map dataDeserialize(byte[] data, Object key, int uniqueNo) {
 
-        return this.serializer.deSerialize(data);
+        return this.serializer.deSerialize(data, key, uniqueNo);
     }
     
 
@@ -133,18 +133,18 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
 
                 if (target != null) {
 
-                    Map targetMap = dataDeserialize(target);
+                    Map targetMap = dataDeserialize(target, key, poitnInt);
 
                     // sizeを加算
                     if (!targetMap.containsKey(key)) incrFlg = true;
 
                     targetMap.put(key, value);
-                    target = dataSerialize(targetMap, this.keyClass, this.valueClass);
+                    target = dataSerialize(targetMap, this.keyClass, this.valueClass, key, poitnInt);
                 } else {
 
                     Map targetMap = new HashMap();
                     targetMap.put(key, value);
-                    target = dataSerialize(targetMap, this.keyClass, this.valueClass);
+                    target = dataSerialize(targetMap, this.keyClass, this.valueClass, key, poitnInt);
 
                     // sizeを加算
                     incrFlg = true;
@@ -184,7 +184,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                 return null;
             }
 
-            Map targetMap = dataDeserialize(target);
+            Map targetMap = dataDeserialize(target, key, poitnInt);
             return targetMap.get(key);
       } finally {
             r.unlock(); 
@@ -217,11 +217,11 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                     return null;
                 }
 
-                Map targetMap = dataDeserialize(target);
+                Map targetMap = dataDeserialize(target, key, poitnInt);
                 ret = targetMap.remove(key);
 
                 if (ret != null) {
-                    target = dataSerialize(targetMap, this.keyClass, this.valueClass);
+                    target = dataSerialize(targetMap, this.keyClass, this.valueClass, key, poitnInt);
 
                     // sizeを減算
                     decrFlg = true;
@@ -260,7 +260,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                     return false;
                 }
 
-                Map targetMap = dataDeserialize(target);
+                Map targetMap = dataDeserialize(target, key, poitnInt);
                 ret = targetMap.containsKey(key);
             }
         } finally {

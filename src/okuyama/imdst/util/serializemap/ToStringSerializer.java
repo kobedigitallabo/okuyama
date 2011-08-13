@@ -12,6 +12,9 @@ public class ToStringSerializer implements ISerializer {
 
     private static String keyToValueSep = "+";
 
+    private Map dataMap = new HashMap(10000);
+
+
     public ToStringSerializer() {
     }
 
@@ -27,9 +30,15 @@ public class ToStringSerializer implements ISerializer {
      * @param serializeTarget シリアライズするターゲットオブジェクト(具象クラスはHashMap)
      * @param mapKeyClazz シリアライズするターゲットオブジェクトのMapがKey値として持つクラス(シリアライス、デシリアライズ時の指標)
      * @param mapValueClazz シリアライズするターゲットオブジェクトのMapがValue値として持つクラス(シリアライス、デシリアライズ時の指標)
+     * @param 呼び出しに使われたKey値
+     * @param uniqueNo 本処理の対象となるMapをあらわすユニークな値
      * @return シリアライズ済み返却値
      */
-    public byte[] serialize(Map serializeTarget, Class mapKeyClazz, Class mapValueClazz) {
+    public byte[] serialize(Map serializeTarget, Class mapKeyClazz, Class mapValueClazz, Object key, int uniqueNo) {
+/*
+        dataMap.put(new Integer(uniqueNo), serializeTarget);
+        return new byte[0];
+*/
 
         if (typeNum) {
             try {
@@ -55,11 +64,11 @@ public class ToStringSerializer implements ISerializer {
                     Map.Entry obj = (Map.Entry)entryIte.next();
                     if (obj == null) continue;
 
-                    CoreMapKey key = (CoreMapKey)obj.getKey();
+                    CoreMapKey coreMapKey = (CoreMapKey)obj.getKey();
                     
                     String data = new String((byte[])obj.getValue(), "UTF-8");
                     strBuf.append(sep);
-                    strBuf.append(key.toString());
+                    strBuf.append(coreMapKey.toString());
                     strBuf.append(keyToValueSep);
                     strBuf.append(data);
                     sep = ", ";
@@ -80,9 +89,18 @@ public class ToStringSerializer implements ISerializer {
      * スピードにやや難有り.<br>
      *
      * @param deserializeTarget デシリアライズターゲット
+     * @param 呼び出しに使われたKey値
+     * @param uniqueNo 本処理の対象となるMapをあらわすユニークな値
      * @return デシリアライズ済み返却値
      */
-    public Map deSerialize(byte[] deserializeTarget) {
+    public Map deSerialize(byte[] deserializeTarget, Object key, int uniqueNo) {
+
+/*
+        Map childMap = (Map)dataMap.get(new Integer(uniqueNo));
+
+        if (childMap == null) childMap = new HashMap();
+        return childMap;
+*/
 
         byte[] decompressData = SystemUtil.dataDecompress(deserializeTarget);
         try {
@@ -98,7 +116,6 @@ public class ToStringSerializer implements ISerializer {
             e.printStackTrace();
             return null;
         }
-            
     }
 
 

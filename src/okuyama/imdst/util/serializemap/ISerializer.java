@@ -20,15 +20,19 @@ public interface ISerializer {
      * @param serializeTarget シリアライズするターゲットオブジェクト(具象クラスはHashMap)
      * @param mapKeyClazz シリアライズするターゲットオブジェクトのMapがKey値として持つクラス(シリアライス、デシリアライズ時の指標)
      * @param mapValueClazz シリアライズするターゲットオブジェクトのMapがValue値として持つクラス(シリアライス、デシリアライズ時の指標)
+     * @param key 本処理を呼び出した処理が使用しようとしているKey値
+     * @param uniqueNo 本処理の対象となるMapをあらわすユニークな値(この値が同じ場合は同一のMapを処理しようとしている)
      * @return シリアライズ済み返却値
      */
-    public byte[] serialize(Map serializeTarget, Class mapKeyClazz, Class mapValueClazz);
+    public byte[] serialize(Map serializeTarget, Class mapKeyClazz, Class mapValueClazz, Object key, int uniqueNo);
 
     /**
      * デシリアライズ処理インターフェース.<br>
      *
      * @param deserializeTarget デシリアライズターゲット値(serializeメソッドで返却した値)
+     * @param key 本処理を呼び出した処理が使用しようとしているKey値
+     * @param uniqueNo 本処理の対象となるMapをあらわすユニークな値(この値が同じ場合は同一のMapを処理しようとしている)
      * @return デシリアライズ済み返却値
      */
-    public Map deSerialize(byte[] deserializeTarget);
+    public Map deSerialize(byte[] deserializeTarget, Object key, int uniqueNo);
 }   

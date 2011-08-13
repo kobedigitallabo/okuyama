@@ -44,7 +44,7 @@ public class SerializeMapIterator implements Iterator {
                 byte[] childMapBytes = (byte[])entry.getValue();
                 if (childMapBytes == null) continue;
 
-                this.nowChildMap = this.serializeMap.dataDeserialize(childMapBytes);
+                this.nowChildMap = this.serializeMap.dataDeserialize(childMapBytes, entry.getKey(), ((Integer)entry.getKey()).intValue());
 
                 Set childSet = this.nowChildMap.entrySet();
 

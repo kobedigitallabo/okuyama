@@ -16,9 +16,11 @@ public class ObjectStreamSerializer implements ISerializer {
      * @param serializeTarget シリアライズするターゲットオブジェクト(具象クラスはHashMap)
      * @param mapKeyClazz シリアライズするターゲットオブジェクトのMapがKey値として持つクラス(シリアライス、デシリアライズ時の指標)
      * @param mapValueClazz シリアライズするターゲットオブジェクトのMapがValue値として持つクラス(シリアライス、デシリアライズ時の指標)
+     * @param 呼び出しに使われたKey値
+     * @param uniqueNo 本処理の対象となるMapをあらわすユニークな値
      * @return シリアライズ済み返却値
      */
-    public byte[] serialize(Map serializeTarget, Class mapKeyClazz, Class mapValueClazz) {
+    public byte[] serialize(Map serializeTarget, Class mapKeyClazz, Class mapValueClazz, Object key, int uniqueNo) {
         return SystemUtil.dataCompress(SystemUtil.defaultSerializeMap(serializeTarget));
     }
 
@@ -29,9 +31,11 @@ public class ObjectStreamSerializer implements ISerializer {
      * スピードにやや難有り.<br>
      *
      * @param deserializeTarget デシリアライズターゲット
+     * @param 呼び出しに使われたKey値
+     * @param uniqueNo 本処理の対象となるMapをあらわすユニークな値
      * @return デシリアライズ済み返却値
      */
-    public Map deSerialize(byte[] deserializeTarget) {
+    public Map deSerialize(byte[] deserializeTarget, Object key, int uniqueNo) {
         return SystemUtil.defaultDeserializeMap(SystemUtil.dataDecompress(deserializeTarget));
     }
 
