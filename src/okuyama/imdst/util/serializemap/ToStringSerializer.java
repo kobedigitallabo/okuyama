@@ -6,6 +6,8 @@ import okuyama.imdst.util.*;
 
 public class ToStringSerializer implements ISerializer {
 
+    private String serializeMapName = null;
+
     private boolean typeNum = false;
 
     private int count = 0;
@@ -23,6 +25,12 @@ public class ToStringSerializer implements ISerializer {
             typeNum = true;
         }
     }
+
+
+    public void setInstanceCreateMapName(String mapName) {
+        this.serializeMapName = mapName;
+    }
+
 
     /**
      * シリアライザ.<br>
@@ -154,5 +162,9 @@ public class ToStringSerializer implements ISerializer {
         }
 
         return retMap;
+    }
+
+
+    public void clearParentMap() {
     }
 }

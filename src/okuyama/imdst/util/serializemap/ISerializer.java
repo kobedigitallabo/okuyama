@@ -14,6 +14,15 @@ import java.util.Map;
  */
 public interface ISerializer {
 
+
+    /**
+     * 自身をインスタンス化したSerializeMapのユニーク名(インスタンスのHash値)を引数に1度だけ呼び出される.<br>
+     *
+     * @param mapName
+     */
+    public void setInstanceCreateMapName(String mapName);
+
+
     /**
      * シリアライズ処理インターフェース.<br>
      *
@@ -35,4 +44,11 @@ public interface ISerializer {
      * @return デシリアライズ済み返却値
      */
     public Map deSerialize(byte[] deserializeTarget, Object key, int uniqueNo);
+
+
+    /**
+     * 自身をインスタンス化したSerializeMapのclearメソッドが呼び出されたタイミングで呼び出される
+     *
+     */
+    public void clearParentMap();
 }   

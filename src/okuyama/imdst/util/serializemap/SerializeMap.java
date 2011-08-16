@@ -47,6 +47,9 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
     private Class keyClass = null;
     private Class valueClass = null;
 
+    private static HashMap uniqueNameMap = new HashMap(10);
+
+
     /**
      * コンストラクタ
      *
@@ -58,6 +61,10 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
     public SerializeMap(int size, int upper, int multi, String serializeClassName) {
         System.out.println("SerializeMap BucketSize= " + multi);
         System.out.println("SerializeMap SerializerClassName= " + serializeClassName);
+        String uniqueName = createUniqueName();
+        System.out.println("SerializeMap UniqueName = " + uniqueName);
+
+
         parallelControl = multi;
         syncObjs = new Integer[multi];
         for (int i = 0; i < parallelControl; i++) {
@@ -67,13 +74,15 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
 
         // シリアライザインスタンス化
         try {
-            if (serializeClassName.indexOf(":") == -1) {
+            if (serializeClassName.indexOf(";") == -1) {
+
                 this.serializer = (ISerializer)((Class)Class.forName(serializeClassName)).newInstance();
+                this.serializer.setInstanceCreateMapName(uniqueName);
             } else {
 
                 Class[] constructorTypes = {String.class};
                 Object[] constructorArgs = new Object[1];
-                String[] classCreateWork = serializeClassName.split(":");
+                String[] classCreateWork = serializeClassName.split(";");
                 String className = classCreateWork[0];
                 String  constructorParam = classCreateWork[1];
                 constructorArgs[0] = constructorParam;
@@ -81,6 +90,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
                 Class serializeClazz = (Class)Class.forName(className);
                 Constructor constructor = serializeClazz.getConstructor(constructorTypes);
                 this.serializer = (ISerializer)constructor.newInstance(constructorArgs);
+                this.serializer.setInstanceCreateMapName(uniqueName);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -278,6 +288,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
         w.lock();
         try { 
             baseMap.clear();
+            this.serializer.clearParentMap();
             nowSize = new AtomicInteger(0);
         } finally {
             w.unlock(); 
@@ -305,5 +316,24 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
      */
     public Set entrySet() {
         return new SerializeMapSet(baseMap.entrySet(), this);
+    }
+
+
+    private static String createUniqueName() {
+        String retStr = null;
+        synchronized(uniqueNameMap) {
+            Random rnd = new Random();
+
+            while(true) {
+                int rndInt = rnd.nextInt(19999);
+                String uniqueKey = "SerializeMapName_" + rndInt;
+                if (!uniqueNameMap.containsKey(uniqueKey)) {
+                    retStr = uniqueKey;
+                    uniqueNameMap.put(retStr, null);
+                    break;
+                }
+            }
+        }
+        return retStr;
     }
 }

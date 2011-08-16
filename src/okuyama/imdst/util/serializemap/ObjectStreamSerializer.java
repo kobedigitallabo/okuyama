@@ -6,7 +6,15 @@ import okuyama.imdst.util.*;
 
 public class ObjectStreamSerializer implements ISerializer {
 
+    private String serializeMapName = null;
+
     public ObjectStreamSerializer() {}
+
+
+    public void setInstanceCreateMapName(String mapName) {
+        this.serializeMapName = mapName;
+    }
+
 
     /**
      * シリアライザ.<br>
@@ -39,4 +47,7 @@ public class ObjectStreamSerializer implements ISerializer {
         return SystemUtil.defaultDeserializeMap(SystemUtil.dataDecompress(deserializeTarget));
     }
 
+
+    public void clearParentMap() {
+    }
 }
