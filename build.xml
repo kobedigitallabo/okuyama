@@ -6,7 +6,7 @@
 	<property name="src.dir"		value="src" />
 	<property name="build.dir"		value="classes" />
 	<property name="install.dir"	value="install" />
-	<property name="version"		value="0.8.8" />
+	<property name="version"		value="0.8.9" />
 	<property name="javadoc.dir"	value="javadoc"/>
 	<property name="lib.dir"	    value="lib"/>
 
@@ -120,7 +120,7 @@
 	</target>
 
 	<target name="masternode_small">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="256m">
 			<arg value="/Main.properties"/>
 			<arg value="/MasterNode_small.properties"/>
 			<!--<arg value="-debug" />-->
