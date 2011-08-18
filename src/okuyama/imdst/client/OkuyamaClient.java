@@ -11,7 +11,7 @@ import com.sun.mail.util.BASE64EncoderStream;
 
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.SystemUtil;
-
+import okuyama.imdst.client.io.*;
 
 /**
  * MasterNodeと通信を行うクライアント<br>
@@ -288,7 +288,7 @@ public class OkuyamaClient {
                 InetSocketAddress inetAddr = new InetSocketAddress(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
                 this.socket.connect(inetAddr, ImdstDefine.clientConnectionOpenTimeout);
                 this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
-                this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), OkuyamaClient.connectDefaultEncoding)));
+                this.pw = new ClientCustomPrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), OkuyamaClient.connectDefaultEncoding)));
                 this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), OkuyamaClient.connectDefaultEncoding));
                 this.initClient();
                 this.nowConnectServerInfo = nodeStr;
@@ -361,7 +361,7 @@ public class OkuyamaClient {
             this.socket.connect(inetAddr, ImdstDefine.clientConnectionOpenTimeout);
             this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
 
-            this.pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encoding)));
+            this.pw = new ClientCustomPrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encoding)));
             this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), encoding));
 
             this.initClient();
@@ -424,6 +424,18 @@ public class OkuyamaClient {
         } catch (Exception e) {
             throw new OkuyamaClientException(e);
         }
+    }
+
+
+    /**
+     * クライアントがokuyamaに送信しているデータをデバッグする.<br>
+     * trueを渡すとデバッグが標準出力に出力される<br>
+     * falseで停止<br>
+     *
+     * @param debug 指定
+     */
+    public void setSendDataDebug(boolean debug) {
+        ((ClientCustomPrintWriter)pw).setDebugLine(debug);
     }
 
 
