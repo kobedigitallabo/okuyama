@@ -625,16 +625,24 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
                         // データ移行処理依頼中
                         // データ移行中はなにもしない
-                        if (super.getConsistentHashMoveData() == null) {
+                        if (StatusUtil.isMainMasterNode()) {
+                            if (super.getConsistentHashMoveData() == null) {
 
-                            // データ移行終了
-                            // ノード中から移行依頼を消す
-                            String[] removeRet = imdstKeyValueClient.removeValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode);
-                            if(removeRet[0].equals("true")) {
-                                setterFlg = true;
-                                this.addNodeInfos = null;
+                                // データ移行終了
+                                // ノード中から移行依頼を消す
+                                String[] removeRet = imdstKeyValueClient.removeValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode);
+                                if(removeRet[0].equals("true")) {
+
+                                    setterFlg = true;
+                                    this.addNodeInfos = null;
+                                }
                             }
                         }
+                    }
+                } else {
+                    if (this.addNodeInfos != null && addNodeRequest[0].equals("false")) {
+                        setterFlg = true;
+                        this.addNodeInfos = null;
                     }
                 }
             }
@@ -985,7 +993,6 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], addNodeInfos[1], addNodeInfos[2]);
             }
 
-
             // MainMasterNodeの場合のみデータ移行を実行
             // ここでsuperのconsistentHashMoveDataに登録
             // KeyNodeOptimizationConsistentHashHelper側でこのデータを監視して、登録されたら、
@@ -993,6 +1000,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             // 移行完了後、superのconsistentHashMoveDataを削除する
             if (StatusUtil.isMainMasterNode()) {
                 if (moveDataMap != null) {
+                    System.out.println("Add DataNode - moveDataMap=" + oveDataMap);
                     super.setConsistentHashMoveData(moveDataMap);
                 }
             }
