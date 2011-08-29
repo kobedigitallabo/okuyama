@@ -44,11 +44,14 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
    DataNode起動例)
     java -cp ./classes;./lib/log4j-1.2.14.jar;./lib/javamail-1.4.1.jar;./lib/commons-codec-1.4.jar -Xmx128m -Xms128m okuyama.base.JavaMain /Main.properties /DataNode.properties -tlft 4
 
+■memcachedでいうところのflush_allを対応
+
+
 
 ■いくつかの処理性能向上と不具合の修正
   ・memcachedモードでMasterNodeを起動した場合にdeleteメソッドで特定のクライアントがkey以外にパラメータを
     転送してくるため、その際エラーになっていたため修正
-
+  ・ノード動的追加時にMainMasterNode以外でMasterNodeで発生するデータが取得出来ない不具合に対応
 
 ========================================================================================================
 [New - 新機能追加、不具合対応]
