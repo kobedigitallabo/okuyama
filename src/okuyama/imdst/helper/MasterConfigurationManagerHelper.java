@@ -1000,7 +1000,7 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             // 移行完了後、superのconsistentHashMoveDataを削除する
             if (StatusUtil.isMainMasterNode()) {
                 if (moveDataMap != null) {
-                    System.out.println("Add DataNode - moveDataMap=" + moveDataMap);
+                    //System.out.println("Add DataNode - moveDataMap=" + moveDataMap);
                     super.setConsistentHashMoveData(moveDataMap);
                 }
             }

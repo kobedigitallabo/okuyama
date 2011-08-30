@@ -16,7 +16,7 @@ import okuyama.imdst.util.JavaSystemApi;
 import okuyama.imdst.client.*;
 
 /**
- * 登録、取得、Tag登録、Tag取得、削除、Script実行、一意登録、のテストを実行
+ * テストを実行
  *
  * @author T.Okuyama
  * @license GPL(Lv3)

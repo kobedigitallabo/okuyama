@@ -262,9 +262,9 @@ public class  HelperPool extends Thread {
      */
     public static void addSpecificationParameterQueue(String helperName, Object[] params, boolean debug) throws Exception {
         try {
-            if (false) {
-                System.out.println(helperName + " =[" + ((ArrayBlockingQueue)serviceParameterQueueMap.get(helperName)).size() + "]");
-            }
+            //if (false) {
+            //    System.out.println(helperName + " =[" + ((ArrayBlockingQueue)serviceParameterQueueMap.get(helperName)).size() + "]");
+            //}
             ((ArrayBlockingQueue)serviceParameterQueueMap.get(helperName)).put(params);
         } catch (Exception e) {
             e.printStackTrace();

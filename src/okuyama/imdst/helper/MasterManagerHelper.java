@@ -1044,7 +1044,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
-
     /**
      * Key-Valueを保存する.<br>
      * 処理フロー.<br>
@@ -1059,6 +1058,25 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @throws BatchException
      */
     private String[] setKeyValue(String keyStr, String tagStr, String transactionCode, String dataStr) throws BatchException {
+        return setKeyValue(keyStr, tagStr, transactionCode, dataStr, false);
+    }
+
+    /**
+     * Key-Valueを保存する.<br>
+     * 処理フロー.<br>
+     * 1.DataDispatcherに依頼してTagの保存先を問い合わせる。Tag情報を全保存する<br>
+     * 2.DataDispatcherに依頼してKeyの保存先を問い合わせる。Tag情報を保存する<br>
+     * 3.結果文字列の配列を作成(成功時は処理番号"1"と"true"、失敗時は処理番号"1"と"false")<br>
+     *
+     * @param keyStr key値の文字列
+     * @param tagStr tag値の文字列
+     * @param transactionCode トランザクションコード
+     * @param dataStr value値の文字列
+     * @param fixPrefix 既にIsolation処理を完了している指定
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyValue(String keyStr, String tagStr, String transactionCode, String dataStr, boolean fixPrefix) throws BatchException {
         //logger.debug("MasterManagerHelper - setKeyValue - start");
         String[] retStrs = new String[3];
 
@@ -1123,7 +1141,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } else {
 
                         // TagをIsolation変換実行
-                        tags[i] = this.encodeIsolationConvert(tags[i]);
+                        if (!fixPrefix) {
+                            tags[i] = this.encodeIsolationConvert(tags[i]);
+                        }
 
                         if (!this.checkKeyLength(tags[i]))  {
                             // 保存失敗
@@ -1233,16 +1253,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @throws BatchException
      */
     private String[] setKeyValueAndCreateIndex(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix, int indexLength, int indexMinLength) throws BatchException {
-        // TODO:Test
+
         String[] retStrs = new String[3];
 
-        /*System.out.println("keyStr=[" + keyStr + "]");
-        System.out.println("tagStr=[" + tagStr + "]");
-        System.out.println("transactionCode=[" + transactionCode + "]");
-        System.out.println("dataStr=[" + dataStr + "]");
-        System.out.println("indexPrefix=[" + indexPrefix + "]");
-        System.out.println("indexLength=[" + indexLength + "]");
-        */
+        //System.out.println("keyStr=[" + keyStr + "]");
+        //System.out.println("tagStr=[" + tagStr + "]");
+        //System.out.println("transactionCode=[" + transactionCode + "]");
+        //System.out.println("dataStr=[" + dataStr + "]");
+        //System.out.println("indexPrefix=[" + indexPrefix + "]");
+        //System.out.println("indexLength=[" + indexLength + "]");
+        
 
         try {
             if (true) {
@@ -1443,7 +1463,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
 
 
-            retStrs = setKeyValue(keyStr, tagStr, transactionCode, dataStr);
+            retStrs = setKeyValue(keyStr, tagStr, transactionCode, dataStr, true);
             retStrs[0] = "42";
         } catch (Exception e) {
             throw new BatchException(e);
