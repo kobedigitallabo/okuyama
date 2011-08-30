@@ -3237,6 +3237,128 @@ public class OkuyamaClient {
 
 
     /**
+     * MasterNodeからKeyでValueを取得する.<br>
+     * setObjectValueで登録した値を取得する.<br>
+     * 取得と同時に有効期限をUpdateする.<br>
+     *
+     * @param keyStr Key値
+     * @return Object[] 要素1(データ有無(String)):"true" or "false",要素2(データ):Object型(データ有無がfalseの場合のみエラーメッセージ文字列(String型固定))
+     * @throws OkuyamaClientException
+     */
+    public Object[] getObjectValueAndUpdateExpireTime(String keyStr) throws OkuyamaClientException {
+        Object[] ret = new Object[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        byte[] keyBytes = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        String encoding = platformDefaultEncoding;
+        try {
+
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.trim().equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+            // Keyに対するLengthチェック
+            keyBytes = keyStr.getBytes(encoding);
+            if (keyBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+
+
+            // 処理番号連結
+            getValueServerReqBuf.append("17");
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            getValueServerReqBuf.append(new String(this.dataEncoding(keyBytes)));
+
+            // サーバ送信
+            pw.println(getValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("17")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    ret[0] = serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if (serverRet[2].equals(OkuyamaClient.blankStr)) {
+                        ret[1] = null;
+                    } else {
+
+                        // Value文字列をBase64でデコード
+                        ret[1] = SystemUtil.normalObjectDeserialize(this.dataDecoding(serverRet[2].getBytes()));
+                    }
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity " + serverRet);
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getObjectValueAndUpdateExpireTime(keyStr);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getObjectValueAndUpdateExpireTime(keyStr);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getObjectValueAndUpdateExpireTime(keyStr);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
      * MasterNodeからKey値の配列を渡すことでValue値の集合を取得する.<br>
      * 文字列エンコーディング指定なし.<br>
      * デフォルトエンコーディングにて復元.<br>

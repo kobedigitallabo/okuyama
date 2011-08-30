@@ -119,6 +119,9 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                         if (execMethods[i].equals("getmultitagvalues")) 
                             retMap.put("getmultitagvalues", execGetMultiTagValues(okuyamaClient, start, count));
 
+                        if (execMethods[i].equals("objectsetget")) 
+                            retMap.put("objectsetget", execObjectSetGet(okuyamaClient, start, count));
+
 
                     }
 
@@ -1436,6 +1439,142 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             throw e;
         }
         System.out.println("execGetMultiTagValues - End");
+        return errorFlg;
+    }
+
+
+    private boolean execObjectSetGet(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execObjectSetGet - Start");
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+            long startTime = new Date().getTime();
+            // データ登録 - 1
+            if (!okuyamaClient.setObjectValue(this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString(), this.nowCount + "setexpiretestdata123456789_" + new Integer(start).toString(), new Integer(10))) {
+                System.out.println("SetExpireAndGet - Set Error=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString() + ", " + this.nowCount + "setexpiretestdata123456789_" + new Integer(start).toString());
+                errorFlg = true;
+            }
+
+            if (!okuyamaClient.setObjectValue(this.nowCount + "expireobjectdatasavekey_" + new Integer(start+1).toString(), this.nowCount + "setexpiretestdata123456789_" + new Integer(start+1).toString(), new Integer(3))) {
+                System.out.println("SetExpireAndGet - Set Error=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+1).toString() + ", " + this.nowCount + "setexpiretestdata123456789_" + new Integer(start+1).toString());
+                errorFlg = true;
+            }
+
+            if (!okuyamaClient.setObjectValue(this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString(), this.nowCount + "setexpiretestdata123456789_" + new Integer(start+2).toString(), new Integer(8))) {
+                System.out.println("SetExpireAndGet - Set Error=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString() + ", " + this.nowCount + "setexpiretestdata123456789_" + new Integer(start+2).toString());
+                errorFlg = true;
+            }
+
+            Thread.sleep(5000);
+            
+            Object[] ret = okuyamaClient.getObjectValue(this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString());
+
+            if (ret[0].equals("true")) {
+                if(!((String)ret[1]).equals(this.nowCount + "setexpiretestdata123456789_" + new Integer(start).toString())) {
+                    logger.error("データ間違い - 1 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString() + "]");
+                    errorFlg = true;                    
+                }
+            } else if (ret[0].equals("false")) {
+                logger.error("データなし - 1 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 1 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+
+            ret = okuyamaClient.getObjectValue(this.nowCount + "expireobjectdatasavekey_" + new Integer(start+1).toString());
+
+            if (ret[0].equals("true")) {
+                logger.error("データあり - 2 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+1).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("false")) {
+
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 2 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+
+            ret = okuyamaClient.getObjectValueAndUpdateExpireTime(this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString());
+
+            if (ret[0].equals("true")) {
+                if(!((String)ret[1]).equals(this.nowCount + "setexpiretestdata123456789_" + new Integer(start+2).toString())) {
+                    logger.error("データ間違い - 3 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString() + "]");
+                    errorFlg = true;                    
+                }
+            } else if (ret[0].equals("false")) {
+                logger.error("データなし - 3 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 3 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+            Thread.sleep(5500);
+
+            ret = okuyamaClient.getValue(this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString());
+
+            if (ret[0].equals("true")) {
+
+                logger.error("データあり - 1 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("false")) {
+
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 1 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+
+            ret = okuyamaClient.getValue(this.nowCount + "expireobjectdatasavekey_" + new Integer(start+1).toString());
+
+            if (ret[0].equals("true")) {
+                logger.error("データあり - 2 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+1).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("false")) {
+
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 2 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+
+            ret = okuyamaClient.getObjectValueAndUpdateExpireTime(this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString());
+
+            if (ret[0].equals("true")) {
+
+            } else if (ret[0].equals("false")) {
+                logger.error("データなし - 3 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString() + "]");
+                errorFlg = true;
+            } else if (ret[0].equals("error")) {
+                System.out.println("Error - 3 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString() + "]" + ret[1]);
+                errorFlg = true;
+            }
+
+            long endTime = new Date().getTime();
+            System.out.println("SetObjectExpireAndObjectGet Method= " + (endTime - startTime) + " milli second");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execObjectSetGet - End");
+
         return errorFlg;
     }
 }
