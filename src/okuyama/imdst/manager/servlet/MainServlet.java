@@ -15,6 +15,13 @@ import okuyama.imdst.client.ImdstKeyValueClient;
 import okuyama.imdst.util.ImdstDefine;
 
 
+
+/**
+ * 管理用WebコンソールのServlet.<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+  */
 public class MainServlet extends HttpServlet {
     private StringBuilder pageBuf = null;
 
