@@ -17,7 +17,9 @@ import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.JavaSystemApi;
 
 /**
- * <br>
+ * 内部で時間取得を行う処理が多いためこのクラスで時間取得処理を集約し<br>
+ * 他のクラスはそのキャッシュを利用する.<br>
+ * 
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
