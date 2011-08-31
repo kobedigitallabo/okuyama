@@ -7,6 +7,13 @@ import java.util.concurrent.*;
 
 import okuyama.imdst.util.*;
 
+
+/**
+ * IOのRandomAccessFileのラッパー.<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ */
 public class CustomRandomAccess extends RandomAccessFile {
 
     private InnerCustomRandomAccessFile innerCustomRandomAccessFile = null;

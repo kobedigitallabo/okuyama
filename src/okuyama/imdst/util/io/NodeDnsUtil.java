@@ -6,6 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * IPの名前解決を代行する.<br>
  *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  */
 public class NodeDnsUtil {
 

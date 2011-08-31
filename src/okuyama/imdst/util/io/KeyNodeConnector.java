@@ -6,6 +6,13 @@ import java.util.*;
 
 import okuyama.imdst.util.*;
 
+
+/**
+ * MasterNodeが利用するDataNodeとの接続コネクター.<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ */
 public class KeyNodeConnector {
 
     private String nodeName = null;

@@ -5,6 +5,12 @@ import java.net.*;
 import java.nio.channels.*;
 import java.nio.*;
 
+/**
+ * NewIOのOutputStreamOutputStreamのラッパー.<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ */
 public class ChannelInput extends InputStream {
   
     private SocketChannel targetChannel = null;

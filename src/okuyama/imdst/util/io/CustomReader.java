@@ -6,6 +6,12 @@ import java.util.*;
 
 import okuyama.imdst.util.*;
 
+/**
+ * IOのRead系のラッパー.<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ */
 public class CustomReader {
 
     private InputStream is = null;

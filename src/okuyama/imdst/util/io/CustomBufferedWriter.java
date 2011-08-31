@@ -6,6 +6,12 @@ import java.util.*;
 
 import okuyama.imdst.util.*;
 
+/**
+ * IOのBufferedWriterのラッパー.<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ */
 public class CustomBufferedWriter extends BufferedWriter {
 
     private FileOutputStream fos = null;
