@@ -20,7 +20,7 @@ import okuyama.imdst.util.io.NodeDnsUtil;
 
 
 /**
- * <br>
+ * サーバの管理コマンドを受付て実行するHelper.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
