@@ -7,6 +7,12 @@ import org.mortbay.jetty.servlet.ServletHandler;
 
 import okuyama.imdst.client.ImdstKeyValueClient;
 
+/**
+ * 管理用Webコンソールの処理全般.<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+  */
 public class OkuyamaManagerServer {
 
     static Server server = null;
