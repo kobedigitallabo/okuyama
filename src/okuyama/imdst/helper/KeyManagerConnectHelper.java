@@ -16,7 +16,8 @@ import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.JavaSystemApi;
 
 /**
- * <br>
+ * クライアント(本クラスからするとMasterNode)からの接続があった際に、Socketからの各IOクラスの<br>
+ * インスタンス化などを行うQueueのworkerクラス.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
