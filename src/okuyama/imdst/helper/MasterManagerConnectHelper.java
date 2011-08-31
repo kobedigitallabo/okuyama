@@ -18,7 +18,8 @@ import okuyama.imdst.util.JavaSystemApi;
 import okuyama.imdst.util.io.CustomReader;
 
 /**
- * <br>
+ * クライアントからの接続があった際に、Socketからの各IOクラスの<br>
+ * インスタンス化などを行うQueueのworkerクラス.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
