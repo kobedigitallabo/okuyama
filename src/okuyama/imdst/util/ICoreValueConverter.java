@@ -4,7 +4,8 @@ import okuyama.base.lang.BatchException;
 
 
 /**
- *
+ * okuyamaがデータを永続化するMapを抽象化するために<br>
+ * 永続化時のKeyとValueを変換するクラスのインターフェース<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
