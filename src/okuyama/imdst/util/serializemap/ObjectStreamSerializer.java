@@ -4,6 +4,13 @@ import java.util.Map;
 
 import okuyama.imdst.util.*;
 
+/**
+ * ISerializerの実装.<br>
+ * 全てのObjectをObjectInput/OutputStreamでSerializeして処理を行う<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ */
 public class ObjectStreamSerializer implements ISerializer {
 
     private String serializeMapName = null;

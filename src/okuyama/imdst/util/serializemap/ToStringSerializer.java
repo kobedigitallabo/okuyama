@@ -4,6 +4,13 @@ import java.util.*;
 
 import okuyama.imdst.util.*;
 
+/**
+ * ISerializerの実装.<br>
+ * 全てのObjectを文字列表記に置き換える<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ */
 public class ToStringSerializer implements ISerializer {
 
     private String serializeMapName = null;
