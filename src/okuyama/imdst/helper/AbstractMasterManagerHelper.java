@@ -19,7 +19,8 @@ import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.io.KeyNodeConnector;
 
 /**
- * MasterNodeのメイン実行部分<br>
+ * MasterNodeのHelperが継承するクラス.<br>
+ * 共通的な処理とネットワークIOのキューイング処理の仲介処理を行う<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
