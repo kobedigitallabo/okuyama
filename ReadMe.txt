@@ -4,7 +4,6 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 ※起動方法はhttp://thinkit.co.jp/story/2011/02/17/2010をご覧頂くか、
   本テキストの「■機能説明とサンプルの実行方法」をご覧ください。
-  同時に「okuyama構成図.gif」もご参照ください。
   blog:http://d.hatena.ne.jp/okuyamaoo/
 
 
