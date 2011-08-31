@@ -16,7 +16,7 @@ import okuyama.imdst.util.JavaSystemApi;
 import okuyama.imdst.client.*;
 
 /**
- * テストを実行
+ * テストを実行.<be>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)

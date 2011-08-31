@@ -18,7 +18,7 @@ import okuyama.imdst.client.*;
 /**
  * DataNodeの停止、起動のテストを実行.<br>
  * このテストケースはWindows環境にCygwinをインストールし、PATHを設定した想定です.<br>
- * Linuxの場合はjpsが利用できれば稼働します。
+ * Linuxの場合はjpsが利用できれば稼働します<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)

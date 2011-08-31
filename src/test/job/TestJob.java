@@ -17,6 +17,7 @@ import okuyama.imdst.util.FileBaseDataMap;
 
 
 /**
+ * Test用のHelperを実行するJob.<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
