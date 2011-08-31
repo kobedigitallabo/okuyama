@@ -1256,14 +1256,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         String[] retStrs = new String[3];
 
-        //System.out.println("keyStr=[" + keyStr + "]");
-        //System.out.println("tagStr=[" + tagStr + "]");
-        //System.out.println("transactionCode=[" + transactionCode + "]");
-        //System.out.println("dataStr=[" + dataStr + "]");
-        //System.out.println("indexPrefix=[" + indexPrefix + "]");
-        //System.out.println("indexLength=[" + indexLength + "]");
-        
-
         try {
             if (true) {
                 // Key値チェック
