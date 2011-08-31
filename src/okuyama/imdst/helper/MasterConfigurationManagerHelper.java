@@ -16,7 +16,10 @@ import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.client.ImdstKeyValueClient;
 
 /**
- * KeyNodeの監視を行うHelperクラス<br>
+ * okuyamaクラスタの設定情報を管理するHelperクラス.<br>
+ * MainMasterNodeの場合はDataNodeの追加情報なども監視し、<br>
+ * 追加時はデータ移行の依頼も行う<br>
+ * MainMasterNodeとSlaveMasterNodeの切り替えも行う<br> 
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
