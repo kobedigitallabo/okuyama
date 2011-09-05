@@ -797,6 +797,14 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
         return retStr;
     }
 
+    private void responseDebug (byte[] strBytes) {
+        if (StatusUtil.getDebugOption()) {
+            try {
+                SystemUtil.debugLine(clientInfo + " : Response  : " + new String(strBytes, "utf-8"));
+            } catch (Exception e) {}
+        }
+    }
+
     private void writeStreamData(int num, BufferedOutputStream bos) throws Exception {
         this.writeStreamData(new Integer(num).toString().getBytes(), bos);
     }
@@ -807,8 +815,10 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
 
     private void writeStreamData(byte[] data, BufferedOutputStream bos) throws Exception {
         try {
-            if (data.length > 0)
+            if (data.length > 0) {
                 bos.write(data, 0, data.length);
+                responseDebug(data);
+            }
         } catch (Exception e) {
             throw e;
         }

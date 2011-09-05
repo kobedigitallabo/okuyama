@@ -226,6 +226,17 @@ public class OkuyamaClient {
         this.dataDecoding("".getBytes());
     }
 
+    /**
+     * コンストラクタ
+     *
+     */
+    public OkuyamaClient(int keyMaxSize) {
+        // エンコーダ、デコーダの初期化に時間を使うようなので初期化
+        this.dataEncoding("".getBytes());
+        this.dataDecoding("".getBytes());
+        this.maxKeySize = keyMaxSize;
+    }
+
 
     /**
      * データ保存時の圧縮指定.<br>
