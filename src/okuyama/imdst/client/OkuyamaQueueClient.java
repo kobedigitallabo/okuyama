@@ -1,14 +1,5 @@
 package okuyama.imdst.client;
 
-import java.util.*;
-import java.io.*;
-import java.net.*;
-
-import com.sun.mail.util.BASE64DecoderStream;
-import com.sun.mail.util.BASE64EncoderStream;
-
-import okuyama.imdst.util.ImdstDefine;
-
 
 /**
  * MasterNodeと通信を行うプログラムインターフェース<br>
@@ -22,7 +13,8 @@ public class OkuyamaQueueClient extends OkuyamaClient {
     public static String QUEUE_NAME_PREFIX = "Okuyama_Queue_Space_Name_Prefix_";
     public static String QUEUE_NAME_PREFIX_NOW_INDEX = "_Now_Index_";
     public static String QUEUE_NAME_PREFIX_NOW_POINT = "_Now_Point_";
-    public static String QUEUE_TAKE_END_VALUE= "OKUYAMA_QUEUE_TAKE_PXIUYUI98613_TYGHU_END_";
+    public static String QUEUE_TAKE_END_VALUE= "{OKUYAMA_QUEUE_END_DATA_MARKER}";
+
 
     /**
      * コンストラクタ
@@ -32,6 +24,13 @@ public class OkuyamaQueueClient extends OkuyamaClient {
         super();
     }
 
+    /**
+     * Queue領域の作成.<br>
+     *
+     * @param queueName 作成Queue名
+     * @retrun boolean 成否
+     * @throw OkuyamaClientException
+     */
     public boolean createQueueSpace(String queueName) throws OkuyamaClientException {
         boolean ret = true;
         try {
@@ -54,6 +53,14 @@ public class OkuyamaQueueClient extends OkuyamaClient {
     }
 
 
+    /**
+     * Queueへの登録.<br>
+     *
+     * @param queueName 指定Queue名
+     * @param data 登録データ
+     * @retrun boolean 成否
+     * @throw OkuyamaClientException
+     */
     public boolean put(String queueName, String data) throws OkuyamaClientException {
 
         boolean ret = false;
@@ -79,11 +86,26 @@ public class OkuyamaQueueClient extends OkuyamaClient {
     }
 
 
-
+    /**
+     * Queueから取得.<br>
+     *
+     * @param queueName 指定Queue名
+     * @return 取得データ(指定時間以内に取得できない場合はnull)
+     * @throw OkuyamaClientException
+     */
     public String take(String queueName) throws OkuyamaClientException {
         return take(queueName, 1000 * 30);
     }
 
+
+    /**
+     * Queueから取得.<br>
+     *
+     * @param queueName 指定Queue名
+     * @param timeOut 待ち受けタイムアウト時間(ミリ秒/単位)
+     * @return 取得データ(指定時間以内に取得できない場合はnull)
+     * @throw OkuyamaClientException
+     */
     public String take(String queueName, long timeOut) throws OkuyamaClientException {
 
         String ret = null;
@@ -96,7 +118,6 @@ public class OkuyamaQueueClient extends OkuyamaClient {
             while(loopFlg) {
 
                 // 現在取得対象の場所を調べる
-
                 String[] takeQueuePoint = super.getValue(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName);
                 if (!takeQueuePoint[0].equals("true")) return null;
 
@@ -105,7 +126,6 @@ public class OkuyamaQueueClient extends OkuyamaClient {
 
                 // 現在の位置でQueueの値を取得する
                 // この際にgetValueVersionCheckで取得
-
                 String[] queueValueRet = super.getValueVersionCheck(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName + "_" + queuePoint + "_value");
 
                 // 値が取れた場合と取得できない場合で処理を分岐
