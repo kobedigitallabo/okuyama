@@ -134,6 +134,13 @@ public class OkuyamaQueueClient extends OkuyamaClient {
                     // 取得データが終了データの場合は無視
                     if (queueValueRet[1].equals(QUEUE_TAKE_END_VALUE)) {
 
+                        // 現在のIndexを取得した際に、Valueに終了を表す値がある場合は、以下のパターンが考えられる
+                        // (1).現在値を登録している最中である。
+                        // (2).put時にincrValueを呼んだ後に、setValueを呼ぶまでに間にPGMがアボートした
+                        // (3).take時にValueに終了を表す文字を入れた後に、QUEUE_NAME_PREFIX_NOW_POINTを更新する前にPGMがアボートした
+                        // (1)の場合は時間的に解決されるが、(2),(3)はなんだかの処置を行う必要がある
+                        // TODO:ここで処置を行う
+                        
                         if (System.currentTimeMillis() > endTime) return null;
                         Thread.sleep(15);
                         continue;
