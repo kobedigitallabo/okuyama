@@ -69,6 +69,14 @@ public class OkuyamaQueueClient extends OkuyamaClient {
             Object[] incrRet = super.incrValue(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_INDEX + queueName, 1L);
             if (incrRet[0].equals(new Boolean(true))) {
 
+                if (((Long)incrRet[1]).longValue() > 0) {
+                    String[] checkValue = super.getValue(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName + "_" + (((Long)incrRet[1]).longValue() - 1) + "_value");
+                    if (checkValue[0].equals("false")) {
+                        // 存在しない場合は、異常な状態のため消し込む。ただし新規性を保証して
+                        super.setNewValue(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName + "_" + (((Long)incrRet[1]).longValue() - 1) + "_value", QUEUE_TAKE_END_VALUE);
+                    }
+                }
+
                 ret = super.setValue(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName + "_" + (Long)incrRet[1] + "_value", data);
                 if (ret == false) {
                     throw new OkuyamaClientException("Queue Data Put Error");
@@ -112,6 +120,8 @@ public class OkuyamaQueueClient extends OkuyamaClient {
         boolean loopFlg = true;
         long startTime = System.currentTimeMillis();
         long endTime = startTime + timeOut;
+        int maxContinueCount = 6;
+        int nowContinueCount = 0;
 
         try {
 
@@ -136,13 +146,30 @@ public class OkuyamaQueueClient extends OkuyamaClient {
 
                         // 現在のIndexを取得した際に、Valueに終了を表す値がある場合は、以下のパターンが考えられる
                         // (1).現在値を登録している最中である。
-                        // (2).put時にincrValueを呼んだ後に、setValueを呼ぶまでに間にPGMがアボートした
-                        // (3).take時にValueに終了を表す文字を入れた後に、QUEUE_NAME_PREFIX_NOW_POINTを更新する前にPGMがアボートした
-                        // (1)の場合は時間的に解決されるが、(2),(3)はなんだかの処置を行う必要がある
+                        // (2).take時にValueに終了を表す文字を入れた後に、QUEUE_NAME_PREFIX_NOW_POINTを更新する前にPGMがアボートした
+                        // (1)の場合は時間的に解決されるが、(2)はなんだかの処置を行う必要がある
                         // TODO:ここで処置を行う
-                        
+                        if (nowContinueCount > maxContinueCount) {
+                            // (1)の可能性がなくなったので、(2)に対する処置を行う
+                            String[] recoverPointRet = super.getValueVersionCheck(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName);
+                            if (recoverPointRet[0].equals("true")) {
+                                // リカバリ処置を行う場合は、まずバージョン込みでNOW_POINTを取得し、現在調べているNOW_POINTと比べる
+                                // 比べた末同じ場合は、バージョンチェックしながら+1する
+                                Long recoverPointLong = new Long(recoverPointRet[1]);
+                                if (recoverPointLong.equals(queuePoint)) {
+                                    // まだNOW_POINTが変わっていないので更新を試みる
+                                    long recoverNowPoint = recoverPointLong.longValue();
+                                    recoverNowPoint = recoverNowPoint + 1;
+                                    // バージョンチェックをしながら更新
+                                    super.setValueVersionCheck(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName, new Long(recoverNowPoint).toString(), recoverPointRet[2]);
+                                }
+                            }
+                            nowContinueCount = 0;
+                        }
+        
                         if (System.currentTimeMillis() > endTime) return null;
                         Thread.sleep(15);
+                        nowContinueCount++;
                         continue;
                     }
 
@@ -163,6 +190,7 @@ public class OkuyamaQueueClient extends OkuyamaClient {
                         Thread.sleep(15);
                     }
                 } else {
+
                     if (System.currentTimeMillis() > endTime) return null;
                     Thread.sleep(15);
                 }
