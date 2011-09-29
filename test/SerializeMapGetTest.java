@@ -9,9 +9,10 @@ import okuyama.imdst.util.serializemap.*;
 
 public class SerializeMapGetTest extends Thread {
 
+    private static String serializeClassName = "okuyama.imdst.util.serializemap.ObjectStreamSerializer";
     private static boolean status = true;
 
-    private static Map testMap = new SerializeMap(2000000, 1900000, 1000000);
+    private static Map testMap = new SerializeMap(2000000, 1900000, 1000000, serializeClassName);
     //private static Map testMap = new ConcurrentHashMap(2000000, 1900000, 64);
 
     private volatile static int testCount = -1;
@@ -32,7 +33,7 @@ public class SerializeMapGetTest extends Thread {
             int maxThreads = Integer.parseInt(args[0]);
             testCount = Integer.parseInt(args[1]);
             w.lock();
-            SerializeMap initMap = new SerializeMap(100, 90, 10);
+            SerializeMap initMap = new SerializeMap(100, 90, 10, serializeClassName);
             initMap.put("a", "b");
             initMap.get("a");
             initMap = null;

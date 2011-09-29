@@ -3,8 +3,7 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
-import org.imdst.client.ImdstKeyValueClient;
-import org.batch.lang.BatchException;
+
 import com.danga.MemCached.*;
 
 
