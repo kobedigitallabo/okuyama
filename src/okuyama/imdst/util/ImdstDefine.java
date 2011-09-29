@@ -11,7 +11,7 @@ import java.util.zip.Deflater;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.8.9";
+    public static final String okuyamaVersion = "VERSION okuyama-0.9.0";
 
     // -- KeyMapファイルに関係する定数 -------------------------------------------------
     // KeyNodeのWorkファイルでのセパレータ
