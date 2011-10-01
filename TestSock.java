@@ -454,8 +454,8 @@ public class TestSock {
                 for (int i = 0; i < Integer.parseInt(args[3]); i++) {
 
                     Object[] ret = okuyamaClient.getTagKeys(args[4], noExistsData);
-                long end = new Date().getTime();
-                System.out.println((end - start));
+                    long end = new Date().getTime();
+                    System.out.println((end - start));
 
                     if (ret[0].equals("true")) {
                         // データ有り
@@ -1480,12 +1480,12 @@ public class TestSock {
                 okuyamaClient.connect(args[1], port);
                 
                 long start = new Date().getTime();
-                Map retMap = okuyamaClient.getMultiTagValues(args[3].split(","), true);
+                Map retMap = okuyamaClient.getMultiTagValues(args[3].split(","), new Boolean(args[4]).booleanValue());
                 long end = new Date().getTime();
                 if (retMap == null) {
                     System.out.println(retMap);
                 } else {
-                    System.out.println(retMap);
+                    //System.out.println(retMap);
                     System.out.println("ResultSize = [" + retMap.size() + "]");
                 }
                 System.out.println((end - start) + "milli second");
@@ -1571,7 +1571,27 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } else if (args[0].equals("33")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用して複数Tag指定でKeyとValueのMapを取得
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                String[] retKeys = okuyamaClient.getMultiTagKeys(args[3].split(","), new Boolean(args[4]).booleanValue());
+                long end = new Date().getTime();
+                if (retKeys == null) {
+                    System.out.println(retKeys);
+                } else {
+                    for (int idx = 0; idx < retKeys.length; idx++) {
+                        System.out.println(retKeys[idx]);
+                    }
+                    System.out.println("ResultSize = [" + retKeys.length + "]");
+                }
+                System.out.println((end - start) + "milli second");
 
+                okuyamaClient.close();
             } else if (args[0].equals("999")) {
                 
                 int port = Integer.parseInt(args[2]);
