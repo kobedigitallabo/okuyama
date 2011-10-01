@@ -3806,6 +3806,134 @@ public class OkuyamaClient {
 
 
     /**
+     * MasterNodeからTag値を渡すことで紐付くKey値の配列を取得する<br>
+     * 複数のTagを指定することで、一度に関連する値を取得可能<br>
+     * 複数のTagに紐付く値はマージされて1つとなる(※AND指定)<br>
+     * AND指定.<br>
+     *
+     * @param tagList Tag値のリスト
+     * @return String[] 取得データのKey配列 取得キーに同一の値を複数指定した場合は束ねられる。結果が0件の場合はnullが返る
+     * @throws OkuyamaClientException
+     */
+    public String[] getMultiTagKeys(String[] tagList) throws OkuyamaClientException {
+        return this.getMultiTagKeys(tagList, true, true);
+    }
+
+    /**
+     * MasterNodeからTag値を渡すことで紐付くKey値の配列を取得する<br>
+     * 複数のTagを指定することで、一度に関連する値を取得可能<br>
+     * 複数のTagに紐付く値はマージされて1つとなる<br>
+     * 引数のmargeTypeを指定することで、ANDとORを切り替えることが出来る<br>
+     * AND指定.<br>
+     *
+     * @param tagList Tag値のリスト
+     * @param margeType 取得方法指定(true = AND、false=OR)
+     * @return String[] 取得データのKey配列 取得キーに同一の値を複数指定した場合は束ねられる。結果が0件の場合はnullが返る
+     * @throws OkuyamaClientException
+     */
+    public String[] getMultiTagKeys(String[] tagList, boolean margeType) throws OkuyamaClientException {
+        return this.getMultiTagKeys(tagList, margeType, true);
+    }
+    
+    /**
+     * MasterNodeからTag値を渡すことで紐付くKey値の配列を取得する<br>
+     * 複数のTagを指定することで、一度に関連する値を取得可能<br>
+     * 複数のTagに紐付く値はマージされて1つとなる<br>
+     * 引数のmargeTypeを指定することで、ANDとORを切り替えることが出来る<br>
+     *
+     * @param tagList Tag値のリスト
+     * @param margeType 取得方法指定(true = AND、false=OR)
+     * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
+     * @return String[] 取得データのKey配列 取得キーに同一の値を複数指定した場合は束ねられる。結果が0件の場合はnullが返る
+     * @throws OkuyamaClientException
+     */
+    public String[] getMultiTagKeys(String[] tagList, boolean margeType, boolean noExistsData) throws OkuyamaClientException {
+        Map ret = null;
+        Map tagRet = null;
+        String[] retKeyList = null;
+        String serverRetStr = null;
+        String[] serverRet = null;
+        String[] margeRet = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+        for (int i = 0; i < tagList.length; i++) {
+            String tagStr = tagList[i];
+            tagRet = null;
+
+            Object[] getTagRetTmp = getTagKeys(tagStr, noExistsData, false);
+            if (getTagRetTmp[0].equals("true")) {
+                String[] keyListTmp = (String[])getTagRetTmp[1];
+                tagRet = new HashMap(keyListTmp.length);
+                for (int idx = 0; idx < keyListTmp.length; idx++) {
+                    tagRet.put(keyListTmp[idx], null);
+                }
+            }
+
+
+            // 結果をマージする
+            if (tagRet != null && tagRet.size() > 0) {
+
+                if (margeType) {
+
+                    // AND
+                    if (tagRet == null || tagRet.size() < 1) return null;
+                    if (ret == null) ret = new HashMap();
+
+
+                    if (ret.size() > 0) {
+
+                        Set entrySet = ret.entrySet();
+                        Iterator entryIte = entrySet.iterator(); 
+                        while(entryIte.hasNext()) {
+
+                            Map.Entry obj = (Map.Entry)entryIte.next();
+                            if (!tagRet.containsKey((String)obj.getKey())) entryIte.remove();
+                        }
+                    } else {
+
+                        ret.putAll(tagRet);
+                    }
+                } else {
+
+                    // OR
+                    if (ret == null) ret = new HashMap();
+                    ret.putAll(tagRet);
+                }
+            } else if (margeType == true) {
+                return null;
+            }
+        }
+
+        if (ret != null && ret.size() > 0) {
+            retKeyList = new String[ret.size()];
+            int counter = 0;
+            Set entrySet = ret.entrySet();
+            Iterator entryIte = entrySet.iterator(); 
+            while(entryIte.hasNext()) {
+
+                Map.Entry obj = (Map.Entry)entryIte.next();
+                String tKey = (String)obj.getKey();
+                if (tKey.length() > 0) {
+                
+                    retKeyList[counter] = new String(this.dataDecoding(tKey.getBytes()));
+                } else {
+                    retKeyList[counter] = "";
+                }
+                counter++;
+            }
+            ret = null;
+        } else {
+            retKeyList = null;
+        }
+        return retKeyList;
+    }
+
+
+    /**
      * MasterNodeからTag値を渡すことで紐付くValue値の集合を取得する.<br>
      * 複数のTagを指定することで、一度に関連する値を取得可能.<br>
      * 複数のTagに紐付く値はマージされて1つとなる.<br>
@@ -5424,6 +5552,20 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public Object[] getTagKeys(String tagStr, boolean noExistsData) throws OkuyamaClientException {
+        return getTagKeys(tagStr, noExistsData, true);
+    }
+    
+    /**
+     * MasterNodeからTagでKey値配列を取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
+     *
+     * @param tagStr Tag値
+     * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
+     * @param 取得するKey値をBase64デコードして返す指定
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(Key値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    public Object[] getTagKeys(String tagStr, boolean noExistsData, boolean decodeKey) throws OkuyamaClientException {
         Object[] ret = new Object[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -5463,12 +5605,10 @@ public class OkuyamaClient {
 
             // サーバ送信
             pw.println(serverRequestBuf.toString());
-
             pw.flush();
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-
             serverRet = serverRetStr.split(OkuyamaClient.sepStr);
 
             // 処理の妥当性確
@@ -5487,11 +5627,17 @@ public class OkuyamaClient {
                         String[] cnvTags = null;
 
                         tags = serverRet[2].split(tagKeySep);
-                        String[] decTags = new String[tags.length];
-                        for (int i = 0; i < tags.length; i++) {
-                            decTags[i] = new String(this.dataDecoding(tags[i].getBytes()));
+                        if (decodeKey) {
+                            String[] decTags = new String[tags.length];
+        
+                            for (int i = 0; i < tags.length; i++) {
+                                decTags[i] = new String(this.dataDecoding(tags[i].getBytes()));
+                            }
+        
+                            ret[1] = decTags;
+                        } else {
+                            ret[1] = tags;
                         }
-                        ret[1] = decTags;
                     }
                 } else if(serverRet[1].equals("false")) {
 
