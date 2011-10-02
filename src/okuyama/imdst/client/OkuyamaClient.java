@@ -3860,11 +3860,17 @@ public class OkuyamaClient {
 
         if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
+        sendGetTagKeys(tagList[0], noExistsData);
         for (int i = 0; i < tagList.length; i++) {
-            String tagStr = tagList[i];
+
             tagRet = null;
 
-            Object[] getTagRetTmp = getTagKeys(tagStr, noExistsData, false);
+            //Object[] getTagRetTmp = getTagKeys(tagStr, noExistsData, false);
+            Object[] getTagRetTmp = readGetTagKeys(false);
+            if ((i+1) < tagList.length) {
+
+                sendGetTagKeys(tagList[i+1], noExistsData);
+            }
             if (getTagRetTmp[0].equals("true")) {
                 String[] keyListTmp = (String[])getTagRetTmp[1];
                 tagRet = new HashMap(keyListTmp.length);
@@ -5554,14 +5560,15 @@ public class OkuyamaClient {
     public Object[] getTagKeys(String tagStr, boolean noExistsData) throws OkuyamaClientException {
         return getTagKeys(tagStr, noExistsData, true);
     }
-    
+
+
     /**
      * MasterNodeからTagでKey値配列を取得する.<br>
      * Tagは打たれているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
      *
      * @param tagStr Tag値
      * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
-     * @param 取得するKey値をBase64デコードして返す指定
+     * @param decodeKey 取得するKey値をBase64デコードして返す指定
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(Key値配列):Stringの配列
      * @throws OkuyamaClientException
      */
@@ -5690,6 +5697,130 @@ public class OkuyamaClient {
             } else {
                 throw new OkuyamaClientException(e);
             }
+        }
+        return ret;
+    }
+
+    /**
+     * MasterNodeからTagでKey値配列を取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
+     *
+     * @param tagStr Tag値
+     * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(Key値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    private void sendGetTagKeys(String tagStr, boolean noExistsData) throws OkuyamaClientException {
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (tagStr == null ||  tagStr.equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a tag");
+            }
+
+            // Tagに対するLengthチェック
+            if (tagStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Tag Max Size " + maxKeySize + " Byte");
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
+
+            // 処理番号連結
+            serverRequestBuf.append("3");
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+
+            // tag値連結(Keyはデータ送信時には必ず文字列が必要)
+            serverRequestBuf.append(new String(this.dataEncoding(tagStr.getBytes())));
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+            // 存在データ取得指定連結
+            serverRequestBuf.append(new Boolean(noExistsData).toString());
+
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+        } catch (Throwable t) {
+            throw new OkuyamaClientException(t);
+        }
+    }
+
+
+    /**
+     * MasterNodeからTagでKey値配列を取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
+     *
+     * @param decodeKey 取得するKey値をBase64デコードして返す指定
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(Key値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    private Object[] readGetTagKeys(boolean decodeKey) throws OkuyamaClientException {
+        Object[] ret = new Object[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確
+            if (serverRet[0].equals("4")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    ret[0] = serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if (serverRet[2].equals(OkuyamaClient.blankStr)) {
+                        String[] tags = {""};
+                        ret[1] = tags;
+                    } else {
+                        String[] tags = null;
+                        String[] cnvTags = null;
+
+                        tags = serverRet[2].split(tagKeySep);
+                        if (decodeKey) {
+                            String[] decTags = new String[tags.length];
+        
+                            for (int i = 0; i < tags.length; i++) {
+                                decTags[i] = new String(this.dataDecoding(tags[i].getBytes()));
+                            }
+        
+                            ret[1] = decTags;
+                        } else {
+                            ret[1] = tags;
+                        }
+                    }
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRet[0] + "]");
+            }
+        } catch (Throwable t) {
+            throw new OkuyamaClientException(t);
         }
         return ret;
     }
@@ -6228,3 +6359,4 @@ public class OkuyamaClient {
         return null;
     }
 }
+
