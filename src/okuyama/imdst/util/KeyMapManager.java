@@ -1383,10 +1383,16 @@ public class KeyMapManager extends Thread {
         if (!blocking) {
 
             int counter = 0;
-
-
+/*
+String testList = getTargetTagIndexList(tag);
+System.out.println("testList[" + testList);
+String[] testIndexs = testList.split(KeyMapManager.tagKeySep);
+System.out.println("[0]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[0]).intValue()));
+System.out.println("[1]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[1]).intValue()));
+*/
             // Tagのキー値を連結
             for (int idx = 0; idx < ImdstDefine.tagRegisterParallelBucket; idx=idx+ImdstDefine.tagBucketMaxLink) {
+
                 keyStrs = null;
                 setTimeSplitWork = null;
                 isMatch = false;
@@ -1401,34 +1407,34 @@ public class KeyMapManager extends Thread {
                     String tagCnv = KeyMapManager.tagStartStr + tag + "_" + counter + KeyMapManager.tagEndStr;
 
                     if (this.containsKeyPair(tagCnv)) {
-        
+
                         tmpStr = (String)this.getKeyPair(tagCnv);
 
                         if (tmpStr != null && !((String[])tmpStr.split("!"))[0].equals("*")) {
-        
+
                             isMatch = true;
                             tmpBuf.append(tmpSep);
-        
+
                             setTimeSplitWork = tmpStr.split(ImdstDefine.setTimeParamSep);
-        
+
                             if (setTimeSplitWork.length > 1) lastSetTime = setTimeSplitWork[1];
-        
+
                             tmpBuf.append(setTimeSplitWork[0]);
                             tmpSep = KeyMapManager.tagKeySep;
 
                         } else if (tmpStr == null || ((String[])tmpStr.split("!"))[0].equals("*")){
-        
+
                             if (!isMatch) {
-        
+
                                 keyStrs = null;
                             } else {
-        
+
                                 keyStrs = tmpBuf.toString();
                             }
                             break;
                         }
                     } else {
-        
+
                         if (!isMatch) {
                             keyStrs = null;
                         } else {
@@ -1438,25 +1444,177 @@ public class KeyMapManager extends Thread {
                     }
                     counter++;
                 }
-                
+
                 if (keyStrs != null) {
-                    
                     ret.append(counterSep);
                     ret.append(keyStrs);
                     counterSep = KeyMapManager.tagKeySep;
                 }
             }
         }
-        
+
         if (ret.toString().equals("")) {
             keyStrs = null;
         } else {
             ret.append(ImdstDefine.setTimeParamSep).append(lastSetTime);
             keyStrs = ret.toString();
         } 
+
         return keyStrs;
     }
 
+
+    /**
+     * 対象のTagのデータが存在する位置をKeyMapManager.tagKeySepで連結した文字列を返す<.br>
+     * 本メソッドで取得したIndexをgetTargetIndexTagPairに渡すことで指定位置のTagとKeyのペアを取得可能.<br>
+     *
+     * @param tag タグ
+     * @return 指定したTag値が分割保存されているIndexの中で実際に値が存在するIndexのKeyMapManager.tagKeySep区切り文字列。Tagが登録されていない場合はnullが返る
+     */
+    public String getTargetTagIndexList(String tag) {
+        String keyIndexList = "";
+        String tmpStr = null;
+        String tmpSep = "";
+        StringBuilder retBuf = new StringBuilder(1024);
+
+        if (!blocking) {
+
+            int counter = 0;
+            tmpSep = "";
+
+            // Tagのキー値を連結
+            for (int idx = 0; idx < ImdstDefine.tagRegisterParallelBucket; idx=idx+ImdstDefine.tagBucketMaxLink) {
+System.out.println(idx);
+
+                counter = idx;
+
+                while(true) {
+
+                    String tagCnv = KeyMapManager.tagStartStr + tag + "_" + counter + KeyMapManager.tagEndStr;
+
+                    if (this.containsKeyPair(tagCnv)) {
+
+                        tmpStr = (String)this.getKeyPair(tagCnv);
+
+                        if (tmpStr != null && !((String[])tmpStr.split("!"))[0].equals("*")) {
+
+
+                            retBuf.append(tmpSep);
+                            retBuf.append(counter);
+                            tmpSep = KeyMapManager.tagKeySep;
+                            break;
+                        } else if (tmpStr == null || ((String[])tmpStr.split("!"))[0].equals("*")){
+
+                            break;
+                        }
+                    } else {
+
+                        break;
+                    }
+                    counter++;
+                }
+            }
+        }
+
+
+        keyIndexList = retBuf.toString();
+        if (keyIndexList == null || keyIndexList.equals("")) {
+            keyIndexList = null;
+        } 
+System.out.println(keyIndexList);
+        return keyIndexList;
+    }
+
+
+    public String getTargetIndexTagPair(String tag, int index) {
+        String keyStrs = "";
+        String[] setTimeSplitWork = null;
+
+        boolean isMatch = false;
+        StringBuilder tmpBuf = new StringBuilder(ImdstDefine.stringBufferLarge_2Size);
+        String tmpStr = null;
+        String tmpSep = "";
+        String lastSetTime = "";
+        String counterSep = "";
+        StringBuilder ret = new StringBuilder();
+
+        if (!blocking) {
+
+            int counter = 0;
+
+
+            // Tagのキー値を連結
+
+//System.out.println(index);
+            keyStrs = null;
+            setTimeSplitWork = null;
+            isMatch = false;
+            tmpBuf = new StringBuilder(ImdstDefine.stringBufferLarge_2Size);
+            tmpStr = null;
+            tmpSep = "";
+
+
+            counter = index;
+            while(true) {
+
+                String tagCnv = KeyMapManager.tagStartStr + tag + "_" + counter + KeyMapManager.tagEndStr;
+
+                if (this.containsKeyPair(tagCnv)) {
+
+                    tmpStr = (String)this.getKeyPair(tagCnv);
+
+                    if (tmpStr != null && !((String[])tmpStr.split("!"))[0].equals("*")) {
+
+                        isMatch = true;
+                        tmpBuf.append(tmpSep);
+
+                        setTimeSplitWork = tmpStr.split(ImdstDefine.setTimeParamSep);
+
+                        if (setTimeSplitWork.length > 1) lastSetTime = setTimeSplitWork[1];
+
+                        tmpBuf.append(setTimeSplitWork[0]);
+                        tmpSep = KeyMapManager.tagKeySep;
+
+                    } else if (tmpStr == null || ((String[])tmpStr.split("!"))[0].equals("*")){
+
+                        if (!isMatch) {
+
+                            keyStrs = null;
+                        } else {
+
+                            keyStrs = tmpBuf.toString();
+                        }
+                        break;
+                    }
+                } else {
+
+                    if (!isMatch) {
+                        keyStrs = null;
+                    } else {
+                        keyStrs = tmpBuf.toString();
+                    }
+                    break;
+                }
+                counter++;
+            }
+
+            if (keyStrs != null) {
+//System.out.println(keyStrs);
+                ret.append(counterSep);
+                ret.append(keyStrs);
+                counterSep = KeyMapManager.tagKeySep;
+            }
+        }
+
+        if (ret.toString().equals("")) {
+            keyStrs = null;
+        } else {
+            ret.append(ImdstDefine.setTimeParamSep).append(lastSetTime);
+            keyStrs = ret.toString();
+        } 
+//System.out.println(keyStrs);
+        return keyStrs;
+    }
 
     // Tagを指定することでTagを消す
     public String removeTagRelation(String tag, String transactionCode) throws BatchException {
