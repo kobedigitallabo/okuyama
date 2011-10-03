@@ -122,7 +122,8 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                         if (execMethods[i].equals("objectsetget")) 
                             retMap.put("objectsetget", execObjectSetGet(okuyamaClient, start, count));
 
-
+                        if (execMethods[i].equals("getmultitagkeys")) 
+                            retMap.put("getmultitagkeys", execGetMultiTagKeys(okuyamaClient, start, count));
                     }
 
                     System.out.println("ErrorMap=" + retMap.toString());
@@ -1442,6 +1443,97 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
         return errorFlg;
     }
 
+
+    private boolean execGetMultiTagKeys(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execGetMultiTagKeys - Start");
+
+            long startTime = new Date().getTime();
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+            String[] tag1 = {start+"_" + this.nowCount + "_tag1_mk"};
+            String[] tag2 = {start+"_" + this.nowCount + "_tag1_mk",start+"_" + this.nowCount + "_tag2_mk"};
+            String[] tag3 = {start+"_" + this.nowCount + "_tag1_mk",start+"_" + this.nowCount + "_tag2_mk",start+"_" + this.nowCount + "_tag3_mk"};
+            String[] tag4 = {start+"_" + this.nowCount + "_tag4_mk"};
+            String[] tag5 = {start+"_" + this.nowCount + "_tag4_mk", start+"_" + this.nowCount + "_tag1_mk"};
+            String[] setTag = null;
+
+            ArrayList tag1RetList = new ArrayList();
+            ArrayList tag2RetList = new ArrayList();
+            ArrayList tag3RetList = new ArrayList();
+            ArrayList tag4RetList = new ArrayList();
+            int counter = 0;
+            for (int i = 0; i < 100; i++) {
+
+                if (counter == 0) {
+
+                    okuyamaClient.setValue(this.nowCount + "tagsampledatakey_mk_" + new Integer(i).toString() + "]", tag1, "tagsampledatakey_mk_" + new Integer(i).toString() + "]");
+                    counter++;
+                } else if (counter == 1) {
+
+                    okuyamaClient.setValue(this.nowCount + "tagsampledatakey_mk_" + new Integer(i).toString() + "]", tag2, "tagsampledatakey_mk_" + new Integer(i).toString() + "]");
+                    counter++;
+                } else if (counter == 2) {
+
+                    okuyamaClient.setValue(this.nowCount + "tagsampledatakey_mk_" + new Integer(i).toString() + "]", tag3, "tagsampledatakey_mk_" + new Integer(i).toString() + "]");
+                    counter++;
+                } else {
+
+                    okuyamaClient.setValue(this.nowCount + "tagsampledatakey_mk_" + new Integer(i).toString() + "]", tag4, "tagsampledatakey_mk_" + new Integer(i).toString() + "]");
+                    counter = 0;
+                }
+            }
+
+            String[] ret = null;
+
+            ret = okuyamaClient.getMultiTagKeys(tag1, true);
+            if(ret.length != 75) {
+                System.out.println(start+"_" + this.nowCount + "_tag1_mk - Error");
+                errorFlg = true;
+            }
+
+            ret = okuyamaClient.getMultiTagKeys(tag2, true);
+            if(ret.length  != 50) {
+                System.out.println(start+"_" + this.nowCount + "_tag1_mk, AND _tag2_mk  - Error");
+                errorFlg = true;
+            }
+
+            ret = okuyamaClient.getMultiTagKeys(tag3, true);
+            if(ret.length  != 25) {
+                System.out.println(start+"_" + this.nowCount + "_tag1_mk, AND _tag2_mk, AND _tag3_mk  - Error");
+                errorFlg = true;
+            }
+
+            ret = okuyamaClient.getMultiTagKeys(tag5, false);
+            if(ret.length  != 100) {
+                System.out.println(start+"_" + this.nowCount + "_tag1_mk, OR _tag4_mk - Error");
+                errorFlg = true;
+            }
+
+            long endTime = new Date().getTime();
+            System.out.println("Tag Multi Get Keys Method= " + (endTime - startTime) + " milli second");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execGetMultiTagKeys - End");
+        return errorFlg;
+    }
 
     private boolean execObjectSetGet(OkuyamaClient client, int start, int count) throws Exception {
         OkuyamaClient okuyamaClient = null;
