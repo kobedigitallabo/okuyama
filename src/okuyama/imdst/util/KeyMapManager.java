@@ -1385,6 +1385,7 @@ public class KeyMapManager extends Thread {
             int counter = 0;
 /*
 String testList = getTargetTagIndexList(tag);
+System.out.println("tag[" + tag + "]");
 System.out.println("testList[" + testList);
 String[] testIndexs = testList.split(KeyMapManager.tagKeySep);
 System.out.println("[0]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[0]).intValue()));
@@ -1484,7 +1485,6 @@ System.out.println("[1]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[1]
 
             // Tagのキー値を連結
             for (int idx = 0; idx < ImdstDefine.tagRegisterParallelBucket; idx=idx+ImdstDefine.tagBucketMaxLink) {
-System.out.println(idx);
 
                 counter = idx;
 
@@ -1521,7 +1521,6 @@ System.out.println(idx);
         if (keyIndexList == null || keyIndexList.equals("")) {
             keyIndexList = null;
         } 
-System.out.println(keyIndexList);
         return keyIndexList;
     }
 
@@ -1544,8 +1543,6 @@ System.out.println(keyIndexList);
 
 
             // Tagのキー値を連結
-
-//System.out.println(index);
             keyStrs = null;
             setTimeSplitWork = null;
             isMatch = false;
@@ -1599,7 +1596,7 @@ System.out.println(keyIndexList);
             }
 
             if (keyStrs != null) {
-//System.out.println(keyStrs);
+
                 ret.append(counterSep);
                 ret.append(keyStrs);
                 counterSep = KeyMapManager.tagKeySep;
@@ -1609,10 +1606,9 @@ System.out.println(keyIndexList);
         if (ret.toString().equals("")) {
             keyStrs = null;
         } else {
-            ret.append(ImdstDefine.setTimeParamSep).append(lastSetTime);
             keyStrs = ret.toString();
         } 
-//System.out.println(keyStrs);
+
         return keyStrs;
     }
 
