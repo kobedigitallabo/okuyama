@@ -698,6 +698,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             }
                             retParams = this.removeSearchIndex(clientParameterList[1], clientParameterList[2], clientParameterList[3], removeIndexLen);
                             break;
+                        case 45 :
+
+                            // TagでKey値が所属するbucketのIndexリストを取得する
+                            retParams = this.getTargetTagIndexList(clientParameterList[1]);
+                            break;
+                        case 46 :
+
+                            // TagとKey値が所属するbucketのIndexを渡すことで、そこのbucketに所属するKeyのリストを返す。
+                            // Keyが存在しない場合はfalseが返る
+                            retParams = this.getTargetIndexTagPair(clientParameterList[1], clientParameterList[2]);
+                            break;
                         case 50 : 
 
                             // 辞書をセットする
@@ -3674,6 +3685,195 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
     /**
+     * Tagを指定することでTgaがKey群を管理するbucketのIndex情報を取得する.<br>
+     *
+     *
+     * @param tagStr key値の文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getTargetTagIndexList(String tagStr) throws BatchException {
+        //logger.debug("MasterManagerHelper - getTargetTagIndexList - start");
+        String[] retStrs = new String[3];
+
+        String[] keyNodeGetRet = null;
+        String[] keyNodeInfo = null;
+
+        try {
+            // Isolation変換実行
+            tagStr = this.encodeIsolationConvert(tagStr);
+
+            if (!this.checkKeyLength(tagStr))  {
+                // 保存失敗
+                retStrs[0] = "45";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
+            // キー値を使用して取得先を決定
+            keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.reverseAccess);
+
+            // 取得実行
+            if (keyNodeInfo.length == 3) {
+                keyNodeGetRet = this.getKeyNodeTagIndexList(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "45", tagStr);
+            } else if (keyNodeInfo.length == 6) {
+                keyNodeGetRet = this.getKeyNodeTagIndexList(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "45", tagStr);
+            } else if (keyNodeInfo.length == 9) {
+                keyNodeGetRet = this.getKeyNodeTagIndexList(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "45", tagStr);
+            }
+
+
+            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
+            // でそちらのルールでのデータ格納場所も調べる
+            if (keyNodeGetRet[1].equals("false")) {
+
+                //System.out.println("過去ルールを探索 - getScript =" + new String(BASE64DecoderStream.decode(tagStr.getBytes())));
+                // キー値を使用して取得先を決定
+                for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.reverseAccess, i)) != null; i++) {
+
+                    // 取得実行
+                    if (keyNodeInfo.length == 3) {
+                        keyNodeGetRet = this.getKeyNodeTagIndexList(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "45", tagStr);
+                    } else if (keyNodeInfo.length == 6) {
+                        keyNodeGetRet = this.getKeyNodeTagIndexList(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "45", tagStr);
+                    } else if (keyNodeInfo.length == 9) {
+                        keyNodeGetRet = this.getKeyNodeTagIndexList(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8],  "45", tagStr);
+                    }
+
+
+                    // 過去ルールからデータを発見
+                    if (keyNodeGetRet[1].equals("true")) {
+                        break;
+                    }
+                }
+            }
+
+
+            // 取得結果確認
+            if (keyNodeGetRet[1].equals("false")) {
+
+                // 取得失敗(データなし)
+                retStrs[0] = keyNodeGetRet[0];
+                retStrs[1] = "false";
+                retStrs[2] = "";
+                
+            } else {
+
+                // trueもしくはerrorの可能性あり
+                retStrs[0] = keyNodeGetRet[0];
+                retStrs[1] = keyNodeGetRet[1];
+                retStrs[2] = keyNodeGetRet[2];
+            }
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - getTargetTagIndexList - Error", be);
+        } catch (Exception e) {
+            logger.error("MasterManagerHelper - getTargetTagIndexList - Error", e);
+            retStrs[0] = "45";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
+        }
+        //logger.debug("MasterManagerHelper - getTargetTagIndexList - end");
+        return retStrs;
+    }
+
+
+    /**
+     * TagとKeyが格納されているbucketのIndexを指定することでそのbucketに格納されているKeyのリストを取得する.<br>
+     *
+     *
+     * @param tagStr key値の文字列
+     * @param indexStr Indexを表す文字列(実際は数字)
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getTargetIndexTagPair(String tagStr, String indexStr) throws BatchException {
+        //logger.debug("MasterManagerHelper - getTargetIndexTagPair - start");
+        String[] retStrs = new String[3];
+
+        String[] keyNodeGetRet = null;
+        String[] keyNodeInfo = null;
+
+        try {
+            // Isolation変換実行
+            tagStr = this.encodeIsolationConvert(tagStr);
+
+            if (!this.checkKeyLength(tagStr))  {
+                // 保存失敗
+                retStrs[0] = "46";
+                retStrs[1] = "false";
+                retStrs[2] = "Key Length Error";
+                return retStrs;
+            }
+
+            // キー値を使用して取得先を決定
+            keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.reverseAccess);
+
+            // 取得実行
+            if (keyNodeInfo.length == 3) {
+                keyNodeGetRet = this.getKeyNodeTargetIndexTagKey(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "46", tagStr, indexStr);
+            } else if (keyNodeInfo.length == 6) {
+                keyNodeGetRet = this.getKeyNodeTargetIndexTagKey(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "46", tagStr, indexStr);
+            } else if (keyNodeInfo.length == 9) {
+                keyNodeGetRet = this.getKeyNodeTargetIndexTagKey(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "46", tagStr, indexStr);
+            }
+
+
+            // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
+            // でそちらのルールでのデータ格納場所も調べる
+            if (keyNodeGetRet[1].equals("false")) {
+
+                //System.out.println("過去ルールを探索 - getScript =" + new String(BASE64DecoderStream.decode(tagStr.getBytes())));
+                // キー値を使用して取得先を決定
+                for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.reverseAccess, i)) != null; i++) {
+
+                    // 取得実行
+                    if (keyNodeInfo.length == 3) {
+                        keyNodeGetRet = this.getKeyNodeTargetIndexTagKey(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "46", tagStr, indexStr);
+                    } else if (keyNodeInfo.length == 6) {
+                        keyNodeGetRet = this.getKeyNodeTargetIndexTagKey(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "46", tagStr, indexStr);
+                    } else if (keyNodeInfo.length == 9) {
+                        keyNodeGetRet = this.getKeyNodeTargetIndexTagKey(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8],  "46", tagStr, indexStr);
+                    }
+
+
+                    // 過去ルールからデータを発見
+                    if (keyNodeGetRet[1].equals("true")) {
+                        break;
+                    }
+                }
+            }
+
+
+            // 取得結果確認
+            if (keyNodeGetRet[1].equals("false")) {
+
+                // 取得失敗(データなし)
+                retStrs[0] = keyNodeGetRet[0];
+                retStrs[1] = "false";
+                retStrs[2] = "";
+                
+            } else {
+
+                // trueもしくはerrorの可能性あり
+                retStrs[0] = keyNodeGetRet[0];
+                retStrs[1] = keyNodeGetRet[1];
+                retStrs[2] = keyNodeGetRet[2];
+            }
+        } catch (BatchException be) {
+            logger.error("MasterManagerHelper - getTargetIndexTagPair - Error", be);
+        } catch (Exception e) {
+            logger.error("MasterManagerHelper - getTargetIndexTagPair - Error", e);
+            retStrs[0] = "46";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
+        }
+        //logger.debug("MasterManagerHelper - getTargetIndexTagPair - end");
+        return retStrs;
+    }
+
+
+    /**
      * KeyNodeからデータを取得する.<br>
      * 
      * @param keyNodeName マスターデータノードの名前(IPなど)
@@ -4205,6 +4405,370 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return retParams;
     }
 
+
+
+    /**
+     * KeyNodeからTagを指定することでKeyが所属するbucketのIndexを返す.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(45=Keyでデータを取得)
+     * @param tag Tag値
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getKeyNodeTagIndexList(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String tag) throws BatchException {
+        boolean exceptionFlg = false;
+        String[] ret = null;
+        String[] thirdRet = null;
+        BatchException retBe = null;
+
+        try {
+
+            ret = this.getKeyNodeTagIndexList(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, tag);
+        } catch (BatchException be) {
+
+            retBe = be;
+            exceptionFlg = true;
+        } catch (Exception e) {
+
+            retBe = new BatchException(e);
+            exceptionFlg = true;
+        } finally {
+            
+            try {
+                if (exceptionFlg) {
+                    thirdRet = this.getKeyNodeTagIndexList(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, tag);
+                    ret = thirdRet;
+                } else {
+                    // サードノードの使用終了のみマーク
+                    if (thirdKeyNodeFullName != null) 
+                        super.execNodeUseEnd(thirdKeyNodeFullName);
+                }
+            } catch (Exception e) {
+                if (exceptionFlg) throw retBe;
+            }
+        }
+
+        return ret;
+    }
+
+
+    /**
+     * KeyNodeからTagを指定することでKeyが所属するbucketのIndexを返す.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(45=Keyでデータを取得)
+     * @param tag Tag値
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getKeyNodeTagIndexList(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String tag) throws BatchException {
+        KeyNodeConnector keyNodeConnector = null;
+
+        String[] retParams = null;
+        String[] cnvConsistencyRet = null;
+
+        boolean slaveUse = false;
+        boolean mainRetry = false;
+
+        String nowUseNodeInfo = null;
+
+
+        SocketException se = null;
+        IOException ie = null;
+        try {
+
+            // KeyNodeとの接続を確立
+            keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+
+            while (true) {
+
+                // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
+                // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
+                if (keyNodeConnector == null) {
+                    if (subKeyNodeName != null) keyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+
+                    if (keyNodeConnector == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                    slaveUse = true;
+                }
+
+
+                try {
+                    // 処理種別判別
+                    if (type.equals("45")) {
+
+                        // Key値でValueを取得
+                        StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
+                        String sendStr = null;
+                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
+                        buf.append("45");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(this.stringCnv(tag));
+                        sendStr = buf.toString();
+
+                        // 送信
+                        keyNodeConnector.println(buf.toString());
+                        keyNodeConnector.flush();
+
+                        // 返却値取得
+                        String retParam = keyNodeConnector.readLine(sendStr);
+
+                        // 返却値を分解
+                        // 処理番号, true or false, valueの想定
+                        // value値にセパレータが入っていても無視する
+                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
+                    } 
+
+                    // 使用済みの接続を戻す
+                    super.addKeyNodeCacheConnectionPool(keyNodeConnector);
+
+                    // 取れ次第返却
+                    break;
+
+                } catch(SocketException tSe) {
+                    // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
+                    se = tSe;
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
+                } catch(IOException tIe) {
+                    // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
+                    ie = tIe;
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
+                }
+
+                // 既にスレーブの接続を使用している場合は、もう一度だけメインノードに接続を試みる
+                // それで駄目な場合はエラーとする
+                if (slaveUse) {
+                    if (mainRetry) {
+                        if (se != null) throw se;
+                        if (ie != null) throw ie;
+                        throw new BatchException("Key Node IO Error: detail info for log file");
+                    } else {
+
+                        // メインKeyNodeとの接続を確立
+                        keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
+                        if (keyNodeConnector == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                        mainRetry = true;
+                    }
+                } else {
+                    if (subKeyNodeName == null) {
+                        if (se != null) throw se;
+                        if (ie != null) throw ie;
+                    } else{
+                        keyNodeConnector = null;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
+            throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            if (subKeyNodeName != null) 
+                super.execNodeUseEnd(subKeyNodeFullName);
+        }
+        return retParams;
+    }
+
+
+    /**
+     * KeyNodeからTagとbucketのIndexを指定することで所属するKey群を返す.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(46=Keyでデータを取得)
+     * @param tag Tag値
+     * @param indexStr Index値
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getKeyNodeTargetIndexTagKey(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String thirdKeyNodeName, String thirdKeyNodePort, String thirdKeyNodeFullName, String type, String tag, String indexStr) throws BatchException {
+        boolean exceptionFlg = false;
+        String[] ret = null;
+        String[] thirdRet = null;
+        BatchException retBe = null;
+
+        try {
+
+            ret = this.getKeyNodeTargetIndexTagKey(keyNodeName, keyNodePort, keyNodeFullName, subKeyNodeName, subKeyNodePort, subKeyNodeFullName, type, tag, indexStr);
+        } catch (BatchException be) {
+
+            retBe = be;
+            exceptionFlg = true;
+        } catch (Exception e) {
+
+            retBe = new BatchException(e);
+            exceptionFlg = true;
+        } finally {
+            
+            try {
+                if (exceptionFlg) {
+                    thirdRet = this.getKeyNodeTargetIndexTagKey(thirdKeyNodeName, thirdKeyNodePort, thirdKeyNodeFullName, null, null, null, type, tag, indexStr);
+                    ret = thirdRet;
+                } else {
+                    // サードノードの使用終了のみマーク
+                    if (thirdKeyNodeFullName != null) 
+                        super.execNodeUseEnd(thirdKeyNodeFullName);
+                }
+            } catch (Exception e) {
+                if (exceptionFlg) throw retBe;
+            }
+        }
+
+        return ret;
+    }
+
+
+    /**
+     * KeyNodeからTagとbucketのIndexを指定することで所属するKey群を返す.<br>
+     * 
+     * @param keyNodeName マスターデータノードの名前(IPなど)
+     * @param keyNodePort マスターデータノードのアクセスポート番号
+     * @param subKeyNodeName スレーブデータノードの名前(IPなど)
+     * @param subKeyNodePort スレーブデータノードのアクセスポート番号
+     * @param type 処理タイプ(46=Keyでデータを取得)
+     * @param tag Tag値
+     * @param indexStr Index値
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] getKeyNodeTargetIndexTagKey(String keyNodeName, String keyNodePort, String keyNodeFullName, String subKeyNodeName, String subKeyNodePort, String subKeyNodeFullName, String type, String tag, String indexStr) throws BatchException {
+        KeyNodeConnector keyNodeConnector = null;
+
+        String[] retParams = null;
+        String[] cnvConsistencyRet = null;
+
+        boolean slaveUse = false;
+        boolean mainRetry = false;
+
+        String nowUseNodeInfo = null;
+
+
+        SocketException se = null;
+        IOException ie = null;
+        try {
+
+            // KeyNodeとの接続を確立
+            keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+
+            while (true) {
+
+                // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
+                // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
+                if (keyNodeConnector == null) {
+                    if (subKeyNodeName != null) keyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
+
+                    if (keyNodeConnector == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                    slaveUse = true;
+                }
+
+
+                try {
+                    // 処理種別判別
+                    if (type.equals("46")) {
+
+                        // Key値でValueを取得
+                        StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferMiddleSize);
+                        String sendStr = null;
+                        // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列
+                        buf.append("46");
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(this.stringCnv(tag));
+                        buf.append(ImdstDefine.keyHelperClientParamSep);
+                        buf.append(this.stringCnv(indexStr));
+                        sendStr = buf.toString();
+
+                        // 送信
+                        keyNodeConnector.println(buf.toString());
+                        keyNodeConnector.flush();
+
+                        // 返却値取得
+                        String retParam = keyNodeConnector.readLine(sendStr);
+
+                        // 返却値を分解
+                        // 処理番号, true or false, valueの想定
+                        // value値にセパレータが入っていても無視する
+                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
+                    } 
+
+                    // 使用済みの接続を戻す
+                    super.addKeyNodeCacheConnectionPool(keyNodeConnector);
+
+                    // 取れ次第返却
+                    break;
+
+                } catch(SocketException tSe) {
+                    // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
+                    se = tSe;
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
+                } catch(IOException tIe) {
+                    // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
+                    ie = tIe;
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.close();
+                        keyNodeConnector = null;
+                    }
+                }
+
+                // 既にスレーブの接続を使用している場合は、もう一度だけメインノードに接続を試みる
+                // それで駄目な場合はエラーとする
+                if (slaveUse) {
+                    if (mainRetry) {
+                        if (se != null) throw se;
+                        if (ie != null) throw ie;
+                        throw new BatchException("Key Node IO Error: detail info for log file");
+                    } else {
+
+                        // メインKeyNodeとの接続を確立
+                        keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, true);
+                        if (keyNodeConnector == null) throw new BatchException("Key Node IO Error: detail info for log file");
+                        mainRetry = true;
+                    }
+                } else {
+                    if (subKeyNodeName == null) {
+                        if (se != null) throw se;
+                        if (ie != null) throw ie;
+                    } else{
+                        keyNodeConnector = null;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            if (keyNodeConnector != null) {
+                keyNodeConnector.close();
+                keyNodeConnector = null;
+            }
+            throw new BatchException(e);
+        } finally {
+            // ノードの使用終了をマーク
+            super.execNodeUseEnd(keyNodeFullName);
+
+            if (subKeyNodeName != null) 
+                super.execNodeUseEnd(subKeyNodeFullName);
+        }
+        return retParams;
+    }
 
 
     /**

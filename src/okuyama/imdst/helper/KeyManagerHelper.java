@@ -641,6 +641,40 @@ public class KeyManagerHelper extends AbstractHelper {
                                 retParamBuf.append(retParams[2]);
                             }
                             break;
+                        case 45 :
+
+                            // Tagに所属するKeyがどこのIndexに存在するかを文字列で返す
+                            // Indexの区切り文字は":"
+                            // 例)0:500000:1000000:2000000・・・
+                            requestHashCode = clientParameterList[1];
+                            // メソッド呼び出し
+                            retParams = this.getTargetTagIndexList(requestHashCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            retParamBuf = new StringBuilder(retParamBuf.toString());
+                            break;
+                        case 46 :
+
+                            // TagとIndexを指定することでそのbucketに所属するKey連結文字列を返す
+                            // 返る値は通常のTgaと同じ
+                            requestHashCode = clientParameterList[1];
+                            int targetIndex = Integer.parseInt(clientParameterList[2]);
+                            // メソッド呼び出し
+                            retParams = this.getTargetIndexTagPair(requestHashCode, targetIndex);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            retParamBuf = new StringBuilder(retParamBuf.toString());
+                            break;
                         case 50 :
                                   
                             // KeyとMatch用文字列を渡すことで、Value該当文字列が含まれるかをチェック
@@ -1445,6 +1479,82 @@ public class KeyManagerHelper extends AbstractHelper {
             retStrs[1] = "false";
         }
         //logger.debug("KeyManagerHelper - getTagdata - end");
+        return retStrs;
+    }
+
+
+    // TagでKey値が所属するbucketのIndexリストを取得する
+    private String[] getTargetTagIndexList(String tag) {
+        //logger.debug("KeyManagerHelper - getTargetTagIndexList - start");
+        String[] retStrs = null;
+        try {
+            if(!this.keyMapManager.checkError()) {
+                if (this.keyMapManager.containsTagPair(tag)) {
+                    String indexList = this.keyMapManager.getTargetTagIndexList(tag);
+                    if (indexList != null) {
+                        retStrs = new String[3];
+                        retStrs[0] = "45";
+                        retStrs[1] = "true";
+                        retStrs[2] = indexList;
+                    } else {
+
+                        retStrs = new String[2];
+                        retStrs[0] = "45";
+                        retStrs[1] = "false";
+                    }
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "45";
+                    retStrs[1] = "false";
+                }
+            } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "45";
+                    retStrs[1] = "false";
+            }
+        } catch (Exception e) {
+            logger.error("KeyManagerHelper - getTargetTagIndexList - Error", e);
+            retStrs = new String[2];
+            retStrs[0] = "45";
+            retStrs[1] = "false";
+        }
+        //logger.debug("KeyManagerHelper - getTargetTagIndexList - end");
+        return retStrs;
+    }
+
+
+    // TagとKey値が所属するbucketのIndexを渡すことで、そこのbucketに所属するKeyのリストを返す。
+    // Keyが存在しない場合はfalseが返る
+    private String[] getTargetIndexTagPair(String tag, int index) {
+        //logger.debug("KeyManagerHelper - getTargetIndexTagPair - start");
+        String[] retStrs = null;
+        try {
+            if(!this.keyMapManager.checkError()) {
+
+                String keys = this.keyMapManager.getTargetIndexTagPair(tag, index);
+                if (keys != null) {
+                    retStrs = new String[3];
+                    retStrs[0] = "46";
+                    retStrs[1] = "true";
+                    retStrs[2] = keys;
+                } else {
+
+                    retStrs = new String[2];
+                    retStrs[0] = "46";
+                    retStrs[1] = "false";
+                }
+            } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "46";
+                    retStrs[1] = "false";
+            }
+        } catch (Exception e) {
+            logger.error("KeyManagerHelper - getTargetIndexTagPair - Error", e);
+            retStrs = new String[2];
+            retStrs[0] = "46";
+            retStrs[1] = "false";
+        }
+        //logger.debug("KeyManagerHelper - getTargetIndexTagPair - end");
         return retStrs;
     }
 
