@@ -12,6 +12,7 @@ import com.sun.mail.util.BASE64EncoderStream;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.SystemUtil;
 import okuyama.imdst.client.io.*;
+import okuyama.imdst.client.result.*;
 
 /**
  * MasterNodeと通信を行うクライアント<br>
@@ -160,6 +161,17 @@ public class OkuyamaClient {
     // 接続中のokuyamaのバージョンNo
     protected double okuyamaVersionNo = 0;
 
+    protected boolean useAutoConnect = false;
+
+    // コネクション構築に用いた変数を格納
+    protected String[] initParamMasterNodes  = null;
+    protected String initParamServer  = null;
+    protected int initParamPort  = -1;
+    protected String initParamEncoding = null;
+    protected int initParamOpenTimeout  = -1;
+    protected int initParamConnectionTimeout  = -1;
+
+
     // サーバへの出力用
     protected PrintWriter pw = null;
 
@@ -257,6 +269,8 @@ public class OkuyamaClient {
      * @param masterNodes 接続情報の配列 "IP:PORT"の形式
      */
     public void setConnectionInfos(String[] masterNodes) {
+        this.initParamMasterNodes = masterNodes;
+
         this.masterNodesList = new ArrayList(masterNodes.length);
         for (int i = 0; i < masterNodes.length; i++) {
             this.masterNodesList.add(masterNodes[i]);
@@ -271,6 +285,7 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public void autoConnect() throws OkuyamaClientException {
+        this.useAutoConnect = true;
         ArrayList tmpMasterNodeList = new ArrayList();
         ArrayList workList = (ArrayList)this.masterNodesList.clone();
         Random rnd = new Random();
@@ -366,6 +381,13 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public void connect(String server, int port, String encoding, int openTimeout, int connectionTimeout) throws OkuyamaClientException {
+        this.initParamServer = server;
+        this.initParamPort = port;
+        this.initParamEncoding = encoding;
+        this.initParamOpenTimeout = openTimeout;
+        this.initParamConnectionTimeout = connectionTimeout;
+        this.useAutoConnect = false;
+
         try {
             this.socket = new Socket();
             InetSocketAddress inetAddr = new InetSocketAddress(server, port);
@@ -5821,6 +5843,292 @@ public class OkuyamaClient {
             }
         } catch (Throwable t) {
             throw new OkuyamaClientException(t);
+        }
+        return ret;
+    }
+
+
+
+    /**
+     * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     *
+     * @param tagStr Tag値
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合はnullが返る
+     * @throws OkuyamaClientException
+     */
+    public OkuyamaResultSet getTagKeyResult(String tagStr) throws OkuyamaClientException {
+        return this.getTagKeyResult(tagStr, null);
+    }
+
+
+    /**
+     * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     *
+     * @param tagStr Tag値
+     * @param encoding エンコーディング指定
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合はnullが返る
+     * @throws OkuyamaClientException
+     */
+    public OkuyamaResultSet getTagKeyResult(String tagStr, String encoding) throws OkuyamaClientException {
+        OkuyamaResultSet okuyamaResultSet = null;
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            if (0.90 > this.okuyamaVersionNo) {
+                throw new OkuyamaClientException("The version of the server is old [The 'searchValue' method can be used since version 0.9.0]");
+            }
+
+            if (encoding == null) encoding = platformDefaultEncoding;
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (tagStr == null ||  tagStr.equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a tag");
+            }
+
+            // Tagに対するLengthチェック
+            if (tagStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Tag Max Size " + maxKeySize + " Byte");
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
+
+            // 処理番号連結
+            serverRequestBuf.append("45");
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+            // tag値連結(Keyはデータ送信時には必ず文字列が必要)
+            serverRequestBuf.append(new String(this.dataEncoding(tagStr.getBytes())));
+
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+
+            // 処理の妥当性確
+            if (serverRet[0].equals("45")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    String indexListStr= serverRet[2];
+
+                    if (indexListStr.trim().equals("")) {
+
+                        okuyamaResultSet = null;
+                    } else {
+
+                        String[] indexList = indexListStr.split(ImdstDefine.imdstTagKeyAppendSep);
+                        OkuyamaClient retSetClient = new OkuyamaClient(maxKeySize);
+                        if (this.useAutoConnect) {
+                            retSetClient.setConnectionInfos(this.initParamMasterNodes);
+                            retSetClient.autoConnect();
+                        } else {
+                            retSetClient.connect(this.initParamServer, this.initParamPort, this.initParamEncoding, this.initParamOpenTimeout, this.initParamConnectionTimeout);
+                        }
+                        okuyamaResultSet = new OkuyamaTagKeysResultSet(retSetClient, tagStr, indexList, encoding);
+                    }
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    okuyamaResultSet = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    okuyamaResultSet = null;
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRet[0] + "]");
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    okuyamaResultSet = this.getTagKeyResult(tagStr, encoding);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    okuyamaResultSet = this.getTagKeyResult(tagStr, encoding);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    okuyamaResultSet = this.getTagKeyResult(tagStr, encoding);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return okuyamaResultSet;
+    }
+
+
+    /**
+     * MasterNodeからTagとKey格納bucketのIndexを使用してKey値配列を取得する.<br>
+     * 本メソッドは、OkuyamaTagKeysResultSetクラスからの利用を想定して作成されているため、
+     * それ以外の部分からの呼び出しは推奨しない.<br>
+     *
+     * @param tagStr Tag値
+     * @param index bucketIndex
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(Key値配列):Stringの配列
+     * @throws OkuyamaClientException
+     */
+    public Object[] getTargetIndexTagKeys(String tagStr, String bucketIndex) throws OkuyamaClientException {
+        Object[] ret = new Object[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            if (0.90 > this.okuyamaVersionNo) {
+                throw new OkuyamaClientException("The version of the server is old [The 'searchValue' method can be used since version 0.9.0]");
+            }
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (tagStr == null ||  tagStr.equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a tag");
+            }
+
+            // Tagに対するLengthチェック
+            if (tagStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Tag Max Size " + maxKeySize + " Byte");
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
+
+            // 処理番号連結
+            serverRequestBuf.append("46");
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+
+            // tag値連結(Keyはデータ送信時には必ず文字列が必要)
+            serverRequestBuf.append(new String(this.dataEncoding(tagStr.getBytes())));
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+            // bucketインデックス
+            serverRequestBuf.append(bucketIndex);
+
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確
+            if (serverRet[0].equals("46")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    ret[0] = serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if (serverRet[2].equals("")) {
+                        String[] tags = {""};
+                        ret[1] = tags;
+                    } else {
+                        String[] tags = null;
+                        String[] cnvTags = null;
+
+                        tags = serverRet[2].split(tagKeySep);
+                        String[] decTags = new String[tags.length];
+    
+                        for (int i = 0; i < tags.length; i++) {
+                            decTags[i] = new String(this.dataDecoding(tags[i].getBytes()));
+                        }
+    
+                        ret[1] = decTags;
+                    }
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRet[0] + "]");
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getTargetIndexTagKeys(tagStr, bucketIndex);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getTargetIndexTagKeys(tagStr, bucketIndex);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getTargetIndexTagKeys(tagStr, bucketIndex);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
         }
         return ret;
     }
