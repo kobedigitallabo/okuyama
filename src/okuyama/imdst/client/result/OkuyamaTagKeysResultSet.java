@@ -24,6 +24,8 @@ import okuyama.imdst.client.*;
  */ 
 public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
 
+    protected int maxMultiGetSize = 100;
+
     protected OkuyamaClient client = null;
 
     protected String tagStr = null;
@@ -85,8 +87,8 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
                 }
 
                 while (this.keyQueue.size() > 0) {
-                    List keys = new ArrayList();
-                    for (int idx = 0; idx < 50; idx++) {
+                    List keys = new ArrayList(maxMultiGetSize);
+                    for (int idx = 0; idx < maxMultiGetSize; idx++) {
                         String tmpKey = (String)this.keyQueue.poll();
                         if (tmpKey == null) break;
                         keys.add(tmpKey);
