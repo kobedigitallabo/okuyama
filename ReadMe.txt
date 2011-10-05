@@ -10,6 +10,25 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
+[[リリース Ver 0.9.0 - (2011/10/XX)]]
+■Hadoop対応
+■getMultiTagKeys
+■getTagKeyResult
+■getMultiTagKeyResult ※未
+■PHPクライアントの以下のメソッド対応 ※未
+getMultiValue
+getTagValues
+removeSearchIndex
+getMultiTagValues
+getValueAndUpdateExpireTime
+setValueとsetNewValueのExpireTime対応
+setObjectValue
+getObjectValue
+
+
+
+========================================================================================================
+[New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.9 - (2011/08/31)]]
 
 ■OkuyamaClientにsetObjectValueとgetObjectValueメソッドを追加
