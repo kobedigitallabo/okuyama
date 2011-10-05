@@ -399,6 +399,11 @@ public class TestSock {
                 String[] setTag = null;
                 int counter = 0;
 
+                String prefix = "";
+                if (args.length > 4) {
+                    prefix = "_" + args[4];
+                }
+
                 long start = new Date().getTime();
 
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
@@ -416,7 +421,7 @@ public class TestSock {
                         counter = 0;
                     }
 
-                    if (!okuyamaClient.setValue("tagsampledatakey_" + new Integer(i).toString(), setTag, "tagsamplesavedata_" + new Integer(i).toString())) {
+                    if (!okuyamaClient.setValue("tagsampledatakey_" + new Integer(i).toString() + prefix, setTag, "tagsamplesavedata_" + new Integer(i).toString() + prefix)) {
                         System.out.println("OkuyamaClient - error");
                     }
                 }
