@@ -69,7 +69,7 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
         try {
 
             for (int idx = 0; idx < this.indexList.length; idx++) {
-                System.out.println(this.indexList[idx]);
+                //System.out.println(this.indexList[idx]);
                 this.indexQueue.put(this.indexList[idx]);
             }
         } catch (Exception e){}
