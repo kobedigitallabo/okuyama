@@ -399,11 +399,6 @@ public class TestSock {
                 String[] setTag = null;
                 int counter = 0;
 
-                String prefix = "";
-                if (args.length > 4) {
-                    prefix = "_" + args[4];
-                }
-
                 long start = new Date().getTime();
 
                 for (int i = 0; i < Integer.parseInt(args[3]);i++) {
@@ -421,7 +416,7 @@ public class TestSock {
                         counter = 0;
                     }
 
-                    if (!okuyamaClient.setValue("tagsampledatakey_" + new Integer(i).toString() + prefix, setTag, "tagsamplesavedata_" + new Integer(i).toString() + prefix)) {
+                    if (!okuyamaClient.setValue("tagsampledatakey_" + new Integer(i).toString(), setTag, "tagsamplesavedata_" + new Integer(i).toString())) {
                         System.out.println("OkuyamaClient - error");
                     }
                 }
@@ -1625,7 +1620,7 @@ public class TestSock {
                 okuyamaClient.connect(args[1], port);
                 
                 long start = new Date().getTime();
-                OkuyamaResultSet okuyamaResultSet = okuyamaClient.getTagKeyResult(args[3]);
+                OkuyamaResultSet okuyamaResultSet = okuyamaClient.getTagKeysResult(args[3]);
                 long end = new Date().getTime();
                 if (okuyamaResultSet == null) {
                     System.out.println(okuyamaResultSet);
@@ -1651,7 +1646,60 @@ public class TestSock {
                 okuyamaClient.connect(args[1], port);
                 
                 long start = new Date().getTime();
-                OkuyamaResultSet okuyamaResultSet = okuyamaClient.getTagKeyResult(args[3]);
+                OkuyamaResultSet okuyamaResultSet = okuyamaClient.getTagKeysResult(args[3]);
+
+                if (okuyamaResultSet == null) {
+                    System.out.println(okuyamaResultSet);
+                } else {
+                    int counter = 0;
+                    while(okuyamaResultSet.next()) {
+                        counter++;
+                        //System.out.println("Key=" + (String)okuyamaResultSet.getKey());
+                        //System.out.println("Value=" + (String)okuyamaResultSet.getValue());
+                    }
+                    okuyamaResultSet.close();
+
+                    System.out.println("ResultSize = [" + counter + "]");
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+            } else if (args[0].equals("35")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用して複数Tag指定でKeyとValueのMapを取得
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                OkuyamaResultSet okuyamaResultSet = okuyamaClient.getMultiTagKeysResult(args[3].split(","), new Boolean(args[4]).booleanValue());
+                long end = new Date().getTime();
+                if (okuyamaResultSet == null) {
+                    System.out.println(okuyamaResultSet);
+                } else {
+                    int counter = 0;
+                    while(okuyamaResultSet.next()) {
+                        counter++;
+                        System.out.println("Key=" + (String)okuyamaResultSet.getKey());
+                        System.out.println("Value=" + (String)okuyamaResultSet.getValue());
+                    }
+                    okuyamaResultSet.close();
+
+                    System.out.println("ResultSize = [" + counter + "]");
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+            } else if (args[0].equals("35.1")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用して複数Tag指定でKeyとValueのMapを取得
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                OkuyamaResultSet okuyamaResultSet = okuyamaClient.getMultiTagKeysResult(args[3].split(","), new Boolean(args[4]).booleanValue());
 
                 if (okuyamaResultSet == null) {
                     System.out.println(okuyamaResultSet);
