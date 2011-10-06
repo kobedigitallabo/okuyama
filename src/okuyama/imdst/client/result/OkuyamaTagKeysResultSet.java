@@ -9,7 +9,7 @@ import okuyama.imdst.client.*;
  * OkuyamaClientのgetTagKeyResultで取得可能なクラス<br>
  * 以下のような構文にてTagを利用して全ての紐付くKeyとValueを取得する<br>
  * -----------------------------------------------------------------
- * OkuyamaResultSet resultSet = client.getTagKeyResult(tagStr);
+ * OkuyamaResultSet resultSet = client.getTagKeysResult(tagStr);
  * 
  * while(resultSet.next()) {
  *     System.out.println("Key=" + (Object)resultSet.getKey());

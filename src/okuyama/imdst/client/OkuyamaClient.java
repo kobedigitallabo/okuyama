@@ -5994,6 +5994,176 @@ public class OkuyamaClient {
     }
 
 
+
+
+
+
+
+
+    /**
+     * MasterNodeからTagを複数を指定することで紐付くKeyが取得可能な、OkuyamaResultSetを取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * またANDとORを指定可能であり、getMultiTagKeysと同じように動くが、こちらを使えば一度にメモリ上に展開出来ないような、<br>
+     * 大量のTagに紐付くデータを対象にする場合に向いている。少量のデータに対して複数Tagで取得したい場合は、従来通りgetMultiTagKeysを使うことを推奨する.<br>
+     *
+     * @param tagList Tag値の配列
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合はnullが返る
+     * @throws OkuyamaClientException
+     */
+    public OkuyamaResultSet getMultiTagKeysResult(String[] tagList) throws OkuyamaClientException {
+        return this.getMultiTagKeysResult(tagList, true);
+    }
+
+
+    /**
+     * MasterNodeからTagを複数を指定することで紐付くKeyが取得可能な、OkuyamaResultSetを取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * またANDとORを指定可能であり、getMultiTagKeysと同じように動くが、こちらを使えば一度にメモリ上に展開出来ないような、<br>
+     * 大量のTagに紐付くデータを対象にする場合に向いている。少量のデータに対して複数Tagで取得したい場合は、従来通りgetMultiTagKeysを使うことを推奨する.<br>
+     *
+     * @param tagList Tag値の配列
+     * @param margeType 取得方法指定(true = AND、false=OR)
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合はnullが返る
+     * @throws OkuyamaClientException
+     */
+    public OkuyamaResultSet getMultiTagKeysResult(String[] tagList, boolean margeType) throws OkuyamaClientException {
+        OkuyamaResultSet okuyamaResultSet = null;
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            if (0.90 > this.okuyamaVersionNo) {
+                throw new OkuyamaClientException("The version of the server is old [The 'searchValue' method can be used since version 0.9.0]");
+            }
+
+            String encoding  = platformDefaultEncoding;
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (tagList == null ||  tagList.length < 2) {
+                throw new OkuyamaClientException("The blank is not admitted on a tag");
+            }
+
+            // Tagに対するLengthチェック
+            for (int idx = 0; idx < tagList.length; idx++) {
+                if (tagList[idx].getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Tag Max Size " + maxKeySize + " Byte");
+            }
+
+            Map resultSetParameterMap = new HashMap(tagList.length);
+            for (int idx = 0; idx < tagList.length; idx++) {
+                // 文字列バッファ初期化
+                serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+    
+    
+                // 処理番号連結
+                serverRequestBuf.append("45");
+                // セパレータ連結
+                serverRequestBuf.append(OkuyamaClient.sepStr);
+    
+                // tag値連結(Keyはデータ送信時には必ず文字列が必要)
+                serverRequestBuf.append(new String(this.dataEncoding(tagList[idx].getBytes())));
+    
+    
+                // サーバ送信
+                pw.println(serverRequestBuf.toString());
+                pw.flush();
+    
+                // サーバから結果受け取り
+                serverRetStr = br.readLine();
+                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+    
+    
+                // 処理の妥当性確
+                if (serverRet[0].equals("45")) {
+                    if (serverRet[1].equals("true")) {
+    
+                        // データ有り
+                        String indexListStr= serverRet[2];
+    
+                        if (!indexListStr.trim().equals("")) {
+    
+                            String[] indexList = indexListStr.split(ImdstDefine.imdstTagKeyAppendSep);
+                            resultSetParameterMap.put(tagList[idx], indexList);
+                        }
+                    } else if(serverRet[1].equals("false")) {
+    
+                        // データなし
+                        if (margeType == true) return null;
+                    } else if(serverRet[1].equals("error")) {
+    
+                        // エラー発生
+                        throw new OkuyamaClientException("Execute Error [" + serverRet[1] + "]");
+                    }
+                } else {
+    
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity [" + serverRet[0] + "]");
+                }
+            }
+
+            OkuyamaClient retSetClient = new OkuyamaClient(maxKeySize);
+            if (this.useAutoConnect) {
+                retSetClient.setConnectionInfos(this.initParamMasterNodes);
+                retSetClient.autoConnect();
+            } else {
+                retSetClient.connect(this.initParamServer, this.initParamPort, this.initParamEncoding, this.initParamOpenTimeout, this.initParamConnectionTimeout);
+            }
+            okuyamaResultSet = new OkuyamaMultiTagKeysResultSet(retSetClient, tagList, resultSetParameterMap, encoding, margeType);
+
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    okuyamaResultSet = this.getMultiTagKeysResult(tagList, margeType);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    okuyamaResultSet = this.getMultiTagKeysResult(tagList, margeType);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    okuyamaResultSet = this.getMultiTagKeysResult(tagList, margeType);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return okuyamaResultSet;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
     /**
      * MasterNodeからTagとKey格納bucketのIndexを使用してKey値配列を取得する.<br>
      * 本メソッドは、OkuyamaTagKeysResultSetクラスからの利用を想定して作成されているため、

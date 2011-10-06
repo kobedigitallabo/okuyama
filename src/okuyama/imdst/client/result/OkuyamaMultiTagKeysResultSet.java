@@ -6,11 +6,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import okuyama.imdst.client.*;
 
 /**
- * OkuyamaClientのgetMultiTagKeyResultで取得可能なクラス<br>
- * 以下のような構文にてTagを利用して全ての紐付くKeyとValueを取得する<br>
+ * OkuyamaClientのgetMultiTagKeysResultで取得可能なクラス<br>
+ * 以下のような構文にてTagを利用して全ての紐付くKeyを取得する<br>
  * その際に複数のTagを指定してAND,ORのどちらかを指定可能<br>
  * -----------------------------------------------------------------
- * OkuyamaResultSet resultSet = client.getTagKeyResult(<String[]>tagStrList, true);
+ * OkuyamaResultSet resultSet = client.getMultiTagKeysResult(tagStrList, true);
  * 
  * while(resultSet.next()) {
  *     System.out.println("Key=" + (Object)resultSet.getKey());
@@ -111,7 +111,6 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
                 Map equalTagGroupMap = (Map)obj.getValue();
                 this.indexQueue.put(equalTagGroupMap);
             }
-            System.out.println(this.indexQueue);
 
         } catch (Exception e){}
     }
@@ -120,28 +119,33 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
 
         try {
             while (true) {
-
                 if (this.keyValueQueue.size() > 0) {
                     String[] keyValue = (String[])this.keyValueQueue.take();
                     this.nowKey = keyValue[0];
                     this.nowValue = keyValue[1];
+
                     return true;
                 }
 
                 while (this.keyQueue.size() > 0) {
+
                     List keys = new ArrayList(maxMultiGetSize);
                     for (int idx = 0; idx < maxMultiGetSize; idx++) {
+
                         String tmpKey = (String)this.keyQueue.poll();
                         if (tmpKey == null) break;
                         keys.add(tmpKey);
                     }
 
                     if (keys.size() > 0) {
+
                         String[] getMultiKeys = new String[keys.size()];
 
                         for (int idx = 0; idx < keys.size(); idx++) {
+
                             getMultiKeys[idx] = (String)keys.get(idx);
                         }
+
                         Map keyValueRetMap = null;
                         if (getMultiKeys.length > 1) {
                             keyValueRetMap = this.client.getMultiValue(getMultiKeys, encoding);
@@ -152,6 +156,7 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
                                 keyValueRetMap.put(getMultiKeys[0], singleGetRet[1]);
                             }
                         }
+
 
                         if (keyValueRetMap != null && keyValueRetMap.size() > 0) {
 
@@ -171,38 +176,51 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
 
                     if (this.keyValueQueue.size() > 0) break;
                 }
+
                 if (this.keyValueQueue.size() > 0) continue;
 
                 while (this.indexQueue.size() > 0) {
-
-                    Map buketIdxStrMap = (Map)this.indexQueue.take();
-                    // ANDの場合はどれか一つでも対象のTagが含まれていない場合はここでcontiune;
-                    if (buketIdxStrMap.size() != this.tagStrList.length) continue;
                     
+                    Map buketIdxStrMap = (Map)this.indexQueue.take();
+                    
+                    // ANDの場合はどれか一つでも対象のTagが含まれていない場合はここでcontiune;
+                    if (this.margeType == true && buketIdxStrMap.size() != this.tagStrList.length) continue;
+
                     // AND,ORに合わせてそれにマッチするKeyのみが格納されたMap<String, null>
                     Map margeKeyMap = new HashMap(1000);
-                    
+                    Map tmpMargeMap = null;
                     for (int idx = 0; idx < this.tagStrList.length; idx++) {
+
                         if (this.margeType) {
                             // AND
+                            tmpMargeMap = new HashMap(100);
                             Object[] bucketKeysRet = this.client.getTargetIndexTagKeys(this.tagStrList[idx], (String)buketIdxStrMap.get(this.tagStrList[idx]));
                             if (bucketKeysRet[0].equals("true")) {
                                 String[] keysStrList = (String[])bucketKeysRet[1];
                                 for (int buketIdx = 0; buketIdx < keysStrList.length; buketIdx++) {
+
                                     if (idx == 0) { 
-                                        margeKeyMap.put(keysStrList[buketIdx], null);
+                                        tmpMargeMap.put(keysStrList[buketIdx], null);
                                     } else {
-                                        if (!margeKeyMap.containsKey(keysStrList[buketIdx])) margeKeyMap.remove(keysStrList[buketIdx]);
+                                        if (margeKeyMap.containsKey(keysStrList[buketIdx])) {
+                                            tmpMargeMap.put(keysStrList[buketIdx], null);
+                                        }
                                     }
                                 }
                             }
+                            margeKeyMap = tmpMargeMap;
                         } else {
                             // OR
-                            Object[] bucketKeysRet = this.client.getTargetIndexTagKeys(this.tagStrList[idx], (String)buketIdxStrMap.get(this.tagStrList[idx]));
-                            if (bucketKeysRet[0].equals("true")) {
-                                String[] keysStrList = (String[])bucketKeysRet[1];
-                                for (int buketIdx = 0; buketIdx < keysStrList.length; buketIdx++) {
-                                    margeKeyMap.put(keysStrList[buketIdx], null);
+                            
+                            if (buketIdxStrMap.containsKey(this.tagStrList[idx])) {
+                                Object[] bucketKeysRet = this.client.getTargetIndexTagKeys(this.tagStrList[idx], (String)buketIdxStrMap.get(this.tagStrList[idx]));
+                                if (bucketKeysRet[0].equals("true")) {
+                                    String[] keysStrList = (String[])bucketKeysRet[1];
+                                    for (int buketIdx = 0; buketIdx < keysStrList.length; buketIdx++) {
+
+                                                                    
+                                        margeKeyMap.put(keysStrList[buketIdx], null);
+                                    }
                                 }
                             }
                         }
@@ -225,6 +243,7 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
         } catch (Exception e) {
             throw new OkuyamaClientException(e);
         }
+        
         return false;
     }
 
