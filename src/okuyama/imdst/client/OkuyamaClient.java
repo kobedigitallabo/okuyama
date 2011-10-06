@@ -5857,8 +5857,8 @@ public class OkuyamaClient {
      * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合はnullが返る
      * @throws OkuyamaClientException
      */
-    public OkuyamaResultSet getTagKeyResult(String tagStr) throws OkuyamaClientException {
-        return this.getTagKeyResult(tagStr, null);
+    public OkuyamaResultSet getTagKeysResult(String tagStr) throws OkuyamaClientException {
+        return this.getTagKeysResult(tagStr, null);
     }
 
 
@@ -5871,7 +5871,7 @@ public class OkuyamaClient {
      * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合はnullが返る
      * @throws OkuyamaClientException
      */
-    public OkuyamaResultSet getTagKeyResult(String tagStr, String encoding) throws OkuyamaClientException {
+    public OkuyamaResultSet getTagKeysResult(String tagStr, String encoding) throws OkuyamaClientException {
         OkuyamaResultSet okuyamaResultSet = null;
         String serverRetStr = null;
         String[] serverRet = null;
@@ -5960,7 +5960,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    okuyamaResultSet = this.getTagKeyResult(tagStr, encoding);
+                    okuyamaResultSet = this.getTagKeysResult(tagStr, encoding);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -5971,7 +5971,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    okuyamaResultSet = this.getTagKeyResult(tagStr, encoding);
+                    okuyamaResultSet = this.getTagKeysResult(tagStr, encoding);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -5982,7 +5982,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    okuyamaResultSet = this.getTagKeyResult(tagStr, encoding);
+                    okuyamaResultSet = this.getTagKeysResult(tagStr, encoding);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
