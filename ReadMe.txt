@@ -24,7 +24,7 @@ getValueAndUpdateExpireTime
 setValue‚ÆsetNewValue‚ÌExpireTime‘Î‰
 setObjectValue
 getObjectValue
-
+¡OkuyamaQueueClient‚ÌÀ‘•
 
 
 ========================================================================================================
