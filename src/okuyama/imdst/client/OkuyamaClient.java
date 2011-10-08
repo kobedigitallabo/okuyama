@@ -5854,7 +5854,7 @@ public class OkuyamaClient {
      * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      *
      * @param tagStr Tag値
-     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合はnullが返る
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
      * @throws OkuyamaClientException
      */
     public OkuyamaResultSet getTagKeysResult(String tagStr) throws OkuyamaClientException {
@@ -5868,7 +5868,7 @@ public class OkuyamaClient {
      *
      * @param tagStr Tag値
      * @param encoding エンコーディング指定
-     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合はnullが返る
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
      * @throws OkuyamaClientException
      */
     public OkuyamaResultSet getTagKeysResult(String tagStr, String encoding) throws OkuyamaClientException {
@@ -5943,11 +5943,11 @@ public class OkuyamaClient {
                 } else if(serverRet[1].equals("false")) {
 
                     // データなし
-                    okuyamaResultSet = null;
+                    okuyamaResultSet = new OkuyamaTagKeysResultSet();
                 } else if(serverRet[1].equals("error")) {
 
                     // エラー発生
-                    okuyamaResultSet = null;
+                    okuyamaResultSet = new OkuyamaTagKeysResultSet();
                 }
             } else {
 
@@ -5995,11 +5995,6 @@ public class OkuyamaClient {
 
 
 
-
-
-
-
-
     /**
      * MasterNodeからTagを複数を指定することで紐付くKeyが取得可能な、OkuyamaResultSetを取得する.<br>
      * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
@@ -6007,7 +6002,7 @@ public class OkuyamaClient {
      * 大量のTagに紐付くデータを対象にする場合に向いている。少量のデータに対して複数Tagで取得したい場合は、従来通りgetMultiTagKeysを使うことを推奨する.<br>
      *
      * @param tagList Tag値の配列
-     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合はnullが返る
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
      * @throws OkuyamaClientException
      */
     public OkuyamaResultSet getMultiTagKeysResult(String[] tagList) throws OkuyamaClientException {
@@ -6023,14 +6018,14 @@ public class OkuyamaClient {
      *
      * @param tagList Tag値の配列
      * @param margeType 取得方法指定(true = AND、false=OR)
-     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合はnullが返る
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
      * @throws OkuyamaClientException
      */
     public OkuyamaResultSet getMultiTagKeysResult(String[] tagList, boolean margeType) throws OkuyamaClientException {
         OkuyamaResultSet okuyamaResultSet = null;
         String serverRetStr = null;
         String[] serverRet = null;
-
+        boolean dataNull = true;
         StringBuilder serverRequestBuf = null;
 
         try {
@@ -6088,6 +6083,7 @@ public class OkuyamaClient {
     
                             String[] indexList = indexListStr.split(ImdstDefine.imdstTagKeyAppendSep);
                             resultSetParameterMap.put(tagList[idx], indexList);
+                            dataNull = false;
                         }
                     } else if(serverRet[1].equals("false")) {
     
@@ -6112,7 +6108,11 @@ public class OkuyamaClient {
             } else {
                 retSetClient.connect(this.initParamServer, this.initParamPort, this.initParamEncoding, this.initParamOpenTimeout, this.initParamConnectionTimeout);
             }
-            okuyamaResultSet = new OkuyamaMultiTagKeysResultSet(retSetClient, tagList, resultSetParameterMap, encoding, margeType);
+            if (!dataNull) {
+                okuyamaResultSet = new OkuyamaMultiTagKeysResultSet(retSetClient, tagList, resultSetParameterMap, encoding, margeType);
+            } else {
+                okuyamaResultSet = new OkuyamaMultiTagKeysResultSet();
+            }
 
         } catch (OkuyamaClientException ice) {
             throw ice;

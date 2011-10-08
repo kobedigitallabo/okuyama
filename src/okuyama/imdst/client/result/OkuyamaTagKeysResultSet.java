@@ -48,10 +48,22 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
 
     private String nowValue = null;
 
+    private boolean dataNull = false;
 
 
     /**
      * コンストラクタ.<br>
+     * データが存在しない場合
+     *
+     */ 
+    public OkuyamaTagKeysResultSet() {
+        this.dataNull = true;
+    }
+
+
+    /**
+     * コンストラクタ.<br>
+     * データが存在する場合
      *
      * @param client
      * @param tagStr
@@ -77,6 +89,7 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
 
     public boolean next() throws OkuyamaClientException {
 
+        if (this.dataNull) return false;
         try {
             while (true) {
 

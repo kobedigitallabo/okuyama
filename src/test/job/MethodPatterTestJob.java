@@ -124,6 +124,12 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
                         if (execMethods[i].equals("getmultitagkeys")) 
                             retMap.put("getmultitagkeys", execGetMultiTagKeys(okuyamaClient, start, count));
+
+                        if (execMethods[i].equals("gettagkeysresult")) 
+                            retMap.put("gettagkeysresult", execGetTagKeysResult(okuyamaClient, start, count));
+
+                        if (execMethods[i].equals("getmultitagkeysresult")) 
+                            retMap.put("getmultitagkeysresult", execMultiGetTagKeysResult(okuyamaClient, start, count));
                     }
 
                     System.out.println("ErrorMap=" + retMap.toString());
@@ -1669,4 +1675,375 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
         return errorFlg;
     }
+
+
+    private boolean execGetTagKeysResult(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        OkuyamaResultSet okuyamaResultSet = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execGetTagKeysResult - Start");
+
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+
+
+            String[] tag1 = {start+"_" + this.nowCount + "_tag1_reslut"};
+            String[] tag2 = {start+"_" + this.nowCount + "_tag1_reslut",start+"_" + this.nowCount + "_tag2_reslut"};
+            String[] tag3 = {start+"_" + this.nowCount + "_tag1_reslut",start+"_" + this.nowCount + "_tag2_reslut",start+"_" + this.nowCount + "_tag3_reslut"};
+            String[] tag4 = {start+"_" + this.nowCount + "_tag4_reslut"};
+            String[] setTag = null;
+
+            int counter = 0;
+            for (int i = start; i < count; i++) {
+                if (counter == 0) {
+                    setTag = tag1;
+                    counter++;
+                } else if (counter == 1) {
+                    setTag = tag2;
+                    counter++;
+                } else if (counter == 2) {
+                    setTag = tag3;
+                    counter++;
+                } else if (counter == 3) {
+                    setTag = tag4;
+                    counter = 0;
+                }
+
+                if (!okuyamaClient.setValue(this.nowCount + "tagsampledatakey_reslut_" + new Integer(i).toString(), setTag, this.nowCount + "tagsamplesavedata_reslut_" + new Integer(i).toString())) {
+                    System.out.println("Tag GetResult Set - Error=[" + this.nowCount + "tagsampledatakey_reslut_" + new Integer(i).toString() + ", " + this.nowCount + "tagsamplesavedata_reslut_" + new Integer(i).toString());
+                    errorFlg = true;
+                }
+            }
+
+
+            ArrayList tag1RetList = new ArrayList();
+            ArrayList tag2RetList = new ArrayList();
+            ArrayList tag3RetList = new ArrayList();
+            ArrayList tag4RetList = new ArrayList();
+            counter = 0;
+            for (int i = start; i < count; i++) {
+                if (counter == 0) {
+
+                    tag1RetList.add(this.nowCount + "tagsampledatakey_reslut_" + new Integer(i).toString());
+                    counter++;
+                } else if (counter == 1) {
+
+                    tag1RetList.add(this.nowCount + "tagsampledatakey_reslut_" + new Integer(i).toString());
+                    tag2RetList.add(this.nowCount + "tagsampledatakey_reslut_" + new Integer(i).toString());
+                    counter++;
+                } else if (counter == 2) {
+
+                    tag1RetList.add(this.nowCount + "tagsampledatakey_reslut_" + new Integer(i).toString());
+                    tag2RetList.add(this.nowCount + "tagsampledatakey_reslut_" + new Integer(i).toString());
+                    tag3RetList.add(this.nowCount + "tagsampledatakey_reslut_" + new Integer(i).toString());
+                    counter++;
+                } else if (counter == 3) {
+
+                    tag4RetList.add(this.nowCount + "tagsampledatakey_reslut_" + new Integer(i).toString());
+                    counter = 0;
+                }
+            }
+
+            HashMap getResult1 = new HashMap();
+            HashMap getResult2 = new HashMap();
+            HashMap getResult3 = new HashMap();
+            HashMap getResult4 = new HashMap();
+            String[] keys = null;
+            long startTime = new Date().getTime();
+            okuyamaResultSet = okuyamaClient.getTagKeysResult(start+"_" + this.nowCount + "_tag1_reslut");
+
+            if (okuyamaResultSet != null) {
+                // データ有り
+                while (okuyamaResultSet.next()) {
+                    getResult1.put(okuyamaResultSet.getKey(), okuyamaResultSet.getValue());
+                }
+                okuyamaResultSet.close();
+            } else {
+                System.out.println(start+"tag1_reslut=データなし");
+                errorFlg = true;
+            }
+
+
+            okuyamaResultSet = okuyamaClient.getTagKeysResult(start+"_" + this.nowCount + "_tag2_reslut");
+            if (okuyamaResultSet != null) {
+                // データ有り
+                while (okuyamaResultSet.next()) {
+                    getResult2.put(okuyamaResultSet.getKey(), okuyamaResultSet.getValue());
+                }
+                okuyamaResultSet.close();
+            } else {
+                System.out.println(start+"tag2_reslut=データなし");
+                errorFlg = true;
+            }
+
+
+            okuyamaResultSet = okuyamaClient.getTagKeysResult(start+"_" + this.nowCount + "_tag3_reslut");
+            if (okuyamaResultSet != null) {
+                // データ有り
+                while (okuyamaResultSet.next()) {
+                    getResult3.put(okuyamaResultSet.getKey(), okuyamaResultSet.getValue());
+                }
+                okuyamaResultSet.close();
+            } else {
+                System.out.println(start+"tag3_reslut=データなし");
+                errorFlg = true;
+            }
+
+
+            okuyamaResultSet = okuyamaClient.getTagKeysResult(start+"_" + this.nowCount + "_tag4_reslut");
+            if (okuyamaResultSet != null) {
+                // データ有り
+                while (okuyamaResultSet.next()) {
+                    getResult4.put(okuyamaResultSet.getKey(), okuyamaResultSet.getValue());
+                }
+                okuyamaResultSet.close();
+            } else {
+                System.out.println(start+"tag4_reslut=データなし");
+                errorFlg = true;
+            }
+
+            okuyamaResultSet = okuyamaClient.getTagKeysResult(start+"_" + this.nowCount + "_tag5_reslut");
+            if (okuyamaResultSet != null) {
+                // データ有り
+                while (okuyamaResultSet.next()) {
+                    System.out.println(start+"tag5_reslut=データあり");
+                    errorFlg = true;
+                }
+                okuyamaResultSet.close();
+            } else {
+                System.out.println(start+"tag5_reslut=OkuyamaResultSet取得できず");
+                errorFlg = true;
+            }
+
+
+
+            // 検証
+            // Tag1
+            for (int idx = 0; idx < tag1RetList.size(); idx++) {
+                if (!getResult1.containsKey((String)tag1RetList.get(idx))) {
+                    System.out.println(start+"_tag1_result=該当データなし Key=[" + (String)tag1RetList.get(idx) +"]");
+                    errorFlg = true;
+                }
+            }
+
+            // Tag2
+            for (int idx = 0; idx < tag2RetList.size(); idx++) {
+                if (!getResult2.containsKey((String)tag2RetList.get(idx))) {
+                    System.out.println(start+"_tag2_result=該当データなし Key=[" + (String)tag2RetList.get(idx) +"]");
+                    errorFlg = true;
+                }
+            }
+
+            // Tag3
+            for (int idx = 0; idx < tag3RetList.size(); idx++) {
+                if (!getResult3.containsKey((String)tag3RetList.get(idx))) {
+                    System.out.println(start+"_tag3_result=該当データなし Key=[" + (String)tag3RetList.get(idx) +"]");
+                    errorFlg = true;
+                }
+            }
+
+            // Tag4
+            for (int idx = 0; idx < tag4RetList.size(); idx++) {
+                if (!getResult4.containsKey((String)tag4RetList.get(idx))) {
+                    System.out.println(start+"_tag4_result=該当データなし Key=[" + (String)tag4RetList.get(idx) +"]");
+                    errorFlg = true;
+                }
+            }
+
+            long endTime = new Date().getTime();
+            System.out.println("Tag Get Result Method= " + (endTime - startTime) + " milli second");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execGetTagKeysResult - End");
+        return errorFlg;
+    }
+
+
+    private boolean execMultiGetTagKeysResult(OkuyamaClient client, int start, int count) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        OkuyamaResultSet okuyamaResultSet = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execMultiGetTagKeysResult - Start");
+
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
+
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+
+            String[] tag1 = {start+"_" + this.nowCount + "_tag1_m_reslut"};
+            String[] tag2 = {start+"_" + this.nowCount + "_tag1_m_reslut",start+"_" + this.nowCount + "_tag2_m_reslut"};
+            String[] tag3 = {start+"_" + this.nowCount + "_tag1_m_reslut",start+"_" + this.nowCount + "_tag2_m_reslut",start+"_" + this.nowCount + "_tag3_m_reslut"};
+            String[] tag4 = {start+"_" + this.nowCount + "_tag4_m_reslut"};
+            String[] setTag = null;
+
+            int counter = 0;
+            for (int i = start; i < count; i++) {
+                if (counter == 0) {
+                    setTag = tag1;
+                    counter++;
+                } else if (counter == 1) {
+                    setTag = tag2;
+                    counter++;
+                } else if (counter == 2) {
+                    setTag = tag3;
+                    counter++;
+                } else if (counter == 3) {
+                    setTag = tag4;
+                    counter = 0;
+                }
+
+                if (!okuyamaClient.setValue(this.nowCount + "tagsampledatakey_m_reslut_" + new Integer(i).toString(), setTag, this.nowCount + "tagsamplesavedata_m_reslut_" + new Integer(i).toString())) {
+                    System.out.println("Tag GetResult Set - Error=[" + this.nowCount + "tagsampledatakey_m_reslut_" + new Integer(i).toString() + ", " + this.nowCount + "tagsamplesavedata_m_reslut_" + new Integer(i).toString());
+                    errorFlg = true;
+                }
+            }
+
+
+            ArrayList tag1RetList = new ArrayList();
+            ArrayList tag2RetList = new ArrayList();
+            counter = 0;
+            for (int i = start; i < count; i++) {
+                if (counter == 0) {
+
+                    tag2RetList.add(this.nowCount + "tagsampledatakey_m_reslut_" + new Integer(i).toString());
+                    counter++;
+                } else if (counter == 1) {
+
+                    tag1RetList.add(this.nowCount + "tagsampledatakey_m_reslut_" + new Integer(i).toString());
+                    tag2RetList.add(this.nowCount + "tagsampledatakey_m_reslut_" + new Integer(i).toString());
+                    counter++;
+                } else if (counter == 2) {
+
+                    tag1RetList.add(this.nowCount + "tagsampledatakey_m_reslut_" + new Integer(i).toString());
+                    tag2RetList.add(this.nowCount + "tagsampledatakey_m_reslut_" + new Integer(i).toString());
+                    counter++;
+                } else if (counter == 3) {
+
+                    tag2RetList.add(this.nowCount + "tagsampledatakey_m_reslut_" + new Integer(i).toString());
+                    counter = 0;
+                }
+            }
+
+            HashMap getResult1 = new HashMap();
+            HashMap getResult2 = new HashMap();
+            HashMap getResult3 = new HashMap();
+            HashMap getResult4 = new HashMap();
+            String[] keys = null;
+            long startTime = new Date().getTime();
+            String[] andTestTag1 = {start+"_" + this.nowCount + "_tag1_m_reslut", start+"_" + this.nowCount + "_tag2_m_reslut"};
+            okuyamaResultSet = okuyamaClient.getMultiTagKeysResult(andTestTag1);
+
+            if (okuyamaResultSet != null) {
+                // データ有り
+                while (okuyamaResultSet.next()) {
+                    getResult1.put(okuyamaResultSet.getKey(), okuyamaResultSet.getValue());
+                }
+                okuyamaResultSet.close();
+                if (getResult1.size() != tag1RetList.size()) {
+                    System.out.println(start+"tag1&tag2_reslut=データ数異常");
+                    errorFlg = true;
+                }
+            } else {
+                System.out.println(start+"tag1&tag2_reslut=データなし");
+                errorFlg = true;
+            }
+
+
+            String[] orTestTag2 = {start+"_" + this.nowCount + "_tag1_m_reslut", start+"_" + this.nowCount + "_tag2_m_reslut", start+"_" + this.nowCount + "_tag4_m_reslut"};
+            okuyamaResultSet = okuyamaClient.getMultiTagKeysResult(orTestTag2, false);
+
+            if (okuyamaResultSet != null) {
+                // データ有り
+                while (okuyamaResultSet.next()) {
+                    getResult2.put(okuyamaResultSet.getKey(), okuyamaResultSet.getValue());
+                }
+                okuyamaResultSet.close();
+                if (getResult2.size() != tag2RetList.size()) {
+                    System.out.println(start+"tag1&tag2&tag4_reslut=データ数異常");
+                    errorFlg = true;
+                }
+
+            } else {
+                System.out.println(start+"tag1&tag2&tag4_reslut=データなし");
+                errorFlg = true;
+            }
+
+
+
+            String[] andTestTag3 = {start+"_" + this.nowCount + "_tag2_m_reslut", start+"_" + this.nowCount + "_tag3_m_reslut", start+"_" + this.nowCount + "_tag4_m_reslut"};
+            okuyamaResultSet = okuyamaClient.getMultiTagKeysResult(andTestTag3, true);
+
+            if (okuyamaResultSet != null) {
+                // データ有り
+
+                errorFlg = true;
+                while (okuyamaResultSet.next()) {
+                    System.out.println(start+"tag2_tag3_tag4_reslut=データあり");
+                    System.out.println(okuyamaResultSet.getKey());
+                }
+                okuyamaResultSet.close();
+            }
+
+
+
+
+            // 検証
+            // Andの1番目
+            for (int idx = 0; idx < tag1RetList.size(); idx++) {
+                if (!getResult1.containsKey((String)tag1RetList.get(idx))) {
+                    System.out.println(start+"AND_1=該当データなし Key=[" + (String)tag1RetList.get(idx) +"]");
+                    errorFlg = true;
+                }
+            }
+
+            // Tag2
+            // Orの1番目
+            for (int idx = 0; idx < tag2RetList.size(); idx++) {
+                if (!getResult2.containsKey((String)tag2RetList.get(idx))) {
+                    System.out.println(start+"Or_1=該当データなし Key=[" + (String)tag2RetList.get(idx) +"]");
+                    errorFlg = true;
+                }
+            }
+
+
+            long endTime = new Date().getTime();
+            System.out.println("Tag Get Result Method= " + (endTime - startTime) + " milli second");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execMultiGetTagKeysResult - End");
+        return errorFlg;
+    }
+
+
+
 }

@@ -56,7 +56,16 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
 
     private String nowValue = null;
 
+    private boolean dataNull = false;
 
+    /**
+     * コンストラクタ.<br>
+     * データなし.<br>
+     *
+     */ 
+    public OkuyamaMultiTagKeysResultSet() {
+        this.dataNull = true;
+    }
 
     /**
      * コンストラクタ.<br>
@@ -117,6 +126,7 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
 
     public boolean next() throws OkuyamaClientException {
 
+        if (this.dataNull) return false;
         try {
             while (true) {
                 if (this.keyValueQueue.size() > 0) {
