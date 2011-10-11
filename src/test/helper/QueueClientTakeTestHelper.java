@@ -50,7 +50,7 @@ public class QueueClientTakeTestHelper extends AbstractHelper {
         try{
             System.out.println("Queue Take Test Start QueueName [" + queueName + "]");
             long start = System.nanoTime();
-            for (int idx = 0; idx < 50000; idx++) {
+            /*for (int idx = 0; idx < 50000; idx++) {
 
 
 
@@ -64,7 +64,7 @@ public class QueueClientTakeTestHelper extends AbstractHelper {
                         if (tmpUpdate[0].equals("true")) break;
                     }
                 }
-            }
+            }*/
 
             while (true) {
 
@@ -77,8 +77,8 @@ public class QueueClientTakeTestHelper extends AbstractHelper {
                     break;
                 }
             }
-            String[] tmp = queueClient.getValue("key");
-            System.out.println("IncrVal[" + tmp[1] + "]");
+            //String[] tmp = queueClient.getValue("key");
+            //System.out.println("IncrVal[" + tmp[1] + "]");
             queueClient.close();
             long end = System.nanoTime();
             System.out.println("Queue Take Test Take End Data Count [" + super.sizeHelperShareParam() + "]");

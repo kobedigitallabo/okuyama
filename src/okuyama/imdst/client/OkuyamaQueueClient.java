@@ -140,7 +140,7 @@ public class OkuyamaQueueClient extends OkuyamaClient {
 
                 // 値が取れた場合と取得できない場合で処理を分岐
                 if (queueValueRet[0].equals("true")) {
-
+                    
                     // 取得データが終了データの場合は無視
                     if (queueValueRet[1].equals(QUEUE_TAKE_END_VALUE)) {
 
@@ -179,8 +179,17 @@ public class OkuyamaQueueClient extends OkuyamaClient {
 
                         // 利用を確定
                         // Queueの取得ポイントを更新する
-                        Object[] queueTakePointUpdateRet = super.incrValue(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName, 1);
-                        if (!queueTakePointUpdateRet[0].equals(new Boolean(true))) throw new OkuyamaClientException("Queue Take Point Update Error");
+                        String[] checkNowQueuePoint = super.getValueVersionCheck(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName);
+                        if (checkNowQueuePoint[0].equals("true")) {
+                            long checkNowQueuePointLong = new Long(checkNowQueuePoint[1]).longValue();
+                            if (queuePoint == checkNowQueuePointLong) {
+                                checkNowQueuePointLong = checkNowQueuePointLong + 1;
+                                Object[] queueTakePointUpdateRet = super.setValueVersionCheck(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName, new Long(checkNowQueuePointLong).toString(), checkNowQueuePoint[2]);
+                            }
+                        } else {
+                            throw new OkuyamaClientException("Queue Take Point Update Error");
+                        }
+
 
                         ret = queueValueRet[1];
                         loopFlg = false;
