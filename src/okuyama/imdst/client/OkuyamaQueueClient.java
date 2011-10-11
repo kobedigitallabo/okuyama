@@ -166,7 +166,7 @@ public class OkuyamaQueueClient extends OkuyamaClient {
                             }
                             nowContinueCount = 0;
                         }
-        
+
                         if (System.currentTimeMillis() > endTime) return null;
                         Thread.sleep(15);
                         nowContinueCount++;

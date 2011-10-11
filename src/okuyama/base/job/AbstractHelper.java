@@ -68,7 +68,7 @@ abstract public class AbstractHelper  implements Runnable{
      * Helper同士で値やり取りを行う領域.<br>
      * 一度登録した値はHelperが終了するまで維持される.<br>
      */
-    private static ConcurrentHashMap helperParamShareMap = new ConcurrentHashMap(1024, 512, 1024);
+    protected static ConcurrentHashMap helperParamShareMap = new ConcurrentHashMap(1024, 512, 1024);
 
     // 呼び出し時に直接渡すパラメータ
     private Object[] parameters = null;
@@ -387,6 +387,19 @@ abstract public class AbstractHelper  implements Runnable{
         return null;
     }
 
+
+    /**
+     * Helper間で共有する値の現在の総数を返す.<br>
+     * 
+     * @return int 値
+     */
+    public int sizeHelperShareParam() {
+        System.out.println(helperParamShareMap);
+        if (helperParamShareMap != null) {
+            return helperParamShareMap.size();
+        } 
+        return -1;
+    }
 
     /**
      * Helper用のパラメータ設定.<br>

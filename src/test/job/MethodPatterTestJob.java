@@ -130,6 +130,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
                         if (execMethods[i].equals("getmultitagkeysresult")) 
                             retMap.put("getmultitagkeysresult", execMultiGetTagKeysResult(okuyamaClient, start, count));
+
                     }
 
                     System.out.println("ErrorMap=" + retMap.toString());
