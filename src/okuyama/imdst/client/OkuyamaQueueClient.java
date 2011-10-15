@@ -4,6 +4,46 @@ package okuyama.imdst.client;
 /**
  * MasterNodeと通信を行うプログラムインターフェース<br>
  * okuyamaを利用してキュー機構を実現するClient<br>
+ * 利用手順としては<br>
+ * 1.MasterNodeへ接続<br>
+ * 2.createQueueSpaceメソッドで任意の名前でQueue領域を作成(既に作成済みのQueue領域を利用する場合は作成不要)<br>
+ * 3.putメソッドにデータを登録、もしくはtakeメソッドにて取り出し<br>
+ * 4.利用終了後closeを呼び出す<br>
+ * ※.Queue領域を削除する場合は
+ *<br>
+ * 実装例)<br>
+ *-----------------------------------------------------------<br>
+ *&nbsp;&nbsp;String[] masterNodeInfos = {"127.0.0.1:8888"};<br>
+ *&nbsp;&nbsp;OkuyamaQueueClient queueClient = new OkuyamaQueueClient();<br>
+ *&nbsp;&nbsp;queueClient.setConnectionInfos(masterNodeInfos);<br>
+ *&nbsp;&nbsp;// 接続<br>
+ *&nbsp;&nbsp;queueClient.autoConnect();<br>
+ *&nbsp;&nbsp;// Queue領域を作成<br>
+ *&nbsp;&nbsp;if(queueClient.createQueueSpace("QueueNameXXX1")) {<br>
+ *&nbsp;&nbsp;&nbsp;&nbsp;System.out.println("Create - Success");<br>
+ *&nbsp;&nbsp;} else {<br>
+ *&nbsp;&nbsp;&nbsp;&nbsp;System.out.println("Create - Error");<br>
+ *&nbsp;&nbsp;}<br>
+ *<br>
+ *&nbsp;&nbsp;// Queue領域名"QueueNameXXX1"にデータを登録<br>
+ *&nbsp;&nbsp;if(queueClient.put("QueueNameXXX1", "Data-0001")) {<br>
+ *&nbsp;&nbsp;&nbsp;&nbsp;System.out.println("Put - Success");<br>
+ *&nbsp;&nbsp;} else {<br>
+ *&nbsp;&nbsp;&nbsp;&nbsp;System.out.println("Put - Error");<br>
+ *&nbsp;&nbsp;}<br>
+ *<br>
+ *&nbsp;&nbsp;String takeData = null;<br>
+ *&nbsp;&nbsp;// Queue領域名"QueueNameXXX1"からデータを取得<br>
+ *&nbsp;&nbsp;takeData = queueClient.take("QueueNameXXX1", 10000);<br>
+ *&nbsp;&nbsp;if (takeData != null) {<br>
+ *&nbsp;&nbsp;&nbsp;&nbsp;System.out.println("Data NotFound");<br>
+ *&nbsp;&nbsp;} else {<br>
+ *&nbsp;&nbsp;&nbsp;&nbsp;System.out.println("Take Data = " + takeData);<br>
+ *&nbsp;&nbsp;}<br>
+ *<br>
+ *&nbsp;&nbsp;// 接続を切断<br>
+ *&nbsp;&nbsp;queueClient.close();<br>
+ *-----------------------------------------------------------<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -26,10 +66,11 @@ public class OkuyamaQueueClient extends OkuyamaClient {
 
     /**
      * Queue領域の作成.<br>
+     * 既に領域が存在する場合はエラー<br>
      *
-     * @param queueName 作成Queue名
-     * @retrun boolean 成否
-     * @throw OkuyamaClientException
+     * @param queueName 作成Queue名(上限の長さはOkuyamaClientでのKeyの最大長 - 43byte)
+     * @retrun boolean 成否 (true=作成成功/false=作成失敗)
+     * @throws OkuyamaClientException
      */
     public boolean createQueueSpace(String queueName) throws OkuyamaClientException {
         boolean ret = true;
@@ -48,17 +89,43 @@ public class OkuyamaQueueClient extends OkuyamaClient {
         return ret;
     }
 
+
+    /**
+     * Queue領域を削除する.<br>
+     * 不要なデータも削除するため処理時間が長くなる可能性がある<br>
+     *
+     * @param queueName 削除Queue名
+     * @return boolean true=削除成功/削除失敗
+     * @throws OkuyamaClientException
+     */
     public boolean removeQueueSpace(String queueName) throws OkuyamaClientException {
-        return false;
+        boolean ret = true;
+        try {
+
+            String[] removeIndexRet = super.removeValue(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_INDEX + queueName);
+            if (!removeIndexRet[0].equals("true")) return false;
+
+            long idx = 1;
+            while (true) {
+                String[] removeDataRet = super.removeValue(QUEUE_NAME_PREFIX + QUEUE_NAME_PREFIX_NOW_POINT + queueName + "_" + idx + "_value");
+                if (!removeDataRet[0].equals("true")) break;
+                idx++;
+            }
+        } catch (OkuyamaClientException oce) {
+            throw oce;
+        } catch (Exception e) {
+            throw new OkuyamaClientException(e);
+        }
+        return ret;
     }
 
 
     /**
-     * Queueへの登録.<br>
+     * Queueへのデータ登録.<br>
      *
-     * @param queueName 指定Queue名
+     * @param queueName 登録するQueue名
      * @param data 登録データ
-     * @retrun boolean 成否
+     * @retrun boolean 成否 (true=登録成功/false=登録失敗)
      * @throw OkuyamaClientException
      */
     public boolean put(String queueName, String data) throws OkuyamaClientException {
@@ -95,11 +162,13 @@ public class OkuyamaQueueClient extends OkuyamaClient {
 
 
     /**
-     * Queueから取得.<br>
+     * Queueからデータ取得.<br>
+     * 指定したQueue名が存在しない場合はエラー<br>
+     * Queueにデータが存在しない場合は30秒待った後にnullが返る<br>
      *
-     * @param queueName 指定Queue名
+     * @param queueName 取得対象のQueue名
      * @return 取得データ(指定時間以内に取得できない場合はnull)
-     * @throw OkuyamaClientException
+     * @throws OkuyamaClientException
      */
     public String take(String queueName) throws OkuyamaClientException {
         return take(queueName, 1000 * 30);
@@ -107,12 +176,14 @@ public class OkuyamaQueueClient extends OkuyamaClient {
 
 
     /**
-     * Queueから取得.<br>
+     * Queueからデータ取得.<br>
+     * 指定したQueue名が存在しない場合はエラー<br>
+     * Queueにデータが存在しない場合の待ち時間を設定出来る<br>
      *
-     * @param queueName 指定Queue名
+     * @param queueName 取得対象のQueue名
      * @param timeOut 待ち受けタイムアウト時間(ミリ秒/単位)
      * @return 取得データ(指定時間以内に取得できない場合はnull)
-     * @throw OkuyamaClientException
+     * @throws OkuyamaClientException
      */
     public String take(String queueName, long timeOut) throws OkuyamaClientException {
 

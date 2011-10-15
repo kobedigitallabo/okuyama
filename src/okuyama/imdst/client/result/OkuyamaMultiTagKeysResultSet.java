@@ -98,16 +98,24 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
 
                 String[] tmpTagIndexList = (String[])this.tagIndexListMap.get(this.tagStrList[idx]);
 
-                for (int tmpIdx = 0; tmpIdx < tmpTagIndexList.length; tmpIdx++) {
-                    Map equalTagGroupMap = (Map)this.getIndexMap.get(new Integer(Integer.parseInt(tmpTagIndexList[tmpIdx]) / buketMaxLinkGroupSize));
-                    if (equalTagGroupMap != null) {
-                        equalTagGroupMap.put(this.tagStrList[idx], tmpTagIndexList[tmpIdx]);
-                    } else {
-                        equalTagGroupMap = new HashMap(8);
-                        equalTagGroupMap.put(this.tagStrList[idx], tmpTagIndexList[tmpIdx]);
+                if (tmpTagIndexList == null) {
+                    // ANDの場合はどれかのTagの情報がとれないだけでしゅう終了
+                    if (this.margeType) {
+                        this.getIndexMap.clear();
+                        break;
                     }
-                    
-                    this.getIndexMap.put(new Integer(Integer.parseInt(tmpTagIndexList[tmpIdx]) / buketMaxLinkGroupSize), equalTagGroupMap);
+                } else {
+                    for (int tmpIdx = 0; tmpIdx < tmpTagIndexList.length; tmpIdx++) {
+                        Map equalTagGroupMap = (Map)this.getIndexMap.get(new Integer(Integer.parseInt(tmpTagIndexList[tmpIdx]) / buketMaxLinkGroupSize));
+                        if (equalTagGroupMap != null) {
+                            equalTagGroupMap.put(this.tagStrList[idx], tmpTagIndexList[tmpIdx]);
+                        } else {
+                            equalTagGroupMap = new HashMap(8);
+                            equalTagGroupMap.put(this.tagStrList[idx], tmpTagIndexList[tmpIdx]);
+                        }
+                        
+                        this.getIndexMap.put(new Integer(Integer.parseInt(tmpTagIndexList[tmpIdx]) / buketMaxLinkGroupSize), equalTagGroupMap);
+                    }
                 }
             }
             
@@ -227,8 +235,7 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
                                 if (bucketKeysRet[0].equals("true")) {
                                     String[] keysStrList = (String[])bucketKeysRet[1];
                                     for (int buketIdx = 0; buketIdx < keysStrList.length; buketIdx++) {
-
-                                                                    
+                      
                                         margeKeyMap.put(keysStrList[buketIdx], null);
                                     }
                                 }

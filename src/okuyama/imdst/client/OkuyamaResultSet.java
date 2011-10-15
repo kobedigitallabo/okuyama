@@ -3,17 +3,17 @@ package okuyama.imdst.client;
 /**
  * OkuyamaClientが一度のリクエストでは取得しきれないような<br>
  * 大量のデータを扱う場合に利用するResultSetクラス.<br>
- * 以下のような構文にてデータを取得する
- * 以下は、Tagを利用して全ての紐付くKeyとValueを出力している
- * -----------------------------------------------------------------
- * OkuyamaResultSet resultSet = client.getTagKeysResult(tagStr);
- * 
- * while(resultSet.next()) {
- *     System.out.println("Key=" + (Object)resultSet.getKey());
- *     System.out.println("Value=" + (Object)resultSet.getValue());
- * }
- * resultSet.close();
- * ------------------------------------------------------------------
+ * 以下のような構文にてデータを取得する<br>
+ * 以下は、Tagを利用して全ての紐付くKeyとValueを出力している<br>
+ * -----------------------------------------------------------------<br>
+ * OkuyamaResultSet resultSet = client.getTagKeysResult(tagStr);<br>
+ * <br>
+ * while(resultSet.next()) {<br>
+ *     System.out.println("Key=" + (Object)resultSet.getKey());<br>
+ *     System.out.println("Value=" + (Object)resultSet.getValue());<br>
+ * }<br>
+ * resultSet.close();<br>
+ * ------------------------------------------------------------------<br>
  * 
  *
  * @author T.Okuyama

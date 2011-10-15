@@ -5998,7 +5998,7 @@ public class OkuyamaClient {
     /**
      * MasterNodeからTagを複数を指定することで紐付くKeyが取得可能な、OkuyamaResultSetを取得する.<br>
      * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
-     * またANDとORを指定可能であり、getMultiTagKeysと同じように動くが、こちらを使えば一度にメモリ上に展開出来ないような、<br>
+     * 指定したTagはANDの扱いでデータは選別される。getMultiTagKeysと同じように動くが、こちらを使えば一度にメモリ上に展開出来ないような、<br>
      * 大量のTagに紐付くデータを対象にする場合に向いている。少量のデータに対して複数Tagで取得したい場合は、従来通りgetMultiTagKeysを使うことを推奨する.<br>
      *
      * @param tagList Tag値の配列
@@ -6152,16 +6152,6 @@ public class OkuyamaClient {
         }
         return okuyamaResultSet;
     }
-
-
-
-
-
-
-
-
-
-
 
 
     /**
