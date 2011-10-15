@@ -59,7 +59,6 @@ public interface OkuyamaResultSet {
      * このResultSetが終了しているかを確認する.<br>
      *
      * @return boolean true=既に終了している false=終了していない
-     * @throws OkuyamaClientException なんだかの理由でリソースの終了確認に失敗した場合
      */
-    public boolean isClose() throws OkuyamaClientException;
+    public boolean isClose();
 }

@@ -196,7 +196,7 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
 
     }
 
-    public boolean isClose(){
+    public boolean isClose() {
         return this.closeFlg;
     }
 }
