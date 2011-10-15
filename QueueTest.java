@@ -61,6 +61,13 @@ public class QueueTest {
                         break;
                     }
                 }
+            } else if (methodType.equals("remove")) {
+
+                if(queueClient.removeQueueSpace(args[2])) {
+                    System.out.println("Remove Queue Success QueueName=[" + args[2] + "]");
+                } else {
+                    System.out.println("Remove Queue Error QueueName=[" + args[2] + "]");
+                }
             }
 
         } catch (Exception e) {
