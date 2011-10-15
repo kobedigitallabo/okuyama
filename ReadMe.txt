@@ -13,8 +13,8 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 [[リリース Ver 0.9.0 - (2011/10/XX)]]
 ■Hadoop対応
 ■getMultiTagKeys
-■getTagKeyResult
-■getMultiTagKeyResult ※未
+■getTagKeysResult
+■getMultiTagKeysResult
 ■PHPクライアントの以下のメソッド対応 ※未
 getMultiValue
 getTagValues
