@@ -5925,7 +5925,7 @@ public class OkuyamaClient {
      * @param cehckType 範囲条件を指定する先を指定 1=Key, 2=Value, 3=両方
      * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
      * @throws OkuyamaClientException
-     */
+     */ 
     public OkuyamaResultSet getTagKeysResult(String tagStr, double[] targetRange, int cehckType) throws OkuyamaClientException {
         return this.getTagKeysResult(tagStr, null, targetRange, null, cehckType);
     }
