@@ -34,6 +34,12 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
 
     protected String encoding = null;
 
+    protected double[] rangeSet = null;
+
+    protected String matchPatternStr = null;
+
+    protected int matchType = -1;
+
     private int nowIndex = 0;
 
     private boolean closeFlg = true;
@@ -53,7 +59,7 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
 
     /**
      * コンストラクタ.<br>
-     * データが存在しない場合
+     * データが存在しない場合に利用<br>
      *
      */ 
     public OkuyamaTagKeysResultSet() {
@@ -63,7 +69,7 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
 
     /**
      * コンストラクタ.<br>
-     * データが存在する場合
+     * データが存在する場合に利用<br>
      *
      * @param client
      * @param tagStr
@@ -87,18 +93,120 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
         } catch (Exception e){}
     }
 
+
+    /**
+     * コンストラクタ.<br>
+     * データが存在する場合に利用<br>
+     *
+     * @param client
+     * @param tagStr
+     * @param indexList
+     * @param encoding
+     * @param rangeSet
+     * @param matchType 1=key, 2=value, 3=key&value
+     */ 
+    public OkuyamaTagKeysResultSet(OkuyamaClient client, String tagStr, String[] indexList, String encoding, double[] rangeSet, int matchType) {
+        this(client, tagStr, indexList, encoding);
+        this.rangeSet = rangeSet;
+        this.matchType = matchType;
+    }
+
+
+    /**
+     * コンストラクタ.<br>
+     * データが存在する場合に利用<br>
+     *
+     * @param client
+     * @param tagStr
+     * @param indexList
+     * @param encoding
+     * @param matchPatternStr
+     * @param matchType 1=key, 2=value, 3=key&value
+     */ 
+    public OkuyamaTagKeysResultSet(OkuyamaClient client, String tagStr, String[] indexList, String encoding, String matchPatternStr, int matchType) {
+        this(client, tagStr, indexList, encoding);
+        this.matchPatternStr = matchPatternStr;
+        this.matchType = matchType;
+    }
+
+
     public boolean next() throws OkuyamaClientException {
 
         if (this.dataNull) return false;
         try {
             while (true) {
 
-                if (this.keyValueQueue.size() > 0) {
-                    String[] keyValue = (String[])this.keyValueQueue.take();
-                    this.nowKey = keyValue[0];
-                    this.nowValue = keyValue[1];
-                    return true;
+                if (this.matchType == -1) {
+                    if (this.keyValueQueue.size() > 0) {
+                        String[] keyValue = (String[])this.keyValueQueue.take();
+                        this.nowKey = keyValue[0];
+                        this.nowValue = keyValue[1];
+                        return true;
+                    }
+                } else if (this.matchPatternStr != null) {
+
+                    while (true) {
+                        if (this.keyValueQueue.size() > 0) {
+                            String[] keyValue = (String[])this.keyValueQueue.take();
+                            this.nowKey = keyValue[0];
+                            this.nowValue = keyValue[1];
+
+                            if (matchType == 1) {
+                                if (this.nowKey == null || !this.nowKey.matches(this.matchPatternStr)) {
+                                    continue;
+                                }
+                            } else if (matchType == 2) {
+                                if (this.nowValue == null || !this.nowValue.matches(this.matchPatternStr)) {
+                                    continue;
+                                }
+                            } else if (matchType == 3) {
+                                if (this.nowKey == null || 
+                                        this.nowValue == null || 
+                                            !this.nowKey.matches(this.matchPatternStr) || 
+                                                !this.nowValue.matches(this.matchPatternStr)) {
+                                    continue;
+                                }
+                            }
+                            return true;
+                        } else {
+                            break;
+                        }
+                    }
+                } else if (rangeSet != null) {
+                    while (true) {
+                        if (this.keyValueQueue.size() > 0) {
+                            String[] keyValue = (String[])this.keyValueQueue.take();
+                            this.nowKey = keyValue[0];
+                            this.nowValue = keyValue[1];
+
+                            if (matchType == 1) {
+
+                                double check = Double.parseDouble(this.nowKey);
+                                if (rangeSet[0] > check || rangeSet[1] < check) {
+                                    continue;
+                                }
+                            } else if (matchType == 2) {
+                                double check = Double.parseDouble(this.nowValue);
+                                if (rangeSet[0] > check || rangeSet[1] < check) {
+                                    continue;
+                                }
+                            } else if (matchType == 3) {
+                                double checkKey = Double.parseDouble(this.nowKey);
+                                double checkVal = Double.parseDouble(this.nowValue);
+                                if (rangeSet[0] > checkKey || 
+                                        rangeSet[1] < checkKey || 
+                                            rangeSet[0] > checkVal || 
+                                                rangeSet[1] < checkVal) {
+                                    continue;
+                                }
+                            }
+                            return true;
+                        } else {
+                            break;
+                        }
+                    }
                 }
+
 
                 while (this.keyQueue.size() > 0) {
                     List keys = new ArrayList(maxMultiGetSize);

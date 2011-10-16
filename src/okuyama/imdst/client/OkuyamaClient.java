@@ -5858,9 +5858,8 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public OkuyamaResultSet getTagKeysResult(String tagStr) throws OkuyamaClientException {
-        return this.getTagKeysResult(tagStr, null);
+        return this.getTagKeysResult(tagStr, null, null, null, -1);
     }
-
 
     /**
      * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
@@ -5872,6 +5871,99 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public OkuyamaResultSet getTagKeysResult(String tagStr, String encoding) throws OkuyamaClientException {
+        return this.getTagKeysResult(tagStr, encoding, null, null, -1);
+    }
+
+
+    /**
+     * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagに紐付くKey、Valueのどちらか、もしくは両方が指定した正規表現と一致する値のみ返される<br>
+     * 第3引数にて範囲を適応する先を決定する<br>
+     
+     *
+     * @param tagStr Tag値
+     * @param matchPattern 正規表現文字列(Java標準の記法)　取得するKey、Valueのどちらかもしくは両方がここで指定する正規表現パターンとマッチする場合のみOkuyamaResultSetから取得できる
+     * @param cehckType 正規表現パターンをマッチする先を指定 1=Key, 2=Value, 3=両方
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
+     * @throws OkuyamaClientException
+     */
+    public OkuyamaResultSet getTagKeysResult(String tagStr, String matchPattern, int cehckType) throws OkuyamaClientException {
+        return this.getTagKeysResult(tagStr, null, null, matchPattern, cehckType);
+    }
+
+
+    /**
+     * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagに紐付くKey、Valueのどちらか、もしくは両方が指定した正規表現と一致する値のみ返される<br>
+     * 第3引数にて範囲を適応する先を決定する<br>
+     *
+     * @param tagStr Tag値
+     * @param encoding Valueを復元する際に利用するエンコーディング指定
+     * @param matchPattern 正規表現文字列(Java標準の記法)　取得するKey、Valueのどちらかもしくは両方がここで指定する正規表現パターンとマッチする場合のみOkuyamaResultSetから取得できる
+     * @param cehckType 正規表現パターンをマッチする先を指定 1=Key, 2=Value, 3=両方
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
+     * @throws OkuyamaClientException
+     */
+    public OkuyamaResultSet getTagKeysResult(String tagStr, String matchPattern, int cehckType, String encoding) throws OkuyamaClientException {
+        return this.getTagKeysResult(tagStr, encoding, null, matchPattern, cehckType);
+    }
+
+
+    /**
+     * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagに紐付くKey、Valueのどちらか、もしくは両方が指定した数値の範囲内のみが返される<br>
+     * Tagに紐付く値の範囲検索が可能<br>
+     * 第3引数にて範囲を適応する先を決定する<br>
+     * 適応先の値に数値に変換出来ない値が存在した場合はOkuyamaResultSetのnextメソッド呼び出し時にExceptionが返される<br>
+     
+     *
+     * @param tagStr Tag値
+     * @param targetRange 取得するKey、Valueのどちらかもしくは両方がここで指定する値の範囲内の場合のみOkuyamaResultSetから取得できる
+     * @param cehckType 範囲条件を指定する先を指定 1=Key, 2=Value, 3=両方
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
+     * @throws OkuyamaClientException
+     */
+    public OkuyamaResultSet getTagKeysResult(String tagStr, double[] targetRange, int cehckType) throws OkuyamaClientException {
+        return this.getTagKeysResult(tagStr, null, targetRange, null, cehckType);
+    }
+
+
+    /**
+     * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagに紐付くKey、Valueのどちらか、もしくは両方が指定した数値の範囲内のみが返される<br>
+     * Tagに紐付く値の範囲検索が可能<br>
+     * 第3引数にて範囲を適応する先を決定する<br>
+     * 適応先の値に数値に変換出来ない値が存在した場合はOkuyamaResultSetのnextメソッド呼び出し時にExceptionが返される<br>
+     *
+     * @param tagStr Tag値
+     * @param encoding Valueを復元する際に利用するエンコーディング指定
+     * @param targetRange 取得するKey、Valueのどちらかもしくは両方がここで指定する値の範囲内の場合のみOkuyamaResultSetから取得できる
+     * @param cehckType 範囲条件を指定する先を指定 1=Key, 2=Value, 3=両方
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
+     * @throws OkuyamaClientException
+     */
+    public OkuyamaResultSet getTagKeysResult(String tagStr, double[] targetRange, int cehckType, String encoding) throws OkuyamaClientException {
+        return this.getTagKeysResult(tagStr, encoding, targetRange, null, cehckType);
+    }
+
+
+    /**
+     * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
+     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     *
+     * @param tagStr Tag値
+     * @param encoding Valueを復元する際に利用するエンコーディング指定
+     * @param targetRange 取得するKey、Valueのどちらかもしくは両方がここで指定する値の範囲内の場合のみOkuyamaResultSetから取得できる
+     * @param matchPattern 正規表現文字列(Java標準の記法)　取得するKey、Valueのどちらかもしくは両方がここで指定する正規表現パターンとマッチする場合のみOkuyamaResultSetから取得できる
+     * @param cehckType 取得条件を指定する先を指定 1=Key, 2=Value, 3=両方
+     * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
+     * @throws OkuyamaClientException
+     */
+    private OkuyamaResultSet getTagKeysResult(String tagStr, String encoding, double[] targetRange, String matchPattern, int cehckType) throws OkuyamaClientException {
         OkuyamaResultSet okuyamaResultSet = null;
         String serverRetStr = null;
         String[] serverRet = null;
@@ -5938,7 +6030,13 @@ public class OkuyamaClient {
                         } else {
                             retSetClient.connect(this.initParamServer, this.initParamPort, this.initParamEncoding, this.initParamOpenTimeout, this.initParamConnectionTimeout);
                         }
-                        okuyamaResultSet = new OkuyamaTagKeysResultSet(retSetClient, tagStr, indexList, encoding);
+                        if (cehckType == -1) {
+                            okuyamaResultSet = new OkuyamaTagKeysResultSet(retSetClient, tagStr, indexList, encoding);
+                        } else if (matchPattern != null) {
+                            okuyamaResultSet = new OkuyamaTagKeysResultSet(retSetClient, tagStr, indexList, encoding, matchPattern, cehckType);
+                        } else if (targetRange != null) {
+                            okuyamaResultSet = new OkuyamaTagKeysResultSet(retSetClient, tagStr, indexList, encoding, targetRange, cehckType);
+                        }
                     }
                 } else if(serverRet[1].equals("false")) {
 
@@ -5960,7 +6058,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    okuyamaResultSet = this.getTagKeysResult(tagStr, encoding);
+                    okuyamaResultSet = this.getTagKeysResult(tagStr, encoding, targetRange, matchPattern, cehckType);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -5971,7 +6069,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    okuyamaResultSet = this.getTagKeysResult(tagStr, encoding);
+                    okuyamaResultSet = this.getTagKeysResult(tagStr, encoding, targetRange, matchPattern, cehckType);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -5982,7 +6080,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    okuyamaResultSet = this.getTagKeysResult(tagStr, encoding);
+                    okuyamaResultSet = this.getTagKeysResult(tagStr, encoding, targetRange, matchPattern, cehckType);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
