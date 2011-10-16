@@ -110,7 +110,7 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
         this.rangeSet = rangeSet;
         this.matchType = matchType;
     }
-
+ 
 
     /**
      * コンストラクタ.<br>
