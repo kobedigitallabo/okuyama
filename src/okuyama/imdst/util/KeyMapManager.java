@@ -1742,20 +1742,20 @@ System.out.println("[1]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[1]
                                 targetData = workSplitData[0];
                             }
                             String nowData = new String(BASE64DecoderStream.decode(targetData.getBytes()));
-                            int nowDataInt = 0;
+                            long nowDataLong = 0;
 
                             try {
 
-                                nowDataInt = Integer.parseInt(nowData);
-                                nowDataInt = nowDataInt + calcVal;
-                                if (nowDataInt < 0) nowDataInt = 0; 
-                                setDataStr = new Long(nowDataInt).toString();
+                                nowDataLong = Long.parseLong(nowData);
+                                nowDataLong = nowDataLong + calcVal;
+                                if (nowDataLong < 0) nowDataLong = 0; 
+                                setDataStr = new Long(nowDataLong).toString();
                             } catch (Exception e){
 
                                 if (calcVal > 0) {
                                     setDataStr = new Long(calcVal).toString();
                                 } else {
-                                    setDataStr = new Long(nowDataInt).toString();
+                                    setDataStr = new Long(nowDataLong).toString();
                                 }
                             }
 
