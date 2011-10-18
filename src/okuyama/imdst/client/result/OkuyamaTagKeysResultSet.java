@@ -40,6 +40,8 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
 
     protected int matchType = -1;
 
+    protected  UserDataFilter filter = null;
+
     private int nowIndex = 0;
 
     private boolean closeFlg = true;
@@ -74,6 +76,7 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
      * @param client
      * @param tagStr
      * @param indexList
+     * @param encoding
      */ 
     public OkuyamaTagKeysResultSet(OkuyamaClient client, String tagStr, String[] indexList, String encoding) {
         this.client = client;
@@ -130,18 +133,61 @@ public class OkuyamaTagKeysResultSet implements OkuyamaResultSet {
     }
 
 
+    /**
+     * コンストラクタ.<br>
+     * データが存在する場合に利用<br>
+     *
+     * @param client
+     * @param tagStr
+     * @param indexList
+     * @param encoding
+     * @param filter
+     */ 
+    public OkuyamaTagKeysResultSet(OkuyamaClient client, String tagStr, String[] indexList, String encoding, UserDataFilter filter) {
+        this.client = client;
+        this.tagStr = tagStr;
+        this.indexList = indexList;
+        this.encoding = encoding;
+        this.filter = filter;
+        this.indexQueue = new LinkedBlockingQueue();
+        this.keyQueue = new LinkedBlockingQueue();
+        this.keyValueQueue = new LinkedBlockingQueue();
+        this.closeFlg = false;
+        try {
+
+            for (int idx = 0; idx < this.indexList.length; idx++) {
+                //System.out.println(this.indexList[idx]);
+                this.indexQueue.put(this.indexList[idx]);
+            }
+        } catch (Exception e){}
+    }
+
+
     public boolean next() throws OkuyamaClientException {
 
         if (this.dataNull) return false;
         try {
             while (true) {
 
-                if (this.matchType == -1) {
+                if (this.matchType == -1 && this.filter == null) {
                     if (this.keyValueQueue.size() > 0) {
                         String[] keyValue = (String[])this.keyValueQueue.take();
                         this.nowKey = keyValue[0];
                         this.nowValue = keyValue[1];
                         return true;
+                    }
+                } else if (this.filter != null) {
+                    while (true) {
+                        if (this.keyValueQueue.size() > 0) {
+                            String[] keyValue = (String[])this.keyValueQueue.take();
+                            this.nowKey = keyValue[0];
+                            this.nowValue = keyValue[1];
+
+                            if (!this.filter.filter(this.nowKey, this.nowValue)) continue;
+                            return true;
+                        } else {
+                            break;
+                        }
                     }
                 } else if (this.matchPatternStr != null) {
 
