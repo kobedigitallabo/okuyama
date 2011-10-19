@@ -440,6 +440,24 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } else if (args[0].equals("3.2")) {
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagあり)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] setTag = args[3].split(" ");
+
+                int counter = 0;
+                String keyStr = null;
+
+                long start = new Date().getTime();
+                for (int idx = 0; idx < Integer.parseInt(args[4]); idx++)  {
+                    okuyamaClient.setValue(new Integer(idx).toString(), setTag, new Integer(idx).toString());
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
             } else if (args[0].equals("4")) {
 
                 int port = Integer.parseInt(args[2]);
@@ -1120,6 +1138,26 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();  
+            } else if (args[0].equals("24.2")) {
+
+                // OkuyamaClientを使用してデータの加算を行う
+                int port = Integer.parseInt(args[2]);
+
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                Object[] ret = okuyamaClient.incrValue(args[3], Integer.parseInt(args[4]));
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println(ret[1]);
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
             } else if (args[0].equals("25")) {
 
                 // OkuyamaClientを使用してデータの減算を行う
@@ -1665,6 +1703,35 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } else if (args[0].equals("34.2")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用して複数Tag指定でKeyとValueのMapを取得
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                double[] rangeSet = {Double.parseDouble(args[4]), Double.parseDouble(args[5])};
+                OkuyamaResultSet okuyamaResultSet = okuyamaClient.getTagKeysResult(args[3], rangeSet, Integer.parseInt(args[6]));
+
+                if (okuyamaResultSet == null) {
+                    System.out.println(okuyamaResultSet);
+                } else {
+                    int counter = 0;
+                    while(okuyamaResultSet.next()) {
+                        counter++;
+                        //System.out.println("Key=" + (String)okuyamaResultSet.getKey());
+                        //System.out.println("Value=" + (String)okuyamaResultSet.getValue());
+                    }
+                    okuyamaResultSet.close();
+
+                    System.out.println("ResultSize = [" + counter + "]");
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+
             } else if (args[0].equals("35")) {
                 
                 int port = Integer.parseInt(args[2]);
