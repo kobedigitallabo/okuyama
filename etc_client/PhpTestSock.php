@@ -54,7 +54,26 @@
       if(!$client->setValue($argv[4], $argv[5])) {
         print_r("Regist Error");
       }
+    } else if ($argv[1] === "1.2") {
 
+      // ƒf[ƒ^‚ð—LŒøŠúŒÀ•t‚«‚Å“o˜^
+      if(!$client->setValue($argv[4], $argv[5], null, $argv[6])) {
+
+        print_r("Regist Error");
+      } else {
+
+        sleep(intval($argv[6]));
+        sleep(1);
+        $ret = $client->getValue($argv[4]);
+        if ($ret[0] === "true") {
+          print_r("ExpireData Get Error");
+          print_r($ret[1]);
+          print_r("\r\n");
+        } else if ($ret[0] === "false") {
+          print_r("ExpireData Get OK");
+          print_r("\r\n");
+        }
+      }
     } else if ($argv[1] === "42") {
 
       // ƒf[ƒ^‚ðˆø”‚Ì‰ñ”•ª“o˜^
@@ -143,6 +162,29 @@
         print_r("There is no data");
         print_r("\r\n");
       }
+    } else if ($argv[1] === "2.5") {
+      // Žw’è‚ÌKey’l‚Åƒf[ƒ^‚ðŽæ“¾
+      // —LŒøŠúŒÀ‚ðŽ©“®“I‚ÉXV‚·‚é
+      // ƒf[ƒ^‚ð—LŒøŠúŒÀ•t‚«‚Å“o˜^
+      if(!$client->setValue($argv[4], $argv[5], null, $argv[6])) {
+
+        print_r("Regist Error");
+      } else {
+
+        sleep(intval($argv[6]) - 1);
+        $ret = $client->getValueAndUpdateExpireTime($argv[4]);
+        sleep(1);
+        $ret = $client->getValue($argv[4]);
+        if ($ret[0] === "false") {
+          print_r("ExpireTimeUpdateGet Error");
+          print_r($ret[1]);
+          print_r("\r\n");
+        } else if ($ret[0] === "true") {
+          print_r("ExpireTimeUpdateGet OK");
+          print_r("\r\n");
+        }
+      }
+
     } else if ($argv[1] === "3") {
 
       // ƒf[ƒ^‚ðˆø”‚Ì‰ñ”•ª“o˜^(Tag‚ð“o˜^)
@@ -279,9 +321,23 @@
       var_dump($ret);
 
     } else if ($argv[1] === "10") {
-      // ƒf[ƒ^‚ðˆø”‚Ì‰ñ”•ª“o˜^
+      // ƒf[ƒ^‚ðˆø”‚ÌV‹K“o˜^
       var_dump($client->setNewValue($argv[4], $argv[5]));
 
+    } else if ($argv[1] === "10.1") {
+      // ƒf[ƒ^‚ðˆø”‚ÌV‹K“o˜^-—LŒøŠúŒÀ‚ ‚è
+      var_dump($client->setNewValue($argv[4], $argv[5], null, $argv[6]));
+      sleep($argv[6]);
+      sleep(1);
+      $ret = $client->getValue($argv[4]);
+      if ($ret[0] === "true") {
+        print_r("ExpireNewData Get Error");
+        print_r($ret[1]);
+        print_r("\r\n");
+      } else if ($ret[0] === "false") {
+        print_r("ExpireNewData Get OK");
+        print_r("\r\n");
+      }
     } else if ($argv[1] === "11") {
       // gets
       var_dump($client->getValueVersionCheck($argv[4]));

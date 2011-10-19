@@ -2,6 +2,8 @@ rem キー値を自動でインクリメントして10個登録
 php PhpTestSock.php 1 127.0.0.1 8888 10
 rem キー値をkey_aでバリュー値value_bを登録
 php PhpTestSock.php 1.1 127.0.0.1 8888 key_a value_b
+rem キー値をkey_aでバリュー値value_cを登録-有効期限テスト
+php PhpTestSock.php 1.2 127.0.0.1 8888 key_c value_c 3
 rem キー値を自動でインクリメントして10個valueを取得
 php PhpTestSock.php 2 127.0.0.1 8888 10
 rem キー値をkey_aでvalueを取得
@@ -10,6 +12,8 @@ rem キー値をkey_aで取得したvalueに対してJavaScriptを実行
 php PhpTestSock.php 2.3 127.0.0.1 8888 key_a "var dataValue; var retValue = dataValue.replace('b', 'dummy'); var execRet = '1';"
 rem キー値をkey_aで取得したvalueに対してJavaScriptを実行
 php PhpTestSock.php 2.4 127.0.0.1 8888 key_a "var dataValue; var dataKey; var retValue = dataValue.replace('b', 'dummy'); if(dataKey == 'key_a') {var execRet = '2'} else {var execRet = '1'}"
+rem キー値をkey_aでバリュー値value_dを登録-有効期限設定を行って有効期限到達前に更新での取得
+php PhpTestSock.php 2.5 127.0.0.1 8888 key_d value_d 3
 rem Tag値を自動で変えて、KeyとValueを10回登録
 php PhpTestSock.php 3 127.0.0.1 8888 10
 rem Tag値をtag1を指定して、tag1に属するKey値を取得(Key値存在指定有り(true))
@@ -22,8 +26,10 @@ rem 分散ロックを使用する
 php PhpTestSock.php 9 127.0.0.1 8888 key_a 10 5
 rem 値の新規登録をおこなう
 php PhpTestSock.php 10 127.0.0.1 8888 newkey newvalue
-rem gets
+rem get
 php PhpTestSock.php 11 127.0.0.1 8888 newkey
+rem 値の新規登録をおこなう-有効期限あり
+php PhpTestSock.php 10.1 127.0.0.1 8888 newkeyT newvalueT 3
 rem cas
 php PhpTestSock.php 12 127.0.0.1 8888 newkey value_cas 0
 rem cas Miss

@@ -53,6 +53,9 @@ class OkuyamaClient {
 
     private $errormsg;
 
+    private $okuyamaVersionNo = 0.00;
+
+
     /**
      * MasterNodeの接続情報を設定する.<br>
      * 本メソッドでセットし、autoConnect()メソッドを<br>
@@ -184,7 +187,7 @@ class OkuyamaClient {
 
     /**
      * Clientを初期化する.<br>
-   * 今のところは最大保存サイズの初期化のみ<br>
+   * 今のところは最大保存サイズの初期化とバージョンの取得<br>
      *
      * @return boolean true:開始成功 false:開始失敗
      * @throws Exception
@@ -240,6 +243,15 @@ class OkuyamaClient {
                 }
             }
 
+            // バージョン取得
+            $versionRet = $this->getOkuyamaVersion();
+
+            if ($versionRet[0] === "true") {
+
+                $versionWork = explode("okuyama-", $versionRet[1]);
+
+                $this->okuyamaVersionNo = (double)$versionWork[1];
+            }
         } catch (OkuyamaClientException $oe) {
             throw $oe;
         } catch (Exception $e) {
@@ -253,6 +265,71 @@ class OkuyamaClient {
             }
         }
     return $ret;
+    }
+
+    /**
+     * 接続先のokuyamaのバージョンを返す<br>
+     *
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):okuyamaのバージョン文字列
+     * @throws OkuyamaClientException
+     */
+    public function getOkuyamaVersion()  {
+        $ret = array(); 
+
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+
+        try {
+            // エラーチェック
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = $serverRequestBuf . "999";
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if ($serverRet[0] === "999") {
+                // 取得
+                $ret[0] = "true";
+                $ret[1] = $serverRet[1];
+
+            } else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->getOkuyamaVersion();
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+            }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->getOkuyamaVersion();
+                }
+            } else {
+            
+                // 妥当性違反
+                throw e;
+            }
+        }
+        return $ret;
     }
 
 
@@ -560,14 +637,16 @@ class OkuyamaClient {
      * マスタサーバへデータを送信する.<br>
      * データ保存を行う.<br>
      * Tag有り.<br>
+     * 有効期限が秒単位で設定可能
      *
      * @param keyStr
-     * @param tagStrs
      * @param value
+     * @param tagStrs
+     * @param expireTime 有効期限(秒/単位)
      * @return boolean
      * @throws Exception
      */
-    public function setValue($keyStr, $value, $tagStrs = null) {
+    public function setValue($keyStr, $value, $tagStrs = null, $expireTime = null) {
         $ret = false; 
         $serverRetStr = null;
         $serverRet = null;
@@ -647,6 +726,22 @@ class OkuyamaClient {
             // Value連結
             $serverRequestBuf = $serverRequestBuf . $encodeValue;
 
+            // 有効期限連結
+            if ($expireTime != null) {
+                // 有効期限あり
+                if (0.880 > $this->okuyamaVersionNo) {
+
+                    throw new OkuyamaClientException("The version of the server is old [The expiration date can be used since version 0.8.8]");
+                } else {
+                    // セパレータ連結
+                    $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+                    $serverRequestBuf = $serverRequestBuf . intval($expireTime);
+                    // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
+                    $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+                } 
+            }
+
+
             // サーバ送信
             @fputs($this->socket, $serverRequestBuf . "\n");
 
@@ -669,7 +764,7 @@ class OkuyamaClient {
             }  else {
                 if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                     if($this->autoConnect()) {
-                        $ret = $this->setValue($keyStr, $value, $tagStrs);
+                        $ret = $this->setValue($keyStr, $value, $tagStrs, $expireTime);
                     }
                 } else {
                 
@@ -682,7 +777,7 @@ class OkuyamaClient {
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
-                    $ret = $this->setValue($keyStr, $value, $tagStrs);
+                    $ret = $this->setValue($keyStr, $value, $tagStrs, $expireTime);
                 }
             } else {
 
@@ -861,7 +956,7 @@ class OkuyamaClient {
      * @return boolean
      * @throws Exception
      */
-    public function setNewValue($keyStr, $value, $tagStrs = null) {
+    public function setNewValue($keyStr, $value, $tagStrs = null, $expireTime) {
         $ret = false; 
         $serverRetStr = null;
         $serverRet = null;
@@ -939,6 +1034,21 @@ class OkuyamaClient {
             // Value連結
             $serverRequestBuf = $serverRequestBuf . $encodeValue;
 
+            // 有効期限連結
+            if ($expireTime != null) {
+                // 有効期限あり
+                if (0.880 > $this->okuyamaVersionNo) {
+
+                    throw new OkuyamaClientException("The version of the server is old [The expiration date can be used since version 0.8.8]");
+                } else {
+                    // セパレータ連結
+                    $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+                    $serverRequestBuf = $serverRequestBuf . intval($expireTime);
+                    // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
+                    $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+                } 
+            }
+
             // サーバ送信
             @fputs($this->socket, $serverRequestBuf . "\n");
 
@@ -962,7 +1072,7 @@ class OkuyamaClient {
             }  else {
                 if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                     if($this->autoConnect()) {
-                        $ret = $this->setNewValue($keyStr, $value, $tagStrs);
+                        $ret = $this->setNewValue($keyStr, $value, $tagStrs, $expireTime);
                     }
                 } else {
                 
@@ -975,7 +1085,7 @@ class OkuyamaClient {
         } catch (Exception $e) {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
-                    $ret = $this->setNewValue($keyStr, $value, $tagStrs);
+                    $ret = $this->setNewValue($keyStr, $value, $tagStrs, $expireTime);
                 }
             } else {
 
@@ -1541,6 +1651,106 @@ class OkuyamaClient {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
                     $ret = $this->getValueVersionCheck($keyStr, $encoding);
+                }
+            } else {
+                throw $e;
+            }
+        }
+        return $ret;
+    }
+
+
+    /**
+     * マスタサーバからKeyでデータを取得する.<br>
+     * 文字列エンコーディング指定あり.<br>
+     * 取得と同時に値の有効期限を取得時から最初に設定した時間分延長更新<br>
+     * 有効期限を設定していない場合は更新されない.<br>
+     * Sessionキャッシュなどでアクセスした時間から所定時間有効などの場合にこちらのメソッドで<br>
+     * 値を取得していれば自動的に有効期限が更新される<br>
+     *
+     * @param keyStr
+     * @param encoding
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
+     * @throws Exception
+     */
+    public function getValueAndUpdateExpireTime($keyStr, $encoding="UTF-8")  {
+        $ret = array(); 
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+
+        try {
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = $serverRequestBuf . "17";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($keyStr);
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if ($serverRet[0] === "17") {
+                if ($serverRet[1] === "true") {
+
+                    // データ有り
+                    $ret[0] =$serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if ($serverRet[2] === $this->blankStr) {
+                        $ret[1] = "";
+                    } else {
+
+                        // Value文字列をBase64でデコード
+                        $ret[1] = $this->dataDecoding($serverRet[2], $encoding);
+                    }
+                } else if($serverRet[1] === "false") {
+
+                    // データなし
+                    $ret[0] = $serverRet[1];
+                    $ret[1] = null;
+                } else if($serverRet[1] === "error") {
+
+                    // エラー発生
+                    $ret[0] = $serverRet[1];
+                    $ret[1] = $serverRet[2];
+                }
+            } else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->getValueAndUpdateExpireTime($keyStr, $encoding);
+                    }
+                } else {
+
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+            }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->getValueAndUpdateExpireTime($keyStr, $encoding);
                 }
             } else {
                 throw $e;
