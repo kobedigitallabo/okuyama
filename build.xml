@@ -84,7 +84,7 @@
 		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="1024m">
 			<arg value="/Main.properties"/>
 			<arg value="/DataNode_small.properties"/>
-			<arg value="-s 4096"/>
+			<arg value=" -s 4096"/>
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>

@@ -20,10 +20,11 @@ getMultiValue
 getTagValues
 removeSearchIndex
 getMultiTagValues
-getValueAndUpdateExpireTime
-setValue‚ÆsetNewValue‚ÌExpireTime‘Î‰
+getValueAndUpdateExpireTime@›
+setValue‚ÆsetNewValue‚ÌExpireTime‘Î‰@›
 setObjectValue
 getObjectValue
+getOkuyamaVersion@›
 ¡OkuyamaQueueClient‚ÌÀ‘•
 ¡getObjectValueAndUpdateExpireTime‚Ì’Ç‰Á
 
