@@ -112,9 +112,16 @@ public class TestSock {
 
 
                 long start = new Date().getTime();
-                if (!okuyamaClient.setValue(args[3], args[4])) {
-                //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                    System.out.println("OkuyamaClient - error");
+                if (args.length > 5) {
+                    if (!okuyamaClient.setValue(args[3], args[4], new Integer(args[5]))) {
+                    //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                        System.out.println("OkuyamaClient - error");
+                    }
+                } else {
+                    if (!okuyamaClient.setValue(args[3], args[4])) {
+                    //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                        System.out.println("OkuyamaClient - error");
+                    }
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
@@ -1805,11 +1812,9 @@ public class TestSock {
                 okuyamaClient.close();  
             }
 
-
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 }
+
