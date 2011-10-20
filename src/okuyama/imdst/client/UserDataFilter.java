@@ -5,7 +5,7 @@ package okuyama.imdst.client;
  * 利用箇所はgetTagKeysResultなどで、本インターフェースを実装したクラスのインスタンスを渡すと、KeyとValueが<br>
  * ユーザプログラムに返る前に実装クラスに渡されfilterメソッドが実行されるので、そこで返却の有無を決めるように<br>
  * 実装すれば返却値をコントロールできる.<br>
- * 実装例)
+ * 実装例)<br>
  *&nbsp;&nbsp;&nbsp;&nbsp;public class ExampleUserFilter implements UserDataFilter {<br>
  *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public boolean filter(Object key, Object value) {<br>
  *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;String targetKey = (Strin)key;<br>
