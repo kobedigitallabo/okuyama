@@ -55,6 +55,8 @@ class OkuyamaClient {
 
     private $okuyamaVersionNo = 0.00;
 
+    private $getMultiEndOfDataStr = "END";
+
 
     /**
      * MasterNodeの接続情報を設定する.<br>
@@ -372,7 +374,7 @@ class OkuyamaClient {
             if ($serverRet[0] === "37") {
                 if ($serverRet[1] === "true") {
                   // TransactionCode取得
-          $ret = true;
+                  $ret = true;
                   $this->transactionCode = $serverRet[2];
         } else {
 
@@ -788,6 +790,24 @@ class OkuyamaClient {
     }
 
 
+    /**
+     * マスタサーバへデータを送信する.<br>
+     * PHPのオブジェクトデータの保存を行う.<br>
+     * 実装としてPHPのserialize関数を利用しているため、serialize関数で変換できないObjectは扱えない.<br>
+     * Tag有り.<br>
+     * 有効期限が秒単位で設定可能
+     *
+     * @param keyStr
+     * @param objectValue
+     * @param tagStrs
+     * @param expireTime 有効期限(秒/単位)
+     * @return boolean
+     * @throws Exception
+     */
+    public function setObjectValue($keyStr, $objectValue, $tagStrs = null, $expireTime = null) {
+        return $this->setValue($keyStr, serialize($objectValue), $tagStrs, $expireTime);
+    }
+
 
     /**
      * MasterNodeへデータを登録要求する.<br>
@@ -956,7 +976,7 @@ class OkuyamaClient {
      * @return boolean
      * @throws Exception
      */
-    public function setNewValue($keyStr, $value, $tagStrs = null, $expireTime) {
+    public function setNewValue($keyStr, $value, $tagStrs = null, $expireTime = null) {
         $ret = false; 
         $serverRetStr = null;
         $serverRet = null;
@@ -1556,6 +1576,145 @@ class OkuyamaClient {
 
     /**
      * マスタサーバからKeyでデータを取得する.<br>
+     * setObjectValueで保存したObjectを取得する.<br>
+     * 実装としてはPHPのunserialize関数を利用しているため、unserialize関数で変換できない値は扱えない
+     *
+     * @param keyStr
+     * @param encoding
+     * @return Object[] 要素1(データ有無(String)):"true" or "false" or "error",要素2(データ):Object型の値はもしくは"false"の場合はnull(データ有無がerrorの場合のみエラーメッセージ文字列(String型固定))
+     * @throws Exception
+     */
+    public function getObjectValue($keyStr)  {
+
+        $ret = array();
+        $strRet = $this->getValue($keyStr);
+        if ($strRet[0] === "true") {
+            $ret[0] = "true";
+            $ret[1] = unserialize($strRet[1]);
+        } else {
+            $ret[0] = $strRet[0];
+            $ret[1] = $strRet[1];
+        }
+        return $ret;
+    }
+
+
+    /**
+     * マスタサーバからKeyを複数個指定することで一度に複数個のKeyとValueをを取得する.<br>
+     * 取得されたKeyとValueがarrayにKeyとValueの組になって格納され返される<br>
+     * 存在しないKeyを指定した場合は返却される連想配列には含まれない<br> 
+     * Key値にブランクを指定した場合はKeyを指定していないものとみなされる<br> 
+     * 
+     * 文字列エンコーディング指定あり.<br>
+     *
+     * @param keyStrList Key値配列<br>1つだけのKeyを指定することは出来ない
+     * @param encoding エンコーディング指定
+     * @return array 取得データの連想配列 取得キーに同一のKey値を複数指定した場合は束ねられる arrayのキー値は指定されたKeyとなりValueは取得した値となる<br>全てのKeyに紐付くValueが存在しなかった場合は、nullが返る
+     * @throws Exception
+     */
+    public function getMultiValue($keyStrList, $encoding="UTF-8")  {
+        $ret = array(); 
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+
+        try {
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStrList == null ||  count($keyStrList) < 2) {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+            $sendKeyList = array();
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = $serverRequestBuf . "22";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $keysSep = "";
+            for ($i = 0; $i < count($keyStrList); $i++) {
+                if ($keyStrList[$i] != null && trim($keyStrList[$i]) !== "") {
+                    $serverRequestBuf = $serverRequestBuf . $keysSep;
+                    $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($keyStrList[$i]);
+                    $sendKeyList[] = $keyStrList[$i];
+                    $keysSep = $this->sepStr;
+                }
+            }
+
+            if ($sendKeyList == null ||  count($sendKeyList) < 2) {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+
+            $readIdx = 0;
+            while (true) {
+                $serverRetStr = @fgets($this->socket);
+                if ($serverRetStr === FALSE) break;
+
+                $serverRetStr = str_replace("\r", "", $serverRetStr);
+                $serverRetStr = str_replace("\n", "", $serverRetStr);
+                if ($serverRetStr === $this->getMultiEndOfDataStr) break;
+
+                $serverRet = explode($this->sepStr, $serverRetStr);
+
+                // 処理の妥当性確認
+                if ($serverRet[0] === "22") {
+                    if ($serverRet[1] === "true") {
+    
+                        // データ有り
+                        $oneDataKey = null;
+                        $oneDataValue = null;
+
+                        $oneDataKey = $sendKeyList[$readIdx];
+                        // Valueがブランク文字か調べる
+                        if ($serverRet[2] === $this->blankStr) {
+                            $oneDataValue = "";
+                        } else {
+
+                            // Value文字列をBase64でデコード
+                            $oneDataValue = $this->dataDecoding($serverRet[2], $encoding);
+                        }
+
+                        $ret[$oneDataKey] =  $oneDataValue;
+                    }
+                } else {
+    
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+                $readIdx++;
+            }
+
+            if (count($ret) < 1) $ret = null;
+
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->getMultiValue($keyStrList, $encoding);
+                }
+            } else {
+                throw $e;
+            }
+        }
+        return $ret;
+    }
+
+
+    /**
+     * マスタサーバからKeyでデータを取得する.<br>
      * 文字列エンコーディング指定あり.<br>
      * Valueのバージョン値を合わせて返す.<br>
      * memcachedのgetsに相当する.<br>
@@ -1755,6 +1914,33 @@ class OkuyamaClient {
             } else {
                 throw $e;
             }
+        }
+        return $ret;
+    }
+
+
+    /**
+     * マスタサーバからKeyでObjectを取得する.<br>
+     * setObjectDataで登録したデータを取り出す.<br>
+     * 取得と同時に値の有効期限を取得時から最初に設定した時間分延長更新<br>
+     * 有効期限を設定していない場合は更新されない.<br>
+     * Sessionキャッシュなどでアクセスした時間から所定時間有効などの場合にこちらのメソッドで<br>
+     * 値を取得していれば自動的に有効期限が更新される<br>
+     *
+     * @param keyStr
+     * @param encoding
+     * @return Object[] 要素1(データ有無(String)):"true" or "false" or "error",要素2(データ):Object型の値はもしくは"false"の場合はnull(データ有無がerrorの場合のみエラーメッセージ文字列(String型固定))
+     * @throws Exception
+     */
+    public function getObjectValueAndUpdateExpireTime($keyStr)  {
+        $ret = array();
+        $strRet = $this->getValueAndUpdateExpireTime($keyStr);
+        if ($strRet[0] === "true") {
+            $ret[0] = "true";
+            $ret[1] = unserialize($strRet[1]);
+        } else {
+            $ret[0] = $strRet[0];
+            $ret[1] = $strRet[1];
         }
         return $ret;
     }
@@ -2434,6 +2620,122 @@ class OkuyamaClient {
             if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
                 if($this->autoConnect()) {
                     $ret = $this->removeTagFromKey($keyStr, $tagStr);
+                }
+            } else {
+
+                throw $e;
+            }
+        }
+        return $ret;
+    }
+
+
+    /**
+     * 全文検索用のIndexを削除する。
+     * Prefixあり<br>
+     * 検索Index長さ指定あり<br>
+     *
+     *
+     * @param keyStr Key値
+     * @param indexPrefix 作成時に設定したIndexのPrefix値
+     * @param indexLength 作成時に指定した作成Indexの長さ指定
+     * @return boolean 削除成否
+     */
+    public function removeSearchIndex($keyStr, $indexPrefix = null, $indexLength = 3) {
+        $ret = false; 
+        $serverRetStr = null;
+        $serverRet = null;
+        $serverRequestBuf = null;
+        try {
+            // Byte Lenghtチェック
+            if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
+            if ($tagStr != null) {
+                if ($this->checkStrByteLength($tagStr) > $this->maxKeySize) throw new OkuyamaClientException("Tag Max Size " . $this->maxKeySize . " Byte");
+            } 
+
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($keyStr == null ||  $keyStr === "") {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+
+            // 処理番号連結
+            $serverRequestBuf = "44";
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            $serverRequestBuf = $serverRequestBuf. $this->dataEncoding($keyStr);
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+            // TransactionCode連結
+            $serverRequestBuf = $serverRequestBuf . $this->transactionCode;
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+            // プレフィックスを有無に合わせて連結
+            if ($indexPrefix == null ||  $indexPrefix === "") {
+
+                // ブランク規定文字列を連結
+                $serverRequestBuf = $serverRequestBuf . $this->blankStr;
+            } else {
+
+                // Indexプレフィックス連結
+                $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($indexPrefix);
+            }
+
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+            // createIndexLen連結
+            $serverRequestBuf = $serverRequestBuf . $indexLength;
+
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            $serverRetStr = @fgets($this->socket);
+
+            $serverRetStr = str_replace("\r", "", $serverRetStr);
+            $serverRetStr = str_replace("\n", "", $serverRetStr);
+            $serverRet = explode($this->sepStr, $serverRetStr);
+
+            // 処理の妥当性確認
+            if ($serverRet[0] === "44") {
+                if ($serverRet[1] === "true") {
+
+                    // 処理成功
+                    $ret = true;
+                } else{
+
+                    // 処理失敗(データなし)
+                    $ret = false;
+                }
+            }  else {
+                if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                    if($this->autoConnect()) {
+                        $ret = $this->removeSearchIndex($keyStr, $indexPrefix, $indexLength);
+                    }
+                } else {
+                
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+            }
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->removeSearchIndex($keyStr, $indexPrefix, $indexLength);
                 }
             } else {
 

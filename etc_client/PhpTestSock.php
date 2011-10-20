@@ -10,8 +10,7 @@
   // 4.実行回数:0～n(実行モード1.1及び2.1及び2.3及び3及び8時は登録、取得、削除したいKey or Tag値)
   // 5.登録データ:(実行モード1.1及び2.3時のみ有効 1.1時は登録したいValue値、2.3時は実行したいJavaScript)
 
-    require_once("OkuyamaClient.class.php");
-
+  require_once("OkuyamaClient.class.php");
   if ($argc > 3) {
 
     // クライアント作成
@@ -116,6 +115,17 @@
       $searchWordList[0] = $argv[4];
       $searchWordList[1] = $argv[5];
       var_dump($client->searchValue($searchWordList, $argv[6]));
+    } else if ($argv[1] === "44") {
+
+
+      // データを検索Indexを削除
+      var_dump($client->removeSearchIndex("datasavekey_716"));
+
+      $searchWordList = array();
+      $searchWordList[0] = $argv[4];
+
+      var_dump($client->searchValue($searchWordList, $argv[5], $argv[6]));
+
     } else if ($argv[1] === "2") {
 
       // データを引数の回数分取得
@@ -181,6 +191,89 @@
           print_r("\r\n");
         } else if ($ret[0] === "true") {
           print_r("ExpireTimeUpdateGet OK");
+          print_r("\r\n");
+        }
+      }
+
+    } else if ($argv[1] === "2.6") {
+        $client->setValue("key_multi_1", "val_multi_1");
+        $client->setValue("key_multi_2", "val_multi_2");
+        $client->setValue("key_multi_3", "val_multi_3");
+        $client->setValue("key_multi_4", "val_multi_4");
+        $client->setValue("key_multi_5", "val_multi_5");
+
+        $getMKeyList1 = array();
+        $getMKeyList1[] = "key_multi_1";
+        $getMKeyList1[] = "key_multi_2";
+        $getMKeyList1[] = "key_multi_3";
+        $getMKeyList1[] = "key_multi_4";
+        $getMKeyList1[] = "key_multi_5";
+        var_dump($client->getMultiValue($getMKeyList1));
+
+        $getMKeyList2 = array();
+        $getMKeyList2[] = "key_multi_4";
+        $getMKeyList2[] = "key_multi_3";
+        var_dump($client->getMultiValue($getMKeyList2));
+
+
+        $getMKeyList3 = array();
+        $getMKeyList3[] = "key_multi_3";
+        $getMKeyList3[] = "key_multi_aaa";
+        $getMKeyList3[] = "key_multi_bbb";
+        $getMKeyList3[] = "key_multi_ccc";
+        var_dump($client->getMultiValue($getMKeyList3));
+
+        $getMKeyList4 = array();
+        $getMKeyList4[] = "key_multi_xxx";
+        $getMKeyList4[] = "key_multi_aaa";
+        $getMKeyList4[] = "key_multi_bbb";
+        $getMKeyList4[] = "key_multi_ccc";
+        var_dump($client->getMultiValue($getMKeyList4));
+
+
+        $getMKeyList5 = array();
+        $getMKeyList5[] = "key_multi_3";
+        $getMKeyList5[] = "key_multi_aaa";
+        $getMKeyList5[] = "key_multi_bbb";
+        $getMKeyList5[] = "key_multi_ccc";
+        $getMKeyList5[] = "key_multi_1";
+        var_dump($client->getMultiValue($getMKeyList5));
+
+
+        $getMKeyList6 = array();
+        $getMKeyList6[] = "key_multi_1";
+        $getMKeyList6[] = "";
+        $getMKeyList6[] = "";
+        $getMKeyList6[] = "";
+        $getMKeyList6[] = "key_multi_";
+        var_dump($client->getMultiValue($getMKeyList6));
+    } else if ($argv[1] === "2.7") {
+      // 指定のKey値でObjectを取得
+      // 有効期限を自動的に更新する
+      // データを有効期限付きで登録
+      $setObj4ExTime = array();
+      $setObj4ExTime[] = "aaxx";
+      $setObj4ExTime[] = "bbyy";
+      $setObj4ExTime[] = array();
+
+      if(!$client->setObjectValue($argv[4], $setObj4ExTime, null, $argv[5])) {
+
+        print_r("Regist Error");
+      } else {
+
+        sleep(intval($argv[5]) - 1);
+        $ret = $client->getObjectValueAndUpdateExpireTime($argv[4]);
+        sleep(1);
+        $ret = $client->getObjectValue($argv[4]);
+        if ($ret[0] === "false") {
+          print_r("ExpireTimeUpdateGet Error");
+          print_r("\r\n");
+          print_r($ret[1]);
+          print_r("\r\n");
+        } else if ($ret[0] === "true") {
+          print_r("ExpireTimeUpdateGet OK");
+          print_r("\r\n");
+          var_dump($ret[1]);
           print_r("\r\n");
         }
       }
@@ -362,6 +455,18 @@
 
       // Tag削除
       var_dump($client->removeTagFromKey($argv[4], $argv[5]));
+    } else if ($argv[1] === "23") {
+      // Object登録
+      $setObj = array();
+      $setObj[0] = "";
+      $setObj[1] = "aaa";
+      $setObj[2] = "bbb";
+      $setObj[3] = array();
+
+      var_dump($client->setObjectValue($argv[4], $setObj));
+    } else if ($argv[1] === "24") {
+      // Object取得
+      var_dump($client->getObjectValue($argv[4]));
     }
 
 
