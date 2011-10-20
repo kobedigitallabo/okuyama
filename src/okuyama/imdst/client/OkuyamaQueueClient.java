@@ -7,9 +7,9 @@ package okuyama.imdst.client;
  * 利用手順としては<br>
  * 1.MasterNodeへ接続<br>
  * 2.createQueueSpaceメソッドで任意の名前でQueue領域を作成(既に作成済みのQueue領域を利用する場合は作成不要)<br>
- * 3.putメソッドにデータを登録、もしくはtakeメソッドにて取り出し<br>
+ * 3.putメソッドにてデータを登録、もしくはtakeメソッドにて取り出し<br>
  * 4.利用終了後closeを呼び出す<br>
- * ※.Queue領域を削除する場合は
+ * ※.Queue領域を削除する場合はremoveQueueSpaceを呼び出す
  *<br>
  * 実装例)<br>
  *-----------------------------------------------------------<br>
@@ -94,7 +94,7 @@ public class OkuyamaQueueClient extends OkuyamaClient {
      * Queue領域を削除する.<br>
      * 不要なデータも削除するため処理時間が長くなる可能性がある<br>
      *
-     * @param queueName 削除Queue名
+     * @param queueName 削除Queue領域名
      * @return boolean true=削除成功/削除失敗
      * @throws OkuyamaClientException
      */
@@ -123,7 +123,7 @@ public class OkuyamaQueueClient extends OkuyamaClient {
     /**
      * Queueへのデータ登録.<br>
      *
-     * @param queueName 登録するQueue名
+     * @param queueName 登録するQueue領域名
      * @param data 登録データ
      * @retrun boolean 成否 (true=登録成功/false=登録失敗)
      * @throw OkuyamaClientException
@@ -166,7 +166,7 @@ public class OkuyamaQueueClient extends OkuyamaClient {
      * 指定したQueue名が存在しない場合はエラー<br>
      * Queueにデータが存在しない場合は30秒待った後にnullが返る<br>
      *
-     * @param queueName 取得対象のQueue名
+     * @param queueName 取得対象のQueue領域名
      * @return 取得データ(指定時間以内に取得できない場合はnull)
      * @throws OkuyamaClientException
      */
@@ -180,7 +180,7 @@ public class OkuyamaQueueClient extends OkuyamaClient {
      * 指定したQueue名が存在しない場合はエラー<br>
      * Queueにデータが存在しない場合の待ち時間を設定出来る<br>
      *
-     * @param queueName 取得対象のQueue名
+     * @param queueName 取得対象のQueue領域名
      * @param timeOut 待ち受けタイムアウト時間(ミリ秒/単位)
      * @return 取得データ(指定時間以内に取得できない場合はnull)
      * @throws OkuyamaClientException

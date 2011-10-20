@@ -3153,7 +3153,7 @@ public class OkuyamaClient {
      * setObjectValueで登録した値を取得する.<br>
      *
      * @param keyStr Key値
-     * @return Object[] 要素1(データ有無(String)):"true" or "false",要素2(データ):Object型(データ有無がfalseの場合のみエラーメッセージ文字列(String型固定))
+     * @return Object[] 要素1(データ有無(String)):"true" or "false" or "error",要素2(データ):Object型の値はもしくは"false"の場合はnull(データ有無がerrorの場合のみエラーメッセージ文字列(String型固定))
      * @throws OkuyamaClientException
      */
     public Object[] getObjectValue(String keyStr) throws OkuyamaClientException {
@@ -3396,8 +3396,8 @@ public class OkuyamaClient {
      * 文字列エンコーディング指定なし.<br>
      * デフォルトエンコーディングにて復元.<br>
      *
-     * @param keyStrList Key値配列
-     * @return Map 取得データのMap 取得キーに同一の値を複数指定した場合は束ねられる Mapのキー値は指定されたKeyとなりValueは取得した値となる
+     * @param keyStrList Key値配列<br>1つだけのKeyを指定することは出来ない
+     * @return Map 取得データのMap 取得キーに同一の値を複数指定した場合は束ねられる Mapのキー値は指定されたKeyとなりValueは取得した値となる<br>全てのKeyに紐付くValueが存在しなかった場合は、nullが返る
      * @throws OkuyamaClientException
      */
     public Map getMultiValue(String[] keyStrList) throws OkuyamaClientException {
@@ -3409,9 +3409,9 @@ public class OkuyamaClient {
      * MasterNodeからKey値の配列を渡すことでValue値の集合を取得する.<br>
      * 文字列エンコーディング指定あり.<br>
      *
-     * @param keyStrList Key値配列
+     * @param keyStrList Key値配列<br>1つだけのKeyを指定することは出来ない
      * @param encoding エンコーディング指定
-     * @return Map 取得データのMap 取得キーに同一の値を複数指定した場合は束ねられる Mapのキー値は指定されたKeyとなりValueは取得した値となる
+     * @return Map 取得データのMap 取得キーに同一の値を複数指定した場合は束ねられる Mapのキー値は指定されたKeyとなりValueは取得した値となる<br>全てのKeyに紐付くValueが存在しなかった場合は、nullが返る
      * @throws OkuyamaClientException
      */
     public Map getMultiValue(String[] keyStrList, String encoding) throws OkuyamaClientException {
@@ -3830,7 +3830,7 @@ public class OkuyamaClient {
     /**
      * MasterNodeからTag値を渡すことで紐付くKey値の配列を取得する<br>
      * 複数のTagを指定することで、一度に関連する値を取得可能<br>
-     * 複数のTagに紐付く値はマージされて1つとなる(※AND指定)<br>
+     * 複数のTagに紐付く値はマージされて1つとなる(※複数のTagはAND指定の扱いとなる)<br>
      * AND指定.<br>
      *
      * @param tagList Tag値のリスト
