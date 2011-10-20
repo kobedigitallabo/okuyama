@@ -473,6 +473,9 @@ public class ImdstDefine {
 
     // 有効期限切れデータバキューム実行指定
     public volatile static boolean vacuumInvalidDataFlg = true;
+    // 有効期限切れデータバキューム実行強制指定
+    public volatile static boolean vacuumInvalidDataCompulsion = false;
+
 
     // 有効期限切れデータ削除チェックサイクル(単位:分)
     public static int startVaccumInvalidCount = 29;

@@ -15,16 +15,18 @@ import okuyama.imdst.util.*;
  * -c  MasterNodeの無操作コネクションタイムアウト時間(秒)<br>
  * -S  DataNodeのValueの保存可能最大サイズ(バイト)<br>
  * -s  DataNodeのValueの共通データファイルへの書き出し中間サイズ(バイト)(DataNode用設定ファイルのdataMemory=trueの場合のみ有効)<br>
- * -v  分散モードがConsistentHash時(MasterNode用設定ファイルのDistributionAlgorithm=consistenthashの場合のみ)のVirtualNodeの数
- * -fa ImdstDefine.parallelDiskAccess /ファイルシステムへの同時アクセス係数(整数)
- * -ncot ImdstDefine.nodeConnectionOpenTimeout /DataNodeへのSocketコネクションOpenのタイムアウト閾値(ミリ秒)
- * -nct ImdstDefine.nodeConnectionTimeout /DataNodeへのSocketコネクションreadのタイムアウト閾値(ミリ秒)
- * -mmgrs ImdstDefine.maxMultiGetRequestSize /getMultiValueの際に一度にDataNodeに問い合わせるRequestKeyの数
- * -sidc ImdstDefine.searchIndexDistributedCount /検索Indexを並列に作成する場合の並列数
- * -gaetu ImdstDefine.getAndExpireTimeUpdate /データの有効期限をGetメソッドで更新するかの指定
- * -fbmnk ImdstDefine.fileBaseMapNumberOfOneFileKey /FileBaseDataMapで1KeyファイルにどれだけのKey値を保存するかの指定
- * -tlft  ImdstDefine.transactionLogFsyncType /WALログのファイルシステムへのfsync係数(0=OSでの自動sync制御、1=fsync回数低、2=fsync回数中、3=fsync回数高、4=常にfsync
- * -vidf  ImdstDefine.vacuumInvalidDataFlg /有効期限切れのデータのクリーニングを行うかどうかの設定 true=行う false=行わない
+ * -v  分散モードがConsistentHash時(MasterNode用設定ファイルのDistributionAlgorithm=consistenthashの場合のみ)のVirtualNodeの数<br>
+ * -fa ImdstDefine.parallelDiskAccess /ファイルシステムへの同時アクセス係数(整数)<br>
+ * -ncot ImdstDefine.nodeConnectionOpenTimeout /DataNodeへのSocketコネクションOpenのタイムアウト閾値(ミリ秒)<br>
+ * -nct ImdstDefine.nodeConnectionTimeout /DataNodeへのSocketコネクションreadのタイムアウト閾値(ミリ秒)<br>
+ * -mmgrs ImdstDefine.maxMultiGetRequestSize /getMultiValueの際に一度にDataNodeに問い合わせるRequestKeyの数<br>
+ * -sidc ImdstDefine.searchIndexDistributedCount /検索Indexを並列に作成する場合の並列数<br>
+ * -gaetu ImdstDefine.getAndExpireTimeUpdate /データの有効期限をGetメソッドで更新するかの指定<br>
+ * -fbmnk ImdstDefine.fileBaseMapNumberOfOneFileKey /FileBaseDataMapで1KeyファイルにどれだけのKey値を保存するかの指定<br>
+ * -tlft  ImdstDefine.transactionLogFsyncType /WALログのファイルシステムへのfsync係数(0=OSでの自動sync制御、1=fsync回数低、2=fsync回数中、3=fsync回数高、4=常にfsync<br>
+ * -vidf  ImdstDefine.vacuumInvalidDataFlg /有効期限切れのデータのクリーニングを行うかどうかの設定 true=行う false=行わない ※trueを指定するとファイルをストレージに使っている場合も実行される<br>
+ * -svic  ImdstDefine.startVaccumInvalidCount /有効期限切れのデータのクリーニングを行う間隔(分/単位)<br>
+ *
  * <br>
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -189,6 +191,17 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
                                 ImdstDefine.vacuumInvalidDataFlg = false;
+                            } else if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")){
+                                ImdstDefine.vacuumInvalidDataCompulsion = true;
+                            }
+                        }
+                    }
+
+                    if (startOptions[i].trim().equals("-svic")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.startVaccumInvalidCount = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
                             }
                         }
                     }

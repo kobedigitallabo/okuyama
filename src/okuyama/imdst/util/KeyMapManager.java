@@ -527,10 +527,10 @@ public class KeyMapManager extends Thread {
 
 
                 // 有効期限切れデータの削除
-                // 実行指定(ImdstDefine.vacuumInvalidDataFlg)がtrueの場合に1時間に1回実行される
-                // このif文に到達するのが1分に1回なので、それを30回繰り返すと削除処理を実行する
+                // 実行指定(ImdstDefine.vacuumInvalidDataFlg)がtrueの場合に実行される
+                // このif文に到達するのが1分に1回なので、それを規定回数繰り返すと削除処理を実行する
                 // 差分データ取集中は行わない
-                if (dataMemory == true && ImdstDefine.vacuumInvalidDataFlg == true && vacuumInvalidDataCount > ImdstDefine.startVaccumInvalidCount && diffDataPoolingFlg == false) {
+                if ((dataMemory == true || ImdstDefine.vacuumInvalidDataCompulsion == true) && ImdstDefine.vacuumInvalidDataFlg == true && vacuumInvalidDataCount > ImdstDefine.startVaccumInvalidCount && diffDataPoolingFlg == false) {
                     logger.info("VacuumInvalidData - Start - 1");
 
                     synchronized(this.poolKeyLock) {
@@ -804,7 +804,12 @@ public class KeyMapManager extends Thread {
 
                     //logger.debug("setKeyPairOnlyOnce - synchronized - start");
 
-                    if(this.containsKeyPair(key)) return ret;
+                    if(this.containsKeyPair(key)) {
+
+                        String tmp = keyMapObjGet(key);
+
+                        if(!isExpireData(tmp)) return ret;
+                    }
 
                     if (this.moveAdjustmentDataMap != null) {
                         synchronized (this.moveAdjustmentSync) {
@@ -3251,6 +3256,39 @@ System.out.println("[1]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[1]
     }
 
 
+    // 有効期限切れデータの場合はtrueが返る
+    private static boolean isExpireData(String valStr) {
+        String[] checkValueSplit = null;
+
+        if (valStr != null && valStr.length() <= 1000) {
+
+            String[] valStrSplit = valStr.split(ImdstDefine.setTimeParamSep);
+            valStr = valStrSplit[0];
+            checkValueSplit = valStr.split(ImdstDefine.keyHelperClientParamSep);
+        } else if (valStr != null && valStr.length() >= 1001){
+
+            if (valStr.indexOf(ImdstDefine.keyHelperClientParamSep, (valStr.length() - 100)) != -1) {
+                String[] valStrSplit = valStr.split(ImdstDefine.setTimeParamSep);
+                valStr = valStrSplit[0];
+                checkValueSplit = valStr.split(ImdstDefine.keyHelperClientParamSep);
+            }
+        } else {
+            return false;
+        }
+
+        // 有効期限チェックを行う
+        if (checkValueSplit != null && checkValueSplit.length > 1) {
+
+            String[] metaColumns = checkValueSplit[1].split(ImdstDefine.valueMetaColumnSep);
+            if (!SystemUtil.expireCheck(metaColumns[1], 1)) {
+
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     public void dump() {
         try {
             System.out.println("-------------------------------------- Dump Start ------------------------------------");
@@ -3399,6 +3437,7 @@ class DataTransactionFileFlushDaemon extends Thread {
             }
         }
     }
+
 
     public void close() {
         if (this.tBw != null) {
