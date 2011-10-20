@@ -10,6 +10,117 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
+[[リリース Ver 0.9.0 - (2011/10/21)]]
+■Hadoop対応
+  !!! [注意] 本機能はベータ機能である !!!
+  Hadoopの持つFormatインターフェースを利用してMapReduce内でokuyamaに登録されているデータを取り出して
+  利用できるようにしました。
+  詳しくはhadoopディレクトリ配下のReadMe.txtを参照してください。
+
+
+■OkuyamaClientへのgetMultiTagKeysメソッドの追加
+  複数のTagを指定して、該当するKeyのみ取得可能なメソッドを追加しました。
+  Keyのみ取得できるので、クライアント側のメモリ利用量の削減が可能です。
+  またgetMultiTagValuesに比べて高速に応答を返します。
+  [OkuyamaClientでのメソッド]
+  public String[] getMultiTagKeys(String[] tagList) throws OkuyamaClientException;
+  public String[] getMultiTagKeys(String[] tagList, boolean margeType) throws OkuyamaClientException;
+  public String[] getMultiTagKeys(String[] tagList, boolean margeType, boolean noExistsData) throws OkuyamaClientException;
+
+
+■OkuyamaClientへのgetTagKeysResultメソッドの追加
+  本メソッドの挙動はgetTagKeysと同様にTagを指定することで、紐付く全てのKeyを取得する。しかし、getTagKeysが
+  一度にString型の配列で紐付く全てのKey値を返してくるのに対して、本メソッドはokuyama.imdst.client.OkuyamaResultSetを
+  返却してくる。OkuyamaResultSetはjava.sql.ResultSetのように順次データを取り出せるようになっており、
+  従来のgetTagKeysでは扱えないような大量のKey値を処理する場合に利用する。
+  以下の実装例はTagに紐付く全てのKeyとValueを出力している例である。
+  例) "Tag1"に紐付く全てのKeyとValueを出力
+  ----------------------------------------------------------------------
+	OkuyamaResultSet resultSet = client.getTagKeysResult("Tag1"); // OkuyamaResultSetインターフェースで結果を受け取る
+
+	while(resultSet.next()) {  // カーソルを移動しながら値の有無を確認 trueを返して来た場合は終端ではない、falseは終端
+		System.out.println("Key=" + (Object)resultSet.getKey());     // getKeyメソッドにて現在のカーソル位置のKey値を取得
+		System.out.println("Value=" + (Object)resultSet.getValue()); // getValueメソッドにて現在のカーソル位置のValue値を取得
+	}
+	resultSet.close();
+  ----------------------------------------------------------------------
+  なお、getTagKeysResultは取得するKeyとValueに対してフィルタリングを設定することが可能である。
+  フィルタリングは
+   1.数値でのKeyとValueに対しての範囲指定
+   2.正規表現でのKeyとValueに対しての一致指定
+   3.ユーザ実行クラスによる独自フィルタリング(フィルタリングクラスは、okuyama.imdst.client.UserDataFilterインターフェースを実装する)
+  が可能である。
+  [OkuyamaClientでのメソッド]
+  public OkuyamaResultSet getTagKeysResult(String tagStr) throws OkuyamaClientException;
+  public OkuyamaResultSet getTagKeysResult(String tagStr, String encoding) throws OkuyamaClientException;
+  public OkuyamaResultSet getTagKeysResult(String tagStr, String matchPattern, int cehckType) throws OkuyamaClientException;
+  public OkuyamaResultSet getTagKeysResult(String tagStr, String matchPattern, int cehckType, String encoding) throws OkuyamaClientException;
+  public OkuyamaResultSet getTagKeysResult(String tagStr, double[] targetRange, int cehckType) throws OkuyamaClientException;
+  public OkuyamaResultSet getTagKeysResult(String tagStr, double[] targetRange, int cehckType, String encoding) throws OkuyamaClientException;
+  public OkuyamaResultSet getTagKeysResult(String tagStr, UserDataFilter filter) throws OkuyamaClientException;
+  public OkuyamaResultSet getTagKeysResult(String tagStr, UserDataFilter filter, String encoding) throws OkuyamaClientException;
+  ※!!注意!! 1.PHPのクライアントは未対応
+             2.本メソッドを利用するためには、okuyamaのMasterNode、DataNode共に、Version-0.9.0以上である必要がある
+             3.OkuyamaResultSetの詳しい利用方法は、JavaDocのokuyama.imdst.client.OkuyamaResultSetの部分を参照してください
+
+
+■OkuyamaClientへのgetMultiTagKeysResultメソッドの追加
+  本メソッドの挙動はgetMultiTagKeysと同様に複数Tagを指定することで、紐付く全てのKeyを取得することが可能であるが、
+  getTagKeysResultと同様に、okuyama.imdst.client.OkuyamaResultSetからデータを取り出すことが可能であるため、大量の
+  データ取得に利用する。getTagKeysResultと違い、値のフィルタリングをすることは出来ない。
+  [OkuyamaClientでのメソッド]
+  public OkuyamaResultSet getMultiTagKeysResult(String[] tagList) throws OkuyamaClientException;
+  public OkuyamaResultSet getMultiTagKeysResult(String[] tagList, boolean margeType) throws OkuyamaClientException;
+  ※!!注意!! 1.PHPのクライアントは未対応
+             2.本メソッドを利用するためには、okuyamaのMasterNode、DataNode共に、Version-0.9.0以上である必要がある
+             3.OkuyamaResultSetの詳しい利用方法は、JavaDocのokuyama.imdst.client.OkuyamaResultSetの部分を参照してください
+
+
+■PHP版のOkuyamaClient.class.phpで未実装だった以下のメソッドを実装。挙動はJava版と同様である
+  1.getMultiValue
+  2.removeSearchIndex
+  3.getValueAndUpdateExpireTime
+  4.setValueとsetNewValueへの有効期限(ExpireTime)対応
+  5.setObjectValue
+  6.getObjectValue
+  7.getObjectValueAndUpdateExpireTime
+  8.getOkuyamaVersion
+
+  ※以下のメソッドは未実装
+    getTagValues
+    getMultiTagValues
+    getMultiTagKeys
+    getTagKeysResult
+    getMultiTagKeysResult
+
+
+■OkuyamaQueueClientの実装
+  !!! [注意] 本機能はベータ機能である !!!
+  okuyamaをキューとして利用できる専用のJavaクライアントを追加
+  クライアント名：okuyama.imdst.client.OkuyamaQueueClient
+  キューとして利用する場合もokuyamaのサーバ側は特に設定は必要なく、通常と同じように起動するだけで良い。
+  OkuyamaQueueClientの利用手順は
+   1.MasterNodeへ接続
+   2.createQueueSpaceメソッドで任意の名前でQueue領域を作成(既に作成済みのQueue領域を利用する場合は作成不要)
+   3.putメソッドにてデータを登録、もしくはtakeメソッドにて取り出し
+   4.利用終了後closeを呼び出す
+  となる。詳しくはJavaDocのokuyama.imdst.client.OkuyamaQueueClientの部分を参照してください。
+
+
+■OkuyamaClientへのgetObjectValueAndUpdateExpireTimeメソッドの追加
+  getValueAndUpdateExpireTimeのObject版になる。取得と同時に有効期限が設定されている場合は設定した有効期限
+  秒数だけ有効期限が延長される。Webでのsessionオブジェクトなどの、アクセスする度に有効期限を延ばしたい
+  値に利用すると便利である。
+  [OkuyamaClientでのメソッド]
+  public Object[] getObjectValueAndUpdateExpireTime(String keyStr) throws OkuyamaClientException;
+  ※PHP版のクライアントも対応済み。
+
+
+■いくつかの処理性能向上と不具合の修正
+
+
+========================================================================================================
+[New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.9 - (2011/08/31)]]
 
 ■OkuyamaClientにsetObjectValueとgetObjectValueメソッドを追加
