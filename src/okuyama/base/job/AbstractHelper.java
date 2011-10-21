@@ -394,7 +394,7 @@ abstract public class AbstractHelper  implements Runnable{
      * @return int 値
      */
     public int sizeHelperShareParam() {
-        System.out.println(helperParamShareMap);
+
         if (helperParamShareMap != null) {
             return helperParamShareMap.size();
         } 
