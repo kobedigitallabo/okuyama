@@ -33,7 +33,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   一度にString型の配列で紐付く全てのKey値を返してくるのに対して、本メソッドはokuyama.imdst.client.OkuyamaResultSetを
   返却してくる。OkuyamaResultSetはjava.sql.ResultSetのように順次データを取り出せるようになっており、
   従来のgetTagKeysでは扱えないような大量のKey値を処理する場合に利用する。
-  以下の実装例はTagに紐付く全てのKeyとValueを出力している例である。
+  以下の実装例はTagに紐付く全てのKeyとValueを出力している例です。
   例) "Tag1"に紐付く全てのKeyとValueを出力
   ----------------------------------------------------------------------
 	OkuyamaResultSet resultSet = client.getTagKeysResult("Tag1"); // OkuyamaResultSetインターフェースで結果を受け取る
