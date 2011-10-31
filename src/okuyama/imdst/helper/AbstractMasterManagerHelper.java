@@ -998,6 +998,17 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
 
     /**
+     * 実行依頼のパラメータと結果パラータをQueueに書き込む.<br>
+     * 正し、書き込む命令は限定可能とし、書き込むパラメータは成功したものだけとする.<br>
+     *
+     * @param requestParams 実行依頼のリクエストパラメータ
+     * @param responseParams 実行結果のレスポンスパラメータ
+     */
+    protected void sendExecuteMethodReportQueue(String[] requestParams, String[] responseParams) {
+    }
+
+
+    /**
      * データノードとのコネクションをセットする.<br>
      * ConnectionPoolHelperが使用する.<br>
      *

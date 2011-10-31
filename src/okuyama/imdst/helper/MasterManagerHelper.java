@@ -101,8 +101,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private static String[] searchIndexDictionaryList = new String[0];
     private static boolean initDictionaryFlg = false;
 
-
-
+    // 実行メソッドをQueueにレポートする有無
+    private boolean execMethodReportQueue = false;
 
 
     /**
@@ -918,6 +918,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             break;
                     }
 
+
                     // Takerで返却値を作成
                     // プロトコルがマッチしていたかをチェック
                     // 設定通りのプロトコルの場合はそのまま処理。そうでない場合はokuyamaで処理
@@ -947,6 +948,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         }
                     }
 
+                    // 実行したメソッドをレポートする
+                    if (this.execMethodReportQueue) super.sendExecuteMethodReportQueue(clientParameterList, retParams);
 
                     // 呼び出しをカウント
                     StatusUtil.incrementMethodExecuteCount();
