@@ -469,7 +469,7 @@ public class ImdstDefine {
     // 保存データサイズの合計値演算設定
     // true:計算する
     // false:計算しない
-    public static final boolean calcSizeFlg = true;
+    public volatile static boolean calcSizeFlg = true;
 
     // 有効期限切れデータバキューム実行指定
     public volatile static boolean vacuumInvalidDataFlg = true;

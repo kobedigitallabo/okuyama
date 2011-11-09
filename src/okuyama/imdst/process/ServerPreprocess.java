@@ -26,6 +26,7 @@ import okuyama.imdst.util.*;
  * -tlft  ImdstDefine.transactionLogFsyncType /WALログのファイルシステムへのfsync係数(0=OSでの自動sync制御、1=fsync回数低、2=fsync回数中、3=fsync回数高、4=常にfsync<br>
  * -vidf  ImdstDefine.vacuumInvalidDataFlg /有効期限切れのデータのクリーニングを行うかどうかの設定 true=行う false=行わない ※trueを指定するとファイルをストレージに使っている場合も実行される<br>
  * -svic  ImdstDefine.startVaccumInvalidCount /有効期限切れのデータのクリーニングを行う間隔(分/単位)<br>
+ * -csf   ImdstDefine.calcSizeFlg /保存データの合計サイズを計算するかどうかの指定 true=計算する/false=計算しない 計算しない方が高速に値の登録が可能<br>
  *
  * <br>
  * @author T.Okuyama
@@ -205,6 +206,19 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
+
+
+                    if (startOptions[i].trim().equals("-csf")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
+                                ImdstDefine.calcSizeFlg = false;
+                            } else if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")){
+                                ImdstDefine.calcSizeFlg = true;
+                            }
+                        }
+                    }
+
+
                 }
             }
         } catch (Exception e) {
