@@ -3213,20 +3213,22 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // 1つのノードで演算に成功した場合はそこでbreak
                 if (calcRet != null && calcRet[1].equals("true")) {
 
-                    calcFixValue = new String[2];
-                    calcFixValue[0] = keyStr;
-                    calcFixValue[1] = calcRet[2];
-                    break;
-                } else if (calcRet != null && calcRet[1].equals("false")){
+                    if (calcFixValue == null) {
+                        calcFixValue = new String[2];
+                        calcFixValue[0] = keyStr;
+                        calcFixValue[1] = calcRet[2];
+                    }
+                    //break;
+                }// else if (calcRet != null && calcRet[1].equals("false")){
                     // 論理的に失敗した場合は即break
-                    calcFixValue = null;
-                    break;
-                }
+                    //calcFixValue = null;
+                    //break;
+                //}
             }
 
 
             // 演算結果を残りのノードへ保存
-            try {
+            /*try {
                 if (calcFixValue != null)  {
                     String[] keyNodeSaveRet = null;
                     if (keyNodeInfo.length == 6 && idx < 3) {
@@ -3241,14 +3243,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
             } catch (Exception e) {
                 // 無視
-            }
+            }*/
 
             // 保存結果確認はしない
             if (calcFixValue != null)  {
                 // 保存失敗
                 retStrs[0] = "13";
                 retStrs[1] = "true";
-                retStrs[2] = calcRet[2];
+                retStrs[2] = calcFixValue[1];
 
             } else {
 

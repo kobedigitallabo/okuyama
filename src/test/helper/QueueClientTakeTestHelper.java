@@ -68,12 +68,13 @@ public class QueueClientTakeTestHelper extends AbstractHelper {
 
             while (true) {
 
-                String data = queueClient.take(queueName, 10000);
+                String data = queueClient.take(queueName, 30000);
                 if(data != null) {
                     String chk = (String)super.removeHelperShareParam(data);
                     if (chk == null) 
                         System.out.println("Queue Take Error --------------------------------------- Data[" + data + "]");
                 } else {
+                    System.out.println("QueueTake - break");
                     break;
                 }
             }

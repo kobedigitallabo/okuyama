@@ -151,8 +151,10 @@ public class FileBaseDataMap extends AbstractMap {
         int oneMapSizePer = numberOfKeyData / numberOfCoreMap;
 
 
-
-        if (numberOfValueLength > 0) {
+        // TODO:追記
+        if (numberOfValueLength == 15) {
+            this.coreFileBaseKeyMaps = new DelayWriteCoreFileBaseKeyMap[baseDirs.length];
+        } else if (numberOfValueLength > 0) {
 
             if (numberOfValueLength > middleSizeLimit) {
 
@@ -183,7 +185,11 @@ public class FileBaseDataMap extends AbstractMap {
 
             String[] dir = {baseDirs[idx]};
 
-            if (numberOfValueLength > 0) {
+            // TODO:追記
+            if (numberOfValueLength == 15) {
+
+                this.coreFileBaseKeyMaps[idx] = new DelayWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, 15);
+            } else if (numberOfValueLength > 0) {
 
                 if (numberOfValueLength > regularSizeLimit) {
                     this.coreFileBaseKeyMaps[idx] = new FixWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, regularSizeLimit);
@@ -700,7 +706,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
             this.oneDataLength = numberOfValueSize;
             this.lineDataSize =  this.keyDataLength + this.oneDataLength;
             if (8192 > this.lineDataSize) {
-                this.getDataSize = this.lineDataSize * (8192 / this.lineDataSize) * 5;
+                this.getDataSize = this.lineDataSize * (8192 / this.lineDataSize) * 10;
             } else {
                 this.getDataSize = this.lineDataSize * 1 * 2;
             }
@@ -1020,9 +1026,8 @@ start1 = System.nanoTime();
 */
         if (this.delayWriteDifferenceMap.containsKey(key)) {
             String retStr = (String)this.delayWriteDifferenceMap.get(key);
-            if (retStr ==null) return null;
-            if (retStr.equals("&&&&&&&&&&&")) return null;
-            return retStr;
+            if (retStr != null && retStr.equals("&&&&&&&&&&&")) return null;
+            if (retStr != null) return retStr;
         }
 
         byte[] tmpBytes = null;
