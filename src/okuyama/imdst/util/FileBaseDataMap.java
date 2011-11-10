@@ -652,11 +652,14 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
     // 全キー取得時の現在のファイル内でのFPの位置
     private long nowIterationFpPosition = 0;
 
+    // 遅延書き込み依頼用のQueueの最大サイズ
+    private int delayWriteQueueSize = 8000;
+
     // 遅延書き込み依頼用のQueue
-    private ArrayBlockingQueue delayWriteQueue = new ArrayBlockingQueue(8000);
+    private ArrayBlockingQueue delayWriteQueue = new ArrayBlockingQueue(delayWriteQueueSize);
 
     // 遅延書き込み前のデータを補完するMap
-    private ConcurrentHashMap delayWriteDifferenceMap = new ConcurrentHashMap(8000, 7900, 32);
+    private ConcurrentHashMap delayWriteDifferenceMap = new ConcurrentHashMap(delayWriteQueueSize, delayWriteQueueSize - 100, 32);
 
     // 遅延書き込みを依頼した回数
     private long delayWriteRequestCount = 0L;
@@ -922,6 +925,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
 //end2 = System.nanoTime();
             this.delayWriteRequestCount++;
 
+            if (this.delayWriteQueue.size() > (delayWriteQueueSize - 500)) Thread.sleep(50);
 //if (ImdstDefine.fileBaseMapTimeDebug) {
 //    System.out.println("Set 1="+(end1 - start1) + " 2="+(end2 - start2));
 //}
