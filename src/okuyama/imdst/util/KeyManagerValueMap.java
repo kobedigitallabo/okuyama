@@ -31,7 +31,12 @@ import org.apache.commons.codec.digest.DigestUtils;
  */
 public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Serializable {
 
+    // 完全にメモリのみでKeyとValueを管理する場合のみtrue
     private boolean memoryMode = true;
+
+    // 完全にディスクのみでKeyとValueを管理する場合のみtrue
+    private boolean fullDiskMode = false;
+
 
     private transient BufferedWriter bw = null;
     private transient AtomicInteger dataFileBufferUseCount = null;
@@ -77,6 +82,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         super(dirs, numberOfDataSize);
         this.memoryMode = false;
+        this.fullDiskMode = true;
     }
 
 
@@ -371,7 +377,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     writeBuf.append("\n");
 
 
-                    if ((seekPoint = this.calcSeekDataPoint(key)) == -1) {
+                    if ((this.fullDiskMode == true && ImdstDefine.reuseDataFileValuePositionFlg == false) || (seekPoint = this.calcSeekDataPoint(key)) == -1) {
 
                         // まだ存在しないデータ
                         // 書き込む行を決定

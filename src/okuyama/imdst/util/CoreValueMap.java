@@ -301,7 +301,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             } else {
 
                 // 非memoryモードの場合をValueの位置をFileMapのValueに入れる
-                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 100000, 0.05);
+                this.urgentSaveMap  = new FileBaseDataMap(this.virtualStoreDirs, 10000000, 0.1, 15);
             }
             this.urgentSaveMode = true;
         }

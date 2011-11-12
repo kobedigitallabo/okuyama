@@ -27,6 +27,7 @@ import okuyama.imdst.util.*;
  * -vidf  ImdstDefine.vacuumInvalidDataFlg /有効期限切れのデータのクリーニングを行うかどうかの設定 true=行う false=行わない ※trueを指定するとファイルをストレージに使っている場合も実行される<br>
  * -svic  ImdstDefine.startVaccumInvalidCount /有効期限切れのデータのクリーニングを行う間隔(分/単位)<br>
  * -csf   ImdstDefine.calcSizeFlg /保存データの合計サイズを計算するかどうかの指定 true=計算する/false=計算しない 計算しない方が高速に値の登録が可能<br>
+ * -rdvp ImdstDefine.reuseDataFileValuePositionFlg /完全ファイルモードでDataNodeを起動した際に値の更新時にデータファイル上のValueの場所を再利用するかの設定.true/再利用する, false/再利用しない
  *
  * <br>
  * @author T.Okuyama
@@ -187,7 +188,8 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
-
+   
+                    // -vidf
                     if (startOptions[i].trim().equals("-vidf")) {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
@@ -198,6 +200,7 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+                    // -svic
                     if (startOptions[i].trim().equals("-svic")) {
                         if (startOptions.length > (i+1)) {
                             try {
@@ -207,7 +210,7 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
-
+                    // -csf
                     if (startOptions[i].trim().equals("-csf")) {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
@@ -218,6 +221,16 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+                    // -rdvp
+                    if (startOptions[i].trim().equals("-rdvp")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
+                                ImdstDefine.reuseDataFileValuePositionFlg = false;
+                            } else if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")){
+                                ImdstDefine.reuseDataFileValuePositionFlg = true;
+                            }
+                        }
+                    }
 
                 }
             }

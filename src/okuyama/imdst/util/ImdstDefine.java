@@ -465,6 +465,12 @@ public class ImdstDefine {
     // WALログのファイルシステムへのfsync係数(0=OSでの自動sync制御、1=fsync回数低、2=fsync回数中、3=fsync回数高、4=常にfsync
     public volatile static int transactionLogFsyncType = 0;
 
+    // 完全ファイルモード時に既に登録されているKeyの更新の場合にファイル上のValueの場所を再利用するかの設定。再利用しない場合は、
+    // 新規、更新ともに処理速度を向上させることが可能。正し同一のKeyを書き換え続けた場合にValueを格納している
+    // データファイルが肥大し続ける。ただし、定期的にVacuum処理で回収はされる。
+    // true=再利用する、false=再利用しない
+    public volatile static boolean reuseDataFileValuePositionFlg = true;
+
 
     // 保存データサイズの合計値演算設定
     // true:計算する
