@@ -3,11 +3,14 @@
  * PHP用のクライアント.<br>
  * Javaをそのまま焼きなおしました.<br>
  * TODO:PHPのコーディングルールに従っていない.<br>
- * TODO:サーバ接続部分のエラーがうまくハンドリグ出来ていない.<br>
+ * TODO:以下がJava版のOkuyamaClientに足りないメソッドです.<br>
+ *      getTagValues
+ *      getMultiTagValues
+ *      getMultiTagKeys
+ *      getTagKeysResult
+ *      getMultiTagKeysResult
  *
  *
- * ・稼動条件
- *   mbstringが読み込まれている必要があります.<br>
  */
 class OkuyamaClient {
 
