@@ -68,3 +68,7 @@ rem searchValue
 php PhpTestSock.php 43.1 127.0.0.1 8888 "7" "716" 2 "Prefix1"
 rem removeSearchIndex
 php PhpTestSock.php 44 127.0.0.1 8888 "datavaluestr_716" 1 ""
+rem MaxSizeTest
+php PhpTestSock.php size-true 127.0.0.1 8888
+rem MaxSizeOverTest
+php PhpTestSock.php size-false 127.0.0.1 8888

@@ -44,10 +44,15 @@ class OkuyamaClient {
     private $maxValueSize = 2560;
 
     // 保存できるKey最大長
-    private $maxKeySize = 386;
+    private $maxKeySize = 320;
 
     // MasterServerへの接続時のタイムアウト時間
     private $connectTimeOut = 10;
+
+    private $midleConnectTimeOut = 50;
+
+    private $longConnectTimeOut = 600;
+
 
     private $errorno;
 
@@ -68,7 +73,6 @@ class OkuyamaClient {
      */
     public function setConnectionInfos($masterNodes) { 
 
-        if ($balanceType) 
         $this->masterNodesList = array();
         for ($i = 0; $i < count($masterNodes); $i++) {
             $this->masterNodesList[$i] = $masterNodes[$i];
@@ -110,7 +114,7 @@ class OkuyamaClient {
                 // 現在のサーバリストから作り直し(unsetだと添え字が切り詰められない為)
                 $repackList = array();
                 for ($idx = 0; $idx < count($this->masterNodesList); $idx++) {
-                    if ($tmpMasterNodeList[$idx] !== null && $tmpMasterNodeList[$idx] !== "") {
+                    if (isset($tmpMasterNodeList[$idx])) {
                         $repackList[] = $tmpMasterNodeList[$idx];
                     }
                 }
@@ -273,7 +277,7 @@ class OkuyamaClient {
      * 接続先のokuyamaのバージョンを返す<br>
      *
      * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):okuyamaのバージョン文字列
-     * @throws OkuyamaClientException
+     * @throws OkuyamaClientException, Exception
      */
     public function getOkuyamaVersion()  {
         $ret = array(); 
@@ -543,9 +547,9 @@ class OkuyamaClient {
      * データのLock解除を依頼する.<br>
      * 本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である
    *
-     * @param keyStr
+     * @param keyStr 
      * @return String[] 要素1(Lock解除成否):"true" or "false"
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
    */
     public function releaseLockData($keyStr) {
         $ret = array(); 
@@ -641,12 +645,12 @@ class OkuyamaClient {
      * Tag有り.<br>
      * 有効期限が秒単位で設定可能
      *
-     * @param keyStr
-     * @param value
-     * @param tagStrs
+     * @param keyStr Key値文字列
+     * @param value Value文字列
+     * @param tagStrs Tag文字配列
      * @param expireTime 有効期限(秒/単位)
-     * @return boolean
-     * @throws Exception
+     * @return boolean 成否
+     * @throws OkuyamaClientException, Exception
      */
     public function setValue($keyStr, $value, $tagStrs = null, $expireTime = null) {
         $ret = false; 
@@ -748,6 +752,7 @@ class OkuyamaClient {
             @fputs($this->socket, $serverRequestBuf . "\n");
 
             $serverRetStr = @fgets($this->socket);
+
             $serverRetStr = str_replace("\r", "", $serverRetStr);
             $serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
@@ -786,6 +791,7 @@ class OkuyamaClient {
                 throw $e;
             }
         }
+
         return $ret;
     }
 
@@ -797,12 +803,12 @@ class OkuyamaClient {
      * Tag有り.<br>
      * 有効期限が秒単位で設定可能
      *
-     * @param keyStr
-     * @param objectValue
-     * @param tagStrs
+     * @param keyStr Key値文字列
+     * @param objectValue Object値
+     * @param tagStrs Tag文字配列
      * @param expireTime 有効期限(秒/単位)
-     * @return boolean
-     * @throws Exception
+     * @return boolean 成否
+     * @throws OkuyamaClientException, Exception
      */
     public function setObjectValue($keyStr, $objectValue, $tagStrs = null, $expireTime = null) {
         return $this->setValue($keyStr, serialize($objectValue), $tagStrs, $expireTime);
@@ -819,11 +825,12 @@ class OkuyamaClient {
      * 検索インデックスを削除してから登録が行われる.<br>
      * Tag有り.<br>
      *
-     * @param keyStr Key値
+     * @param keyStr Key値文字列
      * @param tagStrs Tag値の配列 例){"tag1","tag2","tag3"}
      * @param value value値
      * @param indexPrefix 作成する検索IndexをグルーピングするPrefix文字列.この値と同様の値を指定してsearchValueメソッドを呼び出すと、グループに限定して全文検索が可能となる.最大は128文字
      * @return boolean 登録成否
+     * @throws OkuyamaClientException, Exception
      */
     public function setValueAndCreateIndex($keyStr, $value, $tagStrs = null, $indexPrefix = null) {
         $ret = false; 
@@ -831,6 +838,8 @@ class OkuyamaClient {
         $serverRet = null;
         $serverRequestBuf = null;
         $encodeValue = "";
+
+
         try {
             // Byte Lenghtチェック
             if ($this->checkStrByteLength($keyStr) > $this->maxKeySize) throw new OkuyamaClientException("Save Key Max Size " . $this->maxKeySize . " Byte");
@@ -839,7 +848,9 @@ class OkuyamaClient {
                     if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxKeySize) throw new OkuyamaClientException("Tag Max Size " . $this->maxKeySize . " Byte");
                 }
             }
-            if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new OkuyamaClientException("Save Value Max Size " . $this->maxValueSize . " Byte");
+
+            $valueLen = $this->checkStrByteLength($value);
+            if ($valueLen > $this->maxValueSize) throw new OkuyamaClientException("Save Value Max Size " . $this->maxValueSize . " Byte");
 
             if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
@@ -919,10 +930,14 @@ class OkuyamaClient {
             }
 
 
+            // タイムアウト時間を一番長く伸ばす
+            socket_set_timeout($this->socket, $this->longConnectTimeOut);
+
             // サーバ送信
             @fputs($this->socket, $serverRequestBuf . "\n");
 
             $serverRetStr = @fgets($this->socket);
+
             $serverRetStr = str_replace("\r", "", $serverRetStr);
             $serverRetStr = str_replace("\n", "", $serverRetStr);
             $serverRet = explode($this->sepStr, $serverRetStr);
@@ -974,7 +989,7 @@ class OkuyamaClient {
      * @param tagStrs
      * @param value
      * @return boolean
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function setNewValue($keyStr, $value, $tagStrs = null, $expireTime = null) {
         $ret = false; 
@@ -1117,16 +1132,16 @@ class OkuyamaClient {
 
     /**
      * マスタサーバへデータを送信する.<br>
-     * バージョンチェックを行う.<br>
-     * Tag有り.<br>
+     * 排他的バージョンチェックを行い、更新する.<br>
+     * バージョン番号をgetValueVersionCheckメソッドで事前にバージョン値を取得して更新時のチェック値として利用する
      * memcachedのcasに相当する.<br>
      *
-     * @param keyStr
-     * @param value
-     * @param tagStrs
-     * @param versionNo
-     * @return boolean
-     * @throws Exception
+     * @param keyStr 更新対象のKey値文字列
+     * @param value 更新Value
+     * @param tagStrs Tag値 ※必要ない場合はNULLを渡す
+     * @param versionNo getValueVersionCheckで取得した戻り値のバージョンNo値
+     * @return boolean 成否
+     * @throws OkuyamaClientException, Exception
      */
     public function setValueVersionCheck($keyStr, $value, $tagStrs, $versionNo) {
         $ret = false; 
@@ -1262,10 +1277,10 @@ class OkuyamaClient {
     /**
      * MasterNodeへデータの加算を要求する.<br>
      *
-     * @param keyStr Key値
+     * @param keyStr Key値文字列
      * @param value 加算値
      * @return 要素1(処理成否):Boolean true/false,要素2(演算後の結果):double 数値
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function incrValue($keyStr, $value) {
         $ret = false; 
@@ -1372,10 +1387,10 @@ class OkuyamaClient {
     /**
      * MasterNodeへデータの減算を要求する.<br>
      *
-     * @param keyStr Key値
+     * @param keyStr Key値文字列
      * @param value 減算値
      * @return 要素1(処理成否):Boolean true/false,要素2(演算後の結果):double 数値
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function decrValue($keyStr, $value) {
         $ret = false; 
@@ -1485,7 +1500,7 @@ class OkuyamaClient {
      * @param keyStr
      * @param encoding
      * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function getValue($keyStr, $encoding="UTF-8")  {
         $ret = array(); 
@@ -1582,7 +1597,7 @@ class OkuyamaClient {
      * @param keyStr
      * @param encoding
      * @return Object[] 要素1(データ有無(String)):"true" or "false" or "error",要素2(データ):Object型の値はもしくは"false"の場合はnull(データ有無がerrorの場合のみエラーメッセージ文字列(String型固定))
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function getObjectValue($keyStr)  {
 
@@ -1610,7 +1625,7 @@ class OkuyamaClient {
      * @param keyStrList Key値配列<br>1つだけのKeyを指定することは出来ない
      * @param encoding エンコーディング指定
      * @return array 取得データの連想配列 取得キーに同一のKey値を複数指定した場合は束ねられる arrayのキー値は指定されたKeyとなりValueは取得した値となる<br>全てのKeyに紐付くValueが存在しなかった場合は、nullが返る
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function getMultiValue($keyStrList, $encoding="UTF-8")  {
         $ret = array(); 
@@ -1717,12 +1732,13 @@ class OkuyamaClient {
      * マスタサーバからKeyでデータを取得する.<br>
      * 文字列エンコーディング指定あり.<br>
      * Valueのバージョン値を合わせて返す.<br>
+     * setValueVersionCheckにて取得したバージョンNoを利用する
      * memcachedのgetsに相当する.<br>
      *
-     * @param keyStr
-     * @param encoding
-     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(Version):"0始まりの数字" 
-     * @throws Exception
+     * @param keyStr 取得対象のKey値文字列
+     * @param encoding Valueの文字コード
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列",要素3(VersionNo):"数字" 
+     * @throws OkuyamaClientException, Exception
      */
     public function getValueVersionCheck($keyStr, $encoding="UTF-8")  {
         $ret = array(); 
@@ -1830,7 +1846,7 @@ class OkuyamaClient {
      * @param keyStr
      * @param encoding
      * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function getValueAndUpdateExpireTime($keyStr, $encoding="UTF-8")  {
         $ret = array(); 
@@ -1930,7 +1946,7 @@ class OkuyamaClient {
      * @param keyStr
      * @param encoding
      * @return Object[] 要素1(データ有無(String)):"true" or "false" or "error",要素2(データ):Object型の値はもしくは"false"の場合はnull(データ有無がerrorの場合のみエラーメッセージ文字列(String型固定))
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function getObjectValueAndUpdateExpireTime($keyStr)  {
         $ret = array();
@@ -1951,11 +1967,11 @@ class OkuyamaClient {
      * 取得データに対してJavaScriptを実行する.<br>
      * 文字列エンコーディング指定あり.<br>
      *
-     * @param keyStr
+     * @param keyStr Key値文字列
      * @param scriptStr JavaScriptコード
-     * @param encoding
+     * @param encoding 取得Valueの文字コード
      * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function getValueScript($keyStr, $scriptStr, $encoding="UTF-8")  {
         $ret = array(); 
@@ -2060,11 +2076,11 @@ class OkuyamaClient {
      * 取得データに対してJavaScriptを実行する.<br>
      * 文字列エンコーディング指定あり.<br>
      *
-     * @param keyStr
+     * @param keyStr Key値文字列
      * @param scriptStr JavaScriptコード
-     * @param encoding
+     * @param encoding 取得Valueの文字コード
      * @return String[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function getValueScriptForUpdate($keyStr, $scriptStr, $encoding="UTF-8")  {
         $ret = array(); 
@@ -2167,10 +2183,10 @@ class OkuyamaClient {
     /**
      * マスタサーバからTagでKey値群を取得する.<br>
      *
-     * @param tagStr
+     * @param tagStr Tag文字列
      * @param noExistsData Keyが存在しない場合の取得指定 true=過去にtagを登録した場合はKey値は返す false=現時Keyが存在しなければ返却しない
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(データ):"データ文字列"
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function getTagKeys($tagStr, $noExistsData=true) {
         $ret = array(); 
@@ -2285,14 +2301,14 @@ class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は32文字(ソフトリミット).<br>
+     * 検索可能な文字列は漢字の場合は1文字からで、それ以外は2文字から.<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)<文字配列>
      * @param  searchType 1:AND検索　2:OR検索
      * @param  prefix 検索Index作成時に指定したPrefix値
      * @return object[] 要素1(データ有無):"true" or "false",要素2(該当のKey値配列):Stringの配列
-     * @throws OkuyamaClientException
+     * @throws OkuyamaClientException, Exception
      */
     public function searchValue($searchCharacterList, $searchType, $prefix=null) {
         $ret = array(); 
@@ -2429,9 +2445,9 @@ class OkuyamaClient {
      * マスタサーバからKeyでデータを削除する.<br>
      * 取得値のエンコーディング指定が可能.<br>
      *
-     * @param keyStr
+     * @param keyStr 削除対象のKey値文字列
      * @return String[] 削除したデータ 内容) 要素1(データ削除有無):"true" or "false",要素2(削除データ):"データ文字列"
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function removeValue($keyStr, $encoding="UTF-8")  {
         $ret = array(); 
@@ -2527,9 +2543,10 @@ class OkuyamaClient {
     /**
      * MasterNodeへKey値とTag値を指定してTagの紐付きを削除する.<br>
      *
-     * @param keyStr Key値
-     * @param tagStr tag値
+     * @param keyStr Key値文字列
+     * @param tagStr Tag値文字列
      * @return boolean 削除成否
+     * @throws OkuyamaClientException, Exception
      */
     public function removeTagFromKey($keyStr, $tagStr) {
         $ret = false; 
@@ -2636,10 +2653,11 @@ class OkuyamaClient {
      * 検索Index長さ指定あり<br>
      *
      *
-     * @param keyStr Key値
+     * @param keyStr Key値文字列
      * @param indexPrefix 作成時に設定したIndexのPrefix値
      * @param indexLength 作成時に指定した作成Indexの長さ指定
      * @return boolean 削除成否
+     * @throws OkuyamaClientException, Exception
      */
     public function removeSearchIndex($keyStr, $indexPrefix = null, $indexLength = 3) {
         $ret = false; 
@@ -2673,6 +2691,7 @@ class OkuyamaClient {
             // セパレータ連結
             $serverRequestBuf = $serverRequestBuf . $this->sepStr;
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
+
             $serverRequestBuf = $serverRequestBuf. $this->dataEncoding($keyStr);
 
             // セパレータ連結
@@ -2749,9 +2768,9 @@ class OkuyamaClient {
     /**
      * マスタサーバからKeyでデータを取得する(バイナリ).<br>
      *
-     * @param keyStr
+     * @param keyStr Key値文字列
      * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     public function getByteValue($keyStr) {
         try {
@@ -2797,9 +2816,9 @@ class OkuyamaClient {
     /**
      * マスタサーバからKeyでデータを取得する(バイナリ).<br>
      *
-     * @param  $keyStr
+     * @param  $keyStr Key値文字列
      * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
-     * @throws Exception
+     * @throws OkuyamaClientException, Exception
      */
     private function getByteData($keyStr) {
         $ret = array(); 
@@ -2890,11 +2909,13 @@ class OkuyamaClient {
 
     // 文字列の長さを返す
     private function checkStrByteLength($targetStr) {
+
         $ret = 0;
         $strWidth = strlen($targetStr);
+
         //$strWidth = mb_strlen($targetStr);
         //$ret = $strWidth = mb_strlen($targetStr);
-        return $ret;
+        return $strWidth;
     }
 
     // BASE64でエンコードする
