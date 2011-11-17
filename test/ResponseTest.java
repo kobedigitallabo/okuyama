@@ -101,10 +101,11 @@ public class ResponseTest {
                 } else {
                     boolean execFlg = true;
                     int inCnt = 0;
-
+                    int timeCnt = 0;
                     while(execFlg) {
                         execFlg = false;
 
+                        if ((inCnt % 20) == 0) System.out.println(new Date());
                         for (int i= 0; i < threads.length; i++) {
                             if ((inCnt % 20) == 0) {
 
@@ -144,6 +145,7 @@ public class ResponseTest {
 
                     while(execFlg) {
                         execFlg = false;
+                        if ((inCnt % 20) == 0) System.out.println(new Date());
                         for (int i= 0; i < threads.length; i++) {
                             if ((inCnt % 20) == 0) {
                                 System.out.println(threads[i].getExecCounter());
