@@ -46,6 +46,8 @@ okuyamaサーバインストールパッケージ
     ・KeyManagerJob1.virtualStoreDirs
     ・KeyManagerJob1.keyStoreDirs
 
+  4.log4j.properties
+    ・ログ出力先全て
 
 
 ■手順3)
@@ -56,9 +58,11 @@ okuyamaサーバインストールパッケージ
     第1引数.動作指定: start 
     第2引数.バックグラウンド指定(-server)
     第3引数.起動用設定ファイル
+    第4引数.標準出力ファイル
+    第5引数.標準エラー出力ファイル
 
     例)
-    okuyama start -server /home/okuyama/okuyama/conf/MasterNode.properties
+    okuyama start -server /home/okuyama/okuyama/conf/MasterNode.properties /home/okuyama/okuyama/master.out /home/okuyama/okuyama/master.err
 
 
   2.停止
