@@ -366,6 +366,17 @@ public class SystemUtil {
      * @throw Exception
      */
     public static int diskAccessSync(Object fileAccessor) throws Exception {
+        return diskAccessSync(fileAccessor, true);
+    }
+
+    /**
+     * Diskへの書き込みをSyncする.<br>
+     * 
+     * @param fileAccessor FileアクセスStream
+     * @param type Streamの種類 1=BufferedWriter 2=CustomBufferedWriter
+     * @throw Exception
+     */
+    public static int diskAccessSync(Object fileAccessor, boolean auto) throws Exception {
         try {
             int type = 0;
             int syncIdx = 0;
@@ -387,6 +398,10 @@ public class SystemUtil {
 
 
             if (type == 1) {
+                if (auto == false) {
+                    ((BufferedWriter)fileAccessor).flush();
+                    return 0;
+                }
                 synchronized (diskAccessSync[syncIdx]) {
                     ((BufferedWriter)fileAccessor).flush();
                 }

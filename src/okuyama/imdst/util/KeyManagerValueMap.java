@@ -403,8 +403,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             if (deletedLine == null) {
 
                                 this.bw.write(writeBuf.toString());
-
-                                SystemUtil.diskAccessSync(this.bw);
+                                SystemUtil.diskAccessSync(this.bw, false);
 
                                 this.lineCount++;
 

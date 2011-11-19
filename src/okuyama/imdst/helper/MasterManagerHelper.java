@@ -96,6 +96,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // クライアントからのinitメソッド用返却パラメータ
     private static String[] initReturnParam = {"0", "true", new Integer(ImdstDefine.saveDataMaxSize).toString()};
 
+    // valueのbase64でエンコード後の最大サイズ
+    private int encodeMaxDataSize = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
+
+
     // 検索Index作成用の辞書
     private static ConcurrentHashMap searchIndexDictionaryMap = new ConcurrentHashMap(500, 480, 1024);
     private static String[] searchIndexDictionaryList = new String[0];
@@ -437,6 +441,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             // 取得と同時に有効日付Update
                             retParams = this.getValueAndUpdateExpireTime(clientParameterList[1]);
+                            break;
+                        case 18 :
+
+                            // 値の付加
+                            //retParams = this.appendValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4], clientParameterList[54]);
                             break;
                         case 22 :
 
@@ -1318,9 +1327,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // N-GramのNを決めるループ
                         
                         for (int typeIdx = indexMinLength; typeIdx < indexLength; typeIdx++) {
+
                             try {
                                 // 文字列の最後まで繰り返すループ
                                 for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
+
                                     String checkStr = oldRealKeyStr.substring(i, i+typeIdx);
 
                                     if(SystemUtil.checkNoIndexCharacter(checkStr)) {
@@ -1369,6 +1380,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     try {
 
                         for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
+
                             String checkStr = realKeyStr.substring(i, i+typeIdx);
 
                             if(SystemUtil.checkNoIndexCharacter(checkStr)) {
@@ -7441,7 +7453,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // Value値の長さをチェック
     private boolean checkValueLength(String value) {
         if (value == null) return false;
-        if (value.length() >= new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue()) return false;
+        if (value.length() >= this.encodeMaxDataSize) return false;
         return true;
     }
 }

@@ -980,7 +980,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
             } catch(Exception e) {
 
                 retStrs[0] = "false";
-                logger.info("Node Ping Chekc Error Node Name = [" + nodeName + "] Port [" + port + "]");
+                logger.info("Node Ping Check Error Node Name = [" + nodeName + "] Port [" + port + "]");
                 logger.info(e);
             } finally {
                 try {

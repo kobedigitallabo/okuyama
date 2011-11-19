@@ -11,7 +11,7 @@ import java.util.zip.Deflater;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.9.0";
+    public static final String okuyamaVersion = "VERSION okuyama-0.9.1";
 
     // -- KeyMapファイルに関係する定数 -------------------------------------------------
     // KeyNodeのWorkファイルでのセパレータ
@@ -290,14 +290,14 @@ public class ImdstDefine {
     public volatile static String serializerClassName = null;
 
     // 保存出来る、Key、Tag、Valueの最大長
-    // Valueの最大長
+    // Valueの最大長(base64エンコード前)
     public volatile static int saveDataMaxSize = 1572864;
 
     // 大きいデータ保存する場合は以下の数値の用に最も保存する回数の多いサイズに合わせると
     // レスポンスが向上す。下記の場合は512KB
     //public static final int saveDataMaxSize =524288;
 
-    // Key,Tagの最大長
+    // Key,Tagの最大長(base64エンコード後)
     public volatile static int saveKeyMaxSize = 468;
 
     // 共通のデータファイルに書き出す最大サイズ
@@ -458,6 +458,9 @@ public class ImdstDefine {
     // WALログをローテーションする際のサイズ(1.8GB)
     public static final long workFileChangeNewFileSize = 1610612736;
 
+
+    // DelayWriteCoreFileBaseKeyMapがディスクに書きだすデータをどれだけメモリにキューイングするかのレコード数
+    public volatile static int delayWriteMaxQueueingSize = 8000;
 
     // ファイルシステムへの同時アクセス係数
     public volatile static int parallelDiskAccess = 49;

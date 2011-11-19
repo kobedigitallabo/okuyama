@@ -160,6 +160,8 @@ public class KeyMapManager extends Thread {
     private int memoryLimitSize = -1;
     private String[] virtualStorageDirs = null;
 
+
+
     // 初期化メソッド
     // Transactionを管理する場合に呼び出す
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, boolean dataManage) throws BatchException {
@@ -665,7 +667,6 @@ public class KeyMapManager extends Thread {
 
         if (!blocking) {
             try {
-
                 //logger.debug("setKeyPair - synchronized - start");
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
@@ -677,9 +678,17 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-                    String data = null;
 
-                    boolean containsKeyRet = containsKeyPair(key);
+                    String data = null;
+                    String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+
+                    if (keyNoddes.length > 1) {
+                        data = keyNoddes[0] + ImdstDefine.setTimeParamSep + keyNoddes[1];
+                    } else {
+                        data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
+                    }
+
+                    /*boolean containsKeyRet = containsKeyPair(key);
 
                     if (!containsKeyRet) {
 
@@ -700,6 +709,7 @@ public class KeyMapManager extends Thread {
 
                                 data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (System.nanoTime() + 1);
                             } else {
+System.out.println("aaaaaaaaaaaaaaaa[" + keyNode + "]");
 
                                 data = keyNode;
                             }
@@ -708,7 +718,7 @@ public class KeyMapManager extends Thread {
                             data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
                         }
 
-                    } 
+                    }*/
 
 
 
@@ -1821,6 +1831,127 @@ System.out.println("[1]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[1]
                 logger.error("setKeyPair - Error");
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "setKeyPair - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * キーを指定することで紐付くValueの後ろに渡されたValueを付加する.<br>
+     * 値が存在しない場合は新規の値としてただ登録される.<br>
+     *
+     * @param key キー値
+     * @param appendValue 付加する値(base64でエンコード済み)
+     * @param appendSep 値が既に存在する場合にセパレータとして付加する値(ブランク指定(B)の場合は何も付加されない)
+     * @param transactionCode
+     * @return boolean 成否 0=成功、1=サイズオーバによりエラー
+     */
+    public int appendValue(String key, String appendValue, String appendSep, String transactionCode) throws BatchException {
+        int ret = -1;
+        String data = null;
+        
+        if (!blocking) {
+            try {
+
+                //logger.debug("appendValue - synchronized - start");
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
+                    boolean containsKeyRet = containsKeyPair(key);
+                    if (containsKeyRet) {
+
+                        String tmp = keyMapObjGet(key);
+                        String[] keyNoddes = tmp.split(ImdstDefine.setTimeParamSep);
+                        String setDataStr = null;
+
+                        if (tmp != null) {
+
+                            String targetData = keyNoddes[0];
+
+                            if (keyNoddes[0].indexOf(",") != -1) {
+                                String[] workSplitData = keyNoddes[0].split(",");
+                                targetData = workSplitData[0];
+                            }
+
+                            if (targetData.equals(ImdstDefine.imdstBlankStrData)) {
+                                if (appendValue.equals(ImdstDefine.imdstBlankStrData)) {
+                                    setDataStr = appendValue;
+                                } else {
+                                    setDataStr = new String(BASE64DecoderStream.decode(appendValue.getBytes()));
+                                }
+                            } else {
+
+                                if (appendSep.equals(ImdstDefine.imdstBlankStrData)) {
+                                    appendSep = "";
+                                } else {
+                                    appendSep = new String(BASE64DecoderStream.decode(appendSep.getBytes()));
+                                }
+                                String nowData = new String(BASE64DecoderStream.decode(targetData.getBytes()));
+                                setDataStr = nowData + appendSep + appendValue;
+                            }
+
+                            // 登録前に長さをチェック
+                            if (ImdstDefine.saveDataMaxSize < ((byte[])setDataStr.getBytes()).length) {
+                                return 1;
+                            }
+            
+                            if (keyNoddes.length > 1) {
+
+                                data = new String(BASE64EncoderStream.encode(setDataStr.getBytes())) + ImdstDefine.setTimeParamSep + (Long.parseLong(keyNoddes[1]) + 1);
+                            } else {
+
+                                data = new String(BASE64EncoderStream.encode(setDataStr.getBytes())) + ImdstDefine.setTimeParamSep + "0";
+                            }
+
+                        }
+                    } 
+
+                    if (data != null) {
+                        // 登録
+                        keyMapObjPut(key, data);
+
+                        // データ操作履歴ファイルに追記
+                        if (this.workFileMemory == false) {
+                            synchronized(this.lockWorkFileSync) {
+
+                                if (this.workFileFlushTiming) {
+
+                                    this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                                    SystemUtil.diskAccessSync(this.bw);
+                                    this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
+                                } else {
+
+                                    this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                                }
+                            }
+                        }
+                        
+                        // Diffモードでかつsync後は再度モードを確認後、addする
+                        if (this.diffDataPoolingFlg) {
+                            synchronized (diffSync) {
+                                if (this.diffDataPoolingFlg) {
+    
+                                    this.diffDataPoolingListForFileBase.add("+" + KeyMapManager.workFileSeq + key + KeyMapManager.workFileSeq +  data);
+                                }
+                            }
+                        }
+
+                        // データの書き込みを指示
+                        this.writeMapFileFlg = true;
+                        ret = 0;
+                    }
+                }
+
+                //logger.debug("appendValue - synchronized - end");
+            } catch (BatchException be) {
+                logger.error("appendValue - InnerError", be);
+                throw be;
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("appendValue - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "appendValue - Error [" + e.getMessage() + "]");
                 throw new BatchException(e);
             }
         }

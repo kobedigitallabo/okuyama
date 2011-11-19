@@ -53,7 +53,11 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                 mainMap  = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
             } else {
 
-                if (size > 19999999) {
+                if (size > 100000000) {
+                    multi = new Double(size * 0.1).intValue();
+                } else if (size > 59999999) {
+                    multi = 4000000;
+                } else if (size > 19999999) {
                     multi = 2000000;
                 } else if (size > 9999999) {
                     multi = 1000000;
@@ -87,8 +91,11 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                 System.out.println("ConcurrentHashMap Use");
                 mainMap  = new ConcurrentHashMap(size, upper, multi);
             } else {
-
-                if (size > 19999999) {
+                if (size > 100000000) {
+                    multi = new Double(size * 0.1).intValue();
+                } else if (size > 59999999) {
+                    multi = 4000000;
+                } else if (size > 19999999) {
                     multi = 2000000;
                 } else if (size > 9999999) {
                     multi = 1000000;

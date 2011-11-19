@@ -653,7 +653,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
     private long nowIterationFpPosition = 0;
 
     // 遅延書き込み依頼用のQueueの最大サイズ
-    private int delayWriteQueueSize = 8000;
+    private volatile int delayWriteQueueSize = ImdstDefine.delayWriteMaxQueueingSize;
 
     // 遅延書き込み依頼用のQueue
     private ArrayBlockingQueue delayWriteQueue = new ArrayBlockingQueue(delayWriteQueueSize);
@@ -816,13 +816,18 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                         try {
 
                             // Key値の場所を特定する
+long  start1 = System.nanoTime();
                             long[] dataLineNoRet = this.getLinePoint(key, raf);
+long end1 = System.nanoTime();
 
                             if (dataLineNoRet[0] == -1) {
-
+long  start2 = System.nanoTime();
                                 wr.write(buf.toString());
                                 SystemUtil.diskAccessSync(wr);
-
+long end2 = System.nanoTime();
+    if (((end2 - start2) > (1000 * 1000 * 10)) || ((end1 - start1) > (1000 * 1000 * 10))) {
+        System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - start2) / 1000 /1000));
+    }
                                 // The size of an increment
                                 this.totalSize.getAndIncrement();
                             } else {
@@ -921,11 +926,15 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
             }
 //end1 = System.nanoTime();
 //start2 = System.nanoTime();
+            if (this.delayWriteQueue.size() > (delayWriteQueueSize - 2000)) Thread.sleep(10);
+            if (this.delayWriteQueue.size() > (delayWriteQueueSize - 1000)) Thread.sleep(20);
+
             this.delayWriteQueue.put(instructionObj);
 //end2 = System.nanoTime();
             this.delayWriteRequestCount++;
 
-            if (this.delayWriteQueue.size() > (delayWriteQueueSize - 500)) Thread.sleep(50);
+            if (this.delayWriteQueue.size() > (delayWriteQueueSize - 500)) Thread.sleep(100);
+            if ((this.delayWriteRequestCount % 10000) == 0) System.out.println("NowQueueSize=" + this.delayWriteQueue.size());
 //if (ImdstDefine.fileBaseMapTimeDebug) {
 //    System.out.println("Set 1="+(end1 - start1) + " 2="+(end2 - start2));
 //}

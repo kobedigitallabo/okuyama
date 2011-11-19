@@ -516,6 +516,24 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
                             break;
+                        case 18 :
+
+                            // Key値に既に登録済みの値がある場合は後続に指定のValueをAppendする
+                            requestHashCode = clientParameterList[1];   // 対象のKey値
+                            transactionCode = clientParameterList[2];   // Transactionコード
+                            requestDataNode = clientParameterList[3];   // Appendする値
+                            String addSep = clientParameterList[4];     // Appendする場合に利用するセパレータ
+                            String existsCheck = clientParameterList[5];// 事前に値の存在チェックを行う指定
+
+                            // メソッド呼び出し
+                            retParams = this.appendValue(requestHashCode, requestDataNode, addSep, existsCheck, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
+
+                            break;
 
                         case 20 :
 
@@ -1052,8 +1070,8 @@ public class KeyManagerHelper extends AbstractHelper {
 
     // Key値で特定した値を渡された値で計算する
     // 計算ルールは以下
-    // 1.送信された値をintに変換する。変換できない場合はfalseで返す.<br>
-    // 2.送信された値をintに変換する。変換した値を足しこむ.<br>
+    // 1.送信された値をlongに変換する。変換できない場合はfalseで返す.<br>
+    // 2.送信された値をlongに変換する。変換した値を足しこむ.<br>
     // 3.送信されたKey値で値がとれない。falseで返す.<br>
     // 4.送信されたKey値で取得した値が数値ではない。0で更新.<br>
     private String[] calcValue(String key, String dataNodeStr, String transactionCode) {
@@ -1095,6 +1113,71 @@ public class KeyManagerHelper extends AbstractHelper {
         //logger.debug("KeyManagerHelper - calcValue - end");
         return retStrs;
     }
+
+
+    // KeyとDataNode値を既存の値に付加する
+    // データが事前に存在するかどうかをチェックすることが可能
+    // existsCheck="1"チェックする、existsCheck="2"チェックしない
+    // 登録後の値が長さの規定値を超える場合エラーとなる
+    // 
+    private String[] appendValue(String key, String dataNodeStr, String addSep, String existsCheck, String transactionCode) {
+        //logger.debug("KeyManagerHelper - appendValue - start");
+        String[] retStrs = new String[3];
+        try {
+            if (dataNodeStr.length() < setDatanodeMaxSize) {
+                if(!this.keyMapManager.checkError()) {
+
+                    // 事前に存在チェックを行う場合
+                    if (existsCheck.equals("1")) {
+                        if (this.keyMapManager.containsKeyPair(key)) {
+                            retStrs[0] = "18";
+                            retStrs[1] = "false";
+                            retStrs[2] = "A value does not exist";
+                            return retStrs;
+                        }
+                    }
+
+                    // 付加処理を行う
+                    int appendRet = this.keyMapManager.appendValue(key, dataNodeStr, addSep, transactionCode);
+                    if(appendRet == 0) {
+
+                        retStrs[0] = "18";
+                        retStrs[1] = "true";
+                        retStrs[2] = "OK";
+                    } else if (appendRet == 1){
+
+                        retStrs[0] = "18";
+                        retStrs[1] = "false";
+                        retStrs[2] = "NG:Max Data Size Over";
+                    } else {
+
+                        retStrs[0] = "18";
+                        retStrs[1] = "false";
+                        retStrs[2] = "NG:Other Error";
+                    }
+                } else {
+
+                    retStrs[0] = "18";
+                    retStrs[1] = "false";
+                    retStrs[2] = "NG:KeyMapManager - appendValue - CheckError - NG";
+                }
+            } else {
+
+                retStrs[0] = "18";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:Max Data Size Over";
+            }
+        } catch (BatchException be) {
+
+            logger.debug("KeyManagerHelper - appendValue - Error", be);
+            retStrs[0] = "18";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - appendValue - Exception - " + be.toString();
+        }
+        //logger.debug("KeyManagerHelper - appendValue - end");
+        return retStrs;
+    }
+
 
 
     // KeyでDataNode値を取得する
