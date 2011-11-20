@@ -636,7 +636,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
     private File[] dataFileList = null;
 
     // アクセススピード向上の為に、Openしたファイルストリームを一定数キャッシュする
-    private InnerCache innerCache = null;
+    private SoftRefCacheMap innerCache = null;
 
     // Total Size
     private AtomicInteger totalSize = null;
@@ -684,6 +684,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
             this.innerCacheSize = innerCacheSize;
             if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;
             this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
+            this.innerCacheSize = this.numberOfDataFiles;
 
             this.init();
             this.start();
@@ -714,10 +715,11 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                 this.getDataSize = this.lineDataSize * 1 * 2;
             }
             this.baseFileDirs = dirs;
-            this.innerCacheSize = innerCacheSize;
+
             if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;
             this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
 
+            this.innerCacheSize = this.numberOfDataFiles;
             this.init();
             this.start();
         } catch (Exception e) {
@@ -737,7 +739,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
      */
     public void init() {
 
-        this.innerCache = new InnerCache(this.innerCacheSize);
+        this.innerCache = new SoftRefCacheMap(this.innerCacheSize);
         this.totalSize = new AtomicInteger(0);
         this.dataFileList = new File[numberOfDataFiles];
 
@@ -781,14 +783,10 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                 String value = (String)instructionObj[1];
                 int hashCode = ((Integer)instructionObj[2]).intValue();
                 StringBuilder buf = new StringBuilder(this.lineDataSize);
-                CacheContainer accessor = null;
-                
                 BufferedWriter wr = null;
 
                 buf.append(this.fillCharacter(key, keyDataLength));
                 buf.append(this.fillCharacter(value, oneDataLength));
-
-
 
                 synchronized (this.dataFileList[hashCode % numberOfDataFiles]) {
 
@@ -797,10 +795,14 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                     StringBuilder decompressDataStr =null;
                     byte[] decompressData = null;
                     if (compressFile.exists()) {
-                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
-                        compressData = new byte[new Long(compressFile.length()).intValue()];
-                        bis.read(compressData);
-                        bis.close();
+                        compressData = (byte[])this.innerCache.get(compressFile.getAbsolutePath());
+                        
+                        if (compressData == null || compressData.length < 1) {
+                            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
+                            compressData = new byte[new Long(compressFile.length()).intValue()];
+                            bis.read(compressData);
+                            bis.close();
+                        }
                         decompressData = SystemUtil.dataDecompress(compressData);
                     }
 
@@ -859,6 +861,7 @@ System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - star
                     }
 
                     compressData = SystemUtil.dataCompress(decompressData);
+                    this.innerCache.put(compressFile.getAbsolutePath(), compressData);
                     BufferedOutputStream compressBos = new BufferedOutputStream(new FileOutputStream(compressFile, false));
                     compressBos.write(compressData);
                     compressBos.flush();
@@ -893,7 +896,10 @@ System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - star
      * @throws
      */
     public void clear() {
-        if (this.innerCache != null) this.innerCache.clear();
+        if (this.innerCache != null) {
+            this.innerCache.end();
+            this.innerCache = new SoftRefCacheMap(this.innerCacheSize);
+        }
     }
 
 
@@ -922,16 +928,18 @@ System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - star
             }
 //end1 = System.nanoTime();
 //start2 = System.nanoTime();
+
             if (this.delayWriteQueue.size() > (delayWriteQueueSize - 2000)) Thread.sleep(10);
             if (this.delayWriteQueue.size() > (delayWriteQueueSize - 1000)) Thread.sleep(20);
+
 
 
             this.delayWriteQueue.put(instructionObj);
 //end2 = System.nanoTime();
             this.delayWriteRequestCount++;
 
-            if (this.delayWriteQueue.size() > (delayWriteQueueSize - 500)) Thread.sleep(100);
-            if ((this.delayWriteRequestCount % 10000) == 0) System.out.println("NowQueueSize=" + this.delayWriteQueue.size());
+            if (this.delayWriteQueue.size() > (delayWriteQueueSize - 500)) Thread.sleep(50);
+            if ((this.delayWriteRequestCount % 5000) == 0) System.out.println("NowQueueSize=" + this.delayWriteQueue.size());
 //if (ImdstDefine.fileBaseMapTimeDebug) {
 //    System.out.println("Set 1="+(end1 - start1) + " 2="+(end2 - start2));
 //}
@@ -1061,10 +1069,15 @@ start1 = System.nanoTime();
                 byte[] compressData = null;
                 byte[] decompressData = null;
                 if (compressFile.exists()) {
-                    BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
-                    compressData = new byte[new Long(compressFile.length()).intValue()];
-                    bis.read(compressData);
-                    bis.close();
+                    compressData = (byte[])this.innerCache.get(compressFile.getAbsolutePath());
+                    
+                    if (compressData == null || compressData.length < 1) {
+
+                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
+                        compressData = new byte[new Long(compressFile.length()).intValue()];
+                        bis.read(compressData);
+                        bis.close();
+                    }
                     decompressData = SystemUtil.dataDecompress(compressData);
                     lineBufs = decompressData;
                 }
@@ -1188,7 +1201,7 @@ start1 = System.nanoTime();
     }
 
     public int getCacheSize() {
-        return innerCache.getSize();
+        return -1;
     }
 
 
