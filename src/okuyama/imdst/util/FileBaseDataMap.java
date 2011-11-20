@@ -782,90 +782,87 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                 int hashCode = ((Integer)instructionObj[2]).intValue();
                 StringBuilder buf = new StringBuilder(this.lineDataSize);
                 CacheContainer accessor = null;
-                RandomAccessFile raf = null;
+                
                 BufferedWriter wr = null;
 
                 buf.append(this.fillCharacter(key, keyDataLength));
                 buf.append(this.fillCharacter(value, oneDataLength));
 
-                File file = this.dataFileList[hashCode % numberOfDataFiles];
-
-                if (this.innerCache != null)
-                    accessor = (CacheContainer)this.innerCache.get(file.getAbsolutePath());
 
 
                 synchronized (this.dataFileList[hashCode % numberOfDataFiles]) {
-                    if (accessor == null || accessor.isClosed == true) {
 
-                        raf = new RandomAccessFile(file, "rwd");
-                        wr = new BufferedWriter(new FileWriter(file, true));
-                        accessor = new CacheContainer();
-                        accessor.raf = raf;
-                        accessor.wr = wr;
-                        accessor.file = file;
-                        innerCache.put(file.getAbsolutePath(), accessor);
-                    } else {
-
-                        raf = accessor.raf;
-                        wr = accessor.wr;
+                    File compressFile = this.dataFileList[hashCode % numberOfDataFiles];
+                    byte[] compressData = null;
+                    StringBuilder decompressDataStr =null;
+                    byte[] decompressData = null;
+                    if (compressFile.exists()) {
+                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
+                        compressData = new byte[new Long(compressFile.length()).intValue()];
+                        bis.read(compressData);
+                        bis.close();
+                        decompressData = SystemUtil.dataDecompress(compressData);
                     }
 
-
                     // KeyData Write File
-                    for (int tryIdx = 0; tryIdx < 2; tryIdx++) {
-                        try {
+                    try {
 
                             // Key値の場所を特定する
 long  start1 = System.nanoTime();
-                            long[] dataLineNoRet = this.getLinePoint(key, raf);
+                        long[] dataLineNoRet = this.getLinePoint(key, decompressData);
 long end1 = System.nanoTime();
 
-                            if (dataLineNoRet[0] == -1) {
+                        if (dataLineNoRet[0] == -1) {
 long  start2 = System.nanoTime();
-                                wr.write(buf.toString());
-                                SystemUtil.diskAccessSync(wr);
-long end2 = System.nanoTime();
-    if (((end2 - start2) > (1000 * 1000 * 10)) || ((end1 - start1) > (1000 * 1000 * 10))) {
-        System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - start2) / 1000 /1000));
-    }
-                                // The size of an increment
-                                this.totalSize.getAndIncrement();
+                          
+                            byte[] fixNewData = null;
+                            byte[] bufBytes = buf.toString().getBytes();
+                            
+                            if (decompressData == null || decompressData.length < 1) {
+                                fixNewData = bufBytes;
                             } else {
+                                fixNewData = new byte[bufBytes.length + decompressData.length];
+                                for (int cpIdx = 0; cpIdx < decompressData.length; cpIdx++) {
+                                    fixNewData[cpIdx] = decompressData[cpIdx];
+                                }
+                                
+                                int newCpIdx = decompressData.length;
+                                for (int cpBufIdx = 0; cpBufIdx < bufBytes.length; cpBufIdx++) {
+                                    fixNewData[newCpIdx] = bufBytes[cpBufIdx];
+                                    newCpIdx++;
+                                }
+                            }
+                            
+                            decompressData = fixNewData;
+long end2 = System.nanoTime();
+if (((end2 - start2) > (1000 * 1000 * 100)) || ((end1 - start1) > (1000 * 1000 * 100))) {
+System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - start2) / 1000 /1000));
+}
+                            // The size of an increment
+                            this.totalSize.getAndIncrement();
+                        } else {
 
-                                // 過去に存在したデータなら1増分
-                                boolean increMentFlg = false;
-                                if (dataLineNoRet[1] == -1) increMentFlg = true;
-                                //if (this.get(key, hashCode) == null) increMentFlg = true;
-
-                                raf.seek(dataLineNoRet[0] * (lineDataSize));
-
-                                raf.write(buf.toString().getBytes(), 0, lineDataSize);
-
-                                if (increMentFlg) this.totalSize.getAndIncrement();
+                            // 過去に存在したデータなら1増分
+                            boolean increMentFlg = false;
+                            if (dataLineNoRet[1] == -1) increMentFlg = true;
+                            //if (this.get(key, hashCode) == null) increMentFlg = true;
+                            int insIdx = new Long((dataLineNoRet[0] * (lineDataSize))).intValue();
+                            byte[] insBytes = buf.toString().getBytes();
+                            for (int i = 0; i < lineDataSize; i++) {
+                            
+                                decompressData[insIdx] = insBytes[i];
                             }
 
-                            break;
-                        } catch (IOException ie) {
-
-                            // IOExceptionの場合は1回のみファイルを再度開く
-                            if (tryIdx == 1) throw ie;
-                            try {
-
-                                if (raf != null) raf.close();
-                                if (wr != null) wr.close();
-
-                                raf = new RandomAccessFile(file, "rwd");
-                                wr = new BufferedWriter(new FileWriter(file, true));
-                                accessor = new CacheContainer();
-                                accessor.raf = raf;
-                                accessor.wr = wr;
-                                accessor.file = file;
-                                innerCache.put(file.getAbsolutePath(), accessor);
-                            } catch (Exception e) {
-                                throw e;
-                            }
+                            if (increMentFlg) this.totalSize.getAndIncrement();
                         }
+                    } catch (IOException ie) {
                     }
+
+                    compressData = SystemUtil.dataCompress(decompressData);
+                    BufferedOutputStream compressBos = new BufferedOutputStream(new FileOutputStream(compressFile, false));
+                    compressBos.write(compressData);
+                    compressBos.flush();
+                    compressBos.close();
                 }
 
                 // 削除処理の場合
@@ -908,7 +905,6 @@ long end2 = System.nanoTime();
      * @param hashCode This is a key value hash code
      */
     public void put(String key, String value, int hashCode) {
-
         Object[] instructionObj = new Object[3];
         instructionObj[0] = key;
         instructionObj[1] = value;
@@ -929,6 +925,7 @@ long end2 = System.nanoTime();
             if (this.delayWriteQueue.size() > (delayWriteQueueSize - 2000)) Thread.sleep(10);
             if (this.delayWriteQueue.size() > (delayWriteQueueSize - 1000)) Thread.sleep(20);
 
+
             this.delayWriteQueue.put(instructionObj);
 //end2 = System.nanoTime();
             this.delayWriteRequestCount++;
@@ -945,14 +942,17 @@ long end2 = System.nanoTime();
 
 
     // 指定のキー値が指定のファイル内でどこにあるかを調べる
-    private long[] getLinePoint(String key, RandomAccessFile raf) throws Exception {
+    private long[] getLinePoint(String key, byte[] targetData) throws Exception {
+        
         long[] ret = {-1, 0};
+        if (targetData == null) return ret;
+
         long line = -1;
         long lineCount = 0L;
 
         byte[] keyBytes = key.getBytes();
         byte[] equalKeyBytes = new byte[keyBytes.length + 1];
-        byte[] lineBufs = new byte[this.getDataSize];
+        byte[] lineBufs = null;
         boolean matchFlg = true;
 
         // マッチング用配列作成
@@ -964,46 +964,38 @@ long end2 = System.nanoTime();
 
         try {
 
-            raf.seek(0);
-            int readLen = -1;
-            while((readLen = SystemUtil.diskAccessSync(raf, lineBufs)) != -1) {
+            int readLen = targetData.length;
+            lineBufs =  targetData;
+            int loop = readLen / lineDataSize;
+
+            for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
+
+                int assist = (lineDataSize * loopIdx);
 
                 matchFlg = true;
-
-                int loop = readLen / lineDataSize;
-
-                for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
-
-                    int assist = (lineDataSize * loopIdx);
-
-                    matchFlg = true;
-                    if (equalKeyBytes[equalKeyBytes.length - 1] == lineBufs[assist + (equalKeyBytes.length - 1)]) {
-                        for (int i = 0; i < equalKeyBytes.length; i++) {
-                            if (equalKeyBytes[i] != lineBufs[assist + i]) {
-                                matchFlg = false;
-                                break;
-                            }
+                if (equalKeyBytes[equalKeyBytes.length - 1] == lineBufs[assist + (equalKeyBytes.length - 1)]) {
+                    for (int i = 0; i < equalKeyBytes.length; i++) {
+                        if (equalKeyBytes[i] != lineBufs[assist + i]) {
+                            matchFlg = false;
+                            break;
                         }
-                    } else {
-                        matchFlg = false;
                     }
-
-                    // マッチした場合のみ返す
-                    if (matchFlg) {
-
-                        line = lineCount;
-                        // 削除データか確かめる
-                        if (lineBufs[assist + keyDataLength] == FileBaseDataMap.paddingSymbol) ret[1] = -1;
-                        break;
-                    }
-
-                    lineCount++;
+                } else {
+                    matchFlg = false;
                 }
-                if (matchFlg) break;
+
+                // マッチした場合のみ返す
+                if (matchFlg) {
+
+                    line = lineCount;
+                    // 削除データか確かめる
+                    if (lineBufs[assist + keyDataLength] == FileBaseDataMap.paddingSymbol) ret[1] = -1;
+                    break;
+                }
+
+                lineCount++;
             }
 
-        } catch (IOException ie) {
-            throw ie;
         } catch (Exception e) {
             throw e;
         }
@@ -1048,7 +1040,7 @@ start1 = System.nanoTime();
         String ret = null;
         byte[] keyBytes = key.getBytes();
         byte[] equalKeyBytes = new byte[keyBytes.length + 1];
-        byte[] lineBufs = new byte[this.getDataSize];
+        byte[] lineBufs = null;
         boolean matchFlg = true;
 
         // マッチング用配列作成
@@ -1061,101 +1053,60 @@ start1 = System.nanoTime();
 //end1 = System.nanoTime();
         try {
 //start2 = System.nanoTime();
-            File file = this.dataFileList[hashCode % numberOfDataFiles];
             CacheContainer accessor = null;
-            RandomAccessFile raf = null;
-            BufferedWriter wr = null;
-
-            if (innerCache != null)
-                accessor = (CacheContainer)this.innerCache.get(file.getAbsolutePath());
 
             synchronized (this.dataFileList[hashCode % numberOfDataFiles]) {
-                if (accessor == null || accessor.isClosed) {
-
-                    raf = new RandomAccessFile(file, "rwd");
-                    wr = new BufferedWriter(new FileWriter(file, true));
-                    accessor = new CacheContainer();
-                    accessor.raf = raf;
-                    accessor.wr = wr;
-                    accessor.file = file;
-                    innerCache.put(file.getAbsolutePath(), accessor);
-                } else {
-
-                    raf = accessor.raf;
+            
+                File compressFile = this.dataFileList[hashCode % numberOfDataFiles];
+                byte[] compressData = null;
+                byte[] decompressData = null;
+                if (compressFile.exists()) {
+                    BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
+                    compressData = new byte[new Long(compressFile.length()).intValue()];
+                    bis.read(compressData);
+                    bis.close();
+                    decompressData = SystemUtil.dataDecompress(compressData);
+                    lineBufs = decompressData;
                 }
-//end2 = System.nanoTime();
-//start3 = System.nanoTime();
-                for (int tryIdx = 0; tryIdx < 2; tryIdx++) {
+                int readLen = 0;
+                if (decompressData != null && decompressData.length > 0) {
+                    readLen = decompressData.length;
+                }
+                
+                matchFlg = true;
 
-                    try {
-//start4 = System.nanoTime();
-                        raf.seek(0);
-//end4 = System.nanoTime();
-                        int readLen = -1;
-//start5 = System.nanoTime();
-                        while((readLen = SystemUtil.diskAccessSync(raf, lineBufs)) != -1) {
-//end5 = System.nanoTime();
-//timeList.add((end5 - start5));
-                            matchFlg = true;
+                int loop = readLen / lineDataSize;
 
-                            int loop = readLen / lineDataSize;
+                for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
 
-                            for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
+                    int assist = (lineDataSize * loopIdx);
 
-                                int assist = (lineDataSize * loopIdx);
+                    matchFlg = true;
 
-                                matchFlg = true;
+                    if (equalKeyBytes[equalKeyBytes.length - 1] == lineBufs[assist + (equalKeyBytes.length - 1)]) {
 
-                                if (equalKeyBytes[equalKeyBytes.length - 1] == lineBufs[assist + (equalKeyBytes.length - 1)]) {
+                        for (int i = 0; i < equalKeyBytes.length; i++) {
 
-                                    for (int i = 0; i < equalKeyBytes.length; i++) {
-
-                                        if (equalKeyBytes[i] != lineBufs[assist + i]) {
-                                            matchFlg = false;
-                                            break;
-                                        }
-                                    }
-                                } else {
-
-                                    matchFlg = false;
-                                }
-
-                                // マッチした場合のみ配列化
-                                if (matchFlg) {
-
-                                    tmpBytes = new byte[lineDataSize];
-
-                                    for (int i = 0; i < lineDataSize; i++) {
-
-                                        tmpBytes[i] = lineBufs[assist + i];
-                                    }
-                                    break;
-                                }
+                            if (equalKeyBytes[i] != lineBufs[assist + i]) {
+                                matchFlg = false;
+                                break;
                             }
-//start5 = System.nanoTime();
-                            if (matchFlg) break;
+                        }
+                    } else {
+
+                        matchFlg = false;
+                    }
+
+                    // マッチした場合のみ配列化
+                    if (matchFlg) {
+
+                        tmpBytes = new byte[lineDataSize];
+
+                        for (int i = 0; i < lineDataSize; i++) {
+
+                            tmpBytes[i] = lineBufs[assist + i];
                         }
                         break;
-                    } catch (IOException ie) {
-
-                        // IOExceptionの場合は1回のみファイルをサイド開く
-                        if (tryIdx == 1) throw ie;
-
-                        try {
-
-                            if (raf != null) raf.close();
-                            if (wr != null) wr.close();
-
-                            raf = new RandomAccessFile(file, "rwd");
-                            wr = new BufferedWriter(new FileWriter(file, true));
-                            accessor = new CacheContainer();
-                            accessor.raf = raf;
-                            accessor.wr = wr;
-                            accessor.file = file;
-                            innerCache.put(file.getAbsolutePath(), accessor);
-                        } catch (Exception e) {
-                            throw e;
-                        }
                     }
                 }
             }
@@ -1275,19 +1226,31 @@ start1 = System.nanoTime();
         List keys = null;
         byte[] datas = null;
         StringBuilder keysBuf = null;
-        RandomAccessFile raf = null;
+        
 
         try {
             if (this.nowIterationFileIndex < this.dataFileList.length) {
 
                 keys = new ArrayList();
-                datas = new byte[new Long(this.dataFileList[this.nowIterationFileIndex].length()).intValue()];
+                
+                File compressFile = this.dataFileList[this.nowIterationFileIndex];
+                byte[] compressData = null;
+                byte[] decompressData = null;
+                if (compressFile.exists()) {
+                    BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
+                    compressData = new byte[new Long(compressFile.length()).intValue()];
+                    bis.read(compressData);
+                    bis.close();
+                    decompressData = SystemUtil.dataDecompress(compressData);
+                }
 
-                raf = new RandomAccessFile(this.dataFileList[this.nowIterationFileIndex], "rwd");
+                
+                datas = decompressData;
 
-                raf.seek(0);
                 int readLen = -1;
-                readLen = SystemUtil.diskAccessSync(raf, datas);
+                if (decompressData != null && decompressData.length > 0)  {
+                  readLen = decompressData.length;
+                }
 
                 if (readLen > 0) {
 
@@ -1321,9 +1284,7 @@ start1 = System.nanoTime();
         } finally {
 
             try {
-                if(raf != null) raf.close();
 
-                raf = null;
                 datas = null;
             } catch (Exception e2) {
                 e2.printStackTrace();
