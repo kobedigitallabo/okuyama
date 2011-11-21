@@ -773,12 +773,20 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
 
     // 遅延書き込み用
     public void run() {
+        Map poolCommitMap = null;
+        int poolCount = 0;
+        int maxPoolCount = 1000;
+        List deletePoolKeyList = null;
+
         while (true) {
             
             try {
 
                 Object[] instructionObj = (Object[])this.delayWriteQueue.take();
-
+                if (poolCommitMap == null) {
+                    poolCommitMap = new HashMap(100);
+                    deletePoolKeyList = new ArrayList(100);
+                }
 
                 String key = (String)instructionObj[0];
                 String value = (String)instructionObj[1];
@@ -788,16 +796,23 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
 
                 buf.append(this.fillCharacter(key, keyDataLength));
                 buf.append(this.fillCharacter(value, oneDataLength));
-long  start1 = 0L;
-long end1 = 0L;
-                synchronized (this.dataFileList[hashCode % numberOfDataFiles]) {
-start1 = System.nanoTime();
 
-                    File compressFile = this.dataFileList[hashCode % numberOfDataFiles];
-                    byte[] compressData = null;
-                    StringBuilder decompressDataStr =null;
-                    byte[] decompressData = null;
-                    if (compressFile.exists()) {
+                File compressFile = null;
+                byte[] compressData = null;
+                StringBuilder decompressDataStr =null;
+                byte[] decompressData = null;
+           
+                synchronized (this.dataFileList[hashCode % numberOfDataFiles]) {
+
+                    compressFile = this.dataFileList[hashCode % numberOfDataFiles];
+                    compressData = null;
+                    decompressDataStr =null;
+                    decompressData = null;
+                    if (poolCommitMap.containsKey(compressFile.getAbsolutePath())) {
+                        decompressData = (byte[])poolCommitMap.get(compressFile.getAbsolutePath());
+                    }
+                    
+                    if (decompressData == null && compressFile.exists()) {
 
                         BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
                         compressData = new byte[new Long(compressFile.length()).intValue()];
@@ -808,10 +823,8 @@ start1 = System.nanoTime();
  
                     // KeyData Write File
                     try {
-end1 = System.nanoTime();
                             // Key値の場所を特定する
                         long[] dataLineNoRet = this.getLinePoint(key, decompressData);
-
 
                         if (dataLineNoRet[0] == -1) {
                           
@@ -855,32 +868,70 @@ end1 = System.nanoTime();
                         }
                     } catch (IOException ie) {
                     }
-long  start2 = System.nanoTime();
 
-                    compressData = SystemUtil.dataCompress(decompressData);
-                    BufferedOutputStream compressBos = new BufferedOutputStream(new FileOutputStream(compressFile, false));
-                    compressBos.write(compressData);
-                    compressBos.flush();
-                    compressBos.close();
-long end2 = System.nanoTime();
-if (((end2 - start2) > (1000 * 1000 * 100)) || ((end1 - start1) > (1000 * 1000 * 100))) {
-    System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - start2) / 1000 /1000));
-}
+                    poolCount++;
                 }
 
-                // 削除処理の場合
-                if (value.indexOf("&&&&&&&&&&&") == 0) {
-                    // The size of an decrement
-                    this.totalSize.getAndDecrement();
+                if (poolCount > maxPoolCount) {
+                    poolCommitMap.put(compressFile.getAbsolutePath(), decompressData);
+                    Object[] deleteObj = new Object[2];
+                    deleteObj[0] = key;
+                    deleteObj[1] = value;
+                    
+                    deletePoolKeyList.add(deleteObj);
+
+                    for (int idx = 0; idx < this.dataFileList.length; idx++) {
+                        if (poolCommitMap.containsKey(this.dataFileList[idx].getAbsolutePath())) {
+                            
+                            synchronized (this.dataFileList[idx]) {
+                                decompressData = (byte[])poolCommitMap.get(this.dataFileList[idx].getAbsolutePath());
+                                compressFile = this.dataFileList[idx];
+                                compressData = SystemUtil.dataCompress(decompressData);
+                                BufferedOutputStream compressBos = new BufferedOutputStream(new FileOutputStream(compressFile, false));
+                                compressBos.write(compressData);
+                                compressBos.flush();
+                                compressBos.close();
+                            }
+                        }
+                    }
+                } else {
+                
+                    poolCommitMap.put(compressFile.getAbsolutePath(), decompressData);
+                    Object[] deleteObj = new Object[2];
+                    deleteObj[0] = key;
+                    deleteObj[1] = value;
+                    
+                    deletePoolKeyList.add(deleteObj);
                 }
 
-                synchronized (this.delayWriteDifferenceMap) {
 
-                    String removeChcek = (String)this.delayWriteDifferenceMap.get(key);
-                    if (removeChcek != null && removeChcek.equals(value))
-                        this.delayWriteDifferenceMap.remove(key);
+                if (poolCount > maxPoolCount) {
+                
+                    synchronized (this.delayWriteDifferenceMap) {
+                        for (int idx = 0; idx < deletePoolKeyList.size(); idx++) {
+                            Object[] deleteObj = (Object[])deletePoolKeyList.get(idx);
+                            key = (String)deleteObj[0];
+                            value = (String)deleteObj[1];
+                            
+                            // 削除処理の場合
+                            if (value.indexOf("&&&&&&&&&&&") == 0) {
+                                // The size of an decrement
+                                this.totalSize.getAndDecrement();
+                            }
+            
+            
+                            String removeChcek = (String)this.delayWriteDifferenceMap.get(key);
+                            if (removeChcek != null && removeChcek.equals(value))
+                                this.delayWriteDifferenceMap.remove(key);
+                            
+                            this.delayWriteExecCount++;
+                        }
+                    }
+                    
+                    poolCommitMap = null;
+                    poolCount = 0;
+                    deletePoolKeyList = null;
                 }
-                this.delayWriteExecCount++;
             } catch (Exception e2) {
                 e2.printStackTrace();
             }
@@ -939,7 +990,7 @@ if (((end2 - start2) > (1000 * 1000 * 100)) || ((end1 - start1) > (1000 * 1000 *
             this.delayWriteRequestCount++;
 
             //if (this.delayWriteQueue.size() > (delayWriteQueueSize - 500)) Thread.sleep(50);
-            if ((this.delayWriteRequestCount % 5000) == 0) System.out.println("NowQueueSize=" + this.delayWriteQueue.size());
+            //if ((this.delayWriteRequestCount % 5000) == 0) System.out.println("NowQueueSize=" + this.delayWriteQueue.size());
 //if (ImdstDefine.fileBaseMapTimeDebug) {
 //    System.out.println("Set 1="+(end1 - start1) + " 2="+(end2 - start2));
 //}
