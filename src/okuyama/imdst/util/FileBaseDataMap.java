@@ -776,6 +776,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
         while (true) {
             
             try {
+
                 Object[] instructionObj = (Object[])this.delayWriteQueue.take();
 
 
@@ -787,35 +788,32 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
 
                 buf.append(this.fillCharacter(key, keyDataLength));
                 buf.append(this.fillCharacter(value, oneDataLength));
-
+long  start1 = 0L;
+long end1 = 0L;
                 synchronized (this.dataFileList[hashCode % numberOfDataFiles]) {
+start1 = System.nanoTime();
 
                     File compressFile = this.dataFileList[hashCode % numberOfDataFiles];
                     byte[] compressData = null;
                     StringBuilder decompressDataStr =null;
                     byte[] decompressData = null;
                     if (compressFile.exists()) {
-                        compressData = (byte[])this.innerCache.get(compressFile.getAbsolutePath());
-                        
-                        if (compressData == null || compressData.length < 1) {
-                            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
-                            compressData = new byte[new Long(compressFile.length()).intValue()];
-                            bis.read(compressData);
-                            bis.close();
-                        }
+
+                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
+                        compressData = new byte[new Long(compressFile.length()).intValue()];
+                        bis.read(compressData);
+                        bis.close();
                         decompressData = SystemUtil.dataDecompress(compressData);
                     }
-
+ 
                     // KeyData Write File
                     try {
-
+end1 = System.nanoTime();
                             // Key値の場所を特定する
-long  start1 = System.nanoTime();
                         long[] dataLineNoRet = this.getLinePoint(key, decompressData);
-long end1 = System.nanoTime();
+
 
                         if (dataLineNoRet[0] == -1) {
-long  start2 = System.nanoTime();
                           
                             byte[] fixNewData = null;
                             byte[] bufBytes = buf.toString().getBytes();
@@ -834,12 +832,8 @@ long  start2 = System.nanoTime();
                                     newCpIdx++;
                                 }
                             }
-                            
+
                             decompressData = fixNewData;
-long end2 = System.nanoTime();
-if (((end2 - start2) > (1000 * 1000 * 100)) || ((end1 - start1) > (1000 * 1000 * 100))) {
-System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - start2) / 1000 /1000));
-}
                             // The size of an increment
                             this.totalSize.getAndIncrement();
                         } else {
@@ -849,23 +843,29 @@ System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - star
                             if (dataLineNoRet[1] == -1) increMentFlg = true;
                             //if (this.get(key, hashCode) == null) increMentFlg = true;
                             int insIdx = new Long((dataLineNoRet[0] * (lineDataSize))).intValue();
+
                             byte[] insBytes = buf.toString().getBytes();
                             for (int i = 0; i < lineDataSize; i++) {
                             
                                 decompressData[insIdx] = insBytes[i];
+                                insIdx++;
                             }
 
                             if (increMentFlg) this.totalSize.getAndIncrement();
                         }
                     } catch (IOException ie) {
                     }
+long  start2 = System.nanoTime();
 
                     compressData = SystemUtil.dataCompress(decompressData);
-                    this.innerCache.put(compressFile.getAbsolutePath(), compressData);
                     BufferedOutputStream compressBos = new BufferedOutputStream(new FileOutputStream(compressFile, false));
                     compressBos.write(compressData);
                     compressBos.flush();
                     compressBos.close();
+long end2 = System.nanoTime();
+if (((end2 - start2) > (1000 * 1000 * 100)) || ((end1 - start1) > (1000 * 1000 * 100))) {
+    System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - start2) / 1000 /1000));
+}
                 }
 
                 // 削除処理の場合
@@ -929,8 +929,8 @@ System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - star
 //end1 = System.nanoTime();
 //start2 = System.nanoTime();
 
-            if (this.delayWriteQueue.size() > (delayWriteQueueSize - 2000)) Thread.sleep(10);
-            if (this.delayWriteQueue.size() > (delayWriteQueueSize - 1000)) Thread.sleep(20);
+            //if (this.delayWriteQueue.size() > (delayWriteQueueSize - 2000)) Thread.sleep(10);
+            //if (this.delayWriteQueue.size() > (delayWriteQueueSize - 1000)) Thread.sleep(20);
 
 
 
@@ -938,7 +938,7 @@ System.out.println("1=" + ((end1 - start1) / 1000 /1000) + " 2=" + ((end2 - star
 //end2 = System.nanoTime();
             this.delayWriteRequestCount++;
 
-            if (this.delayWriteQueue.size() > (delayWriteQueueSize - 500)) Thread.sleep(50);
+            //if (this.delayWriteQueue.size() > (delayWriteQueueSize - 500)) Thread.sleep(50);
             if ((this.delayWriteRequestCount % 5000) == 0) System.out.println("NowQueueSize=" + this.delayWriteQueue.size());
 //if (ImdstDefine.fileBaseMapTimeDebug) {
 //    System.out.println("Set 1="+(end1 - start1) + " 2="+(end2 - start2));
@@ -1069,15 +1069,11 @@ start1 = System.nanoTime();
                 byte[] compressData = null;
                 byte[] decompressData = null;
                 if (compressFile.exists()) {
-                    compressData = (byte[])this.innerCache.get(compressFile.getAbsolutePath());
-                    
-                    if (compressData == null || compressData.length < 1) {
 
-                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
-                        compressData = new byte[new Long(compressFile.length()).intValue()];
-                        bis.read(compressData);
-                        bis.close();
-                    }
+                    BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
+                    compressData = new byte[new Long(compressFile.length()).intValue()];
+                    bis.read(compressData);
+                    bis.close();
                     decompressData = SystemUtil.dataDecompress(compressData);
                     lineBufs = decompressData;
                 }
