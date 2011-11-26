@@ -56,7 +56,9 @@ public class JavaSystemApi {
      */
     private static void gc() {
         logger.info("JavaSystemApi - GC Execute Request");
-        System.gc();
+        if (ImdstDefine.jvmGcExecutionMode) {
+            System.gc();
+        }
     }
 
     public static long getRuntimeMaxMem() {

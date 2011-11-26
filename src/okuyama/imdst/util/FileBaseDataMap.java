@@ -775,7 +775,8 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
     public void run() {
         Map poolCommitMap = null;
         int poolCount = 0;
-        int maxPoolCount = 1000;
+        int maxPoolCount = 10000;
+        int maxPoolData = new Long(JavaSystemApi.getRuntimeMaxMem("M")).intValue() / 10;
         List deletePoolKeyList = null;
 
         while (true) {
@@ -784,8 +785,8 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
 
                 Object[] instructionObj = (Object[])this.delayWriteQueue.take();
                 if (poolCommitMap == null) {
-                    poolCommitMap = new HashMap(100);
-                    deletePoolKeyList = new ArrayList(100);
+                    poolCommitMap = new HashMap(maxPoolData);
+                    deletePoolKeyList = new ArrayList(maxPoolData);
                 }
 
                 String key = (String)instructionObj[0];
@@ -895,13 +896,35 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                         }
                     }
                 } else {
-                
-                    poolCommitMap.put(compressFile.getAbsolutePath(), decompressData);
-                    Object[] deleteObj = new Object[2];
-                    deleteObj[0] = key;
-                    deleteObj[1] = value;
-                    
-                    deletePoolKeyList.add(deleteObj);
+                    if (poolCommitMap.size() < maxPoolData || poolCommitMap.containsKey(compressFile.getAbsolutePath())) {
+                        poolCommitMap.put(compressFile.getAbsolutePath(), decompressData);
+                        Object[] deleteObj = new Object[2];
+                        deleteObj[0] = key;
+                        deleteObj[1] = value;
+                        
+                        deletePoolKeyList.add(deleteObj);
+                    } else {
+                        synchronized (this.dataFileList[hashCode % numberOfDataFiles]) {
+                            compressData = SystemUtil.dataCompress(decompressData);
+                            BufferedOutputStream compressBos = new BufferedOutputStream(new FileOutputStream(compressFile, false));
+                            compressBos.write(compressData);
+                            compressBos.flush();
+                            compressBos.close();
+                        }
+                        // 削除処理の場合
+                        if (value.indexOf("&&&&&&&&&&&") == 0) {
+                            // The size of an decrement
+                            this.totalSize.getAndDecrement();
+                        }
+        
+                        synchronized (this.delayWriteDifferenceMap) {
+                            String removeChcek = (String)this.delayWriteDifferenceMap.get(key);
+                            if (removeChcek != null && removeChcek.equals(value))
+                                this.delayWriteDifferenceMap.remove(key);
+                            
+                            this.delayWriteExecCount++;
+                        }
+                    }
                 }
 
 

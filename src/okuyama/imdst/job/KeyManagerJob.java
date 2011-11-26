@@ -369,6 +369,10 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                         StatusUtil.setMemoryLimitMinSize(memoryLimitSizeInt);
                     }
                 }
+
+                if (memoryLimitSize == null || memoryLimitSize.equals("") || memoryLimitSize.trim().equals("0")) {
+                    ImdstDefine.jvmGcExecutionMode = false;
+                }
             }
 
             // KeyMapManager初期化

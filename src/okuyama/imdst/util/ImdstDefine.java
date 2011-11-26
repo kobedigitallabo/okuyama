@@ -282,6 +282,8 @@ public class ImdstDefine {
     // TODO:未実装
     public volatile static boolean getAndExpireTimeUpdate = false;
 
+    // GC呼び出しを行う指定
+    public volatile static boolean jvmGcExecutionMode = true;
 
 
     // ---- プログラム規定数値 -------------------------------------------------------------
