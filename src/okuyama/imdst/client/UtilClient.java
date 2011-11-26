@@ -1,4 +1,3 @@
-
 package okuyama.imdst.client;
 
 import java.util.*;
@@ -6,6 +5,7 @@ import java.io.*;
 import java.net.*;
 import java.util.zip.*;
 
+import okuyama.imdst.util.*;
 
 /**
  * okuyama用のUtilityクライアント.<br>
@@ -27,6 +27,7 @@ public class UtilClient {
             System.out.println("Command1. DataExport args1=bkup args2=DataNode-IPAdress args3=DataNode-Port");
             System.out.println("Command2. TruncateData args1=truncatedata args2=MainMasterNode-IPAdress args3=MainMasterNode-Port args4=IsolationName or 'all'");
             System.out.println("Command3. MasterNodeConfigCheck args1=masterconfig args2=MainMasterNode-IPAdress args3=MainMasterNode-Port");
+            System.out.println("Command4. DataNode is added args1=adddatanode args2=MasterNode-IPAdress:PortNo args3=DataNodeIPAddress:PortNo args4=Slave1-DataNodeIpAddress:PortNo args5=Slave2-DataNodeIpAddress:PortNo");
             System.exit(1);
         }
 
@@ -67,6 +68,27 @@ public class UtilClient {
 
             dataExport(args[1], Integer.parseInt(args[2]));
         }
+
+
+        if (args[0].equals("adddatanode")) {
+            if (args.length < 3) {
+                System.out.println("Argument Error! args[0]=Command, args[1]=MasterNodeIp:Port, args[2]=DataNodeIP:Port");
+                System.exit(1);
+            }
+
+            List addNodeList = new ArrayList(3);
+            addNodeList.add(args[2]);
+            
+            if (args.length > 3) {
+                addNodeList.add(args[3]);
+            }
+            
+            if (args.length > 4) {
+                addNodeList.add(args[4]);
+            }
+            addDataNode(args[1], addNodeList);
+        }
+
 
     }
 
@@ -167,4 +189,92 @@ public class UtilClient {
             }
         }
     }
+    
+
+    public static void addDataNode(String masterNodeIpPort, List addNodeList) {
+        OkuyamaClient client = null;
+
+        try {
+            client = new OkuyamaClient();
+            client.setConnectionInfos(masterNodeIpPort.split(","));
+            client.autoConnect();
+
+            String[] algorithmRet = client.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_DistributionAlgorithm);
+
+            if (algorithmRet[0].equals("true")) {
+
+                if (algorithmRet[1].equals(ImdstDefine.dispatchModeConsistentHash)) {
+
+                    int replicaType = 0;
+                    String[] dataNodeRet = client.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo);
+                    String[] slaveDataNodeRet = client.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo);
+                    String[] thirdDataNodeRet = client.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_ThirdKeyMapNodesInfo);
+
+                    if (dataNodeRet[0].equals("true")) replicaType++;
+                    if (slaveDataNodeRet[0].equals("true")) replicaType++;
+                    if (thirdDataNodeRet[0].equals("true")) replicaType++;
+                    
+                    if (replicaType != addNodeList.size()) {
+                        System.out.println("[Error] - The number of the replicas of DataNode to add differs from the number of replicas of DataNode set up now");
+                    } else {
+
+                        StringBuilder addAllNodeInfos = new StringBuilder();
+                        boolean setUpRet = false;
+                        if (replicaType > 0) {
+                            setUpRet = client.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo, dataNodeRet[1] + "," + (String)addNodeList.get(0));
+                            if (!setUpRet) client.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_KeyMapNodesInfo, dataNodeRet[1]);
+                            addAllNodeInfos.append((String)addNodeList.get(0));
+                        }
+                        if (!setUpRet) {
+                            System.out.println("[Error] - When registering the information on DataNode, the error occurred. AddDataNodeName[" +  (String)addNodeList.get(0) + "]");
+                            return;
+                        }
+                     
+                        if (replicaType > 1) {
+                            setUpRet = client.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo, slaveDataNodeRet[1] + "," + (String)addNodeList.get(1));
+                            if (!setUpRet) client.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_SubKeyMapNodesInfo, slaveDataNodeRet[1]);
+                            addAllNodeInfos.append(",");
+                            addAllNodeInfos.append((String)addNodeList.get(1));
+                        }
+                        if (!setUpRet) {
+                            System.out.println("[Error] - When registering the information on DataNode, the error occurred. AddDataNodeName[" +  (String)addNodeList.get(1) + "]");
+                            return;
+                        }
+
+                        if (replicaType > 2) {
+                            client.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_ThirdKeyMapNodesInfo, thirdDataNodeRet[1] + "," + (String)addNodeList.get(2));
+                            if (!setUpRet) client.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_ThirdKeyMapNodesInfo, thirdDataNodeRet[1]);
+
+                            addAllNodeInfos.append(",");
+                            addAllNodeInfos.append((String)addNodeList.get(2));
+                        }
+                        if (!setUpRet) {
+                            System.out.println("[Error] - When registering the information on DataNode, the error occurred. AddDataNodeName[" +  (String)addNodeList.get(2) + "]");
+                            return;
+                        }
+                        
+                        setUpRet = client.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode, addAllNodeInfos.toString());
+                        if (!setUpRet) client.removeValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.addNode4ConsistentHashMode);
+                        
+                        if (setUpRet) {
+                            System.out.println("[Success] - The additional application of DataNode was completed");
+                        }  else {
+                            System.out.println("[Error] - The additional application of DataNode went wrong");
+                        }
+                    }
+                } else {
+                    System.out.println("[Error] - DataNode can be added only when 'DistributionAlgorithm' is 'consistenthash'");
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (client != null) client.close();
+            } catch (Exception e2) {
+            }
+        }
+    }
+
 }
