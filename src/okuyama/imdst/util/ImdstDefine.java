@@ -381,6 +381,10 @@ public class ImdstDefine {
     // MasterNodeとの無操作コネクションタイムアウト時間(ミリ秒)
     public volatile static int masterNodeMaxConnectTime = 60000 * 60 * 12;
 
+ 
+    // MasterNode -> DataNode間の通信が失敗した際に強制的に再接続を行う設定
+    public volatile static boolean compulsionRetryConnectMode = false;
+
 
     // MasterConfigurationManagerHelperが設定情報を確認する時間間隔
     public static final int configurationCheckCycle = 1000 * 60;

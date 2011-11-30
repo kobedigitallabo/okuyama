@@ -29,8 +29,8 @@ import okuyama.imdst.util.*;
  * -csf   ImdstDefine.calcSizeFlg /保存データの合計サイズを計算するかどうかの指定 true=計算する/false=計算しない 計算しない方が高速に値の登録が可能<br>
  * -rdvp ImdstDefine.reuseDataFileValuePositionFlg /完全ファイルモードでDataNodeを起動した際に値の更新時にデータファイル上のValueの場所を再利用するかの設定.true/再利用する, false/再利用しない
  * -dwmqs ImdstDefine.delayWriteMaxQueueingSize /DelayWriteCoreFileBaseKeyMapのメモリ上へのキューイングレコード数
- * 
-
+ * -crcm ImdstDefine.compulsionRetryConnectMode /MasterNodeとDataNode間のし処理に失敗した場合に強制的に1度だけ再処理を行うようにするかの設定
+ *
  * <br>
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -245,6 +245,14 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+
+                    if (startOptions[i].trim().equals("-crcm")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
+                                ImdstDefine.compulsionRetryConnectMode = true;
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {

@@ -128,6 +128,7 @@ public class KeyNodeConnector {
             }
 
 
+            retry = ImdstDefine.compulsionRetryConnectMode;
             ret = this.br.readLine();
             if (ret == null) throw new IOException("readLine Ret = null");
             retry = false;
