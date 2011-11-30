@@ -773,21 +773,12 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
 
     // 遅延書き込み用
     public void run() {
-        Map poolCommitMap = null;
-        int poolCount = 0;
-        int maxPoolCount = 10000;
-        int maxPoolData = new Long(JavaSystemApi.getRuntimeMaxMem("M")).intValue() / 10;
-        List deletePoolKeyList = null;
 
         while (true) {
             
             try {
 
                 Object[] instructionObj = (Object[])this.delayWriteQueue.take();
-                if (poolCommitMap == null) {
-                    poolCommitMap = new HashMap(maxPoolData);
-                    deletePoolKeyList = new ArrayList(maxPoolData);
-                }
 
                 String key = (String)instructionObj[0];
                 String value = (String)instructionObj[1];
@@ -809,19 +800,15 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                     compressData = null;
                     decompressDataStr =null;
                     decompressData = null;
-                    if (poolCommitMap.containsKey(compressFile.getAbsolutePath())) {
-                        decompressData = (byte[])poolCommitMap.get(compressFile.getAbsolutePath());
-                    }
-                    
-                    if (decompressData == null && compressFile.exists()) {
 
+                    if (compressFile.exists()) {
                         BufferedInputStream bis = new BufferedInputStream(new FileInputStream(compressFile));
                         compressData = new byte[new Long(compressFile.length()).intValue()];
                         bis.read(compressData);
                         bis.close();
                         decompressData = SystemUtil.dataDecompress(compressData);
-                    }
- 
+                    } 
+
                     // KeyData Write File
                     try {
                             // Key値の場所を特定する
@@ -870,90 +857,28 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                     } catch (IOException ie) {
                     }
 
-                    poolCount++;
+                    compressData = SystemUtil.dataCompress(decompressData);
+                    BufferedOutputStream compressBos = new BufferedOutputStream(new FileOutputStream(compressFile, false));
+                    compressBos.write(compressData);
+                    compressBos.flush();
+                    compressBos.close();
                 }
 
-                if (poolCount > maxPoolCount) {
-                    poolCommitMap.put(compressFile.getAbsolutePath(), decompressData);
-                    Object[] deleteObj = new Object[2];
-                    deleteObj[0] = key;
-                    deleteObj[1] = value;
-                    
-                    deletePoolKeyList.add(deleteObj);
 
-                    for (int idx = 0; idx < this.dataFileList.length; idx++) {
-                        if (poolCommitMap.containsKey(this.dataFileList[idx].getAbsolutePath())) {
-                            
-                            synchronized (this.dataFileList[idx]) {
-                                decompressData = (byte[])poolCommitMap.get(this.dataFileList[idx].getAbsolutePath());
-                                compressFile = this.dataFileList[idx];
-                                compressData = SystemUtil.dataCompress(decompressData);
-                                BufferedOutputStream compressBos = new BufferedOutputStream(new FileOutputStream(compressFile, false));
-                                compressBos.write(compressData);
-                                compressBos.flush();
-                                compressBos.close();
-                            }
-                        }
-                    }
-                } else {
-                    if (poolCommitMap.size() < maxPoolData || poolCommitMap.containsKey(compressFile.getAbsolutePath())) {
-                        poolCommitMap.put(compressFile.getAbsolutePath(), decompressData);
-                        Object[] deleteObj = new Object[2];
-                        deleteObj[0] = key;
-                        deleteObj[1] = value;
-                        
-                        deletePoolKeyList.add(deleteObj);
-                    } else {
-                        synchronized (this.dataFileList[hashCode % numberOfDataFiles]) {
-                            compressData = SystemUtil.dataCompress(decompressData);
-                            BufferedOutputStream compressBos = new BufferedOutputStream(new FileOutputStream(compressFile, false));
-                            compressBos.write(compressData);
-                            compressBos.flush();
-                            compressBos.close();
-                        }
-                        // 削除処理の場合
-                        if (value.indexOf("&&&&&&&&&&&") == 0) {
-                            // The size of an decrement
-                            this.totalSize.getAndDecrement();
-                        }
+                // 削除処理の場合
+                if (value.indexOf("&&&&&&&&&&&") == 0) {
+                    // The size of an decrement
+                    this.totalSize.getAndDecrement();
+                }
         
-                        synchronized (this.delayWriteDifferenceMap) {
-                            String removeChcek = (String)this.delayWriteDifferenceMap.get(key);
-                            if (removeChcek != null && removeChcek.equals(value))
-                                this.delayWriteDifferenceMap.remove(key);
-                            
-                            this.delayWriteExecCount++;
-                        }
-                    }
-                }
+                synchronized (this.delayWriteDifferenceMap) {
+        
+                    String removeChcek = (String)this.delayWriteDifferenceMap.get(key);
 
-
-                if (poolCount > maxPoolCount) {
-                
-                    synchronized (this.delayWriteDifferenceMap) {
-                        for (int idx = 0; idx < deletePoolKeyList.size(); idx++) {
-                            Object[] deleteObj = (Object[])deletePoolKeyList.get(idx);
-                            key = (String)deleteObj[0];
-                            value = (String)deleteObj[1];
-                            
-                            // 削除処理の場合
-                            if (value.indexOf("&&&&&&&&&&&") == 0) {
-                                // The size of an decrement
-                                this.totalSize.getAndDecrement();
-                            }
-            
-            
-                            String removeChcek = (String)this.delayWriteDifferenceMap.get(key);
-                            if (removeChcek != null && removeChcek.equals(value))
-                                this.delayWriteDifferenceMap.remove(key);
-                            
-                            this.delayWriteExecCount++;
-                        }
+                    if (removeChcek != null && removeChcek.equals(value)) {
+                        this.delayWriteDifferenceMap.remove(key);
+                        this.delayWriteExecCount++;
                     }
-                    
-                    poolCommitMap = null;
-                    poolCount = 0;
-                    deletePoolKeyList = null;
                 }
             } catch (Exception e2) {
                 e2.printStackTrace();
