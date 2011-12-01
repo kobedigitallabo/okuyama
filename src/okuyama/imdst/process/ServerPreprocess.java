@@ -27,9 +27,9 @@ import okuyama.imdst.util.*;
  * -vidf  ImdstDefine.vacuumInvalidDataFlg /有効期限切れのデータのクリーニングを行うかどうかの設定 true=行う false=行わない ※trueを指定するとファイルをストレージに使っている場合も実行される<br>
  * -svic  ImdstDefine.startVaccumInvalidCount /有効期限切れのデータのクリーニングを行う間隔(分/単位)<br>
  * -csf   ImdstDefine.calcSizeFlg /保存データの合計サイズを計算するかどうかの指定 true=計算する/false=計算しない 計算しない方が高速に値の登録が可能<br>
- * -rdvp ImdstDefine.reuseDataFileValuePositionFlg /完全ファイルモードでDataNodeを起動した際に値の更新時にデータファイル上のValueの場所を再利用するかの設定.true/再利用する, false/再利用しない
- * -dwmqs ImdstDefine.delayWriteMaxQueueingSize /DelayWriteCoreFileBaseKeyMapのメモリ上へのキューイングレコード数
- * -crcm ImdstDefine.compulsionRetryConnectMode /MasterNodeとDataNode間のし処理に失敗した場合に強制的に1度だけ再処理を行うようにするかの設定
+ * -rdvp ImdstDefine.reuseDataFileValuePositionFlg /完全ファイルモードでDataNodeを起動した際に値の更新時にデータファイル上のValueの場所を再利用するかの設定.true/再利用する, false/再利用しない<br>
+ * -dwmqs ImdstDefine.delayWriteMaxQueueingSize /DelayWriteCoreFileBaseKeyMapのメモリ上へのキューイングレコード数<br>
+ * -crcm ImdstDefine.compulsionRetryConnectMode /MasterNodeとDataNode間のし処理に失敗した場合に強制的に1度だけ再処理を行うようにするかの設定 true/再接続する, false/再接続は自動<br>
  *
  * <br>
  * @author T.Okuyama
