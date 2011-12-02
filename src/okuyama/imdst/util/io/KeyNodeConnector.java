@@ -134,8 +134,8 @@ public class KeyNodeConnector {
             retry = false;
         } catch (Exception e) {
 
+            
             if (this.retryConnectMode == true && this.retry == false) {
-
                 this.retry = true;
                 try {
                     if (this.socket != null && this.socket.isClosed() != true) {
