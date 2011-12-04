@@ -104,6 +104,8 @@ public class KeyNodeConnector {
 
 
     public String readLine(String retryStr) throws Exception {
+
+        if (ImdstDefine.compulsionRetryConnectMode) retry = false;
         return this.readLine(retryStr, false);
     }
 
@@ -127,14 +129,12 @@ public class KeyNodeConnector {
                 this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
             }
 
-
-            if (ImdstDefine.compulsionRetryConnectMode) retry = false;
             ret = this.br.readLine();
             if (ret == null) throw new IOException("readLine Ret = null");
             retry = false;
         } catch (Exception e) {
-
-            
+            long uTime = System.nanoTime();
+            //System.err.println("this.retryConnectMode=" + this.retryConnectMode + ", this.retry=" + this.retry + ", retryStr=" +retryStr + ", utime=" + uTime);
             if (this.retryConnectMode == true && this.retry == false) {
                 this.retry = true;
                 try {
@@ -149,13 +149,14 @@ public class KeyNodeConnector {
                     }
 
                     try {
-
+                        //System.err.println("connect1 utime=" + uTime);
                         this.connect();
                     } catch (SocketTimeoutException ste) {
 
                         // 再リトライ
                         try {
 
+                            //System.err.println("connect2 utime=" + uTime);
                             this.connect();
                         } catch (SocketTimeoutException ste2) {
 
@@ -165,7 +166,9 @@ public class KeyNodeConnector {
 
                     // リトライフラグが有効でかつ、送信文字が指定されている場合は再送後、取得
                     if (retryStr != null) {
-
+                        
+                        //System.err.println("println utime=" + uTime);
+                        Thread.sleep(500);
                         this.println(retryStr);
                         this.flush();
                     }

@@ -575,6 +575,10 @@ public class StatusUtil {
     public static void setMainMasterNode(boolean flg, int no) {
         //if (flg == false) System.out.println(no);
         mainMasterNode = new Boolean(flg);
+        if (mainMasterNode.booleanValue() == false) {
+            // MainMaterNode以外はDataNodeへの再接続を強制する
+            ImdstDefine.compulsionRetryConnectMode = true;
+        }
     }
 
 
