@@ -134,7 +134,7 @@ public class KeyNodeConnector {
             retry = false;
         } catch (Exception e) {
             long uTime = System.nanoTime();
-            //System.err.println("this.retryConnectMode=" + this.retryConnectMode + ", this.retry=" + this.retry + ", retryStr=" +retryStr + ", utime=" + uTime);
+            //System.err.println("this.retryConnectMode=" + this.retryConnectMode + ", this.retry=" + this.retry + ", ConnectDump=" + this.connectorDump() + ", retryStr=" +retryStr + ", utime=" + uTime);
             if (this.retryConnectMode == true && this.retry == false) {
                 this.retry = true;
                 try {
@@ -150,6 +150,7 @@ public class KeyNodeConnector {
 
                     try {
                         //System.err.println("connect1 utime=" + uTime);
+                        Thread.sleep(100);
                         this.connect();
                     } catch (SocketTimeoutException ste) {
 
@@ -157,18 +158,18 @@ public class KeyNodeConnector {
                         try {
 
                             //System.err.println("connect2 utime=" + uTime);
+                            Thread.sleep(5000);
                             this.connect();
                         } catch (SocketTimeoutException ste2) {
-
+                            //System.out.println("throw Point 1 uTime=" + uTime + " nowTime=" + System.nanoTime());
                             throw ste2;
                         }
                     }
 
                     // リトライフラグが有効でかつ、送信文字が指定されている場合は再送後、取得
                     if (retryStr != null) {
-                        
+
                         //System.err.println("println utime=" + uTime);
-                        Thread.sleep(500);
                         this.println(retryStr);
                         this.flush();
                     }
@@ -176,9 +177,11 @@ public class KeyNodeConnector {
                     ret = this.readLine();
                     retry = false;
                 } catch(Exception ee) {
-                    throw e;
+                    //System.out.println("throw Point 1 uTime=" + uTime + " nowTime=" + System.nanoTime());
+                    throw ee;
                 }
             } else {
+                System.out.println("throw Point 1 uTime=" + uTime + " nowTime=" + System.nanoTime());
                 throw e;
             }
         }

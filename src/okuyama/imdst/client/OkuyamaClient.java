@@ -261,6 +261,20 @@ public class OkuyamaClient {
 
 
     /**
+     * MasterNodeとのコネクション確立後の処理依頼に対するタイムアウト時間.<br>
+     *
+     * @param time タイムアウト時間(単位はミリ秒)
+     */
+    public void setMethodTimeoutTime(int time) {
+        if (this.socket != null) {
+            try {
+                this.socket.setSoTimeout(time);
+            } catch (Exception e) {}
+        }
+    }
+
+
+    /**
      * MasterNodeの接続情報を設定する.<br>
      * 本メソッドでセットし、autoConnect()メソッドを<br>
      * 呼び出すと、自動的にその時稼動しているMasterNodeにバランシングして<br>
