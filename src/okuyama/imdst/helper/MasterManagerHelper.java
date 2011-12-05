@@ -4980,10 +4980,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // SubDataNodeに送信
                             slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
                             if (slaveKeyNodeConnector != null) {
-                                    // 送信
-                                    slaveKeyNodeConnector.println(sendStr);
-                                    slaveKeyNodeConnector.flush();
-                                    slaveSendEnd = true;
+                                // 送信
+                                slaveKeyNodeConnector.println(sendStr);
+                                slaveKeyNodeConnector.flush();
+                                slaveSendEnd = true;
                             }
                         }
 
@@ -5149,25 +5149,25 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         super.addKeyNodeCacheConnectionPool(slaveKeyNodeConnector);
                     } catch (SocketException se) {
                         //se.printStackTrace();
-                        if (keyNodeConnector != null) {
-                            keyNodeConnector.close();
-                            keyNodeConnector = null;
+                        if (slaveKeyNodeConnector != null) {
+                            slaveKeyNodeConnector.close();
+                            slaveKeyNodeConnector = null;
                         }
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 5, se);
                         logger.debug(se);
                     } catch (IOException ie) {
                         //ie.printStackTrace();
-                        if (keyNodeConnector != null) {
-                            keyNodeConnector.close();
-                            keyNodeConnector = null;
+                        if (slaveKeyNodeConnector != null) {
+                            slaveKeyNodeConnector.close();
+                            slaveKeyNodeConnector = null;
                         }
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 6, ie);
                         logger.debug(ie);
                     } catch (Exception ee) {
                         //ee.printStackTrace();
-                        if (keyNodeConnector != null) {
-                            keyNodeConnector.close();
-                            keyNodeConnector = null;
+                        if (slaveKeyNodeConnector != null) {
+                            slaveKeyNodeConnector.close();
+                            slaveKeyNodeConnector = null;
                         }
                         super.setDeadNode(subKeyNodeName + ":" + subKeyNodePort, 7, ee);
                         logger.debug(ee);
