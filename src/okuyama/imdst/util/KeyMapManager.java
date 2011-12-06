@@ -3512,6 +3512,7 @@ class DataTransactionFileFlushDaemon extends Thread {
     
     public volatile BufferedWriter tBw= null;
 
+    public Object daemonSyncObj = new Object();
 
     public volatile boolean executeEnd = false;
 
@@ -3527,16 +3528,18 @@ class DataTransactionFileFlushDaemon extends Thread {
                 if (writeStr == null) 
                     writeStr = (String)this.delayWriteQueue.take();
 
-                if (this.tBw != null) {
-                    this.tBw.write(writeStr);
-                    SystemUtil.diskAccessSync(this.tBw);
-                    writeStr = null;
-                    bufferUseCount++;
-                    if (bufferUseCount > maxBufferUseCount) {
-                        this.tBw.flush();
-                        this.tBw.close();
-                        this.tBw = null;
-                        this.tBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.tFilePath)) , KeyMapManager.workMapFileEnc), 8192 * 24);
+                synchronized (daemonSyncObj) {
+                    if (this.tBw != null) {
+                        this.tBw.write(writeStr);
+                        SystemUtil.diskAccessSync(this.tBw);
+                        writeStr = null;
+                        bufferUseCount++;
+                        if (bufferUseCount > maxBufferUseCount) {
+                            this.tBw.flush();
+                            this.tBw.close();
+                            this.tBw = null;
+                            this.tBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.tFilePath)) , KeyMapManager.workMapFileEnc), 8192 * 24);
+                        }
                     }
                 }
             } catch (Throwable te) {
@@ -3571,17 +3574,19 @@ class DataTransactionFileFlushDaemon extends Thread {
 
 
     public void close() {
-        if (this.tBw != null) {
-            try {
-                SystemUtil.diskAccessSync(this.tBw);
-            } catch (Throwable te) {
-            } finally {
+        synchronized (daemonSyncObj) {
+            if (this.tBw != null) {
                 try {
-                    this.tBw.close();
-                } catch (Throwable te2) {
+                    SystemUtil.diskAccessSync(this.tBw);
+                } catch (Throwable te) {
+                } finally {
+                    try {
+                        this.tBw.close();
+                    } catch (Throwable te2) {
+                    }
+                    this.tBw = null;
+                    this.tFilePath = null;
                 }
-                this.tBw = null;
-                this.tFilePath = null;
             }
         }
     }
