@@ -689,11 +689,11 @@ public class KeyMapManager extends Thread {
                     }
 
                     // 登録
-                    long start1 = System.nanoTime();
+                    //long start1 = System.nanoTime();
                     keyMapObjPut(key, data);
-                    long end1 = System.nanoTime();
+                    //long end1 = System.nanoTime();
 
-                    long start2 = System.nanoTime();
+                    //long start2 = System.nanoTime();
                     // データ操作履歴ファイルに追記
                     if (this.workFileMemory == false) {
 
@@ -721,10 +721,10 @@ public class KeyMapManager extends Thread {
                             }
                         }
                     }
-                    long end2 = System.nanoTime();
-                    if (((end2 - start2) + (end1 - start1)) > 1 * 1000 * 1000 * 100) {
-                        System.out.println("1=" + (end1 - start1) + " 2=" + (end2 - start2));
-                    }
+                    //long end2 = System.nanoTime();
+                    //if (((end2 - start2) + (end1 - start1)) > 1 * 1000 * 1000 * 100) {
+                    //  System.out.println("1=" + (end1 - start1) + " 2=" + (end2 - start2));
+                    //}
                     // Diffモードでかつsync後は再度モードを確認後、addする
                     if (this.diffDataPoolingFlg) {
 
