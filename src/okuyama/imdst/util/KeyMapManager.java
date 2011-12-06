@@ -3538,7 +3538,8 @@ class DataTransactionFileFlushDaemon extends Thread {
                             this.tBw.flush();
                             this.tBw.close();
                             this.tBw = null;
-                            this.tBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.tFilePath)) , KeyMapManager.workMapFileEnc), 8192 * 24);
+                            this.tBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.tFilePath), true) , KeyMapManager.workMapFileEnc), 8192 * 24);
+                            bufferUseCount = 0;
                         }
                     }
                 }
