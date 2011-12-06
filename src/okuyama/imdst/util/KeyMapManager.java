@@ -3500,7 +3500,7 @@ class DataTransactionFileFlushDaemon extends Thread {
                 if (writeStr == null) {
                     StringBuilder strBuf = new StringBuilder();
                     for (int i = 0; i < 10; i++) {
-                        String tmp = (String)this.delayWriteQueue.poll(10L, TimeUnit.MILLISECONDS);
+                        String tmp = (String)this.delayWriteQueue.poll(200L, TimeUnit.MILLISECONDS);
                         if (tmp != null) strBuf.append(tmp);
                     }
                     
@@ -3509,7 +3509,7 @@ class DataTransactionFileFlushDaemon extends Thread {
                 }
 
                 synchronized (daemonSyncObj) {
-                    if (this.tBw != null) {
+                    if (this.tBw != null && writeStr != null) {
                         this.tBw.write(writeStr);
                         SystemUtil.diskAccessSync(this.tBw);
                         writeStr = null;
@@ -3560,10 +3560,12 @@ class DataTransactionFileFlushDaemon extends Thread {
                 try {
                     SystemUtil.diskAccessSync(this.tBw);
                 } catch (Throwable te) {
+                    te.printStackTrace();
                 } finally {
                     try {
                         this.tBw.close();
                     } catch (Throwable te2) {
+                        te2.printStackTrace();
                     }
                     this.tBw = null;
                     this.tFilePath = null;
