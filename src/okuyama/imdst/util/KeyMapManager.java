@@ -689,11 +689,11 @@ public class KeyMapManager extends Thread {
                     }
 
                     // 登録
-                    //long start1 = System.nanoTime();
+                    long start1 = System.nanoTime();
                     keyMapObjPut(key, data);
-                    //long end1 = System.nanoTime();
+                    long end1 = System.nanoTime();
 
-                    //long start2 = System.nanoTime();
+                    long start2 = System.nanoTime();
                     // データ操作履歴ファイルに追記
                     if (this.workFileMemory == false) {
 
@@ -721,10 +721,10 @@ public class KeyMapManager extends Thread {
                             }
                         }
                     }
-                    //long end2 = System.nanoTime();
-                    //if (((end2 - start2) + (end1 - start1)) > 1 * 1000 * 1000 * 100) {
-                    //  System.out.println("1=" + (end1 - start1) + " 2=" + (end2 - start2));
-                    //}
+                    long end2 = System.nanoTime();
+                    if (((end2 - start2) + (end1 - start1)) > 1 * 1000 * 1000 * 100) {
+                        System.out.println("1=" + (end1 - start1) + " 2=" + (end2 - start2));
+                    }
                     // Diffモードでかつsync後は再度モードを確認後、addする
                     if (this.diffDataPoolingFlg) {
 
@@ -3497,22 +3497,30 @@ class DataTransactionFileFlushDaemon extends Thread {
         while (this.execFlg) {
 
             try {
-                if (writeStr == null) 
-                    writeStr = (String)this.delayWriteQueue.take();
+                if (writeStr == null) {
+                    StringBuilder strBuf = new StringBuilder();
+                    for (int i = 0; i < 10; i++) {
+                        String tmp = (String)this.delayWriteQueue.poll(10L, TimeUnit.MILLISECONDS);
+                        if (tmp != null) strBuf.append(tmp);
+                    }
+                    
+                    writeStr = strBuf.toString();
+                    if (writeStr == null || writeStr.equals("")) writeStr = null;
+                }
 
                 synchronized (daemonSyncObj) {
                     if (this.tBw != null) {
                         this.tBw.write(writeStr);
                         SystemUtil.diskAccessSync(this.tBw);
                         writeStr = null;
-                        bufferUseCount++;
+                        /*bufferUseCount++;
                         if (bufferUseCount > maxBufferUseCount) {
                             this.tBw.flush();
                             this.tBw.close();
                             this.tBw = null;
                             this.tBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.tFilePath), true) , KeyMapManager.workMapFileEnc), 8192 * 24);
                             bufferUseCount = 0;
-                        }
+                        }*/
                     }
                 }
             } catch (Throwable te) {
