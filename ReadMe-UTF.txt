@@ -6,8 +6,71 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   本テキストの「■機能説明とサンプルの実行方法」をご覧ください。
   blog:http://d.hatena.ne.jp/okuyamaoo/
 
+  ・okuyamaに関する執筆記事
+    [Think IT] "分散KVS「okuyama」の全貌"
+    第1回 NOSQLは「知る時代」から「使う時代」へ http://thinkit.co.jp/story/2011/02/03/1990
+    第2回 NOSQLの新顔、分散KVS「okuyama」の機能 http://thinkit.co.jp/story/2011/02/10/2002
+    第3回 分散KVS「okuyama」のインストール http://thinkit.co.jp/story/2011/02/17/2010
+    第4回 分散KVS「okuyama」の活用ノウハウ http://thinkit.co.jp/story/2011/02/24/2026
+
+    [Think IT] "分散KVS「okuyama」実践TIPS"
+    第1回 okuyamaを導入するまでに知っておきたいサーバリソースとの4つの関係 http://thinkit.co.jp/story/2011/10/12/2303
+    第2回 okuyamaを運用するために知っておきたい基本的な操作 http://thinkit.co.jp/story/2011/10/26/2316
+    第3回 okuyamaでのアプリ開発で押さえておきたい機能 http://thinkit.co.jp/story/2011/11/10/2325
+
 
 ・改修履歴
+========================================================================================================
+[New - 新機能追加、不具合対応]
+[[リリース Ver 0.9.1 - (2011/XX/XX)]]
+
+・PHP版のOkuyamaClientの不具合対応
+・UtilClientにadddatanodeを追加
+・DataNodeの完全ディスクモードの性能を向上
+・DataNode.propertiesのDataSaveTransactionFileEveryCommit=false時の不具合を対応
+・MasterNodeのIsolation機能(パーティション機能)利用時にgetTagKeysResult、getMultiTagKeysResultで発生する
+  不具合に対応
+・起動パラメータを以下の通り追加
+  DataNode用の起動パラメータ
+   -vidf 記述：true/false
+         説明：有効期限切れのデータのクリーニングを行うかどうかの設定 true=行う false=行わない 
+               有効期限付きのデータを登録しない場合はfalseにすることでクリーニングデータのチェックで
+               発生する負荷を減らすことが出来る
+               true=リーニングを行う、false=リーニングを行わない
+               デフィルトはValueがメモリの場合はtrue、Valueがディスクの場合はfalse
+               ※trueを指定するとファイルをストレージに使っている場合も実行される
+         設定例： -vidf false
+
+   -svic 記述：整数(分/単位)
+         説明：有効期限切れのデータのクリーニングを行う時間間隔。短い間隔を指定すると、クリーニングデータのチェックが
+               頻繁に発生するため負荷がかかる。大きすぎる値を指定すると有効期限切れのデータがいつまでもアクセス
+               不可の状態で保持されるためストレージ領域を無駄にしてしまいます。               
+               デフィルトは30分
+         設定例： -svic 60
+
+   -csf 記述：true/false
+        説明：保存データの合計サイズを計算するかどうかの指定
+              保存容量を計算する必要がない場合はfalseにすることで登録・削除時の負荷を軽減できる。
+              保存容量とはMasterNodeのKeyNodeWatchHelper.logなどで出力されている、"Save Data Size"項目などに当たります。
+              true=計算する、false=計算しない
+              デフィルトはtrue
+        設定例： -csf false
+
+   -rdvp 記述：true/false
+         説明：Key、Value共にディスクを利用した際にValueの更新時に更新前のデータファイル上のValueの場所を再利用して
+               再保存するかの設定。
+               再利用する場合は登録済みValueの再保存を行うと更新前のディスク上の場所を利用するため、更新によるディスク使用量の
+               増加はありません。しかしディスクへのアクセスは既存のValueの位置へディスクをシークしてから保存を行うためディスクへの
+               負荷が高くなります。
+               再利用しない場合は既存のValueであっても常に最新のValueをディスクの最後尾に書き足すため、ディスクへのアクセスは
+               シーケンシャル(一方向)なアクセスになりディスク負荷は少なくなります。しかし既存のValueへの更新であっても
+               ディスク使用量が増加します。
+               デフィルトはtrue
+        設定例： -rdvp false
+
+appendValueを実装
+
+
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.9.0 - (2011/10/21)]]
