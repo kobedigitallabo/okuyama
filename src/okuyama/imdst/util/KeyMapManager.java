@@ -688,43 +688,12 @@ public class KeyMapManager extends Thread {
                         data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
                     }
 
-                    /*boolean containsKeyRet = containsKeyPair(key);
-
-                    if (!containsKeyRet) {
-
-                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
-
-                        if (keyNoddes.length > 1) {
-                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + keyNoddes[1];
-                        } else {
-                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
-                        }
-                    } else if (containsKeyRet) {
-
-                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
-
-                        if (keyNoddes.length > 1) {
-
-                            if (keyNoddes[1].equals("0")) {
-
-                                data = keyNoddes[0] + ImdstDefine.setTimeParamSep + (System.nanoTime() + 1);
-                            } else {
-System.out.println("aaaaaaaaaaaaaaaa[" + keyNode + "]");
-
-                                data = keyNode;
-                            }
-                        } else {
-
-                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
-                        }
-
-                    }*/
-
-
-
                     // 登録
+                    long start1 = System.nanoTime();
                     keyMapObjPut(key, data);
+                    long end1 = System.nanoTime();
 
+                    long start2 = System.nanoTime();
                     // データ操作履歴ファイルに追記
                     if (this.workFileMemory == false) {
 
@@ -752,7 +721,10 @@ System.out.println("aaaaaaaaaaaaaaaa[" + keyNode + "]");
                             }
                         }
                     }
-
+                    long end2 = System.nanoTime();
+                    if (((end2 - start2) + (end1 - start1)) > 1 * 1000 * 1000 * 100) {
+                        System.out.println("1=" + (end1 - start1) + " 2=" + (end2 - start2));
+                    }
                     // Diffモードでかつsync後は再度モードを確認後、addする
                     if (this.diffDataPoolingFlg) {
 
