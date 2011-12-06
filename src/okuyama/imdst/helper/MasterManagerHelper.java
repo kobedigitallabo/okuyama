@@ -4724,6 +4724,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 処理番号, true or false, valueの想定
                         // value値にセパレータが入っていても無視する
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
+
                     } 
 
                     // 使用済みの接続を戻す
@@ -4768,6 +4769,29 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         if (ie != null) throw ie;
                     } else{
                         keyNodeConnector = null;
+                    }
+                }
+            }
+
+            // Isolation利用時のみPrefix文字列を取り外す
+            if (retParams != null && retParams[1].equals("true")) {
+        
+                if (this.isolationMode) {
+
+                    String[] splitList = retParams[2].split(ImdstDefine.imdstTagKeyAppendSep);
+                    if (splitList.length > 0) {
+
+                        StringBuilder retBuf = new StringBuilder(ImdstDefine.stringBufferLargeSize);
+                        String retSep = "";
+
+                        for (int idx = 0; idx < splitList.length; idx++) {
+
+                            retBuf.append(retSep);
+                            retBuf.append(this.decodeIsolationConvert(splitList[idx]));
+                            retSep = ImdstDefine.imdstTagKeyAppendSep;
+                        }
+
+                        retParams[2] = retBuf.toString();
                     }
                 }
             }
