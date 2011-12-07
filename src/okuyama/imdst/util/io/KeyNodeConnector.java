@@ -25,6 +25,7 @@ public class KeyNodeConnector {
     private PrintWriter pw = null;
     private BufferedReader br = null;
     private Long connectTime = null;
+    private int useCount = 0;
 
     private boolean poolConnect = false;
 
@@ -118,6 +119,7 @@ public class KeyNodeConnector {
 
         String ret = null;
         try {
+            this.useCount++;
 
             if (isReady) {
                 if(!this.br.ready()) Thread.sleep(500);
@@ -133,6 +135,9 @@ public class KeyNodeConnector {
             if (ret == null) throw new IOException("readLine Ret = null");
             retry = false;
         } catch (Exception e) {
+            // 一度でもエラーになった接続は再利用しない
+            this.useCount = Integer.MAX_VALUE;
+
             long uTime = System.nanoTime();
             //System.err.println("this.retryConnectMode=" + this.retryConnectMode + ", this.retry=" + this.retry + ", ConnectDump=" + this.connectorDump() + ", retryStr=" +retryStr + ", utime=" + uTime);
             if (this.retryConnectMode == true && this.retry == false) {
@@ -172,16 +177,16 @@ public class KeyNodeConnector {
                         //System.err.println("println utime=" + uTime);
                         this.println(retryStr);
                         this.flush();
+                        ret = this.readLine();
                     }
 
-                    ret = this.readLine();
                     retry = false;
                 } catch(Exception ee) {
-                    //System.out.println("throw Point 1 uTime=" + uTime + " nowTime=" + System.nanoTime());
+                    //System.out.println("throw Point 2 uTime=" + uTime + " nowTime=" + System.nanoTime());
                     throw ee;
                 }
             } else {
-                System.out.println("throw Point 1 uTime=" + uTime + " nowTime=" + System.nanoTime());
+                //System.out.println("throw Point 3 uTime=" + uTime + " nowTime=" + System.nanoTime());
                 throw e;
             }
         }
@@ -306,6 +311,10 @@ public class KeyNodeConnector {
         }
     }
 
+
+    public int getUseCount() {
+        return this.useCount;
+    }
 
     public String connectorDump() {
         StringBuilder dump = new StringBuilder(1024);

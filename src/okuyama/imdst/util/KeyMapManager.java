@@ -723,7 +723,7 @@ public class KeyMapManager extends Thread {
                     }
                     //long end2 = System.nanoTime();
                     //if (((end2 - start2) + (end1 - start1)) > 1 * 1000 * 1000 * 100) {
-                    //  System.out.println("1=" + (end1 - start1) + " 2=" + (end2 - start2));
+                    //    System.out.println("1=" + (end1 - start1) + " 2=" + (end2 - start2));
                     //}
                     // Diffモードでかつsync後は再度モードを確認後、addする
                     if (this.diffDataPoolingFlg) {

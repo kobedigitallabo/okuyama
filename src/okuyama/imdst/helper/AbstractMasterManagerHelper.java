@@ -1038,6 +1038,15 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
         String connectionFullName = null;
         if (keyNodeConnector != null) {
 
+            if (keyNodeConnector.getUseCount() > ImdstDefine.datanodeConnectorMaxUseCount) {
+
+                try {
+                    keyNodeConnector.close();
+                    keyNodeConnector = null;
+                    return;
+                } catch (Exception e) {}
+            }
+
             connectionFullName = keyNodeConnector.getNodeFullName();
 
             if (keyNodeConnectPool.containsKey(connectionFullName)) {

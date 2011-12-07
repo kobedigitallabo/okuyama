@@ -15,7 +15,6 @@ import okuyama.imdst.util.*;
  * -c  MasterNodeの無操作コネクションタイムアウト時間(秒)<br>
  * -S  DataNodeのValueの保存可能最大サイズ(バイト)<br>
  * -s  DataNodeのValueの共通データファイルへの書き出し中間サイズ(バイト)(DataNode用設定ファイルのdataMemory=trueの場合のみ有効)<br>
- * -KS ImdstDefine.saveKeyMaxSize Keyの最大サイズを設定 200以下を設定することは出来ない。設置した場合は自動的に200となる<br>
  * -v  分散モードがConsistentHash時(MasterNode用設定ファイルのDistributionAlgorithm=consistenthashの場合のみ)のVirtualNodeの数<br>
  * -fa ImdstDefine.parallelDiskAccess /ファイルシステムへの同時アクセス係数(整数)<br>
  * -ncot ImdstDefine.nodeConnectionOpenTimeout /DataNodeへのSocketコネクションOpenのタイムアウト閾値(ミリ秒)<br>
@@ -30,7 +29,8 @@ import okuyama.imdst.util.*;
  * -csf   ImdstDefine.calcSizeFlg /保存データの合計サイズを計算するかどうかの指定 true=計算する/false=計算しない 計算しない方が高速に値の登録が可能<br>
  * -rdvp ImdstDefine.reuseDataFileValuePositionFlg /完全ファイルモードでDataNodeを起動した際に値の更新時にデータファイル上のValueの場所を再利用するかの設定.true/再利用する, false/再利用しない<br>
  * -dwmqs ImdstDefine.delayWriteMaxQueueingSize /DelayWriteCoreFileBaseKeyMapのメモリ上へのキューイングレコード数<br>
- * -crcm ImdstDefine.compulsionRetryConnectMode /MasterNodeとDataNode間のし処理に失敗した場合に強制的に1度だけ再処理を行うようにするかの設定 true/再接続する, false/再接続は自動<br>
+ * -crcm ImdstDefine.compulsionRetryConnectMode /MasterNodeとDataNode間の処理に失敗した場合に強制的に1度だけ再処理を行うようにするかの設定 true/再接続する, false/再接続は自動<br>
+ * -dcmuc ImdstDefine.datanodeConnectorMaxUseCount /MasterNodeとDataNode間のSockeの最大再利用回数 (整数) 少ない値にすると接続コストがかかる 
  *
  * <br>
  * @author T.Okuyama
@@ -172,6 +172,7 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+
                     // -fbmnk
                     if (startOptions[i].trim().equals("-fbmnk")) {
                         if (startOptions.length > (i+1)) {
@@ -182,6 +183,7 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+
                     // -tlft
                     if (startOptions[i].trim().equals("-tlft")) {
                         if (startOptions.length > (i+1)) {
@@ -191,7 +193,8 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
-   
+
+
                     // -vidf
                     if (startOptions[i].trim().equals("-vidf")) {
                         if (startOptions.length > (i+1)) {
@@ -203,6 +206,7 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+
                     // -svic
                     if (startOptions[i].trim().equals("-svic")) {
                         if (startOptions.length > (i+1)) {
@@ -212,6 +216,7 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
+
 
                     // -csf
                     if (startOptions[i].trim().equals("-csf")) {
@@ -223,6 +228,7 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
+
 
                     // -rdvp
                     if (startOptions[i].trim().equals("-rdvp")) {
@@ -247,6 +253,7 @@ public class ServerPreprocess implements IProcess {
                     }
 
 
+                    // -crcm
                     if (startOptions[i].trim().equals("-crcm")) {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
@@ -254,6 +261,18 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
+
+
+                    // -dcmuc
+                    if (startOptions[i].trim().equals("-dcmuc")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.datanodeConnectorMaxUseCount = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
                 }
             }
         } catch (Exception e) {

@@ -386,6 +386,10 @@ public class ImdstDefine {
     public volatile static boolean compulsionRetryConnectMode = false;
 
 
+    // MasterNodeとDataNode間のコネクションを強制的に切断するまでの閾値
+    public volatile static int datanodeConnectorMaxUseCount = 50000;
+
+
     // MasterConfigurationManagerHelperが設定情報を確認する時間間隔
     public static final int configurationCheckCycle = 1000 * 60;
 
