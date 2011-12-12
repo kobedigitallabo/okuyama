@@ -30,7 +30,8 @@ import okuyama.imdst.util.*;
  * -rdvp ImdstDefine.reuseDataFileValuePositionFlg /完全ファイルモードでDataNodeを起動した際に値の更新時にデータファイル上のValueの場所を再利用するかの設定.true/再利用する, false/再利用しない<br>
  * -dwmqs ImdstDefine.delayWriteMaxQueueingSize /DelayWriteCoreFileBaseKeyMapのメモリ上へのキューイングレコード数<br>
  * -crcm ImdstDefine.compulsionRetryConnectMode /MasterNodeとDataNode間の処理に失敗した場合に強制的に1度だけ再処理を行うようにするかの設定 true/再接続する, false/再接続は自動<br>
- * -dcmuc ImdstDefine.datanodeConnectorMaxUseCount /MasterNodeとDataNode間のSockeの最大再利用回数 (整数) 少ない値にすると接続コストがかかる 
+ * -dcmuc ImdstDefine.datanodeConnectorMaxUseCount /MasterNodeとDataNode間のSockeの最大再利用回数 (整数) 少ない値にすると接続コストがかかる<br>
+ * -smbsmf ImdstDefine.serializeMapBucketSizeMemoryFactor /SerializMapのBucketサイズのJVMへのメモリ割当に対する1Bucket当たりの係数(整数)<br>
  *
  * <br>
  * @author T.Okuyama
@@ -272,7 +273,16 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
-
+                    
+                    // -smbsmf
+                    if (startOptions[i].trim().equals("-smbsmf")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.serializeMapBucketSizeMemoryFactor = Long.parseLong(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {

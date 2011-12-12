@@ -484,6 +484,9 @@ public class ImdstDefine {
     // true=再利用する、false=再利用しない
     public volatile static boolean reuseDataFileValuePositionFlg = true;
 
+    // SerializeMapのBucketサイズのJVMへのメモリ割当1MB単位への格納係数　小さな値にすればBucket数は減る
+    public volatile static long serializeMapBucketSizeMemoryFactor = 400;
+
 
     // 保存データサイズの合計値演算設定
     // true:計算する

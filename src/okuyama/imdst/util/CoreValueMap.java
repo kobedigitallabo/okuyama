@@ -53,6 +53,9 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                 mainMap  = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
             } else {
 
+                long jvmMaxMemory = JavaSystemApi.getRuntimeMaxMem("M");
+                long bucketSize = jvmMaxMemory * SerializeMap.bucketJvm1MBMemoryFactor;
+                /*
                 if (size > 100000000) {
                     multi = new Double(size * 0.1).intValue();
                 } else if (size > 59999999) {
@@ -73,11 +76,11 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                     size = 200000;
                     upper =190000;
                     multi = 50000;
-                }
+                }*/
 
                 System.out.println("PartialSerializeMap Use");
                 MemoryModeCoreValueCnv.compressUnderLimitSize = 1024 * 1024 * 1024;
-                mainMap  = new PartialSerializeMap(size, upper, multi, virtualStoreDirs);
+                mainMap  = new PartialSerializeMap(size, upper, new Long(bucketSize).intValue(), virtualStoreDirs);
             }
 
             converter = new MemoryModeCoreValueCnv();
@@ -91,6 +94,11 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                 System.out.println("ConcurrentHashMap Use");
                 mainMap  = new ConcurrentHashMap(size, upper, multi);
             } else {
+
+
+                long jvmMaxMemory = JavaSystemApi.getRuntimeMaxMem("M");
+                long bucketSize = jvmMaxMemory * SerializeMap.bucketJvm1MBMemoryFactor;
+/*
                 if (size > 100000000) {
                     multi = new Double(size * 0.1).intValue();
                 } else if (size > 59999999) {
@@ -113,8 +121,9 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                     upper =190000;
                     multi = 50000;
                 }
+*/
                 System.out.println("SerializeMap Use");
-                mainMap = new SerializeMap(size, upper, multi, ImdstDefine.serializerClassName);
+                mainMap = new SerializeMap(size, upper, new Long(bucketSize).intValue(), ImdstDefine.serializerClassName);
             }
 
             converter = new PartialFileModeCoreValueCnv();
