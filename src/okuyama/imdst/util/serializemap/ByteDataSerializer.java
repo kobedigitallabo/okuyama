@@ -6,6 +6,8 @@ import okuyama.imdst.util.*;
 
 /**
  * ISerializerの実装.<br>
+ * あらかじめbyte配列で領域を固定してそこにデータを格納し、GCのold領域中の参照切れをなくす試験実装<br>
+ * 指定方法) okuyama.imdst.util.serializemap.ByteDataSerializer;disk<br>
  * <br>
  *
  * @author T.Okuyama
@@ -31,10 +33,8 @@ public class ByteDataSerializer implements ISerializer {
 
     /**
      * シリアライザ.<br>
-     * 内部ではObjectOutputStreamを利用している.<br>
-     * スピードにやや難有り.<br>
      * 
-     * @param serializeTarget シリアライズするターゲットオブジェクト(具象クラスはHashMap)
+     * @param serializeTarget シリアライズするターゲットオブジェクト(具象クラスはHashMapもしくはByteDataSerializeCustomHashMap
      * @param mapKeyClazz シリアライズするターゲットオブジェクトのMapがKey値として持つクラス(シリアライス、デシリアライズ時の指標)
      * @param mapValueClazz シリアライズするターゲットオブジェクトのMapがValue値として持つクラス(シリアライス、デシリアライズ時の指標)
      * @param 呼び出しに使われたKey値
@@ -67,8 +67,6 @@ public class ByteDataSerializer implements ISerializer {
 
     /**
      * デシリアライズ処理インターフェース.<br>
-     * 内部ではObjectInputStreamを利用している.<br>
-     * スピードにやや難有り.<br>
      *
      * @param deserializeTarget デシリアライズターゲット
      * @param 呼び出しに使われたKey値
