@@ -1,6 +1,5 @@
 package okuyama.imdst.client;
 
-import okuyama.imdst.client.*;
 
 /**
  * OkuyamaClientをConnectionPoolにて利用するためのラッパークラス.<br>

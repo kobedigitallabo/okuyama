@@ -346,32 +346,32 @@ public class ImdstDefine {
     public static final int defaultDeadPingCount = 3;
 
     // クライアントのコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int clientConnectionOpenTimeout = 10000;
+    public static final int clientConnectionOpenTimeout = 10000 * 5;
 
     // クライアントのコネクションタイムアウト時間(ミリ秒)
     public static final int clientConnectionTimeout = 60000 * 2;
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public static final int nodeConnectionOpenShortTimeout = 1000;
+    public static final int nodeConnectionOpenShortTimeout = 1000 * 10;
 
-    public static final int nodeConnectiontReadShortTimeout = 1500;
+    public static final int nodeConnectiontReadShortTimeout = 1500 * 10;
 
 
     // Node間のコネクションオープンタイムアウト時間(ミリ秒)
-    public volatile static int nodeConnectionOpenTimeout = 5000;
+    public volatile static int nodeConnectionOpenTimeout = 5000 * 10;
 
     // Node間のコネクションReadタイムアウト時間(ミリ秒)
-    public volatile static int nodeConnectionTimeout = 10000;
+    public volatile static int nodeConnectionTimeout = 10000 * 10;
 
 
     public static final int nodeConnectionTimeout4RecoverMode = 60000 * 5;
 
     // Node間のコネクションオープンタイムアウト時間(PING)(ミリ秒)
-    public static final int nodeConnectionOpenPingTimeout = 3000;
+    public static final int nodeConnectionOpenPingTimeout = 3000 * 10;
 
     // Node間のコネクションReadタイムアウト時間(PING)(ミリ秒)
-    public static final int nodeConnectionPingTimeout = 4000;
+    public static final int nodeConnectionPingTimeout = 4000 * 10;
 
 
    // Recoverのコネクションタイムアウト時間(ミリ秒)

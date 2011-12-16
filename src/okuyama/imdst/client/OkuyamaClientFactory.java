@@ -6,7 +6,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import okuyama.imdst.client.*;
+
 
 /**
  * OkuyamaClient用のコネクションプール.<br>
