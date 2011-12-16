@@ -949,7 +949,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 keyNodeConnector.flush();
 
                 // 返却値取得
-                String retParam = keyNodeConnector.readLineWithReady();
+                String retParam = keyNodeConnector.readLineWithReady(buf.toString());
 
                 retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
 
@@ -982,6 +982,7 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                 retStrs[0] = "false";
                 logger.info("Node Ping Check Error Node Name = [" + nodeName + "] Port [" + port + "]");
                 logger.info(e);
+                //e.printStackTrace();
             } finally {
                 try {
 

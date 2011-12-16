@@ -1,7 +1,14 @@
 package okuyama.imdst.client;
 
+import okuyama.imdst.client.*;
 
-
+/**
+ * OkuyamaClientをConnectionPoolにて利用するためのラッパークラス.<br>
+ * ユーザが利用時に意識する必要はない.<br>
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ */
 public class ClientRedirector extends OkuyamaClient {
 
     public long useCount = 0L;

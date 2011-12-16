@@ -111,6 +111,7 @@ public class KeyNodeConnector {
     }
 
     public String readLineWithReady(String retryStr) throws Exception {
+        if (ImdstDefine.compulsionRetryConnectMode) retry = false;
         return this.readLine(retryStr, true);
     }
 
@@ -135,11 +136,12 @@ public class KeyNodeConnector {
             if (ret == null) throw new IOException("readLine Ret = null");
             retry = false;
         } catch (Exception e) {
+            e.printStackTrace();
             // 一度でもエラーになった接続は再利用しない
             this.useCount = Integer.MAX_VALUE;
 
             long uTime = System.nanoTime();
-            //System.err.println("this.retryConnectMode=" + this.retryConnectMode + ", this.retry=" + this.retry + ", ConnectDump=" + this.connectorDump() + ", retryStr=" +retryStr + ", utime=" + uTime);
+            //System.out.println("this.retryConnectMode=" + this.retryConnectMode + ", this.retry=" + this.retry + ", ConnectDump=" + this.connectorDump() + ", retryStr=" +retryStr + ", utime=" + uTime);
             if (this.retryConnectMode == true && this.retry == false) {
                 this.retry = true;
                 try {
@@ -154,7 +156,7 @@ public class KeyNodeConnector {
                     }
 
                     try {
-                        //System.err.println("connect1 utime=" + uTime);
+                        //System.out.println("connect1 utime=" + uTime);
                         Thread.sleep(100);
                         this.connect();
                     } catch (SocketTimeoutException ste) {
@@ -162,7 +164,7 @@ public class KeyNodeConnector {
                         // 再リトライ
                         try {
 
-                            //System.err.println("connect2 utime=" + uTime);
+                            //System.out.println("connect2 utime=" + uTime);
                             Thread.sleep(5000);
                             this.connect();
                         } catch (SocketTimeoutException ste2) {
@@ -174,10 +176,20 @@ public class KeyNodeConnector {
                     // リトライフラグが有効でかつ、送信文字が指定されている場合は再送後、取得
                     if (retryStr != null) {
 
-                        //System.err.println("println utime=" + uTime);
-                        this.println(retryStr);
-                        this.flush();
-                        ret = this.readLine();
+                        //System.out.println("println utime=" + uTime);
+                        this.pw.println(retryStr);
+                        this.pw.flush();
+                        ret = this.br.readLine();
+                        if (ret == null) {
+                            //System.out.println("Retry - 1 println =[" + retryStr + "]ReadLine = null");
+                            // 再度試す
+                            this.close();
+                            this.connect();
+                            this.pw.println(retryStr);
+                            this.pw.flush();
+                            ret = this.br.readLine();
+                        }
+                        //System.out.println("readLine utime=" + uTime + " readStr=" + ret);
                     }
 
                     retry = false;
