@@ -22,14 +22,72 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
-[[リリース Ver 0.9.1 - (2011/XX/XX)]]
+[[リリース Ver 0.9.1 - (2011/12/19)]]
 
 ・PHP版のOkuyamaClientの不具合対応
+  ・Key、Value、Tagの登録前サイズチェック周りの修正
+    登録可能なKeyおよび、Tagのバイト長を320byteに固定
+    PhpTestSock.phpにテストコードを追加
+    テスト名はsize-trueとsize-falseとなる
+  ・OkuyamaClient.class.phpの前回バージョンの71行目の構文が不要なため削除
+  ・OkuyamaClient.class.phpの前回バージョンの113行目unset済み変数への参照の構文を修正
+    isset関数に置き換え
+
+
+・Java用のOkuyamaClientをプーリングするコネクションプールを追加
+  本機能を利用すると接続処理、接続済みOkuyamaClientのプール、クローズ処理の管理を行うことが出来る
+  接続済みのコネクションを即利用可能なため、接続処理のコスト削減、接続処理の共通化を行うことが可能
+  該当クラスは以下
+  ・okuyama.imdst.client.OkuyamaClientFactory
+  (利用方法)
+   -------------------------------------------------------------------------------------------------------
+   // MasterNodeの接続情報を作成して、OkuyamaClientFactory.getFactoryに渡すことでコネクションプールを取得
+   // ここで取得されるインスタンスはシングルトンとなり全てのスレッドで唯一となる
+   // スレッド毎に新しいFactoryを利用したい場合はgetNewFactoryメソッドを利用する
+   String[] masterNodes = {"192.168.1.1:8888","192.168.1.2:8888"};
+   OkuyamaClientFactory factory = OkuyamaClientFactory.getFactory(masterNodes, 20);
+
+   // プールからClientを取得
+   OkuyamaClient okuyamaClient = factory.getClient();
+
+   // 以降は通常のOkuyamaClientの利用方法と同様
+   String[] getResult = okuyamaClient.getValue("Key-XXXX");
+   if (getResult[0].equals("true")) {
+       System.out.println(getResult[1]);
+   }
+
+   // close()を呼び出すことでコネクションプールに返却される
+   okuyamaClient.close();
+
+   // アプリケーションそのものを終了する際は以下でFactoryを終了させて全てのコネクションを破棄する
+   // 終了後も再度getFactoryを呼び出せば新たにfactoryが再生成される
+   factory.shutdown();
+   -------------------------------------------------------------------------------------------------------
+
+
 ・UtilClientにadddatanodeを追加
+  DataNodeを追加する際に従来はWebの管理画面からしか追加できなかったが、
+  UtilClientから追加する機能を追加
+  ※本機能によるokuyamaのサーバ側の変更は必要ありません。
+  使い方)
+  $ java -classpath ./:./lib/javamail-1.4.1.jar:./okuyama-0.9.1.jar okuyama.imdst.client.UtilClient adddatanode masternode:8888 datanode02:5555 slavedatanode:02:6555 thirddatanode:7555
+  引数説明
+  1)adddatanode : 追加命令
+  2)masternode:8888 : 追加を依頼するMasterNodeのアドレスとPort番号
+  3)datanode02:5555 : 追加を依頼するDataNodeのアドレスとPort番号(MasterNode.propertiesのKeyMapNodesInfoの設定に該当)
+  4)slavedatanode:6555 : 追加を依頼するDataNodeのアドレスとPort番号(MasterNode.propertiesのSubKeyMapNodesInfoの設定に該当。設定を行っていない場合は省略)
+  5)thirddatanode:7555 : 追加を依頼するDataNodeのアドレスとPort番号(MasterNode.propertiesのThirdKeyMapNodesInfoの設定に該当。設定を行っていない場合は省略)
+
+
 ・DataNodeの完全ディスクモードの性能を向上
-・DataNode.propertiesのDataSaveTransactionFileEveryCommit=false時の不具合を対応
+  ファイルへの書き出しにメモリでのバッファリング領域を設けそちらへの書き出しが完了した時点でユーザ処理を
+  完了とすることで応答速度向上。実際の書き出し処理は別スレッドで順次行われる。
+
+
 ・MasterNodeのIsolation機能(パーティション機能)利用時にgetTagKeysResult、getMultiTagKeysResultで発生する
   不具合に対応
+
+
 ・起動パラメータを以下の通り追加
   DataNode用の起動パラメータ
    -vidf 記述：true/false
@@ -68,8 +126,14 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
                デフィルトはtrue
         設定例： -rdvp false
 
-appendValueを実装
+   -dwmqs 記述：整数(バッファリング件数/単位)
+         説明：DataNodeの完全ディスクモード時にメモリのバッファリング空間の蓄積できる件数。最大値は20億。
+         最大ここで設定した件数分のKey長+10byte分のメモリ容量を利用するため、大きな値にする場合は注意が
+         必要となる。Defaultの値は7000。
+        設定例： -dwmqs 15000
 
+
+・DataNode.propertiesのDataSaveTransactionFileEveryCommit=false時の不具合を対応
 
 ========================================================================================================
 [New - 新機能追加、不具合対応]
