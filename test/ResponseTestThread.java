@@ -4,8 +4,8 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
-import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
+import okuyama.imdst.client.*;
+
 
 
 public class ResponseTestThread extends Thread {
@@ -21,9 +21,11 @@ public class ResponseTestThread extends Thread {
     private volatile boolean endFlg = false;
 
 
-    private static final String tmpKey = "DataSaveKey910111213_123456789";
-    private static final String tmpValue = "DataSaveValue1234567890GHIJKLMNopqrstu1234567812345623456781234567890GHIJKLMNopqrstu12o_";
+    private static final String tmpKey = "DataSaveKey123456789ABC_";
+    private static final String tmpValue = "DataSaveValue_0987654321DEFGHIJKLMN0123456789_";
 
+    private OkuyamaClientFactory factory = null;
+    private static Object sync = new Object();
 
 
     public ResponseTestThread(int threadNo, String prefix, boolean rndFlg, long endCounter) {
@@ -36,16 +38,20 @@ public class ResponseTestThread extends Thread {
 
     public void run() {
         OkuyamaClient okuyamaClient = null;
+
         while(!ResponseTest.startFlg){}
         try {
+            String[] infos = ResponseTest.args[1].split(",");
+            this.factory = OkuyamaClientFactory.getFactory(ResponseTest.args[1].split(","), 5);
+            okuyamaClient = this.factory.getClient();
+
             if (ResponseTest.args[0].equals("1")) {
 
-                okuyamaClient = new OkuyamaClient();
 
-                String[] infos = ResponseTest.args[1].split(",");
-                okuyamaClient.setConnectionInfos(infos);
 
-                okuyamaClient.autoConnect();
+                /*okuyamaClient.setConnectionInfos(infos);
+                okuyamaClient.autoConnect();*/
+
 
                 String key = tmpKey + threadNo + "_" + prefix + "_";
                 String value= tmpValue + threadNo + "_" + prefix + "_";
@@ -63,6 +69,7 @@ public class ResponseTestThread extends Thread {
                         if(!okuyamaClient.setValue(key + appendInt, value + appendInt)) {
                             System.out.println("Error");
                         }
+
                         this.execCounter++;
                     }
                 } else {
@@ -73,18 +80,14 @@ public class ResponseTestThread extends Thread {
                         if(!okuyamaClient.setValue(key + this.execCounter, value + this.execCounter)) {
                             System.out.println("Error");
                         }
+
                         this.execCounter++;
                         if (this.endCounter <= this.execCounter) break;
                     }
                 }
             } else if (ResponseTest.args[0].equals("2")) {
 
-                okuyamaClient = new OkuyamaClient();
 
-                String[] infos = ResponseTest.args[1].split(",");
-                okuyamaClient.setConnectionInfos(infos);
-
-                okuyamaClient.autoConnect();
 
                 String key = tmpKey + threadNo + "_" + prefix + "_";
                 String[] ret = null;
@@ -124,6 +127,8 @@ public class ResponseTestThread extends Thread {
                     }
                 }
             }
+            okuyamaClient.close();
+            this.factory.shutdown();
             this.endFlg = true;
         } catch (Exception e) {
             e.printStackTrace();
