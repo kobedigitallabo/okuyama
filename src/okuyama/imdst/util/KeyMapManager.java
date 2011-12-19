@@ -1261,100 +1261,6 @@ public class KeyMapManager extends Thread {
     }
 
 
-
-    // Tagを指定することでKeyリストを返す
-/*    public String getTagPair(String tag, PrintWriter pw) {
-        String keyStrs = "";
-        String[] setTimeSplitWork = null;
-
-        boolean isMatch = false;
-
-        String tmpStr = null;
-        String tmpSep = "";
-        String lastSetTime = "";
-        String counterSep = "";
-
-        boolean headerSend = false;
-
-        if (!blocking) {
-
-            int counter = 0;
-
-
-            // Tagのキー値を連結
-            for (int idx = 0; idx < ImdstDefine.tagRegisterParallelBucket; idx=idx+ImdstDefine.tagBucketMaxLink) {
-                keyStrs = null;
-                setTimeSplitWork = null;
-                isMatch = false;
-                tmpStr = null;
-                if (!headerSend) tmpSep = "";
-
-
-                counter = idx;
-                while(true) {
-
-                    String tagCnv = KeyMapManager.tagStartStr + tag + "_" + counter + KeyMapManager.tagEndStr;
-
-                    if (this.containsKeyPair(tagCnv)) {
-        
-                        tmpStr = (String)this.getKeyPair(tagCnv);
-
-                        if (tmpStr != null && !((String[])tmpStr.split("!"))[0].equals("*")) {
-        
-                            isMatch = true;
-                            if (!headerSend) {
-                                pw.print("4");
-                                pw.print(ImdstDefine.keyHelperClientParamSep);
-                                pw.print("true");
-                                pw.print(ImdstDefine.keyHelperClientParamSep);
-                                headerSend = true;
-                            }
-
-                            pw.print(tmpSep);
-        
-
-                            setTimeSplitWork = tmpStr.split(ImdstDefine.setTimeParamSep);
-        
-                            if (lastSetTime != null && setTimeSplitWork.length > 1) lastSetTime = setTimeSplitWork[1];
-        
-                            pw.print(setTimeSplitWork[0]);
-                            tmpSep = KeyMapManager.tagKeySep;
-
-                        } else if (tmpStr == null || ((String[])tmpStr.split("!"))[0].equals("*")){
-
-                            break;
-                        }
-                    } else {
-        
-                        break;
-                    }
-                    counter++;
-                    
-                }
-
-                if (isMatch) pw.flush();
-            }
-        }
-        
-        
-        if (!headerSend) {
-
-            pw.print("4");
-            pw.print(ImdstDefine.keyHelperClientParamSep);
-            pw.print("false");
-            pw.println();
-            pw.flush();
-        } else {
-
-            pw.print(ImdstDefine.setTimeParamSep);
-            pw.print(lastSetTime);
-            pw.println();
-            pw.flush();
-        } 
-        return null;
-    }
-*/
-
     public String getTagPair(String tag) {
         String keyStrs = "";
         String[] setTimeSplitWork = null;
@@ -1370,14 +1276,14 @@ public class KeyMapManager extends Thread {
         if (!blocking) {
 
             int counter = 0;
-/*
-String testList = getTargetTagIndexList(tag);
-System.out.println("tag[" + tag + "]");
-System.out.println("testList[" + testList);
-String[] testIndexs = testList.split(KeyMapManager.tagKeySep);
-System.out.println("[0]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[0]).intValue()));
-System.out.println("[1]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[1]).intValue()));
-*/
+            /*
+            String testList = getTargetTagIndexList(tag);
+            System.out.println("tag[" + tag + "]");
+            System.out.println("testList[" + testList);
+            String[] testIndexs = testList.split(KeyMapManager.tagKeySep);
+            System.out.println("[0]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[0]).intValue()));
+            System.out.println("[1]=" + getTargetIndexTagPair(tag, new Integer(testIndexs[1]).intValue()));
+            */
             // Tagのキー値を連結
             for (int idx = 0; idx < ImdstDefine.tagRegisterParallelBucket; idx=idx+ImdstDefine.tagBucketMaxLink) {
 

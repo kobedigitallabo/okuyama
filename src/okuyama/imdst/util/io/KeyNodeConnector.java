@@ -136,7 +136,7 @@ public class KeyNodeConnector {
             if (ret == null) throw new IOException("readLine Ret = null");
             retry = false;
         } catch (Exception e) {
-            e.printStackTrace();
+
             // 一度でもエラーになった接続は再利用しない
             this.useCount = Integer.MAX_VALUE;
 

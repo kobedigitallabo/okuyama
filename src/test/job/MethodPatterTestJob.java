@@ -2001,9 +2001,8 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
             if (okuyamaResultSet != null) {
                 // データ有り
-
-                errorFlg = true;
                 while (okuyamaResultSet.next()) {
+                    errorFlg = true;
                     System.out.println(start+"tag2_tag3_tag4_reslut=データあり");
                     System.out.println(okuyamaResultSet.getKey());
                 }
