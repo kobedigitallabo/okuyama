@@ -29,20 +29,6 @@ abstract public class AbstractProtocolTaker {
 
                 // 送られてきた時間指定がUTCの場合
                 timeStrLong = Long.parseLong(timeStr);
-                if (timeStrLong > 2592000) {
-
-                    // 送られてきた値がUTCなのに、現在時間より小さい値の場合
-                    if (timeStrLong > nowSecTime) {
-
-                        // 送られてきた値が現在時間よりも大きい場合
-                        // 指定時間から現在時間を引いた値に変換
-                        timeStrLong = timeStrLong - nowSecTime;
-                    } else {
-
-                        // 送られてきた時間が現在時間よりも小さい場合は-1とする
-                        timeStrLong = -1;
-                    }
-                }
 
                 // 数値変換出来ない場合はエラー
                 long plusTime = timeStrLong * 1000;
