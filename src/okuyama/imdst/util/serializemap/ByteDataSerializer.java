@@ -42,10 +42,12 @@ public class ByteDataSerializer implements ISerializer {
      * @return シリアライズ済み返却値
      */
     public byte[] serialize(Map serializeTarget, Class mapKeyClazz, Class mapValueClazz, Object key, int uniqueNo) {
+        byte[] retData = null;
         if (valueDisk == true) {
+
             if (serializeTarget instanceof  ByteDataSerializeCustomHashMap) {
 
-                return ((ByteDataSerializeCustomHashMap)serializeTarget).byteData;
+                retData = ((ByteDataSerializeCustomHashMap)serializeTarget).byteData;
             } else if (serializeTarget instanceof  HashMap) {
 
                 String val = (String)serializeTarget.get(key);
@@ -56,12 +58,29 @@ public class ByteDataSerializer implements ISerializer {
                 for (int idx = 0; idx < keyValByte.length; idx++) {
                     newData[idx] = keyValByte[idx];
                 }
-                return newData;
+                retData = newData;
             }
         } else {
-            return SystemUtil.dataCompress(SystemUtil.defaultSerializeMap(serializeTarget));
+            if (serializeTarget instanceof  ByteDataSerializeCustomHashMap) {
+
+                retData = ((ByteDataSerializeCustomHashMap)serializeTarget).byteData;
+            } else if (serializeTarget instanceof  HashMap) {
+
+                byte[] val = (byte[])serializeTarget.get(key);
+
+                String keyVal = key + ";" + new String(val);
+                byte[] newData = new byte[4096];
+
+                byte[] keyValByte = keyVal.getBytes();
+                for (int idx = 0; idx < keyValByte.length; idx++) {
+                    newData[idx] = keyValByte[idx];
+                }
+                retData = newData;
+            }
+            
+            //return SystemUtil.dataCompress(SystemUtil.defaultSerializeMap(serializeTarget));
         }
-        return null;
+        return SystemUtil.dataCompress(retData);
     }
 
 
@@ -74,6 +93,7 @@ public class ByteDataSerializer implements ISerializer {
      * @return デシリアライズ済み返却値
      */
     public Map deSerialize(byte[] deserializeTarget, Object key, int uniqueNo) {
+        deserializeTarget = SystemUtil.dataCompress(deserializeTarget)
         if (valueDisk == true) {
             String dataStr = null;
             String[] keyVal = null;
@@ -94,7 +114,28 @@ public class ByteDataSerializer implements ISerializer {
             }
             return customHashMap;
         } else {
-            return SystemUtil.defaultDeserializeMap(SystemUtil.dataDecompress(deserializeTarget));
+
+            String dataStr = null;
+            String[] keyVal = null;
+
+            dataStr = new String(deserializeTarget);
+
+            dataStr = dataStr.trim();
+
+            Map customHashMap = new ByteDataSerializeCustomHashMap(deserializeTarget);
+
+            if (!dataStr.equals("")) {
+                keyVal = dataStr.split(",");
+
+                for (int idx = 0; idx < keyVal.length; idx++) {
+                    String[] singleData = keyVal[idx].split(";");
+                    
+                    ((ByteDataSerializeCustomHashMap)customHashMap).originalPut(new CoreMapKey(singleData[0]), singleData[1].getBytes());
+                }
+            }
+            return customHashMap;
+
+            //return SystemUtil.defaultDeserializeMap(SystemUtil.dataDecompress(deserializeTarget));
         }
     }
 

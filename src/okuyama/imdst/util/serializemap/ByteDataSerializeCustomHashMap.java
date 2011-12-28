@@ -14,11 +14,22 @@ public class ByteDataSerializeCustomHashMap extends HashMap {
     }
 
 
-    public Object put(Object key, Object value) {
-        Object ret = super.put(key, value);
 
-        String keyStr = ((CoreMapKey)key).toString();
-        String valueInt = (String)value;
+    public Object put(Object key, Object value) {
+
+        Object ret = super.put(key, value);
+        String keyStr = null;
+        String valueInt = null;
+
+        if (value instanceof String)  {
+
+            keyStr = ((CoreMapKey)key).toString();
+            valueInt = (String)value;
+        } else {
+
+            keyStr = ((CoreMapKey)key).toString();
+            valueInt = new String((byte[])value);
+        }
 
         String nowDataStr = new String(this.byteData);
 
@@ -84,6 +95,7 @@ public class ByteDataSerializeCustomHashMap extends HashMap {
             this.byteData[chkIdx] = putFullData[i];
             chkIdx++;
         }
+
         return ret;
     }
 
@@ -128,6 +140,7 @@ public class ByteDataSerializeCustomHashMap extends HashMap {
     }
 
     public Object originalPut(Object key, Object value) {
+
         return super.put(key, value);
     }
 
