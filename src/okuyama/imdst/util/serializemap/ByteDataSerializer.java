@@ -80,7 +80,8 @@ public class ByteDataSerializer implements ISerializer {
             
             //return SystemUtil.dataCompress(SystemUtil.defaultSerializeMap(serializeTarget));
         }
-        return SystemUtil.dataCompress(retData);
+        return retData;
+        //return SystemUtil.dataCompress(retData);
     }
 
 
@@ -93,7 +94,7 @@ public class ByteDataSerializer implements ISerializer {
      * @return デシリアライズ済み返却値
      */
     public Map deSerialize(byte[] deserializeTarget, Object key, int uniqueNo) {
-        deserializeTarget = SystemUtil.dataCompress(deserializeTarget)
+        //deserializeTarget = SystemUtil.dataCompress(deserializeTarget)
         if (valueDisk == true) {
             String dataStr = null;
             String[] keyVal = null;

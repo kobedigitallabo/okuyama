@@ -57,7 +57,7 @@ public class SerializeMap extends AbstractMap implements Cloneable, Serializable
      *
      * @param size 予想格納最大数(現在内部的には利用しない)
      * @param upper 格納上限拡張閾値(現在内部的には利用しない)
-     * @param multi 実際に格納に使用する集合バケット数 (現在の検証で1GBのJVMへのメモリ割当で40万程度、1MBで400件程度が適正値)
+     * @param multi 実際に格納に使用する集合バケット数 (現在の検証で1GBのJVMへのメモリ割当で40万程度、1MBで400d件程度が適正値)
      */
     public SerializeMap(int size, int upper, int multi, String serializeClassName) {
         System.out.println("SerializeMap BucketSize= " + multi);
