@@ -438,7 +438,23 @@ public class KeyManagerHelper extends AbstractHelper {
                             // ServerConnect Test Ping
                             retParamBuf.append("10");
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
-                            retParamBuf.append("true");
+                            // ステータスチェック時にデータ永続化部分でエラーが出ていないか確認する
+                            String retStatus = "false";
+                            try {
+                                if(!this.keyMapManager.checkError()) {
+                                    this.keyMapManager.containsKeyPair("PCKey");
+                                    this.keyMapManager.setKeyPair("PCKey", "PCValue", "0");
+                                    String chkGetRet = this.keyMapManager.getKeyPair("PCKey");
+
+                                    if (chkGetRet != null) retStatus = "true";
+                                } else {
+                                    retStatus = "false";
+                                }
+                            } catch (Exception chkE) {
+                                retStatus = "false";
+                            }
+                            
+                            retParamBuf.append(retStatus);
                             // エラーの場合は以下でエラーメッセメッセージも連結
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(StatusUtil.getNowMemoryStatus());
