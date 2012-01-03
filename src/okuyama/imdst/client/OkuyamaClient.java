@@ -3549,7 +3549,6 @@ public class OkuyamaClient {
                     throw new OkuyamaClientException(e);
                 }
             } else {
-                e.printStackTrace();
                 throw new OkuyamaClientException(e);
             }
         }
