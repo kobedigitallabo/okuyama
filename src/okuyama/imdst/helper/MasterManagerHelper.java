@@ -878,6 +878,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParams[1] = "true";
                             retParams[2] = "";
                             break;
+                        case 98 :
+
+                            // KeyNodeの停止が他のMainMasterNode以外から通知
+                            this.reportDeadNode(clientParameterList[1], 99);
+                            retParams = new String[3];
+                            retParams[0] = "98";
+                            retParams[1] = "true";
+                            retParams[2] = "";
+                            break;
                         case 998:
                         
                             // 自信の現時点での設定情報を全て出力

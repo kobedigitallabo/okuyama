@@ -74,6 +74,19 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
      * @param setPoint 
      * @param te
      */
+    protected void reportDeadNode(String nodeInfo, int setPoint) {
+        this.setDeadNode(nodeInfo, setPoint, null, false);
+    }
+
+
+    /**
+     * ノードの停止を登録
+     *
+     *
+     * @param nodeInfo 対象のノード情報
+     * @param setPoint 
+     * @param te
+     */
     protected void setDeadNode(String nodeInfo, int setPoint, Throwable te) {
         this.setDeadNode(nodeInfo, setPoint, te, false);
     }
@@ -207,6 +220,89 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
                         }
                         execCounter++;
                     }
+                }
+            }
+        } else {
+            // SlaveMasterNodeでの処理
+            
+            // MainMasterNodeからの通知の場合は以降の処理は行わない
+            if (setPoint == 9) return;
+
+            // MainMasterNodeではない場合はMainMasterNodeへ伝搬する
+            String mainMasterNodeInfoStr = StatusUtil.getMainMasterNodeInfo();
+            String[] mainMasterNodeInfoDt = mainMasterNodeInfoStr.split(":");
+            Socket socket = null;
+            PrintWriter pw = null;
+            BufferedReader br = null;
+
+            try {
+
+                // MainMasterNode名とポートに分解
+                InetSocketAddress inetAddr = new InetSocketAddress(mainMasterNodeInfoDt[0], Integer.parseInt(mainMasterNodeInfoDt[1]));
+                socket = new Socket();
+                socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenShortTimeout);
+                socket.setSoTimeout(ImdstDefine.nodeConnectiontReadShortTimeout);
+
+                pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
+                                                                               ImdstDefine.keyHelperClientParamEncoding)));
+                br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
+                                                              ImdstDefine.keyHelperClientParamEncoding));
+
+                // 文字列バッファ初期化
+                StringBuilder serverRequestBuf = new StringBuilder();
+
+                // 処理番号連結
+                serverRequestBuf.append("98");
+                // セパレータ連結
+                serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
+                // 障害ノード名連結
+                serverRequestBuf.append(nodeInfo);
+
+                // サーバ送信
+                pw.println(serverRequestBuf.toString());
+                pw.flush();
+
+                // サーバから結果受け取り
+                String serverRetStr = br.readLine();
+
+                String[] serverRet = serverRetStr.split(ImdstDefine.keyHelperClientParamSep);
+
+                // 処理の妥当性確認
+                if (serverRet[0].equals("98")) {
+                    if (!serverRet[1].equals("true")) {
+                        // 異常事態だが、稼動していないことも考えられるので、
+                        // 無視する
+                        //System.out.println("Main Master Node setDeadNode Error [" + mainMasterNodeInfoDt[i] + "]");
+                    }
+                }
+            } catch(Exception e) {
+
+                // 異常事態だが、稼動していないことも考えられるので、
+                // 無視する
+                //System.out.println("Main Master Node setArriveNode Error [" + mainMasterNodeInfoDt[i] + "]");
+                //e.printStackTrace();
+            } finally {
+                try {
+                    if (pw != null) {
+                        // 接続切断を通知
+                        pw.println(ImdstDefine.imdstConnectExitRequest);
+                        pw.flush();
+
+                        pw.close();
+                        pw = null;
+                    }
+
+                    if (br != null) {
+                        br.close();
+                        br = null;
+                    }
+
+                    if (socket != null) {
+                        socket.close();
+                        socket = null;
+                    }
+                } catch(Exception e2) {
+                    // 無視
                 }
             }
         }

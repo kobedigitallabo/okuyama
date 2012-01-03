@@ -107,10 +107,12 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
         StatusUtil.setDistributionAlgorithm(dispatchMode);
         DataDispatcher.setDispatchMode(dispatchMode);
 
-
         try{
             // 起動時は設定ファイルから情報取得
             this.parseAllNodesInfo();
+
+            // MainMasterNode設定
+            StatusUtil.setMainMasterNodeInfo(mainMasterNodeInfoStr);
 
             // 現在の設定を標準出力にOutput
             System.out.println("The current 'okuyama' cluster configuration information");
@@ -567,6 +569,8 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             // メインマスターノード接続情報
             nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_MainMasterNodeInfo);
             if(nodeRet[0].equals("true") && nodeRet[1] != null) {
+                StatusUtil.setMainMasterNodeInfo(mainMasterNodeInfoStr);
+
                 if(!nodeRet[1].equals(mainMasterNodeInfoStr)) {
                     mainMasterNodeInfoStr = nodeRet[1];
                     setterFlg = true;

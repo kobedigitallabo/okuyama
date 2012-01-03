@@ -74,6 +74,7 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                 HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
 
                 this.mainNodeList = (ArrayList)allNodeInfo.get("main");
+                if (this.mainNodeList != null && this.mainNodeList.size() > 10)  this.checkCycle = 100;
                 this.subNodeList = (ArrayList)allNodeInfo.get("sub");
                 this.thirdNodeList = (ArrayList)allNodeInfo.get("third");
 
@@ -100,7 +101,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                 // ノード数分チェック
                 for (int i = 0; i < mainNodeList.size(); i++) {
-                    Thread.sleep(checkCycle);
+
+                    Thread.sleep(this.checkCycle);
 
                     // MainのMasterNodeの場合のみ実行
                     if (StatusUtil.isMainMasterNode()) {
