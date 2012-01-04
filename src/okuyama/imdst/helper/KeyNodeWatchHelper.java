@@ -194,6 +194,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                     }
                                 }
                             }
+                            // SlaveMasterNodeにも伝搬する
+                            super.setArriveNode(nodeDt[0] + ":" +  nodeDt[1]);
                         }
                         logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
 
@@ -271,6 +273,9 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                         }
                                     }
                                 }
+                                
+                                // SlaveMasterNodeにも伝搬する
+                                super.setArriveNode(subNodeDt[0] + ":" +  subNodeDt[1]);
                             }
                             logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
                             logger.info("************************************************************");

@@ -881,7 +881,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         case 98 :
 
                             // KeyNodeの停止が他のMainMasterNode以外から通知
+                            logger.info("Dead DataNode Report Node name =" + clientParameterList[1]);
                             this.reportDeadNode(clientParameterList[1], 99);
+                            
                             retParams = new String[3];
                             retParams[0] = "98";
                             retParams[1] = "true";
