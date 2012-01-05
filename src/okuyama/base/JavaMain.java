@@ -5,6 +5,7 @@ import okuyama.base.lang.BatchException;
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
 import okuyama.base.util.ClassUtility;
+import okuyama.base.util.DefaultLogger;
 import okuyama.base.parameter.config.BatchConfig;
 import okuyama.base.parameter.config.ConfigFolder;
 import okuyama.base.parameter.config.JobConfig;
@@ -18,14 +19,14 @@ import okuyama.base.parameter.config.JobConfig;
 public class JavaMain {
 
     // Logger
-    private static ILogger logger = LoggerFactory.createLogger(JavaMain.class);
+    private static ILogger logger = null;
 
     /**
      * 起動メソッド
      * @param args [0]=バッチ用設定ファイル名, [1]=Job用設定ファイル名
      */
     public static void main(String[] args) {
-        logger.info("JavaMain - start");
+        //logger.info("JavaMain - start");
         try {
 
             if (args == null || args.length < 2) {
@@ -54,11 +55,12 @@ public class JavaMain {
             me.exec(args[0],args[1]);
 
         } catch (BatchException be) {
-            logger.error("JavaMain - error", be);
+            //logger.error("JavaMain - error", be);
+            System.err.println("JavaMain -error");
             System.exit(1);
         }
 
-        logger.info("JavaMain - end");
+        //logger.info("JavaMain - end");
     }
 
     /**
@@ -69,12 +71,22 @@ public class JavaMain {
      * @throws BatchException
      */
     public void exec(String batchConfPath, String jobConfPath) throws BatchException {
-        logger.debug("JavaMain - exec - start");
+        //logger.debug("JavaMain - exec - start");
         String controllerClassName = null;
+
 
         try {
             BatchConfig batchConfig = new BatchConfig(batchConfPath);
             JobConfig jobConfig = new JobConfig(jobConfPath);
+
+            // Log4jの設定ファイルが指定されている場合は初期化
+            String logPropertiesPath = batchConfig.getBatchParam("loggerproperties");
+            if (logPropertiesPath != null && !logPropertiesPath.trim().equals("")) {
+                DefaultLogger.propertiesFileName = logPropertiesPath;
+            }
+
+            // Logger作成
+            logger = LoggerFactory.createLogger(JavaMain.class);
 
             // Folderに設定情報を格納
             ConfigFolder.setConfig(batchConfig, jobConfig);

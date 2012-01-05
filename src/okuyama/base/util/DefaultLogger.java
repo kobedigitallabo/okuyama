@@ -17,15 +17,18 @@ import org.apache.log4j.Level;
  */
 public class DefaultLogger implements ILogger {
 
+   public static String propertiesFileName = "log4j.properties";
+
     Logger logger = null;
+
 
     public DefaultLogger(Class clazz) {
 
         //設定ファイルを読み込む
-        if (new File("log4j.properties").exists()) {
+        if (new File(propertiesFileName).exists()) {
 
             this.logger = Logger.getLogger(clazz);
-            PropertyConfigurator.configure("log4j.properties");
+            PropertyConfigurator.configure(propertiesFileName);
         } else if (DefaultLogger.class.getResource("/log4j.properties") != null) {
 
             this.logger = Logger.getLogger(clazz);
@@ -109,13 +112,13 @@ public class DefaultLogger implements ILogger {
     }
 
 
-	public boolean isDebugEnabled() {
-		return this.logger.isDebugEnabled();
-	}
+    public boolean isDebugEnabled() {
+        return this.logger.isDebugEnabled();
+    }
 
 
-	public boolean isInfoEnabled() {
-		return this.logger.isInfoEnabled();
-	}
+    public boolean isInfoEnabled() {
+        return this.logger.isInfoEnabled();
+    }
 
 }
