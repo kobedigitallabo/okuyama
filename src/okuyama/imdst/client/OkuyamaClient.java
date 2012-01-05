@@ -6442,7 +6442,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字(漢字のみそれ以外は2文字から)からで、最大は128文字(ソフトリミット).<br>
      * Prefxiなし.<br>
      *
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -6456,7 +6456,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字(漢字のみそれ以外は2文字から)からで、最大は128文字(ソフトリミット).<br>
      * Prefxiなし.<br>
      *
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -6471,7 +6471,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字(漢字のみそれ以外は2文字から)からで、最大は128文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -6492,7 +6492,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字(漢字のみそれ以外は2文字から)からで、最大は128文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -6514,7 +6514,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字(漢字のみそれ以外は2文字から)からで、最大は128文字(ソフトリミット).<br>
      * Prefxiなし.<br>
      *
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -6529,7 +6529,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字(漢字のみそれ以外は2文字から)からで、最大は128文字(ソフトリミット).<br>
      * Prefxiなし.<br>
      *
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -6544,7 +6544,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字(漢字のみそれ以外は2文字から)からで、最大は128文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -6653,7 +6653,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字(漢字のみそれ以外は2文字から)からで、最大は128文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)
@@ -6669,7 +6669,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
-     * 検索可能な文字列は1文字からで、最大は128文字(ソフトリミット).<br>
+     * 検索可能な文字列は1文字(漢字のみそれ以外は2文字から)からで、最大は128文字(ソフトリミット).<br>
      * Prefxiあり.<br>
      * 
      * @param searchCharacterList 取得したい値の文字配列(エンコードはUTF-8固定)

@@ -2260,6 +2260,8 @@ public class KeyMapManager extends Thread {
                     int printLineCount = 0;
                     // 一度に送信するデータ量を算出。空きメモリの20%を使用する
                     int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.4) / (ImdstDefine.saveDataMaxSize / 100)).intValue();
+                    // 最大でも10万件以上を一度に送信はしない
+                    if (maxLineCount > 100000) maxLineCount = 100000;
 
                     if (entrySet.size() > 0) {
                         if(maxLineCount == 0) maxLineCount = 1;
@@ -2730,6 +2732,9 @@ public class KeyMapManager extends Thread {
                 int printLineCount = 0;
                 // 一度に送信するデータ量を算出。空きメモリの10%を使用する
                 int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / ((ImdstDefine.saveKeyMaxSize * 1.38 + ImdstDefine.saveDataMaxSize * 1.38) / 50)).intValue();
+                // 最大でも5万件以上を一度に送信はしない
+                if (maxLineCount > 50000) maxLineCount = 50000;
+
 
                 //int maxLineCount = 500;
                 if (entrySet.size() > 0) {
@@ -2868,6 +2873,9 @@ public class KeyMapManager extends Thread {
 
                 // 一度に送信するデータ量を算出。空きメモリの10%を使用する
                 int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.1) / ((ImdstDefine.saveKeyMaxSize * 1.38 + ImdstDefine.saveDataMaxSize * 1.38) / 50)).intValue();
+                // 最大でも5万件以上を一度に送信はしない
+                if (maxLineCount > 50000) maxLineCount = 50000;
+
                 //int maxLineCount = 500;
                 if (entrySet.size() > 0) {
                     if (maxLineCount == 0) maxLineCount = 1;
