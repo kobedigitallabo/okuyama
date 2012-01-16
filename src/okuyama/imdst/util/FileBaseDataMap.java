@@ -135,6 +135,20 @@ public class FileBaseDataMap extends AbstractMap {
      * @throws
      */
     public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent, int numberOfValueLength, int regularSizeLimit, int middleSizeLimit) {
+        this(baseDirs, numberOfKeyData, cacheMemPercent, numberOfValueLength, regularSizeLimit, middleSizeLimit, true);
+    }
+
+    /**
+     * コンストラクタ.<br>
+     *
+     * @param baseDirs
+     * @param numberOfKeyData
+     * @param cacheMemPercent
+     * @param numberOfValueLength
+     * @return 
+     * @throws
+     */
+    public FileBaseDataMap(String[] baseDirs, int numberOfKeyData, double cacheMemPercent, int numberOfValueLength, int regularSizeLimit, int middleSizeLimit, boolean renewData) {
         this.regularSizeLimit = regularSizeLimit;
         this.dirs = baseDirs;
         this.numberOfCoreMap = baseDirs.length;
@@ -161,19 +175,19 @@ public class FileBaseDataMap extends AbstractMap {
                 coreMapType = 2;
                 // 最大サイズ用
                 String[] bigDataDir = {baseDirs[0]+"/virtualbigdata1/", baseDirs[0]+"/virtualbigdata2/"};
-                coreFileBaseKeyMap4BigData = new FixWriteCoreFileBaseKeyMap(bigDataDir, oneCacheSizePer / 3, oneMapSizePer / 3, numberOfValueLength);
+                coreFileBaseKeyMap4BigData = new FixWriteCoreFileBaseKeyMap(bigDataDir, oneCacheSizePer / 3, oneMapSizePer / 3, numberOfValueLength, renewData);
 
                 // ミドルサイズ用
                 middleSize = middleSizeLimit;
 
                 String[] middleDataDir = {baseDirs[0]+"/virtualmiddledata1/", baseDirs[0]+"/virtualmiddledata2/"};
-                coreFileBaseKeyMap4MiddleData = new FixWriteCoreFileBaseKeyMap(middleDataDir, oneCacheSizePer / 3, oneMapSizePer / 3, middleSize);
+                coreFileBaseKeyMap4MiddleData = new FixWriteCoreFileBaseKeyMap(middleDataDir, oneCacheSizePer / 3, oneMapSizePer / 3, middleSize, renewData);
             } else if (numberOfValueLength > regularSizeLimit){
 
                 coreMapType = 1;
                 // 最大サイズ用
                 String[] bigDataDir = {baseDirs[0]+"/virtualbigdata1/", baseDirs[0]+"/virtualbigdata2/"};
-                coreFileBaseKeyMap4BigData = new FixWriteCoreFileBaseKeyMap(bigDataDir, oneCacheSizePer / 2, oneMapSizePer / 2, numberOfValueLength);
+                coreFileBaseKeyMap4BigData = new FixWriteCoreFileBaseKeyMap(bigDataDir, oneCacheSizePer / 2, oneMapSizePer / 2, numberOfValueLength, renewData);
             }
             this.coreFileBaseKeyMaps = new FixWriteCoreFileBaseKeyMap[baseDirs.length];
         } else {
@@ -188,13 +202,13 @@ public class FileBaseDataMap extends AbstractMap {
             // TODO:追記
             if (numberOfValueLength == 15) {
 
-                this.coreFileBaseKeyMaps[idx] = new DelayWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, 15);
+                this.coreFileBaseKeyMaps[idx] = new DelayWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, 15, renewData);
             } else if (numberOfValueLength > 0) {
 
                 if (numberOfValueLength > regularSizeLimit) {
-                    this.coreFileBaseKeyMaps[idx] = new FixWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, regularSizeLimit);
+                    this.coreFileBaseKeyMaps[idx] = new FixWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, regularSizeLimit, renewData);
                 } else {
-                    this.coreFileBaseKeyMaps[idx] = new FixWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, numberOfValueLength);
+                    this.coreFileBaseKeyMaps[idx] = new FixWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, numberOfValueLength, renewData);
                 }
 
                 fillStream = new ByteArrayOutputStream(4096);
@@ -203,7 +217,7 @@ public class FileBaseDataMap extends AbstractMap {
                 }
             } else {
 
-                this.coreFileBaseKeyMaps[idx] = new DelayWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer);
+                this.coreFileBaseKeyMaps[idx] = new DelayWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, renewData);
             }
         }
     }
@@ -361,15 +375,15 @@ public class FileBaseDataMap extends AbstractMap {
 
             synchronized (this.syncObj) { 
                 this.coreFileBaseKeyMaps[i].clear();
-                this.coreFileBaseKeyMaps[i].init();
+                this.coreFileBaseKeyMaps[i].init(true);
                 if (coreMapType > 0) {
                     this.coreFileBaseKeyMap4BigData.clear();
-                    this.coreFileBaseKeyMap4BigData.init();
+                    this.coreFileBaseKeyMap4BigData.init(true);
                 } 
 
                 if (coreMapType > 1) {
                     this.coreFileBaseKeyMap4MiddleData.clear();
-                    this.coreFileBaseKeyMap4MiddleData.init();
+                    this.coreFileBaseKeyMap4MiddleData.init(true);
                 } 
             }
         }
@@ -577,7 +591,7 @@ interface CoreFileBaseKeyMap {
      * init.
      *
      */
-    public void init();
+    public void init(boolean renewData);
 
 
     /**
@@ -678,7 +692,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
      * @return 
      * @throws
      */
-    public DelayWriteCoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData) {
+    public DelayWriteCoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData, boolean renewData) {
         try {
             this.baseFileDirs = dirs;
             this.innerCacheSize = innerCacheSize;
@@ -686,7 +700,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
             this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
             this.innerCacheSize = this.numberOfDataFiles;
 
-            this.init();
+            this.init(renewData);
             this.start();
         } catch (Exception e) {
             e.printStackTrace();
@@ -705,7 +719,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
      * @return 
      * @throws
      */
-    public DelayWriteCoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData, int numberOfValueSize) {
+    public DelayWriteCoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData, int numberOfValueSize, boolean renewData) {
         try {
             this.oneDataLength = numberOfValueSize;
             this.lineDataSize =  this.keyDataLength + this.oneDataLength;
@@ -720,7 +734,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
             this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
 
             this.innerCacheSize = this.numberOfDataFiles;
-            this.init();
+            this.init(renewData);
             this.start();
         } catch (Exception e) {
             e.printStackTrace();
@@ -731,13 +745,9 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
     /**
      * 初期化
      *
-     * @param dirs
-     * @param innerCacheSize
-     * @param numberOfKeyData
-     * @return 
-     * @throws
+     * @param renewData
      */
-    public void init() {
+    public void init(boolean renewData) {
 
         this.innerCache = new SoftRefCacheMap(this.innerCacheSize);
         this.totalSize = new AtomicInteger(0);
@@ -761,7 +771,9 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
                 // Keyファイルのディレクトリ範囲ないで適当に記録ファイルを分散させる
                 File file = new File(this.fileDirs[i % this.fileDirs.length] + i + ".data");
 
-                file.delete();
+                if (renewData) {
+                    file.delete();
+                }
                 dataFileList[i] = file;
             }
 
@@ -1366,14 +1378,14 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
      * @return 
      * @throws
      */
-    public FixWriteCoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData) {
+    public FixWriteCoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData, boolean renewData) {
         try {
             this.baseFileDirs = dirs;
             this.innerCacheSize = innerCacheSize;
             if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;
             this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
 
-            this.init();
+            this.init(renewData);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1392,7 +1404,7 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
      * @throws
      */
 
-    public FixWriteCoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData, int numberOfValueSize) {
+    public FixWriteCoreFileBaseKeyMap(String[] dirs, int innerCacheSize, int numberOfKeyData, int numberOfValueSize, boolean renewData) {
         try {
             this.oneDataLength = numberOfValueSize;
             this.lineDataSize =  this.keyDataLength + this.oneDataLength;
@@ -1409,7 +1421,7 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
             if (numberOfKeyData <=  this.numberOfOneFileKey) numberOfKeyData =  this.numberOfOneFileKey * 2;
             this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
 
-            this.init();
+            this.init(renewData);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1427,7 +1439,7 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
      * @return 
      * @throws
      */
-    public void init() {
+    public void init(boolean renewData) {
 
         this.innerCache = new InnerCache(this.innerCacheSize);
         this.totalSize = new AtomicInteger(0);
@@ -1450,8 +1462,12 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
 
                 // Keyファイルのディレクトリ範囲ないで適当に記録ファイルを分散させる
                 File file = new File(this.fileDirs[i % this.fileDirs.length] + i + ".data");
-                if (file.exists()) {
-                    file.delete();
+
+                // 再構築指定がtrueの場合のみデータ領域を削除して作り直し
+                if (renewData) {
+                    if (file.exists()) {
+                        file.delete();
+                    }
                 }
 
                 dataFileList[i] = file;

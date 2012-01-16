@@ -16,7 +16,7 @@ package okuyama.imdst.client;
  *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
  *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
  *&nbsp;&nbsp;&nbsp;&nbsp;}<br>
- *上記の実装例は、Keyに"2011"という文字列が含まれて、Valueに"hogehoge"という文字が含まれている場合のみ、値を変えすようになります<br>
+ *上記の実装例は、Keyに"2011"という文字列が含まれて、Valueに"hogehoge"という文字が含まれている場合のみ、値を返すようになる<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)

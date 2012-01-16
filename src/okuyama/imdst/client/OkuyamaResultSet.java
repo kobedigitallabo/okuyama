@@ -8,9 +8,9 @@ package okuyama.imdst.client;
  * -----------------------------------------------------------------<br>
  * OkuyamaResultSet resultSet = client.getTagKeysResult(tagStr);<br>
  * <br>
- * while(resultSet.next()) {<br>
- *     System.out.println("Key=" + (Object)resultSet.getKey());<br>
- *     System.out.println("Value=" + (Object)resultSet.getValue());<br>
+ * while(resultSet.next()){<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("Key=" + (Object)resultSet.getKey());<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp;System.out.println("Value=" + (Object)resultSet.getValue());<br>
  * }<br>
  * resultSet.close();<br>
  * ------------------------------------------------------------------<br>

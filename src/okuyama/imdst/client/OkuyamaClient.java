@@ -5585,7 +5585,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagでKey値配列を取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
+     * Tagは紐付いているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
      *
      * @param tagStr Tag値
      * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
@@ -5599,7 +5599,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagでKey値配列を取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
+     * Tagは紐付いているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
      *
      * @param tagStr Tag値
      * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
@@ -5738,7 +5738,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagでKey値配列を取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
+     * Tagは紐付いているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
      *
      * @param tagStr Tag値
      * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
@@ -5792,7 +5792,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagでKey値配列を取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
+     * Tagは紐付いているが実際は既に存在しないValueをどのように扱うかを指定できる.<br>
      *
      * @param decodeKey 取得するKey値をBase64デコードして返す指定
      * @return Object[] 要素1(データ有無):"true" or "false",要素2(Key値配列):Stringの配列
@@ -5864,7 +5864,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      *
      * @param tagStr Tag値
      * @return OkuyamaResultSet 結果のOkuyamaResultSet　Tagがそもそも存在しない場合もOkuyamaResultSetは返るのでOkuyamaResultSetのnextメソッドを呼び出してデータの有無を確認する必要がある
@@ -5876,7 +5876,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      *
      * @param tagStr Tag値
      * @param encoding エンコーディング指定
@@ -5890,7 +5890,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      * Tagに紐付くKey、Valueのどちらか、もしくは両方が指定した正規表現と一致する値のみ返される<br>
      * 第3引数にて範囲を適応する先を決定する<br>
      
@@ -5908,7 +5908,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      * Tagに紐付くKey、Valueのどちらか、もしくは両方が指定した正規表現と一致する値のみ返される<br>
      * 第3引数にて範囲を適応する先を決定する<br>
      *
@@ -5926,7 +5926,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      * Tagに紐付くKey、Valueのどちらか、もしくは両方が指定した数値の範囲内のみが返される<br>
      * Tagに紐付く値の範囲検索が可能<br>
      * 第3引数にて範囲を適応する先を決定する<br>
@@ -5946,7 +5946,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      * Tagに紐付くKey、Valueのどちらか、もしくは両方が指定した数値の範囲内のみが返される<br>
      * Tagに紐付く値の範囲検索が可能<br>
      * 第3引数にて範囲を適応する先を決定する<br>
@@ -5966,7 +5966,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      * 利用者が独自で実装可能なUserDataFilterインターフェースを実装したクラスを渡すことで独自のフィルターが可能<br>
      *
      * @param tagStr Tag値
@@ -5980,7 +5980,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      * 利用者が独自で実装可能なUserDataFilterインターフェースを実装したクラスを渡すことで独自のフィルターが可能<br>
      *
      * @param tagStr Tag値
@@ -5996,7 +5996,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを指定することで紐付くKeyとValueが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      *
      * @param tagStr Tag値
      * @param encoding Valueを復元する際に利用するエンコーディング指定
@@ -6143,7 +6143,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを複数を指定することで紐付くKeyが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      * 指定したTagはANDの扱いでデータは選別される。getMultiTagKeysと同じように動くが、こちらを使えば一度にメモリ上に展開出来ないような、<br>
      * 大量のTagに紐付くデータを対象にする場合に向いている。少量のデータに対して複数Tagで取得したい場合は、従来通りgetMultiTagKeysを使うことを推奨する.<br>
      *
@@ -6158,7 +6158,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeからTagを複数を指定することで紐付くKeyが取得可能な、OkuyamaResultSetを取得する.<br>
-     * Tagは打たれているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
+     * Tagは紐付いているが実際は既に存在しないValueが紐付くKey値は取得出来ない.<br>
      * またANDとORを指定可能であり、getMultiTagKeysと同じように動くが、こちらを使えば一度にメモリ上に展開出来ないような、<br>
      * 大量のTagに紐付くデータを対象にする場合に向いている。少量のデータに対して複数Tagで取得したい場合は、従来通りgetMultiTagKeysを使うことを推奨する.<br>
      *

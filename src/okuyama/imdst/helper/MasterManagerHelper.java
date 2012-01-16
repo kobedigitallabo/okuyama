@@ -3573,7 +3573,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         //logger.debug("MasterManagerHelper - getTagKeys - start");
         String[] retStrs = new String[3];
 
-        String[] keyNodeSaveRet = null;
+        String[] tagGetRet = null;
+
+        Map oldTagData = null;
 
         try {
             // Isolation変換実行
@@ -3592,18 +3594,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
             // 取得実行
-
             if (keyNodeInfo.length == 3) {
-                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
+                tagGetRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
             } else if (keyNodeInfo.length == 6) {
-                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
+                tagGetRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
             } else if (keyNodeInfo.length == 9) {
-                keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
+                tagGetRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
             }
 
             // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるので
             // そちらのルールでのデータ格納場所も調べる
-            if (keyNodeSaveRet[1].equals("false")) {
+            if (tagGetRet[1].equals("false")) {
 
                 //System.out.println("過去ルールを探索 - getTagKeys(" + keyNodeInfo[2] + ") =" + new String(BASE64DecoderStream.decode(tagStr.getBytes())));
                 for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.reverseAccess, i)) != null; i++) {
@@ -3611,22 +3612,70 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // キー値を使用して取得先を決定
                     // 取得実行
                     if (keyNodeInfo.length == 3) {
-                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
+                        tagGetRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
                     } else if (keyNodeInfo.length == 6) {
-                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
+                        tagGetRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
                     } else if (keyNodeInfo.length == 9) {
-                        keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
+                        tagGetRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
                     }
 
-                    if (keyNodeSaveRet[1].equals("true")) break;
+                    if (tagGetRet[1].equals("true")) break;
+                }
+            } else if (tagGetRet[1].equals("true")) {
+
+                // 既にNodeにデータは存在するが、現在がDataNode追加中の場合は旧ノードからもデータを取り出して、そちらとマージする
+                for (int i = 0; (keyNodeInfo = DataDispatcher.dispatchKeyNode(tagStr, this.reverseAccess, i)) != null; i++) {
+
+                    oldTagData = new HashMap();
+                    String[] oldNodeRet = null;
+                    // キー値を使用して取得先を決定
+                    // 取得実行
+                    if (keyNodeInfo.length == 3) {
+                        oldNodeRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null, "4", tagStr);
+                    } else if (keyNodeInfo.length == 6) {
+                        oldNodeRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], "4", tagStr);
+                    } else if (keyNodeInfo.length == 9) {
+                        oldNodeRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "4", tagStr);
+                    }
+
+                    // 現在までに取得したデータとマージするための準備
+                    if (oldNodeRet[1].equals("true")) {
+
+                        String[] oldSplitList = oldNodeRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
+                        if (oldSplitList.length > 0) {
+
+                            for (int idx = 0; idx < oldSplitList.length; idx++) {
+
+                                oldTagData.put(oldSplitList[idx], null);
+                            }
+                        }
+                        // 最新のDataNodeで取得出来た値とマージする
+                        String[] splitList = tagGetRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
+                        if (splitList.length > 0) {
+
+                            for (int idx = 0; idx < splitList.length; idx++) {
+                                oldTagData.remove(splitList[idx]);
+                            }
+
+                            Set entrySet = oldTagData.entrySet();
+                            Iterator entryIte = entrySet.iterator(); 
+
+                            while(entryIte.hasNext()) {
+                                Map.Entry obj = (Map.Entry)entryIte.next();
+                                // キー値を取り出して連結する
+                                tagGetRet[2] = tagGetRet[2] + ImdstDefine.imdstTagKeyAppendSep + obj.getKey();
+
+                            }
+                        }
+                    }
                 }
             }
 
             // 取得結果確認
-            if (keyNodeSaveRet[1].equals("false")) {
+            if (tagGetRet[1].equals("false")) {
 
                 // 取得失敗(データなし)
-                retStrs[0] = keyNodeSaveRet[0];
+                retStrs[0] = tagGetRet[0];
                 retStrs[1] = "false";
                 retStrs[2] = "";
             } else {
@@ -3634,15 +3683,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 // データ有り
                 if (noExistsData) {
 
-                    retStrs[0] = keyNodeSaveRet[0];
+                    retStrs[0] = tagGetRet[0];
                     retStrs[1] = "true";
 
                     if (!this.isolationMode) {
 
-                        retStrs[2] = keyNodeSaveRet[2];
+                        retStrs[2] = tagGetRet[2];
                     } else {
 
-                        String[] splitList = keyNodeSaveRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
+                        String[] splitList = tagGetRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
                         if (splitList.length > 0) {
 
                             StringBuilder retBuf = new StringBuilder(ImdstDefine.stringBufferLargeSize);
@@ -3660,11 +3709,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
                 } else {
 
-                    retStrs[0] = keyNodeSaveRet[0];
+                    retStrs[0] = tagGetRet[0];
                     retStrs[1] = "true";
 
-                    String[] splitList = keyNodeSaveRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
-                    keyNodeSaveRet[2] = null;
+                    String[] splitList = tagGetRet[2].split(ImdstDefine.imdstTagKeyAppendSep);
+                    tagGetRet[2] = null;
 
                     if (splitList.length > 0) {
 
@@ -3694,7 +3743,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         retStrs[2] = "";
                     }
                 }
-
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getTagKeys - Error", be);
@@ -3714,7 +3762,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
     /**
-     * Tagを指定することでTgaがKey群を管理するbucketのIndex情報を取得する.<br>
+     * Tagを指定することでTagがKey群を管理するbucketのIndex情報を取得する.<br>
      *
      *
      * @param tagStr key値の文字列

@@ -88,7 +88,7 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
         this.closeFlg = false;
         try {
             // このMapはKeyが全てのTagのIndexから導き出した、buketのIndexの丸めた値(つまり5000000区切りの値)をKeyに、そのIndexのグループないで実際に取得しなければ
-            // 行けないTagと本当にそのTagが取得しなければ行けないIndexの値を格納したMapが入っている
+            // いけないTagと本当にそのTagが取得しなければ行けないIndexの値を格納したMapが入っている
             // {0,{"Tag1","0","Tag2","1","Tag3","0"}, 5000000, {"Tag1","500001","Tag2","5000000","Tag3","500000"}}
             // つまり、同じ範囲のKeyはorであれば全て取得対象になり、ANDであればそもそも同じグループないにどれか一つのTagでも対象になければ
             // 取得対象から外れる。取得した後は通常のOR, ANDのロジックで処理すれば目当てのデータがとれる
@@ -99,7 +99,7 @@ public class OkuyamaMultiTagKeysResultSet implements OkuyamaResultSet {
                 String[] tmpTagIndexList = (String[])this.tagIndexListMap.get(this.tagStrList[idx]);
 
                 if (tmpTagIndexList == null) {
-                    // ANDの場合はどれかのTagの情報がとれないだけでしゅう終了
+                    // ANDの場合はどれかのTagの情報がとれないだけで終了
                     if (this.margeType) {
                         this.getIndexMap.clear();
                         break;
