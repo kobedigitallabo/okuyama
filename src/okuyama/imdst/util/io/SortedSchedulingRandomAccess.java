@@ -26,6 +26,10 @@ public class SortedSchedulingRandomAccess extends RandomAccessFile {
 
     private long nowSeekPoint = 0L;
 
+    // 30万回のSeekでいくらかゴミが出た場合は全て削除
+    private long clearCount= 300000;
+    private long executeCount =0L;
+
 
     public SortedSchedulingRandomAccess(File target, String type) throws FileNotFoundException {
         super(target, type);
@@ -48,16 +52,25 @@ public class SortedSchedulingRandomAccess extends RandomAccessFile {
         this.nowSeekPoint = seekPoint;
         super.seek(seekPoint);
     }
-    
+
     public void write(byte[] data, int start, int size) throws IOException {
         this.responseDataSizeMap.remove(this.nowSeekPoint);
         this.responseDataMap.remove(this.nowSeekPoint);
         super.write(data, start, size);
     }
 
+
     public int seekAndRead(long seekPoint, byte[] data, int start, int size) throws IOException {
         int ret = -1;
         try {
+            executeCount++;
+            if (this.clearCount < this.executeCount) {
+                this.responseDataSizeMap.clear();
+                this.responseDataMap.clear();
+                this.readRequestSeekPointQueue.clear();
+                executeCount = 0;
+            }
+
             Integer readDataSize = (Integer)this.responseDataSizeMap.remove(seekPoint);
             if (readDataSize != null) {
                 Map response = (Map)this.responseDataMap.remove(seekPoint);
@@ -71,10 +84,9 @@ public class SortedSchedulingRandomAccess extends RandomAccessFile {
             if (this.readRequestSeekPointQueue.size() > 1) {
 
                 int count = this.maxSeqSize;
-                if (count > readRequestSeekPointQueue.size()) {
-                    count = readRequestSeekPointQueue.size();
-                }
-                //System.out.println("Count=" + count + " responseDataMap=" + responseDataMap.size() + " responseDataSizeMap=" + responseDataSizeMap.size());
+                if (count > readRequestSeekPointQueue.size()) count = readRequestSeekPointQueue.size();
+
+                System.out.println("Count=" + count + " responseDataMap=" + responseDataMap.size() + " responseDataSizeMap=" + responseDataSizeMap.size());
                 this.seekPointList = new long[count];
                 Map requestParams = null;
                 for (int i = 0; i < count; i++){
