@@ -11,6 +11,8 @@ import okuyama.imdst.util.*;
 
 /**
  * IOのRandomAccessFileのラッパー.<br>
+ * RandomAccessにおいてシーク処理を行う前に、リクエストを一定以上蓄積し、シーク位置を昇順でソートし<br>
+ * シーケンシャルアクセスになるようにスケジューリングを行う。<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -62,6 +64,7 @@ public class SortedSchedulingRandomAccess extends RandomAccessFile {
 
     public int seekAndRead(long seekPoint, byte[] data, int start, int size) throws IOException {
         int ret = -1;
+        boolean waitMode = false;
         try {
             executeCount++;
             if (this.clearCount < this.executeCount) {
@@ -85,25 +88,49 @@ public class SortedSchedulingRandomAccess extends RandomAccessFile {
 
                 int count = this.maxSeqSize;
                 if (count > readRequestSeekPointQueue.size()) count = readRequestSeekPointQueue.size();
-
-                System.out.println("Count=" + count + " responseDataMap=" + responseDataMap.size() + " responseDataSizeMap=" + responseDataSizeMap.size());
-                this.seekPointList = new long[count];
                 Map requestParams = null;
-                for (int i = 0; i < count; i++){
 
-                    requestParams = (Map)readRequestSeekPointQueue.take();
-                    seekPointList[i] = ((Long)requestParams.get(4)).longValue();
-                    this.responseDataMap.put(seekPointList[i], requestParams);
+                //System.out.println("Count=" + count + " responseDataMap=" + responseDataMap.size() + " responseDataSizeMap=" + responseDataSizeMap.size());
+
+                if (waitMode == true) {
+                    List tmpList = new ArrayList();
+                    int maxPool = 30;
+                    int execPool = 0;
+                    while ((requestParams = (Map)readRequestSeekPointQueue.poll(10, TimeUnit.MILLISECONDS)) != null) {
+
+                        tmpList.add(requestParams);
+                        execPool++;
+                        if (maxPool <= execPool) break;
+                    }
+
+                    count = tmpList.size();
+                    this.seekPointList = new long[count];
+                    for (int i = 0; i < count; i++){
+
+                        requestParams = (Map)tmpList.get(i);
+                        seekPointList[i] = ((Long)requestParams.get(4)).longValue();
+                        this.responseDataMap.put(seekPointList[i], requestParams);
+                    }
+                } else {
+
+                    this.seekPointList = new long[count];
+                    for (int i = 0; i < count; i++){
+
+                        requestParams = (Map)readRequestSeekPointQueue.take();
+                        seekPointList[i] = ((Long)requestParams.get(4)).longValue();
+                        this.responseDataMap.put(seekPointList[i], requestParams);
+                    }
                 }
+
                 java.util.Arrays.sort(seekPointList);
 
                 for (int i = 0; i < seekPointList.length; i++) {
-                    super.seek(seekPointList[i]);
                     requestParams = (Map)this.responseDataMap.remove(seekPointList[i]);
-
                     int reqStart = ((Integer)requestParams.get(2)).intValue();
                     int reqSize = ((Integer)requestParams.get(3)).intValue();
                     byte[] reqData = new byte[reqSize];
+                    
+                    super.seek(seekPointList[i]);
                     Integer readDataLen = new Integer(super.read(reqData, reqStart, reqSize));
                     requestParams.put(1, reqData);
                     this.responseDataMap.put(seekPointList[i], requestParams);
