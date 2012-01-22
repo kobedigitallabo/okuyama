@@ -40,7 +40,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     private transient BufferedWriter bw = null;
     private transient AtomicInteger dataFileBufferUseCount = null;
-    private transient RandomAccessFile raf = null;
+    private transient AbstractDataRandomAccess raf = null;
 
     private transient FileBaseDataMap overSizeDataStore = null;
 
@@ -129,7 +129,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 //this.raf = new RandomAccessFile(new File(lineFile) , "rw");
                 this.raf = new SortedSchedulingRandomAccess(new File(lineFile) , "rw");
             }
-
+            // 自身のインスタンスをファイルアクセッサに渡す
+            this.raf.setDataPointMap(this);
+            
             // 削除済みデータ位置保持領域構築
             this.deletedDataPointList = new ArrayBlockingQueue(ImdstDefine.numberOfDeletedDataPoint);
 
@@ -188,10 +190,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         }
                     }
 
-                    if (!ImdstDefine.dataFileWriteDelayFlg) {
-                        ((SortedSchedulingRandomAccess)this.raf).requestSeekPoint(seekPoint, 0, this.oneDataLength);
-                    }
-
                     this.readDataFile(buf, seekPoint, this.oneDataLength);
                 }
 
@@ -234,11 +232,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     if ((seekPoint = this.calcSeekDataPoint(key)) == -1) {
 
                         return null;
-                    }
-
-                    // シーク位置をリクエストしておく
-                    if (!ImdstDefine.dataFileWriteDelayFlg) {
-                        ((SortedSchedulingRandomAccess)this.raf).requestSeekPoint(seekPoint, 0, this.oneDataLength);
                     }
 
                     synchronized (sync) {
@@ -301,11 +294,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 // Vacuum中で且つ、Mapを更新中の場合はここで同期化する。
                 // seek値取得
                 if ((seekPoint = this.calcSeekDataPoint(key)) == -1) return null;
-
-                // シーク位置をリクエストしておく
-                if (!ImdstDefine.dataFileWriteDelayFlg) {
-                    ((SortedSchedulingRandomAccess)this.raf).requestSeekPoint(seekPoint, 0, this.oneDataLength);
-                }
 
                 readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
 

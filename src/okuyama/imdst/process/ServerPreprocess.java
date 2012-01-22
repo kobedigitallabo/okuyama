@@ -283,6 +283,17 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
+                    
+                    // -pcms
+                    if (startOptions[i].trim().equals("-pcms")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.pageCacheMappendSize = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+                    
                 }
             }
         } catch (Exception e) {

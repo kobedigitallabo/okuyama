@@ -14,7 +14,9 @@ import okuyama.imdst.util.*;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class CustomRandomAccess extends RandomAccessFile {
+public class CustomRandomAccess extends AbstractDataRandomAccess {
+
+    protected Map dataPointMap = null;
 
     private InnerCustomRandomAccessFile innerCustomRandomAccessFile = null;
 
@@ -28,6 +30,11 @@ public class CustomRandomAccess extends RandomAccessFile {
             super.close();
         } catch (Exception e) {
         }
+    }
+
+
+    public void setDataPointMap(Map dataPointMap) {
+        this.dataPointMap = dataPointMap;
     }
 
     public void seek(long seekPoint) throws IOException {
@@ -44,6 +51,7 @@ public class CustomRandomAccess extends RandomAccessFile {
 
     public void close() throws IOException {
         this.innerCustomRandomAccessFile.close();
+        super.close();
     }
 }
 

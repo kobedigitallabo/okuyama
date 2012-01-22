@@ -21,6 +21,7 @@ public class ValueCacheMap extends LinkedHashMap {
 
     private int maxCacheSize = 8192;
 
+    protected Map copyMap = null;
 
     // コンストラクタ
     public ValueCacheMap() {
@@ -35,6 +36,15 @@ public class ValueCacheMap extends LinkedHashMap {
     }
 
 
+
+    // コンストラクタ
+    public ValueCacheMap(int maxCacheCapacity, Map copyMap) {
+        super(maxCacheCapacity, 0.75f, true);
+        maxCacheSize = maxCacheCapacity;
+        this.copyMap = copyMap;
+    }
+
+
     /**
      * set<br>
      *
@@ -43,8 +53,12 @@ public class ValueCacheMap extends LinkedHashMap {
      */
     public Object put(Object key, Object value) {
         w.lock();
-        try { 
+        try {
+            if (this.copyMap != null) {
+                this.copyMap.put(key, "");
+            } 
             return super.put(key, value);
+            
         } finally {
             w.unlock(); 
         }
@@ -92,6 +106,7 @@ public class ValueCacheMap extends LinkedHashMap {
     public Object remove(Object key) {
         w.lock();
         try {
+            if (this.copyMap != null) this.copyMap.remove(key);
             return super.remove(key);
         } finally {
             w.unlock(); 
@@ -160,6 +175,7 @@ public class ValueCacheMap extends LinkedHashMap {
         w.lock();
         try { 
             super.clear();
+            if (this.copyMap != null) this.copyMap.clear();
         } finally {
             w.unlock(); 
         }
@@ -170,7 +186,12 @@ public class ValueCacheMap extends LinkedHashMap {
      * 削除指標実装.<br>
      */
     protected boolean removeEldestEntry(Map.Entry eldest) {
-        if (maxCacheSize < super.size()) return true;
+        if (maxCacheSize < super.size()) {
+            if (this.copyMap != null) {
+                this.copyMap.remove(eldest.getKey());
+            }
+            return true;
+        }
         int nowJvmUseMem = JavaSystemApi.getUseMemoryPercentCache();
         
         return nowJvmUseMem > upperCacheMemSize;
