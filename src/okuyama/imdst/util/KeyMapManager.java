@@ -3020,7 +3020,6 @@ public class KeyMapManager extends Thread {
                     synchronized(this.poolKeyLock) {
 
                         dataStr = br.readLine();
-                        System.out.println("read=" + dataStr);
                         if (dataStr == null || dataStr.equals("-1")) break;
                         String[] dataLines = dataStr.split(ImdstDefine.imdstConnectAllDataSendDataSep);
 
@@ -3032,13 +3031,13 @@ public class KeyMapManager extends Thread {
 
                                 // データの種類に合わせて処理分岐
                                 if (oneDatas[0].equals("1")) {
-                                    System.out.println("Normal");
+
                                     // 通常データ
                                     // 成功、失敗関係なく全て登録処理
                                     this.setKeyPairOnlyOnce(oneDatas[1], oneDatas[2], "0", true);
                                 } else if (oneDatas[0].equals("2")) {
 
-                                    System.out.println("Tag");
+
                                     // Tagデータ
                                     // 通常通りタグとして保存
                                     // Tagデータはキー値にインデックス付きで送信されるので、インデックスを取り外す
@@ -3046,7 +3045,6 @@ public class KeyMapManager extends Thread {
                                     int lastIdx = oneDatas[1].lastIndexOf("_");
                                     oneDatas[1] = oneDatas[1].substring(0, lastIdx);
 
-                                    System.out.println("Tag-1=" + oneDatas[1] + "  Tag-2=" + oneDatas[2]);
                                     this.setTagPair(oneDatas[1], oneDatas[2], "0");
                                 }
                             }
