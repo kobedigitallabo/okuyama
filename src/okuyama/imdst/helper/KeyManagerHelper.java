@@ -560,6 +560,15 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             //retParamBuf = null;
                             break;
+                        case 209 : 
+
+                            // 20番の処理を強制停止する
+                            this.keyMapManager.outputDataStopSignal = true;
+                            System.out.println("Stop Output Data Start");
+                            Thread.sleep(10000);
+
+                            this.keyMapManager.outputDataStopSignal = false;
+                            System.out.println("Stop Output Data End");
                         case 21 :
 
                             // KeyMapManager Direct Connection
@@ -613,6 +622,13 @@ public class KeyManagerHelper extends AbstractHelper {
                             pw.flush();
                             //retParamBuf = null;
                             break;
+                        case 279 :
+
+                            // 27番の処理を強制停止する
+                            this.keyMapManager.outputDataStopSignal = true;
+                            Thread.sleep(10000);
+                            this.keyMapManager.outputDataStopSignal = false;
+                            retParamBuf.append("Stop OutputData");
                         case 28 :
 
                             // KeyMapManager Direct Connection
@@ -821,7 +837,7 @@ public class KeyManagerHelper extends AbstractHelper {
                         case 101 :
 
                             // KeyMapManager DataExport(For Backup)
-                            this.keyMapManager.dataExport(pw);
+                            this.keyMapManager.dataExport(pw, br, soc);
 
                             //retParamBuf = null;
                             break;

@@ -24,7 +24,7 @@ public class UtilClient {
     public static void main(String[] args) {
         if (args.length < 1) {
             System.out.println("args[0]=Command");
-            System.out.println("Command1. DataExport args1=bkup args2=DataNode-IPAdress args3=DataNode-Port");
+            System.out.println("Command1. DataExport args1=bkup args2=DataNode-IPAdress args3=DataNode-Port args4=ClientArrivalCheckTime(Option) args5=DataReadWaitTime(Option - milli)");
             System.out.println("Command2. TruncateData args1=truncatedata args2=MainMasterNode-IPAdress args3=MainMasterNode-Port args4=IsolationName or 'all'");
             System.out.println("Command3. MasterNodeConfigCheck args1=masterconfig args2=MainMasterNode-IPAdress args3=MainMasterNode-Port");
             System.out.println("Command4. DataNode is added args1=adddatanode args2=MasterNode-IPAdress:PortNo args3=DataNodeIPAddress:PortNo args4=Slave1-DataNodeIpAddress:PortNo args5=Slave2-DataNodeIpAddress:PortNo");
@@ -32,12 +32,18 @@ public class UtilClient {
         }
 
         if (args[0].trim().equals("dataexport") || args[0].trim().equals("bkup")) {
-            if (args.length != 3) {
+            if (args.length < 3) {
                 System.out.println("Argument Error! args[0]=dataexport or bkup, args[1]=serverip, args[2]=port");
                 System.exit(1);
             }
 
-            dataExport(args[1], Integer.parseInt(args[2]));
+            if (args.length > 4) {
+                dataExport(args[1], Integer.parseInt(args[2]), args[3] , args[4]); 
+            } else if (args.length > 3) {
+                dataExport(args[1], Integer.parseInt(args[2]), args[3] , "0"); 
+            } else {
+                dataExport(args[1], Integer.parseInt(args[2]), "1", "0"); 
+            }
         }
 
         if (args[0].trim().equals("truncatedata")) {
@@ -66,7 +72,13 @@ public class UtilClient {
                 System.exit(1);
             }
 
-            dataExport(args[1], Integer.parseInt(args[2]));
+            if (args.length > 4) {
+                dataExport(args[1], Integer.parseInt(args[2]), args[3] , args[4]); 
+            } else if (args.length > 3) {
+                dataExport(args[1], Integer.parseInt(args[2]), args[3] , "0"); 
+            } else {
+                dataExport(args[1], Integer.parseInt(args[2]), "1", "0"); 
+            }
         }
 
 
@@ -93,10 +105,11 @@ public class UtilClient {
     }
 
 
-    public static  void dataExport(String serverip, int port) {
+    public static  void dataExport(String serverip, int port, String checkWaitTime, String readWaitTime) {
         Socket socket = null;
         PrintWriter pw = null;
         BufferedReader br = null;
+
 
         try {
             socket = new Socket();
@@ -108,6 +121,10 @@ public class UtilClient {
 
             pw.println("101");
             pw.flush();
+            pw.println(checkWaitTime + "," + readWaitTime);
+            pw.flush();
+
+
             String line = null;
             while ((line = br.readLine()) != null) {
                 if (line.equals("-1")) break;

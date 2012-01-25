@@ -26,7 +26,7 @@ import okuyama.imdst.util.io.CustomReader;
  */
 public class MasterManagerAcceptHelper extends AbstractMasterManagerHelper {
 
-    private ArrayBlockingQueue connectCheckQueue = new ArrayBlockingQueue(5000);
+    private ArrayBlockingQueue connectCheckQueue = new ArrayBlockingQueue(50000);
 
     private CheckConnection[] checkConnections = null;
 

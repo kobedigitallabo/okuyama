@@ -39,6 +39,8 @@ public class KeyMapManager extends Thread {
 
     private int putValueMaxSize = new Double(ImdstDefine.saveDataMaxSize * 1.38).intValue();
 
+    // Recoverを強制的に停止するためのフラグ
+    public boolean outputDataStopSignal = false;
 
     // Key系の書き込み、取得
     private Object poolKeyLock = new Object();
@@ -161,6 +163,9 @@ public class KeyMapManager extends Thread {
     private String[] virtualStorageDirs = null;
 
 
+    // Valueのファイルを新規時に削除するかの指定
+    protected boolean initDataFile = true;
+    
 
     // 初期化メソッド
     // Transactionを管理する場合に呼び出す
@@ -187,6 +192,15 @@ public class KeyMapManager extends Thread {
 
     // 初期化メソッド
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, String[] dirs) throws BatchException {
+        boolean renewFlg = false;
+        for (int idx = 0; idx < dirs.length; idx++) {
+            File path = new File(dirs[idx]);
+            if (!path.exists()) {
+                renewFlg = true;
+            }
+        }
+        initDataFile = renewFlg;
+        if (ImdstDefine.recycleExsistData == false) initDataFile = true;
         this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, dirs);
     }
 
@@ -250,15 +264,18 @@ public class KeyMapManager extends Thread {
                     if (!this.allDataForFile) {
                         this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs);
                     } else {
-                        this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize);
+                        this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize, this.initDataFile);
                     }
 
 
                     // Valueをファイルに保持する場合は初期化
                     // ファイルが既に存在する場合は削除する
                     if (!dataMemory) {
-                        File dataFile = new File(this.diskModeRestoreFile);
-                        if (dataFile.exists()) dataFile.delete();
+                        File beforeDtaFile = new File(this.diskModeRestoreFile);
+
+                        if (this.initDataFile == true) {
+                            if (beforeDtaFile.exists()) beforeDtaFile.delete();
+                        }
                         this.keyMapObj.initNoMemoryModeSetting(this.diskModeRestoreFile);
                     }
 
@@ -2151,6 +2168,26 @@ public class KeyMapManager extends Thread {
 
     /**
      * keyMapObjに対するアクセスメソッド.<br>
+     * Valueをファイルにしている場合にファイル上の位置を特定する
+     * get<br>
+     */
+    private long keyMapObjDataPointGet(String key) throws BatchException {
+        try {
+            this.lastAccess = JavaSystemApi.currentTimeMillis;
+            if (key != null) {
+                return this.keyMapObj.dataPointGet(key);
+            } else {
+                return -1;
+            }
+        } catch (Exception e) {
+            throw new BatchException(e);
+        }
+    }
+
+
+
+    /**
+     * keyMapObjに対するアクセスメソッド.<br>
      * 
      */
     private void keyMapObjRemove(String key) throws BatchException {
@@ -2249,7 +2286,10 @@ public class KeyMapManager extends Thread {
     public void outputKeyMapObj2Stream(PrintWriter pw) throws BatchException {
         if (!blocking) {
             try {
+                int checkCnt = 0;
                 synchronized(poolKeyLock) {
+
+
                     logger.info("outputKeyMapObj2Stream - synchronized - start");
                     String allDataSep = "";
                     StringBuilder allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
@@ -2279,45 +2319,137 @@ public class KeyMapManager extends Thread {
 
                     long counter = 0;
                     int sendCounter = 0;
-                    while(entryIte.hasNext()) {
+                    if (this.keyMapObj.memoryMode) {
+                        while(entryIte.hasNext()) {
 
-                        if ((counter % 1000) == 0) logger.info("outputKeyMapObj2Stream - output count[" + counter + "]");
+                            if (this.outputDataStopSignal == true) {
+                                logger.info("outputKeyMapObj2Stream - Stop Signal");
+                                break;
+                            }
+                            if ((counter % 1000) == 0) logger.info("outputKeyMapObj2Stream - output count[" + counter + "]");
 
-                        Map.Entry obj = (Map.Entry)entryIte.next();
-                        if (obj == null) continue;
-                        String key = null;
+                            Map.Entry obj = (Map.Entry)entryIte.next();
+                            if (obj == null) continue;
+                            String key = null;
 
-                        key = (String)obj.getKey();
+                            key = (String)obj.getKey();
 
-                        // 全てのデータを送る
-                        allDataBuf.append(allDataSep);
-                        allDataBuf.append(key);
+                            // 全てのデータを送る
+                            allDataBuf.append(allDataSep);
+                            allDataBuf.append(key);
 
-                        allDataBuf.append(KeyMapManager.workFileSeq);
-                        allDataBuf.append(this.keyMapObjGet(key));
-                        allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                            allDataBuf.append(KeyMapManager.workFileSeq);
+                            allDataBuf.append(this.keyMapObjGet(key));
+                            allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
 
-                        counter++;
-                        if (counter > (maxLineCount - 1)) {
-                            sendCounter++;
-                            pw.println(allDataBuf.toString());
-                            pw.flush();
-                            allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
-                            counter = 0;
-                            if ((sendCounter % 10) == 0) Thread.sleep(3000);
+                            counter++;
+                            if (counter > (maxLineCount - 1)) {
+                                sendCounter++;
+                                pw.println(allDataBuf.toString());
+                                pw.flush();
+                                allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
+                                counter = 0;
+                                if ((sendCounter % 10) == 0) Thread.sleep(3000);
+                            }
                         }
-                    }
 
-                    String lastSendStr = allDataBuf.toString();
-                    if (!lastSendStr.equals("")) {
-                        pw.println(lastSendStr);
+                        String lastSendStr = allDataBuf.toString();
+                        if (!lastSendStr.equals("")) {
+                            pw.println(lastSendStr);
+                            pw.flush();
+                        }
+                        allDataBuf = null;
+
+                        pw.println("-1");
+                        pw.flush();
+                    } else {
+                        // Key-Valueどちらかがメモリではない
+                        List keyList = new ArrayList();
+                        Map pointToKeyMap = new HashMap();
+                        while(entryIte.hasNext()) {
+
+                            if (this.outputDataStopSignal == true) {
+                                logger.info("outputKeyMapObj2Stream - Stop Signal");
+                                break;
+                            }
+                            if ((counter % 1000) == 0) logger.info("outputKeyMapObj2Stream - output count[" + counter + "]");
+
+                            Map.Entry obj = (Map.Entry)entryIte.next();
+                            if (obj == null) continue;
+                            String key = null;
+
+                            
+                            key = (String)obj.getKey();
+                            long point = this.keyMapObjDataPointGet(key);
+                            if (point != -1) {
+                                pointToKeyMap.put(new Long(point), key);
+                                keyList.add(point);
+                            }
+                            counter++;
+                            if (counter > (maxLineCount - 1)) {
+
+                                long[] keyListInt = new long[keyList.size()];
+                                for (int idx = 0; idx < keyList.size(); idx++) {
+                                    keyListInt[idx] = ((Long)keyList.get(idx)).longValue();
+                                }
+                                Arrays.sort(keyListInt);
+                                keyList = null;
+                                keyList = new ArrayList();
+                                for (int idx = 0; idx < keyListInt.length; idx++) {
+                                    checkCnt++;
+                                    // 全てのデータを送る
+                                    String sendKey = (String)pointToKeyMap.get(new Long(keyListInt[idx]));
+                                    allDataBuf.append(allDataSep);
+                                    allDataBuf.append(sendKey);
+                                    
+                                    allDataBuf.append(KeyMapManager.workFileSeq);
+                                    allDataBuf.append(this.keyMapObjGet(sendKey));
+                                    allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                                }
+                            
+                                sendCounter++;
+                                pw.println(allDataBuf.toString());
+                                pw.flush();
+                                allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
+                                counter = 0;
+                                if ((sendCounter % 10) == 0) Thread.sleep(3000);
+
+                                pointToKeyMap = new HashMap();
+                            }
+                        }
+
+                        if (keyList.size() > 0) {
+                            long[] keyListInt = new long[keyList.size()];
+                            for (int idx = 0; idx < keyListInt.length; idx++) {
+                                keyListInt[idx] = ((Long)keyList.get(idx)).longValue();
+                            }
+                            Arrays.sort(keyListInt);
+                            keyList = null;
+                            keyList = new ArrayList();
+                            for (int idx = 0; idx < keyListInt.length; idx++) {
+                                checkCnt++;
+                                // 全てのデータを送る
+                                String sendKey = (String)pointToKeyMap.get(new Long(keyListInt[idx]));
+                                allDataBuf.append(allDataSep);
+                                allDataBuf.append(sendKey);
+                                
+                                allDataBuf.append(KeyMapManager.workFileSeq);
+                                allDataBuf.append(this.keyMapObjGet(sendKey));
+                                allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                            }
+                            String lastSendStr = allDataBuf.toString();
+                            if (!lastSendStr.equals("")) {
+                                pw.println(lastSendStr);
+                                pw.flush();
+                            }
+                        }
+                        allDataBuf = null;
+
+                        pw.println("-1");
                         pw.flush();
                     }
-                    allDataBuf = null;
-
-                    pw.println("-1");
-                    pw.flush();
                 }
+                System.out.println(checkCnt);
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("outputKeyMapObj2Stream - Error =[" + e.getMessage() + "]");
@@ -2485,7 +2617,7 @@ public class KeyMapManager extends Thread {
                         if (!this.allDataForFile) {
                             this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs);
                         } else {
-                            this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize);
+                            this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize, true);
                         }
 
                         if (!dataMemory) 
@@ -2891,6 +3023,11 @@ public class KeyMapManager extends Thread {
 
                 // キー値を1件づつレンジに含まれているか確認
                 while(entryIte.hasNext()) {
+                    if (this.outputDataStopSignal == true) {
+                        logger.info("outputConsistentHashMoveData2Stream - Stop Signal");
+                        break;
+                    }
+
                     Map.Entry obj = (Map.Entry)entryIte.next();
                     if (obj == null) continue;
                     String key = null;
@@ -3355,8 +3492,26 @@ public class KeyMapManager extends Thread {
     }
 
 
-    public void dataExport(PrintWriter pw) {
+    public void dataExport(PrintWriter pw, BufferedReader br, Socket soc) {
         try {
+            int checkTime = 1;
+            long waitTime = 0;
+
+            long networkCheckCount = 1000;
+            long count = 0;
+            int maxOutPutCount = 5;
+
+            // クライアントから設定値を取り出し
+            try {
+                soc.setSoTimeout(1000);
+                String confStr = br.readLine();
+                if (confStr != null && !confStr.trim().equals("")) {
+                    String[] confStrList = confStr.split(",");
+                    checkTime = Integer.parseInt(confStrList[0]);
+                    waitTime = Long.parseLong(confStrList[1]);
+                }
+            } catch(Exception ee) {}
+
             // 全データをトランザクションログ形式でネットワークに書き出す
             Set entrySet = this.keyMapObj.entrySet();
 
@@ -3365,6 +3520,7 @@ public class KeyMapManager extends Thread {
 
             // キー値を1件づつレンジに含まれているか確認
             while(entryIte.hasNext()) {
+                count++;
                 Map.Entry obj = (Map.Entry)entryIte.next();
                 if (obj == null) continue;
                 String key = null;
@@ -3374,12 +3530,25 @@ public class KeyMapManager extends Thread {
                 key = (String)obj.getKey();
                 String value = this.keyMapObjGet(key);
                 pw.println("+" + KeyMapManager.workFileSeq + key + KeyMapManager.workFileSeq + value + KeyMapManager.workFileSeq + JavaSystemApi.currentTimeMillis + KeyMapManager.workFileSeq + KeyMapManager.workFileEndPoint);
-                pw.flush();
+                if ((count % maxOutPutCount) == 0) pw.flush();
+
+                if ((count % networkCheckCount) == 0) {
+                    try {
+                        soc.setSoTimeout(checkTime);
+                        br.read();
+                        br.reset(); 
+                    } catch (SocketTimeoutException se) {
+                    }
+                }
+                if (waitTime != 0) Thread.sleep(waitTime);
             }
+            pw.flush();
+
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         } finally {
             try {
+
                 pw.println("-1");
                 pw.flush();
             } catch (Exception e2) {

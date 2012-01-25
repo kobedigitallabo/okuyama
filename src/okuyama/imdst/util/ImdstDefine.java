@@ -487,6 +487,8 @@ public class ImdstDefine {
     // SerializeMapのBucketサイズのJVMへのメモリ割当1MB単位への格納係数　小さな値にすればBucket数は減る
     public volatile static long serializeMapBucketSizeMemoryFactor = 400;
 
+    // 完全ファイルモード時に既に存在するデータを再利用する設定
+    public volatile static boolean recycleExsistData = false;
 
     // 保存データサイズの合計値演算設定
     // true:計算する

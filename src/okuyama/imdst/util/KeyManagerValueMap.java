@@ -32,7 +32,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Serializable {
 
     // 完全にメモリのみでKeyとValueを管理する場合のみtrue
-    private boolean memoryMode = true;
+    public boolean memoryMode = true;
 
     // 完全にディスクのみでKeyとValueを管理する場合のみtrue
     private boolean fullDiskMode = false;
@@ -78,9 +78,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
 
     // コンストラクタ
-    public KeyManagerValueMap(String[] dirs, int numberOfDataSize) {
+    public KeyManagerValueMap(String[] dirs, int numberOfDataSize, boolean renewFlg) {
 
-        super(dirs, numberOfDataSize);
+        super(dirs, numberOfDataSize, renewFlg);
         this.memoryMode = false;
         this.fullDiskMode = true;
     }
@@ -330,6 +330,23 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         return ret;
     }
 
+
+    /**
+     * Valueがファイルにある場合の位置を取得する
+     *
+     */
+    public long dataPointGet(Object key) {
+        long ret = -1;
+        try {
+            ret = this.calcSeekDataPoint(key);
+        } catch (Exception e) {
+            e.printStackTrace();
+            // 致命的
+            StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - dataPointGet - Error [" + e.getMessage() + "]");
+            
+        }
+        return ret;
+    }
 
     /**
      * putをオーバーライド.<br>

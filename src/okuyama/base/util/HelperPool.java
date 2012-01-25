@@ -50,7 +50,7 @@ public class  HelperPool extends Thread {
 
 
     // 呼び出し時に直接渡すパラメータ
-    private static ArrayBlockingQueue helperParamQueue = new ArrayBlockingQueue(1000);
+    private static ArrayBlockingQueue helperParamQueue = new ArrayBlockingQueue(20000);
 
     public HelperPool() {
         poolRunning = true;

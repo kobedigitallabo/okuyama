@@ -83,9 +83,9 @@ abstract public class AbstractDataRandomAccess extends RandomAccessFile {
                             Long seekPoint = (Long)obj.getKey();
                             raf.seek(seekPoint.longValue());
                             raf.read(data, 0, ImdstDefine.dataFileWriteMaxSize);
-                            if ((count % 1000) == 0) {
+                            if ((count % 100) == 0) {
                                 if (runFlg == false) break;
-                                Thread.sleep(100);
+                                Thread.sleep(500);
                             }
                         } catch (IOException e) {
                             highReferenceFrequencyMap.remove(obj.getKey());
