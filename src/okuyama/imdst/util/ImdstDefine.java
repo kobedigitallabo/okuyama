@@ -490,6 +490,9 @@ public class ImdstDefine {
     // 完全ファイルモード時に既に存在するデータを再利用する設定
     public volatile static boolean recycleExsistData = false;
 
+    // 操作記録ログ(WALログ)を読み込む設定
+    public volatile static boolean workFileStartingReadFlg = true;
+
     // 保存データサイズの合計値演算設定
     // true:計算する
     // false:計算しない

@@ -69,7 +69,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     // コンストラクタ
     public KeyManagerValueMap(int size, boolean memoryMode, String[] virtualStoreDirs) {
-
         super(size, new Double(size * 0.9).intValue(), 512, memoryMode, virtualStoreDirs);
 
         this.memoryMode = memoryMode;
@@ -79,7 +78,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     // コンストラクタ
     public KeyManagerValueMap(String[] dirs, int numberOfDataSize, boolean renewFlg) {
-
         super(dirs, numberOfDataSize, renewFlg);
         this.memoryMode = false;
         this.fullDiskMode = true;
@@ -996,9 +994,12 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         Integer lineInteger = null;
         if (mapValueInSize) {
-            String lineIntegerMix = (String)super.get(key);
-            if (lineIntegerMix != null) {
-                lineInteger = new Integer(((String[])lineIntegerMix.split(":"))[0]);
+            Object lineIntegerObj = (Object)super.get(key);
+            if (lineIntegerObj != null) {
+                String lineIntegerMix = (String)super.get(key);
+                if (lineIntegerMix != null) {
+                    lineInteger = new Integer(((String[])lineIntegerMix.split(":"))[0]);
+                }
             }
         } else {
             lineInteger = (Integer)super.get(key);

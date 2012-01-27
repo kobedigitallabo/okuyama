@@ -84,6 +84,9 @@ public class KeyMapManager extends Thread {
     private static int updateInterval = 1000;
     private static int intervalCount =  60;
 
+    // 起動時にとトランザクションログを読み込む設定
+    private static boolean workFileStartingReadFlg = ImdstDefine.workFileStartingReadFlg;
+
     // workMap(トランザクションログ)ファイルのデータセパレータ文字列
     private static String workFileSeq = ImdstDefine.keyWorkFileSep;
 
@@ -280,76 +283,78 @@ public class KeyMapManager extends Thread {
                     }
 
 
-                    // WorkKeyMapファイルが存在する場合は読み込み
-                    // トランザクションファイルはサイズでローテーションされているので、0からのインデックス番号順に読み込む
-                    for (int i = 0; true; i++) {
+                    if (this.workFileStartingReadFlg == true) {
+                        // WorkKeyMapファイルが存在する場合は読み込み
+                        // トランザクションファイルはサイズでローテーションされているので、0からのインデックス番号順に読み込む
+                        for (int i = 0; true; i++) {
 
-                        boolean endFlg = false;
-                        File workKeyFile = new File(this.workKeyFilePath + i);
+                            boolean endFlg = false;
+                            File workKeyFile = new File(this.workKeyFilePath + i);
 
-                        if (!workKeyFile.exists()) {
+                            if (!workKeyFile.exists()) {
 
-                            workKeyFile = new File(this.workKeyFilePath);
-                            endFlg = true;
-                        }
-
-                        if (workKeyFile.exists()) {
-                            logger.info("workKeyMapFile - Read - start");
-                            workKeyFilefis = new FileInputStream(workKeyFile);
-                            isr = new InputStreamReader(workKeyFilefis , KeyMapManager.workMapFileEnc);
-                            br = new BufferedReader(isr);
-                            int counter = 1;
-
-                            while((line=br.readLine())!=null){
-                                if ((counter % 100) == 0) {
-                                    logger.info("workKeyMapFile - Read - Count =[" + counter + "]");
-                                }
-
-                                if (!line.equals("")) {
-                                    workSplitStrs = line.split(KeyMapManager.workFileSeq);
-
-
-                                    // データは必ず5つか6つに分解できる
-                                    if (workSplitStrs.length == 5) {
-                                        // 登録データ
-                                        if (workSplitStrs[0].equals("+")) {
-
-                                            // トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
-                                            keyMapObjPutSetTime(workSplitStrs[1], workSplitStrs[2], new Long(workSplitStrs[3]).longValue());
-                                        } else if (workSplitStrs[0].equals("-")) {
-
-                                            // トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
-                                            keyMapObjRemoveSetTime(workSplitStrs[1], new Long(workSplitStrs[3]).longValue());
-                                        }
-                                    } else if (workSplitStrs.length == 6) {
-                                        // 登録データ
-                                        if (workSplitStrs[0].equals("+")) {
-
-                                            // トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
-                                            keyMapObjPutSetTime(workSplitStrs[1], workSplitStrs[2] + KeyMapManager.workFileSeq + workSplitStrs[3], new Long(workSplitStrs[4]).longValue());
-                                        } else if (workSplitStrs[0].equals("-")) {
-
-                                            // トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
-                                            keyMapObjRemoveSetTime(workSplitStrs[1], new Long(workSplitStrs[3]).longValue());
-                                        }
-                                    } else {
-
-                                        // 不正データ
-                                        logger.error("workKeyMapFile - Read - Error " + counter + "Line Data = [" + workSplitStrs + "]");
-                                    }
-                                } else {
-                                    logger.info("workKeyMapFile - Read - Info " + counter + "Line Blank");
-                                }
-                                counter++;
+                                workKeyFile = new File(this.workKeyFilePath);
+                                endFlg = true;
                             }
 
-                            br.close();
-                            isr.close();
-                            workKeyFilefis.close();
-                            logger.info("workKeyMapFile - Read - end");
+                            if (workKeyFile.exists()) {
+                                logger.info("workKeyMapFile - Read - start");
+                                workKeyFilefis = new FileInputStream(workKeyFile);
+                                isr = new InputStreamReader(workKeyFilefis , KeyMapManager.workMapFileEnc);
+                                br = new BufferedReader(isr);
+                                int counter = 1;
 
+                                while((line=br.readLine())!=null){
+                                    if ((counter % 100) == 0) {
+                                        logger.info("workKeyMapFile - Read - Count =[" + counter + "]");
+                                    }
+
+                                    if (!line.equals("")) {
+                                        workSplitStrs = line.split(KeyMapManager.workFileSeq);
+
+
+                                        // データは必ず5つか6つに分解できる
+                                        if (workSplitStrs.length == 5) {
+                                            // 登録データ
+                                            if (workSplitStrs[0].equals("+")) {
+
+                                                // トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
+                                                keyMapObjPutSetTime(workSplitStrs[1], workSplitStrs[2], new Long(workSplitStrs[3]).longValue());
+                                            } else if (workSplitStrs[0].equals("-")) {
+
+                                                // トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
+                                                keyMapObjRemoveSetTime(workSplitStrs[1], new Long(workSplitStrs[3]).longValue());
+                                            }
+                                        } else if (workSplitStrs.length == 6) {
+                                            // 登録データ
+                                            if (workSplitStrs[0].equals("+")) {
+
+                                                // トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
+                                                keyMapObjPutSetTime(workSplitStrs[1], workSplitStrs[2] + KeyMapManager.workFileSeq + workSplitStrs[3], new Long(workSplitStrs[4]).longValue());
+                                            } else if (workSplitStrs[0].equals("-")) {
+
+                                                // トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
+                                                keyMapObjRemoveSetTime(workSplitStrs[1], new Long(workSplitStrs[3]).longValue());
+                                            }
+                                        } else {
+
+                                            // 不正データ
+                                            logger.error("workKeyMapFile - Read - Error " + counter + "Line Data = [" + workSplitStrs + "]");
+                                        }
+                                    } else {
+                                        logger.info("workKeyMapFile - Read - Info " + counter + "Line Blank");
+                                    }
+                                    counter++;
+                                }
+
+                                br.close();
+                                isr.close();
+                                workKeyFilefis.close();
+                                logger.info("workKeyMapFile - Read - end");
+
+                            }
+                            if (endFlg) break;
                         }
-                        if (endFlg) break;
                     }
 
                     // トランザクションログ用のストリーム構築

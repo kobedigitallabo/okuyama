@@ -82,6 +82,7 @@ public class FileBaseDataMap extends AbstractMap {
 
     protected static ByteArrayOutputStream fillStream = null;
 
+    protected static String sizeSaveKey = "SYS-ALLDATASIZE";
 
 
     /**
@@ -185,8 +186,8 @@ public class FileBaseDataMap extends AbstractMap {
                 System.out.println("FixWriteCoreFileBaseKeyMap - Use");
                 this.coreFileBaseKeyMaps = new FixWriteCoreFileBaseKeyMap[baseDirs.length];
             } else {
-                System.out.println("DelayWriteCoreFileBaseKeyMap - Use");
-                this.coreFileBaseKeyMaps = new DelayWriteCoreFileBaseKeyMap[baseDirs.length];
+                System.out.println("FixWriteCoreFileBaseKeyMap - Use");
+                this.coreFileBaseKeyMaps = new FixWriteCoreFileBaseKeyMap[baseDirs.length];
             }
         } else if (numberOfValueLength > 0) {
 
@@ -222,11 +223,11 @@ public class FileBaseDataMap extends AbstractMap {
             // TODO:追記
             if (numberOfValueLength == 15) {
                 if (ImdstDefine.recycleExsistData) {
-                    System.out.println("FixWriteCoreFileBaseKeyMap - Use");
+                    System.out.println("FixWriteCoreFileBaseKeyMap - Use renew = " + renewData);
                     this.coreFileBaseKeyMaps[idx] = new FixWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, 15, renewData);
                 } else {
-                    System.out.println("DelayWriteCoreFileBaseKeyMap - Use");
-                    this.coreFileBaseKeyMaps[idx] = new DelayWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, 15, renewData);
+                    System.out.println("FixWriteCoreFileBaseKeyMap - Use - renew = true");
+                    this.coreFileBaseKeyMaps[idx] = new FixWriteCoreFileBaseKeyMap(dir, oneCacheSizePer, oneMapSizePer, 15, true);
                 }
             } else if (numberOfValueLength > 0) {
 
@@ -729,7 +730,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
             this.init(renewData);
             this.start();
             int sizeInt = 0;
-            String size = this.get("SYS-ALLDATASIZE", FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+            String size = this.get(FileBaseDataMap.sizeSaveKey, FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
             if (size != null) {
                 sizeInt = Integer.parseInt(size);
             }
@@ -768,7 +769,7 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
             this.innerCacheSize = this.numberOfDataFiles;
             this.init(renewData);
             this.start();
-            String size = this.get("SYS-ALLDATASIZE", FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+            String size = this.get(FileBaseDataMap.sizeSaveKey, FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
             int sizeInt = 0;
             if (size != null) {
                 sizeInt = Integer.parseInt(size);
@@ -944,24 +945,24 @@ class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap 
      */
     private void getAndIncrement() {
         int sizeInt = 0;
-        String size = this.get("SYS-ALLDATASIZE", FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+        String size = this.get(FileBaseDataMap.sizeSaveKey, FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
         if (size != null) {
             sizeInt = Integer.parseInt(size);
             sizeInt++;
             this.totalSize.getAndIncrement();
         }
-        this.put("SYS-ALLDATASIZE", new Integer(sizeInt).toString(), FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+        this.put(FileBaseDataMap.sizeSaveKey, new Integer(sizeInt).toString(), FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
     }
 
     private void getAndDecrement() {
         int sizeInt = 0;
-        String size = this.get("SYS-ALLDATASIZE", FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+        String size = this.get(FileBaseDataMap.sizeSaveKey, FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
         if (size != null) {
             sizeInt = Integer.parseInt(size);
             sizeInt--;
             this.totalSize.getAndDecrement();
         }
-        this.put("SYS-ALLDATASIZE", new Integer(sizeInt).toString(), FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+        this.put(FileBaseDataMap.sizeSaveKey, new Integer(sizeInt).toString(), FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
     }
 
     /**
@@ -1213,17 +1214,6 @@ start1 = System.nanoTime();
                     ret = new String(tmpBytes, keyDataLength, counter, "UTF-8");
                 }
             }
-            /*end3 = System.nanoTime();
-
-            if (ImdstDefine.fileBaseMapTimeDebug) {
-                long time5 = 0L;
-                for (int idx = 0; idx < timeList.size(); idx++) {
-                    time5 = time5 + (Long)timeList.get(idx);
-                }
-                
-                System.out.println("Get 1="+(end1 - start1) + " 2="+(end2 - start2) + " 3="+(end3 - start3) +" 4=" + (end4 - start4) + " 5=" +timeList + " 5-Total=" + time5);
-            }*/
-
         } catch (Exception e) {
 
             e.printStackTrace();
@@ -1357,7 +1347,10 @@ start1 = System.nanoTime();
                             }
                             idx++;
                         }
-                        keys.add(keysBuf.toString());
+                        String keyStr = keysBuf.toString();
+                        if (!keyStr.equals(FileBaseDataMap.sizeSaveKey)) {
+                            keys.add(keyStr);
+                        }
                         keysBuf = null;
                     }
                 }
@@ -1375,6 +1368,7 @@ start1 = System.nanoTime();
                 e2.printStackTrace();
             }
         }
+        if (keys != null && keys.size() == 0) keys = null;
         return keys;
     }
 }
@@ -1451,7 +1445,7 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
             this.numberOfDataFiles = numberOfKeyData / this.numberOfOneFileKey;
 
             this.init(renewData);
-            String size = this.get("SYS-ALLDATASIZE", FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+            String size = this.get(FileBaseDataMap.sizeSaveKey, FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
             int sizeInt = 0;
             if (size != null) {
                 sizeInt = Integer.parseInt(size);
@@ -1971,24 +1965,24 @@ long end4 = 0L;
      */
     private void getAndIncrement() {
         int sizeInt = 0;
-        String size = this.get("SYS-ALLDATASIZE", FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+        String size = this.get(FileBaseDataMap.sizeSaveKey, FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
         if (size != null) {
             sizeInt = Integer.parseInt(size);
             sizeInt++;
             this.totalSize.getAndIncrement();
         }
-        this.put("SYS-ALLDATASIZE", new Integer(sizeInt).toString(), FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+        this.put(FileBaseDataMap.sizeSaveKey, new Integer(sizeInt).toString(), FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
     }
 
     private void getAndDecrement() {
         int sizeInt = 0;
-        String size = this.get("SYS-ALLDATASIZE", FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+        String size = this.get(FileBaseDataMap.sizeSaveKey, FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
         if (size != null) {
             sizeInt = Integer.parseInt(size);
             sizeInt--;
             this.totalSize.getAndDecrement();
         }
-        this.put("SYS-ALLDATASIZE", new Integer(sizeInt).toString(), FileBaseDataMap.createHashCode("SYS-ALLDATASIZE"));
+        this.put(FileBaseDataMap.sizeSaveKey, new Integer(sizeInt).toString(), FileBaseDataMap.createHashCode(FileBaseDataMap.sizeSaveKey));
     }
 
     /**
@@ -2085,7 +2079,10 @@ long end4 = 0L;
                                 }
                                 idx++;
                             }
-                            keys.add(keysBuf.toString());
+                            String keyStr = keysBuf.toString();
+                            if (!keyStr.equals(FileBaseDataMap.sizeSaveKey)) {
+                                keys.add(keyStr);
+                            }
                             keysBuf = null;
                         }
                     }
@@ -2106,6 +2103,8 @@ long end4 = 0L;
                 e2.printStackTrace();
             }
         }
+        if (keys != null && keys.size() == 0) keys = null;
+    
         return keys;
     }
 }

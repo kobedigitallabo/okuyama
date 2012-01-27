@@ -304,6 +304,15 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+
+                    // -red
+                    if (startOptions[i].trim().equals("-wfsrf")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
+                                ImdstDefine.workFileStartingReadFlg = false;
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {

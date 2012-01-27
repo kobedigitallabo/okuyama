@@ -443,10 +443,8 @@ public class KeyManagerHelper extends AbstractHelper {
                             try {
                                 if(!this.keyMapManager.checkError()) {
                                     this.keyMapManager.containsKeyPair("PCKey");
-                                    this.keyMapManager.setKeyPair("PCKey", "PCValue", "0");
                                     String chkGetRet = this.keyMapManager.getKeyPair("PCKey");
-
-                                    if (chkGetRet != null) retStatus = "true";
+                                    retStatus = "true";
                                 } else {
                                     retStatus = "false";
                                 }
