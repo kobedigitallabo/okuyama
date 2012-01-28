@@ -313,6 +313,17 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
+
+                    // -udt
+                    if (startOptions[i].trim().equals("-udt")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                int type = Integer.parseInt(startOptions[i+1]);
+                                if (type == 2) ImdstDefine.useDiskType = 2;
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {

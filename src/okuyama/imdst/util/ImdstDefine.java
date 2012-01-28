@@ -490,6 +490,10 @@ public class ImdstDefine {
     // 完全ファイルモード時に既に存在するデータを再利用する設定
     public volatile static boolean recycleExsistData = false;
 
+    // okuyamaが利用するディスクの種類 1=HDD,2=SSD
+    public volatile static int useDiskType = 1;
+
+
     // 操作記録ログ(WALログ)を読み込む設定
     public volatile static boolean workFileStartingReadFlg = true;
 

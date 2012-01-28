@@ -100,8 +100,6 @@ public class UtilClient {
             }
             addDataNode(args[1], addNodeList);
         }
-
-
     }
 
 
