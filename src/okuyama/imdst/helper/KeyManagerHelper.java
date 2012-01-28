@@ -839,6 +839,15 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             //retParamBuf = null;
                             break;
+                        case 102 :
+
+                            // KeyMapManager OnMemoryObjectExport(For Backup)
+                            String memoryObjBkupFilePath = null;
+                            if (clientParameterList.length > 1) {
+                                memoryObjBkupFilePath = clientParameterList[1].trim();
+                            }
+                            retParamBuf.append(this.keyMapManager.keyObjectExport(memoryObjBkupFilePath));
+                            break;
                         default :
 
                             logger.debug("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");

@@ -168,11 +168,17 @@ public class KeyMapManager extends Thread {
 
     // Valueのファイルを新規時に削除するかの指定
     protected boolean initDataFile = true;
-    
+
+    protected boolean keyObjBkupMode = false;
+
+    protected String keyObjBkupFilePath = null;
+
 
     // 初期化メソッド
     // Transactionを管理する場合に呼び出す
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, boolean dataManage) throws BatchException {
+        this.keyObjBkupMode = true;
+        this.bkupObjCheck(keyMapFilePath);
         this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
         this.dataManege = dataManage;
     }
@@ -181,12 +187,16 @@ public class KeyMapManager extends Thread {
     // 初期化メソッド
     // Key値はメモリを使用する場合に使用
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory) throws BatchException {
+        this.keyObjBkupMode = true;
+        this.bkupObjCheck(keyMapFilePath);
         this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
     }
 
     // 初期化メソッド
     // Key値はメモリを使用する場合に使用
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, int memoryLimitSize, String[] virtualStorageDirs) throws BatchException {
+        this.keyObjBkupMode = true;
+        this.bkupObjCheck(keyMapFilePath);
         this.memoryLimitSize = memoryLimitSize;
         this.virtualStorageDirs = virtualStorageDirs;
         this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
@@ -207,6 +217,16 @@ public class KeyMapManager extends Thread {
         this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, dirs);
     }
 
+
+    private void bkupObjCheck(String keyMapFilePath) {
+    
+        boolean renewFlg = false;
+        this.keyObjBkupFilePath = keyMapFilePath + ".obj";
+        File path = new File(this.keyObjBkupFilePath);
+        if (!path.exists()) renewFlg = true;
+        initDataFile = renewFlg;
+        if (ImdstDefine.recycleExsistData == false) initDataFile = true;
+    }
 
     /**
      * 初期化処理
@@ -265,7 +285,7 @@ public class KeyMapManager extends Thread {
 
                     // KeyManagerValueMap作成
                     if (!this.allDataForFile) {
-                        this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs);
+                        this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs, this.initDataFile, new File(this.keyObjBkupFilePath));
                     } else {
                         this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize, this.initDataFile);
                     }
@@ -2440,7 +2460,7 @@ public class KeyMapManager extends Thread {
                                 
                                 allDataBuf.append(KeyMapManager.workFileSeq);
                                 allDataBuf.append(this.keyMapObjGet(sendKey));
-                                allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep;
+                                allDataSep = ImdstDefine.imdstConnectAllDataSendDataSep ;
                             }
                             String lastSendStr = allDataBuf.toString();
                             if (!lastSendStr.equals("")) {
@@ -2620,7 +2640,7 @@ public class KeyMapManager extends Thread {
 
                         // 新たにKeyManagerValueMapを作成
                         if (!this.allDataForFile) {
-                            this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs);
+                            this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs, true, null);
                         } else {
                             this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize, true);
                         }
@@ -3497,6 +3517,33 @@ public class KeyMapManager extends Thread {
     }
 
 
+    /**
+     * メモリ上のデータのみバックアップファイルにストア
+     */
+    public int keyObjectExport(String filePath) {
+
+        if (this.keyObjBkupMode || filePath != null) {
+            try {
+                File storeFile = null;
+                if (filePath != null) {
+                    storeFile = new File(filePath);
+                } else {
+                    storeFile = new File(keyObjBkupFilePath);
+                }
+                this.keyMapObj.fileStoreMapObject(storeFile);
+                return 1;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return -9;
+            }
+        } else {
+            return -1;
+        }
+    }
+
+    /**
+     * データバックアップ用
+     */
     public void dataExport(PrintWriter pw, BufferedReader br, Socket soc) {
         try {
             int checkTime = 1;

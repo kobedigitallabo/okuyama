@@ -68,8 +68,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
 
     // コンストラクタ
-    public KeyManagerValueMap(int size, boolean memoryMode, String[] virtualStoreDirs) {
-        super(size, new Double(size * 0.9).intValue(), 512, memoryMode, virtualStoreDirs);
+    public KeyManagerValueMap(int size, boolean memoryMode, String[] virtualStoreDirs, boolean renewFlg, File bkupObjFile) {
+        super(size, new Double(size * 0.9).intValue(), 512, memoryMode, virtualStoreDirs, renewFlg, bkupObjFile);
 
         this.memoryMode = memoryMode;
         if (!this.memoryMode) this.mapValueInSize = true;

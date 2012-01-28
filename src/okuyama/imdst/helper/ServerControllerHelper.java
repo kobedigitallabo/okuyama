@@ -216,23 +216,6 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         br.close();
                         pw.close();
                         soc.close();
-                    } else if (command.equals("backupdata")) {
-                        
-                        pw.println(command + " Success");
-                        pw.flush();
-                        Thread.sleep(100);
-
-                        SystemUtil.netDebugPrinter = pw;
-                        StatusUtil.setDebugOption(true);
-                        try {
-                            br.readLine(); 
-                        } catch(Exception e){}
-                        
-                        StatusUtil.setDebugOption(false);
-                        SystemUtil.netDebugPrinter = null;
-
-                        br.close();
-                        pw.close();
                         soc.close();
                     } else if (command.equals("maptime")) {
 
@@ -257,7 +240,6 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         pw.println("rname");
                         pw.println("fullgc");
                         pw.println("netdebug");
-                        pw.println("backupdata ...(Only DataNode Command)");
                         pw.println("");
 
                         pw.flush();

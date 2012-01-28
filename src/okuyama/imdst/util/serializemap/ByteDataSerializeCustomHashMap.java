@@ -1,10 +1,11 @@
 package okuyama.imdst.util.serializemap;
 
 import java.util.*;
+import java.io.*;
 
 import okuyama.imdst.util.*;
 
-public class ByteDataSerializeCustomHashMap extends HashMap {
+public class ByteDataSerializeCustomHashMap extends HashMap implements Cloneable, Serializable {
 
     public byte[] byteData = null;
 

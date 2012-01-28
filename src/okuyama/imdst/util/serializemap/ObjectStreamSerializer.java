@@ -1,6 +1,7 @@
 package okuyama.imdst.util.serializemap;
 
 import java.util.Map;
+import java.io.*;
 
 import okuyama.imdst.util.*;
 
@@ -11,7 +12,7 @@ import okuyama.imdst.util.*;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class ObjectStreamSerializer implements ISerializer {
+public class ObjectStreamSerializer implements Cloneable, Serializable, ISerializer {
 
     private String serializeMapName = null;
 

@@ -23,7 +23,7 @@ import com.sun.mail.util.BASE64DecoderStream;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class FileBaseDataMap extends AbstractMap {
+public class FileBaseDataMap extends AbstractMap implements Cloneable, Serializable {
 
     private CoreFileBaseKeyMap[] coreFileBaseKeyMaps = null;
     private CoreFileBaseKeyMap coreFileBaseKeyMap4BigData = null;
