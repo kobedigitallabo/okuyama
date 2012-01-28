@@ -283,7 +283,17 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
-                    
+
+
+                    // -pcmf
+                    if (startOptions[i].trim().equals("-pcmf")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
+                                ImdstDefine.pageCacheMappendFlg = true;
+                            }
+                        }
+                    }
+
                     // -pcms
                     if (startOptions[i].trim().equals("-pcms")) {
                         if (startOptions.length > (i+1)) {
@@ -321,6 +331,15 @@ public class ServerPreprocess implements IProcess {
                                 int type = Integer.parseInt(startOptions[i+1]);
                                 if (type == 2) ImdstDefine.useDiskType = 2;
                             } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
+                    // -pcmf
+                    if (startOptions[i].trim().equals("-pcmf")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
+                                ImdstDefine.pageCacheMappendFlg = true;
                             }
                         }
                     }

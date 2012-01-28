@@ -514,8 +514,11 @@ public class ImdstDefine {
     // 有効期限切れのデータを実際に物理削除するまでの経過時間(ミリ秒)
     public static final long invalidDataDeleteTime = 6000;
 
+    // データファイルをOSのPageCacheにのせる要否
+    public volatile static boolean pageCacheMappendFlg = false;
     // データファイルをOSのPageCacheにのせる件数
     public volatile static int pageCacheMappendSize = 100000;
-    
+
+
     public volatile static boolean fileBaseMapTimeDebug = false;
 }

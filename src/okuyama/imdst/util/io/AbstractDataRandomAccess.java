@@ -23,6 +23,8 @@ abstract public class AbstractDataRandomAccess extends RandomAccessFile {
     protected ValueCacheMap highReferenceFrequencyMap = null;
     protected ConcurrentHashMap highReferencedMapCopy = null;
 
+    protected boolean execMappingFlg = ImdstDefine.pageCacheMappendFlg;
+
     protected static int pageCacheMappendSize = ImdstDefine.pageCacheMappendSize;
 
 
@@ -31,10 +33,12 @@ abstract public class AbstractDataRandomAccess extends RandomAccessFile {
         super(target, type);
         this.dataFile = target;
         try {
-            this.highReferencedMapCopy = new ConcurrentHashMap(pageCacheMappendSize);
-            this.highReferenceFrequencyMap = new ValueCacheMap(pageCacheMappendSize, this.highReferencedMapCopy);
-            this.dataCacheMapper = new DataFilePageCacheMapper(target);
-            this.dataCacheMapper.start();
+            if(execMappingFlg) {
+                this.highReferencedMapCopy = new ConcurrentHashMap(pageCacheMappendSize);
+                this.highReferenceFrequencyMap = new ValueCacheMap(pageCacheMappendSize, this.highReferencedMapCopy);
+                this.dataCacheMapper = new DataFilePageCacheMapper(target);
+                this.dataCacheMapper.start();
+            }
         } catch (Exception e) {}
     }
 
@@ -43,14 +47,18 @@ abstract public class AbstractDataRandomAccess extends RandomAccessFile {
 
     public void close() throws IOException {
         try {
-            this.dataCacheMapper.close();
-            this.dataCacheMapper.join(3000);
+            if (execMappingFlg) {
+                this.dataCacheMapper.close();
+                this.dataCacheMapper.join(3000);
+            }
             super.close();
         } catch (Exception e) {}        
     }
 
     public void putHighReferenceData(long seekPoint) {
-        highReferenceFrequencyMap.put(new Long(seekPoint), null);
+        if (execMappingFlg) {
+            highReferenceFrequencyMap.put(new Long(seekPoint), null);
+        }
     }
 
 
@@ -83,9 +91,9 @@ abstract public class AbstractDataRandomAccess extends RandomAccessFile {
                             Long seekPoint = (Long)obj.getKey();
                             raf.seek(seekPoint.longValue());
                             raf.read(data, 0, ImdstDefine.dataFileWriteMaxSize);
-                            if ((count % 100) == 0) {
+                            if ((count % 10) == 0) {
                                 if (runFlg == false) break;
-                                Thread.sleep(500);
+                                Thread.sleep(30);
                             }
                         } catch (IOException e) {
                             highReferenceFrequencyMap.remove(obj.getKey());
