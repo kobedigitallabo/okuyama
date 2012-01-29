@@ -19,7 +19,7 @@ import com.sun.mail.util.BASE64EncoderStream;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class PartialConcurrentHashMap extends ConcurrentHashMap implements Cloneable, Serializable {
+public class PartialConcurrentHashMap extends ConcurrentHashMap implements Cloneable, Serializable, ICoreStorage {
 
     private boolean fullMemory = true;
 

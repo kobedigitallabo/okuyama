@@ -334,27 +334,41 @@ public class KeyMapManager extends Thread {
 
 
                                         // データは必ず5つか6つに分解できる
+                                        // 復元の際はCoreStorageをバックアップイメージから復元している場合があるので、
+                                        // CoreStorageのバックアップデータ作成時間より新しいログデータのみ復元対象とする。
+                                        // CoreStorageがバックアップデータから復元していない場合は、作成時間が0なので確実にログから復元される
                                         if (workSplitStrs.length == 5) {
-                                            // 登録データ
-                                            if (workSplitStrs[0].equals("+")) {
 
+                                            if (workSplitStrs[0].equals("+")) {
+                                                // 登録データ
                                                 // トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
-                                                keyMapObjPutSetTime(workSplitStrs[1], workSplitStrs[2], new Long(workSplitStrs[3]).longValue());
+                                                // 復元時間もチェック
+                                                if (keyMapObj.useStorageObjectTime <  Long.parseLong(workSplitStrs[3])) 
+                                                    keyMapObjPutSetTime(workSplitStrs[1], workSplitStrs[2], new Long(workSplitStrs[3]).longValue());
                                             } else if (workSplitStrs[0].equals("-")) {
 
+                                                // 削除データ
                                                 // トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
-                                                keyMapObjRemoveSetTime(workSplitStrs[1], new Long(workSplitStrs[3]).longValue());
+                                                // 復元時間もチェック
+                                                if (keyMapObj.useStorageObjectTime <  Long.parseLong(workSplitStrs[3]))
+                                                    keyMapObjRemoveSetTime(workSplitStrs[1], new Long(workSplitStrs[3]).longValue());
                                             }
                                         } else if (workSplitStrs.length == 6) {
-                                            // 登録データ
+
                                             if (workSplitStrs[0].equals("+")) {
 
+                                                // 登録データ
                                                 // トランザクションファイルからデータ登録操作を復元する。その際に登録実行時間もファイルから復元
-                                                keyMapObjPutSetTime(workSplitStrs[1], workSplitStrs[2] + KeyMapManager.workFileSeq + workSplitStrs[3], new Long(workSplitStrs[4]).longValue());
+                                                // 復元時間もチェック
+                                                if (keyMapObj.useStorageObjectTime <  Long.parseLong(workSplitStrs[4]))
+                                                    keyMapObjPutSetTime(workSplitStrs[1], workSplitStrs[2] + KeyMapManager.workFileSeq + workSplitStrs[3], new Long(workSplitStrs[4]).longValue());
                                             } else if (workSplitStrs[0].equals("-")) {
 
+                                                // 削除データ
                                                 // トランザクションファイルからデータ削除操作を復元する。その際に削除実行時間もファイルから復元
-                                                keyMapObjRemoveSetTime(workSplitStrs[1], new Long(workSplitStrs[3]).longValue());
+                                                // 復元時間もチェック
+                                                if (keyMapObj.useStorageObjectTime <  Long.parseLong(workSplitStrs[3]))
+                                                    keyMapObjRemoveSetTime(workSplitStrs[1], new Long(workSplitStrs[3]).longValue());
                                             }
                                         } else {
 

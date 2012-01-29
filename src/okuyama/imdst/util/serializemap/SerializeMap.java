@@ -26,7 +26,7 @@ import okuyama.imdst.util.*;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class SerializeMap extends AbstractMap implements Cloneable, Serializable {
+public class SerializeMap extends AbstractMap implements Cloneable, Serializable, ICoreStorage {
 
     private AtomicInteger nowSize = new AtomicInteger(0);
 

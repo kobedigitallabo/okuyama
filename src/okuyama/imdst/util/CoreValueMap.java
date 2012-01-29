@@ -30,6 +30,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
     private boolean allDataMemory = false;
 
+    public long useStorageObjectTime = 0L;
 
     // メモリ救済用
     // メモリ領域が枯渇した場合に使用する仮想領域
@@ -42,13 +43,12 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
     // コンストラクタ
     public CoreValueMap(int size, int upper, int multi, boolean memoryMode, String[] virtualStoreDirs, boolean renewFlg, File bkupObjectDataFile) {
-
+        System.out.println("Core Storage initialize start - " + new Date().toString());
         if (memoryMode) {
 
-            //mainMap  = new ConcurrentHashMap(size, upper, multi);
             if (!ImdstDefine.useSerializeMap) {
 
-                System.out.println("PartialConcurrentHashMap Use");
+                System.out.println(" PartialConcurrentHashMap Use");
                 if (renewFlg) {
                     mainMap = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
                 } else {
@@ -57,7 +57,9 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                         try {
                             FileInputStream fis = new FileInputStream(file);
                             ObjectInputStream ois = new ObjectInputStream(fis);
-                            mainMap = (PartialConcurrentHashMap)ois.readObject();
+                            CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
+                            this.useStorageObjectTime = container.storeTime;
+                            mainMap = (PartialConcurrentHashMap)container.storeObject;
                         } catch(Exception e) {
                             e.printStackTrace();
                             mainMap = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
@@ -71,7 +73,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                 long jvmMaxMemory = JavaSystemApi.getRuntimeMaxMem("M");
                 long bucketSize = jvmMaxMemory * SerializeMap.bucketJvm1MBMemoryFactor;
 
-                System.out.println("PartialSerializeMap Use");
+                System.out.println(" PartialSerializeMap Use");
                 MemoryModeCoreValueCnv.compressUnderLimitSize = 1024 * 1024 * 1024;
 
                 if (renewFlg) {
@@ -82,7 +84,9 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                         try {
                             FileInputStream fis = new FileInputStream(file);
                             ObjectInputStream ois = new ObjectInputStream(fis);
-                            mainMap = (PartialSerializeMap)ois.readObject();
+                            CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
+                            this.useStorageObjectTime = container.storeTime;
+                            mainMap = (PartialSerializeMap)container.storeObject;
                         } catch(Exception e) {
                             mainMap = new PartialSerializeMap(size, upper, new Long(bucketSize).intValue(), virtualStoreDirs);
                         }
@@ -96,26 +100,26 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             this.allDataMemory = true;
         } else {
 
-            //mainMap  = new ConcurrentHashMap(size, upper, multi);
-
             if (!ImdstDefine.useSerializeMap) {
 
-                System.out.println("ConcurrentHashMap Use");
+                System.out.println(" ConcurrentHashMap Use");
                 
                 if (renewFlg) {
-                    mainMap = new ConcurrentHashMap(size, upper, multi);
+                    mainMap = new NativeConcurrentHashMap(size, upper, multi);
                 } else {
                     File file = bkupObjectDataFile;
                     if (file != null && file.exists()) {
                         try {
                             FileInputStream fis = new FileInputStream(file);
                             ObjectInputStream ois = new ObjectInputStream(fis);
-                            mainMap = (ConcurrentHashMap)ois.readObject();
+                            CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
+                            this.useStorageObjectTime = container.storeTime;
+                            mainMap = (NativeConcurrentHashMap)container.storeObject;
                         } catch(Exception e) {
-                            mainMap = new ConcurrentHashMap(size, upper, multi);
+                            mainMap = new NativeConcurrentHashMap(size, upper, multi);
                         }
                     } else {
-                        mainMap = new ConcurrentHashMap(size, upper, multi);
+                        mainMap = new NativeConcurrentHashMap(size, upper, multi);
                     }
                 }
             } else {
@@ -124,7 +128,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                 long jvmMaxMemory = JavaSystemApi.getRuntimeMaxMem("M");
                 long bucketSize = jvmMaxMemory * SerializeMap.bucketJvm1MBMemoryFactor;
 
-                System.out.println("SerializeMap Use");
+                System.out.println(" SerializeMap Use");
 
                 if (renewFlg) {
                     mainMap = new SerializeMap(size, upper, new Long(bucketSize).intValue(), ImdstDefine.serializerClassName);
@@ -134,7 +138,9 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                         try {
                             FileInputStream fis = new FileInputStream(file);
                             ObjectInputStream ois = new ObjectInputStream(fis);
-                            mainMap = (SerializeMap)ois.readObject();
+                            CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
+                            this.useStorageObjectTime = container.storeTime;
+                            mainMap = (SerializeMap)container.storeObject;
                         } catch(Exception e) {
                             mainMap = new SerializeMap(size, upper, new Long(bucketSize).intValue(), ImdstDefine.serializerClassName);
                         }
@@ -148,13 +154,18 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
         }
 
         this.virtualStoreDirs = virtualStoreDirs;
+        if (useStorageObjectTime != 0L) {
+            System.out.println(" ->Storage data is restored from backup");
+            System.out.println(" ->Backup data create time = " + new Date(useStorageObjectTime).toString());
+        }
+        System.out.println("Core Storage initialize end   - " + new Date().toString());
     }
 
 
     // コンストラクタ
     public CoreValueMap(String[] dirs, int numberOfDataSize, boolean renewFlg) {
 
-        mainMap  = new FileBaseDataMap(dirs, numberOfDataSize, 0.2, 15, renewFlg);
+        mainMap = new FileBaseDataMap(dirs, numberOfDataSize, 0.2, 15, renewFlg);
         converter = new AllFileModeCoreValueCnv();
     }
 
@@ -349,7 +360,12 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
             System.out.println("Execute - fileStoreMapObject - Start" + new Date());
-            oos.writeObject(this.mainMap);
+
+            CoreStorageContainer container = new CoreStorageContainer();
+            container.storeTime = System.currentTimeMillis();
+            container.storeObject = (ICoreStorage)this.mainMap;
+
+            oos.writeObject(container);
             System.out.println("Execute - fileStoreMapObject - End" + new Date());
             oos.close();
         } catch(Exception e) {

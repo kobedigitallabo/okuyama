@@ -488,7 +488,7 @@ public class ImdstDefine {
     public volatile static long serializeMapBucketSizeMemoryFactor = 400;
 
     // 完全ファイルモード時に既に存在するデータを再利用する設定
-    public volatile static boolean recycleExsistData = false;
+    public volatile static boolean recycleExsistData = true;
 
     // okuyamaが利用するディスクの種類 1=HDD,2=SSD
     public volatile static int useDiskType = 1;

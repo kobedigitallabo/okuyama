@@ -22,7 +22,7 @@ import okuyama.imdst.util.serializemap.*;
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
-public class PartialSerializeMap extends SerializeMap implements Cloneable, Serializable {
+public class PartialSerializeMap extends SerializeMap implements Cloneable, Serializable, ICoreStorage {
 
     private boolean fullMemory = true;
 

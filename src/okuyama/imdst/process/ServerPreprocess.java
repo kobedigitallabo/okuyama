@@ -308,8 +308,8 @@ public class ServerPreprocess implements IProcess {
                     // -red
                     if (startOptions[i].trim().equals("-red")) {
                         if (startOptions.length > (i+1)) {
-                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
-                                ImdstDefine.recycleExsistData = true;
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
+                                ImdstDefine.recycleExsistData = false;
                             }
                         }
                     }
