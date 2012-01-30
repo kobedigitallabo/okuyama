@@ -137,9 +137,34 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             this.lineFile = lineFile;
             int counter = 0;
 
-            // 現在のファイルの終端
-            while(br.readLine() != null){
-                counter++;
+            // 現在のファイルの終端を探す
+            // 終端を探すまでに壊れてしまっているデータは無効データ(ブランクデータ)に置き換える
+            String readDataLine = null;
+            while((readDataLine = br.readLine()) != null){
+                if (!readDataLine.trim().equals("")) {
+                    counter++;
+                    if (readDataLine.getBytes().length < this.oneDataLength) {
+                        int shiftByteSize = 0;
+                        if (readDataLine.length() < "(B)!0".length()) {
+                            int shift = "(B)!0".length() - readDataLine.length();
+                            shiftByteSize = shift; 
+                        }
+                        readDataLine = "(B)!0";
+                        StringBuilder updateBuf = new StringBuilder(readDataLine);
+                        for (int i = 0; i < (this.oneDataLength - readDataLine.length()); i++) {
+                            updateBuf.append("&");
+                            shiftByteSize++;
+                        }
+                        updateBuf.append("\n");
+                        shiftByteSize++;
+
+                        this.raf.seek(this.convertLineToSeekPoint(counter));
+                        this.raf.write(updateBuf.toString().getBytes(), 0, this.oneDataLength+1);
+                        for (int i = 0; i < shiftByteSize; i++) {
+                            br.read();
+                        }
+                    }
+                }
             }
 
             this.lineCount = counter;
