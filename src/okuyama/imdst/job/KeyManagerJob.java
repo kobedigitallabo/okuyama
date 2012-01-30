@@ -390,7 +390,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             // 設定情報以外の値が入っている場合は一旦停止
             if (this.keyMapManager.getSaveDataCount() > 50) {
                 JavaSystemApi.manualGc();
-                Thread.sleep(60000);
+                Thread.sleep(3000);
             }
 
         } catch(Exception e) {
