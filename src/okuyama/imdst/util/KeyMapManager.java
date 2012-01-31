@@ -173,6 +173,10 @@ public class KeyMapManager extends Thread {
 
     protected String keyObjBkupFilePath = null;
 
+    private Object keyObjectExportSync = new Object();
+
+    private int keyObjectStoreTiming = 30; // 30分に一度バックアップが作成される
+
 
     // 初期化メソッド
     // Transactionを管理する場合に呼び出す
@@ -427,6 +431,7 @@ public class KeyMapManager extends Thread {
     public void run (){
         int sizeCheckCounter = 0;
         int vacuumInvalidDataCount = 0;
+        int keyMapObjectStoreCheckCount = 0;
 
         while(true) {
 
@@ -437,7 +442,7 @@ public class KeyMapManager extends Thread {
 
             try {
 
-                // 1サイクル1.5秒の停止を規定回数行う(途中で停止要求があった場合は無条件で処理実行)
+                // 1サイクル1秒の停止を規定回数行う(途中で停止要求があった場合は無条件で処理実行)
                 for (int count = 0; count < KeyMapManager.intervalCount; count++) {
 
                     // システム停止要求を監視
@@ -574,6 +579,7 @@ public class KeyMapManager extends Thread {
 
                                 long vacuumStart = JavaSystemApi.currentTimeMillis;
                                 this.keyMapObj.vacuumData();
+                                this.keyObjectExport(null); // Vacuum完了後、メモリ上の情報もストアする
 
                                 long vacuumEnd = JavaSystemApi.currentTimeMillis;
                                 logger.info("Vacuum - End - VacuumTime [" + (vacuumEnd - vacuumStart) +"] Milli Second");
@@ -642,6 +648,14 @@ public class KeyMapManager extends Thread {
                 }
 
                 vacuumInvalidDataCount++;
+
+                // メモリ上の情報をファイルにストア
+                // このループへは1分に1度訪れるので、規定分に一度実行する
+                keyMapObjectStoreCheckCount++;
+                if (keyMapObjectStoreCheckCount > this.keyObjectStoreTiming) {
+                    this.keyObjectExport(null);
+                    keyMapObjectStoreCheckCount = 0;
+                }
             } catch (Exception e) {
 
                 e.printStackTrace();
@@ -3537,18 +3551,20 @@ public class KeyMapManager extends Thread {
     public int keyObjectExport(String filePath) {
 
         if (this.keyObjBkupMode || filePath != null) {
-            try {
-                File storeFile = null;
-                if (filePath != null) {
-                    storeFile = new File(filePath);
-                } else {
-                    storeFile = new File(keyObjBkupFilePath);
+            synchronized(this.keyObjectExportSync) {
+                try {
+                    File storeFile = null;
+                    if (filePath != null) {
+                        storeFile = new File(filePath);
+                    } else {
+                        storeFile = new File(keyObjBkupFilePath);
+                    }
+                    this.keyMapObj.fileStoreMapObject(storeFile);
+                    return 1;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return -9;
                 }
-                this.keyMapObj.fileStoreMapObject(storeFile);
-                return 1;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return -9;
             }
         } else {
             return -1;
