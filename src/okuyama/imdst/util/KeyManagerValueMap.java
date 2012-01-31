@@ -213,7 +213,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                         }
                     }
 
-                    this.readDataFile(buf, seekPoint, this.oneDataLength);
+                    this.readDataFile(buf, seekPoint, this.oneDataLength, key);
                 }
 
                 ret = new String(buf, ImdstDefine.keyWorkFileEncoding);
@@ -258,7 +258,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     }
 
                     synchronized (sync) {
-                        readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
+                        readRet = this.readDataFile(buf, seekPoint, this.oneDataLength, key);
                         if (readRet == -1) {
 
                             return null;
@@ -318,7 +318,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 // seek値取得
                 if ((seekPoint = this.calcSeekDataPoint(key)) == -1) return null;
 
-                readRet = this.readDataFile(buf, seekPoint, this.oneDataLength);
+                readRet = this.readDataFile(buf, seekPoint, this.oneDataLength, key);
 
                 boolean overSizeData = false;
                 if (buf[this.oneDataLength -1] != 38 || readRet > this.oneDataLength) {
@@ -361,7 +361,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     public long dataPointGet(Object key) {
         long ret = -1;
         try {
-            ret = this.calcSeekDataPoint(key);
+            ret = this.calcSeekDataPoint(key, false);
         } catch (Exception e) {
             e.printStackTrace();
             // 致命的
@@ -420,7 +420,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     writeBuf.append("\n");
 
 
-                    if ((this.fullDiskMode == true && ImdstDefine.reuseDataFileValuePositionFlg == false) || (seekPoint = this.calcSeekDataPoint(key)) == -1) {
+                    if ((this.fullDiskMode == true && ImdstDefine.reuseDataFileValuePositionFlg == false) || (seekPoint = this.calcSeekDataPoint(key, false)) == -1) {
 
                         // まだ存在しないデータ
                         // 書き込む行を決定
@@ -939,13 +939,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * @param readLength 読み込み指定地
      * @return 読み込んだデータサイズ
      */
-    private int readDataFile(byte[] buf, long seekPoint, int readLength) throws Exception {
+    private int readDataFile(byte[] buf, long seekPoint, int readLength, Object key) throws Exception {
         int ret = readLength;
 
         if (raf != null) {
 
             if (!ImdstDefine.dataFileWriteDelayFlg) {
-                ((SortedSchedulingRandomAccess)this.raf).seekAndRead(seekPoint, buf, 0, this.oneDataLength);
+                ((SortedSchedulingRandomAccess)this.raf).seekAndRead(seekPoint, buf, 0, this.oneDataLength, key);
             } else {
                 raf.seek(seekPoint);
                 SystemUtil.diskAccessSync(raf, buf, 0, this.oneDataLength);
@@ -1008,6 +1008,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     }
 
 
+
     /**
      * Key値を渡すことでそのKeyの対となるValueがデータファイルのどこにあるかを.<br>
      * データファイル中のバイト位置で返す.<br>
@@ -1016,6 +1017,16 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * @return long ファイル中の開始位置 データが存在しない場合は-1が返却される
      */
     private long calcSeekDataPoint(Object key) {
+        return this.calcSeekDataPoint(key, true);
+    }
+    /**
+     * Key値を渡すことでそのKeyの対となるValueがデータファイルのどこにあるかを.<br>
+     * データファイル中のバイト位置で返す.<br>
+     *
+     * @param key Key値
+     * @return long ファイル中の開始位置 データが存在しない場合は-1が返却される
+     */
+    private long calcSeekDataPoint(Object key, boolean requestSeekPoint) {
 
         Integer lineInteger = null;
         if (mapValueInSize) {
@@ -1028,8 +1039,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             }
         } else {
             lineInteger = (Integer)super.get(key);
-        } 
-        return this.convertLineToSeekPoint(lineInteger);
+        }
+        long ret = this.convertLineToSeekPoint(lineInteger);
+        if (ret != -1 && requestSeekPoint == true) {
+            if (!ImdstDefine.dataFileWriteDelayFlg)
+                ((SortedSchedulingRandomAccess)this.raf).requestSeekPoint(ret, 0, this.oneDataLength);
+        }
+        return ret;
     }
 
 
