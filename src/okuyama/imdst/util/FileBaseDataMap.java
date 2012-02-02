@@ -1538,14 +1538,41 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
 
                 // Keyファイルのディレクトリ範囲ないで適当に記録ファイルを分散させる
                 File file = new File(this.fileDirs[i % this.fileDirs.length] + i + ".data");
-
-                // 再構築指定がtrueの場合のみデータ領域を削除して作り直し
-                if (renewData) {
-                    if (file.exists()) {
-                        file.delete();
+                if (file.length() > 0 && (file.length() % lineDataSize) != 0) {
+                    if (renewData) {
+                        if (file.exists()) {
+                            file.delete();
+                        }
+                    } else if ((file.length() / lineDataSize) == 0) {
+                        if (file.exists()) {
+                            file.delete();
+                        }
+                    } else {
+                        System.out.println(file.getAbsolutePath() + "=" + file.length());
+                        // ファイルのサイズが1レコードの倍数でない場合は壊れている可能性があるので修復する
+                        File recoverFile = new File(this.fileDirs[i % this.fileDirs.length] + i + ".recover");
+                        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(recoverFile));
+                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+                        byte[] recoverData = new byte[new Long(((file.length() / lineDataSize) * lineDataSize)).intValue()];
+                        bis.read(recoverData);
+                        bos.write(recoverData);
+                        bos.flush();
+                        bos.close();
+                        bis.close();
+                        System.out.println("delete=" + file.delete());
+                        file = new File(this.fileDirs[i % this.fileDirs.length] + i + ".data");
+                        System.out.println("delete=" + recoverFile.renameTo(file));
+                        file = recoverFile;
+                    }
+                } else {
+                    
+                    // 再構築指定がtrueの場合のみデータ領域を削除して作り直し
+                    if (renewData) {
+                        if (file.exists()) {
+                            file.delete();
+                        }
                     }
                 }
-
                 dataFileList[i] = file;
             }
 
