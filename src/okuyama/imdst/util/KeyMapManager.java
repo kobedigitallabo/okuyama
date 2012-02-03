@@ -175,7 +175,7 @@ public class KeyMapManager extends Thread {
 
     private Object keyObjectExportSync = new Object();
 
-    private int keyObjectStoreTiming = 30; // 30分に一度バックアップが作成される
+    private int keyObjectStoreTiming = 180; // 180分に一度バックアップが作成される
 
 
     // 初期化メソッド
@@ -2351,8 +2351,8 @@ public class KeyMapManager extends Thread {
                     Set entrySet = this.keyMapObj.entrySet();
 
                     int printLineCount = 0;
-                    // 一度に送信するデータ量を算出。空きメモリの20%を使用する
-                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.4) / (ImdstDefine.saveDataMaxSize / 100)).intValue();
+                    // 一度に送信するデータ量を算出。空きメモリの30%を使用する
+                    int maxLineCount = new Double((JavaSystemApi.getRuntimeFreeMem("") * 0.3) / (ImdstDefine.saveDataMaxSize / 50)).intValue();
                     // 最大でも10万件以上を一度に送信はしない
                     if (maxLineCount > 100000) maxLineCount = 100000;
 

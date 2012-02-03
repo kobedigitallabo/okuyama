@@ -519,6 +519,9 @@ public class ImdstDefine {
     // データファイルをOSのPageCacheにのせる件数
     public volatile static int pageCacheMappendSize = 100000;
 
+    // データファイルへのシークアクセスをSequentialになるように調整する設定
+    public volatile static boolean dataFileSequentialSchedulingFlg = false;
+
 
     public volatile static boolean fileBaseMapTimeDebug = false;
 }

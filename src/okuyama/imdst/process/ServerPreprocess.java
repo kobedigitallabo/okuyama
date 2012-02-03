@@ -343,6 +343,18 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
+
+
+                    // -dfssf
+                    if (startOptions[i].trim().equals("-dfssf")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
+                                ImdstDefine.dataFileSequentialSchedulingFlg = true;
+                            }
+                        }
+                    }
+
+
                 }
             }
         } catch (Exception e) {

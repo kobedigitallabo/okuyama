@@ -36,6 +36,9 @@ public class SortedSchedulingRandomAccess extends AbstractDataRandomAccess {
 
     private Object sync = new Object();
 
+    private boolean sortAccessFlg = ImdstDefine.dataFileSequentialSchedulingFlg;
+
+
 
     public SortedSchedulingRandomAccess(File target, String type) throws FileNotFoundException {
         super(target, type);
@@ -46,26 +49,32 @@ public class SortedSchedulingRandomAccess extends AbstractDataRandomAccess {
     }
 
     public void requestSeekPoint(long seekPoint, int start, int size) {
-        try {
-            Map requestParams = new HashMap(4);
-            requestParams.put(2, start);
-            requestParams.put(3, size);
-            requestParams.put(4, seekPoint);
-            this.readRequestSeekPointQueue.put(requestParams);
+        if (this.sortAccessFlg) {
+            try {
+                Map requestParams = new HashMap(4);
+                requestParams.put(2, start);
+                requestParams.put(3, size);
+                requestParams.put(4, seekPoint);
+                this.readRequestSeekPointQueue.put(requestParams);
 
-        } catch(Exception e) {
-            e.printStackTrace();
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
     public void seek(long seekPoint) throws IOException {
-        this.nowSeekPoint = seekPoint;
+        if (this.sortAccessFlg) {
+            this.nowSeekPoint = seekPoint;
+        }
         super.seek(seekPoint);
     }
 
     public void write(byte[] data, int start, int size) throws IOException {
-        this.responseDataSizeMap.remove(this.nowSeekPoint);
-        this.responseDataMap.remove(this.nowSeekPoint);
+        if (this.sortAccessFlg) {
+            this.responseDataSizeMap.remove(this.nowSeekPoint);
+            this.responseDataMap.remove(this.nowSeekPoint);
+        }
         super.write(data, start, size);
     }
 
@@ -74,106 +83,113 @@ public class SortedSchedulingRandomAccess extends AbstractDataRandomAccess {
         int ret = -1;
         boolean waitMode = false;
         try {
-            executeCount++;
-            if (this.clearCount < this.executeCount) {
-                this.responseDataSizeMap.clear();
-                this.responseDataMap.clear();
-                this.readRequestSeekPointQueue.clear();
-                executeCount = 0;
-            }
+            if (this.sortAccessFlg) {
 
-            Integer readDataSize = (Integer)this.responseDataSizeMap.remove(seekPoint);
-            if (readDataSize != null) {
-                Map response = (Map)this.responseDataMap.remove(seekPoint);
-                byte[] responseBytes = (byte[])response.get(1);
-                for (int idx = 0; idx < responseBytes.length; idx++) {
-                    data[idx] = responseBytes[idx];
-                }
-                return readDataSize.intValue();
-            }
-
-            if (this.readRequestSeekPointQueue.size() > 1) {
-
-                int count = this.maxSeqSize;
-                if (count > readRequestSeekPointQueue.size()) count = readRequestSeekPointQueue.size();
-                Map requestParams = null;
-
-                //System.out.println("Count=" + count + " responseDataMap=" + responseDataMap.size() + " responseDataSizeMap=" + responseDataSizeMap.size());
-
-                if (waitMode == true) {
-                    List tmpList = new ArrayList();
-                    int maxPool = 30;
-                    int execPool = 0;
-                    while ((requestParams = (Map)readRequestSeekPointQueue.poll(10, TimeUnit.MILLISECONDS)) != null) {
-
-                        tmpList.add(requestParams);
-                        execPool++;
-                        if (maxPool <= execPool) break;
-                    }
-
-                    count = tmpList.size();
-                    this.seekPointList = new long[count];
-                    for (int i = 0; i < count; i++){
-
-                        requestParams = (Map)tmpList.get(i);
-                        seekPointList[i] = ((Long)requestParams.get(4)).longValue();
-                        this.responseDataMap.put(seekPointList[i], requestParams);
-                    }
-                } else {
-
-                    this.seekPointList = new long[count];
-                    for (int i = 0; i < count; i++){
-
-                        requestParams = (Map)readRequestSeekPointQueue.take();
-                        seekPointList[i] = ((Long)requestParams.get(4)).longValue();
-                        this.responseDataMap.put(seekPointList[i], requestParams);
-                    }
+                executeCount++;
+                if (this.clearCount < this.executeCount) {
+                    this.responseDataSizeMap.clear();
+                    this.responseDataMap.clear();
+                    this.readRequestSeekPointQueue.clear();
+                    executeCount = 0;
                 }
 
-                java.util.Arrays.sort(seekPointList);
-
-                for (int i = 0; i < seekPointList.length; i++) {
-                    requestParams = (Map)this.responseDataMap.remove(seekPointList[i]);
-                    int reqStart = ((Integer)requestParams.get(2)).intValue();
-                    int reqSize = ((Integer)requestParams.get(3)).intValue();
-                    byte[] reqData = new byte[reqSize];
-                    
-                    super.seek(seekPointList[i]);
-                    Integer readDataLen = new Integer(super.read(reqData, reqStart, reqSize));
-                    requestParams.put(1, reqData);
-                    this.responseDataMap.put(seekPointList[i], requestParams);
-                    this.responseDataSizeMap.put(seekPointList[i], readDataLen);
-                }
-
-                // 今回のメソッド呼び出しのリクエストデータを作成
-                // 既に別リクエストが同一のseekポイントを指定している場合データが消えている可能性が
-                // あるので、null確認を行う
-                readDataSize = (Integer)this.responseDataSizeMap.remove(seekPoint);
-                Map response = (Map)this.responseDataMap.remove(seekPoint);
-                if (readDataSize == null || response == null) {
-                    
-                    super.seek(seekPoint);
-                    ret = super.read(data, start, size);
-                } else {
+                Integer readDataSize = (Integer)this.responseDataSizeMap.remove(seekPoint);
+                if (readDataSize != null) {
+                    Map response = (Map)this.responseDataMap.remove(seekPoint);
                     byte[] responseBytes = (byte[])response.get(1);
                     for (int idx = 0; idx < responseBytes.length; idx++) {
                         data[idx] = responseBytes[idx];
                     }
-                    ret = readDataSize.intValue();
+                    return readDataSize.intValue();
                 }
-            } else if (this.readRequestSeekPointQueue.size() == 1){
 
-                Map requestParams = (Map)this.readRequestSeekPointQueue.take();
-                long requestSeekPoint = ((Long)requestParams.get(4)).longValue();
-                if (requestSeekPoint == seekPoint) {
-                    super.seek(requestSeekPoint);
-                    ret = super.read(data, start, size);
+                if (this.readRequestSeekPointQueue.size() > 1) {
+
+                    int count = this.maxSeqSize;
+                    if (count > readRequestSeekPointQueue.size()) count = readRequestSeekPointQueue.size();
+                    Map requestParams = null;
+
+                    //System.out.println("Count=" + count + " responseDataMap=" + responseDataMap.size() + " responseDataSizeMap=" + responseDataSizeMap.size());
+
+                    if (waitMode == true) {
+                        List tmpList = new ArrayList();
+                        int maxPool = 30;
+                        int execPool = 0;
+                        while ((requestParams = (Map)readRequestSeekPointQueue.poll(10, TimeUnit.MILLISECONDS)) != null) {
+
+                            tmpList.add(requestParams);
+                            execPool++;
+                            if (maxPool <= execPool) break;
+                        }
+
+                        count = tmpList.size();
+                        this.seekPointList = new long[count];
+                        for (int i = 0; i < count; i++){
+
+                            requestParams = (Map)tmpList.get(i);
+                            seekPointList[i] = ((Long)requestParams.get(4)).longValue();
+                            this.responseDataMap.put(seekPointList[i], requestParams);
+                        }
+                    } else {
+
+                        this.seekPointList = new long[count];
+                        for (int i = 0; i < count; i++){
+
+                            requestParams = (Map)readRequestSeekPointQueue.take();
+                            seekPointList[i] = ((Long)requestParams.get(4)).longValue();
+                            this.responseDataMap.put(seekPointList[i], requestParams);
+                        }
+                    }
+
+                    java.util.Arrays.sort(seekPointList);
+
+                    for (int i = 0; i < seekPointList.length; i++) {
+                        requestParams = (Map)this.responseDataMap.remove(seekPointList[i]);
+                        int reqStart = ((Integer)requestParams.get(2)).intValue();
+                        int reqSize = ((Integer)requestParams.get(3)).intValue();
+                        byte[] reqData = new byte[reqSize];
+                        
+                        super.seek(seekPointList[i]);
+                        Integer readDataLen = new Integer(super.read(reqData, reqStart, reqSize));
+                        requestParams.put(1, reqData);
+                        this.responseDataMap.put(seekPointList[i], requestParams);
+                        this.responseDataSizeMap.put(seekPointList[i], readDataLen);
+                    }
+
+                    // 今回のメソッド呼び出しのリクエストデータを作成
+                    // 既に別リクエストが同一のseekポイントを指定している場合データが消えている可能性が
+                    // あるので、null確認を行う
+                    readDataSize = (Integer)this.responseDataSizeMap.remove(seekPoint);
+                    Map response = (Map)this.responseDataMap.remove(seekPoint);
+                    if (readDataSize == null || response == null) {
+                        
+                        super.seek(seekPoint);
+                        ret = super.read(data, start, size);
+                    } else {
+                        byte[] responseBytes = (byte[])response.get(1);
+                        for (int idx = 0; idx < responseBytes.length; idx++) {
+                            data[idx] = responseBytes[idx];
+                        }
+                        ret = readDataSize.intValue();
+                    }
+                } else if (this.readRequestSeekPointQueue.size() == 1){
+
+                    Map requestParams = (Map)this.readRequestSeekPointQueue.take();
+                    long requestSeekPoint = ((Long)requestParams.get(4)).longValue();
+                    if (requestSeekPoint == seekPoint) {
+                        super.seek(requestSeekPoint);
+                        ret = super.read(data, start, size);
+                    } else {
+                        super.seek(seekPoint);
+                        ret = super.read(data, start, size);
+                        this.readRequestSeekPointQueue.put(requestParams);
+                    }
                 } else {
                     super.seek(seekPoint);
                     ret = super.read(data, start, size);
-                    this.readRequestSeekPointQueue.put(requestParams);
                 }
             } else {
+
                 super.seek(seekPoint);
                 ret = super.read(data, start, size);
             }
