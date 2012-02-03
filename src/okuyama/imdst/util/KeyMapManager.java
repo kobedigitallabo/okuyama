@@ -175,7 +175,7 @@ public class KeyMapManager extends Thread {
 
     private Object keyObjectExportSync = new Object();
 
-    private int keyObjectStoreTiming = 180; // 180分に一度バックアップが作成される
+    private int keyObjectStoreTiming = 25; // 25分に一度バックアップが作成される
 
 
     // 初期化メソッド

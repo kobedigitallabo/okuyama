@@ -428,13 +428,19 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                             // 削除済みデータが使用していた場所をまずは調べる
                             Integer deletedLine = null;
-                            if (mapValueInSize) {
-                                String deletedLineStr = (String)this.deletedDataPointList.poll();
-                                if (deletedLineStr != null) {
-                                    deletedLine = new Integer(((String[])deletedLineStr.split(":"))[0]);
+
+                            String deletedLineStr = (String)this.deletedDataPointList.peek();
+
+                            if (deletedLineStr != null) {
+                                String[] checkUseTime = deletedLineStr.split("\\.");    // 先頭にこのデータが登録された時刻が連結されている
+                                if (Long.parseLong(checkUseTime[0]) < System.currentTimeMillis()) {
+                                    if (mapValueInSize) {
+                                        deletedLine = new Integer(((String[])checkUseTime[1].split(":"))[0]);
+                                    } else {
+                                        deletedLine = new Integer(checkUseTime[1]);
+                                    }
+                                    deletedDataPointList.poll();
                                 }
-                            } else {
-                                deletedLine = (Integer)this.deletedDataPointList.poll();
                             }
 
                             if (vacuumExecFlg) {
@@ -546,8 +552,11 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
             // 再利用可能なデータの場所を保持(ValueをFileに保存している場合のみ)
             if(ret != null) {
-                if (!this.memoryMode) 
-                    this.deletedDataPointList.offer(ret);
+                if (!this.memoryMode) {
+                    String deleteLinePointStr = new Long((System.currentTimeMillis() + (1000 * 60 * 35))).toString() + "." + ret;
+                    
+                    this.deletedDataPointList.offer(deleteLinePointStr);
+                }
             }
 
 
