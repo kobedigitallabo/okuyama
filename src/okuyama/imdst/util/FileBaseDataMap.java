@@ -1548,7 +1548,7 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
                             file.delete();
                         }
                     } else {
-                        System.out.println(file.getAbsolutePath() + "=" + file.length());
+                        System.out.println(file.getAbsolutePath() + " = This file has broken, it restores.");
                         // ファイルのサイズが1レコードの倍数でない場合は壊れている可能性があるので修復する
                         File recoverFile = new File(this.fileDirs[i % this.fileDirs.length] + i + ".recover");
                         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(recoverFile));
@@ -1559,10 +1559,9 @@ class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
                         bos.flush();
                         bos.close();
                         bis.close();
-                        System.out.println("delete=" + file.delete());
                         file = new File(this.fileDirs[i % this.fileDirs.length] + i + ".data");
-                        System.out.println("delete=" + recoverFile.renameTo(file));
-                        file = recoverFile;
+                        file = new File(this.fileDirs[i % this.fileDirs.length] + i + ".data");
+                        recoverFile.delete();
                     }
                 } else {
                     

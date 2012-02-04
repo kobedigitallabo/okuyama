@@ -554,7 +554,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             if(ret != null) {
                 if (!this.memoryMode) {
                     String deleteLinePointStr = new Long((System.currentTimeMillis() + (1000 * 60 * 35))).toString() + "." + ret;
-                    
                     this.deletedDataPointList.offer(deleteLinePointStr);
                 }
             }
