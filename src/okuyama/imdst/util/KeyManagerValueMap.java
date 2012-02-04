@@ -125,7 +125,8 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             } else {
                 // 遅延なし
                 //this.raf = new RandomAccessFile(new File(lineFile) , "rw");
-                this.raf = new SortedSchedulingRandomAccess(new File(lineFile) , "rw");
+                //this.raf = new SortedSchedulingRandomAccess(new File(lineFile) , "rw");
+                this.raf = new HighSpeedDiskCacheRandomAccess(new File(lineFile), "rw");
             }
             // 自身のインスタンスをファイルアクセッサに渡す
             this.raf.setDataPointMap(this);
@@ -953,7 +954,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         if (raf != null) {
 
             if (!ImdstDefine.dataFileWriteDelayFlg) {
-                ((SortedSchedulingRandomAccess)this.raf).seekAndRead(seekPoint, buf, 0, this.oneDataLength, key);
+                ((AbstractDataRandomAccess)this.raf).seekAndRead(seekPoint, buf, 0, this.oneDataLength, key);
             } else {
                 raf.seek(seekPoint);
                 SystemUtil.diskAccessSync(raf, buf, 0, this.oneDataLength);
@@ -1051,7 +1052,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         long ret = this.convertLineToSeekPoint(lineInteger);
         if (ret != -1 && requestSeekPoint == true) {
             if (!ImdstDefine.dataFileWriteDelayFlg)
-                ((SortedSchedulingRandomAccess)this.raf).requestSeekPoint(ret, 0, this.oneDataLength);
+                ((AbstractDataRandomAccess)this.raf).requestSeekPoint(ret, 0, this.oneDataLength);
         }
         return ret;
     }

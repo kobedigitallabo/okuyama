@@ -42,7 +42,11 @@ abstract public class AbstractDataRandomAccess extends RandomAccessFile {
         } catch (Exception e) {}
     }
 
-    abstract public void setDataPointMap(Map dataPointMap) ;
+    abstract public void setDataPointMap(Map dataPointMap);
+
+    abstract public void requestSeekPoint(long seekPoint, int start, int size);
+
+    abstract public int seekAndRead(long seekPoint, byte[] data, int start, int size, Object key) throws IOException;
 
 
     public void close() throws IOException {

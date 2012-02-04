@@ -37,6 +37,14 @@ public class CustomRandomAccess extends AbstractDataRandomAccess {
         this.dataPointMap = dataPointMap;
     }
 
+
+    public void requestSeekPoint(long seekPoint, int start, int size) {
+    }
+
+    public int seekAndRead(long seekPoint, byte[] data, int start, int size, Object key) throws IOException {
+        throw new IOException("Not found methdo");
+    }
+
     public void seek(long seekPoint) throws IOException {
         this.nowSeekPoint = seekPoint;
     }
