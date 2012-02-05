@@ -177,11 +177,14 @@ public class KeyMapManager extends Thread {
 
     private int keyObjectStoreTiming = 25; // 25分に一度バックアップが作成される
 
+    private String diskCacheFile = null;
+
 
     // 初期化メソッド
     // Transactionを管理する場合に呼び出す
-    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, boolean dataManage) throws BatchException {
+    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, boolean dataManage, String diskCacheFile) throws BatchException {
         this.keyObjBkupMode = true;
+        this.diskCacheFile = diskCacheFile;
         this.bkupObjCheck(keyMapFilePath);
         this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
         this.dataManege = dataManage;
@@ -190,16 +193,18 @@ public class KeyMapManager extends Thread {
 
     // 初期化メソッド
     // Key値はメモリを使用する場合に使用
-    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory) throws BatchException {
+    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, String diskCacheFile) throws BatchException {
         this.keyObjBkupMode = true;
+        this.diskCacheFile = diskCacheFile;
         this.bkupObjCheck(keyMapFilePath);
         this.init(keyMapFilePath, workKeyMapFilePath, workFileMemory, keySize, dataMemory, null);
     }
 
     // 初期化メソッド
     // Key値はメモリを使用する場合に使用
-    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, int memoryLimitSize, String[] virtualStorageDirs) throws BatchException {
+    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, int memoryLimitSize, String[] virtualStorageDirs, String diskCacheFile) throws BatchException {
         this.keyObjBkupMode = true;
+        this.diskCacheFile = diskCacheFile;
         this.bkupObjCheck(keyMapFilePath);
         this.memoryLimitSize = memoryLimitSize;
         this.virtualStorageDirs = virtualStorageDirs;
@@ -208,8 +213,9 @@ public class KeyMapManager extends Thread {
 
 
     // 初期化メソッド
-    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, String[] dirs) throws BatchException {
+    public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, String[] dirs, String diskCacheFile) throws BatchException {
         boolean renewFlg = false;
+        this.diskCacheFile = diskCacheFile;
         for (int idx = 0; idx < dirs.length; idx++) {
             File path = new File(dirs[idx]);
             if (!path.exists()) {
@@ -289,9 +295,9 @@ public class KeyMapManager extends Thread {
 
                     // KeyManagerValueMap作成
                     if (!this.allDataForFile) {
-                        this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs, this.initDataFile, new File(this.keyObjBkupFilePath));
+                        this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs, this.initDataFile, new File(this.keyObjBkupFilePath), this.diskCacheFile);
                     } else {
-                        this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize, this.initDataFile);
+                        this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize, this.initDataFile, this.diskCacheFile);
                     }
 
 
@@ -2668,9 +2674,9 @@ public class KeyMapManager extends Thread {
 
                         // 新たにKeyManagerValueMapを作成
                         if (!this.allDataForFile) {
-                            this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs, true, null);
+                            this.keyMapObj = new KeyManagerValueMap(this.mapSize, this.dataMemory, this.virtualStorageDirs, true, null, this.diskCacheFile);
                         } else {
-                            this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize, true);
+                            this.keyMapObj = new KeyManagerValueMap(this.keyFileDirs, this.mapSize, true, this.diskCacheFile);
                         }
 
                         if (!dataMemory) 

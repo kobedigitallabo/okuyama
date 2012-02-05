@@ -355,6 +355,18 @@ public class ServerPreprocess implements IProcess {
                     }
 
 
+                    // -mdcs
+                    if (startOptions[i].trim().equals("-mdcs")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.maxDiskCacheSize = Integer.parseInt(startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
+
+
                 }
             }
         } catch (Exception e) {

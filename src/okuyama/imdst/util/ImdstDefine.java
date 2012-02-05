@@ -210,6 +210,7 @@ public class ImdstDefine {
     public static final String Prop_MemoryLimitSize = ".memoryLimitSize";
     public static final String Prop_VirtualStoreDirs = ".virtualStoreDirs";
     public static final String Prop_KeyStoreDirs = ".keyStoreDirs";
+    public static final String Prop_DiskCacheFilePath = ".cacheFilePath";
     public static final String Prop_DataSaveTransactionFileEveryCommit = "DataSaveTransactionFileEveryCommit";
     public static final String Prop_ShareDataFileWriteDelayFlg = "ShareDataFileWriteDelayFlg";
     public static final String Prop_ShareDataFileMaxDelayCount = "ShareDataFileMaxDelayCount";
@@ -518,6 +519,10 @@ public class ImdstDefine {
     public volatile static boolean pageCacheMappendFlg = false;
     // データファイルをOSのPageCacheにのせる件数
     public volatile static int pageCacheMappendSize = 100000;
+
+    // 高速なDiskを読み出しキャッシュに利用する場合の最大キャッシュ数(ここでの定義数 × dataFileWriteMaxSize=ディスク上に作成される最大サイズ(バイト/単位))
+    public volatile static int maxDiskCacheSize = 10000;
+
 
     // データファイルへのシークアクセスをSequentialになるように調整する設定
     public volatile static boolean dataFileSequentialSchedulingFlg = false;

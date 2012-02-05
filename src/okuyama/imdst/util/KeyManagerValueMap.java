@@ -66,10 +66,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
     private boolean mapValueInSize = false;
 
+    private String diskCacheFile = null;
+
 
     // コンストラクタ
-    public KeyManagerValueMap(int size, boolean memoryMode, String[] virtualStoreDirs, boolean renewFlg, File bkupObjFile) {
+    public KeyManagerValueMap(int size, boolean memoryMode, String[] virtualStoreDirs, boolean renewFlg, File bkupObjFile, String diskCacheFile) {
         super(size, new Double(size * 0.9).intValue(), 512, memoryMode, virtualStoreDirs, renewFlg, bkupObjFile);
+        this.diskCacheFile = diskCacheFile;
 
         this.memoryMode = memoryMode;
         if (!this.memoryMode) this.mapValueInSize = true;
@@ -77,8 +80,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
 
     // コンストラクタ
-    public KeyManagerValueMap(String[] dirs, int numberOfDataSize, boolean renewFlg) {
+    public KeyManagerValueMap(String[] dirs, int numberOfDataSize, boolean renewFlg, String diskCacheFile) {
         super(dirs, numberOfDataSize, renewFlg);
+        this.diskCacheFile = diskCacheFile;
         this.memoryMode = false;
         this.fullDiskMode = true;
     }
@@ -126,7 +130,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 // 遅延なし
                 //this.raf = new RandomAccessFile(new File(lineFile) , "rw");
                 //this.raf = new SortedSchedulingRandomAccess(new File(lineFile) , "rw");
-                this.raf = new HighSpeedDiskCacheRandomAccess(new File(lineFile), "rw");
+                this.raf = new HighSpeedDiskCacheRandomAccess(new File(lineFile), "rw", this.diskCacheFile);
             }
             // 自身のインスタンスをファイルアクセッサに渡す
             this.raf.setDataPointMap(this);

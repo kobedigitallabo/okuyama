@@ -20,15 +20,27 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
 
     protected Map dataPointMap = null;
     protected DiskCacheManager diskCacheManager = null;
+    protected int maxCacheSize = ImdstDefine.maxDiskCacheSize;
+
+    private String cacheFilePath = null;
 
     private long nowSeekPoint = 0L;
 
-    public HighSpeedDiskCacheRandomAccess(File target, String type) throws FileNotFoundException {
-        super(target, type);
-        File cacheFile = new File("o:/DiskCache.data");
+    private long cacheHitCount = 0L;
 
-        this.diskCacheManager = new DiskCacheManager(100000, cacheFile);
-        this.diskCacheManager.start();
+
+    public HighSpeedDiskCacheRandomAccess(File target, String type, String cacheFilePath) throws FileNotFoundException {
+        super(target, type);
+        File cacheFile = null;
+        this.cacheFilePath = cacheFilePath;
+        if (this.cacheFilePath != null && !this.cacheFilePath.trim().equals("")) {
+            cacheFile = new File(cacheFilePath);
+            this.diskCacheManager = new DiskCacheManager(150000, cacheFile);
+            this.diskCacheManager.start();
+            System.out.println(" DiskCache Use - CacheFile=[" + cacheFilePath + "] Number of max cache data=" + this.maxCacheSize);
+        } else {
+            this.diskCacheManager = new DiskCacheManager();
+        }
     }
 
     public void setDataPointMap(Map dataPointMap) {
@@ -67,7 +79,8 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
                 }
                 this.diskCacheManager.addCacheDarta(seekPoint, cacheData);
             } else {
-
+                cacheHitCount++;
+                if ((cacheHitCount % 5000) == 0) System.out.println("Cache hit count=" + cacheHitCount + " [" + new Date().toString());
                 // キャッシュあり
                 for (int i = 0; i < cacheData.length; i++) {
                     data[i] = cacheData[i];
@@ -94,6 +107,12 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
         private ConcurrentHashMap fixWriteDataMap = new ConcurrentHashMap(20000);
         private DiskBaseCacheMap diskBaseCacheMap = null;
         private Object sync = new Object();
+
+        private boolean noCache = false;
+
+        public DiskCacheManager() {
+            this.noCache = true;
+        }
 
 
         public DiskCacheManager(int maxCacheSize, File dataFile) throws FileNotFoundException {
@@ -130,6 +149,7 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
     
 
         public void addCacheDarta(long seekPoint, byte[] cacheData) {
+            if (this.noCache) return;
             synchronized (this.sync) {
                 Long seekPointLong = new Long(seekPoint);
                 if(this.writeQueue.offer(seekPointLong)) {
@@ -140,10 +160,12 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
 
 
         public byte[] getCacheData(long seekPoint) {
+            if (this.noCache) return null;
             return (byte[])this.diskBaseCacheMap.get(new Long(seekPoint));
         }
 
         public void removeCache(long seekPoint) {
+            if (this.noCache) return;
             synchronized (this.sync) {
                 this.diskBaseCacheMap.remove(new Long(seekPoint));
                 this.fixWriteDataMap.remove(seekPoint);

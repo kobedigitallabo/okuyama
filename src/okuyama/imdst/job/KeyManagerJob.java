@@ -36,6 +36,8 @@ public class KeyManagerJob extends AbstractJob implements IJob {
     private String keySizeStr = null;
     private int keySize = 500000;
 
+    private String diskCacheFilePath = null;
+
     private boolean workFileMemoryMode = false;
     private String workFileMemoryModeStr = null;
 
@@ -346,7 +348,12 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             keyStoreDirsStr = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_KeyStoreDirs);
             if (keyStoreDirsStr != null) keyStoreDirs = keyStoreDirsStr.split(",");
 
+            // 保存するデータの総量の予想値
             this.keySizeStr = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_KeySize);
+
+            // DiskCache用のファイルパス
+            this.diskCacheFilePath = super.getPropertiesValue(super.getJobName() + ImdstDefine.Prop_DiskCacheFilePath);
+
 
             // workファイルを保持するか判断
             if (workFileMemoryModeStr != null && workFileMemoryModeStr.equals("true")) workFileMemoryMode = true;
@@ -379,11 +386,11 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             if (keyStoreForFileFlg) {
 
                 // Key is FileStoreMode
-                this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode, keyStoreDirs);
+                this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode, keyStoreDirs, this.diskCacheFilePath);
             } else {
 
                 // Key is MemoryStoreMode
-                this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode, memoryLimitSizeInt, virtualStorageDirs);
+                this.keyMapManager = new KeyMapManager(keyMapFiles[0], keyMapFiles[1], workFileMemoryMode, keySize, dataMemoryMode, memoryLimitSizeInt, virtualStorageDirs, this.diskCacheFilePath);
             }
             this.keyMapManager.start();
 
