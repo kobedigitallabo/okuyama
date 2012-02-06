@@ -32,6 +32,8 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
     public long useStorageObjectTime = 0L;
 
+    protected Map dataSizeMap = new ConcurrentHashMap(20, 16, 16);
+
     // メモリ救済用
     // メモリ領域が枯渇した場合に使用する仮想領域
     private boolean urgentSaveMode = false;
@@ -39,7 +41,6 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
     private ICoreValueConverter urgentSaveMapConverter = null;
     private String[] virtualStoreDirs = null;
     private Object syncObj = new Object();
-
 
     // コンストラクタ
     public CoreValueMap(int size, int upper, int multi, boolean memoryMode, String[] virtualStoreDirs, boolean renewFlg, File bkupObjectDataFile) {
@@ -60,6 +61,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                             CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
                             this.useStorageObjectTime = container.storeTime;
                             mainMap = (PartialConcurrentHashMap)container.storeObject;
+                            this.setDataSizeMap(container.dataSizeMap);
                         } catch(Exception e) {
                             e.printStackTrace();
                             mainMap = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
@@ -87,6 +89,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                             CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
                             this.useStorageObjectTime = container.storeTime;
                             mainMap = (PartialSerializeMap)container.storeObject;
+                            this.setDataSizeMap(container.dataSizeMap);
                         } catch(Exception e) {
                             mainMap = new PartialSerializeMap(size, upper, new Long(bucketSize).intValue(), virtualStoreDirs);
                         }
@@ -115,6 +118,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                             CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
                             this.useStorageObjectTime = container.storeTime;
                             mainMap = (NativeConcurrentHashMap)container.storeObject;
+                            this.setDataSizeMap(container.dataSizeMap);
                         } catch(Exception e) {
                             mainMap = new NativeConcurrentHashMap(size, upper, multi);
                         }
@@ -141,6 +145,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                             CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
                             this.useStorageObjectTime = container.storeTime;
                             mainMap = (SerializeMap)container.storeObject;
+                            this.setDataSizeMap(container.dataSizeMap);
                         } catch(Exception e) {
                             mainMap = new SerializeMap(size, upper, new Long(bucketSize).intValue(), ImdstDefine.serializerClassName);
                         }
@@ -169,6 +174,9 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
         converter = new AllFileModeCoreValueCnv();
     }
 
+    protected void setDataSizeMap(Map dataSizeMap) {
+        this.dataSizeMap = dataSizeMap;
+    }
 
     /**
      * set<br>
@@ -354,7 +362,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
     }
 
 
-    public void fileStoreMapObject(File file) throws Exception {
+    public void fileStoreMapObject(File file, Map dataSizeMap) throws Exception {
         try {
             FileOutputStream fos = new FileOutputStream(file, false);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -364,6 +372,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             CoreStorageContainer container = new CoreStorageContainer();
             container.storeTime = System.currentTimeMillis();
             container.storeObject = (ICoreStorage)this.mainMap;
+            container.dataSizeMap = dataSizeMap;
 
             oos.writeObject(container);
             System.out.println("Execute - fileStoreMapObject - End" + new Date());

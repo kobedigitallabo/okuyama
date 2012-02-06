@@ -8,7 +8,6 @@ import java.util.concurrent.locks.*;
 import java.util.concurrent.ArrayBlockingQueue;
 
 
-    
 
 /**
  * LinkedHashMapを継承してLRUキャッシュを実現.<br>
@@ -26,10 +25,13 @@ public class DiskBaseCacheMap extends LinkedHashMap {
     private RandomAccessFile raf = null;
     private ArrayBlockingQueue freeCacheSpaceQueue = null;
 
+    private String cacheStoreFilePath = null;
     private File cacheStoreFile = null;
 
     private int maxCacheSize = 8192;
 
+    // 自身を維持できないエラーが発生した場合にtrueとなる
+    public boolean errorFlg = false;
 
 
     // コンストラクタ
@@ -40,10 +42,13 @@ public class DiskBaseCacheMap extends LinkedHashMap {
         this.freeCacheSpaceQueue = new ArrayBlockingQueue(this.maxCacheSize);
         this.raf = new RandomAccessFile(this.cacheStoreFile, "rw");
         long freeSpacePoint = 0L;
+
         for (long i = 0; i < this.maxCacheSize; i++) {
+
             this.freeCacheSpaceQueue.offer(new Long(freeSpacePoint));
             freeSpacePoint = freeSpacePoint + ImdstDefine.dataFileWriteMaxSize;
         }
+        this.cacheStoreFilePath = this.cacheStoreFile.getAbsolutePath();
     }
 
 
@@ -70,6 +75,7 @@ public class DiskBaseCacheMap extends LinkedHashMap {
             }
 
         } catch(Exception e) {
+            this.errorFlg = true;
             e.printStackTrace();
         } finally {
             w.unlock(); 
@@ -112,6 +118,7 @@ public class DiskBaseCacheMap extends LinkedHashMap {
                 this.raf.read(retData);
             }
         } catch(Exception e) {
+            this.errorFlg = true;
             e.printStackTrace();
         } finally { 
             w.unlock(); 
@@ -135,6 +142,8 @@ public class DiskBaseCacheMap extends LinkedHashMap {
             if (ret != null) {
                 this.freeCacheSpaceQueue.offer((Long)ret);
             }
+        } catch (Exception e) {
+            this.errorFlg = true;
         } finally {
             w.unlock(); 
         }
@@ -151,14 +160,41 @@ public class DiskBaseCacheMap extends LinkedHashMap {
         try { 
             super.clear();
             this.freeCacheSpaceQueue = new ArrayBlockingQueue(this.maxCacheSize);
-            for (long i = 0; i < this.maxCacheSize; i = i + ImdstDefine.dataFileWriteMaxSize) {
-                this.freeCacheSpaceQueue.offer(new Long(i));
+
+            this.cacheStoreFile.delete();
+            this.cacheStoreFile = null;
+            this.raf = null;
+
+            this.cacheStoreFile = new File(this.cacheStoreFilePath);
+            this.raf = new RandomAccessFile(this.cacheStoreFile, "rw");
+            long freeSpacePoint = 0L;
+
+            for (long i = 0; i < this.maxCacheSize; i++) {
+
+                this.freeCacheSpaceQueue.offer(new Long(freeSpacePoint));
+                freeSpacePoint = freeSpacePoint + ImdstDefine.dataFileWriteMaxSize;
             }
+            this.errorFlg = false;
+        } catch (Exception e) {
+            this.errorFlg = true;
         } finally {
             w.unlock(); 
         }
     }
 
+
+    /**
+     * データファイルの存在確認用メソッド<br>
+     *
+     */
+    public void existsCacheFile() {
+        try { 
+            File checkCacheFile = new File(this.cacheStoreFilePath);
+            if (!checkCacheFile.exists()) this.errorFlg = true;
+        } catch (Exception e) {
+            this.errorFlg = true;
+        }
+    }
 
     /**
      * 削除指標実装.<br>
@@ -168,6 +204,7 @@ public class DiskBaseCacheMap extends LinkedHashMap {
 
             Long ret = (Long)super.remove(eldest.getKey());
             if (ret != null) {
+
                 this.freeCacheSpaceQueue.offer(ret);
             }
         }

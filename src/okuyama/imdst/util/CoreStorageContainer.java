@@ -15,5 +15,7 @@ public class CoreStorageContainer implements Cloneable, Serializable {
     public long storeTime = 0L;
 
     public ICoreStorage storeObject = null;
-    
+
+    public Map dataSizeMap = null;
+
 }

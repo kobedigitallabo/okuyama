@@ -49,7 +49,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     private transient boolean vacuumExecFlg = false;
     private transient List vacuumDiffDataList = null;
 
-    private ConcurrentHashMap dataSizeMap = new ConcurrentHashMap(20, 16, 16);
+    protected Map dataSizeMap = new ConcurrentHashMap(20, 16, 16);
     private ArrayBlockingQueue deletedDataPointList = null;
 
     private String lineFile = null;
@@ -72,6 +72,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     // コンストラクタ
     public KeyManagerValueMap(int size, boolean memoryMode, String[] virtualStoreDirs, boolean renewFlg, File bkupObjFile, String diskCacheFile) {
         super(size, new Double(size * 0.9).intValue(), 512, memoryMode, virtualStoreDirs, renewFlg, bkupObjFile);
+        this.dataSizeMap = super.dataSizeMap;
         this.diskCacheFile = diskCacheFile;
 
         this.memoryMode = memoryMode;
@@ -82,11 +83,17 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
     // コンストラクタ
     public KeyManagerValueMap(String[] dirs, int numberOfDataSize, boolean renewFlg, String diskCacheFile) {
         super(dirs, numberOfDataSize, renewFlg);
+        this.dataSizeMap = super.dataSizeMap;
         this.diskCacheFile = diskCacheFile;
         this.memoryMode = false;
         this.fullDiskMode = true;
     }
 
+    // DataSizeMapに初期値を登録する
+    // メモリオブジェクトからの初期化時などに利用
+    protected void setDataSizeMap(Map dataSizeMap) {
+        this.dataSizeMap = dataSizeMap;
+    }
 
     /**
      * 本メソッドは使用前に必ず呼び出す<br>
@@ -642,6 +649,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             size = (AtomicLong)dataSizeMap.get(unique);
         }
 
+        // 参照上を演算
         size.getAndAdd(beforeSize);
         size.getAndAdd(addSize);
     }
@@ -904,6 +912,11 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             }
         } catch(Exception e3) {
         }
+    }
+
+
+    public void fileStoreMapObject(File file) throws Exception {
+        super.fileStoreMapObject(file, this.dataSizeMap);
     }
 
     /**

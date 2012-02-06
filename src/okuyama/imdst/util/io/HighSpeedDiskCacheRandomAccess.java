@@ -35,7 +35,7 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
         this.cacheFilePath = cacheFilePath;
         if (this.cacheFilePath != null && !this.cacheFilePath.trim().equals("")) {
             cacheFile = new File(cacheFilePath);
-            this.diskCacheManager = new DiskCacheManager(150000, cacheFile);
+            this.diskCacheManager = new DiskCacheManager(maxCacheSize, cacheFile);
             this.diskCacheManager.start();
             System.out.println(" DiskCache Use - CacheFile=[" + cacheFilePath + "] Number of max cache data=" + this.maxCacheSize);
         } else {
@@ -66,9 +66,12 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
         int ret = -1;
         try {
             byte[] cacheData = null;
+            String type = "cache";
+            long startTime = System.nanoTime();
             cacheData = this.diskCacheManager.getCacheData(seekPoint);
 
             if (cacheData == null) {
+                type = "no-cache";
                 // キャッシュなし
                 super.seek(seekPoint);
                 ret = super.read(data, start, size);
@@ -79,14 +82,16 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
                 }
                 this.diskCacheManager.addCacheDarta(seekPoint, cacheData);
             } else {
-                cacheHitCount++;
-                if ((cacheHitCount % 5000) == 0) System.out.println("Cache hit count=" + cacheHitCount + " [" + new Date().toString());
+                //cacheHitCount++;
+                //if ((cacheHitCount % 5000) == 0) System.out.println("Cache hit count=" + cacheHitCount + " [" + new Date().toString());
                 // キャッシュあり
                 for (int i = 0; i < cacheData.length; i++) {
                     data[i] = cacheData[i];
                 }
                 ret = cacheData.length;
             }
+            long endTime = System.nanoTime();
+            System.out.println("Read time cache=[" + type + "] read time=[" + ((endTime - startTime) / 1000) + "]");
         } catch(IOException ie) {
             throw ie;
         } catch(Exception e) {
@@ -122,8 +127,23 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
 
         public void run() {
             boolean sleepFlg = false;
+            long checkCount = 0L;
             try {
                 while(this.runFlg) {
+                    checkCount++;
+                    if (checkCount > 50) {
+                        this.diskBaseCacheMap.existsCacheFile();
+                        checkCount = 0L;
+                    }
+                    if (this.diskBaseCacheMap.errorFlg) {
+
+                        this.noCache = true;
+                        Thread.sleep(10000);
+                        this.diskBaseCacheMap.clear();
+                        if(this.diskBaseCacheMap.errorFlg) continue;
+                    }
+
+                    this.noCache = false;
                     if (sleepFlg == true) Thread.sleep(1000);
 
                     sleepFlg = false;
@@ -138,7 +158,6 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
                             sleepFlg = true;
                         }
                     }
-
                 }
             } catch(Exception e) {
                 e.printStackTrace();
