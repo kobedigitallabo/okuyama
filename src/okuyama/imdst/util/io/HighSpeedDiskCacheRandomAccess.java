@@ -66,12 +66,11 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
         int ret = -1;
         try {
             byte[] cacheData = null;
-            String type = "cache";
-            long startTime = System.nanoTime();
+
             cacheData = this.diskCacheManager.getCacheData(seekPoint);
 
             if (cacheData == null) {
-                type = "no-cache";
+
                 // キャッシュなし
                 super.seek(seekPoint);
                 ret = super.read(data, start, size);
@@ -90,8 +89,7 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
                 }
                 ret = cacheData.length;
             }
-            long endTime = System.nanoTime();
-            System.out.println("Read time cache=[" + type + "] read time=[" + ((endTime - startTime) / 1000) + "]");
+
         } catch(IOException ie) {
             throw ie;
         } catch(Exception e) {
@@ -136,7 +134,7 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
                         checkCount = 0L;
                     }
                     if (this.diskBaseCacheMap.errorFlg) {
-
+                        System.out.println("Cache File Error " + new Date().toString());
                         this.noCache = true;
                         Thread.sleep(10000);
                         this.diskBaseCacheMap.clear();
