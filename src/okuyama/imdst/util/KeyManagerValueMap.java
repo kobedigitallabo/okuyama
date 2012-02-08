@@ -89,11 +89,6 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         this.fullDiskMode = true;
     }
 
-    // DataSizeMapに初期値を登録する
-    // メモリオブジェクトからの初期化時などに利用
-    protected void setDataSizeMap(Map dataSizeMap) {
-        this.dataSizeMap = dataSizeMap;
-    }
 
     /**
      * 本メソッドは使用前に必ず呼び出す<br>

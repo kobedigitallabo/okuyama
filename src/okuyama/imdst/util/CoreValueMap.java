@@ -61,7 +61,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                             CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
                             this.useStorageObjectTime = container.storeTime;
                             mainMap = (PartialConcurrentHashMap)container.storeObject;
-                            this.setDataSizeMap(container.dataSizeMap);
+                            this.dataSizeMap = container.dataSizeMap;
                         } catch(Exception e) {
                             e.printStackTrace();
                             mainMap = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
@@ -89,7 +89,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                             CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
                             this.useStorageObjectTime = container.storeTime;
                             mainMap = (PartialSerializeMap)container.storeObject;
-                            this.setDataSizeMap(container.dataSizeMap);
+                            this.dataSizeMap = container.dataSizeMap;
                         } catch(Exception e) {
                             mainMap = new PartialSerializeMap(size, upper, new Long(bucketSize).intValue(), virtualStoreDirs);
                         }
@@ -118,7 +118,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                             CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
                             this.useStorageObjectTime = container.storeTime;
                             mainMap = (NativeConcurrentHashMap)container.storeObject;
-                            this.setDataSizeMap(container.dataSizeMap);
+                            this.dataSizeMap = container.dataSizeMap;
                         } catch(Exception e) {
                             mainMap = new NativeConcurrentHashMap(size, upper, multi);
                         }
@@ -145,7 +145,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                             CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
                             this.useStorageObjectTime = container.storeTime;
                             mainMap = (SerializeMap)container.storeObject;
-                            this.setDataSizeMap(container.dataSizeMap);
+                            this.dataSizeMap = container.dataSizeMap;
                         } catch(Exception e) {
                             mainMap = new SerializeMap(size, upper, new Long(bucketSize).intValue(), ImdstDefine.serializerClassName);
                         }
@@ -174,9 +174,6 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
         converter = new AllFileModeCoreValueCnv();
     }
 
-    protected void setDataSizeMap(Map dataSizeMap) {
-        this.dataSizeMap = dataSizeMap;
-    }
 
     /**
      * set<br>

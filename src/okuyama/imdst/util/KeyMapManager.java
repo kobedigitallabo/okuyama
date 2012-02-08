@@ -314,6 +314,7 @@ public class KeyMapManager extends Thread {
 
 
                     if (this.workFileStartingReadFlg == true) {
+                        System.out.println(" Data log file read start - " + new Date().toString());
                         // WorkKeyMapファイルが存在する場合は読み込み
                         // トランザクションファイルはサイズでローテーションされているので、0からのインデックス番号順に読み込む
                         for (int i = 0; true; i++) {
@@ -399,6 +400,7 @@ public class KeyMapManager extends Thread {
                             }
                             if (endFlg) break;
                         }
+                        System.out.println(" Data log file read end - " + new Date().toString());
                     }
 
                     // トランザクションログ用のストリーム構築
@@ -2345,9 +2347,8 @@ public class KeyMapManager extends Thread {
     public void outputKeyMapObj2Stream(PrintWriter pw) throws BatchException {
         if (!blocking) {
             try {
-                int checkCnt = 0;
-                synchronized(poolKeyLock) {
 
+                synchronized(poolKeyLock) {
 
                     logger.info("outputKeyMapObj2Stream - synchronized - start");
                     String allDataSep = "";
@@ -2455,7 +2456,7 @@ public class KeyMapManager extends Thread {
                                 keyList = null;
                                 keyList = new ArrayList();
                                 for (int idx = 0; idx < keyListInt.length; idx++) {
-                                    checkCnt++;
+
                                     // 全てのデータを送る
                                     String sendKey = (String)pointToKeyMap.get(new Long(keyListInt[idx]));
                                     allDataBuf.append(allDataSep);
@@ -2486,7 +2487,7 @@ public class KeyMapManager extends Thread {
                             keyList = null;
                             keyList = new ArrayList();
                             for (int idx = 0; idx < keyListInt.length; idx++) {
-                                checkCnt++;
+
                                 // 全てのデータを送る
                                 String sendKey = (String)pointToKeyMap.get(new Long(keyListInt[idx]));
                                 allDataBuf.append(allDataSep);
@@ -2508,7 +2509,7 @@ public class KeyMapManager extends Thread {
                         pw.flush();
                     }
                 }
-                System.out.println(checkCnt);
+
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("outputKeyMapObj2Stream - Error =[" + e.getMessage() + "]");
