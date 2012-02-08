@@ -79,7 +79,7 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
                 for (int i = 0; i < data.length; i++) {
                     cacheData[i] = data[i];
                 }
-                this.diskCacheManager.addCacheDarta(seekPoint, cacheData);
+                this.diskCacheManager.addCacheData(seekPoint, cacheData);
             } else {
                 //cacheHitCount++;
                 //if ((cacheHitCount % 5000) == 0) System.out.println("Cache hit count=" + cacheHitCount + " [" + new Date().toString());
@@ -110,6 +110,7 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
         private ConcurrentHashMap fixWriteDataMap = new ConcurrentHashMap(20000);
         private DiskBaseCacheMap diskBaseCacheMap = null;
         private Object sync = new Object();
+        private Object removeSync = new Object();
 
         private boolean noCache = false;
 
@@ -149,6 +150,10 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
                         Long cacheSeekPoint = (Long)this.writeQueue.poll();
                         if (cacheSeekPoint != null) {
                             byte[] cacheData = (byte[])fixWriteDataMap.remove(cacheSeekPoint);
+                            if (cacheData == null) {
+                                Thread.sleep(10);
+                                cacheData = (byte[])fixWriteDataMap.remove(cacheSeekPoint);
+                            }
                             if (cacheData != null) {
                                 this.diskBaseCacheMap.put(cacheSeekPoint, cacheData);
                             }
@@ -165,9 +170,9 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
         }
     
 
-        public void addCacheDarta(long seekPoint, byte[] cacheData) {
+        public void addCacheData(long seekPoint, byte[] cacheData) {
             if (this.noCache) return;
-            synchronized (this.sync) {
+            synchronized (this.removeSync) {
                 Long seekPointLong = new Long(seekPoint);
                 if(this.writeQueue.offer(seekPointLong)) {
                     this.fixWriteDataMap.put(seekPointLong, cacheData);
@@ -183,9 +188,12 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
 
         public void removeCache(long seekPoint) {
             if (this.noCache) return;
-            synchronized (this.sync) {
-                this.diskBaseCacheMap.remove(new Long(seekPoint));
-                this.fixWriteDataMap.remove(seekPoint);
+            synchronized (this.removeSync) {
+                synchronized (this.sync) {
+
+                    this.diskBaseCacheMap.remove(new Long(seekPoint));
+                    this.fixWriteDataMap.remove(seekPoint);
+                }
             }
         }
 
