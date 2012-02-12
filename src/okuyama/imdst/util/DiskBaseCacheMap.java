@@ -128,6 +128,7 @@ public class DiskBaseCacheMap extends LinkedHashMap {
             }
         } catch(Exception e) {
             this.errorFlg = true;
+            retData = null;
             e.printStackTrace();
         } finally { 
             w.unlock(); 
@@ -153,6 +154,7 @@ public class DiskBaseCacheMap extends LinkedHashMap {
             }
         } catch (Exception e) {
             this.errorFlg = true;
+            ret = null;
         } finally {
             w.unlock(); 
         }

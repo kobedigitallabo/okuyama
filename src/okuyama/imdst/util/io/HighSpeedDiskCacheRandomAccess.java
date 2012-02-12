@@ -29,6 +29,7 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
     private long cacheHitCount = 0L;
 
 
+
     public HighSpeedDiskCacheRandomAccess(File target, String type, String cacheFilePath) throws FileNotFoundException {
         super(target, type);
         File cacheFile = null;
@@ -111,6 +112,8 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
         private DiskBaseCacheMap diskBaseCacheMap = null;
         private Object sync = new Object();
         private Object removeSync = new Object();
+        private long lastAccessTime = 0L;
+
 
         private boolean noCache = false;
 
@@ -146,6 +149,13 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
                     if (sleepFlg == true) Thread.sleep(1000);
 
                     sleepFlg = false;
+
+                    // 連続アクセス中は登録を中止する
+                    for (int skipIdx = 0; skipIdx < 5; skipIdx++) {
+                        if ((System.nanoTime() - lastAccessTime) > 10000000) break; 
+                        Thread.sleep(10);
+                    }
+
                     synchronized (this.sync) {
                         Long cacheSeekPoint = (Long)this.writeQueue.poll();
                         if (cacheSeekPoint != null) {
@@ -172,7 +182,9 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
 
         public void addCacheData(long seekPoint, byte[] cacheData) {
             if (this.noCache) return;
+            lastAccessTime = System.nanoTime();
             synchronized (this.removeSync) {
+
                 Long seekPointLong = new Long(seekPoint);
                 if(this.writeQueue.offer(seekPointLong)) {
                     this.fixWriteDataMap.put(seekPointLong, cacheData);
@@ -183,11 +195,13 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
 
         public byte[] getCacheData(long seekPoint) {
             if (this.noCache) return null;
+            lastAccessTime = System.nanoTime();
             return (byte[])this.diskBaseCacheMap.get(new Long(seekPoint));
         }
 
         public void removeCache(long seekPoint) {
             if (this.noCache) return;
+            lastAccessTime = System.nanoTime();
             synchronized (this.removeSync) {
                 synchronized (this.sync) {
 
