@@ -151,7 +151,7 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
                     sleepFlg = false;
 
                     // 連続アクセス中は登録を中止する
-                    for (int skipIdx = 0; skipIdx < 5; skipIdx++) {
+                    for (int skipIdx = 0; skipIdx < 3; skipIdx++) {
                         if ((System.nanoTime() - lastAccessTime) > 10000000) break; 
                         Thread.sleep(10);
                     }
