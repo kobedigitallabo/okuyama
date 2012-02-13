@@ -39,7 +39,7 @@ public class FileBaseDataList extends AbstractList {
     // Total Size
     private AtomicInteger totalSize = null;
 
-    private int oneDataLength = 35 + new Double(ImdstDefine.saveKeyMaxSize * 1.33 + 1).intValue() + new Double(ImdstDefine.saveDataMaxSize * 1.33 + 1).intValue();
+    private int oneDataLength = 35 + new Double(ImdstDefine.saveKeyMaxSize * 1.38 + 1).intValue() + new Double(ImdstDefine.saveDataMaxSize * 1.40 + 1).intValue();
 //    private int oneDataLength = 1 + 170 + 2560;
 
     private List tmpList = null;

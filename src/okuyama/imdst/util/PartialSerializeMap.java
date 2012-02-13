@@ -40,7 +40,7 @@ public class PartialSerializeMap extends SerializeMap implements Cloneable, Seri
                                          bigValueStoreDirs[0] + "/partialbigdata3/", 
                                          bigValueStoreDirs[0] + "/partialbigdata4/", 
                                          bigValueStoreDirs[0] + "/partialbigdata5/"};
-            this.bigValueStoreMap = new FileBaseDataMap(bigValueStoreDir, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.memoryStoreLimitSize*2, ImdstDefine.memoryStoreLimitSize*6);
+            this.bigValueStoreMap = new FileBaseDataMap(bigValueStoreDir, 100000, 0.01, new Double(ImdstDefine.saveDataMaxSize*1.40).intValue(), ImdstDefine.memoryStoreLimitSize*2, ImdstDefine.memoryStoreLimitSize*6);
         }
     }
 

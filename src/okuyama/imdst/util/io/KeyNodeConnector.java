@@ -140,7 +140,7 @@ public class KeyNodeConnector {
             // 一度でもエラーになった接続は再利用しない
             this.useCount = Integer.MAX_VALUE;
 
-            long uTime = System.nanoTime();
+            //long uTime = System.nanoTime();
             //System.out.println("this.retryConnectMode=" + this.retryConnectMode + ", this.retry=" + this.retry + ", ConnectDump=" + this.connectorDump() + ", retryStr=" +retryStr + ", utime=" + uTime);
             if (this.retryConnectMode == true && this.retry == false) {
                 this.retry = true;
@@ -177,6 +177,7 @@ public class KeyNodeConnector {
                     if (retryStr != null) {
 
                         //System.out.println("println utime=" + uTime);
+                        this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout*5);
                         this.pw.println(retryStr);
                         this.pw.flush();
                         ret = this.br.readLine();
@@ -185,13 +186,14 @@ public class KeyNodeConnector {
                             // 再度試す
                             this.close();
                             this.connect();
+                            this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout*5);
                             this.pw.println(retryStr);
                             this.pw.flush();
                             ret = this.br.readLine();
                         }
                         //System.out.println("readLine utime=" + uTime + " readStr=" + ret);
                     }
-
+                    this.socket.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
                     retry = false;
                 } catch(Exception ee) {
                     //System.out.println("throw Point 2 uTime=" + uTime + " nowTime=" + System.nanoTime());

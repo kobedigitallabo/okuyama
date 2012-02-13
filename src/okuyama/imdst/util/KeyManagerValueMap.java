@@ -120,8 +120,13 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 this.overSizeDataStore = new FileBaseDataMap(overSizeDataStoreDirs, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.dataFileWriteMaxSize*5, ImdstDefine.dataFileWriteMaxSize*15);
 
 
+
+            File valueFile = new File(lineFile);
+            if (!valueFile.exists() || valueFile.length() < 1) {
+                super.clear();
+            }
             // データ操作記録ファイル用のBufferedWriter
-            this.bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(lineFile), true), ImdstDefine.keyWorkFileEncoding), 1024*256);
+            this.bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(valueFile, true), ImdstDefine.keyWorkFileEncoding), 1024*256);
             this.dataFileBufferUseCount = new AtomicInteger(0);
 
             // 共有データファイルの再書き込み遅延指定
@@ -148,28 +153,36 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             // 終端を探すまでに壊れてしまっているデータは無効データ(ブランクデータ)に置き換える
             String readDataLine = null;
             while((readDataLine = br.readLine()) != null){
-                if (!readDataLine.trim().equals("")) {
-                    counter++;
-                    if (readDataLine.getBytes().length < this.oneDataLength) {
-                        int shiftByteSize = 0;
-                        if (readDataLine.length() < "(B)!0".length()) {
-                            int shift = "(B)!0".length() - readDataLine.length();
-                            shiftByteSize = shift; 
-                        }
-                        readDataLine = "(B)!0";
-                        StringBuilder updateBuf = new StringBuilder(readDataLine);
-                        for (int i = 0; i < (this.oneDataLength - readDataLine.length()); i++) {
-                            updateBuf.append("&");
-                            shiftByteSize++;
-                        }
-                        updateBuf.append("\n");
-                        shiftByteSize++;
 
-                        this.raf.seek(this.convertLineToSeekPoint(counter));
-                        this.raf.write(updateBuf.toString().getBytes(), 0, this.oneDataLength+1);
-                        for (int i = 0; i < shiftByteSize; i++) {
-                            br.read();
-                        }
+                counter++;
+                boolean zeroDataFlg = false;
+                int writeLen = this.oneDataLength;
+                if (readDataLine.trim().length() == 0) zeroDataFlg = true;
+
+                if (readDataLine.getBytes().length < this.oneDataLength) {
+                    int shiftByteSize = 0;
+                    if (readDataLine.length() < "(B)!0".length()) {
+                        int shift = "(B)!0".length() - readDataLine.length();
+                        shiftByteSize = shift; 
+                    }
+                    readDataLine = "(B)!0";
+                    StringBuilder updateBuf = new StringBuilder(readDataLine);
+                    for (int i = 0; i < (this.oneDataLength - readDataLine.length()); i++) {
+                        updateBuf.append("&");
+                        shiftByteSize++;
+                    }
+
+                    if(!zeroDataFlg) {
+                        updateBuf.append("\n");
+                        writeLen = writeLen + 1;
+                    }
+
+                    shiftByteSize++;
+
+                    this.raf.seek(this.convertLineToSeekPoint(counter));
+                    this.raf.write(updateBuf.toString().getBytes(), 0, writeLen);
+                    for (int i = 0; i < shiftByteSize; i++) {
+                        br.read();
                     }
                 }
             }
