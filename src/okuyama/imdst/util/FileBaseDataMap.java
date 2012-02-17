@@ -40,7 +40,7 @@ public class FileBaseDataMap extends AbstractMap implements Cloneable, Serializa
     private int innerCacheSizeTotal = 1024;
 
     // Sync Object
-    private Object syncObj = null;
+    private transient Object syncObj = null;
 
     private int iteratorIndex = 0;
 
@@ -660,7 +660,7 @@ interface CoreFileBaseKeyMap {
  *
  *
  */
-class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap {
+class DelayWriteCoreFileBaseKeyMap extends Thread implements CoreFileBaseKeyMap, Cloneable, Serializable {
 
     // Create a data directory(Base directory)
     private String[] baseFileDirs = null;
@@ -1379,7 +1379,7 @@ start1 = System.nanoTime();
  *
  *
  */
-class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap{
+class FixWriteCoreFileBaseKeyMap implements CoreFileBaseKeyMap, Cloneable, Serializable{
 
     // Create a data directory(Base directory)
     private String[] baseFileDirs = null;
@@ -2144,19 +2144,19 @@ long end4 = 0L;
 /**
  * ファイルアクセッサー周りのキャッシュ用コンテナ.<br>
  */
-class CacheContainer {
-    public RandomAccessFile raf = null;
-    public BufferedWriter wr = null;
-    public File file = null;
+class CacheContainer implements Cloneable, Serializable {
+    public transient RandomAccessFile raf = null;
+    public transient BufferedWriter wr = null;
+    public transient File file = null;
     public boolean isClosed = false;
 }
 
 
-class FileBaseDataMapEntry implements Map.Entry {
+class FileBaseDataMapEntry implements Map.Entry, Cloneable, Serializable {
 
-    private Object key = null;
-    private Object value = null;
-    private FileBaseDataMap fileBaseDataMap = null;
+    private transient Object key = null;
+    private transient Object value = null;
+    private transient FileBaseDataMap fileBaseDataMap = null;
 
     // コンストラクタ
     public FileBaseDataMapEntry(Object key, Object value, FileBaseDataMap fileBaseDataMap) {
@@ -2210,7 +2210,7 @@ class FileBaseDataMapEntry implements Map.Entry {
 }
 
 
-class FileBaseDataMapSet extends AbstractSet implements Set {
+class FileBaseDataMapSet extends AbstractSet implements Set, Cloneable, Serializable {
 
     private FileBaseDataMap fileBaseDataMap = null;
 
@@ -2231,11 +2231,11 @@ class FileBaseDataMapSet extends AbstractSet implements Set {
 }
 
 
-class FileBaseDataMapIterator implements Iterator {
+class FileBaseDataMapIterator implements Iterator, Cloneable, Serializable {
 
     private FileBaseDataMap fileBaseDataMap = null;
 
-    private Object nowPositionKey = null;
+    private transient Object nowPositionKey = null;
 
 
     // コンストラクタ
@@ -2289,7 +2289,7 @@ class FileBaseDataMapIterator implements Iterator {
 /**
  * ファイルアクセッサーのキャッシュ群.<br>
  */
-class InnerCache extends LinkedHashMap {
+class InnerCache extends LinkedHashMap implements Cloneable, Serializable {
 
     private boolean fileWrite = false;
 
@@ -2299,7 +2299,7 @@ class InnerCache extends LinkedHashMap {
 
     private int maxCacheSize = -1;
 
-    public Object syncObj = new Object();
+    public transient Object syncObj = new Object();
 
     // コンストラクタ
     public InnerCache() {
