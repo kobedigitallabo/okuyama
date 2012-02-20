@@ -100,6 +100,29 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   自動的に再認識され、利用される。その際DataNodeの停止は伴わない。
 
 
+・JavaのOkuyamaClientにObjectの新規登録を保証するsetNewObjectValueメソッドを追加
+  setNewValueはValueにString型しか対応していなかったが、ValueをObjectとするバージョンを追加。
+  利用方法はsetNewValueと同様
+  利用例)
+  ------------------------------------------------------
+    OkuyamaClient client = new OkuyamaClient();
+    client.connect("127.0.0.1", 8888);
+
+    Map objectValue = new HashMap();
+    objectValue.put("Key_XXX", "Value_XXX");
+    objectValue.put("Key_YYY", "Value_YYY");
+    objectValue.put("Key_ZZZ", "Value_ZZZ");
+
+    String[] setResult = client.setNewObjectValue("Object_Key", objectValue); // 新規登録
+
+    if (setResult[0].equals("true")) { // 登録を確認
+		System.out.println("登録成功");
+    } else {
+		System.out.println("登録失敗 Message=[" + setResult[1] + "]");
+    }
+  ------------------------------------------------------
+
+
 
 ・有効期限を30日以上に設定出来ないバグを修正
 ・ノード追加に伴うデータ移行中にTagデータを新規登録すると、正しく取得出来ないバグを修正
