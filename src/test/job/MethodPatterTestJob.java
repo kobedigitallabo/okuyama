@@ -676,6 +676,29 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             } else {
                 //System.out.println("処理成功");
             }
+
+
+            Map newObjMap = new HashMap();
+            newObjMap.put(this.nowCount + "Key_ABCDE_obj_" + start, this.nowCount + "AAAAAAAAABBBBBBBBBBBBCCCCCCCCCC" + start);
+
+            String[] setNewObjRet = okuyamaClient.setNewObjectValue(this.nowCount + "Key_ABCDE_obj_" + start, newObjMap);
+            if(!setNewObjRet[0].equals("true")) {
+
+                System.out.println("Key=[" + this.nowCount + "Key_ABCDE_obj_" + start + "] Error =[" + setNewObjRet[1] + "]");
+                errorFlg = true;
+            } else {
+                Object[] getNewObjRet = okuyamaClient.getObjectValue(this.nowCount + "Key_ABCDE_obj_" + start);
+                if (getNewObjRet[0].equals("true")) {
+                    Map retMap = (Map)getNewObjRet[1];
+                    if (!retMap.equals(newObjMap)) {
+                        System.out.println("Key=[" + this.nowCount + "Key_ABCDE_obj_" + start + "] Get - Error");
+                        errorFlg = true;
+                    } else {
+                        //System.out.println("処理成功");
+                    }
+                }
+                //System.out.println("処理成功");
+            }
             long endTime = new Date().getTime();
 
             System.out.println("New Value Method= " + (endTime - startTime) + " milli second");
