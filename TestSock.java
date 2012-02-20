@@ -431,6 +431,34 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } else if (args[0].equals("3.9")) {
+
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagあり)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] tag1 = {"tag11"};
+                String[] setTag = null;
+                int counter = 0;
+
+                long start = new Date().getTime();
+                long end = 0L;
+                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                        setTag = tag1;
+
+                    if (!okuyamaClient.setValue("tagsampledatakey_" + new Integer(i).toString(), setTag, "tagsamplesavedata_" + new Integer(i).toString())) {
+                        System.out.println("OkuyamaClient - error");
+                    }
+                    if ((i % 1000) == 0) {
+                        end = new Date().getTime();
+                        System.out.println((end - start));
+                        start = new Date().getTime();
+                    }
+                }
+                end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
             } else if (args[0].equals("3.1")) {
                 int port = Integer.parseInt(args[2]);
                 // OkuyamaClientを使用してデータを保存(Tagあり)
