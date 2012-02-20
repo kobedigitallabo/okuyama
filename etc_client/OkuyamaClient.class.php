@@ -1159,6 +1159,7 @@ class OkuyamaClient {
                     if ($this->checkStrByteLength($tagStrs[$i]) > $this->maxKeySize) throw new OkuyamaClientException("Tag Max Size " . $this->maxKeySize . " Byte");
                 }
             }
+
             if ($this->checkStrByteLength($value) > $this->maxValueSize) throw new OkuyamaClientException("Save Value Max Size " . $this->maxValueSize . " Byte");
 
             if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
@@ -1178,7 +1179,8 @@ class OkuyamaClient {
                 // ValueをBase64でエンコード
                 $encodeValue = $this->dataEncoding($value);
             }
-
+var_dump("this->maxValueSize=" . $this->maxValueSize);
+var_dump($this->checkStrByteLength($encodeValue));
             // 文字列バッファ初期化
             $serverRequestBuf = "";
 
@@ -2301,6 +2303,107 @@ class OkuyamaClient {
     }
 
 
+
+    /**
+     * MasterNodeからTag値を渡すことで紐付くValue値の集合を取得する.<br>
+     * 文字列エンコーディング指定あり.<br>
+     * Keyは削除されTagとの紐付けだけ残っている値は返却されない.<br>
+     * 存在しないTagを指定した場合はNULLが返される<br>
+     *
+     * @param tagStr Tag文字列
+     * @param encoding エンコーディング指定
+     * @return array 取得データの連想配列 キー値はTag紐付くKeyとなりValueはそのKeyに紐付く値となる(存在しないTagを指定した場合はNULLが返される)
+     * @throws OkuyamaClientException, Exception
+     */
+    public function getTagValues($tagStr, $encoding="UTF-8") {
+        $ret = array(); 
+        $serverRetStr = null;
+        $serverRet = null;
+
+        $serverRequestBuf = null;
+
+        try {
+            if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if ($tagStr == null ||  $tagStr === "") {
+                throw new OkuyamaClientException("The blank is not admitted on a tag");
+            }
+
+
+            $sendKeyList = array();
+
+            // 文字列バッファ初期化
+            $serverRequestBuf = "";
+
+            // 処理番号連結
+            $serverRequestBuf = $serverRequestBuf . "23";
+            // セパレータ連結
+            $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+            // Tag連結
+            $serverRequestBuf = $serverRequestBuf . $this->dataEncoding($tagStr);
+
+
+            // サーバ送信
+            @fputs($this->socket, $serverRequestBuf . "\n");
+
+            while (true) {
+                $serverRetStr = @fgets($this->socket);
+                if ($serverRetStr === FALSE) break;
+
+                $serverRetStr = str_replace("\r", "", $serverRetStr);
+                $serverRetStr = str_replace("\n", "", $serverRetStr);
+                if ($serverRetStr === $this->getMultiEndOfDataStr) break;
+
+                $serverRet = explode($this->sepStr, $serverRetStr);
+
+
+
+                // 処理の妥当性確認
+                if ($serverRet[0] === "23") {
+                    if ($serverRet[1] === "true") {
+    
+                        // データ有り
+                        $oneDataRet = array();
+
+                        $oneDataRet[0] = $this->dataDecoding($serverRet[2], $encoding);
+
+                        // Valueがブランク文字か調べる
+                        if ($serverRet[3] === $this->blankStr) {
+                            $oneDataRet[1] = "";
+                        } else {
+    
+                            // Value文字列をBase64でデコード
+                            $oneDataRet[1] =  $this->dataDecoding($serverRet[3], $encoding);
+                        }
+                        $ret[$oneDataRet[0]] =  $oneDataRet[1];
+                    } else {
+                        // データなし or エラー 今のところ無視
+                    }
+                } else {
+    
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+            }
+
+            if (count($ret) < 1) $ret = null;
+
+        } catch (OkuyamaClientException $oe) {
+            throw $oe;
+        } catch (Exception $e) {
+            if ($this->masterNodesList != null && count($this->masterNodesList) > 1) {
+                if($this->autoConnect()) {
+                    $ret = $this->getTagValues($keyStrList, $encoding);
+                }
+            } else {
+                throw $e;
+            }
+        }
+        return $ret;
+    }
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>

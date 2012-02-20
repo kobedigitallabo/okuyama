@@ -36,6 +36,7 @@
       exit;
     }
 */
+
     // 分岐
     try {
       if ($argv[1] === "size-true") {
@@ -74,6 +75,7 @@
         var_dump("incrValue - OK");
         $client->decrValue($keyVal, 1);
         var_dump("decrValue - OK");
+
 
       } else if ($argv[1] === "size-false") {
 
@@ -379,11 +381,9 @@
           $client->setValue("key_multi_5", "val_multi_5");
   
           $getMKeyList1 = array();
-          $getMKeyList1[] = "key_multi_1";
-          $getMKeyList1[] = "key_multi_2";
-          $getMKeyList1[] = "key_multi_3";
-          $getMKeyList1[] = "key_multi_4";
-          $getMKeyList1[] = "key_multi_5";
+          $getMKeyList1[] = "key_multi_1X";
+          $getMKeyList1[] = "key_multi_5XY";
+
           var_dump($client->getMultiValue($getMKeyList1));
   
           $getMKeyList2 = array();
@@ -496,7 +496,11 @@
           var_dump($client->getTagKeys($argv[4]));
         }
   
-  
+      } else if ($argv[1] === "4.1"){
+        // Tagを指定してKey-Valueを取得
+        $counter = 0;
+        var_dump($client->getTagValues($argv[4]));
+        var_dump($client->getTagValues($argv[4], "UTF-8"));
       } else if ($argv[1] === "7") {
   
         // データを引数の回数分取得
