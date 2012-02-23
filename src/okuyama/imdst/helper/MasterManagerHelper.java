@@ -3495,7 +3495,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 String[] workDataNodeInfo = mainDataNodeInfo.split(":");
 
                 keyNodeConnector = this.createKeyNodeConnection(workDataNodeInfo[0], workDataNodeInfo[1], mainDataNodeInfo, false);
-                keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
+                keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode*12*24);
 
                 if (keyNodeConnector != null) {
 
@@ -3514,7 +3514,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     String[] subWorkDataNodeInfo = subDataNodeInfo.split(":");
 
                     keyNodeConnector = this.createKeyNodeConnection(subWorkDataNodeInfo[0], subWorkDataNodeInfo[1], subDataNodeInfo, false);
-                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode*12*24);
     
                     if (keyNodeConnector != null) {
 
@@ -3535,7 +3535,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     String[] thirdWorkDataNodeInfo = thirdDataNodeInfo.split(":");
 
                     keyNodeConnector = this.createKeyNodeConnection(thirdWorkDataNodeInfo[0], thirdWorkDataNodeInfo[1], thirdDataNodeInfo, false);
-                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode);
+                    keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout4RecoverMode*12*24);
 
                     if (keyNodeConnector != null) {
 
