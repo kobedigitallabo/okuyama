@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# okuyamamaster    Startup script for Okuyama MasterNode
+
+# chkconfig: 2345 99 99
+# description: okuyamamaster okuyama.
+
+# 事前に/etc/profileにてOKUYAMA_HOME及び、JAVA_HOMEを環境変数として作成してください。
+# 事前にokuyamaユーザを作成してください。別ユーザで実行する場合は19行目を変更してください。
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+
+source /etc/profile
+OKUYAMA_USER=okuyama
+progstart=$OKUYAMA_HOME/bin/okuyama
+progstop=$OKUYAMA_HOME/bin/okuyama
+okuyamaconf=$OKUYAMA_HOME/conf/MasterNode.properties
+okuyamastdout=$OKUYAMA_HOME/logs/masternode.out
+okuyamastderr=$OKUYAMA_HOME/logs/masternode.err
+okuyamactlport=18888
+okuyamalockfilename=okuyamamaster
+RETVAL=0
+
+case "$1" in
+  start)
+         # Start
+        if [ -f /var/lock/subsys/$okuyamalockfilename ] ; then
+            echo "okuyama already started!!"
+            exit 1
+        fi
+        echo -n "Starting okuyama: "
+        su -s /bin/bash - $OKUYAMA_USER -c "$progstart start -server $okuyamaconf $okuyamastdout $okuyamastderr"
+        RETVAL=$?
+        echo
+        [ $RETVAL = 0 ] && touch /var/lock/subsys/$okuyamalockfilename
+        ;;
+  stop)
+
+
+        # Stop daemons.
+        if [ ! -f /var/lock/subsys/$okuyamalockfilename ] ; then
+            echo "okuyama already stopped!"
+            exit 1
+        fi
+        echo -n "Shutting down okuyama: "
+        $progstop stop $okuyamactlport
+        RETVAL=$?
+        echo
+        rm -f /var/lock/subsys/$okuyamalockfilename
+        ;;
+  restart)
+        echo "No Use"
+        ;;
+  status)
+        $JAVA_HOME/bin/jps -lVvm | grep  "$okuyamaconf" 1> /dev/null
+        if [ $? = '0' ]; then
+            echo "okuyama is running.."
+        else
+            echo "okuyama is stoppend.."
+        fi
+
+        exit $?
+        ;;
+  *)
+        echo $"Usage: okuyamamaster {start|stop|status}"
+        exit 1
+esac
+
+exit $RETVAL
