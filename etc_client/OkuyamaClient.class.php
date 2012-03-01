@@ -1620,7 +1620,7 @@ var_dump($this->checkStrByteLength($encodeValue));
 
 
     /**
-     * マスタサーバからKeyを複数個指定することで一度に複数個のKeyとValueをを取得する.<br>
+     * マスタサーバからKeyを複数個指定することで一度に複数個のKeyとValueを取得する.<br>
      * 取得されたKeyとValueがarrayにKeyとValueの組になって格納され返される<br>
      * 存在しないKeyを指定した場合は返却される連想配列には含まれない<br> 
      * Key値にブランクを指定した場合はKeyを指定していないものとみなされる<br> 
@@ -2404,6 +2404,144 @@ var_dump($this->checkStrByteLength($encodeValue));
         }
         return $ret;
     }
+
+    /**
+     * MasterNodeからTag値を渡すことで紐付くKey値の配列を取得する<br>
+     * 複数のTagを指定することで、一度に関連する値を取得可能<br>
+     * 複数のTagに紐付く値はマージされて1つとなる<br>
+     * 引数のmargeTypeを指定することで、ANDとORを切り替えることが出来る<br>
+     *
+     * @param tagList Tag値のリスト
+     * @param margeType 取得方法指定(true = AND、false=OR)
+     * @param noExistsData 存在していないデータを取得するかの指定(true:取得する false:取得しない)
+     * @return String[] 取得データのKey配列 取得キーに同一の値を複数指定した場合は束ねられる。結果が0件の場合はnullが返る
+     */
+    public function getMultiTagKeys($tagList, $margeType=true, $noExistsData=true) {
+        $ret = null;
+        $tagRet = null;
+        $retKeyList = null;
+        $serverRetStr = null;
+        $serverRet = null;
+        $margeRet = null;
+        $tmpKeys = null;
+
+        if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+        $tagRet = $this->getTagKeys($tagList[0], $noExistsData);
+        if($margeType === true && $tagRet[0] === "false") return $ret;
+
+        if ($tagRet[0] === "true") {
+            $tmpKeys = array();
+            $retTmpKeys = $tagRet[1];
+
+            for ($i = 0; $i < count($retTmpKeys); $i++) {
+                $tmpKeys[$retTmpKeys[$i]] = "";
+            }           
+            $retKeyList = $tmpKeys;
+
+        } else {
+            $retKeyList = array();
+        }
+
+        for ($i = 1; $i < count($tagList); $i++) {
+            $tagRet = $this->getTagKeys($tagList[$i]);
+            if($margeType === true && $tagRet[0] === "false") return NULL;
+
+            if ($tagRet[0] === "true") {
+                if ($margeType === true) {
+
+                    $tmpKeys = array();
+                    $retTmpKeys = $tagRet[1];
+                    for ($retTmpKeysIdx = 0; $retTmpKeysIdx < count($retTmpKeys); $retTmpKeysIdx++) {
+                        $tmpKeys[$retTmpKeys[$retTmpKeysIdx]] = "";
+                    }
+                    $deleteKeys = array_diff_key($retKeyList, $tmpKeys);
+
+                    foreach ($deleteKeys as $key => $val){
+                        unset($retKeyList[$key]);
+                    }   
+                } else {
+                    $tmpKeys = array();
+                    $retTmpKeys = $tagRet[1];
+                    for ($retTmpKeysIdx = 0; $retTmpKeysIdx < count($retTmpKeys); $retTmpKeysIdx++) {
+                        $tmpKeys[$retTmpKeys[$retTmpKeysIdx]] = "";
+                    }
+                    $tmpRet = array_merge($retKeyList, $tmpKeys);
+                    $retKeyList = $tmpRet;
+                }
+            } else {
+                $tmpKeys = array();
+                $retTmpKeys = $tagRet[1];
+                for ($retTmpKeysIdx = 0; $retTmpKeysIdx < count($retTmpKeys); $retTmpKeysIdx++) {
+                    $tmpKeys[$retTmpKeys[$retTmpKeysIdx]] = "";
+                }
+                $tmpRet = array_merge($retKeyList, $tmpKeys);
+                $retKeyList = $tmpRet;
+            }
+        }
+
+        if (count($retKeyList) < 1) return null;
+
+        $tmpKeys = array();
+
+        foreach ($retKeyList as $key => $val){
+            $tmpKeys[] = $key;
+        }
+
+        $retKeyList = $tmpKeys;
+
+        return $retKeyList;
+    }
+
+    /**
+     * MasterNodeからTag値を渡すことで紐付くValue値の集合を取得する<br>
+     * 複数のTagを指定することで、一度に関連する値を取得可能<br>
+     * 複数のTagに紐付く値はマージされて1つとなる<br>
+     * 引数のmargeTypeを指定することで、ANDとORを切り替えることが出来る<br>
+     *
+     * @param tagList Tag値のリスト
+     * @param margeType 取得方法指定(true = AND、false=OR)
+     * @return array KeyとValueが格納された連想配列がかえされる。1件もデータが存在しない場合はnullが返る
+     */
+    public function getMultiTagValues($tagList, $margeType=true) {
+        $ret = null;
+        $tagRet = null;
+        $retKeyList = null;
+        $serverRetStr = null;
+        $serverRet = null;
+        $margeRet = null;
+        $tmpKeys = null;
+
+        if ($this->socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+        $tagRet = $this->getTagValues($tagList[0]);
+        if($margeType === true && $tagRet[0] === "false") return $ret;
+
+        $ret = $tagRet;
+
+        for ($i = 1; $i < count($tagList); $i++) {
+            $tagRet = $this->getTagValues($tagList[$i]);
+            if($margeType === true && $tagRet === null) return NULL;
+
+            if ($tagRet !== null) {
+                if ($margeType === true) {
+
+                    $deleteKeys = array_diff_key($ret, $tagRet);
+                    foreach ($deleteKeys as $key => $val){
+                        unset($ret[$key]);
+                    }   
+                } else {
+                    $tmpRet = array_merge($ret, $tagRet);
+                    $ret = $tmpRet;
+                }
+            }
+        }
+
+        if (count($ret) < 1) return null;
+
+        return $ret;
+    }
+
 
     /**
      * MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br>
