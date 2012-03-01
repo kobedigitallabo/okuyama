@@ -512,6 +512,7 @@
         $tagList[] = "tag3";
         $tagList[] = "tag4";
         var_dump($client->getMultiTagKeys($tagList, false));
+        var_dump($client->getMultiTagKeys($tagList, true));
       } else if ($argv[1] === "4.3") {
   
         // Tagを複数指定してANDもしくはOR条件でリストを取得
@@ -522,17 +523,18 @@
         $tagList[] = "tag2";
         $tagList[] = "tag4";
         var_dump($client->getMultiTagKeys($tagList, true));
+        var_dump($client->getMultiTagKeys($tagList, false));
       } else if ($argv[1] === "4.4") {
   
         // Tagを複数指定してANDもしくはOR条件でリストを取得
         $counter = 0;
 
         $tagList = array();
-        //$tagList[] = "tag1";
-        //$tagList[] = "tag2";
-        $tagList[] = "tag4";
+        $tagList[] = "tag1";
+        $tagList[] = "tag2";
+        $tagList[] = "tag3";
         var_dump($client->getMultiTagValues($tagList, true));
-
+        var_dump($client->getMultiTagValues($tagList, false));
       } else if ($argv[1] === "7") {
   
         // データを引数の回数分取得

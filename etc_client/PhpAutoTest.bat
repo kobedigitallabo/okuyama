@@ -26,6 +26,9 @@ rem Tag値をtag1を指定して、tag1に属するKey値を取得(Key値存在指定有り(false))
 php PhpTestSock.php 4 127.0.0.1 8888 tag1 false
 rem Tag値をtag1を指定して、tag1に属するKey値をValue
 php PhpTestSock.php 4.1 127.0.0.1 8888 tag1
+php PhpTestSock.php 4.2 127.0.0.1 8888
+php PhpTestSock.php 4.3 127.0.0.1 8888
+php PhpTestSock.php 4.4 127.0.0.1 8888
 rem キー値をkey_aでValueを削除
 php PhpTestSock.php 8 127.0.0.1 8888 key_a
 rem 分散ロックを使用する
