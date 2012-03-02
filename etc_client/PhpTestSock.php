@@ -678,7 +678,18 @@
         $setObj[3] = array();
   
         var_dump($client->setObjectValue($argv[4], $setObj));
+      } else if ($argv[1] === "23.1") {
+        // ObjectNew“o˜^
+        $setObj = array();
+        $setObj[0] = "";
+        $setObj[1] = "xxx";
+        $setObj[2] = "yyy";
+        $setObj[3] = array();
+          var_dump($client->setNewObjectValue($argv[4], $setObj));
       } else if ($argv[1] === "24") {
+        // ObjectŽæ“¾
+        var_dump($client->getObjectValue($argv[4]));
+      } else if ($argv[1] === "24.1") {
         // ObjectŽæ“¾
         var_dump($client->getObjectValue($argv[4]));
       }

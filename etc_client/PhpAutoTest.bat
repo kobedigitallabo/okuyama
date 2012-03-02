@@ -63,6 +63,7 @@ rem getObjectValue
 php PhpTestSock.php 24 127.0.0.1 8888 objectKey1
 rem getObjectValue
 php PhpTestSock.php 24 127.0.0.1 8888 objectKey2
+
 rem setValueAndCreateIndex
 php PhpTestSock.php 42 127.0.0.1 8888 1000
 rem searchValue
@@ -77,3 +78,7 @@ rem MaxSizeTest
 php PhpTestSock.php size-true 127.0.0.1 8888
 rem MaxSizeOverTest
 php PhpTestSock.php size-false 127.0.0.1 8888
+rem setNewObjectValue
+php PhpTestSock.php 23.1 127.0.0.1 8888 objectKeyNew1
+rem getObjectValue
+php PhpTestSock.php 24.1 127.0.0.1 8888 objectKeyNew1

@@ -1134,6 +1134,25 @@ class OkuyamaClient {
     }
 
     /**
+     * マスタサーバへObjectデータを送信する.<br>
+     * 値の新規登録を保証する<br>
+     * PHPのオブジェクトデータの保存を行う.<br>
+     * 実装としてPHPのserialize関数を利用しているため、serialize関数で変換できないObjectは扱えない.<br>
+     * Tag有り.<br>
+     * 有効期限が秒単位で設定可能<br>
+     *
+     * @param keyStr Key値文字列
+     * @param objectValue Object値
+     * @param tagStrs Tag文字配列
+     * @param expireTime 有効期限(秒/単位)
+     * @return boolean 成否
+     * @throws OkuyamaClientException, Exception
+     */
+    public function setNewObjectValue($keyStr, $objectValue, $tagStrs = null, $expireTime = null) {
+        return $this->setNewValue($keyStr, serialize($objectValue), $tagStrs, $expireTime);
+    }
+
+    /**
      * マスタサーバへデータを送信する.<br>
      * 排他的バージョンチェックを行い、更新する.<br>
      * バージョン番号をgetValueVersionCheckメソッドで事前にバージョン値を取得して更新時のチェック値として利用する
