@@ -32,7 +32,7 @@ import okuyama.imdst.util.*;
  * -crcm ImdstDefine.compulsionRetryConnectMode /MasterNodeとDataNode間の処理に失敗した場合に強制的に1度だけ再処理を行うようにするかの設定 true/再接続する, false/再接続は自動<br>
  * -dcmuc ImdstDefine.datanodeConnectorMaxUseCount /MasterNodeとDataNode間のSockeの最大再利用回数 (整数) 少ない値にすると接続コストがかかる<br>
  * -smbsmf ImdstDefine.serializeMapBucketSizeMemoryFactor /SerializMapのBucketサイズのJVMへのメモリ割当に対する1Bucket当たりの係数(整数)<br>
- *
+ * -red ImdstDefine.recycleExsistData / 完全ファイルモード時に既に存在するデータを再利用する設定
  * <br>
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -315,7 +315,7 @@ public class ServerPreprocess implements IProcess {
                     }
 
 
-                    // -red
+                    // -wfsrf
                     if (startOptions[i].trim().equals("-wfsrf")) {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {

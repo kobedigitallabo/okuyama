@@ -487,6 +487,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                     // 1つのKeyで問い合わせる
                                     // 1つのKeyで以降の処理を正しく動かすために差を補正する
                                     mRetParams = this.getKeyValue(requestKeysBuf.toString());
+
                                     if (mRetParams[1].equals("true")) {
                                         mRetParams[2] = requestKeysBuf.toString() + ":" + mRetParams[2];
                                     } else {
@@ -539,6 +540,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             retParams = this.getKeyValue(clientParameterList[mIdx]);
                             if (retParams != null && retParams[0].equals("2")) retParams[0] = "22-f";   
+
                             break;
                         case 23 :
 
@@ -1899,6 +1901,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 String[] keys = keyStr.split(";");
                 Map requestKeyMap = new HashMap();
                 Map requestNodeMap = new HashMap();
+
                 for (int i = 0; i < keys.length; i++) {
 
                     keys[i] = this.encodeIsolationConvert(keys[i]);
@@ -4066,6 +4069,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         SocketException se = null;
         IOException ie = null;
 
+        boolean multiPossibility = false;
         try {
 
             // KeyNodeとの接続を確立
@@ -4096,6 +4100,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // 処理種別判別
                     if (type.equals("2")) {
+                        // 複数取得の可能性
+                        if (key.indexOf(";") != -1) multiPossibility = true;
 
                         // Key値でValueを取得
                         // パラメータ作成 処理タイプ[セパレータ]キー値
@@ -4114,7 +4120,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
                         // value値にセパレータが入っていても無視する
-
                         retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
                     } else if (type.equals("4")) {
 
@@ -4173,7 +4178,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         // 一貫性データが付随した状態から通常データに変換する
                         if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
 
-                            cnvConsistencyRet = dataConvert4Consistency(retParams[2]);
+                            cnvConsistencyRet = dataConvert4Consistency(retParams[2], multiPossibility);
                             retParams[2] = cnvConsistencyRet[0];
                             if (returnVersion) {
                                 String[] workRet = new String[retParams.length + 1];
@@ -7300,7 +7305,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         }
     }
 
-
     /**
      * データノードからの結果文字列を結果値と更新時間の2つに分解する.<br>
      *
@@ -7308,6 +7312,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果 [0]=取り出した結果文字列(複数Valueの場合は、Key:Value;Key:Value;....), [1]=更新時間(登録されていない場合は-1)(複数Valueの場合は、Time;Time;...)
      */
     private String[] dataConvert4Consistency(String targetStr) {
+        return dataConvert4Consistency(targetStr, false);
+    }
+
+    /**
+     * データノードからの結果文字列を結果値と更新時間の2つに分解する.<br>
+     *
+     * @param targetStr 対象値
+     * @return String[] 結果 [0]=取り出した結果文字列(複数Valueの場合は、Key:Value;Key:Value;....), [1]=更新時間(登録されていない場合は-1)(複数Valueの場合は、Time;Time;...)
+     */
+    private String[] dataConvert4Consistency(String targetStr, boolean multiPossibility) {
         boolean multiResult = false;
 
         String[] ret = new String[2];
@@ -7317,7 +7331,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         if (targetStr != null) {
             // 複数のValue値を扱っているかをチェック
-            if (targetStr.indexOf(ImdstDefine.setTimeParamSep) < targetStr.indexOf(";")) multiResult = true;
+            if (multiPossibility == true) {
+                if (targetStr.indexOf(";") != -1) multiResult = true;
+            } else {
+                if (targetStr.indexOf(ImdstDefine.setTimeParamSep) < targetStr.indexOf(";")) multiResult = true;
+            }
 
             if (!multiResult) {
                 String[] setTimeSplitRet = targetStr.split(ImdstDefine.setTimeParamSep);
