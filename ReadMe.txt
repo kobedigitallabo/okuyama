@@ -6,7 +6,6 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   本テキストの「■機能説明とサンプルの実行方法」をご覧ください。
   blog:http://d.hatena.ne.jp/okuyamaoo/
 
-
   ・okuyamaに関する執筆記事
     [Think IT] "分散KVS「okuyama」の全貌"
     第1回 NOSQLは「知る時代」から「使う時代」へ http://thinkit.co.jp/story/2011/02/03/1990
@@ -19,17 +18,18 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     第2回 okuyamaを運用するために知っておきたい基本的な操作 http://thinkit.co.jp/story/2011/10/26/2316
     第3回 okuyamaでのアプリ開発で押さえておきたい機能 http://thinkit.co.jp/story/2011/11/10/2325
 
+
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
-[[リリース Ver 0.9.2 - (2012/02/XX)]]
-■メモリオブジェクトのバックアップ機能を追加
-  メモリオブジェクトのバックアップ機能により、今までDataNode復帰時に操作記録ログから復旧していたのに対して、
+[[リリース Ver 0.9.2 - (2012/03/02)]]
+■メモリオブジェクトの自動スナップショット機能を追加
+  メモリオブジェクトのスナップショット機能により、今までDataNode復帰時に操作記録ログから復旧していたのに対して、
   高速に停止前の状態に復元されるようになった。
 
-  メモリオブジェクトのバックアップは通常25分に一度作成される。作成されたログはDataNodeの標準出力に
+  メモリオブジェクトのスナップショットは通常25分に一度作成される。作成されたログはDataNodeの標準出力に
   開始時間と終了時間が表示される。作成される場所及びファイルの名前は、DataNodeの設定ファイルである
-  DataNode.propertiesの以下の設定値の第一設定値の名前として拡張子に「.obj」が付加されて作成される。
+  DataNode.propertiesの以下の設定値の第一設定値の名前に拡張子に「.obj」が付加されて作成される。
   "KeyManagerJob1.Option="
   例)
      "KeyManagerJob1.Option=./keymapfile/1.key,./keymapfile/1.work.key"
@@ -55,6 +55,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
       状態に復元される。
       メモリオブジェクトは存在するが、Valueを保存しているディスク上のファイルが存在しない、サイズが0である
       場合などは、操作記録ログに残されているデータのみが復元される。
+
 
 
 ■完全ファイルモード時にDataNodeを停止後、再起動した際に操作記録ログがなくても
@@ -116,10 +117,10 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 
 
-■JavaのOkuyamaClientにObjectの新規登録を保証するsetNewObjectValueメソッドを追加
+■Java&PHPのOkuyamaClientにObjectの新規登録を保証するsetNewObjectValueメソッドを追加
   setNewValueはValueにString型しか対応していなかったが、ValueをObjectとするバージョンを追加。
   利用方法はsetNewValueと同様
-  利用例)
+  利用例)※Java版
   ------------------------------------------------------
     OkuyamaClient client = new OkuyamaClient();
     client.connect("127.0.0.1", 8888);
@@ -137,6 +138,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 		System.out.println("登録失敗 Message=[" + setResult[1] + "]");
     }
   ------------------------------------------------------
+
 
 
 ■起動パラメータを以下の通り追加
@@ -170,6 +172,18 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
                falseの場合は読みこまない.この場合はデータは常に0件からの起動になる
         設定例： -wfsrf false
 
+   -udt 記述：1/2
+         説明：データファイルを保存するディスクのタイプを指定することで、ディスクへのアクセスが最適化される 
+               1=HDD(デフォルト) 2=SSD
+         設定例： -udt 2
+
+   -mdcs 記述：整数(格納数)
+         説明：ディスクキャッシュ利用時に、どれだけの件数をキャッシュに乗せるかを件数で指定する 
+               「■ディスクキャッシュ機能を追加」も参照
+               デフォルトでは10000件
+         設定例： -mdcs 50000
+
+
 
 ■PHP版のOkuyamaClient.class.phpで未実装だった以下のメソッドを実装。挙動はJava版と同様である
   1.getTagValues
@@ -181,16 +195,22 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     getMultiTagKeysResult
 
 
+■Linux用のサービス化スクリプトを試験的に作成。install/配下に
+  MasterNode用[okuyamaMasterNodeServiceScript]
+  DataNode用[okuyamaDataNodeServiceScript]
+  として配置
+
+
 ■有効期限を30日以上に設定出来ないバグを修正
 ■ノード追加に伴うデータ移行中にTagデータを新規登録すると、正しく取得出来ないバグを修正
 ■DataNodeのリカバリー処理、ノード追加時のデータ再配置処理の堅牢性を向上
+■getMultiValuesメソッドで特定の条件下で応答が返ってこないバグを修正
 ■いくつかの性能向上
-
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.9.1 - (2011/12/19)]]
 
-■PHP版のOkuyamaClientの不具合対応
+・PHP版のOkuyamaClientの不具合対応
   ・Key、Value、Tagの登録前サイズチェック周りの修正
     登録可能なKeyおよび、Tagのバイト長を320byteに固定
     PhpTestSock.phpにテストコードを追加
@@ -200,7 +220,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     isset関数に置き換え
 
 
-■Java用のOkuyamaClientをプーリングするコネクションプールを追加
+・Java用のOkuyamaClientをプーリングするコネクションプールを追加
   本機能を利用すると接続処理、接続済みOkuyamaClientのプール、クローズ処理の管理を行うことが出来る
   接続済みのコネクションを即利用可能なため、接続処理のコスト削減、接続処理の共通化を行うことが可能
   該当クラスは以下
@@ -231,7 +251,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
    -------------------------------------------------------------------------------------------------------
 
 
-■UtilClientにadddatanodeを追加
+・UtilClientにadddatanodeを追加
   DataNodeを追加する際に従来はWebの管理画面からしか追加できなかったが、
   UtilClientから追加する機能を追加
   ※本機能によるokuyamaのサーバ側の変更は必要ありません。
@@ -245,16 +265,16 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   5)thirddatanode:7555 : 追加を依頼するDataNodeのアドレスとPort番号(MasterNode.propertiesのThirdKeyMapNodesInfoの設定に該当。設定を行っていない場合は省略)
 
 
-■DataNodeの完全ディスクモードの性能を向上
+・DataNodeの完全ディスクモードの性能を向上
   ファイルへの書き出しにメモリでのバッファリング領域を設けそちらへの書き出しが完了した時点でユーザ処理を
   完了とすることで応答速度向上。実際の書き出し処理は別スレッドで順次行われる。
 
 
-■MasterNodeのIsolation機能(パーティション機能)利用時にgetTagKeysResult、getMultiTagKeysResultで発生する
+・MasterNodeのIsolation機能(パーティション機能)利用時にgetTagKeysResult、getMultiTagKeysResultで発生する
   不具合に対応
 
 
-■起動パラメータを以下の通り追加
+・起動パラメータを以下の通り追加
   DataNode用の起動パラメータ
    -vidf 記述：true/false
          説明：有効期限切れのデータのクリーニングを行うかどうかの設定 true=行う false=行わない 
@@ -299,8 +319,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
         設定例： -dwmqs 15000
 
 
-■DataNode.propertiesのDataSaveTransactionFileEveryCommit=false時の不具合を対応
-
+・DataNode.propertiesのDataSaveTransactionFileEveryCommit=false時の不具合を対応
 
 ========================================================================================================
 [New - 新機能追加、不具合対応]
@@ -327,7 +346,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   一度にString型の配列で紐付く全てのKey値を返してくるのに対して、本メソッドはokuyama.imdst.client.OkuyamaResultSetを
   返却してくる。OkuyamaResultSetはjava.sql.ResultSetのように順次データを取り出せるようになっており、
   従来のgetTagKeysでは扱えないような大量のKey値を処理する場合に利用する。
-  以下の実装例はTagに紐付く全てのKeyとValueを出力している例です。
+  以下の実装例はTagに紐付く全てのKeyとValueを出力している例である。
   例) "Tag1"に紐付く全てのKeyとValueを出力
   ----------------------------------------------------------------------
 	OkuyamaResultSet resultSet = client.getTagKeysResult("Tag1"); // OkuyamaResultSetインターフェースで結果を受け取る
@@ -467,7 +486,6 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
     検索対象にならない不具合に対応
 
 
-
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.8 - (2011/07/3)]]
@@ -559,6 +577,48 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
    2.MasterNodeの不正な呼び出し番号(プロトコルの先頭)を渡した場合に応答がなくなってしまう問題を解決
    
 ========================================================================================================
+[New - 新機能追加、不具合対応]
+[[リリース Ver 0.8.8 - (2011/07/3)]]
+
+■okuyamaクライアントからも有効期限を設定可能に
+  OkuyamaClientのsetValue及び、setNewValueにexpireTimeを渡すことで有効期限(単位は秒)を設定可能
+  上限時間は、Integerの限界値
+  例)
+  okuyamaClient.setValue("Key_XXX", "Value_YYY", new Integer(300));
+  上記の場合有効期限は300秒
+
+
+■データ取得と同時にそのデータに設定されている有効期限を登録時に設定した期限分延長するメソッドを
+  okuyamaクライアントに追加。メソッド名はgetValueAndUpdateExpireTime
+  ※有効期限が設定させていないデータは何も起こらない
+  例)
+  okuyamaClient.setValue("Key_XXX", "Value_YYY", new Integer(300));
+  String[] getResult = okuyamaClient.getValueAndUpdateExpireTime("Key_XXX");
+  ※上記のsetValue時に設定された300秒という有効期限が、getValueAndUpdateExpireTime呼び出し時に再度300秒で
+    自動的に延長される。
+
+■ストレージ機能にSerializeMapを追加
+  データ格納時にメモリ空間を有効利用するSerializeMapという機能を追加。
+  アクセスレスポンスは低下するがメモリ上に格納できるデータ量は向上する。
+  詳しくは以下のBlogを参照
+  http://d.hatena.ne.jp/okuyamaoo/20110616
+  http://d.hatena.ne.jp/okuyamaoo/20110623
+
+  設定はDataNode.propertiesに以下の項目が追加された
+  "DataSaveMapType"
+
+  設定なしは、ConcurrentHashMapを利用する。DefaultはConcurrentHashMap
+
+  設定方法)
+  DataSaveMapType=serialize
+  ※上記でSerializeMapを内部で利用
+
+  DataSaveMapType=
+  ※上記で通常のConcurrentHashMapを内部で利用
+
+■いくつかの処理性能向上と不具合の修正
+
+========================================================================================================
 [New - リリースファイル不備]
 [[リリース Ver 0.8.7.2 - (2011/05/12)]]
 ■リリース物に空のkeymapfileディレクトリを同梱し忘れたため、追加
@@ -571,6 +631,8 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.7 - (2011/04/20)]]
+
+・改修履歴
   ■メモリへのデータ保存時に圧縮を行う
 	この設定はDataNode.propertiesの"dataMemory=true"の場合のみ有効
 	true=圧縮、false=非圧縮
@@ -705,7 +767,8 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
         =>OkuyamaClientではdecrValue(String key, long val)
 		=>memcachedプロトコルではdecr
 
-    !!注意!!:PHPクライアントは未対応。
+	 !!注意!!:PHPクライアントは未対応。
+
 
   ■ServerControllerにコマンドの種類追加
     1.1. サーバコントロールコマンドを追加
@@ -729,7 +792,8 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
          "size" : Isolation名を指定することで個別のサイズを返す
                       >size
 					  >IsolationPrefix
-					 
+
+
   ■レプリケーション登録未確認機能追加
     DataNodeのレプリケーション先を設定している場合に、レプリケーションのデータを転送後、データノードで登録が正しく完了しているかを確認
 	せずにクラインとには成功として返す。
@@ -743,9 +807,9 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 	KeyMapDelayWrite=false
 　--------------------------------
 
-  ■いくつかの処理性能向上と不具合の修正
-  
 
+  ■いくつかの処理性能向上と不具合の修正
+  	  
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.8.5 - (2011/01/18)]]
