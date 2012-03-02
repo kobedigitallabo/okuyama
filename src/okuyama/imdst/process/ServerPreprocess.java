@@ -33,6 +33,10 @@ import okuyama.imdst.util.*;
  * -dcmuc ImdstDefine.datanodeConnectorMaxUseCount /MasterNodeとDataNode間のSockeの最大再利用回数 (整数) 少ない値にすると接続コストがかかる<br>
  * -smbsmf ImdstDefine.serializeMapBucketSizeMemoryFactor /SerializMapのBucketサイズのJVMへのメモリ割当に対する1Bucket当たりの係数(整数)<br>
  * -red ImdstDefine.recycleExsistData / 完全ファイルモード時に既に存在するデータを再利用する設定
+ * -wfsrf ImdstDefine.workFileStartingReadFlg / DataNode起動時に操作記録ログ(トランザクションログ)を読み込む設定.trueの場合は読み込む(デフォルト)
+ * -udt ImdstDefine.useDiskType / データファイルを保存するディスクのタイプを指定することで、ディスクへのアクセスが最適化される 1=HDD(デフォルト) 2=SSD
+ * -mdcs ImdstDefine.maxDiskCacheSize / ディスクキャッシュ利用時に、どれだけの件数をキャッシュに乗せるかを件数で指定する デフォルトでは10000件
+ *
  * <br>
  * @author T.Okuyama
  * @license GPL(Lv3)
