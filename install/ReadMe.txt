@@ -48,7 +48,17 @@ okuyamaサーバインストールパッケージ
     ・KeyManagerJob1.virtualStoreDirs
     ・KeyManagerJob1.keyStoreDirs
 
-  4.log4j.properties
+  4.DataNode.propertiesのファイルパス指定を変更する
+    以下の項目を環境に合わせて変更
+    ・MyNodeInfo
+    ・MainMasterNodeInfo
+    ・AllMasterNodeInfo
+
+  5.hostsファイルに以下の行を追記
+    masternode1 127.0.0.1 
+    masternode2 127.0.0.1 
+
+  6.log4j.properties
     ・ログ出力先全て
 
 
@@ -63,7 +73,10 @@ okuyamaサーバインストールパッケージ
     第4引数.標準出力ファイル
     第5引数.標準エラー出力ファイル
 
-    例)
+    DataNodeを起動する
+    okuyama start -server /home/okuyama/okuyama/conf/DataNode.properties /home/okuyama/okuyama/data.out /home/okuyama/okuyama/data.err
+
+    MasterNodeを起動する
     okuyama start -server /home/okuyama/okuyama/conf/MasterNode.properties /home/okuyama/okuyama/master.out /home/okuyama/okuyama/master.err
 
 
@@ -73,4 +86,5 @@ okuyamaサーバインストールパッケージ
     第2引数.停止用ポート番号(MasterNode.propertiesおよび、DataNode.propertiesの"ServerControllerHelper.Init="で指定している":"より右辺の番号)
 
     例)
+    okuyama stop 15553
     okuyama stop 18888
