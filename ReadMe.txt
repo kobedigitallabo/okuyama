@@ -150,7 +150,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
    第5引き数:okuyama側データを出力する際に一定量排出した後にここで指定したミリ秒だけ停止する。大きくすると負荷は下がるが時間がかかる
  
   利用方法)
-  java -classpath ./:./okuyama-0.9.2.jar;./lib/ okuyama.imdst.client.UtilClient bkup 127.0.0.1 5553 10 20 > bkupFor5554.dump
+  java -classpath ./:./okuyama-0.9.2.jar:./lib/javamail-1.4.1.jar okuyama.imdst.client.UtilClient bkup 127.0.0.1 5553 10 20 > bkupFor5553.dump
 
 
 
