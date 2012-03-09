@@ -6302,8 +6302,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         String[] tmpSaveData = null;
         String retParam = null;
 
+        String mainRetStr = null;
+        String subRetStr = null;
         boolean mainNodeSave = false;
         boolean subNodeSave = false;
+
         try {
             // TransactionModeの状態に合わせてLock状態を確かめる
             if (transactionMode) {
@@ -6348,6 +6351,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // 返却値取得
                         retParam = keyNodeConnector.readLine(sendStr);
+
+                        if (counter == 0) mainRetStr = retParam;
+                        if (counter == 1) subRetStr = retParam;
 
                         // 使用済みの接続を戻す
                         super.addKeyNodeCacheConnectionPool(keyNodeConnector);
@@ -6420,6 +6426,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 super.execNodeUseEnd(subKeyNodeFullName);
 
             // 返却地値をパースする
+            if (mainNodeSave == true && mainRetStr != null) retParam = mainRetStr;
+            if (subNodeSave == true && subRetStr != null) retParam = subRetStr;
             if (retParam != null) {
 
                 retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
