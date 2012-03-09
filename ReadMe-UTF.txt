@@ -28,7 +28,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   1.完全ファイルモード時に、DataNode.propertiesの'KeyManagerJob1.keySize='に大きな値を設定し(1000万など)
     少ない登録数の場合にバックアップコマンドや、DataNodeのリカバリが失敗する事象
 
-  2.DataNode追加時のデータ移行中のごく短い一定期間の間、getMultiValueで一部のデータを取得出来ない問題事象
+  2.DataNode追加時のデータ移行中のごく短い一定期間の間、getMultiValueで一部のデータを取得出来ない事象
 
   3.PHP版のOkuyamaClientにvar_dumpの記述があった為、削除
 
