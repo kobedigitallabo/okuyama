@@ -100,6 +100,16 @@ public class UtilClient {
             }
             addDataNode(args[1], addNodeList);
         }
+
+        if (args[0].equals("addmasternode")) {
+            if (args.length < 3) {
+                System.out.println("Argument Error! args[0]=Command, args[1]=MasterNodeIp:Port, args[2]=AddMasterNodeIP:Port");
+                System.exit(1);
+            }
+
+            addMasterNode(args[1], args[2]);
+        }
+
     }
 
 
@@ -280,6 +290,39 @@ public class UtilClient {
                 } else {
                     System.out.println("[Error] - DataNode can be added only when 'DistributionAlgorithm' is 'consistenthash'");
                 }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (client != null) client.close();
+            } catch (Exception e2) {
+            }
+        }
+    }
+
+
+    public static void addMasterNode(String masterNodeIpPort, String addNode) {
+        OkuyamaClient client = null;
+
+        try {
+            client = new OkuyamaClient();
+            client.setConnectionInfos(masterNodeIpPort.split(","));
+            client.autoConnect();
+
+
+            String[] masterNodeRet = client.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo);
+
+            if (masterNodeRet[0].equals("true")) {
+                String updateMasterNodeInfo = masterNodeRet[1] + "," + addNode;
+                if(client.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo, updateMasterNodeInfo)) {
+                    System.out.println("MasterNode add success");
+                } else {
+                    System.out.println("MasterNode add error");
+                }
+            } else {
+                System.out.println("MasterNode add error");
             }
 
         } catch (Exception e) {
