@@ -792,16 +792,27 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 okuyamaClient.connect(masterNodeName, port);
             }
 
+            Object[] ret = okuyamaClient.incrValue("calcKeyIncr_" + this.nowCount, 1);
+            if (ret[0].equals("true")) {
+                System.out.println("execIncr - error - 1");
+                errorFlg = true;
+            } 
+            ret = okuyamaClient.incrValue("calcKeyIncr_" + this.nowCount, 20, true);
+            if (ret[0].equals("false")) {
+                System.out.println("execIncr - error - 2");
+                errorFlg = true;
+            }
+
             long startTime = new Date().getTime();
             String[] work = okuyamaClient.setNewValue("calcKeyIncr", "0");
 
 
             for (int i = start; i < count; i++) {
-                Object[] ret = okuyamaClient.incrValue("calcKeyIncr", 1);
-                if (ret[0].equals("false")) {
+                Object[] calcRet = okuyamaClient.incrValue("calcKeyIncr", 1);
+                if (calcRet[0].equals("false")) {
                     errorFlg = true;
-                    System.out.println(ret[0]);
-                    System.out.println(ret[1]);
+                    System.out.println(calcRet[0]);
+                    System.out.println(calcRet[1]);
                 }
             }
 
@@ -837,16 +848,27 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 okuyamaClient.connect(masterNodeName, port);
             }
 
+            Object[] ret = okuyamaClient.decrValue("calcKeyDecr_" + this.nowCount, 1);
+            if (ret[0].equals("true")) {
+                System.out.println("execDecr - error - 1");
+                errorFlg = true;
+            } 
+            ret = okuyamaClient.decrValue("calcKeyDecr_" + this.nowCount, 20, true);
+            if (ret[0].equals("false")) {
+                System.out.println("execDecr - error - 2");
+                errorFlg = true;
+            }
+
             long startTime = new Date().getTime();
             String[] work = okuyamaClient.setNewValue("calcKeyDecr", "1000000");
 
 
             for (int i = start; i < count; i++) {
-                Object[] ret = okuyamaClient.decrValue("calcKeyDecr", 1);
-                if (ret[0].equals("false")) {
+                Object[] calcRet = okuyamaClient.decrValue("calcKeyDecr", 1);
+                if (calcRet[0].equals("false")) {
                     errorFlg = true;
-                    System.out.println(ret[0]);
-                    System.out.println(ret[1]);
+                    System.out.println(calcRet[0]);
+                    System.out.println(calcRet[1]);
                 }
             }
 

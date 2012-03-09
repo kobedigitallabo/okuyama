@@ -334,6 +334,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // ReadTimeout時間設定初期化
                     longReadTimeout = false;
 
+                    // 計算時に初期化するフラグ
+                    boolean initCalcValueFlg = false;
+
                     // 本体処理開始
                     // 処理番号で処理を分岐
                     // 実行許可も判定
@@ -420,12 +423,27 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         case 13 :
 
                             // 値の加算
-                            retParams = this.incrValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
+                            initCalcValueFlg = false;
+                            if (clientParameterList.length > 4) {
+
+                                if (clientParameterList[4].trim().equals("1")) {
+                                    initCalcValueFlg = true;
+                                }
+                            }
+
+                            retParams = this.incrValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], initCalcValueFlg);
                             break;
                         case 14 :
 
                             // 値の減算
-                            retParams = this.decrValue(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
+                            initCalcValueFlg = false;
+                            if (clientParameterList.length > 4) {
+
+                                if (clientParameterList[4].trim().equals("1")) {
+                                    initCalcValueFlg = true;
+                                }
+                            }
+                            retParams = this.decrValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], initCalcValueFlg);
                             break;
                         case 15 :
 
@@ -3181,7 +3199,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] decrValue(String keyStr, String transactionCode, String decrValue) throws BatchException {
+    private String[] decrValue(String keyStr, String transactionCode, String decrValue, boolean initValueFlg) throws BatchException {
 
         //logger.debug("MasterManagerHelper - decrValue - start");
         String[] retStrs = new String[3];
@@ -3193,7 +3211,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             String minus = "";
             if (decodeData.indexOf("-") != 0) minus = "-";
 
-            retStrs = this.incrValue(keyStr, transactionCode, new String(BASE64EncoderStream.encode((minus + decodeData).getBytes())));
+            retStrs = this.incrValue(keyStr, transactionCode, new String(BASE64EncoderStream.encode((minus + decodeData).getBytes())), initValueFlg);
 
             // 処理番号変更
             retStrs[0] = "14";
@@ -3224,7 +3242,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] incrValue(String keyStr, String transactionCode, String incrValue) throws BatchException {
+    private String[] incrValue(String keyStr, String transactionCode, String incrValue, boolean initValueFlg) throws BatchException {
 
         //logger.debug("MasterManagerHelper - incrValue - start");
         String[] retStrs = new String[3];
@@ -3255,7 +3273,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             for (idx = 0; idx < keyNodeInfo.length; idx=idx+3)  {
 
                 calcRet = null;
-                calcRet = this.calcKeyValue(keyNodeInfo[idx], keyNodeInfo[idx + 1], keyNodeInfo[idx + 2], keyStr, incrValue, transactionCode);
+                calcRet = this.calcKeyValue(keyNodeInfo[idx], keyNodeInfo[idx + 1], keyNodeInfo[idx + 2], keyStr, incrValue, transactionCode, initValueFlg);
 
                 // 1つのノードで演算に成功した場合はそこでbreak
                 if (calcRet != null && calcRet[1].equals("true")) {
@@ -4105,6 +4123,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     if (keyNodeConnector == null) {
 
                         if (mainNodeRetParam != null) break;
+
                         throw new BatchException("Key Node IO Error: detail info for log file");
                     }
                     slaveUse = true;
@@ -6632,7 +6651,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] calcKeyValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String key, String calcValue, String transactionCode) throws BatchException {
+    private String[] calcKeyValue(String keyNodeName, String keyNodePort, String keyNodeFullName, String key, String calcValue, String transactionCode, boolean initValueFlg) throws BatchException {
         KeyNodeConnector keyNodeConnector = null;
         KeyNodeConnector slaveKeyNodeConnector = null;
 
@@ -6681,6 +6700,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             buf.append(transactionCode);                         // Transaction値
             buf.append(ImdstDefine.keyHelperClientParamSep);
             buf.append(calcValue);                               // Value値
+            if (initValueFlg) {
+                buf.append(ImdstDefine.keyHelperClientParamSep);
+                buf.append("1");                               // init指定
+            }
+
             sendStr = buf.toString();
 
             // KeyNodeとの接続を確立
@@ -6711,7 +6735,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     } else {
 
                         // 論理的に登録失敗
-                        super.setDeadNode(nodeName + ":" + nodePort, 3, null);
                         logger.error("calcValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
                     }
 

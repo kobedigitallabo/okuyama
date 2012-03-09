@@ -742,7 +742,6 @@ public class KeyMapManager extends Thread {
      * @param boolean 移行データ指定
      */
     public void setKeyPair(String key, String keyNode, String transactionCode) throws BatchException {
-
         if (!blocking) {
             try {
                 //logger.debug("setKeyPair - synchronized - start");
@@ -857,6 +856,7 @@ public class KeyMapManager extends Thread {
      */
     public boolean setKeyPairOnlyOnce(String key, String keyNode, String transactionCode, boolean moveData) throws BatchException {
         boolean ret = false;
+
         if (!blocking) {
             try {
                 // このsynchroの方法は正しくないきがするが。。。
@@ -1687,7 +1687,7 @@ public class KeyMapManager extends Thread {
      * @param calcVal 計算値(数値)
      * @param transactionCode
      */
-    public String calcValue(String key, int calcVal, String transactionCode) throws BatchException {
+    public String calcValue(String key, int calcVal, String transactionCode, boolean initCalcValueFlg) throws BatchException {
         String ret = null;
         String data = null;
         
@@ -1698,6 +1698,18 @@ public class KeyMapManager extends Thread {
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((key.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     boolean containsKeyRet = containsKeyPair(key);
+                    // 初期化指定がされていて現在値が存在しない場合は0で初期化をまず行う
+
+                    if (initCalcValueFlg == true && containsKeyRet == false) {
+
+                        boolean initRet = this.setKeyPairOnlyOnce(key, new String(BASE64EncoderStream.encode("0".getBytes())) + ImdstDefine.setTimeParamSep + "0", "0");
+                        if (initRet) {
+                            containsKeyRet = true;
+                        } else {
+                            containsKeyRet = containsKeyPair(key);
+                        }
+                    }
+
                     if (containsKeyRet) {
 
                         String tmp = keyMapObjGet(key);

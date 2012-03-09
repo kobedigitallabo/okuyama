@@ -496,14 +496,19 @@ public class KeyManagerHelper extends AbstractHelper {
                             transactionCode = clientParameterList[2];
                             requestDataNode = clientParameterList[3];
 
+                            boolean initCalcValueFlg = false;
+                            if (clientParameterList.length > 4) {
+                                if (clientParameterList[4].equals("1")) {
+                                    initCalcValueFlg = true;
+                                }
+                            }
                             // メソッド呼び出し
-                            retParams = this.calcValue(requestHashCode, requestDataNode, transactionCode);
+                            retParams = this.calcValue(requestHashCode, requestDataNode, transactionCode, initCalcValueFlg);
                             retParamBuf.append(retParams[0]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[1]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
-
                             break;
                         case 16 :
 
@@ -1113,14 +1118,14 @@ public class KeyManagerHelper extends AbstractHelper {
     // 2.送信された値をlongに変換する。変換した値を足しこむ.<br>
     // 3.送信されたKey値で値がとれない。falseで返す.<br>
     // 4.送信されたKey値で取得した値が数値ではない。0で更新.<br>
-    private String[] calcValue(String key, String dataNodeStr, String transactionCode) {
+    private String[] calcValue(String key, String dataNodeStr, String transactionCode, boolean initCalcValueFlg) {
         //logger.debug("KeyManagerHelper - calcValue - start");
         String[] retStrs = new String[3];
         try {
             int calcVal = Integer.parseInt(new String(BASE64DecoderStream.decode(dataNodeStr.getBytes())));
             if(!this.keyMapManager.checkError()) {
                 String retVal = null;
-                if((retVal = this.keyMapManager.calcValue(key, calcVal, transactionCode)) != null) {
+                if((retVal = this.keyMapManager.calcValue(key, calcVal, transactionCode, initCalcValueFlg)) != null) {
 
                     retStrs[0] = "13";
                     retStrs[1] = "true";

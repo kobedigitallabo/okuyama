@@ -4510,9 +4510,9 @@ public class OkuyamaClient {
         return ret;
     }
 
-
     /**
      * MasterNodeへデータの加算を要求する.<br>
+     * 指定したKey-Valueが存在しな場合は失敗する.<br>
      *
      * @param keyStr Key値
      * @param value 加算値
@@ -4520,6 +4520,19 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public Object[] incrValue(String keyStr, long value) throws OkuyamaClientException {
+        return this.incrValue(keyStr, value, false);
+    }
+
+    /**
+     * MasterNodeへデータの加算を要求する.<br>
+     *
+     * @param keyStr Key値
+     * @param value 加算値
+     * @param initCalcValue あたいの初期化指定 true=計算対象のKey-Valueがokuyama上に存在しない場合、0の値を作成してから、計算を行う false=存在しない場合は計算失敗
+     * @return Object[] 要素1(処理成否):Boolean true/false,要素2(演算後の結果):Long 数値
+     * @throws OkuyamaClientException
+     */
+    public Object[] incrValue(String keyStr, long value, boolean initCalcValue) throws OkuyamaClientException {
         Object[] ret = new Object[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -4563,8 +4576,16 @@ public class OkuyamaClient {
             // Value連結
             incrValueServerReqBuf.append(valueStr);
 
-            // サーバ送信
+            // 初期化指定連結
+            if (initCalcValue) {
 
+                // セパレータ連結
+                incrValueServerReqBuf.append(OkuyamaClient.sepStr);
+                // Value連結
+                incrValueServerReqBuf.append("1");
+            }
+
+            // サーバ送信
             pw.println(incrValueServerReqBuf.toString());
             pw.flush();
 
@@ -4637,6 +4658,7 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeへデータの減算を要求する.<br>
+     * 指定したKey-Valueが存在しな場合は失敗する.<br>
      *
      * @param keyStr Key値
      * @param value 減算値
@@ -4644,6 +4666,19 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public Object[] decrValue(String keyStr, long value) throws OkuyamaClientException {
+        return this.decrValue(keyStr, value, false);
+    }
+
+    /**
+     * MasterNodeへデータの減算を要求する.<br>
+     *
+     * @param keyStr Key値
+     * @param value 減算値
+     * @param initCalcValue あたいの初期化指定 true=計算対象のKey-Valueがokuyama上に存在しない場合、0の値を作成してから、計算を行う false=存在しない場合は計算失敗
+     * @return Object[] 要素1(処理成否):Boolean true/false,要素2(演算後の結果):Long 数値
+     * @throws OkuyamaClientException
+     */
+    public Object[] decrValue(String keyStr, long value, boolean initCalcValue) throws OkuyamaClientException {
         Object[] ret = new Object[2]; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -4686,6 +4721,16 @@ public class OkuyamaClient {
 
             // Value連結
             decrValueServerReqBuf.append(valueStr);
+
+            // 初期化指定連結
+            if (initCalcValue) {
+
+                // セパレータ連結
+                decrValueServerReqBuf.append(OkuyamaClient.sepStr);
+                // Value連結
+                decrValueServerReqBuf.append("1");
+            }
+
 
             // サーバ送信
             pw.println(decrValueServerReqBuf.toString());
