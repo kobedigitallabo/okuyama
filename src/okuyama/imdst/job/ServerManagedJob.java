@@ -136,7 +136,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
             // 正常終了ではない
             if (StatusUtil.getStatus() == 1 || StatusUtil.getStatus() == 2) {
                 logger.error("ServerManagedJob - executeJob - Error End Message=[" + StatusUtil.getStatusMessage() + "]");
-                JavaMain.shutdownMainProccess();
+                JavaMain.shutdownMainProcess();
             }
         }
 

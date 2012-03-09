@@ -105,7 +105,7 @@ public class JavaMain {
         logger.debug("JavaMain - exec - end");
     }
 
-    public static void shutdownMainProccess() {
+    public static void shutdownMainProcess() {
         System.exit(0);
     }
 }

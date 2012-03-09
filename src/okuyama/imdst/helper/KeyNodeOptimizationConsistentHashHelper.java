@@ -149,6 +149,7 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                     sendRequestBuf.append("true");
 
                     if (moveTargetData != null) {
+                        logger.info("The processing which moves the data which Datanode has to new Datanode is started.");
                         logger.info("Step - 1");
                         while (true) {
                             super.setNowNodeDataOptimization(true);
@@ -625,6 +626,8 @@ public class KeyNodeOptimizationConsistentHashHelper extends AbstractMasterManag
                                 }
 
                                 logger.info("Step - 73");
+                                super.finishDynamicDataRemoveProcess();
+                                logger.info("The processing which moves the data which Datanode has to new Datanode was completed.");
                                 break;
                             } catch (Exception e) {
                                 super.setNowNodeDataOptimization(false);

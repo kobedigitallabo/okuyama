@@ -458,6 +458,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             StringBuilder requestKeysBuf = new StringBuilder();
                             ArrayList requestKeyList = new ArrayList();
 
+                            // データノード追加による移行中はmgetは1件づつ集めるようにする
+                            if (ImdstDefine.nodeDataRemoveProcess == true) {
+                                maxGetSize = 1;
+                            } else {
+                                maxGetSize = ImdstDefine.maxMultiGetRequestSize;
+                            }
+
                             for (; mIdx < (clientParameterList.length - 1); mIdx++) {
 
                                 innerIdx++;
@@ -466,8 +473,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 requestKeysBuf.append(clientParameterList[mIdx]);
                                 sep = ";";
                                 requestKeyList.add(clientParameterList[mIdx]);
+
                                 // maxGetSize個のKeyをまとめて問い合わせる
                                 if (!(innerIdx == MasterManagerHelper.maxGetSize) && !((mIdx+1) >= (clientParameterList.length - 1))) continue;
+
                                 innerIdx=0;
                                 sep = "";
 
@@ -891,6 +900,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParams[1] = "true";
                             retParams[2] = "";
                             break;
+                        case 101 :
+
+                            // DataNode追加によるデータ移行中をマーク
+                            ImdstDefine.nodeDataRemoveProcess = true;
+                            break;
+                        case 102 :
+
+                            // DataNode追加によるデータ移行中を終了
+                            ImdstDefine.nodeDataRemoveProcess = false;
+                            break;
+
                         case 998:
                         
                             // 自信の現時点での設定情報を全て出力

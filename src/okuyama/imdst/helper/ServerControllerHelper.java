@@ -87,7 +87,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         pw.flush();
                         Thread.sleep(500);
                         soc.close();
-                        JavaMain.shutdownMainProccess();
+                        JavaMain.shutdownMainProcess();
                         break;
                     } else if (command.equals("debug")) {
 

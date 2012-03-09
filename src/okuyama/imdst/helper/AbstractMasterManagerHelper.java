@@ -440,6 +440,102 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
     }
 
 
+
+    /**
+     * データノード追加によるデータ移行プロセスの終了を全MasterNodeに伝える
+     *
+     * @param nodeInfo 対象のノード情報
+     */
+    protected void finishDynamicDataRemoveProcess() {
+
+        // ノードのデータ移行完了
+        ImdstDefine.nodeDataRemoveProcess = false;
+
+        // MainのMasterNodeの場合のみ実行
+        // SlaveのMasterNodeにもノードのデータ移行完了を通知
+        if (StatusUtil.isMainMasterNode()) {
+
+            // 対象のSlaveMasterNode全てに依頼
+            String slaves = StatusUtil.getSlaveMasterNodes();
+
+            if (slaves != null && !slaves.trim().equals("")) {
+                String[] slaveList = slaves.split(",");
+
+                // 1ノードづつ実行
+                for (int i = 0; i < slaveList.length; i++) {
+
+                    for (int msIdx = 0; msIdx < 4; msIdx++) {
+                        Socket socket = null;
+                        PrintWriter pw = null;
+                        BufferedReader br = null;
+
+                        try {
+                            Thread.sleep(200);
+
+                            // Slaveノード名とポートに分解
+                            String[] slaveNodeDt = slaveList[i].split(":");
+                            InetSocketAddress inetAddr = new InetSocketAddress(slaveNodeDt[0], Integer.parseInt(slaveNodeDt[1]));
+                            socket = new Socket();
+                            socket.connect(inetAddr, ImdstDefine.nodeConnectionOpenShortTimeout);
+                            socket.setSoTimeout(ImdstDefine.nodeConnectiontReadShortTimeout);
+
+                            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), 
+                                                                                           ImdstDefine.keyHelperClientParamEncoding)));
+                            br = new BufferedReader(new InputStreamReader(socket.getInputStream(), 
+                                                                          ImdstDefine.keyHelperClientParamEncoding));
+
+                            // 文字列バッファ初期化
+                            StringBuilder serverRequestBuf = new StringBuilder();
+
+                            // 処理番号連結
+                            serverRequestBuf.append("102");
+                            // セパレータ連結
+                            serverRequestBuf.append(ImdstDefine.keyHelperClientParamSep);
+
+                            // サーバ送信
+                            pw.println(serverRequestBuf.toString());
+                            pw.flush();
+
+                            // サーバから結果受け取り
+                            String serverRetStr = br.readLine();
+                        } catch(Exception e) {
+
+                            // TODO:復帰登録失敗
+                            // 異常事態だが、稼動していないことも考えられるので、
+                            // 無視する
+                            System.out.println("Slave Master Node finishDynamicDataRemoveProcess Error [" + slaveList[i] + "]");
+                            //e.printStackTrace();
+                        } finally {
+                            try {
+                                if (pw != null) {
+                                    // 接続切断を通知
+                                    pw.println(ImdstDefine.imdstConnectExitRequest);
+                                    pw.flush();
+
+                                    pw.close();
+                                    pw = null;
+                                }
+
+                                if (br != null) {
+                                    br.close();
+                                    br = null;
+                                }
+
+                                if (socket != null) {
+                                    socket.close();
+                                    socket = null;
+                                }
+                            } catch(Exception e2) {
+                                // 無視
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     /**
      * ノードのリカバリーの開始、終了をスレーブのMasterNodeへ送信
      *

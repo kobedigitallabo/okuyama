@@ -505,8 +505,11 @@ public class FileBaseDataMap extends AbstractMap implements Cloneable, Serializa
      * @throws
      */
     public boolean hasIteratorNext() {
+
         if(this.iteratorNowDataList == null) return false;
+
         if(this.iteratorNowDataList.size() > this.iteratorNowDataListIdx) return true;
+
         return false;
     }
 
@@ -531,11 +534,13 @@ public class FileBaseDataMap extends AbstractMap implements Cloneable, Serializa
                 while (true) {
 
                     this.iteratorNowDataList = this.coreFileBaseKeyMaps[this.iteratorIndex].getAllOneFileInKeys();
+
                     this.iteratorNowDataListIdx = 0;
 
                     if (this.iteratorNowDataList == null && this.iteratorIndex < this.coreFileBaseKeyMaps.length) {
 
                         this.iteratorIndex++;
+
                         if (this.iteratorIndex == this.coreFileBaseKeyMaps.length) break;
                         continue;
                     }
@@ -1303,7 +1308,17 @@ start1 = System.nanoTime();
         
 
         try {
+
             if (this.nowIterationFileIndex < this.dataFileList.length) {
+
+                int assistIdx = 0;
+                for (assistIdx = this.nowIterationFileIndex; assistIdx < this.dataFileList.length; assistIdx++) {
+
+                    if (this.dataFileList[assistIdx].length() > 1L) break;
+                }
+
+                if (assistIdx < this.dataFileList.length) this.nowIterationFileIndex = assistIdx;
+
 
                 keys = new ArrayList();
                 
@@ -2071,54 +2086,65 @@ long end4 = 0L;
         RandomAccessFile raf = null;
 
         try {
-            if (this.nowIterationFileIndex < this.dataFileList.length) {
+            for (int retryCnt = 0; retryCnt < 2; retryCnt++) {
 
-                keys = new ArrayList();
+                if (this.nowIterationFileIndex < this.dataFileList.length) {
+                    int assistIdx = 0;
+                    for (assistIdx = this.nowIterationFileIndex; assistIdx < this.dataFileList.length; assistIdx++) {
+                        if (this.dataFileList[assistIdx].length() > 1L) break;
+                    }
 
-                long oneFileLength = new Long(this.dataFileList[this.nowIterationFileIndex].length()).longValue();
+                    if (assistIdx < this.dataFileList.length) this.nowIterationFileIndex = assistIdx;
 
-                long readSize = lineDataSize * 10;
-                int readLoop = new Long(oneFileLength / readSize).intValue();
-                if ((oneFileLength % readSize) > 0) readLoop++;
-                raf = new RandomAccessFile(this.dataFileList[this.nowIterationFileIndex], "rwd");
-                raf.seek(0);
+                    keys = new ArrayList();
 
-                for (int readLoopIdx = 0; readLoopIdx < readLoop; readLoopIdx++) {
-                    datas = new byte[new Long(readSize).intValue()];
+                    long oneFileLength = new Long(this.dataFileList[this.nowIterationFileIndex].length()).longValue();
 
-                    int readLen = -1;
-                    readLen = SystemUtil.diskAccessSync(raf, datas);
+                    long readSize = lineDataSize * 10;
+                    int readLoop = new Long(oneFileLength / readSize).intValue();
+                    if ((oneFileLength % readSize) > 0) readLoop++;
+                    raf = new RandomAccessFile(this.dataFileList[this.nowIterationFileIndex], "rwd");
+                    raf.seek(0);
 
-                    if (readLen > 0) {
+                    for (int readLoopIdx = 0; readLoopIdx < readLoop; readLoopIdx++) {
+                        datas = new byte[new Long(readSize).intValue()];
 
-                        int loop = readLen / lineDataSize;
+                        int readLen = -1;
+                        readLen = SystemUtil.diskAccessSync(raf, datas);
 
-                        for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
+                        if (readLen > 0) {
 
-                            int assist = (lineDataSize * loopIdx);
-                            keysBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
+                            int loop = readLen / lineDataSize;
 
-                            int idx = 0;
+                            for (int loopIdx = 0; loopIdx < loop; loopIdx++) {
 
-                            while (true) {
+                                int assist = (lineDataSize * loopIdx);
+                                keysBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
 
-                                if (datas[assist + idx] != FileBaseDataMap.paddingSymbol) {
-                                    keysBuf.append(new String(datas, assist + idx, 1));
-                                } else {
-                                    break;
+                                int idx = 0;
+
+                                while (true) {
+
+                                    if (datas[assist + idx] != FileBaseDataMap.paddingSymbol) {
+                                        keysBuf.append(new String(datas, assist + idx, 1));
+                                    } else {
+                                        break;
+                                    }
+                                    idx++;
                                 }
-                                idx++;
+                                String keyStr = keysBuf.toString();
+                                if (!keyStr.equals(FileBaseDataMap.sizeSaveKey)) {
+                                    keys.add(keyStr);
+                                }
+                                keysBuf = null;
                             }
-                            String keyStr = keysBuf.toString();
-                            if (!keyStr.equals(FileBaseDataMap.sizeSaveKey)) {
-                                keys.add(keyStr);
-                            }
-                            keysBuf = null;
                         }
                     }
                 }
+                this.nowIterationFileIndex++;
+                if (keys != null && keys.size() == 0) continue;
+                retryCnt = 2;
             }
-            this.nowIterationFileIndex++;
         } catch(Exception e) {
 
             e.printStackTrace();
@@ -2133,8 +2159,8 @@ long end4 = 0L;
                 e2.printStackTrace();
             }
         }
+
         if (keys != null && keys.size() == 0) keys = null;
-    
         return keys;
     }
 }

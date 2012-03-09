@@ -1000,6 +1000,10 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
                 moveDataMap = DataDispatcher.addNode4ConsistentHash(addNodeInfos[0], addNodeInfos[1], addNodeInfos[2]);
             }
 
+            // データ移行を開始することをマーク
+            // マークを落とすのは、MainMasterNodeからの通知により102の処理番号で落とす
+            ImdstDefine.nodeDataRemoveProcess = true;
+
             // MainMasterNodeの場合のみデータ移行を実行
             // ここでsuperのconsistentHashMoveDataに登録
             // KeyNodeOptimizationConsistentHashHelper側でこのデータを監視して、登録されたら、

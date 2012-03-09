@@ -286,6 +286,9 @@ public class ImdstDefine {
     // GC呼び出しを行う指定
     public volatile static boolean jvmGcExecutionMode = true;
 
+    // DataNode追加によるデータ移行中を表す。
+    public volatile static boolean nodeDataRemoveProcess = false;
+
 
     // ---- プログラム規定数値 -------------------------------------------------------------
     // メモリ保存に利用するMapの種類指定 (true=SerializeMap(遅いが大量のデータ), false=通常のMap(速いが少量のデータ)) 
