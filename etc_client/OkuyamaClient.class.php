@@ -1198,8 +1198,7 @@ class OkuyamaClient {
                 // ValueをBase64でエンコード
                 $encodeValue = $this->dataEncoding($value);
             }
-var_dump("this->maxValueSize=" . $this->maxValueSize);
-var_dump($this->checkStrByteLength($encodeValue));
+
             // 文字列バッファ初期化
             $serverRequestBuf = "";
 
@@ -1303,10 +1302,11 @@ var_dump($this->checkStrByteLength($encodeValue));
      *
      * @param keyStr Key値文字列
      * @param value 加算値
+     * @param initCalcValue 計算対象のKey-Valueが存在しない場合の初期化指定(TRUE=初期化する(0のvalueが作成される), FALSE=初期化されずfalseが返る)
      * @return 要素1(処理成否):Boolean true/false,要素2(演算後の結果):double 数値
      * @throws OkuyamaClientException, Exception
      */
-    public function incrValue($keyStr, $value) {
+    public function incrValue($keyStr, $value, $initCalcValue=FALSE) {
         $ret = false; 
         $serverRetStr = null;
         $serverRet = null;
@@ -1352,6 +1352,15 @@ var_dump($this->checkStrByteLength($encodeValue));
 
             // Value連結
             $serverRequestBuf = $serverRequestBuf . $encodeValue;
+
+            // 初期化設定
+            if ($initCalcValue === TRUE) {
+                // セパレータ連結
+                $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+                // Value連結
+                $serverRequestBuf = $serverRequestBuf . "1";
+            }
 
             // サーバ送信
             @fputs($this->socket, $serverRequestBuf . "\n");
@@ -1413,10 +1422,11 @@ var_dump($this->checkStrByteLength($encodeValue));
      *
      * @param keyStr Key値文字列
      * @param value 減算値
+     * @param initCalcValue 計算対象のKey-Valueが存在しない場合の初期化指定(TRUE=初期化する(0のvalueが作成される), FALSE=初期化されずfalseが返る)
      * @return 要素1(処理成否):Boolean true/false,要素2(演算後の結果):double 数値
      * @throws OkuyamaClientException, Exception
      */
-    public function decrValue($keyStr, $value) {
+    public function decrValue($keyStr, $value, $initCalcValue=FALSE) {
         $ret = false; 
         $serverRetStr = null;
         $serverRet = null;
@@ -1462,6 +1472,16 @@ var_dump($this->checkStrByteLength($encodeValue));
 
             // Value連結
             $serverRequestBuf = $serverRequestBuf . $encodeValue;
+
+            // 初期化設定
+            if ($initCalcValue === TRUE) {
+                // セパレータ連結
+                $serverRequestBuf = $serverRequestBuf . $this->sepStr;
+
+                // Value連結
+                $serverRequestBuf = $serverRequestBuf . "1";
+            }
+
 
             // サーバ送信
             @fputs($this->socket, $serverRequestBuf . "\n");
