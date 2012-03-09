@@ -22,6 +22,73 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
+[[リリース Ver 0.9.3 - (2012/03/10)]]
+バグ報告をいただいた為、急遽リリースを行います。
+■バグ内容
+  1.完全ファイルモード時に、DataNode.propertiesの'KeyManagerJob1.keySize='に大きな値を設定し(1000万など)
+    少ない登録数の場合にバックアップコマンドや、DataNodeのリカバリが失敗する事象
+
+  2.DataNode追加時のデータ移行中のごく短い一定期間の間、getMultiValueで一部のデータを取得出来ない問題事象
+
+  3.PHP版のOkuyamaClientにvar_dumpの記述があった為、削除
+
+
+■追加機能
+
+  ■incrValue及び、decrValueに値の初期化機能を追加
+    incrValue及び、decrValueは存在しないKey-Valueに対して処理を行うと失敗するが、新たに初期化指定を追加
+    初期化指定引数にtrueを渡して実行すると値が存在しない場合、
+   「Key=指定されたKey値:Value=0」
+    というセットで登録をおこなった後に指定された加算、減算を行うようになる。
+
+    追加されたメソッドは以下(PHP版のOkuyamaClient.class.phpも同様)
+    /**
+     * MasterNodeへデータの加算を要求する.<br>
+     *
+     * @param keyStr Key値
+     * @param value 加算値
+	 * @param initCalcValue あたいの初期化指定 true=計算対象のKey-Valueがokuyama上に存在しない場合、0の値を作成してから、計算を行う false=存在しない場合は計算失敗
+     * @return Object[] 要素1(処理成否):Boolean true/false,要素2(演算後の結果):Long 数値
+     * @throws OkuyamaClientException
+     */
+     public Object[] incrValue(String keyStr, long value, boolean initCalcValue) throws OkuyamaClientException;
+
+    /**
+     * MasterNodeへデータの減算を要求する.<br>
+     *
+     * @param keyStr Key値
+     * @param value 減算値
+	 * @param initCalcValue あたいの初期化指定 true=計算対象のKey-Valueがokuyama上に存在しない場合、0の値を作成してから、計算を行う false=存在しない場合は計算失敗
+     * @return Object[] 要素1(処理成否):Boolean true/false,要素2(演算後の結果):Long 数値
+     * @throws OkuyamaClientException
+     */
+     public Object[] decrValue(String keyStr, long value, boolean initCalcValue) throws OkuyamaClientException;
+
+
+    (例) Java版のOkuyamaClientの場合は以下の構文になる。
+    ----------------------------------------------------------
+     // 存在しない値に加算を実行
+     Object[] incrRet = okuyamaClient.incrValue("NO_DATA_KEY", 10, true); // 第三引数にtrueを指定
+
+     if (incrRet[0].equals("true")) {
+         System.out.println("ResultValue=" + (Long)incrRet[1]);
+	 }
+    ----------------------------------------------------------
+
+  ■MasterNodeを追加する機能をUtilClientに追加
+    従来MasterNodeを追加する場合はWebベースのマネージャを起動し、そこから行うしかなかったが、
+    UtilClientに追加する機能を追加
+     使い方)
+     $ java -classpath ./:./lib/javamail-1.4.1.jar:./okuyama-0.9.3.jar okuyama.imdst.client.UtilClient addmasternode masternode:8888 masternode2:8889
+     引数説明
+      1)addmasternode : 追加命令
+      2)masternode:8888 : 追加を依頼するMasterNodeのアドレスとPort番号(フォーマット "アドレス:ポート番号")
+      3)masternode2:8889 : 追加するMasterNodeのアドレスとPort番号(フォーマット "アドレス:ポート番号")
+
+
+
+========================================================================================================
+[New - 新機能追加、不具合対応]
 [[リリース Ver 0.9.2 - (2012/03/03)]]
 ■メモリオブジェクトの自動スナップショット機能を追加
   メモリオブジェクトのスナップショット機能により、今までDataNode復帰時に操作記録ログから復旧していたのに対して、
