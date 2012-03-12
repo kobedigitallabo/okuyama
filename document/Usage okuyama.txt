@@ -18,26 +18,29 @@
  6.Download okuyama
    URL (http://sourceforge.jp/projects/okuyama/releases/)
 
- 7.Please okuyama-0.8.2.zip and extract it to a suitable place
+ 7.Please okuyama-0.9.3.zip and extract it to a suitable place
 
- 8.After thawing, okuyama-0.8.2 directory, please go to
+ 8.After thawing, okuyama-0.9.3 directory, please go to
 
  9.ant command argument "compile" Please run
    Example
-    C:\okuyama-0.8.2>ant compile
+    C:\okuyama-0.9.3>ant compile
 
 
 
 [How to Start okuyama]
- 1.Please okuyama-0.8.2 directory
+ 1.Please okuyama-0.9.3 directory
 
- 2.ant command argument "serverrun" Please run
+ 2.ant command argument "serverrun" or "fullserverrun" Please run
    Example
-    C:\okuyama-0.8.2>ant serverrun
+    C:\okuyama-0.9.3>ant serverrun
 
  3.Starts below
+   run "serverrun"
    MasterNode
    DataNode
+
+   run "fullserverrun"
    SlaveDataNode
    ThirdDataNode
 
@@ -46,11 +49,11 @@
 
  1.The following command can be registered
    Example
-    C:\okuyama-0.8.2>ant set -Dkey=ExampleKey -Dvalue=ExampleValue
+    C:\okuyama-0.9.3>ant set -Dkey=ExampleKey -Dvalue=ExampleValue
 
     The output is as follows
 
-      C:\okuyama-0.8.2>ant set -Dkey=ExampleKey -Dvalue=ExampleValue
+      C:\okuyama-0.9.3>ant set -Dkey=ExampleKey -Dvalue=ExampleValue
       Buildfile: build.xml
       
       set:
@@ -63,11 +66,11 @@
 
  2.You can get registered with the following command
    Example
-    C:\okuyama-0.8.2>ant get -Dkey=ExampleKey
+    C:\okuyama-0.9.3>ant get -Dkey=ExampleKey
 
     The output is as follows
 
-      C:\okuyama-0.8.2>ant get -Dkey=ExampleKey
+      C:\okuyama-0.9.3>ant get -Dkey=ExampleKey
       Buildfile: build.xml
 
       get:
@@ -81,7 +84,7 @@
 
  3.You can automatically register the value of 1000 with the following command
    Example
-    C:\okuyama-0.8.2>ant testset
+    C:\okuyama-0.9.3>ant testset
     Buildfile: build.xml
 
     testset:
@@ -93,7 +96,7 @@
 
  4.Gets the value of 1,000 previously registered with the following command
    Example
-    C:\okuyama-0.8.2>ant testget
+    C:\okuyama-0.9.3>ant testget
 
 
  5.The tag set
@@ -102,102 +105,80 @@
     Key=okuyama
     Value=javakvs
     Tag={"oss","kvs"}
-    C:\okuyama-0.8.2>java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 3.1 127.0.0.1 8888 okuyama "oss kvs" javakvs
+    C:\okuyama-0.9.3>java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 3.1 127.0.0.1 8888 okuyama "oss kvs" javakvs
 
     Key=httpd
     Value=AtypicalWebServer
     Tag={"oss","webserver"}
-    C:\okuyama-0.8.2>java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 3.1 127.0.0.1 8888 httpd "oss webserver" AtypicalWebServer
+    C:\okuyama-0.9.3>java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 3.1 127.0.0.1 8888 httpd "oss webserver" AtypicalWebServer
 
 
  6.Get the key and value from the tag
    Example
-    C:\okuyama-0.8.2>java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 4 127.0.0.1 8888 1 oss
+    C:\okuyama-0.9.3>java -cp ./;./classes;./lib/javamail-1.4.1.jar TestSock 4 127.0.0.1 8888 1 oss
 
-
- 7.The total of 100,000 for the value of the five threads with the following command
-   Example
-    C:\okuyama-0.8.2>java -cp ./;./classes;./lib/javamail-1.4.1.jar test.TestSock 4 127.0.0.1:8888 5
-    The output is as follows
-      ------- Start -------
-    0
-    0
-    0
-    0
-    0
-    549
-    534
-    549
-    535
-    539
-            *
-            *
-            *
-      -------- End --------
-
-    ThreadNo.1 = 20000?
-    ThreadNo.2 = 20000?
-    ThreadNo.3 = 20000?
-    ThreadNo.4 = 20000?
-    ThreadNo.5 = 20000?
-
-    Total = 100000?
-
- 8.I try to get the process done many times in one minute 10 concurrent threads
-   Example
-    C:\okuyama-0.8.2>java -cp ./;./classes;./lib/javamail-1.4.1.jar test.TestSock get 127.0.0.1:8888 10 100000
 
 
 
 [Configuration file]
    (Slave Third)DataNode Configuration file
-   Location : okuyama-0.8.2\classes\DataNode.properties or SlaveDataNode.properties ThirdDataNode.properties
+   Location : okuyama-0.9.3\classes\DataNode.properties or SlaveDataNode.properties ThirdDataNode.properties
 
    (Attention)
    To start making a single configuration file with two data nodes
 
   ------------------------------- DataNode.properties  -----------------------------------------
    Line number
-            19 KeyManagerJob1.Init=5553        <=Start Port Number
-            26 KeyManagerJob2.Init=5554        <=Start Port Number
+            18 KeyManagerJob1.Init=5553        <=Start port number
+            25 KeyManagerJob2.Init=5554        <=Start port number
 
-            80 KeyManagerJob1.memoryMode=false <=Configuration data persistence(true=Non-persistent, false=Persistence)
-            81 KeyManagerJob1.dataMemory=true  <=location to store the value(true=Memory, false=File)
+            19 KeyManagerJob1.Option=./keymapfile/1.key,./keymapfile/1.work.key        <=Data file
+            26 KeyManagerJob2.Option=./keymapfile/2.key,./keymapfile/2.work.key        <=Data file
 
-            85 KeyManagerJob2.memoryMode=false <=Configuration data persistence(true=Non-persistent, false=Persistence)
-            86 KeyManagerJob2.dataMemory=true  <=location to store the value(true=Memory, false=File)
+			58 ServerControllerHelper.Init=15554     <= Controll server port number
+
+			130 KeyManagerJob1.memoryMode=false      <=Configuration data persistence(true=Non-persistent, false=Persistence)
+			131 KeyManagerJob1.dataMemory=true       <=location to store the value(true=Memory, false=File)
+			132 KeyManagerJob1.keyMemory=true        <=location to store the key(true=Memory, false=File)
+
+			140 KeyManagerJob2.memoryMode=false      <=Configuration data persistence(true=Non-persistent, false=Persistence)
+			141 KeyManagerJob2.dataMemory=true       <=location to store the value(true=Memory, false=File)
+			142 KeyManagerJob2.keyMemory=true        <=location to store the key(true=Memory, false=File)
+
+            172 DataSaveMapType=     <=Compression memory storage setting (Setting example =serialize)
+            173 SerializerClassName= <=Compression java class setting (Setting example =okuyama.imdst.util.serializemap.ObjectStreamSerializer)
 
   -----------------------------------------------------------------------------------------------
 
 
    MasterNode Configuration file
-   Location : okuyama-0.8.2\classes\MasterNode.properties
+   Location : okuyama-0.9.3\classes\MasterNode.properties
 
    ------------------------------- MasterNode.properties  -----------------------------------------
    Line number
             17 MasterManagerJob.Init=8888                         <=Start Port Number
 
-           103 DistributionAlgorithm=mod                          <=Data distribution algorithm(mod, consistenthash)
+           131 DistributionAlgorithm=mod                          <=Data distribution algorithm(mod, consistenthash)
 
-           111 DataConsistencyMode=0                              <=Level of consistenc(0, 1, 2)
+           139 DataConsistencyMode=0                              <=Level of consistenc(0, 1, 2)
 
-           126 MyNodeInfo=127.0.0.1:8888                          <=Represent itself in all the information MasterNode
+           169 MyNodeInfo=127.0.0.1:8888                          <=Represent itself in all the information MasterNode
 
-           133 MainMasterNodeInfo=127.0.0.1:8888                  <=MainMasterNode information
+           176 MainMasterNodeInfo=127.0.0.1:8888                  <=MainMasterNode information
 
-           142 AllMasterNodeInfo=127.0.0.1:8888,127.0.0.1:8889    <=All information MasterNode
+           185 AllMasterNodeInfo=127.0.0.1:8888,127.0.0.1:8889    <=All information MasterNode
 
-           172 KeyMapNodesRule=2                                  <=If you start the mod DataNode number of algorithms
+           215 KeyMapNodesRule=2                                  <=If you start the mod DataNode number of algorithms(When a "consistenthash" algorithm is chosen, it is not necessary to set up)
 
-           175 KeyMapNodesInfo=127.0.0.1:5553,127.0.0.1:5554      <=DataNode information
+           218 KeyMapNodesInfo=127.0.0.1:5553,127.0.0.1:5554      <=DataNode information
 
-           185 SubKeyMapNodesInfo=127.0.0.1:6553,127.0.0.1:6554   <=SlaveDataNode information
+           228 SubKeyMapNodesInfo=127.0.0.1:6553,127.0.0.1:6554   <=SlaveDataNode information
 
-           188 ThirdKeyMapNodesInfo=127.0.0.1:7553,127.0.0.1:7554 <=SlaveDataNode information
+           232 ThirdKeyMapNodesInfo=127.0.0.1:7553,127.0.0.1:7554 <=SlaveDataNode information
 
-           220 LoadBalanceMode=true                               <=Load balancing settings(true=on, false=off)
+           264 LoadBalanceMode=true                               <=Load balancing settings(true=on, false=off)
 
-           221 BalanceRatio=7:3                                   <=Allocation ratio
+           265 BalanceRatio=7:3                                   <=Allocation ratio
    ---------------------------------------------------------------------------------------------------
 
 
