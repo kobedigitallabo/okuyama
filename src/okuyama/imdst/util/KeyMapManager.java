@@ -329,7 +329,7 @@ public class KeyMapManager extends Thread {
                             }
 
                             if (workKeyFile.exists()) {
-                                logger.info("workKeyMapFile - Read - start");
+                                logger.info("workKeyMapFile - [" + workKeyFile.getPath() + "] - Read - start");
                                 workKeyFilefis = new FileInputStream(workKeyFile);
                                 isr = new InputStreamReader(workKeyFilefis , KeyMapManager.workMapFileEnc);
                                 br = new BufferedReader(isr);
@@ -337,7 +337,7 @@ public class KeyMapManager extends Thread {
 
                                 while((line=br.readLine())!=null){
                                     if ((counter % 100) == 0) {
-                                        logger.info("workKeyMapFile - Read - Count =[" + counter + "]");
+                                        logger.info("workKeyMapFile - [" + workKeyFile.getPath() + "] - Read - Count =[" + counter + "]");
                                     }
 
                                     if (!line.equals("")) {
@@ -384,10 +384,10 @@ public class KeyMapManager extends Thread {
                                         } else {
 
                                             // 不正データ
-                                            logger.error("workKeyMapFile - Read - Error " + counter + "Line Data = [" + workSplitStrs + "]");
+                                            logger.error("workKeyMapFile - [" + workKeyFile.getPath() + "] - Read - Error " + counter + "Line Data = [" + workSplitStrs + "]");
                                         }
                                     } else {
-                                        logger.info("workKeyMapFile - Read - Info " + counter + "Line Blank");
+                                        logger.info("workKeyMapFile - [" + workKeyFile.getPath() + "] - Read - Info " + counter + "Line Blank");
                                     }
                                     counter++;
                                 }
@@ -395,8 +395,7 @@ public class KeyMapManager extends Thread {
                                 br.close();
                                 isr.close();
                                 workKeyFilefis.close();
-                                logger.info("workKeyMapFile - Read - end");
-
+                                logger.info("workKeyMapFile - [" + workKeyFile.getPath() + "] - Read - end");
                             }
                             if (endFlg) break;
                         }
