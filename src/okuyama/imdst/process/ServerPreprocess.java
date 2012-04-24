@@ -36,6 +36,7 @@ import okuyama.imdst.util.*;
  * -wfsrf ImdstDefine.workFileStartingReadFlg / DataNode起動時に操作記録ログ(トランザクションログ)を読み込む設定.trueの場合は読み込む(デフォルト)
  * -udt ImdstDefine.useDiskType / データファイルを保存するディスクのタイプを指定することで、ディスクへのアクセスが最適化される 1=HDD(デフォルト) 2=SSD
  * -mdcs ImdstDefine.maxDiskCacheSize / ディスクキャッシュ利用時に、どれだけの件数をキャッシュに乗せるかを件数で指定する デフォルトでは10000件
+ * -numberOfDeletedDataPoint
  *
  * <br>
  * @author T.Okuyama

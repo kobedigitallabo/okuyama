@@ -17,6 +17,7 @@ import okuyama.imdst.util.StatusUtil;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.SystemUtil;
 
 import com.sun.mail.util.BASE64EncoderStream;
 
@@ -107,6 +108,7 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             this.portNo = Integer.parseInt(initValue);
         }
 
+        SystemUtil.bindMasterNodeServerPortNo = this.portNo;
 
         // 遅延書き込み指定
         String keyMapDelayWrite = (String)super.getPropertiesValue(ImdstDefine.Prop_KeyMapDelayWrite);

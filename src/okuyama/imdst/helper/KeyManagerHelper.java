@@ -441,6 +441,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             // ステータスチェック時にデータ永続化部分でエラーが出ていないか確認する
                             String retStatus = "false";
                             try {
+
                                 if(!this.keyMapManager.checkError()) {
                                     this.keyMapManager.containsKeyPair("PCKey");
                                     String chkGetRet = this.keyMapManager.getKeyPair("PCKey");

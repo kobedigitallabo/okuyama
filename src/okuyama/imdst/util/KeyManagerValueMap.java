@@ -95,6 +95,14 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * Objectに書き出した後でも必須
      */
     public void initNoMemoryModeSetting(String lineFile) {
+        this.initNoMemoryModeSetting(lineFile, true);
+    }
+
+    /**
+     * 本メソッドは使用前に必ず呼び出す<br>
+     * Objectに書き出した後でも必須
+     */
+    public void initNoMemoryModeSetting(String lineFile, boolean renewFlg) {
         try {
             if (sync == null) 
                 sync = new Object();
@@ -116,9 +124,16 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 overSizeDataStoreDirs[dirIdx] = lineFile + "_" + dirIdx + "/";
             }
 
-            if (this.overSizeDataStore == null)
-                this.overSizeDataStore = new FileBaseDataMap(overSizeDataStoreDirs, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.dataFileWriteMaxSize*5, ImdstDefine.dataFileWriteMaxSize*15);
+            if (this.overSizeDataStore == null) {
+                // 一時Objectファイルを読み込んだ場合はオーバーサイズ領域を初期化しない
+                if (renewFlg) {
 
+                    this.overSizeDataStore = new FileBaseDataMap(overSizeDataStoreDirs, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.dataFileWriteMaxSize*5, ImdstDefine.dataFileWriteMaxSize*15);
+                } else {
+                    // スナップショットファイルを読み込んでる
+                    this.overSizeDataStore = new FileBaseDataMap(overSizeDataStoreDirs, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.dataFileWriteMaxSize*5, ImdstDefine.dataFileWriteMaxSize*15, false);
+                }
+            }
 
 
             File valueFile = new File(lineFile);

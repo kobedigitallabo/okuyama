@@ -233,6 +233,7 @@ public class OkuyamaClient {
      *
      */
     public OkuyamaClient() {
+
         // エンコーダ、デコーダの初期化に時間を使うようなので初期化
         this.dataEncoding("".getBytes());
         this.dataDecoding("".getBytes());
@@ -4116,6 +4117,124 @@ public class OkuyamaClient {
                 try {
                     this.autoConnect();
                     ret = this.getTagValues(tagStr, encoding);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * MasterNodeからTag値を渡すことで紐付くValue値の集合を取得する.<br>
+     * 紐付くValueが全てsetObjectValueで登録した値であること.<br>
+     * 指定したTag内にsetObjectValueで登録した値以外が含まれるとエラーとなる<br>
+     *
+     * @param tagStr Tag値
+     * @return Map 取得データのMap Mapのキー値はTag紐付くKey(String型)となりValueはそのKeyに紐付く値(Object型)となる(キャストして利用してください)
+     * @throws OkuyamaClientException
+     */
+    public Map getTagObjectValues(String tagStr) throws OkuyamaClientException {
+        Map ret = new HashMap(); 
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        String encoding = platformDefaultEncoding;
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Tagに対する無指定チェック
+            if (tagStr == null ||  tagStr.equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a tag");
+            }
+
+            // Tagに対するLengthチェック
+            if (tagStr.getBytes(encoding).length > maxKeySize) throw new OkuyamaClientException("Save Tag Max Size " + maxKeySize + " Byte");
+
+
+            // 処理番号連結
+            getValueServerReqBuf.append("23");
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // tag値連結(Keyはデータ送信時には必ず文字列が必要)
+            getValueServerReqBuf.append(new String(this.dataEncoding(tagStr.getBytes(encoding))));
+
+            // サーバ送信
+
+            pw.println(getValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            int readIdx = 0;
+            while (!(serverRetStr = br.readLine()).equals(ImdstDefine.getMultiEndOfDataStr)) {
+
+                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+                // 処理の妥当性確認
+                if (serverRet[0].equals("23")) {
+                    if (serverRet[1].equals("true")) {
+    
+                        // データ有り
+                        Object[] oneDataRet = new Object[2];
+
+                        oneDataRet[0] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
+
+                        // Value文字列をBase64でデコードしてObject化
+                        oneDataRet[1] = SystemUtil.normalObjectDeserialize(this.dataDecoding(serverRet[3].getBytes()));
+                        ret.put((String)oneDataRet[0], oneDataRet[1]);
+                    } else if(serverRet[1].equals("false")) {
+    
+                        // データなし
+                        // 処理なし
+                    } else if(serverRet[1].equals("error")) {
+    
+                        // エラー発生
+                        // 処理なし
+                    }
+                } else {
+    
+                    // 妥当性違反
+                    throw new OkuyamaClientException("Execute Violation of validity");
+                }
+                readIdx++;
+            }
+
+            if(ret.size() == 0) ret = null;
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getTagObjectValues(tagStr);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getTagObjectValues(tagStr);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getTagObjectValues(tagStr);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }

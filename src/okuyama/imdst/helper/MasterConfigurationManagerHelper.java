@@ -12,6 +12,7 @@ import okuyama.base.util.LoggerFactory;
 import okuyama.imdst.util.ImdstDefine;
 import okuyama.imdst.util.DataDispatcher;
 import okuyama.imdst.util.StatusUtil;
+import okuyama.imdst.util.SystemUtil;
 
 import okuyama.imdst.client.ImdstKeyValueClient;
 
@@ -349,6 +350,9 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
 
         // 自身の情報
         myNodeInfoStr = super.getPropertiesValue(ImdstDefine.Prop_MyNodeInfo);
+        if (myNodeInfoStr == null || myNodeInfoStr.trim().equals("")) {
+            myNodeInfoStr = SystemUtil.getHostName() + ":" + SystemUtil.getBindMasterNodePortNo();
+        }
         StatusUtil.setMyNodeInfo(myNodeInfoStr);
 
         // メインマスターノード接続情報

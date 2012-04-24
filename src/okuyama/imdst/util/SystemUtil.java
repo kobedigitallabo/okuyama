@@ -1,5 +1,6 @@
 package okuyama.imdst.util;
 
+import java.net.*;
 import java.io.*;
 import java.util.*;
 import java.util.Date;
@@ -33,6 +34,8 @@ public class SystemUtil {
     public static PrintWriter netDebugPrinter = null;
 
     private static Map checkCharacterMap = new HashMap(64);
+
+    public static int bindMasterNodeServerPortNo = 8888;
 
 
     static {
@@ -822,6 +825,20 @@ public class SystemUtil {
         return retData;
     }
 
+
+    public static String getHostName() {
+        try {
+            InetAddress inet = InetAddress.getLocalHost();
+            return inet.getHostName();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
+    public static int getBindMasterNodePortNo() {
+        return bindMasterNodeServerPortNo;
+    }
 
 }
 
