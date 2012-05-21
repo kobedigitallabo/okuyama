@@ -213,6 +213,7 @@ public class KeyMapManager extends Thread {
 
 
     // 初期化メソッド
+    // Keyもファイルの場合
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, String[] dirs, String diskCacheFile) throws BatchException {
         boolean renewFlg = false;
         this.diskCacheFile = diskCacheFile;
@@ -2405,6 +2406,7 @@ public class KeyMapManager extends Thread {
                             String key = null;
 
                             key = (String)obj.getKey();
+
 
                             // 全てのデータを送る
                             allDataBuf.append(allDataSep);
