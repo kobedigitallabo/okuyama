@@ -1331,6 +1331,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         String[] retStrs = new String[3];
 
+
         try {
             if (true) {
                 // Key値チェック
@@ -1434,9 +1435,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         for (int i = 0; i < ImdstDefine.saveDataMaxSize; i++) {
 
                             String checkStr = realKeyStr.substring(i, i+typeIdx);
-
-                            if(SystemUtil.checkNoIndexCharacter(checkStr)) {
-                                continue;
+                            if ((i+typeIdx) == i) continue;
+                            if (((byte[])checkStr.getBytes()).length < 2) {
+                                if(SystemUtil.checkNoIndexCharacter(checkStr)) {
+                                    continue;
+                                }
                             }
                             sIdx1 = new String(BASE64EncoderStream.encode((prefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
 
@@ -2153,7 +2156,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 String workStr = new String(BASE64DecoderStream.decode(workKeywords[idx].getBytes(ImdstDefine.characterDecodeSetBySearch)), ImdstDefine.characterDecodeSetBySearch);
 
                 String keyword = "";
-
                 // 辞書マッチから調べる
                 if (searchIndexDictionaryMap.containsKey(workStr)) {
 
@@ -2190,7 +2192,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 // 検索対象か調べる
                 // 辞書マッチの場合は必ず対象
-                if(dictionaryMatch == false && SystemUtil.checkNoIndexCharacter(keyword)) continue;
+
+                if(((byte[])keyword.getBytes()).length < 2) {
+                    if(dictionaryMatch == false && SystemUtil.checkNoIndexCharacter(keyword)) continue;
+                }
 
                 // デコード済みキーワードを蓄える
                 decodeWorkKeywords.add(workStr);
