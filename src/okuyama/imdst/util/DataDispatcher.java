@@ -639,7 +639,6 @@ public class DataDispatcher {
             // Consistent Hash
             ret = dispatchConsistentHashKeyNode(key, false);
         }
-        
         return adjustmentAccessNode(ret, reverse);
     }
 
@@ -678,6 +677,7 @@ public class DataDispatcher {
             if (useRule == 0 && oldCircle != null) 
                 ret = dispatchConsistentHashKeyNode(key, false, true);
         }
+
         return adjustmentAccessNode(ret, reverse);
     }
 
@@ -793,7 +793,22 @@ public class DataDispatcher {
                     retNodes[8] = nodes[5];
                 }
             } else {
-                retNodes = nodes;
+                if (reverse == true) {
+
+                    retNodes = new String[9];
+                    retNodes[0] = nodes[3];
+                    retNodes[1] = nodes[4];
+                    retNodes[2] = nodes[5];
+                    retNodes[3] = nodes[6];
+                    retNodes[4] = nodes[7];
+                    retNodes[5] = nodes[8];
+                    retNodes[6] = nodes[0];
+                    retNodes[7] = nodes[1];
+                    retNodes[8] = nodes[2];
+                } else {
+                    retNodes = nodes;
+                }
+                
             }
         }
         return retNodes;

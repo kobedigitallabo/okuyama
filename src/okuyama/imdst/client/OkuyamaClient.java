@@ -3529,7 +3529,7 @@ System.out.println(serverRetStr);
             } else {
 
                 // 妥当性違反
-                throw new OkuyamaClientException("Execute Violation of validity " + serverRet);
+                throw new OkuyamaClientException("Execute Violation of validity : Key=[" + keyStr + "] Value=[" + serverRetStr + "]");
             }
         } catch (OkuyamaClientException ice) {
             throw ice;
