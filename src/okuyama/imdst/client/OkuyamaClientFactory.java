@@ -170,6 +170,20 @@ public class OkuyamaClientFactory {
      */
     public OkuyamaClient getClient() throws OkuyamaClientException {
 
+        return this.getClient(false);
+    }
+
+
+    /**
+     * OkuyamaClientを取得する.<br>
+     * 内部的に接続状態の確認を行ったのちに返却される<br>
+     * プールに1つもOkuyamaClientが存在しない場合は新規に作成されて返される<br>
+     * 本メソッドから取得したOkuyamaClientのcloseメソッドを呼び出すことでプールに返却される<br>
+     *
+     * @throws OkuyamaClientException 有効なOkuyamaClientの返却に失敗
+     */
+    public OkuyamaClient getClient(boolean noCheck) throws OkuyamaClientException {
+
         OkuyamaClient client = null;
 
         try {
@@ -187,10 +201,13 @@ public class OkuyamaClientFactory {
                     client = null;
                 } else {
 
-                    try {
-                        client.getOkuyamaVersion();
-                    } catch (Exception innerE) {
-                        client = null;
+                    if (noCheck == false) {
+
+                        try {
+                            client.getOkuyamaVersion();
+                        } catch (Exception innerE) {
+                            client = null;
+                        }
                     }
                 }
             }
@@ -218,6 +235,7 @@ public class OkuyamaClientFactory {
 
         return client;
     }
+
 
 
     /**
