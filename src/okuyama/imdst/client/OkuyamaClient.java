@@ -3970,7 +3970,7 @@ System.out.println(serverRetStr);
      * @throws OkuyamaClientException
      */
     public Map getMultiValue(String[] keyStrList) throws OkuyamaClientException {
-        return this.getMultiValue(keyStrList, null);
+        return this.getMultiValue(keyStrList, null, false);
     }
 
 
@@ -3984,6 +3984,19 @@ System.out.println(serverRetStr);
      * @throws OkuyamaClientException
      */
     public Map getMultiValue(String[] keyStrList, String encoding) throws OkuyamaClientException {
+        return this.getMultiValue(keyStrList, encoding, false);
+    }
+
+    /**
+     * MasterNodeからKey値の配列を渡すことでValue値の集合を取得する.<br>
+     * 文字列エンコーディング指定あり.<br>
+     *
+     * @param keyStrList Key値配列<br>1つだけのKeyを指定することは出来ない
+     * @param encoding エンコーディング指定
+     * @return Map 取得データのMap 取得キーに同一の値を複数指定した場合は束ねられる Mapのキー値は指定されたKeyとなりValueは取得した値となる<br>全てのKeyに紐付くValueが存在しなかった場合は、nullが返る
+     * @throws OkuyamaClientException
+     */
+    public Map getMultiValue(String[] keyStrList, String encoding, boolean noDecode) throws OkuyamaClientException {
         Map ret = new HashMap(); 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -4049,8 +4062,13 @@ System.out.println(serverRetStr);
                             oneDataRet[1] = "";
                         } else {
     
-                            // Value文字列をBase64でデコード
-                            oneDataRet[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
+                            if (noDecode == false) {
+                                // Value文字列をBase64でデコード
+                                oneDataRet[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
+                            } else {
+                                // Value文字列をBase64でデコードしない
+                                oneDataRet[1] = serverRet[2];
+                            }
                         }
                         ret.put(oneDataRet[0], oneDataRet[1]);
                     } else if(serverRet[1].equals("false")) {
@@ -4077,7 +4095,7 @@ System.out.println(serverRetStr);
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.getMultiValue(keyStrList, encoding);
+                    ret = this.getMultiValue(keyStrList, encoding, noDecode);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -4088,7 +4106,7 @@ System.out.println(serverRetStr);
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.getMultiValue(keyStrList, encoding);
+                    ret = this.getMultiValue(keyStrList, encoding, noDecode);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -4099,7 +4117,7 @@ System.out.println(serverRetStr);
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.getMultiValue(keyStrList, encoding);
+                    ret = this.getMultiValue(keyStrList, encoding, noDecode);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
@@ -6662,6 +6680,51 @@ System.out.println(serverRetStr);
                 try {
                     this.autoConnect();
                     ret = this.readByteValue(keyStr);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * MasterNodeからKeyでデータを取得する(バイナリ).<br>
+     * sendByteValueで登録したValueはこちらで取得する.<br>
+     *
+     * @param keyStr Key値
+     * @return Map 取得データのMap 取得キーに同一の値を複数指定した場合は束ねられる Mapのキー値は指定されたKeyとなりValueは取得した値となる<br>全てのKeyに紐付くValueが存在しなかった場合は、nullが返る
+     * @throws OkuyamaClientException
+     */
+    public Map readMultiByteValue(String[] keyStrList) throws OkuyamaClientException {
+        Map ret = new HashMap();
+        byte[] byteRet = null;
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            Map cnvRet = this.getMultiValue(keyStrList);
+
+            for (int idx = 0; idx < keyStrList.length; idx++) {
+                String key = keyStrList[idx];
+
+                String valueStr = (String)cnvRet.get(key);
+                if (valueStr != null) {
+                    ret.put(key, this.dataDecoding(valueStr.getBytes()));
+                }
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.readMultiByteValue(keyStrList);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
