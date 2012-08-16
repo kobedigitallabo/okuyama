@@ -327,7 +327,9 @@ public class OkuyamaClient {
                 String[] nodeInfo = nodeStr.split(":");
                 this.socket = new Socket();
                 InetSocketAddress inetAddr = new InetSocketAddress(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
+
                 this.socket.connect(inetAddr, ImdstDefine.clientConnectionOpenTimeout);
+
                 this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
                 this.pw = new ClientCustomPrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), OkuyamaClient.connectDefaultEncoding)));
                 this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), OkuyamaClient.connectDefaultEncoding));
@@ -2806,6 +2808,7 @@ System.out.println(serverRetStr);
 
     /**
      * MasterNodeへデータを送信する(バイナリデータ).<br>
+     * からならずValueがzip圧縮される
      *
      * @param keyStr
      * @param values
@@ -2938,6 +2941,7 @@ System.out.println(serverRetStr);
     /**
      * MasterNodeへデータを送信する(バイナリデータ).<br>
      * setByteValueメソッドとの違いはValueをSplitしないで登録する部分.<br>
+     * からならずValueがzip圧縮されない
      *
      * @param keyStr Key値
      * @param values Value値
@@ -6696,6 +6700,161 @@ System.out.println(serverRetStr);
      * sendByteValueで登録したValueはこちらで取得する.<br>
      *
      * @param keyStr Key値
+     * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
+     * @throws OkuyamaClientException
+     */
+    public boolean requestReadByteValue(String keyStr) throws OkuyamaClientException {
+        boolean ret = false;
+        byte[] byteRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.trim().equals(""))
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+
+            // Keyに対するLengthチェック
+            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + keyStr + " Byte");
+
+            // 文字列バッファ初期化
+            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+
+            // 処理番号連結
+            serverRequestBuf.append("2");
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            ret = true;
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.requestReadByteValue(keyStr);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * MasterNodeからKeyでデータを取得する(バイナリ).<br>
+     * sendByteValueで登録したValueはこちらで取得する.<br>
+     *
+     * @param keyStr Key値
+     * @return Object[] 要素1(String)(データ有無):"true" or "false",要素2(byte[])(データ):{バイト配列}
+     * @throws OkuyamaClientException
+     */
+    public Object[] responseReadByteValue(String keyStr) throws OkuyamaClientException {
+        Object[] ret = new Object[2];
+        byte[] byteRet = null;
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        StringBuilder serverRequestBuf = null;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("2")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    ret[0] = serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if (serverRet[2].equals(OkuyamaClient.blankStr)) {
+                        byteRet = new byte[0];
+                        ret[1] = byteRet;
+                    } else {
+
+                        // Value文字列をBase64でデコード
+                        ret[1] = this.dataDecoding(serverRet[2].getBytes());
+                    }
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity");
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.readByteValue(keyStr);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.readByteValue(keyStr);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.readByteValue(keyStr);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * MasterNodeからKeyでデータを取得する(バイナリ).<br>
+     * sendByteValueで登録したValueはこちらで取得する.<br>
+     *
+     * @param keyStr Key値
      * @return Map 取得データのMap 取得キーに同一の値を複数指定した場合は束ねられる Mapのキー値は指定されたKeyとなりValueは取得した値となる<br>全てのKeyに紐付くValueが存在しなかった場合は、nullが返る
      * @throws OkuyamaClientException
      */
@@ -6710,13 +6869,17 @@ System.out.println(serverRetStr);
         try {
             Map cnvRet = this.getMultiValue(keyStrList);
 
-            for (int idx = 0; idx < keyStrList.length; idx++) {
-                String key = keyStrList[idx];
+            if (cnvRet != null) {
+                for (int idx = 0; idx < keyStrList.length; idx++) {
+                    String key = keyStrList[idx];
 
-                String valueStr = (String)cnvRet.get(key);
-                if (valueStr != null) {
-                    ret.put(key, this.dataDecoding(valueStr.getBytes()));
+                    String valueStr = (String)cnvRet.get(key);
+                    if (valueStr != null) {
+                        ret.put(key, valueStr.getBytes());
+                    }
                 }
+            } else {
+                ret = null;
             }
         } catch (OkuyamaClientException ice) {
             throw ice;

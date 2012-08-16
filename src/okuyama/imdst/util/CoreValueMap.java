@@ -361,7 +361,10 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
     public void fileStoreMapObject(File file, Map dataSizeMap) throws Exception {
         try {
-            FileOutputStream fos = new FileOutputStream(file, false);
+            String fileName = file.getAbsolutePath();
+            File createFile = new File(fileName + ".tmp");
+
+            FileOutputStream fos = new FileOutputStream(createFile, false);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
             System.out.println("  Execute - fileStoreMapObject - Start" + new Date());
@@ -374,6 +377,14 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             oos.writeObject(container);
             System.out.println("  Execute - fileStoreMapObject - End" + new Date());
             oos.close();
+
+            if (file.exists()) {
+
+                file.delete();
+            }
+
+            file = new File(fileName);
+            if(!createFile.renameTo(file)) throw new Exception("Obj file create error");
         } catch(Exception e) {
             throw e;
         }
