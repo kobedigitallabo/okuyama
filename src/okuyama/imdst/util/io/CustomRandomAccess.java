@@ -42,7 +42,7 @@ public class CustomRandomAccess extends AbstractDataRandomAccess {
     }
 
     public int seekAndRead(long seekPoint, byte[] data, int start, int size, Object key) throws IOException {
-        throw new IOException("Not found methdo");
+        throw new IOException("Not found function");
     }
 
     public void seek(long seekPoint) throws IOException {

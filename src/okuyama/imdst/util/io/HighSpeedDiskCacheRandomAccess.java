@@ -77,17 +77,13 @@ public class HighSpeedDiskCacheRandomAccess extends AbstractDataRandomAccess {
                 ret = super.read(data, start, size);
                 cacheData = new byte[data.length];
                 ret = data.length;
-                for (int i = 0; i < data.length; i++) {
-                    cacheData[i] = data[i];
-                }
+                System.arraycopy(data, 0, cacheData, 0, data.length);
                 this.diskCacheManager.addCacheData(seekPoint, cacheData);
             } else {
                 //cacheHitCount++;
                 //if ((cacheHitCount % 5000) == 0) System.out.println("Cache hit count=" + cacheHitCount + " [" + new Date().toString());
                 // キャッシュあり
-                for (int i = 0; i < cacheData.length; i++) {
-                    data[i] = cacheData[i];
-                }
+                System.arraycopy(cacheData, 0, data, 0, cacheData.length);
                 ret = cacheData.length;
             }
 

@@ -126,27 +126,15 @@ public class DiskBaseCacheMap extends LinkedHashMap {
                 if (ImdstDefine.dataFileWriteMaxSize > 4096) {
 
                     this.raf.seek(cacheSeekPoint.longValue());
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream(ImdstDefine.dataFileWriteMaxSize + 1);
                     int readCount = ImdstDefine.dataFileWriteMaxSize / 4096;
                     int assist = ImdstDefine.dataFileWriteMaxSize % 4096;
                     if (assist > 0) {
                         readCount = readCount + 1;
                     }
 
-                    for (int i = 0; i < (readCount - 1); i++) {
-
-                        retData = new byte[4096];
-                        this.raf.read(retData);
-                        baos.write(retData);
-                    }
-
-                    if (assist > 0) {
-                        retData = new byte[assist];
-                        this.raf.read(retData);
-                        baos.write(retData);
-                    }
-                    retData = null;
-                    retData = baos.toByteArray();
+                    byte[] baos2 = new byte[((readCount - 1) * 4096) + assist];
+                    this.raf.read(baos2);
+                    retData = baos2;
                 } else {
 
                     retData = new byte[ImdstDefine.dataFileWriteMaxSize];

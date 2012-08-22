@@ -445,15 +445,12 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                     // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
                     // 足りない文字列は固定の"&"で補う(38)
-                    byte[] appendDatas = new byte[this.oneDataLength - valueSize];
 
-                    for (int i = 0; i < appendDatas.length; i++) {
-                        appendDatas[i] = 38;
-                    }
+                    byte[] appendDatas = new byte[this.oneDataLength - valueSize + 1];
+                    Arrays.fill(appendDatas, (byte)38);
+                    appendDatas[appendDatas.length - 2] = 10;
 
                     writeBuf.append(new String(appendDatas));
-                    writeBuf.append("\n");
-
 
                     if ((this.fullDiskMode == true && ImdstDefine.reuseDataFileValuePositionFlg == false) || (seekPoint = this.calcSeekDataPoint(key, false)) == -1) {
 
