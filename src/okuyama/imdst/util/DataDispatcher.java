@@ -1301,7 +1301,8 @@ public class DataDispatcher {
 
             ArrayList tmpNodeList = (ArrayList)allNodeMap.get("main");
 
-            for (int i = 0; i < tmpNodeList.size(); i++) {
+            int tmpNodeListSize = tmpNodeList.size();
+            for (int i = 0; i < tmpNodeListSize; i++) {
                 mainNodeList.add(tmpNodeList.get(i));
             }
             retMap.put("main", mainNodeList);
@@ -1310,7 +1311,8 @@ public class DataDispatcher {
             if (allNodeMap.containsKey("sub")) {
                 tmpNodeList = (ArrayList)allNodeMap.get("sub");
 
-                for (int i = 0; i < tmpNodeList.size(); i++) {
+                tmpNodeListSize = tmpNodeList.size();
+                for (int i = 0; i < tmpNodeListSize; i++) {
                     subNodeList.add(tmpNodeList.get(i));
                 }
                 retMap.put("sub", subNodeList);
@@ -1320,7 +1322,8 @@ public class DataDispatcher {
             if (allNodeMap.containsKey("third")) {
                 tmpNodeList = (ArrayList)allNodeMap.get("third");
 
-                for (int i = 0; i < tmpNodeList.size(); i++) {
+                tmpNodeListSize = tmpNodeList.size();
+                for (int i = 0; i < tmpNodeListSize; i++) {
                     thirdNodeList.add(tmpNodeList.get(i));
                 }
                 retMap.put("third", thirdNodeList);

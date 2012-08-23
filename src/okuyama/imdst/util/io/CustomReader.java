@@ -18,6 +18,10 @@ public class CustomReader {
 
     private BufferedInputStream bis = null;
 
+    private ByteArrayOutputStream bos = new ByteArrayOutputStream(4096);
+    private byte[] b = new byte[1];
+
+
     public CustomReader(InputStream is) {
 
         this.is = is;
@@ -26,20 +30,21 @@ public class CustomReader {
 
 
     public String readLine() throws Exception {
-
-        byte[] b = new byte[1];
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        this.b[0] = (byte)0;
 
         int i = 0;
-        while (bis.read(b, 0, 1) != -1) {
+        while (bis.read(this.b, 0, 1) != -1) {
 
-            if (b[0] != 13 && b[0] != 10) {
-                bos.write(b, 0, 1);
-            } else if (b[0] == 10) {
+            if (this.b[0] != 13 && this.b[0] != 10) {
+                this.bos.write(this.b, 0, 1);
+            } else if (this.b[0] == 10) {
                 break;
             }
         }
-        return bos.toString();
+
+        String ret = this.bos.toString();
+        this.bos.reset();
+        return ret;
     }
 
 

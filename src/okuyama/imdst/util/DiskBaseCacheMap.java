@@ -34,6 +34,10 @@ public class DiskBaseCacheMap extends LinkedHashMap {
     private RandomAccessFile raf = null;
     private ArrayBlockingQueue freeCacheSpaceQueue = null;
 
+    private ArrayBlockingQueue readOnlyFpQueue = null;
+    private int readOnlyFpQueueSize = 4;
+
+
     private String cacheStoreFilePath = null;
     private File cacheStoreFile = null;
 
@@ -58,6 +62,13 @@ public class DiskBaseCacheMap extends LinkedHashMap {
             freeSpacePoint = freeSpacePoint + ImdstDefine.dataFileWriteMaxSize;
         }
         this.cacheStoreFilePath = this.cacheStoreFile.getAbsolutePath();
+
+        this.readOnlyFpQueue = new ArrayBlockingQueue(this.readOnlyFpQueueSize);
+        try {
+            for (int i = 0; i < this.readOnlyFpQueueSize; i++) {
+                this.readOnlyFpQueue.put(new RandomAccessFile(this.cacheStoreFile, "r"));
+            }
+        } catch (Exception ee) {}
     }
 
 
@@ -116,30 +127,36 @@ public class DiskBaseCacheMap extends LinkedHashMap {
      * @return Object
      */
     public Object get(Object key) {
-        w.lock();
+
         byte[] retData = null;
+        RandomAccessFile useRaf = null;
+
+        r.lock();
         try { 
             Long cacheSeekPoint = (Long)super.get(key);
 
             if (cacheSeekPoint != null) {
 
+                useRaf = (RandomAccessFile)this.readOnlyFpQueue.poll(100L, TimeUnit.MILLISECONDS);
+                if (useRaf == null) return null;
+
                 if (ImdstDefine.dataFileWriteMaxSize > 4096) {
 
-                    this.raf.seek(cacheSeekPoint.longValue());
+                    useRaf.seek(cacheSeekPoint.longValue());
                     int readCount = ImdstDefine.dataFileWriteMaxSize / 4096;
                     int assist = ImdstDefine.dataFileWriteMaxSize % 4096;
                     if (assist > 0) {
                         readCount = readCount + 1;
                     }
 
-                    byte[] baos2 = new byte[((readCount - 1) * 4096) + assist];
-                    this.raf.read(baos2);
-                    retData = baos2;
+                    byte[] baos = new byte[((readCount - 1) * 4096) + assist];
+                    useRaf.read(baos);
+                    retData = baos;
                 } else {
 
                     retData = new byte[ImdstDefine.dataFileWriteMaxSize];
-                    this.raf.seek(cacheSeekPoint.longValue());
-                    this.raf.read(retData);
+                    useRaf.seek(cacheSeekPoint.longValue());
+                    useRaf.read(retData);
                 }
             }
         } catch(Exception e) {
@@ -147,7 +164,17 @@ public class DiskBaseCacheMap extends LinkedHashMap {
             retData = null;
             e.printStackTrace();
         } finally { 
-            w.unlock(); 
+            try {
+                if (this.errorFlg) {
+                    useRaf.close();
+                    useRaf = null;
+                }
+
+                if (useRaf != null) this.readOnlyFpQueue.offer(useRaf);
+            } catch(Exception ee) {
+                
+            }
+            r.unlock(); 
         }
         return retData;
     }

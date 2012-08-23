@@ -207,8 +207,9 @@ public class FileBaseDataList extends AbstractList {
                             }
                         }
 
-                        Object[] retObjs = new Object[dataList.size()];
-                        for (int idx = 0; idx < dataList.size(); idx++) {
+                        int dataListSize = dataList.size();
+                        Object[] retObjs = new Object[dataListSize];
+                        for (int idx = 0; idx < dataListSize; idx++) {
                             retObjs[idx] = dataList.get(idx);
                         }
                         return retObjs;

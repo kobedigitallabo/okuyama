@@ -2462,8 +2462,9 @@ public class KeyMapManager extends Thread {
                             counter++;
                             if (counter > (maxLineCount - 1)) {
 
-                                long[] keyListInt = new long[keyList.size()];
-                                for (int idx = 0; idx < keyList.size(); idx++) {
+                                int keyListSize = keyList.size();
+                                long[] keyListInt = new long[keyListSize];
+                                for (int idx = 0; idx < keyListSize; idx++) {
                                     keyListInt[idx] = ((Long)keyList.get(idx)).longValue();
                                 }
                                 Arrays.sort(keyListInt);
@@ -2493,7 +2494,9 @@ public class KeyMapManager extends Thread {
                         }
 
                         if (keyList.size() > 0) {
-                            long[] keyListInt = new long[keyList.size()];
+
+                            int keyListSize = keyList.size();
+                            long[] keyListInt = new long[keyListSize];
                             for (int idx = 0; idx < keyListInt.length; idx++) {
                                 keyListInt[idx] = ((Long)keyList.get(idx)).longValue();
                             }

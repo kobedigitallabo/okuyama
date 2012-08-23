@@ -532,7 +532,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                     resultMap.put(oneRet[0], oneRet[1]);
                                 }
 
-                                for (int i = 0; i < requestKeyList.size(); i++) {
+                                int requestKeyListSize = requestKeyList.size();
+                                for (int i = 0; i < requestKeyListSize; i++) {
 
                                     String retVal = (String)resultMap.get((String)requestKeyList.get(i));
 
@@ -2264,7 +2265,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             } else {
 
                 // OR検索の場合は全てのWordで検索出来たものをマージしてそれをベースに検索を行う
-                for (int idx = 0; idx < allSearchWordList.size(); idx++) {
+                int allSearchWordListSize = allSearchWordList.size();
+                for (int idx = 0; idx < allSearchWordListSize; idx++) {
 
                     String[] singleWordList = (String[])allSearchWordList.get(idx);
                     boolean fullMatchFlg = ((Boolean)fullMatchList.get(idx)).booleanValue();

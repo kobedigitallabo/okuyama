@@ -348,10 +348,12 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                         }
                     }
 
-                    retStrs = new String[requestWorkList.size()];
-                    this.requestSplit = new String[requestWorkList.size()];
+                    int requestWorkListSize = requestWorkList.size();
+                    retStrs = new String[requestWorkListSize];
+                    this.requestSplit = new String[requestWorkListSize];
 
-                    for (int idx = 0; idx < requestWorkList.size(); idx++) {
+
+                    for (int idx = 0; idx < requestWorkListSize; idx++) {
 
                         retStrs[idx] = (String)requestWorkList.get(idx);
                         requestSplit[idx] = (String)replaceRequestWorkList.get(idx);

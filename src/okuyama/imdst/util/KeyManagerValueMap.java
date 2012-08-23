@@ -316,6 +316,14 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             ret = this.readOverSizeData(key, buf);
                         } else {
 
+                            if (buf[buf.length / 2] != 38) i = buf.length / 2;
+                            for (; i < buf.length; i=i+1024) {
+                                if (buf[i] == 38) break;
+                            }
+
+                            if (i != 0) {
+                                i = i - 1024;
+                            }
                             for (; i < buf.length; i++) {
                                 if (buf[i] == 38) break;
                             }
@@ -371,9 +379,18 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     ret = this.readOverSizeData(key, buf);
                 } else {
 
+                    if (buf[buf.length / 2] != 38) i = buf.length / 2;
+                    for (; i < buf.length; i=i+1024) {
+                        if (buf[i] == 38) break;
+                    }
+
+                    if (i != 0) {
+                        i = i - 1024;
+                    }
                     for (; i < buf.length; i++) {
                         if (buf[i] == 38) break;
                     }
+
                     ret = new String(buf, 0, i, ImdstDefine.keyWorkFileEncoding);
                 }
 
@@ -445,12 +462,11 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
                     // 渡されたデータが固定の長さ分ない場合は足りない部分を補う
                     // 足りない文字列は固定の"&"で補う(38)
-
-                    byte[] appendDatas = new byte[this.oneDataLength - valueSize + 1];
+                    byte[] appendDatas = new byte[this.oneDataLength - valueSize];
                     Arrays.fill(appendDatas, (byte)38);
-                    appendDatas[appendDatas.length - 2] = 10;
 
                     writeBuf.append(new String(appendDatas));
+                    writeBuf.append("\n");
 
                     if ((this.fullDiskMode == true && ImdstDefine.reuseDataFileValuePositionFlg == false) || (seekPoint = this.calcSeekDataPoint(key, false)) == -1) {
 
