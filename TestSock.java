@@ -267,14 +267,28 @@ public class TestSock {
                 String[] ret = null;
 
                 long start = new Date().getTime();
-                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
-                    ret = okuyamaClient.getValue("datasavekey_" + new Integer(i).toString());
-                    if (ret[0].equals("true")) {
-                        // データ有り
-                    } else if (ret[0].equals("false")) {
-                        System.out.println("datasavekey_" + new Integer(i).toString() + " = データなし");
-                    } else if (ret[0].equals("error")) {
-                        System.out.println(ret[1]);
+                if (args.length > 4) {
+                    for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                        ret = okuyamaClient.getValue("datasavekey_" + args[4] + "_" + new Integer(i).toString());
+                        if (ret[0].equals("true")) {
+                            // データ有り
+                            //System.out.println(ret[1]);
+                        } else if (ret[0].equals("false")) {
+                            System.out.println("データなし");
+                        } else if (ret[0].equals("error")) {
+                            System.out.println(ret[1]);
+                        }
+                    }
+                } else{
+                    for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                        ret = okuyamaClient.getValue("datasavekey_" + new Integer(i).toString());
+                        if (ret[0].equals("true")) {
+                            // データ有り
+                        } else if (ret[0].equals("false")) {
+                            System.out.println("datasavekey_" + new Integer(i).toString() + " = データなし");
+                        } else if (ret[0].equals("error")) {
+                            System.out.println(ret[1]);
+                        }
                     }
                 }
                 long end = new Date().getTime();
@@ -1333,29 +1347,7 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
-            } if (args[0].equals("27.1")) {
-                
-                int port = Integer.parseInt(args[2]);
-                // OkuyamaClientを使用してデータをIndexを作りながら保存
-
-                // クライアントインスタンスを作成
-                OkuyamaClient okuyamaClient = new OkuyamaClient();
-                
-                // マスタサーバに接続
-                okuyamaClient.connect(args[1], port);
-
-
-                long start = new Date().getTime();
-                // Key, Value, Prefix
-                if (!okuyamaClient.setValueAndCreateIndex(args[3], args[4])) {
-                //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
-                    System.out.println("OkuyamaClient - error");
-                }
-                long end = new Date().getTime();
-                System.out.println((end - start) + "milli second");
-
-                okuyamaClient.close();
-
+            
             } if (args[0].equals("27.2")) {
                 
                 int port = Integer.parseInt(args[2]);
@@ -1458,8 +1450,8 @@ public class TestSock {
                 String[] keys = null;
                 String[] searchCharList = args[3].split(":");
                 long start = new Date().getTime();
-
-                Object[] ret = okuyamaClient.searchValue(searchCharList, args[4]);
+searchCharList[0] = "あ";
+                Object[] ret = okuyamaClient.searchValue(searchCharList, args[4], 1);
                 long end = new Date().getTime();
 
                 if (ret[0].equals("true")) {
@@ -1603,6 +1595,40 @@ public class TestSock {
                     objData.put("key_x_" + idx, "value_x_" + idx);
                     if (!okuyamaClient.setObjectValue("ObjectSetKey_" + idx, objData)) {
                         System.out.println("OkuyamaClient - error");
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+
+            } if (args[0].equals("31.1")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagあり)
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+
+                long start = new Date().getTime();
+                for (int idx = 0; idx < Integer.parseInt(args[3]); idx++) {
+                    Map objData = new HashMap();
+                    objData.put("key" + idx, "value" + idx);
+                    objData.put("key_x_" + idx, "value_x_" + idx);
+                    if ((idx % 2) == 0) {
+                        String[] tag = {"Tag1","Tag3"};
+                        if (!okuyamaClient.setObjectValue("ObjectSetKey_" + idx, tag, objData)) {
+                            System.out.println("OkuyamaClient - error");
+                        }
+                    } else {
+                        String[] tag = {"Tag2"};
+                        if (!okuyamaClient.setObjectValue("ObjectSetKey_" + idx, tag, objData)) {
+                            System.out.println("OkuyamaClient - error");
+                        }
                     }
                 }
                 long end = new Date().getTime();
@@ -1820,6 +1846,25 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } else if (args[0].equals("36")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを取得(ObjectのTag版のみ)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                Map retMap = okuyamaClient.getTagObjectValues(args[3]);
+                long end = new Date().getTime();
+                if (retMap == null) {
+                    System.out.println(retMap);
+                } else {
+                    System.out.println(retMap);
+                    System.out.println("ResultSize = [" + retMap.size() + "]");
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
             } else if (args[0].equals("999")) {
                 
                 int port = Integer.parseInt(args[2]);
