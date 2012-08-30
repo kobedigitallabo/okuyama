@@ -231,12 +231,12 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
                     // クライアントからのパラメータ分解
-                    clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
-
-
+//                    clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
+                    clientParameterList = clientParameterSplit(clientParametersStr, ImdstDefine.keyHelperClientParamSep);
                     // 処理番号を取り出し
                     if(clientParameterList[0] == null ||  clientParameterList[0].equals("")) clientParameterList[0] = "-1";
-                    switch (Integer.parseInt(clientParameterList[0])) {
+                    int methodNo = Integer.parseInt(clientParameterList[0]);
+                    switch (methodNo) {
 
                         case 1 :
 
@@ -2013,5 +2013,33 @@ public class KeyManagerHelper extends AbstractHelper {
             logger.error(e);
         }
     }
+
+
+    public String[] clientParameterSplit(String targetStr, String sep) {
+
+        if (targetStr.indexOf("2,") == 0) {
+
+            // Get
+            String[] retSplit = new String[2];
+            retSplit[0] = "2";
+            retSplit[1] = targetStr.substring(2);
+            return retSplit;
+        } else if (targetStr.indexOf("1,") == 0) {
+
+            // Set
+            int secondSep = targetStr.indexOf(sep, 2);
+            int thirdSep = targetStr.indexOf(sep, secondSep+1);
+            String[] retSplit = new String[4];
+            
+            retSplit[0] = "1";
+            retSplit[1] = targetStr.substring(2, secondSep);
+            retSplit[2] = targetStr.substring(secondSep+1, thirdSep);
+            retSplit[3] = targetStr.substring(thirdSep+1);
+            return retSplit;
+        } else {
+            return targetStr.split(sep);
+        }
+    }
+
 
 }

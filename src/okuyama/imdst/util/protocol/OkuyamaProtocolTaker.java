@@ -156,7 +156,19 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
 
     private String[] okuyamaMethodCnv(String executeMethodStr) {
         int methodLen = executeMethodStr.length();
-        String[] splitMethodSet = executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
+
+        String[] splitMethodSet = null;
+        if (executeMethodStr.indexOf("2,") == 0) {
+
+            splitMethodSet = new String[2];
+            splitMethodSet[0] = "2";
+            splitMethodSet[1] = executeMethodStr.substring(2);
+        } else if (executeMethodStr.indexOf("1,") == 0) {
+
+            splitMethodSet = SystemUtil.fastSplit(executeMethodStr, ImdstDefine.keyHelperClientParamSep);
+        } else {
+            splitMethodSet = executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
+        }
 
         if (splitMethodSet[0].equals(checkSetMethodCodeSet) || splitMethodSet[0].equals(checkSetMethodCodeAdd)) {
             
@@ -219,7 +231,17 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
             // getValue or getValueVerionCheckの場合
             if (retParams[0].equals("2") || retParams[0].equals("15") || retParams[0].equals("17")) {
                 String[] metaColumns = null;
-                String[] valueSplit = retParams[2].split(ImdstDefine.keyHelperClientParamSep);
+
+                String[] valueSplit = null;
+                int metaDataSepPoint = retParams[2].indexOf(ImdstDefine.keyHelperClientParamSep);
+                if(metaDataSepPoint != -1) {
+                    valueSplit = new String[2];
+                    valueSplit[0] = retParams[2].substring(0, metaDataSepPoint);
+                    valueSplit[1] = retParams[2].substring(metaDataSepPoint+1);
+                } else {
+                    valueSplit = new String[1];
+                    valueSplit[0] = retParams[2];
+                }
 
                 if (valueSplit.length > 1) 
                     metaColumns = valueSplit[1].split(AbstractProtocolTaker.metaColumnSep);
