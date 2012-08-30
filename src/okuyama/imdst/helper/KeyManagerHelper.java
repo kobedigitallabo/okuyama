@@ -311,17 +311,52 @@ public class KeyManagerHelper extends AbstractHelper {
                                 retParamBuf.append(resultBuf.toString());
                             } else {
 
+
                                 // メソッド呼び出し
                                 retParams = this.getDatanode(requestHashCode);
 
+                                // Get処理は速度を重視するために、リターンの通信制御を独自に行う
+                                // プロトコルに合わせて処理を分岐
+                                if (this.porotocolTaker != null) {
 
-                                retParamBuf.append(retParams[0]);
+                                    retParamBuf.append(retParams[0]);
+                                    retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                    retParamBuf.append(retParams[1]);
+                                    if (retParams.length > 2) {
+                                        retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                        retParamBuf.append(retParams[2]);
+                                    }
+                                } else {
+
+                                    pw.print(retParams[0]);
+                                    pw.print(ImdstDefine.keyHelperClientParamSep);
+                                    pw.print(retParams[1]);
+                                    if (retParams.length > 2) {
+                                        pw.print(ImdstDefine.keyHelperClientParamSep);
+                                        pw.print(retParams[2]);
+                                    }
+                                    pw.println("");
+                                    pw.flush();
+                                    // Debugログ書き出し
+                                    if (StatusUtil.getDebugOption()) {
+
+                                        String debugLogStr = retParams[0] + ImdstDefine.keyHelperClientParamSep + retParams[1];
+                                        if (retParams.length > 2) {
+                                            debugLogStr = debugLogStr + ImdstDefine.keyHelperClientParamSep;
+                                            debugLogStr = debugLogStr + retParams[2];
+                                        }
+                                        SystemUtil.debugLine(clientInfo + " : Response : " + debugLogStr);
+                                    }
+                                }
+
+
+/*                                retParamBuf.append(retParams[0]);
                                 retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                                 retParamBuf.append(retParams[1]);
                                 if (retParams.length > 2) {
                                     retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                                     retParamBuf.append(retParams[2]);
-                                }
+                                }*/
                             }
                             break;
                         case 3 :
@@ -1231,8 +1266,9 @@ public class KeyManagerHelper extends AbstractHelper {
         String[] retStrs = null;
         try {
             if(!this.keyMapManager.checkError()) {
-                if (this.keyMapManager.containsKeyPair(key)) {
-                    String ret = this.keyMapManager.getKeyPair(key);
+                String ret = this.keyMapManager.getKeyPair(key);
+                if (ret != null) {
+                    //String ret = this.keyMapManager.getKeyPair(key);
 
                     if (ret != null) {
                         retStrs = new String[3];

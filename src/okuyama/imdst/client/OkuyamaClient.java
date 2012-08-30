@@ -1294,15 +1294,21 @@ public class OkuyamaClient {
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            boolean requestSuccess = false;
+            if (serverRetStr.indexOf("1,true") == 0) {
+                requestSuccess = true;
+            } else {
+                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+            }
 
             // 処理の妥当性確認
-            if (serverRet.length == 3 && serverRet[0].equals("1")) {
-                if (serverRet[1].equals("true")) {
+            if (requestSuccess) {
 
-                    // 処理成功
-                    ret = true;
-                } else if (serverRet[1].equals("error")){
+                ret = true;
+            } else if (serverRet.length == 3 && serverRet[0].equals("1")) {
+
+                if (serverRet[1].equals("error")){
 
                     // 処理失敗(メッセージ格納)
                     throw new OkuyamaClientException(serverRet[2]);
@@ -1749,7 +1755,7 @@ public class OkuyamaClient {
                     ret = false;
                 }
             } else {
-System.out.println(serverRetStr);
+
                 // 妥当性違反
                 throw new OkuyamaClientException("Execute Violation of validity");
             }
@@ -3010,19 +3016,23 @@ System.out.println(serverRetStr);
             // サーバから結果受け取り
             serverRetStr = br.readLine();
 
-            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+            boolean requestSuccess = false;
+            if (serverRetStr.indexOf("1,true") == 0) {
+
+                requestSuccess = true;
+            } else {
+                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+            }
 
             // 処理の妥当性確認
-            if (serverRet.length == 3 && serverRet[0].equals("1")) {
-                if (serverRet[1].equals("true")) {
+            if (requestSuccess) {
 
-                    // 処理成功
-                    ret = true;
-                } else{
+                // 処理成功
+                ret = true;
+            } else if (serverRet.length == 3 && serverRet[0].equals("1")) {
 
-                    // 処理失敗(メッセージ格納)
-                    throw new OkuyamaClientException(serverRet[2]);
-                }
+                // 処理失敗(メッセージ格納)
+                throw new OkuyamaClientException(serverRet[2]);
             } else {
 
                 // 妥当性違反
@@ -3545,24 +3555,33 @@ System.out.println(serverRetStr);
             // サーバから結果受け取り
             serverRetStr = br.readLine();
 
-            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
 
+            
+            boolean responseSuccess = false;
+            if (serverRetStr.indexOf("2,true") == 0) {
+
+                responseSuccess = true;
+            } else {
+
+                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+            }
             // 処理の妥当性確認
-            if (serverRet[0].equals("2")) {
-                if (serverRet[1].equals("true")) {
+            if (responseSuccess) {
 
-                    // データ有り
-                    ret[0] = serverRet[1];
+                // データ有り
+                ret[0] = "true";
+                String retValueStr = serverRetStr.substring(7);
+                // Valueがブランク文字か調べる
+                if (retValueStr.equals(OkuyamaClient.blankStr)) {
+                    ret[1] = "";
+                } else {
 
-                    // Valueがブランク文字か調べる
-                    if (serverRet[2].equals(OkuyamaClient.blankStr)) {
-                        ret[1] = "";
-                    } else {
 
-                        // Value文字列をBase64でデコード
-                        ret[1] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
-                    }
-                } else if(serverRet[1].equals("false")) {
+                    // Value文字列をBase64でデコード
+                    ret[1] = new String(this.dataDecoding(retValueStr.getBytes(encoding)), encoding);
+                }
+            } else if (serverRet[0].equals("2")) {
+                if(serverRet[1].equals("false")) {
 
                     // データなし
                     ret[0] = serverRet[1];
@@ -6776,25 +6795,33 @@ System.out.println(serverRetStr);
             // サーバから結果受け取り
             serverRetStr = br.readLine();
 
-            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+            boolean responseSuccess = false;
+            if (serverRetStr.indexOf("2,true") == 0) {
+
+                responseSuccess = true;
+            } else {
+
+                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+            }
 
             // 処理の妥当性確認
-            if (serverRet[0].equals("2")) {
-                if (serverRet[1].equals("true")) {
+            if (responseSuccess) {
 
-                    // データ有り
-                    ret[0] = serverRet[1];
+                // データ有り
+                ret[0] = "true";
 
-                    // Valueがブランク文字か調べる
-                    if (serverRet[2].equals(OkuyamaClient.blankStr)) {
-                        byteRet = new byte[0];
-                        ret[1] = byteRet;
-                    } else {
+                String retValueStr = serverRetStr.substring(7);
+                // Valueがブランク文字か調べる
+                if (retValueStr.equals(OkuyamaClient.blankStr)) {
+                    byteRet = new byte[0];
+                    ret[1] = byteRet;
+                } else {
 
-                        // Value文字列をBase64でデコード
-                        ret[1] = this.dataDecoding(serverRet[2].getBytes());
-                    }
-                } else if(serverRet[1].equals("false")) {
+                    // Value文字列をBase64でデコード
+                    ret[1] = this.dataDecoding(retValueStr.getBytes());
+                }
+            } else if (serverRet[0].equals("2")) {
+                if(serverRet[1].equals("false")) {
 
                     // データなし
                     ret[0] = serverRet[1];

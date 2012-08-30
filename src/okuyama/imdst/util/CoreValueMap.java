@@ -49,26 +49,56 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
             if (!ImdstDefine.useSerializeMap) {
 
-                System.out.println(" PartialConcurrentHashMap Use");
-                if (renewFlg) {
-                    mainMap = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
-                } else {
-                    File file = bkupObjectDataFile;
-                    if (file != null && file.exists()) {
-                        try {
-                            FileInputStream fis = new FileInputStream(file);
-                            ObjectInputStream ois = new ObjectInputStream(fis);
-                            CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
-                            this.useStorageObjectTime = container.storeTime;
-                            mainMap = (PartialConcurrentHashMap)container.storeObject;
-                            this.dataSizeMap = container.dataSizeMap;
-                        } catch(Exception e) {
-                            e.printStackTrace();
+                if (ImdstDefine.saveValueCompress == true) {
+
+                    // Value圧縮あり
+                    System.out.println(" PartialConcurrentHashMap Use");
+                    if (renewFlg) {
+                        mainMap = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
+                    } else {
+                        File file = bkupObjectDataFile;
+                        if (file != null && file.exists()) {
+                            try {
+                                FileInputStream fis = new FileInputStream(file);
+                                ObjectInputStream ois = new ObjectInputStream(fis);
+                                CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
+                                this.useStorageObjectTime = container.storeTime;
+                                mainMap = (PartialConcurrentHashMap)container.storeObject;
+                                this.dataSizeMap = container.dataSizeMap;
+                            } catch(Exception e) {
+                                e.printStackTrace();
+                                mainMap = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
+                            }
+                        } else {
                             mainMap = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
                         }
-                    } else {
-                        mainMap = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
                     }
+                } else {
+
+                    // Value圧縮なし
+                    System.out.println(" ConcurrentHashMap Use");
+                    if (renewFlg) {
+                        mainMap = new NativeConcurrentHashMap(size, upper, multi);
+                    } else {
+                        File file = bkupObjectDataFile;
+                        if (file != null && file.exists()) {
+                            try {
+                                FileInputStream fis = new FileInputStream(file);
+                                ObjectInputStream ois = new ObjectInputStream(fis);
+                                CoreStorageContainer container = (CoreStorageContainer)ois.readObject();
+                                this.useStorageObjectTime = container.storeTime;
+                                mainMap = (NativeConcurrentHashMap)container.storeObject;
+                                this.dataSizeMap = container.dataSizeMap;
+                            } catch(Exception e) {
+                                e.printStackTrace();
+                                mainMap = new NativeConcurrentHashMap(size, upper, multi);
+                            }
+                        } else {
+                            mainMap = new NativeConcurrentHashMap(size, upper, multi);
+                        }
+                    }
+                    // 圧縮なしのメモリ用のコンバータ
+                    converter = new OriginalValueMemoryModeCoreValueCnv();
                 }
             } else {
 
@@ -99,7 +129,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                 }
             }
 
-            converter = new MemoryModeCoreValueCnv();
+            if (converter == null) converter = new MemoryModeCoreValueCnv();
             this.allDataMemory = true;
         } else {
 

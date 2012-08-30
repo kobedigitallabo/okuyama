@@ -840,5 +840,51 @@ public class SystemUtil {
         return bindMasterNodeServerPortNo;
     }
 
+    public static String[] fastSplit(String target, String sep, int sepCount) {
+        if (target == null || target.length() < 1) return target.split(sep);
+
+        String[] tmpRet = new String[sepCount+1];
+        int offset = 0;
+        int startOffset = 0;
+        int idx = 0;
+        while((offset = target.indexOf(sep, offset)) != -1) {
+
+            tmpRet[idx] = target.substring(startOffset, offset);
+            idx++;
+            offset = offset + 1;
+            startOffset = offset;
+            if (idx == sepCount) break;
+        }
+
+
+        tmpRet[idx] = target.substring(startOffset, target.length());
+
+        return tmpRet;
+    }
+
+    public static String[] fastSplit(String target, String sep) {
+        if (target == null || target.length() < 1) return target.split(sep);
+
+        String[] tmpRet = new String[10];
+        int offset = 0;
+        int startOffset = 0;
+        int idx = 0;
+        while((offset = target.indexOf(sep, offset)) != -1) {
+
+            tmpRet[idx] = target.substring(startOffset, offset);
+            idx++;
+            offset = offset + 1;
+            startOffset = offset;
+        }
+
+        tmpRet[idx] = target.substring(startOffset, target.length());
+
+        String[] ret = new String[idx+1];
+
+        for (int i = 0; i < idx+1; i++) {
+            ret[i] = tmpRet[i];
+        }
+        return ret;
+    }
 }
 

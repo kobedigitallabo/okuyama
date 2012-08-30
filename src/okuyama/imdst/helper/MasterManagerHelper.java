@@ -356,9 +356,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             break;
                         case 2 :
                             //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
-
                             // Key値でValueを取得する
                             retParams = this.getKeyValue(clientParameterList[1]);
+
                             break;
                         case 3 :
 
@@ -1883,7 +1883,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, this.reverseAccess);
 
-
                 // 取得実行
                 if (keyNodeInfo.length == 3) {
                     keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], null, null, null,  "2", keyStr);
@@ -1892,7 +1891,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 } else if (keyNodeInfo.length == 9) {
                     keyNodeSaveRet = this.getKeyNodeValue(keyNodeInfo[0], keyNodeInfo[1], keyNodeInfo[2], keyNodeInfo[3], keyNodeInfo[4], keyNodeInfo[5], keyNodeInfo[6], keyNodeInfo[7], keyNodeInfo[8], "2", keyStr);
                 }
-
 
                 // 過去に別ルールを設定している場合は過去ルール側でデータ登録が行われている可能性があるの
                 // でそちらのルールでのデータ格納場所も調べる
@@ -4120,6 +4118,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
             // KeyNodeとの接続を確立
             keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+
             nowUse = 1;
             while (true) {
 
@@ -4143,6 +4142,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // 文字列Buffer初期化
                     this.getSendData.delete(0, Integer.MAX_VALUE);
+
                     String sendStr = null;
 
                     // 処理種別判別
@@ -4164,10 +4164,18 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                         // 返却値取得
                         String retParam = keyNodeConnector.readLine(sendStr);
+
                         // 返却値を分解
                         // 処理番号, true or false, valueの想定
                         // value値にセパレータが入っていても無視する
-                        retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
+                        if (retParam != null && retParam.indexOf("2,true") == 0) {
+                            retParams = new String[3];
+                            retParams[0] = "2";
+                            retParams[1] = "true";
+                            retParams[2] = retParam.substring(7);
+                        } else {
+                            retParams = retParam.split(ImdstDefine.keyHelperClientParamSep, 3);
+                        }
                     } else if (type.equals("4")) {
 
                         // Tag値でキー値群を取得
@@ -4196,7 +4204,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                     // 使用済みの接続を戻す
                     super.addKeyNodeCacheConnectionPool(keyNodeConnector);
-
                     // Tag取得の場合は値が取れ次第終了
                     if (type.equals("4")) {
                         if (retParams != null && retParams.length > 1 && retParams[1].equals("true")) {
@@ -4249,7 +4256,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         if (subKeyNodeName == null) break;
                         if (mainNodeRetParam != null && subNodeRetParam != null) break;
                     }
-
                 } catch(SocketException tSe) {
                     //tSe.printStackTrace();
                     // ここでのエラーは通信中に発生しているので、スレーブノードを使用していない場合のみ再度スレーブへの接続を試みる
@@ -4304,6 +4310,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             if (type.equals("2") && this.dataConsistencyMode == 2) {
                 retParams = this.strongConsistencyDataConvert(retParams, mainNodeRetParam, subNodeRetParam, type, returnVersion);
             }
+
         } catch (Exception e) {
             //e.printStackTrace();
             logger.error("PollQueue =[" + this.myPollQueue + "] RequestTime=[" + new Date() + "] ErrorKey=[" + new String(BASE64DecoderStream.decode(this.decodeIsolationConvert(key).getBytes())) + "]");
@@ -4321,6 +4328,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             if (subKeyNodeName != null) 
                 super.execNodeUseEnd(subKeyNodeFullName);
         }
+
         return retParams;
     }
 
