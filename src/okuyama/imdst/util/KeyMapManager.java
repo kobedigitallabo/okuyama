@@ -756,14 +756,21 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-
                     String data = null;
-                    String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+                    int timeSepPoint = keyNode.indexOf(ImdstDefine.setTimeParamSep);
+                    //String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+                    if (timeSepPoint != -1) {
 
-                    if (keyNoddes.length > 1) {
-                        data = keyNoddes[0] + ImdstDefine.setTimeParamSep + keyNoddes[1];
+                        int lastTimeSepPoint = keyNode.lastIndexOf(ImdstDefine.setTimeParamSep);
+                        if (timeSepPoint == lastTimeSepPoint) {
+                            data = keyNode;
+                        } else {
+                            String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+                            data = keyNoddes[0] + ImdstDefine.setTimeParamSep + keyNoddes[1];
+                        }
                     } else {
-                        data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
+
+                        data = keyNode + ImdstDefine.setTimeParamSep + "0";
                     }
 
                     // 登録
@@ -778,18 +785,31 @@ public class KeyMapManager extends Thread {
                         synchronized(this.lockWorkFileSync) {
 
                             if (this.workFileFlushTiming) {
-                                this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).
-                                                                append("+").
-                                                                append(KeyMapManager.workFileSeq).
-                                                                append(key).
-                                                                append(KeyMapManager.workFileSeq).
-                                                                append(data).
-                                                                append(KeyMapManager.workFileSeq).
-                                                                append(JavaSystemApi.currentTimeMillis).
-                                                                append(KeyMapManager.workFileSeq).
-                                                                append(KeyMapManager.workFileEndPoint).
-                                                                append("\n").toString());
 
+                                if (data.length() < 200) { 
+                                    this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).
+                                                                    append("+").
+                                                                    append(KeyMapManager.workFileSeq).
+                                                                    append(key).
+                                                                    append(KeyMapManager.workFileSeq).
+                                                                    append(data).
+                                                                    append(KeyMapManager.workFileSeq).
+                                                                    append(JavaSystemApi.currentTimeMillis).
+                                                                    append(KeyMapManager.workFileSeq).
+                                                                    append(KeyMapManager.workFileEndPoint).
+                                                                    append("\n").toString());
+                                } else {
+                                    this.bw.write("+");
+                                    this.bw.write(KeyMapManager.workFileSeq);
+                                    this.bw.write(key);
+                                    this.bw.write(KeyMapManager.workFileSeq);
+                                    this.bw.write(data);
+                                    this.bw.write(KeyMapManager.workFileSeq);
+                                    this.bw.write(new Long(JavaSystemApi.currentTimeMillis).toString());
+                                    this.bw.write(KeyMapManager.workFileSeq);
+                                    this.bw.write(KeyMapManager.workFileEndPoint);
+                                    this.bw.write("\n");
+                                }
                                 SystemUtil.diskAccessSync(this.bw);
 
                                 // 現在の利用回数をチェック

@@ -767,16 +767,62 @@ public class SystemUtil {
 
 
     public static byte[] normalObjectSerialize(Object data) {
+
         ByteArrayOutputStream bao = null;
         ObjectOutput oo = null;
         try {
             bao = new ByteArrayOutputStream(1000);
             oo = new ObjectOutputStream(bao);
-
             oo.writeObject(data);
             oo.flush();
 
             oo.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return bao.toByteArray();
+    }
+
+
+    public static byte[] byteListStoreSerialize(Object data) {
+        ByteArrayOutputStream bao = null;
+        ObjectOutput oo = null;
+        try {
+            bao = new ByteArrayOutputStream(5000);
+
+            for (Iterator it = ((Map)data).entrySet().iterator(); it.hasNext(); ) {
+
+                Map.Entry entry = (Map.Entry)it.next();
+                byte[] keyByte = ((CoreMapKey)entry.getKey()).getDatas();
+                byte[] valueByte = (byte[])entry.getValue();
+                int keyLen = keyByte.length;
+                int valLen = valueByte.length;
+
+                // KeyとValueの桁数をバイナリ情報に文字列として埋め込むために先頭0埋めの文字列化
+                // フォーマット Key長さ(0埋め6桁)Value長さ(0埋め9桁)Key値Value値
+                // 例 000038000004123KeyDataXXXXXXXXXXXValueDataZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+                byte[] keyLenBytes = new Integer(keyLen).toString().getBytes();
+                byte[] saveKeyLenInfo = {48,48,48,48,48,48};
+                int idx = 0;
+                for (int i = (6-keyLenBytes.length); i < 6; i++) {
+                    saveKeyLenInfo[i] = keyLenBytes[idx];
+                    idx++;
+                }
+
+                byte[] valLenBytes = new Integer(valLen).toString().getBytes();
+                byte[] saveValLenInfo = {48,48,48,48,48,48,48,48,48};
+                idx = 0;
+                for (int i = (9 - valLenBytes.length); i < 9; i++) {
+                    saveValLenInfo[i] = valLenBytes[idx];
+                    idx++;
+                }
+
+                bao.write(saveKeyLenInfo);
+                bao.write(saveValLenInfo);
+                bao.write(keyByte);
+                bao.write(valueByte);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -809,6 +855,7 @@ public class SystemUtil {
     }
 
     public static Object normalObjectDeserialize(byte[] data) {
+
         Object retData = null;
         ByteArrayInputStream bio = null;
         ObjectInputStream ois = null;
@@ -819,6 +866,49 @@ public class SystemUtil {
             retData = ois.readObject();
             ois.close();
             bio.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return retData;
+    }
+
+    public static Map byteListStoreDeserialize(byte[] data) {
+
+        Map retData = new HashMap();
+        ByteArrayInputStream bio = null;
+        ObjectInputStream ois = null;
+        try {
+
+            int keyInfoStartIdx = 0;
+            int valInfoStartIdx = 6;
+            int keyDataInfoStartIdx = 15;
+            int valDataInfoStartIdx = 0;
+
+            while (true) {
+
+                if (keyInfoStartIdx >= data.length) break;
+                byte[] keyLenInfo = new byte[6];
+                byte[] valLenInfo = new byte[9];
+
+                System.arraycopy(data, keyInfoStartIdx, keyLenInfo, 0, 6);
+                System.arraycopy(data, valInfoStartIdx, valLenInfo, 0, 9);
+                int keyLen = Integer.parseInt(new String(keyLenInfo));
+                int valLen = Integer.parseInt(new String(valLenInfo));
+
+                byte[] keyData = new byte[keyLen];
+                byte[] valData = new byte[valLen];
+
+                System.arraycopy(data, keyDataInfoStartIdx, keyData, 0 , keyLen);
+
+                valDataInfoStartIdx = keyDataInfoStartIdx + keyLen;
+                System.arraycopy(data, valDataInfoStartIdx, valData, 0 , valLen);
+
+                retData.put(new CoreMapKey(keyData), valData);
+                keyInfoStartIdx = valDataInfoStartIdx+valLen;
+                valInfoStartIdx = keyInfoStartIdx+6;
+                keyDataInfoStartIdx = valInfoStartIdx+9;
+            }
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -838,6 +928,17 @@ public class SystemUtil {
 
     public static int getBindMasterNodePortNo() {
         return bindMasterNodeServerPortNo;
+    }
+
+
+    public static String[] fastSplit(String target, int sepPoint) {
+        if (target == null || target.length() < 1) return new String[1];
+
+        String[] ret = new String[2];
+        ret[0] = target.substring(0, sepPoint);
+        ret[1] = target.substring(sepPoint+1);
+
+        return ret;
     }
 
     public static String[] fastSplit(String target, String sep, int sepCount) {
