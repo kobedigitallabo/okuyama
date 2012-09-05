@@ -789,7 +789,7 @@ public class SystemUtil {
         ByteArrayOutputStream bao = null;
         ObjectOutput oo = null;
         try {
-            bao = new ByteArrayOutputStream(5000);
+            bao = new ByteArrayOutputStream(17000);
 
             for (Iterator it = ((Map)data).entrySet().iterator(); it.hasNext(); ) {
 

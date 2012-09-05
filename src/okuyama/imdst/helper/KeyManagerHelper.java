@@ -1047,7 +1047,7 @@ public class KeyManagerHelper extends AbstractHelper {
                 retStrs[2] = "NG:Max Data Size Over";
             }
         } catch (BatchException be) {
-
+be.printStackTrace();
             logger.debug("KeyManagerHelper - setDatanode - Error = [" + key + "]", be);
             //logger.debug("KeyManagerHelper - setDatanode - Error", be);
             retStrs[0] = "1";

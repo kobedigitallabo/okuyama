@@ -174,9 +174,19 @@ public class OkuyamaClient {
 
     // サーバへの出力用
     protected PrintWriter pw = null;
+    protected BufferedOutputStream bos = null;
 
     // サーバからの受信用
     protected BufferedReader br = null;
+    protected BufferedInputStream bis = null;
+
+
+    protected byte[] getMethodTypeBytes = "201".getBytes();
+    protected byte[] clientMethodSepBytes = OkuyamaClient.sepStr.getBytes();
+    protected byte[] clientMethodEndSep = "\n".getBytes();
+
+    protected byte[] readBytesRetHeaderBytes = "201,true,".getBytes();
+
 
     protected String transactionCode = "0";
 
@@ -332,7 +342,11 @@ public class OkuyamaClient {
 
                 this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
                 this.pw = new ClientCustomPrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), OkuyamaClient.connectDefaultEncoding)));
+                this.bos = new BufferedOutputStream(socket.getOutputStream());
+
                 this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), OkuyamaClient.connectDefaultEncoding));
+                this.bis = new BufferedInputStream(socket.getInputStream());
+
                 this.initClient();
                 this.nowConnectServerInfo = nodeStr;
                 break;
@@ -466,6 +480,19 @@ public class OkuyamaClient {
                 this.br.close();
                 this.br = null;
             }
+
+
+            if (this.bos != null) {
+                this.bos.close();
+                this.bos = null;
+            }
+
+
+            if (this.bis != null) {
+                this.bis.close();
+                this.bis = null;
+            }
+
 
             if (this.socket != null) {
                 this.socket.close();
@@ -6595,6 +6622,7 @@ public class OkuyamaClient {
     }
 
 
+
     /**
      * MasterNodeからKeyでデータを取得する(バイナリ).<br>
      * sendByteValueで登録したValueはこちらで取得する.<br>
@@ -6736,11 +6764,12 @@ public class OkuyamaClient {
             if (keyStr == null ||  keyStr.trim().equals(""))
                 throw new OkuyamaClientException("The blank is not admitted on a key");
 
+            byte[] keyBytes = keyStr.getBytes();
             // Keyに対するLengthチェック
-            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + keyStr + " Byte");
+            if (keyBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + keyStr + " Byte");
 
             // 文字列バッファ初期化
-            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
+/*            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
             // 処理番号連結
             serverRequestBuf.append("2");
@@ -6748,11 +6777,20 @@ public class OkuyamaClient {
             serverRequestBuf.append(OkuyamaClient.sepStr);
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            serverRequestBuf.append(new String(this.dataEncoding(keyBytes)));
 
             // サーバ送信
             pw.println(serverRequestBuf.toString());
             pw.flush();
+*/
+            byte[] valueDataBytes = this.dataEncoding(keyBytes);
+            this.bos.write(this.getMethodTypeBytes, 0 ,this.getMethodTypeBytes.length);
+            this.bos.write(this.clientMethodSepBytes, 0 ,this.clientMethodSepBytes.length);
+            this.bos.write(valueDataBytes, 0 ,valueDataBytes.length);
+            this.bos.write(this.clientMethodEndSep, 0 ,this.clientMethodEndSep.length);
+
+            this.bos.flush();
+
 
             ret = true;
         } catch (OkuyamaClientException ice) {
@@ -6793,6 +6831,47 @@ public class OkuyamaClient {
             if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
 
             // サーバから結果受け取り
+            byte[] realRetParams = new byte[9];
+            this.bis.read(realRetParams, 0, 9);
+            boolean checkRet = true;
+            for (int i = 0; i < readBytesRetHeaderBytes.length; i++) {
+                if (realRetParams[i] != this.readBytesRetHeaderBytes[i]) {
+                    checkRet = false;
+                    break;
+                }
+            }
+
+            if (checkRet == true) {
+                byte[] valueLenInfo = new byte[9];
+                this.bis.read(valueLenInfo, 0, 9);
+                this.bis.read();
+                int valLen = Integer.parseInt(new String(valueLenInfo));
+
+                byte[] valueBytes = new byte[valLen];
+                int readCount = 0;
+                int totalReadByte = 0;
+                while (true) {
+                    int readByte = this.bis.read(valueBytes, totalReadByte, (valLen - totalReadByte));
+                    if (readByte == -1) break;
+                    totalReadByte = totalReadByte + readByte; 
+                    readCount++;
+                    if (totalReadByte == valLen) break;
+                }
+
+                /*
+                for (readCount = 0; readCount < valLen; readCount++) {
+                    this.bis.read(valueBytes, readCount, 1);
+                }*/
+                this.bis.read();
+                ret[0] = "true";
+                ret[1] = this.dataDecoding(valueBytes);
+            } else {
+                // データなし
+                ret[0] = "false";
+                ret[1] = null;
+            }
+
+            /*
             serverRetStr = br.readLine();
 
             boolean responseSuccess = false;
@@ -6837,6 +6916,7 @@ public class OkuyamaClient {
                 // 妥当性違反
                 throw new OkuyamaClientException("Execute Violation of validity");
             }
+*/
         } catch (OkuyamaClientException ice) {
             throw ice;
         } catch (ConnectException ce) {

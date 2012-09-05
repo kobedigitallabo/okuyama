@@ -360,6 +360,31 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             retParams = this.getKeyValue(clientParameterList[1]);
 
                             break;
+                        case 201 :
+                            //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
+                            // Key値でValueを取得する
+                            retParams = this.getKeyValue(clientParameterList[1]);
+
+                            if (retParams.length > 1 && retParams[1].equals("true")) {
+
+                                
+                                String[] realRetParams = new String[4];
+                                realRetParams[0] = "201";
+                                realRetParams[1] = "true";
+                                byte[] valLenBytes = new Integer(retParams[2].length()).toString().getBytes();
+                                byte[] valLenInfo = {48,48,48,48,48,48,48,48,48};
+                                int idx = 0;
+                                for (int i = (9 - valLenBytes.length); i < 9; i++) {
+                                    valLenInfo[i] = valLenBytes[idx];
+                                    idx++;
+                                }
+                                realRetParams[2] = new String(valLenInfo);
+                                realRetParams[3] = retParams[2];
+                                retParams = realRetParams;
+                            }
+
+                            break;
+
                         case 3 :
 
                             // Tag値でキー値群を取得する
