@@ -109,12 +109,17 @@ public class StatusUtil {
     // アクセスを時間帯単位でサマリーするリスト
     private static AtomicLong[] accessCountList = new AtomicLong[24];
 
+    private static AtomicLong[] nowExecuteMethodSummaryList = new AtomicLong[1000];
 
 
     // 初期化
     static {
         for (int i = 0; i < 24;i++) {
             accessCountList[i] = new AtomicLong();
+        }
+
+        for (int i = 0; i < 1000; i++) {
+            nowExecuteMethodSummaryList[i] = new AtomicLong();
         }
 
         try {
@@ -705,6 +710,31 @@ public class StatusUtil {
             strBuf.append("], ");
         }
         return strBuf.toString();
+    }
+
+    public static void incrExecuteMethodNo(int no) {
+        if (no > -1 && no < 1000) {
+            nowExecuteMethodSummaryList[no].incrementAndGet();
+        }
+    }
+
+    public static void decrExecuteMethodNo(int no) {
+        if (no > -1 && no < 1000) {
+            nowExecuteMethodSummaryList[no].decrementAndGet();
+        }
+    }
+
+    public static Map getNowExecuteMethodNoMap() {
+        Map executeMethodNoMap = new LinkedHashMap();
+
+
+        for (int i = 0; i < 1000; i++) {
+            long count = nowExecuteMethodSummaryList[i].longValue();
+            if (count > 0L) {
+                executeMethodNoMap.put("MethodNo[" + i + "]", count);
+            }
+        }
+        return executeMethodNoMap;
     }
 
 

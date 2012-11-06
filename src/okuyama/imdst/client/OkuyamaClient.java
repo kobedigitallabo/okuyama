@@ -6751,6 +6751,7 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public boolean requestReadByteValue(String keyStr) throws OkuyamaClientException {
+
         boolean ret = false;
         byte[] byteRet = null;
 
@@ -6864,7 +6865,7 @@ public class OkuyamaClient {
                 }*/
                 this.bis.read();
                 ret[0] = "true";
-                ret[1] = this.dataDecoding(valueBytes);
+                ret[1] = this.dataDecoding(SystemUtil.dataDecompress(this.dataDecoding(valueBytes)));
             } else {
                 // データなし
                 ret[0] = "false";

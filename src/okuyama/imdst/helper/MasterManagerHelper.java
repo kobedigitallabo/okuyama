@@ -108,6 +108,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // 実行メソッドをQueueにレポートする有無
     private boolean execMethodReportQueue = false;
 
+    private boolean newKeyNodeConnectionUse = false;
+
 
     /**
      * Logger.<br>
@@ -191,6 +193,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         Socket socket = null;
         String socketString = null;
+        int executeMethodNo = -1;
 
         try{
 
@@ -340,10 +343,15 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 本体処理開始
                     // 処理番号で処理を分岐
                     // 実行許可も判定
-                    switch (StatusUtil.isExecuteMethod(Integer.parseInt(clientParameterList[0]))) {
+                    executeMethodNo = Integer.parseInt(clientParameterList[0]);
+
+                    // 実行中のメドッドNoを増分
+                    StatusUtil.incrExecuteMethodNo(executeMethodNo);
+
+                    newKeyNodeConnectionUse = false;
+                    switch (StatusUtil.isExecuteMethod(executeMethodNo)) {
 
                         case 0 :
-
                             // Client初期化情報
                             retParams = this.initClient();
 
@@ -363,15 +371,17 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         case 201 :
                             //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
                             // Key値でValueを取得する
+                            newKeyNodeConnectionUse = true;
                             retParams = this.getKeyValue(clientParameterList[1]);
 
                             if (retParams.length > 1 && retParams[1].equals("true")) {
 
-                                
                                 String[] realRetParams = new String[4];
                                 realRetParams[0] = "201";
                                 realRetParams[1] = "true";
-                                byte[] valLenBytes = new Integer(retParams[2].length()).toString().getBytes();
+                                String compressStr = retParams[2];
+                                String compressFixStr = new String(BASE64EncoderStream.encode(SystemUtil.dataCompress(compressStr.getBytes())));
+                                byte[] valLenBytes = new Integer(compressFixStr.length()).toString().getBytes();
                                 byte[] valLenInfo = {48,48,48,48,48,48,48,48,48};
                                 int idx = 0;
                                 for (int i = (9 - valLenBytes.length); i < 9; i++) {
@@ -379,7 +389,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                     idx++;
                                 }
                                 realRetParams[2] = new String(valLenInfo);
-                                realRetParams[3] = retParams[2];
+                                realRetParams[3] = compressFixStr;
                                 retParams = realRetParams;
                             }
 
@@ -1110,14 +1120,27 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     if (!reloopSameClient)
                         numberOfQueueBindWaitCounter.getAndIncrement();
                 }
+
+                // 実行終了のMethodNoを減算
+                StatusUtil.decrExecuteMethodNo(executeMethodNo);
+                executeMethodNo = -1;
             }
 
             ret = super.SUCCESS;
         } catch(Exception e) {
 
+            try {
+                if (socket != null) socket.close();
+                socket = null;
+            } catch (Throwable InnerE) {
+            }
             logger.error("MasterManagerHelper - executeHelper - Error", e);
             ret = super.ERROR;
         } finally {
+            if (executeMethodNo == -1) {
+                StatusUtil.decrExecuteMethodNo(executeMethodNo);
+                executeMethodNo = -1;
+            }
         }
 
         
@@ -4142,7 +4165,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         try {
 
             // KeyNodeとの接続を確立
-            keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, false);
+            keyNodeConnector = this.createKeyNodeConnection(keyNodeName, keyNodePort, keyNodeFullName, newKeyNodeConnectionUse);
 
             nowUse = 1;
             while (true) {
@@ -7290,12 +7313,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                 // まだ接続が完了していない場合は接続処理続行
                 // TODO:ConnectionPoolは一時休止中なのでコメントアウト
-                /*if (keyNodeConnector == null)
+                //if (keyNodeConnector == null)
                     // 新規接続
                     // 親クラスから既に接続済みの接続をもらう
-                    keyNodeConnector = super.getActiveConnection(connectionFullName);
-                */
+                    //keyNodeConnector = super.getActiveConnection(connectionFullName);
+                //
             }
+
 
             // まだ接続が完了していない場合は接続処理続行
             if (keyNodeConnector == null) {

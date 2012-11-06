@@ -227,6 +227,17 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         pw.close();
                         Thread.sleep(500);
                         soc.close();
+                    } else if (command.equals("jobstatus")) {
+                    
+                        Map nowStatus = StatusUtil.getNowExecuteMethodNoMap();
+                        String statusStr = nowStatus.toString();
+                        pw.println(command + " Success");
+                        pw.println("Method status = " + statusStr);
+                        pw.flush();
+                        br.close();
+                        pw.close();
+                        Thread.sleep(500);
+                        soc.close();
                     } else if (command.equals("-help")) {
                         pw.println(command + " Success");
                         pw.println("");
@@ -240,6 +251,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         pw.println("rname");
                         pw.println("fullgc");
                         pw.println("netdebug");
+                        pw.println("jobstatus");
                         pw.println("");
 
                         pw.flush();

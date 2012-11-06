@@ -38,9 +38,10 @@ public class SoftRefCacheMap extends Thread {
      * @param key
      * @param value
      */
-    public void put(Object key, Object value) {
+    public Object put(Object key, Object value) {
         SoftReference oldRef = (SoftReference)this.innerCacheMap.put(key, new SoftReference(value));
         if (oldRef != null) oldRef.clear();
+        return null;
     }
 
 
@@ -74,6 +75,22 @@ public class SoftRefCacheMap extends Thread {
         return this.innerCacheMap.remove(key);
     }
 
+    public boolean containsKey(Object key)  {
+        Object value = null;
+        SoftReference refValue = null;
+
+        // nullであれば存在しない
+        if ((refValue = (SoftReference)this.innerCacheMap.get(key)) == null) return false;
+
+        // Referenceは存在するが内容がない場合はgcにて消されてるのでkeyも消す
+        if ((value = refValue.get())== null) this.innerCacheMap.remove(key);
+
+        if (value == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 
     /**
      * end<br>
