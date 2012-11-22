@@ -380,8 +380,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 realRetParams[0] = "201";
                                 realRetParams[1] = "true";
                                 String compressStr = retParams[2];
-                                String compressFixStr = new String(BASE64EncoderStream.encode(SystemUtil.dataCompress(compressStr.getBytes())));
-                                byte[] valLenBytes = new Integer(compressFixStr.length()).toString().getBytes();
+                                //String compressFixStr = new String(BASE64EncoderStream.encode(SystemUtil.dataCompress(compressStr.getBytes())));
+                                byte[] valLenBytes = new Integer(compressStr.length()).toString().getBytes();
                                 byte[] valLenInfo = {48,48,48,48,48,48,48,48,48};
                                 int idx = 0;
                                 for (int i = (9 - valLenBytes.length); i < 9; i++) {
@@ -389,7 +389,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                     idx++;
                                 }
                                 realRetParams[2] = new String(valLenInfo);
-                                realRetParams[3] = compressFixStr;
+                                realRetParams[3] = compressStr;
                                 retParams = realRetParams;
                             }
 

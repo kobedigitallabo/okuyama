@@ -2997,7 +2997,8 @@ public class OkuyamaClient {
             if (keyStr == null ||  keyStr.trim().equals(""))
                 throw new OkuyamaClientException("The blank is not admitted on a key");
 
-            if (keyStr.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+            byte[] keyStrBytes = keyStr.getBytes();
+            if (keyStrBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
 
             if (values == null || values.length == 0)
                 throw new OkuyamaClientException("The blank is not admitted on a value");
@@ -3016,7 +3017,7 @@ public class OkuyamaClient {
             serverRequestBuf.append(OkuyamaClient.sepStr);
 
             // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(this.dataEncoding(keyStr.getBytes())));
+            serverRequestBuf.append(new String(this.dataEncoding(keyStrBytes)));
             // セパレータ連結
             serverRequestBuf.append(OkuyamaClient.sepStr);
 
@@ -6865,7 +6866,7 @@ public class OkuyamaClient {
                 }*/
                 this.bis.read();
                 ret[0] = "true";
-                ret[1] = this.dataDecoding(SystemUtil.dataDecompress(this.dataDecoding(valueBytes)));
+                ret[1] = this.dataDecoding(valueBytes);
             } else {
                 // データなし
                 ret[0] = "false";
