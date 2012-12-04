@@ -1,0 +1,1488 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+		<head>
+			<!-- template designed by Marco Von Ballmoos -->
+			<title>Docs For Class OkuyamaClient</title>
+			<link rel="stylesheet" href="../media/stylesheet.css" />
+			<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>
+		</head>
+		<body>
+			<div class="page-body">			
+<h2 class="class-name">Class OkuyamaClient</h2>
+
+<a name="sec-description"></a>
+<div class="info-box">
+	<div class="info-box-title">Description</div>
+	<div class="nav-bar">
+					<span class="disabled">Description</span> |
+															<a href="#sec-method-summary">Methods</a> (<a href="#sec-methods">details</a>)
+						
+					</div>
+	<div class="info-box-body">
+        		<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">PHP用のクライアント.<br /></p>
+<p class="description"><p>Javaをそのまま焼きなおしました.<br />  TODO:PHPのコーディングルールに従っていない.<br />  TODO:以下がJava版のOkuyamaClientに足りないメソッドです.<br />       getTagValues<br />       getMultiTagValues<br />       getMultiTagKeys<br />       getTagKeysResult<br />       getMultiTagKeysResult<br /> <br /> 利用方法<br /> &nbsp;&nbsp;&nbsp;&nbsp;// クライアント作成<br /> &nbsp;&nbsp;&nbsp;&nbsp;$client = new OkuyamaClient();<br /> <br /> &nbsp;&nbsp;&nbsp;&nbsp;// okuyamaへ接続(MasterNodeのアドレスとポート番号を指定)<br /> &nbsp;&nbsp;&nbsp;&nbsp;if(!$client-&gt;connect(&quot;127.0.0.1&quot;, 8888)) {<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print_r(&quot;Sever Connection refused !!&quot;);<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit;<br /> &nbsp;&nbsp;&nbsp;&nbsp;}<br />  <br /> &nbsp;&nbsp;&nbsp;&nbsp;try {<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Key-Valueを登録<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$client-&gt;setValue(&quot;Key-1&quot;, &quot;Value-1&quot;);<br /> <br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Keyを指定してValueを取得<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$ret = $client-&gt;getValue(&quot;Key-1&quot;);<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($ret[0] === &quot;true&quot;) {<br /> <br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Valueを表示<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print_r($ret[1]);<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} else if ($ret[0] === &quot;false&quot;) {<br /> <br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Valueなし<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print_r(&quot;Not found&quot;);<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $client-&gt;close();<br /> &nbsp;&nbsp;&nbsp;&nbsp;} catch (Exception $e) {<br /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var_dump($e);<br /> &nbsp;&nbsp;&nbsp;&nbsp;}<br />  <br /></p></p>
+	<ul class="tags">
+				<li><span class="field">author:</span> T.Okuyama</li>
+			</ul>
+		<p class="notes">
+			Located in <a class="field" href="_OkuyamaClient.class.php.html">/OkuyamaClient.class.php</a> (line <span class="field">45</span>)
+		</p>
+		
+				
+		<pre></pre>
+	
+			</div>
+</div>
+
+
+
+
+	<a name="sec-method-summary"></a>
+	<div class="info-box">
+		<div class="info-box-title">Method Summary</span></div>
+		<div class="nav-bar">
+			<a href="#sec-description">Description</a> |
+												<span class="disabled">Methods</span> (<a href="#sec-methods">details</a>)
+		</div>
+		<div class="info-box-body">			
+			<div class="method-summary">
+																																																																																																																																																																																																																																																																																																				
+												<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#autoConnect" title="details" class="method-name">autoConnect</a>
+											(<span class="var-type">masterNodes</span>&nbsp;<span class="var-name">0</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#close" title="details" class="method-name">close</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#connect" title="details" class="method-name">connect</a>
+											(<span class="var-type">server</span>&nbsp;<span class="var-name">$server</span>, <span class="var-type">port</span>&nbsp;<span class="var-name">$port</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">要素1(処理成否):Boolean</span>
+										<a href="#decrValue" title="details" class="method-name">decrValue</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">value</span>&nbsp;<span class="var-name">$value</span>, [<span class="var-type">initCalcValue</span>&nbsp;<span class="var-name">$initCalcValue</span> = <span class="var-default">FALSE</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#endTransaction" title="details" class="method-name">endTransaction</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">Object[]</span>
+										<a href="#getByteValue" title="details" class="method-name">getByteValue</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">String[]</span>
+										<a href="#getMultiTagKeys" title="details" class="method-name">getMultiTagKeys</a>
+											(<span class="var-type">tagList</span>&nbsp;<span class="var-name">$tagList</span>, [<span class="var-type">margeType</span>&nbsp;<span class="var-name">$margeType</span> = <span class="var-default">true</span>], [<span class="var-type">noExistsData</span>&nbsp;<span class="var-name">$noExistsData</span> = <span class="var-default">true</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">array</span>
+										<a href="#getMultiTagValues" title="details" class="method-name">getMultiTagValues</a>
+											(<span class="var-type">tagList</span>&nbsp;<span class="var-name">$tagList</span>, [<span class="var-type">margeType</span>&nbsp;<span class="var-name">$margeType</span> = <span class="var-default">true</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">array</span>
+										<a href="#getMultiValue" title="details" class="method-name">getMultiValue</a>
+											(<span class="var-type">keyStrList</span>&nbsp;<span class="var-name">$keyStrList</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">Object[]</span>
+										<a href="#getObjectValue" title="details" class="method-name">getObjectValue</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">encoding</span>&nbsp;<span class="var-name">1</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">Object[]</span>
+										<a href="#getObjectValueAndUpdateExpireTime" title="details" class="method-name">getObjectValueAndUpdateExpireTime</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">encoding</span>&nbsp;<span class="var-name">1</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">String[]</span>
+										<a href="#getOkuyamaVersion" title="details" class="method-name">getOkuyamaVersion</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">Object[]</span>
+										<a href="#getTagKeys" title="details" class="method-name">getTagKeys</a>
+											(<span class="var-type">tagStr</span>&nbsp;<span class="var-name">$tagStr</span>, [<span class="var-type">noExistsData</span>&nbsp;<span class="var-name">$noExistsData</span> = <span class="var-default">true</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">array</span>
+										<a href="#getTagValues" title="details" class="method-name">getTagValues</a>
+											(<span class="var-type">tagStr</span>&nbsp;<span class="var-name">$tagStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">String[]</span>
+										<a href="#getValue" title="details" class="method-name">getValue</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">String[]</span>
+										<a href="#getValueAndUpdateExpireTime" title="details" class="method-name">getValueAndUpdateExpireTime</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">String[]</span>
+										<a href="#getValueScript" title="details" class="method-name">getValueScript</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">scriptStr</span>&nbsp;<span class="var-name">$scriptStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">String[]</span>
+										<a href="#getValueScriptForUpdate" title="details" class="method-name">getValueScriptForUpdate</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">scriptStr</span>&nbsp;<span class="var-name">$scriptStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">String[]</span>
+										<a href="#getValueVersionCheck" title="details" class="method-name">getValueVersionCheck</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">要素1(処理成否):Boolean</span>
+										<a href="#incrValue" title="details" class="method-name">incrValue</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">value</span>&nbsp;<span class="var-name">$value</span>, [<span class="var-type">initCalcValue</span>&nbsp;<span class="var-name">$initCalcValue</span> = <span class="var-default">FALSE</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">boolean</span>
+										<a href="#initClient" title="details" class="method-name">initClient</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">String[]</span>
+										<a href="#lockData" title="details" class="method-name">lockData</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">lockingTime</span>&nbsp;<span class="var-name">$lockingTime</span>, [<span class="var-type">waitLockTime</span>&nbsp;<span class="var-name">$waitLockTime</span> = <span class="var-default">0</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">String[]</span>
+										<a href="#releaseLockData" title="details" class="method-name">releaseLockData</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">boolean</span>
+										<a href="#removeSearchIndex" title="details" class="method-name">removeSearchIndex</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, [<span class="var-type">indexPrefix</span>&nbsp;<span class="var-name">$indexPrefix</span> = <span class="var-default">null</span>], [<span class="var-type">indexLength</span>&nbsp;<span class="var-name">$indexLength</span> = <span class="var-default">3</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">boolean</span>
+										<a href="#removeTagFromKey" title="details" class="method-name">removeTagFromKey</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">tagStr</span>&nbsp;<span class="var-name">$tagStr</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">String[]</span>
+										<a href="#removeValue" title="details" class="method-name">removeValue</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, [<span class="var-type"></span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">object[]</span>
+										<a href="#searchValue" title="details" class="method-name">searchValue</a>
+											(<span class="var-type">searchCharacterList</span>&nbsp;<span class="var-name">$searchCharacterList</span>, <span class="var-type">searchType</span>&nbsp;<span class="var-name">$searchType</span>, [<span class="var-type">prefix</span>&nbsp;<span class="var-name">$prefix</span> = <span class="var-default">null</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#setConnectionInfos" title="details" class="method-name">setConnectionInfos</a>
+											(<span class="var-type">masterNodes</span>&nbsp;<span class="var-name">$masterNodes</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">boolean</span>
+										<a href="#setNewObjectValue" title="details" class="method-name">setNewObjectValue</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">objectValue</span>&nbsp;<span class="var-name">$objectValue</span>, [<span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$tagStrs</span> = <span class="var-default">null</span>], [<span class="var-type">expireTime</span>&nbsp;<span class="var-name">$expireTime</span> = <span class="var-default">null</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">boolean</span>
+										<a href="#setNewValue" title="details" class="method-name">setNewValue</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$value</span>, [<span class="var-type">value</span>&nbsp;<span class="var-name">$tagStrs</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$expireTime</span> = <span class="var-default">null</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">boolean</span>
+										<a href="#setObjectValue" title="details" class="method-name">setObjectValue</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">objectValue</span>&nbsp;<span class="var-name">$objectValue</span>, [<span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$tagStrs</span> = <span class="var-default">null</span>], [<span class="var-type">expireTime</span>&nbsp;<span class="var-name">$expireTime</span> = <span class="var-default">null</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#setSaveMaxDataSize" title="details" class="method-name">setSaveMaxDataSize</a>
+											(<span class="var-type">size</span>&nbsp;<span class="var-name">$size</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">boolean</span>
+										<a href="#setValue" title="details" class="method-name">setValue</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">value</span>&nbsp;<span class="var-name">$value</span>, [<span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$tagStrs</span> = <span class="var-default">null</span>], [<span class="var-type">expireTime</span>&nbsp;<span class="var-name">$expireTime</span> = <span class="var-default">null</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">boolean</span>
+										<a href="#setValueAndCreateIndex" title="details" class="method-name">setValueAndCreateIndex</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$value</span>, [<span class="var-type">value</span>&nbsp;<span class="var-name">$tagStrs</span> = <span class="var-default">null</span>], [<span class="var-type">indexPrefix</span>&nbsp;<span class="var-name">$indexPrefix</span> = <span class="var-default">null</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">boolean</span>
+										<a href="#setValueVersionCheck" title="details" class="method-name">setValueVersionCheck</a>
+											(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">value</span>&nbsp;<span class="var-name">$value</span>, <span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$tagStrs</span>, <span class="var-type">versionNo</span>&nbsp;<span class="var-name">$versionNo</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#startTransaction" title="details" class="method-name">startTransaction</a>
+										()
+									</div>
+								</div>
+		</div>
+	</div>		
+
+	
+	<a name="sec-methods"></a>
+	<div class="info-box">
+		<div class="info-box-title">Methods</div>
+		<div class="nav-bar">
+			<a href="#sec-description">Description</a> |
+																<a href="#sec-method-summary">Methods</a> (<span class="disabled">details</span>)
+						
+		</div>
+		<div class="info-box-body">
+			<A NAME='method_detail'></A>
+
+<a name="methodautoConnect" id="autoConnect"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">autoConnect</span> (line <span class="line-number">121</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">設定されたMasterNodeの接続情報を元に自動的に接続を行う.<br />  接続出来ない場合自動的に別ノードへ再接続を行う.<br /></p>
+	<ul class="tags">
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			autoConnect
+		</span>
+					(<span class="var-type">masterNodes</span>&nbsp;<span class="var-name">0</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">masterNodes</span>
+				<span class="var-name">0</span><span class="var-description">: 接続情報の配列 &quot;IP:PORT&quot;の形式</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodclose" id="close"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">close</span> (line <span class="line-number">212</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバとの接続を切断.<br /></p>
+	<ul class="tags">
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			close
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodconnect" id="connect"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">connect</span> (line <span class="line-number">190</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">接続処理.<br />  エンコーディング指定有り.<br /></p>
+	<ul class="tags">
+				<li><span class="field">throws:</span> Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			connect
+		</span>
+					(<span class="var-type">server</span>&nbsp;<span class="var-name">$server</span>, <span class="var-type">port</span>&nbsp;<span class="var-name">$port</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">server</span>
+				<span class="var-name">$server</span>			</li>
+					<li>
+				<span class="var-type">port</span>
+				<span class="var-name">$port</span>			</li>
+					<li>
+				<span class="var-type">encoding</span>
+				<span class="var-name">$encoding</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methoddecrValue" id="decrValue"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">decrValue</span> (line <span class="line-number">1459</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">MasterNodeへデータの減算を要求する.<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> true/false,要素2(演算後の結果):double 数値</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">要素1(処理成否):Boolean</span>
+		<span class="method-name">
+			decrValue
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">value</span>&nbsp;<span class="var-name">$value</span>, [<span class="var-type">initCalcValue</span>&nbsp;<span class="var-name">$initCalcValue</span> = <span class="var-default">FALSE</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+					<li>
+				<span class="var-type">value</span>
+				<span class="var-name">$value</span><span class="var-description">: 減算値</span>			</li>
+					<li>
+				<span class="var-type">initCalcValue</span>
+				<span class="var-name">$initCalcValue</span><span class="var-description">: 計算対象のKey-Valueが存在しない場合の初期化指定(TRUE=初期化する(0のvalueが作成される), FALSE=初期化されずfalseが返る)</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodendTransaction" id="endTransaction"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">endTransaction</span> (line <span class="line-number">455</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Transactionを開始する.<br />  データロック、ロックリリースを使用する場合は、<br />  事前に呼び出す必要がある<br /></p>
+	<ul class="tags">
+				<li><span class="field">throws:</span> Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			endTransaction
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetByteValue" id="getByteValue"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getByteValue</span> (line <span class="line-number">3088</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからKeyでデータを取得する(バイナリ).<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(String)(データ有無):&quot;true&quot; or &quot;false&quot;,要素2(byte[])(データ):{バイト配列}</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">Object[]</span>
+		<span class="method-name">
+			getByteValue
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetMultiTagKeys" id="getMultiTagKeys"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getMultiTagKeys</span> (line <span class="line-number">2488</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">MasterNodeからTag値を渡すことで紐付くKey値の配列を取得する<br /></p>
+<p class="description"><p>複数のTagを指定することで、一度に関連する値を取得可能<br />  複数のTagに紐付く値はマージされて1つとなる<br />  引数のmargeTypeを指定することで、ANDとORを切り替えることが出来る<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 取得データのKey配列 取得キーに同一の値を複数指定した場合は束ねられる。結果が0件の場合はnullが返る</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">String[]</span>
+		<span class="method-name">
+			getMultiTagKeys
+		</span>
+					(<span class="var-type">tagList</span>&nbsp;<span class="var-name">$tagList</span>, [<span class="var-type">margeType</span>&nbsp;<span class="var-name">$margeType</span> = <span class="var-default">true</span>], [<span class="var-type">noExistsData</span>&nbsp;<span class="var-name">$noExistsData</span> = <span class="var-default">true</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">tagList</span>
+				<span class="var-name">$tagList</span><span class="var-description">: Tag値のリスト</span>			</li>
+					<li>
+				<span class="var-type">margeType</span>
+				<span class="var-name">$margeType</span><span class="var-description">: 取得方法指定(true = AND、false=OR)</span>			</li>
+					<li>
+				<span class="var-type">noExistsData</span>
+				<span class="var-name">$noExistsData</span><span class="var-description">: 存在していないデータを取得するかの指定(true:取得する false:取得しない)</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetMultiTagValues" id="getMultiTagValues"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getMultiTagValues</span> (line <span class="line-number">2575</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">MasterNodeからTag値を渡すことで紐付くValue値の集合を取得する<br /></p>
+<p class="description"><p>複数のTagを指定することで、一度に関連する値を取得可能<br />  複数のTagに紐付く値はマージされて1つとなる<br />  引数のmargeTypeを指定することで、ANDとORを切り替えることが出来る<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> KeyとValueが格納された連想配列がかえされる。1件もデータが存在しない場合はnullが返る</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">array</span>
+		<span class="method-name">
+			getMultiTagValues
+		</span>
+					(<span class="var-type">tagList</span>&nbsp;<span class="var-name">$tagList</span>, [<span class="var-type">margeType</span>&nbsp;<span class="var-name">$margeType</span> = <span class="var-default">true</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">tagList</span>
+				<span class="var-name">$tagList</span><span class="var-description">: Tag値のリスト</span>			</li>
+					<li>
+				<span class="var-type">margeType</span>
+				<span class="var-name">$margeType</span><span class="var-description">: 取得方法指定(true = AND、false=OR)</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetMultiValue" id="getMultiValue"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getMultiValue</span> (line <span class="line-number">1704</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからKeyを複数個指定することで一度に複数個のKeyとValueを取得する.<br /></p>
+<p class="description"><p>取得されたKeyとValueがarrayにKeyとValueの組になって格納され返される<br />  存在しないKeyを指定した場合は返却される連想配列には含まれない<br />  Key値にブランクを指定した場合はKeyを指定していないものとみなされる<br /></p><p>文字列エンコーディング指定あり.<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 取得データの連想配列 取得キーに同一のKey値を複数指定した場合は束ねられる arrayのキー値は指定されたKeyとなりValueは取得した値となる<br />全てのKeyに紐付くValueが存在しなかった場合は、nullが返る</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">array</span>
+		<span class="method-name">
+			getMultiValue
+		</span>
+					(<span class="var-type">keyStrList</span>&nbsp;<span class="var-name">$keyStrList</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStrList</span>
+				<span class="var-name">$keyStrList</span><span class="var-description">: Key値配列<br />1つだけのKeyを指定することは出来ない</span>			</li>
+					<li>
+				<span class="var-type">encoding</span>
+				<span class="var-name">$encoding</span><span class="var-description">: エンコーディング指定</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetObjectValue" id="getObjectValue"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getObjectValue</span> (line <span class="line-number">1676</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからKeyでデータを取得する.<br />  setObjectValueで保存したObjectを取得する.<br />  実装としてはPHPのunserialize関数を利用しているため、unserialize関数で変換できない値は扱えない</p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(データ有無(String)):&quot;true&quot; or &quot;false&quot; or &quot;error&quot;,要素2(データ):Object型の値はもしくは&quot;false&quot;の場合はnull(データ有無がerrorの場合のみエラーメッセージ文字列(String型固定))</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">Object[]</span>
+		<span class="method-name">
+			getObjectValue
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">encoding</span>&nbsp;<span class="var-name">1</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">encoding</span>
+				<span class="var-name">1</span>			</li>
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetObjectValueAndUpdateExpireTime" id="getObjectValueAndUpdateExpireTime"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getObjectValueAndUpdateExpireTime</span> (line <span class="line-number">2025</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからKeyでObjectを取得する.<br /></p>
+<p class="description"><p>setObjectDataで登録したデータを取り出す.<br />  取得と同時に値の有効期限を取得時から最初に設定した時間分延長更新<br />  有効期限を設定していない場合は更新されない.<br />  Sessionキャッシュなどでアクセスした時間から所定時間有効などの場合にこちらのメソッドで<br />  値を取得していれば自動的に有効期限が更新される<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(データ有無(String)):&quot;true&quot; or &quot;false&quot; or &quot;error&quot;,要素2(データ):Object型の値はもしくは&quot;false&quot;の場合はnull(データ有無がerrorの場合のみエラーメッセージ文字列(String型固定))</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">Object[]</span>
+		<span class="method-name">
+			getObjectValueAndUpdateExpireTime
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">encoding</span>&nbsp;<span class="var-name">1</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">encoding</span>
+				<span class="var-name">1</span>			</li>
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetOkuyamaVersion" id="getOkuyamaVersion"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getOkuyamaVersion</span> (line <span class="line-number">315</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">接続先のokuyamaのバージョンを返す<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(データ有無):&quot;true&quot; or &quot;false&quot;,要素2(データ):okuyamaのバージョン文字列</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">String[]</span>
+		<span class="method-name">
+			getOkuyamaVersion
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetTagKeys" id="getTagKeys"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getTagKeys</span> (line <span class="line-number">2265</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからTagでKey値群を取得する.<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(データ有無):&quot;true&quot; or &quot;false&quot;,要素2(データ):&quot;データ文字列&quot;</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">Object[]</span>
+		<span class="method-name">
+			getTagKeys
+		</span>
+					(<span class="var-type">tagStr</span>&nbsp;<span class="var-name">$tagStr</span>, [<span class="var-type">noExistsData</span>&nbsp;<span class="var-name">$noExistsData</span> = <span class="var-default">true</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">tagStr</span>
+				<span class="var-name">$tagStr</span><span class="var-description">: Tag文字列</span>			</li>
+					<li>
+				<span class="var-type">noExistsData</span>
+				<span class="var-name">$noExistsData</span><span class="var-description">: Keyが存在しない場合の取得指定 true=過去にtagを登録した場合はKey値は返す false=現時Keyが存在しなければ返却しない</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetTagValues" id="getTagValues"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getTagValues</span> (line <span class="line-number">2387</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">MasterNodeからTag値を渡すことで紐付くValue値の集合を取得する.<br /></p>
+<p class="description"><p>文字列エンコーディング指定あり.<br />  Keyは削除されTagとの紐付けだけ残っている値は返却されない.<br />  存在しないTagを指定した場合はNULLが返される<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 取得データの連想配列 キー値はTag紐付くKeyとなりValueはそのKeyに紐付く値となる(存在しないTagを指定した場合はNULLが返される)</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">array</span>
+		<span class="method-name">
+			getTagValues
+		</span>
+					(<span class="var-type">tagStr</span>&nbsp;<span class="var-name">$tagStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">tagStr</span>
+				<span class="var-name">$tagStr</span><span class="var-description">: Tag文字列</span>			</li>
+					<li>
+				<span class="var-type">encoding</span>
+				<span class="var-name">$encoding</span><span class="var-description">: エンコーディング指定</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetValue" id="getValue"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getValue</span> (line <span class="line-number">1579</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからKeyでデータを取得する.<br />  文字列エンコーディング指定あり.<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(データ有無):&quot;true&quot; or &quot;false&quot;,要素2(データ):&quot;データ文字列&quot;</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">String[]</span>
+		<span class="method-name">
+			getValue
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span>			</li>
+					<li>
+				<span class="var-type">encoding</span>
+				<span class="var-name">$encoding</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetValueAndUpdateExpireTime" id="getValueAndUpdateExpireTime"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getValueAndUpdateExpireTime</span> (line <span class="line-number">1925</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからKeyでデータを取得する.<br /></p>
+<p class="description"><p>文字列エンコーディング指定あり.<br />  取得と同時に値の有効期限を取得時から最初に設定した時間分延長更新<br />  有効期限を設定していない場合は更新されない.<br />  Sessionキャッシュなどでアクセスした時間から所定時間有効などの場合にこちらのメソッドで<br />  値を取得していれば自動的に有効期限が更新される<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(データ有無):&quot;true&quot; or &quot;false&quot;,要素2(データ):&quot;データ文字列&quot;</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">String[]</span>
+		<span class="method-name">
+			getValueAndUpdateExpireTime
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span>			</li>
+					<li>
+				<span class="var-type">encoding</span>
+				<span class="var-name">$encoding</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetValueScript" id="getValueScript"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getValueScript</span> (line <span class="line-number">2050</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからKeyでデータを取得する.<br />  取得データに対してJavaScriptを実行する.<br />  文字列エンコーディング指定あり.<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(データ有無):&quot;true&quot; or &quot;false&quot;,要素2(データ):&quot;データ文字列&quot;</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">String[]</span>
+		<span class="method-name">
+			getValueScript
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">scriptStr</span>&nbsp;<span class="var-name">$scriptStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+					<li>
+				<span class="var-type">scriptStr</span>
+				<span class="var-name">$scriptStr</span><span class="var-description">: JavaScriptコード</span>			</li>
+					<li>
+				<span class="var-type">encoding</span>
+				<span class="var-name">$encoding</span><span class="var-description">: 取得Valueの文字コード</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetValueScriptForUpdate" id="getValueScriptForUpdate"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getValueScriptForUpdate</span> (line <span class="line-number">2159</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからKeyでデータを取得する.<br />  取得データに対してJavaScriptを実行する.<br />  文字列エンコーディング指定あり.<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(データ有無):&quot;true&quot; or &quot;false&quot;,要素2(データ):&quot;データ文字列&quot;</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">String[]</span>
+		<span class="method-name">
+			getValueScriptForUpdate
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">scriptStr</span>&nbsp;<span class="var-name">$scriptStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+					<li>
+				<span class="var-type">scriptStr</span>
+				<span class="var-name">$scriptStr</span><span class="var-description">: JavaScriptコード</span>			</li>
+					<li>
+				<span class="var-type">encoding</span>
+				<span class="var-name">$encoding</span><span class="var-description">: 取得Valueの文字コード</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodgetValueVersionCheck" id="getValueVersionCheck"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getValueVersionCheck</span> (line <span class="line-number">1817</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからKeyでデータを取得する.<br /></p>
+<p class="description"><p>文字列エンコーディング指定あり.<br />  Valueのバージョン値を合わせて返す.<br />  setValueVersionCheckにて取得したバージョンNoを利用する  memcachedのgetsに相当する.<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(データ有無):&quot;true&quot; or &quot;false&quot;,要素2(データ):&quot;データ文字列&quot;,要素3(VersionNo):&quot;数字&quot;</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">String[]</span>
+		<span class="method-name">
+			getValueVersionCheck
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, [<span class="var-type">encoding</span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: 取得対象のKey値文字列</span>			</li>
+					<li>
+				<span class="var-type">encoding</span>
+				<span class="var-name">$encoding</span><span class="var-description">: Valueの文字コード</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodincrValue" id="incrValue"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">incrValue</span> (line <span class="line-number">1339</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">MasterNodeへデータの加算を要求する.<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> true/false,要素2(演算後の結果):double 数値</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">要素1(処理成否):Boolean</span>
+		<span class="method-name">
+			incrValue
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">value</span>&nbsp;<span class="var-name">$value</span>, [<span class="var-type">initCalcValue</span>&nbsp;<span class="var-name">$initCalcValue</span> = <span class="var-default">FALSE</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+					<li>
+				<span class="var-type">value</span>
+				<span class="var-name">$value</span><span class="var-description">: 加算値</span>			</li>
+					<li>
+				<span class="var-type">initCalcValue</span>
+				<span class="var-name">$initCalcValue</span><span class="var-description">: 計算対象のKey-Valueが存在しない場合の初期化指定(TRUE=初期化する(0のvalueが作成される), FALSE=初期化されずfalseが返る)</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodinitClient" id="initClient"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">initClient</span> (line <span class="line-number">234</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Clientを初期化する.<br />  今のところは最大保存サイズの初期化とバージョンの取得<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> true:開始成功 false:開始失敗</li>
+				<li><span class="field">throws:</span> Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">boolean</span>
+		<span class="method-name">
+			initClient
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodlockData" id="lockData"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">lockData</span> (line <span class="line-number">481</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">データのLockを依頼する.<br />  本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である</p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(Lock成否):&quot;true&quot; or &quot;false&quot;</li>
+				<li><span class="field">throws:</span> Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">String[]</span>
+		<span class="method-name">
+			lockData
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">lockingTime</span>&nbsp;<span class="var-name">$lockingTime</span>, [<span class="var-type">waitLockTime</span>&nbsp;<span class="var-name">$waitLockTime</span> = <span class="var-default">0</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span>			</li>
+					<li>
+				<span class="var-type">lockingTime</span>
+				<span class="var-name">$lockingTime</span><span class="var-description">: Lockを取得後、維持する時間(この時間を経過すると自動的にLockが解除される)(単位は秒)(0は無制限)</span>			</li>
+					<li>
+				<span class="var-type">waitLockTime</span>
+				<span class="var-name">$waitLockTime</span><span class="var-description">: Lockを取得する場合に既に取得中の場合この時間はLock取得をリトライする(単位は秒)(0は1度取得を試みる)</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodreleaseLockData" id="releaseLockData"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">releaseLockData</span> (line <span class="line-number">587</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">データのLock解除を依頼する.<br />  本メソッドは、startTransactionメソッドを呼び出した場合のみ有効である</p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(Lock解除成否):&quot;true&quot; or &quot;false&quot;</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">String[]</span>
+		<span class="method-name">
+			releaseLockData
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodremoveSearchIndex" id="removeSearchIndex"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">removeSearchIndex</span> (line <span class="line-number">2975</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">全文検索用のIndexを削除する。  Prefixあり<br />  検索Index長さ指定あり<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 削除成否</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">boolean</span>
+		<span class="method-name">
+			removeSearchIndex
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, [<span class="var-type">indexPrefix</span>&nbsp;<span class="var-name">$indexPrefix</span> = <span class="var-default">null</span>], [<span class="var-type">indexLength</span>&nbsp;<span class="var-name">$indexLength</span> = <span class="var-default">3</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+					<li>
+				<span class="var-type">indexPrefix</span>
+				<span class="var-name">$indexPrefix</span><span class="var-description">: 作成時に設定したIndexのPrefix値</span>			</li>
+					<li>
+				<span class="var-type">indexLength</span>
+				<span class="var-name">$indexLength</span><span class="var-description">: 作成時に指定した作成Indexの長さ指定</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodremoveTagFromKey" id="removeTagFromKey"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">removeTagFromKey</span> (line <span class="line-number">2864</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">MasterNodeへKey値とTag値を指定してTagの紐付きを削除する.<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 削除成否</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">boolean</span>
+		<span class="method-name">
+			removeTagFromKey
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">tagStr</span>&nbsp;<span class="var-name">$tagStr</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+					<li>
+				<span class="var-type">tagStr</span>
+				<span class="var-name">$tagStr</span><span class="var-description">: Tag値文字列</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodremoveValue" id="removeValue"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">removeValue</span> (line <span class="line-number">2765</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバからKeyでデータを削除する.<br />  取得値のエンコーディング指定が可能.<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 削除したデータ 内容) 要素1(データ削除有無):&quot;true&quot; or &quot;false&quot;,要素2(削除データ):&quot;データ文字列&quot;</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">String[]</span>
+		<span class="method-name">
+			removeValue
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, [<span class="var-type"></span>&nbsp;<span class="var-name">$encoding</span> = <span class="var-default">&quot;UTF-8&quot;</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: 削除対象のKey値文字列</span>			</li>
+					<li>
+				<span class="var-type"></span>
+				<span class="var-name">$encoding</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodsearchValue" id="searchValue"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">searchValue</span> (line <span class="line-number">2626</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">MasterNodeからsetValueAndCreateIndexで作成されたIndexを使って検索して該当する値を取得する.<br />  検索可能な文字列は漢字の場合は1文字からで、それ以外は2文字から.<br />  Prefxiあり.<br /></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 要素1(データ有無):&quot;true&quot; or &quot;false&quot;,要素2(該当のKey値配列):Stringの配列</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">object[]</span>
+		<span class="method-name">
+			searchValue
+		</span>
+					(<span class="var-type">searchCharacterList</span>&nbsp;<span class="var-name">$searchCharacterList</span>, <span class="var-type">searchType</span>&nbsp;<span class="var-name">$searchType</span>, [<span class="var-type">prefix</span>&nbsp;<span class="var-name">$prefix</span> = <span class="var-default">null</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">searchCharacterList</span>
+				<span class="var-name">$searchCharacterList</span><span class="var-description">: 取得したい値の文字配列(エンコードはUTF-8固定)&lt;文字配列&gt;</span>			</li>
+					<li>
+				<span class="var-type">searchType</span>
+				<span class="var-name">$searchType</span><span class="var-description">: 1:AND検索　2:OR検索</span>			</li>
+					<li>
+				<span class="var-type">prefix</span>
+				<span class="var-name">$prefix</span><span class="var-description">: 検索Index作成時に指定したPrefix値</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodsetConnectionInfos" id="setConnectionInfos"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">setConnectionInfos</span> (line <span class="line-number">107</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">MasterNodeの接続情報を設定する.<br /></p>
+<p class="description"><p>本メソッドでセットし、autoConnect()メソッドを<br />  呼び出すと、自動的にその時稼動しているMasterNodeにバランシングして<br />  接続される。接続出来ない場合は、別のMasterNodeに再接続される.<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			setConnectionInfos
+		</span>
+					(<span class="var-type">masterNodes</span>&nbsp;<span class="var-name">$masterNodes</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">masterNodes</span>
+				<span class="var-name">$masterNodes</span><span class="var-description">: 接続情報の配列 &quot;IP:PORT&quot;の形式</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodsetNewObjectValue" id="setNewObjectValue"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">setNewObjectValue</span> (line <span class="line-number">1181</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバへObjectデータを送信する.<br /></p>
+<p class="description"><p>値の新規登録を保証する<br />  PHPのオブジェクトデータの保存を行う.<br />  実装としてPHPのserialize関数を利用しているため、serialize関数で変換できないObjectは扱えない.<br />  Tag有り.<br />  有効期限が秒単位で設定可能<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 成否</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">boolean</span>
+		<span class="method-name">
+			setNewObjectValue
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">objectValue</span>&nbsp;<span class="var-name">$objectValue</span>, [<span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$tagStrs</span> = <span class="var-default">null</span>], [<span class="var-type">expireTime</span>&nbsp;<span class="var-name">$expireTime</span> = <span class="var-default">null</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+					<li>
+				<span class="var-type">objectValue</span>
+				<span class="var-name">$objectValue</span><span class="var-description">: Object値</span>			</li>
+					<li>
+				<span class="var-type">tagStrs</span>
+				<span class="var-name">$tagStrs</span><span class="var-description">: Tag文字配列</span>			</li>
+					<li>
+				<span class="var-type">expireTime</span>
+				<span class="var-name">$expireTime</span><span class="var-description">: 有効期限(秒/単位)</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodsetNewValue" id="setNewValue"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">setNewValue</span> (line <span class="line-number">1027</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバへデータを送信する.<br />  1度のみ登録可能.<br />  Tag有り.<br /></p>
+	<ul class="tags">
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">boolean</span>
+		<span class="method-name">
+			setNewValue
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$value</span>, [<span class="var-type">value</span>&nbsp;<span class="var-name">$tagStrs</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$expireTime</span> = <span class="var-default">null</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span>			</li>
+					<li>
+				<span class="var-type">tagStrs</span>
+				<span class="var-name">$value</span>			</li>
+					<li>
+				<span class="var-type">value</span>
+				<span class="var-name">$tagStrs</span>			</li>
+					<li>
+				<span class="var-type"></span>
+				<span class="var-name">$expireTime</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodsetObjectValue" id="setObjectValue"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">setObjectValue</span> (line <span class="line-number">846</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバへデータを送信する.<br /></p>
+<p class="description"><p>PHPのオブジェクトデータの保存を行う.<br />  実装としてPHPのserialize関数を利用しているため、serialize関数で変換できないObjectは扱えない.<br />  Tag有り.<br />  有効期限が秒単位で設定可能</p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 成否</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">boolean</span>
+		<span class="method-name">
+			setObjectValue
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">objectValue</span>&nbsp;<span class="var-name">$objectValue</span>, [<span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$tagStrs</span> = <span class="var-default">null</span>], [<span class="var-type">expireTime</span>&nbsp;<span class="var-name">$expireTime</span> = <span class="var-default">null</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+					<li>
+				<span class="var-type">objectValue</span>
+				<span class="var-name">$objectValue</span><span class="var-description">: Object値</span>			</li>
+					<li>
+				<span class="var-type">tagStrs</span>
+				<span class="var-name">$tagStrs</span><span class="var-description">: Tag文字配列</span>			</li>
+					<li>
+				<span class="var-type">expireTime</span>
+				<span class="var-name">$expireTime</span><span class="var-description">: 有効期限(秒/単位)</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodsetSaveMaxDataSize" id="setSaveMaxDataSize"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">setSaveMaxDataSize</span> (line <span class="line-number">465</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">保存するデータの最大長を変更する.<br /></p>
+	<ul class="tags">
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			setSaveMaxDataSize
+		</span>
+					(<span class="var-type">size</span>&nbsp;<span class="var-name">$size</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">size</span>
+				<span class="var-name">$size</span><span class="var-description">: 保存サイズ(バイト長)</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodsetValue" id="setValue"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">setValue</span> (line <span class="line-number">688</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバへデータを送信する.<br /></p>
+<p class="description"><p>データ保存を行う.<br />  Tag有り.<br />  有効期限が秒単位で設定可能</p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 成否</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">boolean</span>
+		<span class="method-name">
+			setValue
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">value</span>&nbsp;<span class="var-name">$value</span>, [<span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$tagStrs</span> = <span class="var-default">null</span>], [<span class="var-type">expireTime</span>&nbsp;<span class="var-name">$expireTime</span> = <span class="var-default">null</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+					<li>
+				<span class="var-type">value</span>
+				<span class="var-name">$value</span><span class="var-description">: Value文字列</span>			</li>
+					<li>
+				<span class="var-type">tagStrs</span>
+				<span class="var-name">$tagStrs</span><span class="var-description">: Tag文字配列</span>			</li>
+					<li>
+				<span class="var-type">expireTime</span>
+				<span class="var-name">$expireTime</span><span class="var-description">: 有効期限(秒/単位)</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodsetValueAndCreateIndex" id="setValueAndCreateIndex"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">setValueAndCreateIndex</span> (line <span class="line-number">868</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">MasterNodeへデータを登録要求する.<br /></p>
+<p class="description"><p>登録と同時にValueの検索Indexを作成する<br />  検索Indexを作成するので通常のSetに比べて時間がかかる.<br />  全文Indexが作成されるので、値は検索可能な文字を指定すること。例えばBASE64エンコードの値などの場合は<br />  検索時も同様にエンコードした値で検索する必要がある.<br />  ※okuyamaは検索Index作成前に、同様のKey値で値が登録されている場合は、そのKey値で登録されているValue値の<br />  検索インデックスを削除してから登録が行われる.<br />  Tag有り.<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 登録成否</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">boolean</span>
+		<span class="method-name">
+			setValueAndCreateIndex
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$value</span>, [<span class="var-type">value</span>&nbsp;<span class="var-name">$tagStrs</span> = <span class="var-default">null</span>], [<span class="var-type">indexPrefix</span>&nbsp;<span class="var-name">$indexPrefix</span> = <span class="var-default">null</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: Key値文字列</span>			</li>
+					<li>
+				<span class="var-type">tagStrs</span>
+				<span class="var-name">$value</span><span class="var-description">: Tag値の配列 例){&quot;tag1&quot;,&quot;tag2&quot;,&quot;tag3&quot;}</span>			</li>
+					<li>
+				<span class="var-type">value</span>
+				<span class="var-name">$tagStrs</span><span class="var-description">: value値</span>			</li>
+					<li>
+				<span class="var-type">indexPrefix</span>
+				<span class="var-name">$indexPrefix</span><span class="var-description">: 作成する検索IndexをグルーピングするPrefix文字列.この値と同様の値を指定してsearchValueメソッドを呼び出すと、グループに限定して全文検索が可能となる.最大は128文字</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodsetValueVersionCheck" id="setValueVersionCheck"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">setValueVersionCheck</span> (line <span class="line-number">1198</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">マスタサーバへデータを送信する.<br /></p>
+<p class="description"><p>排他的バージョンチェックを行い、更新する.<br />  バージョン番号をgetValueVersionCheckメソッドで事前にバージョン値を取得して更新時のチェック値として利用する  memcachedのcasに相当する.<br /></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> 成否</li>
+				<li><span class="field">throws:</span> OkuyamaClientException, Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">boolean</span>
+		<span class="method-name">
+			setValueVersionCheck
+		</span>
+					(<span class="var-type">keyStr</span>&nbsp;<span class="var-name">$keyStr</span>, <span class="var-type">value</span>&nbsp;<span class="var-name">$value</span>, <span class="var-type">tagStrs</span>&nbsp;<span class="var-name">$tagStrs</span>, <span class="var-type">versionNo</span>&nbsp;<span class="var-name">$versionNo</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">keyStr</span>
+				<span class="var-name">$keyStr</span><span class="var-description">: 更新対象のKey値文字列</span>			</li>
+					<li>
+				<span class="var-type">value</span>
+				<span class="var-name">$value</span><span class="var-description">: 更新Value</span>			</li>
+					<li>
+				<span class="var-type">tagStrs</span>
+				<span class="var-name">$tagStrs</span><span class="var-description">: Tag値 ※必要ない場合はNULLを渡す</span>			</li>
+					<li>
+				<span class="var-type">versionNo</span>
+				<span class="var-name">$versionNo</span><span class="var-description">: getValueVersionCheckで取得した戻り値のバージョンNo値</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodstartTransaction" id="startTransaction"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">startTransaction</span> (line <span class="line-number">382</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Transactionを開始する.<br />  データロック、ロックリリースを使用する場合は、<br />  事前に呼び出す必要がある<br /></p>
+	<ul class="tags">
+				<li><span class="field">throws:</span> Exception</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			startTransaction
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+						
+		</div>
+	</div>
+
+
+	<p class="notes" id="credit">
+		Documentation generated on Wed, 21 Nov 2012 05:32:33 +0900 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.4</a>
+	</p>
+	</div></body>
+</html>
