@@ -128,6 +128,31 @@ public class TestSock {
 
                 okuyamaClient.close();
 
+            } if (args[0].equals("1.11")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagなし)
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+
+                if (!okuyamaClient.sendByteValue(args[3], args[4].getBytes())) {
+                    System.out.println("OkuyamaClient - error");
+                }
+                long start = new Date().getTime();
+                for (int idx = 0; idx  < Integer.parseInt(args[5]); idx++) {
+                    if (!okuyamaClient.sendByteValue(args[3] + "_" + idx, (args[4] + "_" + idx).getBytes())) {
+                        System.out.println("OkuyamaClient - error");
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
             } else if (args[0].equals("1.2")) {
                 // AutoConnectionモード
                 // クライアントインスタンスを作成
@@ -445,6 +470,50 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+
+            } else if (args[0].equals("3.1")) {
+
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagあり)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] tag1 = {"tag1-d"};
+                String[] tag2 = {"tag1-d","tag2-d"};
+                String[] tag3 = {"tag1-d","tag2-d","tag3-d"};
+                String[] tag4 = {"tag4-d"};
+
+                String[] setTag = null;
+                int counter = 0;
+
+                long start = new Date().getTime();
+
+                Random rnd = new Random();
+                for (int i = 0; i < Integer.parseInt(args[3]);i++) {
+                    if (counter == 0) {
+                        setTag = tag1;
+                        counter++;
+                    } else if (counter == 1) {
+                        setTag = tag2;
+                        counter++;
+                    } else if (counter == 2) {
+                        setTag = tag3;
+                        counter++;
+                    } else if (counter == 3) {
+                        setTag = tag4;
+                        counter = 0;
+                    }
+
+                    int expireTime = rnd.nextInt(60);
+                    if (expireTime < 1) expireTime = 10;
+                    if (!okuyamaClient.setValue("tagsampledatakey_d_" + new Integer(i).toString(), setTag, "tagsamplesavedata_d_" + new Integer(i).toString(), expireTime)) {
+                        System.out.println("OkuyamaClient - error");
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+
             } else if (args[0].equals("3.9")) {
 
                 int port = Integer.parseInt(args[2]);
