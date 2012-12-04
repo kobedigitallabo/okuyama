@@ -3108,6 +3108,140 @@ public class OkuyamaClient {
 
     /**
      * MasterNodeへデータを送信する(バイナリデータ).<br>
+     * setByteValueメソッドとの違いはValueをSplitしないで登録する部分.<br>
+     * からならずValueがzip圧縮されない
+     * 本メソッドは一度のMasterNodeとの通信で複数個のKey-Valueを保存することが可能である<br>
+     * 通信回数を削減し、速度向上が可能である。ただし一度に大量のデータをMasterNodeに送るため、<br>
+     * サーバ側でのメモリ枯渇の原因になりえるため、注意が必要である<br>
+     * また登録処理の順番などの概念はない.<br>
+     *
+     * @param requestData 登録するKey値とValue値のMap(Map内の値はKey=String、Value=byte[]である必要がある)
+     * @return Map 登録依頼されたKeyに対して、成否のBooleanが格納されたMap
+     * @throws OkuyamaClientException
+     */
+    public Map sendMultiByteValue(Map<String, byte[]> requestData) throws OkuyamaClientException {
+        Map ret = new HashMap(); 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        StringBuilder serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
+
+        StringBuilder saveStr = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            String keyStr = null;
+            byte[] values = null;
+            String sep = "";
+            for (Iterator ite = requestData.entrySet().iterator(); ite.hasNext();) {
+
+                Map.Entry ent = (Map.Entry)ite.next();
+                keyStr = (String)ent.getKey();
+                values = (byte[])ent.getValue();
+
+                // Byte Lenghtチェック
+                if (keyStr == null ||  keyStr.trim().equals(""))
+                    throw new OkuyamaClientException("The blank is not admitted on a key");
+
+                byte[] keyStrBytes = keyStr.getBytes();
+                if (keyStrBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+
+                if (values == null || values.length == 0)
+                    throw new OkuyamaClientException("The blank is not admitted on a value");
+
+                if (values.length > maxValueSize) 
+                    throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
+
+                saveStr.append(sep);
+                saveStr.append(new String(this.dataEncoding(keyStrBytes)));
+                saveStr.append(this.byteDataKeysSep);
+                saveStr.append(new String(this.dataEncoding(values)));
+                sep = OkuyamaClient.sepStr;
+            }
+
+
+            // "111,TransactionCode,Key(B64E):#:value(B64E),Key(B64E):#:value(B64E),Key(B64E):#:value(B64E)
+            // 処理番号連結
+            serverRequestBuf.append("111");
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            serverRequestBuf.append(this.transactionCode);
+            // セパレータ連結
+            serverRequestBuf.append(OkuyamaClient.sepStr);
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            serverRequestBuf.append(saveStr.toString());
+
+
+            // サーバ送信
+            pw.println(serverRequestBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+
+            // ResponseStr="111,true,Key(B64E):true:#:Key(B64E):true:#:Key(B64E):false:#:Key(B64E):true
+            if (serverRetStr.indexOf("111,true") == 0) {
+
+                String[] responseLine = serverRetStr.split(OkuyamaClient.sepStr);
+                if (responseLine.length > 2) {
+
+                    String[] saveResponseDtList = responseLine[2].split(this.byteDataKeysSep);
+                    for (int idx = 0; idx < saveResponseDtList.length; idx++) {
+                    
+                        String[] responseDt = saveResponseDtList[idx].split(":");
+                        ret.put(new String(this.dataDecoding(responseDt[0].getBytes())), new Boolean(responseDt[1]));
+                    }
+                }
+            } else {
+                throw new OkuyamaClientException(serverRetStr);
+            }
+
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.sendMultiByteValue(requestData);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.sendMultiByteValue(requestData);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.sendMultiByteValue(requestData);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * MasterNodeへデータを送信する(バイナリデータ).<br>
      * 本メソッドは呼び出し後はrequestByteValue後に呼び出すこと.<br>
      *
      * @param keyStr Key値
@@ -6770,21 +6904,7 @@ public class OkuyamaClient {
             // Keyに対するLengthチェック
             if (keyBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + keyStr + " Byte");
 
-            // 文字列バッファ初期化
-/*            serverRequestBuf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
 
-            // 処理番号連結
-            serverRequestBuf.append("2");
-            // セパレータ連結
-            serverRequestBuf.append(OkuyamaClient.sepStr);
-
-            // Key連結(Keyはデータ送信時には必ず文字列が必要)
-            serverRequestBuf.append(new String(this.dataEncoding(keyBytes)));
-
-            // サーバ送信
-            pw.println(serverRequestBuf.toString());
-            pw.flush();
-*/
             byte[] valueDataBytes = this.dataEncoding(keyBytes);
             this.bos.write(this.getMethodTypeBytes, 0 ,this.getMethodTypeBytes.length);
             this.bos.write(this.clientMethodSepBytes, 0 ,this.clientMethodSepBytes.length);
@@ -6860,65 +6980,17 @@ public class OkuyamaClient {
                     if (totalReadByte == valLen) break;
                 }
 
-                /*
-                for (readCount = 0; readCount < valLen; readCount++) {
-                    this.bis.read(valueBytes, readCount, 1);
-                }*/
                 this.bis.read();
                 ret[0] = "true";
-                ret[1] = this.dataDecoding(valueBytes);
+
+                ret[1] = this.dataDecoding(SystemUtil.dataDecompress(this.dataDecoding(valueBytes)));
             } else {
                 // データなし
                 ret[0] = "false";
                 ret[1] = null;
             }
 
-            /*
-            serverRetStr = br.readLine();
 
-            boolean responseSuccess = false;
-            if (serverRetStr.indexOf("2,true") == 0) {
-
-                responseSuccess = true;
-            } else {
-
-                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
-            }
-
-            // 処理の妥当性確認
-            if (responseSuccess) {
-
-                // データ有り
-                ret[0] = "true";
-
-                String retValueStr = serverRetStr.substring(7);
-                // Valueがブランク文字か調べる
-                if (retValueStr.equals(OkuyamaClient.blankStr)) {
-                    byteRet = new byte[0];
-                    ret[1] = byteRet;
-                } else {
-
-                    // Value文字列をBase64でデコード
-                    ret[1] = this.dataDecoding(retValueStr.getBytes());
-                }
-            } else if (serverRet[0].equals("2")) {
-                if(serverRet[1].equals("false")) {
-
-                    // データなし
-                    ret[0] = serverRet[1];
-                    ret[1] = null;
-                } else if(serverRet[1].equals("error")) {
-
-                    // エラー発生
-                    ret[0] = serverRet[1];
-                    ret[1] = serverRet[2];
-                }
-            } else {
-
-                // 妥当性違反
-                throw new OkuyamaClientException("Execute Violation of validity");
-            }
-*/
         } catch (OkuyamaClientException ice) {
             throw ice;
         } catch (ConnectException ce) {

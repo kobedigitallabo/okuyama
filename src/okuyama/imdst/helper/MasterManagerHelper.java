@@ -362,6 +362,40 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                             // Key値とValueを格納する
                             retParams = this.setKeyValue(clientParameterList[1], clientParameterList[2], clientParameterList[3], clientParameterList[4]);
                             break;
+                        case 111 :
+                            //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
+
+                            // Key値とValueを格納する
+                            // "111,TransactionCode,Key(B64E):#:value(B64E),Key(B64E):#:value(B64E),Key(B64E):#:value(B64E)
+                            StringBuilder mBytePutRet = new StringBuilder();
+                            String retSep = "";
+                            for (int idx = 2; idx < clientParameterList.length; idx++) {
+
+                                String[] keyValueData = clientParameterList[idx].split(ImdstDefine.imdstMultiRequestByteDataSep);
+                                retParams = this.setKeyValue(keyValueData[0], ImdstDefine.imdstBlankStrData, clientParameterList[1], keyValueData[1]);
+                                if (retParams != null && retParams[0].equals("1") && retParams[1].equals("true")) {
+
+                                    // ResponseStr="111,true,Key(B64E):true:#:Key(B64E):true:#:Key(B64E):false:#:Key(B64E):true
+                                    mBytePutRet.append(retSep);
+                                    mBytePutRet.append(keyValueData[0]);
+                                    mBytePutRet.append(":");
+                                    mBytePutRet.append("true");
+                                } else {
+
+                                    mBytePutRet.append(retSep);
+                                    mBytePutRet.append(keyValueData[0]);
+                                    mBytePutRet.append(":");
+                                    mBytePutRet.append("false");
+                                }
+                                retSep = ImdstDefine.imdstMultiRequestByteDataSep;
+                            }
+                            retParams = new String[3];
+                            retParams[0] = "111";
+                            retParams[1] = "true";
+                            retParams[2] = mBytePutRet.toString();
+
+                            break;
+
                         case 2 :
                             //System.out.println(new String(BASE64DecoderStream.decode(clientParameterList[1].getBytes())));
                             // Key値でValueを取得する
@@ -380,7 +414,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 realRetParams[0] = "201";
                                 realRetParams[1] = "true";
                                 String compressStr = retParams[2];
-                                //String compressFixStr = new String(BASE64EncoderStream.encode(SystemUtil.dataCompress(compressStr.getBytes())));
+                                compressStr = new String(BASE64EncoderStream.encode(SystemUtil.dataCompress(compressStr.getBytes())));
                                 byte[] valLenBytes = new Integer(compressStr.length()).toString().getBytes();
                                 byte[] valLenInfo = {48,48,48,48,48,48,48,48,48};
                                 int idx = 0;
@@ -2577,6 +2611,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - searchValueIndex - Error", be);
+            retStrs[0] = "43";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             logger.error("MasterManagerHelper - searchValueIndex - Exception", e);
             retStrs[0] = "43";
@@ -2788,6 +2825,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getKeyValueScript - Error", be);
+            retStrs[0] = "8";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             logger.error("MasterManagerHelper - getKeyValueScript - Error", e);
             retStrs[0] = "8";
@@ -3033,6 +3073,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - removeKeyValue - Error", be);
+            retStrs[0] = "5";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             logger.error("MasterManagerHelper - removeKeyValue - Error", e);
             retStrs[0] = "5";
@@ -3125,6 +3168,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (BatchException be) {
 
             logger.error("MasterManagerHelper - removeSearchIndex - Error", be);
+            retStrs[0] = "44";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
 
             logger.error("MasterManagerHelper - removeSearchIndex - Error", e);
@@ -3230,6 +3276,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - removeTargetTagInKey - Error", be);
+            retStrs[0] = "40";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             logger.error("MasterManagerHelper - removeTargetTagInKey - Error", e);
             retStrs[0] = "40";
@@ -3272,6 +3321,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         } catch (BatchException be) {
 
             logger.info("MasterManagerHelper - decrValue - Error", be);
+            retStrs[0] = "14";
+            retStrs[1] = "false";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
 
             logger.info("MasterManagerHelper - decrValue - Error", e);
@@ -3379,6 +3431,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (BatchException be) {
             logger.info("MasterManagerHelper - incrValue - Error", be);
+            retStrs[0] = "13";
+            retStrs[1] = "false";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             logger.info("MasterManagerHelper - incrValue - Error", e);
             retStrs[0] = "13";
@@ -3451,6 +3506,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - lockingData - Error", be);
+            retStrs[0] = "30";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             retStrs[0] = "30";
             retStrs[1] = "error";
@@ -3519,6 +3577,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - releaseLockingData - Error", be);
+            retStrs[0] = "31";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             retStrs[0] = "31";
             retStrs[1] = "error";
@@ -3939,6 +4000,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getTargetTagIndexList - Error", be);
+            retStrs[0] = "45";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             logger.error("MasterManagerHelper - getTargetTagIndexList - Error", e);
             retStrs[0] = "45";
@@ -4034,6 +4098,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             }
         } catch (BatchException be) {
             logger.error("MasterManagerHelper - getTargetIndexTagPair - Error", be);
+            retStrs[0] = "46";
+            retStrs[1] = "error";
+            retStrs[2] = "MasterNode - Exception";
         } catch (Exception e) {
             logger.error("MasterManagerHelper - getTargetIndexTagPair - Error", e);
             retStrs[0] = "46";

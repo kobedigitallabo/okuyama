@@ -483,7 +483,7 @@ public class MemcachedProtocolTaker extends AbstractProtocolTaker implements IPr
                 retStrs[0] = "999";
             } else if (executeMethods[0].equals(ImdstDefine.memcacheExecuteMethodFlushall)) {
             
-                // version
+                // flush_all
                 retStrs = new String[1];
                 retStrs[0] = "61";
             } else {
