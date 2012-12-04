@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Project ROOT  -->
+<project name="okuyamaFuse" default="package" basedir=".">
+	<property name="project.title"  value="okuyamaFuse" />
+	<property name="src.dir"		value="src" />
+	<property name="build.dir"		value="classes" />
+	<property name="version"		value="0.0.1" />
+	<property name="lib.dir"	    value="lib"/>
+
+	<!-- Use Project Lib  -->
+	<path id="project.class.path">
+		<pathelement path = "."/>
+		<pathelement path = "classes"/>
+		<pathelement path = "lib/fuse-j-2.4/fuse-j.jar"/>
+		<pathelement path = "lib/fuse-j-2.4/lib/commons-logging-1.0.4.jar"/>
+		<pathelement path = "../../okuyama-0.9.4.jar"/>
+	</path>
+
+	<!-- clean Task  -->
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete dir="okuyamaFuse.jar" />
+	</target>
+
+	<!-- setup Task  -->
+	<target name="setup">
+		<mkdir dir="${build.dir}"/>
+	</target>
+
+	<!-- compile task  -->
+	<target name="compile" depends="clean, setup">
+		<javac debug="yes" srcdir="${src.dir}" destdir="${build.dir}" encoding="UTF-8" deprecation="true">
+			<classpath refid="project.class.path"/>
+		</javac>
+	</target>
+
+	<!-- jar make task  -->
+	<target name="jar" depends="compile">
+		<jar compress="yes" jarfile="okuyamaFuse-${version}.jar" basedir="${build.dir}" includes="**/*.class" />
+	</target>
+
+</project>
