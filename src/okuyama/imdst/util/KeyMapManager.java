@@ -2446,6 +2446,7 @@ public class KeyMapManager extends Thread {
                                 pw.println(allDataBuf.toString());
                                 pw.flush();
                                 allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
+                                if (ImdstDefine.lowSpecDataNode) Thread.sleep(50);
                                 counter = 0;
                                 if ((sendCounter % 10) == 0) Thread.sleep(3000);
                             }
@@ -2509,6 +2510,7 @@ public class KeyMapManager extends Thread {
                                 sendCounter++;
                                 pw.println(allDataBuf.toString());
                                 pw.flush();
+                                if (ImdstDefine.lowSpecDataNode) Thread.sleep(50);
                                 allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
                                 counter = 0;
                                 if ((sendCounter % 10) == 0) Thread.sleep(3000);
@@ -3218,6 +3220,7 @@ public class KeyMapManager extends Thread {
 
                         pw.println(allDataBuf.toString());
                         pw.flush();
+                        if (ImdstDefine.lowSpecDataNode) Thread.sleep(50);
                         allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
                         counter = 0;
                         allDataSep = "";
