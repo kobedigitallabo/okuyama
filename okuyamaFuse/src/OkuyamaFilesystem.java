@@ -850,31 +850,26 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
     }
 
 
-   public int getxattr(String path, String name, ByteBuffer dst) throws FuseException, BufferOverflowException
-   {
+    public int getxattr(String path, String name, ByteBuffer dst) throws FuseException, BufferOverflowException {
 
-      return 0;
-   }
+       return 0;
+    }
 
-   public int getxattrsize(String path, String name, FuseSizeSetter sizeSetter) throws FuseException
-   {
+    public int getxattrsize(String path, String name, FuseSizeSetter sizeSetter) throws FuseException {
 
-      return 0;
-   }
+       return 0;
+    }
 
-   public int listxattr(String path, XattrLister lister) throws FuseException
-   {
+    public int listxattr(String path, XattrLister lister) throws FuseException {
 
-      return 0;
-   }
+       return 0;
+    }
 
-   public int removexattr(String path, String name) throws FuseException
-   {
-      return 0;
-   }
+    public int removexattr(String path, String name) throws FuseException {
+       return 0;
+    }
 
-   public int setxattr(String path, String name, ByteBuffer value, int flags) throws FuseException
-   {
-      return 0;
-   }
+    public int setxattr(String path, String name, ByteBuffer value, int flags) throws FuseException {
+       return 0;
+    }
 }
