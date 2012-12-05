@@ -61,7 +61,7 @@ Linux用のファイルシステムとして実装されており、CentOS5.8上で開発しました。
    ■マウント
      ※以下でMount実行(最終行はMasterNodeのIPとポート番号を":"で連結し、","で繋いで列挙する(一台の場合1つだけ記述)
       ※/usr/local/lib配下にFUSEのライブラリが配置されている想定
-   $LD_LIBRARY_PATH=./:/usr/local/lib java -classpath \
+   LD_LIBRARY_PATH=./:/usr/local/lib java -classpath \
     ./okuyamaFuse-0.0.1.jar:./fuse-j.jar:./commons-logging-1.0.4.jar:./okuyama-0.9.4.jar:./javamail-1.4.1.jar \
     -Dorg.apache.commons.logging.Log=fuse.logging.FuseLog \
     -Dfuse.logging.level=ERROR -Xmx1024m -Xms1024m -server \
