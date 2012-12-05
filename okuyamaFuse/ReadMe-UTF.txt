@@ -66,7 +66,7 @@ Linux用のファイルシステムとして実装されており、CentOS5.8上で開発しました。
     -Dorg.apache.commons.logging.Log=fuse.logging.FuseLog \
     -Dfuse.logging.level=ERROR -Xmx1024m -Xms1024m -server \
     -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseParNewGC \
-    fuse.okuyamafs.OkuyamaFilesystem \
+    fuse.okuyamafs.OkuyamaFuse \
     -f -o allow_other \
     /var/tmp/okuyamafuse \
     192.168.1.1:8888,192.168.1.2:8888
