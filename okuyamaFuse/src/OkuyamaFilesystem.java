@@ -1,16 +1,11 @@
 package fuse.okuyamafs;
 
-import fuse.*;
-//import fuse.compat.Filesystem2;
-//import fuse.compat.FuseDirEnt;
-//import fuse.compat.FuseStat;
-
-
 import java.io.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import fuse.*;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
@@ -18,6 +13,7 @@ import org.apache.commons.logging.Log;
 
 /**
  * OkuyamaFuse.<br>
+ * FUSE-Jインターフェースの実装クラス<br>
  *
  * @author T.Okuyama
  * @license GPL(Lv3)
@@ -881,55 +877,4 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
    {
       return 0;
    }
-
-
-    public static void main(String[] args) {
-
-        String fuseArgs[] = new String[args.length - 1];
-        System.arraycopy(args, 0, fuseArgs, 0, fuseArgs.length);
-     
-        log.info("entering");
-     
-        try {
-            String okuyamaStr = args[args.length - 1];
-            String[] masterNodeInfos = null;
-            if (okuyamaStr.indexOf(",") != -1) {
-                masterNodeInfos = okuyamaStr.split(",");
-            } else {
-                masterNodeInfos = (okuyamaStr + "," + okuyamaStr).split(",");
-            }
-            // 1=Mmoery
-            // 2=okuyama
-            // 3=LocalCacheOkuyama
-
-
-            String[] optionParams = {"2","true"};
-            String fsystemMode = optionParams[0].trim();
-            boolean singleFlg = new Boolean(optionParams[1].trim()).booleanValue();
-
-            OkuyamaFilesystem.storageType = new Integer(fsystemMode).intValue();
-            if (OkuyamaFilesystem.storageType == 1) OkuyamaFilesystem.blockSize = OkuyamaFilesystem.blockSize;
-
-            CoreMapFactory.init(new Integer(fsystemMode.trim()).intValue(), masterNodeInfos);
-            FilesystemCheckDaemon loopDaemon = new FilesystemCheckDaemon(1, fuseArgs[fuseArgs.length - 1]);
-            loopDaemon.start();
-
-            if (OkuyamaFilesystem.storageType == 2) {
-                FilesystemCheckDaemon bufferCheckDaemon = new FilesystemCheckDaemon(2, null);
-                bufferCheckDaemon.start();
-            }
-
-            FuseMount.mount(fuseArgs, new OkuyamaFilesystem(fsystemMode, singleFlg), log);
-        }
-        catch (Exception e)
-        {
-           e.printStackTrace();
-        }
-        finally
-        {
-           log.info("exiting");
-        }
-    }
-
 }
-
