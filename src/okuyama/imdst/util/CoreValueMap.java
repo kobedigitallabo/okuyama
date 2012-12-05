@@ -397,7 +397,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             FileOutputStream fos = new FileOutputStream(createFile, false);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
-            System.out.println("  Execute - fileStoreMapObject - Start" + new Date());
+            //System.out.println("  Execute - fileStoreMapObject - Start" + new Date());
 
             CoreStorageContainer container = new CoreStorageContainer();
             container.storeTime = System.currentTimeMillis();
@@ -405,7 +405,7 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
             container.dataSizeMap = dataSizeMap;
 
             oos.writeObject(container);
-            System.out.println("  Execute - fileStoreMapObject - End" + new Date());
+            //System.out.println("  Execute - fileStoreMapObject - End" + new Date());
             oos.close();
 
             if (file.exists()) {

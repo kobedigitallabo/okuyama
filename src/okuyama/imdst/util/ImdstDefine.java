@@ -534,6 +534,15 @@ public class ImdstDefine {
     // データファイルへのシークアクセスをSequentialになるように調整する設定
     public volatile static boolean dataFileSequentialSchedulingFlg = false;
 
+    // バックアップ用のSnapShotObjectを出力するかの有無
+    public volatile static boolean executeFileStoreMapObject = true;
+
+    // DataNodeがLowSpecのサーバで稼働しているもしくはディスクが遅い、リカバリorノード追加時の負荷を下げたい場合にtrueとする
+    public volatile static boolean lowSpecDataNode = false;
+
+    // DataNodeがリカバリ時、ノード追加時にデータを一度に転送する上限数を制御する
+    public volatile static int lowSpecDataNodeSendDataCount = 2000;
+
 
     public volatile static boolean fileBaseMapTimeDebug = false;
 }

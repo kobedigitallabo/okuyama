@@ -36,7 +36,10 @@ import okuyama.imdst.util.*;
  * -wfsrf ImdstDefine.workFileStartingReadFlg / DataNode起動時に操作記録ログ(トランザクションログ)を読み込む設定.trueの場合は読み込む(デフォルト)
  * -udt ImdstDefine.useDiskType / データファイルを保存するディスクのタイプを指定することで、ディスクへのアクセスが最適化される 1=HDD(デフォルト) 2=SSD
  * -mdcs ImdstDefine.maxDiskCacheSize / ディスクキャッシュ利用時に、どれだけの件数をキャッシュに乗せるかを件数で指定する デフォルトでは10000件
- * -numberOfDeletedDataPoint
+ * -efsmo ImdstDefine.executeFileStoreMapObject / バックアップ用のスナップショットObjectを出力するかの有無(デフォルト出力)
+ * -lsdn ImdstDefine.lowSpecDataNode / DataNodeがLowSpecのサーバで稼働しているもしくはディスクが遅い、リカバリorノード追加時の負荷を下げたい場合にtrueとする
+ * -lsdnsdc ImdstDefine.lowSpecDataNodeSendDataCount / DataNodeがリカバリ時、ノード追加時にデータを一度に転送する上限数を制御する
+ *
  *
  * <br>
  * @author T.Okuyama
@@ -370,8 +373,34 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
 
+                    // -efsmo
+                    if (startOptions[i].trim().equals("-efsmo")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
+                                ImdstDefine.executeFileStoreMapObject = false;
+                            }
+                        }
+                    }
 
+                    // -lsdn
+                    if (startOptions[i].trim().equals("-lsdn")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
+                                ImdstDefine.lowSpecDataNode = true;
+                            }
+                        }
+                    }
 
+                    // -lsdnsdc
+                    if (startOptions[i].trim().equals("-lsdnsdc")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.lowSpecDataNodeSendDataCount = Integer.parseInt(startOptions[i+1]);
+                                if (ImdstDefine.lowSpecDataNodeSendDataCount < 0) ImdstDefine.lowSpecDataNodeSendDataCount = 2000;
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {

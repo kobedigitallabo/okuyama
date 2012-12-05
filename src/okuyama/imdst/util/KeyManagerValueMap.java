@@ -952,7 +952,9 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
 
     public void fileStoreMapObject(File file) throws Exception {
-        super.fileStoreMapObject(file, this.dataSizeMap);
+        if (ImdstDefine.executeFileStoreMapObject) {
+            super.fileStoreMapObject(file, this.dataSizeMap);
+        }
     }
 
     /**
