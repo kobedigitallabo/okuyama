@@ -1414,7 +1414,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     private String[] setKeyValueAndCreateIndex(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix, int indexLength, int indexMinLength) throws BatchException {
 
         String[] retStrs = new String[3];
-
+        Map removeIndexMap = null;
 
         try {
             if (true) {
@@ -1446,14 +1446,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 if (true) {
                     String[] oldValueData = this.getKeyValue(keyStr);
                     if (oldValueData != null && oldValueData[1].equals("true")) {
-
+                        removeIndexMap = new HashMap();
                         byte[] oldTestBytes = BASE64DecoderStream.decode(oldValueData[2].getBytes(ImdstDefine.characterDecodeSetBySearch));
 
                         String oldSIdx1 = null;
                         String oldSIdx2 = null;
                         String oldStrIdx = "";
-
-
 
                         String oldPrefix = (((keyStr.hashCode() << 1) >>> 1) % ImdstDefine.searchIndexDistributedCount) + "_" + indexPrefix + "_";
 
@@ -1477,7 +1475,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                                     oldSIdx1 = new String(BASE64EncoderStream.encode((oldPrefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
 
-                                    String[] rmRet = this.removeTargetTagInKey(oldSIdx1, keyStr,"0");
+                                    removeIndexMap.put(oldSIdx1, null);
                                 }
                             } catch (Exception inE) {}
 
@@ -1489,7 +1487,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                     String checkStr = searchIndexDictionaryList[i];
                                     oldSIdx1 = new String(BASE64EncoderStream.encode((oldPrefix + checkStr).getBytes(ImdstDefine.characterDecodeSetBySearch)));
 
-                                    String[] rmRet = this.removeTargetTagInKey(oldSIdx1, keyStr,"0");
+                                    removeIndexMap.put(oldSIdx1, null);
                                 }
                             }
                         }
@@ -1580,6 +1578,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     }
 
                     // Tag値保存先を問い合わせ
+                    if (removeIndexMap != null) removeIndexMap.remove(workTagList[i]); // 旧Indexから消さなくても良いものを消し込む
                     String[] tagKeyNodeInfo = DataDispatcher.dispatchKeyNode(workTagList[i], false);
 
                     if (batchTagRegisterMap.containsKey(tagKeyNodeInfo[2])) {
@@ -1619,10 +1618,26 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 tagStr = registerTagStrBuf.toString();
             }
 
+            // 本当に消さなくてはいけないIndexを削除する
+            if (removeIndexMap != null) {
+                try {
+                    Set removeSet = removeIndexMap.entrySet();
+                    Iterator removeIte = removeSet.iterator(); 
+
+                    while(removeIte.hasNext()) {
+
+                        Map.Entry obj = (Map.Entry)removeIte.next();
+                        this.removeTargetTagInKey((String)obj.getKey(), keyStr,"0");
+                    }
+                } catch (Exception removeE) {
+                    // Remove Error
+                }
+            }
 
             retStrs = setKeyValue(keyStr, tagStr, transactionCode, dataStr, true);
             retStrs[0] = "42";
         } catch (Exception e) {
+
             throw new BatchException(e);
         }
         return retStrs;

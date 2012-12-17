@@ -867,7 +867,7 @@ public class SystemUtil {
             ois.close();
             bio.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return retData;
     }
@@ -910,7 +910,7 @@ public class SystemUtil {
             }
             
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return retData;
     }

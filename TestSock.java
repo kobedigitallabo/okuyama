@@ -1519,7 +1519,7 @@ public class TestSock {
                 String[] keys = null;
                 String[] searchCharList = args[3].split(":");
                 long start = new Date().getTime();
-searchCharList[0] = "‚ ";
+
                 Object[] ret = okuyamaClient.searchValue(searchCharList, args[4], 1);
                 long end = new Date().getTime();
 

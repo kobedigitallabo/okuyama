@@ -3847,13 +3847,11 @@ public class OkuyamaClient {
 
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-
             serverRet = serverRetStr.split(OkuyamaClient.sepStr);
 
             // 処理の妥当性確認
             if (serverRet[0].equals("2")) {
                 if (serverRet[1].equals("true")) {
-
                     // データ有り
                     ret[0] = serverRet[1];
 
@@ -3863,15 +3861,22 @@ public class OkuyamaClient {
                     } else {
 
                         // Value文字列をBase64でデコード
-                        ret[1] = SystemUtil.normalObjectDeserialize(this.dataDecoding(serverRet[2].getBytes()));
+                        try {
+                            ret[1] = SystemUtil.normalObjectDeserialize(this.dataDecoding(serverRet[2].getBytes()));
+                            if (ret[1] == null) {
+                                ret[0] = "error";
+                                ret[1] = "Not serializable error";
+                            }
+                        } catch (Throwable innerTh) {
+                            ret[0] = "error";
+                            ret[1] = "Not serializable error";
+                        }
                     }
                 } else if(serverRet[1].equals("false")) {
-
                     // データなし
                     ret[0] = serverRet[1];
                     ret[1] = null;
                 } else if(serverRet[1].equals("error")) {
-
                     // エラー発生
                     ret[0] = serverRet[1];
                     ret[1] = serverRet[2];
@@ -3985,7 +3990,16 @@ public class OkuyamaClient {
                     } else {
 
                         // Value文字列をBase64でデコード
-                        ret[1] = SystemUtil.normalObjectDeserialize(this.dataDecoding(serverRet[2].getBytes()));
+                        try {
+                            ret[1] = SystemUtil.normalObjectDeserialize(this.dataDecoding(serverRet[2].getBytes()));
+                            if (ret[1] == null) {
+                                ret[0] = "error";
+                                ret[1] = "Not serializable error";
+                            }
+                        } catch (Throwable innerTh) {
+                            ret[0] = "error";
+                            ret[1] = "Not serializable error";
+                        }
                     }
                 } else if(serverRet[1].equals("false")) {
 
@@ -4853,8 +4867,16 @@ public class OkuyamaClient {
                         oneDataRet[0] = new String(this.dataDecoding(serverRet[2].getBytes(encoding)), encoding);
 
                         // Value文字列をBase64でデコードしてObject化
-                        oneDataRet[1] = SystemUtil.normalObjectDeserialize(this.dataDecoding(serverRet[3].getBytes()));
-                        ret.put((String)oneDataRet[0], oneDataRet[1]);
+                        try {
+                            oneDataRet[1] = SystemUtil.normalObjectDeserialize(this.dataDecoding(serverRet[3].getBytes()));
+                            if (oneDataRet[1] != null) {
+                                ret.put((String)oneDataRet[0], oneDataRet[1]);
+                            }
+                        } catch (Throwable innerTh) {
+                            // Deserialize出来なかった
+                            // 処理しない
+                            oneDataRet = null;
+                        }
                     } else if(serverRet[1].equals("false")) {
     
                         // データなし
