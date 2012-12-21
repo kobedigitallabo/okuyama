@@ -24,7 +24,7 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
     public volatile static int blockSizeAssist = 2024;
 
-    public volatile static int blockSize = 5632; // Blockサイズ
+    public volatile static int blockSize = 23500; // Blockサイズ
 
     
     public volatile static int writeBufferSize = 1024 * 1024 * 4 + 1024;
