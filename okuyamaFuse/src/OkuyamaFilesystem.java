@@ -22,12 +22,12 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
     private static final Log log = LogFactory.getLog(OkuyamaFilesystem.class);
 
-    public volatile static int blockSizeAssist = 2024;
+    public volatile static int blockSizeAssist = 2400;
 
-    public volatile static int blockSize = 23500; // Blockサイズ
-
+    public volatile static int blockSize = 23000; //5200; // Blockサイズ
+//23000
     
-    public volatile static int writeBufferSize = 1024 * 1024 * 4 + 1024;
+    public volatile static int writeBufferSize = 1024 * 1024 * 10 + 1024;
 
     public static final int maxSingleModeCacheSize = 200000;
 
@@ -583,7 +583,11 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                         if (count > OkuyamaFilesystem.blockSizeAssist || bBuf.size() >= writeBufferSize) {
 
                             // まとめて書き出す
-                            return this.realWrite(bPath, bFh, bIsWritepage, bBuf, bOffset);
+                            long start = System.nanoTime();
+                            int ret=  this.realWrite(bPath, bFh, bIsWritepage, bBuf, bOffset);
+                            long end = System.nanoTime();
+System.out.println("realWriteTime=" + (end - start) / 1000);
+                            return ret;
                         } else {
 
                             appendData.put("buf", bBuf);

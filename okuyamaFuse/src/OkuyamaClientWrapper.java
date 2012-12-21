@@ -280,6 +280,8 @@ public class OkuyamaClientWrapper {
 
     public long writeValue(String key, long start, byte[] writeData, int limit, String realKeyNodeNo, long lastBlockIdx) throws Exception {
 
+        long startT = System.nanoTime();
+
         long retBlockIdx = 0L;
 
         int realStartPoint = new Long(((start % OkuyamaFilesystem.blockSize))).intValue();
@@ -316,7 +318,6 @@ public class OkuyamaClientWrapper {
         }
 
         int dataReadKeyListSize = dataReadKeyList.length;
-        //long startT = System.nanoTime();
 
         byte[] replaceDataBuf = new byte[OkuyamaFilesystem.blockSize * dataReadKeyListSize];
         int copyStart = 0;
@@ -328,18 +329,27 @@ public class OkuyamaClientWrapper {
             }
         } else {
             boolean firstDataExists = false;
+            byte[] lastBlock = null;
             for (int idx = 0; idx < dataReadKeyListSize; idx++) {
                 byte[] replaceData = null;
                 // 最初の1レコード、最後の1レコードのみ取得する。これは途中のデータは新しいデータに絶対に上書きされるため、
                 // 現行データが残る可能性があるデータは最後の1データのみであるためである。
                 if (CoreMapFactory.factoryType == 1 || CoreMapFactory.factoryType == 2) {
                     if (idx == 0) {
+                        Object[] keys = new Object[2];
+                        keys[0] = dataReadKeyList[idx];
+                        keys[1] = dataReadKeyList[dataReadKeyListSize - 1];
+                        Map mRet = getMultiValue(keys);
 
-                        replaceData = getValue(dataReadKeyList[idx]);
+                        //replaceData = getValue(dataReadKeyList[idx]);
+                        byte[] firstData = (byte[])mRet.get((String)keys[0]);
+                        lastBlock = (byte[])mRet.get((String)keys[1]);
+                        replaceData = firstData;
                         if (replaceData != null) firstDataExists = true;
                     } else if ((idx + 1) == dataReadKeyListSize) {
                         if (firstDataExists == true) {
-                            replaceData = getValue(dataReadKeyList[idx]);
+                            replaceData = lastBlock;
+                            //replaceData = getValue(dataReadKeyList[idx]);
                         }
                     }
                 }
@@ -357,8 +367,10 @@ public class OkuyamaClientWrapper {
             }
 
         }
-        //long endT = System.nanoTime();
+        long endT = System.nanoTime();
 
+
+        long startT2 = System.nanoTime();
         byte[] replaceAllData = replaceDataBuf;
 
         replaceDataBuf = null;
@@ -370,7 +382,7 @@ public class OkuyamaClientWrapper {
 
         String lastSetKey = null;
 
-        //long startT2 = System.nanoTime();
+
 
         if (CoreMapFactory.factoryType == 1) {
 
@@ -418,14 +430,19 @@ public class OkuyamaClientWrapper {
                 lastSetKey = dataReadKeyList[idx];
             }
 
+            long startT3 = System.nanoTime();
             ((OkuyamaFsMap)dataMap).putMultiBytes(putDataList);
+            long endT3 = System.nanoTime();
+System.out.println("putM=" + ((endT3 - startT3) / 1000) + " put count=" + putDataList.length);
+
         }
-        //long endT2 = System.nanoTime();
-        //System.out.println("T1=" + (endT - startT) + " T2=" + (endT2 - startT2));
 
         //int tabPoint = lastSetKey.indexOf("\t");
         String retBlockIdxStr = lastSetKey.substring(lastSetKey.indexOf("\t") + 1);
         retBlockIdx = Long.parseLong(retBlockIdxStr);
+
+        long endT2 = System.nanoTime();
+        System.out.println("T1=" + ((endT - startT) / 1000) + " T2=" + ((endT2 - startT2) / 1000));
         return retBlockIdx;
     }
 
