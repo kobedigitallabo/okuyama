@@ -9,7 +9,8 @@ import okuyama.imdst.util.*;
 /**
  * OkuyamaFuse.<br>
  * okuyama上で全てのデータを管理するコアのMap.<br>
- *
+ * ！！1つのブロックを大きく取って、送る際に圧縮して送ることで速度が出る。!!
+ * 
  * @author T.Okuyama
  * @license GPL(Lv3)
  */
