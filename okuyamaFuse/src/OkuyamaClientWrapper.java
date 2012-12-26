@@ -209,7 +209,7 @@ public class OkuyamaClientWrapper {
             /*for (int i = 0; i < dataReadKeyListSize; i++) {
                 keyList[i] = (String)dataReadKeyList.get(i);
             }*/
-            if (dataReadKeyListSize > 0) {
+            if (dataReadKeyListSize > 1) {
                 //Map multiReadRet = this.getMultiValue(keyList);
                 Map multiReadRet = this.getMultiValue(dataReadKeyList);
 
@@ -222,6 +222,15 @@ public class OkuyamaClientWrapper {
                         System.arraycopy(readData, 0, replaceDataBuf, t, readData.length);
                         t = t + readData.length;
                     }
+                }
+            } else {
+                for (int i = 0; i < dataReadKeyListSize; i++) {
+                    byte[] readData = getValue(dataReadKeyList[i]);
+                    if (readData == null) break;
+
+                    allDataNull = false;
+                    System.arraycopy(readData, 0, replaceDataBuf, t, readData.length);
+                    t = t + readData.length;
                 }
             }
         } else {

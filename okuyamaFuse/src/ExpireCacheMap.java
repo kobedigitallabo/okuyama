@@ -30,6 +30,9 @@ public class ExpireCacheMap extends LinkedHashMap {
 
     private OkuyamaClientFactory factory = null;
 
+    private boolean compress = true;
+
+
     /**
      * コンストラクタ.<br>
      * キャッシュ数は8192個<br>
@@ -52,6 +55,7 @@ public class ExpireCacheMap extends LinkedHashMap {
         maxCacheSize = maxCacheCapacity;
     }
 
+
     /**
      * コンストラクタ.<br>
      * キャッシュ有効時間は15秒<br>
@@ -72,11 +76,40 @@ public class ExpireCacheMap extends LinkedHashMap {
      * @param maxCacheCapacity 最大キャッシュ数
      * @param expireTime 最大キャッシュ有効時間(ミリ秒/単位)
      */
+    public ExpireCacheMap(int maxCacheCapacity, long expireTime, boolean compress) {
+        super(maxCacheCapacity, 0.75f, true);
+        maxCacheSize = maxCacheCapacity;
+        this.cacheExpireTime = expireTime;
+        this.compress = compress;
+    }
+
+    /**
+     * コンストラクタ.<br>
+     * キャッシュ有効時間は15秒<br>
+     *
+     * @param maxCacheCapacity 最大キャッシュ数
+     * @param expireTime 最大キャッシュ有効時間(ミリ秒/単位)
+     */
     public ExpireCacheMap(int maxCacheCapacity, long expireTime, OkuyamaClientFactory factory) {
         super(maxCacheCapacity, 0.75f, true);
         maxCacheSize = maxCacheCapacity;
         this.cacheExpireTime = expireTime;
         this.factory = factory;
+    }
+
+    /**
+     * コンストラクタ.<br>
+     * キャッシュ有効時間は15秒<br>
+     *
+     * @param maxCacheCapacity 最大キャッシュ数
+     * @param expireTime 最大キャッシュ有効時間(ミリ秒/単位)
+     */
+    public ExpireCacheMap(int maxCacheCapacity, long expireTime, OkuyamaClientFactory factory, boolean compress) {
+        super(maxCacheCapacity, 0.75f, true);
+        maxCacheSize = maxCacheCapacity;
+        this.cacheExpireTime = expireTime;
+        this.factory = factory;
+        this.compress = compress;
     }
 
 
@@ -92,7 +125,11 @@ public class ExpireCacheMap extends LinkedHashMap {
         try {
             if (value instanceof byte[]) {
                 Object[] valSt = new Object[2];
-                valSt[0] = SystemUtil.dataCompress((byte[])value);
+                if (this.compress) {
+                    valSt[0] = SystemUtil.dataCompress((byte[])value);
+                } else {
+                    valSt[0] = (byte[])value;
+                }
                 valSt[1] = new Long(System.currentTimeMillis());
                 return super.put(key, valSt);
             } else {
@@ -118,8 +155,12 @@ public class ExpireCacheMap extends LinkedHashMap {
         try {
             Object[] valSt = (Object[])super.get(key);
             if (valSt != null) {
-
-                byte[] replaceBytes = SystemUtil.dataDecompress((byte[])valSt[0]);
+                byte[] replaceBytes = null;
+                if (this.compress) {
+                    replaceBytes = SystemUtil.dataDecompress((byte[])valSt[0]);
+                } else {
+                    replaceBytes = (byte[])valSt[0];
+                }
                 int realStartPointInt = realStartPoint.intValue();
                 System.arraycopy((byte[])value, realStartPointInt, replaceBytes, realStartPointInt, (((byte[])value).length - realStartPointInt));
                 value = replaceBytes;
@@ -136,7 +177,11 @@ public class ExpireCacheMap extends LinkedHashMap {
             }
 
             valSt = new Object[3];
-            valSt[0] = SystemUtil.dataCompress((byte[])value);
+            if (this.compress) {
+                valSt[0] = SystemUtil.dataCompress((byte[])value);
+            } else {
+                valSt[0] = (byte[])value;
+            }
             valSt[1] = new Long(cacheSetTime);
             valSt[2] = realStartPoint;
             return super.put(key, valSt);
@@ -192,7 +237,11 @@ public class ExpireCacheMap extends LinkedHashMap {
             if (valSt.length < 3) {
                 if ((System.currentTimeMillis() - cacheTime.longValue()) < cacheExpireTime) {
                     if (valSt[0] instanceof byte[]) {
-                        return SystemUtil.dataDecompress((byte[])valSt[0]);
+                        if (this.compress) {
+                            return SystemUtil.dataDecompress((byte[])valSt[0]);
+                        } else {
+                            return (byte[])valSt[0];
+                        }
                     } else {
                         return valSt[0];
                     }
@@ -206,7 +255,12 @@ public class ExpireCacheMap extends LinkedHashMap {
                 OkuyamaClient client = this.factory.getClient();
 
                 Object[] replaceRet = client.readByteValue((String)key);
-                byte[] value = SystemUtil.dataDecompress((byte[])valSt[0]);
+                byte[] value = null;
+                if (this.compress) {
+                    value = SystemUtil.dataDecompress((byte[])valSt[0]);
+                } else {
+                    value = (byte[])valSt[0];
+                }
 
                 byte[] replaceBytes = null;
                 if (replaceRet[0].equals("true")) {
@@ -222,7 +276,11 @@ public class ExpireCacheMap extends LinkedHashMap {
                 }
                 if (replaceBytes == null) return null;
                 valSt = new Object[2];
-                valSt[0] = SystemUtil.dataCompress((byte[])replaceBytes);
+                if (this.compress) {
+                    valSt[0] = SystemUtil.dataCompress((byte[])replaceBytes);
+                } else {
+                    valSt[0] = (byte[])replaceBytes;
+                }
                 valSt[1] = cacheTime;
                 super.put(key, valSt);
                 return replaceBytes;

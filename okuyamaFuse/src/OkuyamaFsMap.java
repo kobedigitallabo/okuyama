@@ -55,9 +55,9 @@ public class OkuyamaFsMap implements IFsMap {
             this.factory = OkuyamaClientFactory.getFactory(this.masterNodeList, 350);
 
             if (type == 1) {
-                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, 50*1000, this.factory);
+                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, 500, this.factory, false);
             } else {
-                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, 5*1000);
+                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, 5*1000, false);
             }
             /*this.delayStoreDaemon = new DelayStoreDaemon[delayStoreDaemonSize];
             for (int idx = 0; idx < delayStoreDaemonSize; idx++) {
@@ -176,7 +176,12 @@ public class OkuyamaFsMap implements IFsMap {
 
         try {
             String keyStr = type + "\t" + (String)key;
-            client.sendByteValue(keyStr, value);
+
+            long start = System.nanoTime();
+            client.sendByteValue(keyStr, SystemUtil.dataCompress(value));
+            long end = System.nanoTime();
+            System.out.println("putBytes=" + ((end - start) / 1000 / 1000) + " Len=" + value.length);
+
             //this.delayStoreDaemon[(((keyStr.hashCode() << 1) >>> 1) % delayStoreDaemonSize)].putBytes(keyStr, putBytes);
             //dataCache.put(keyStr, value);
         } catch (Exception e) {
@@ -219,7 +224,7 @@ public class OkuyamaFsMap implements IFsMap {
                 } else {
 
                     OkuyamaClient client = createClient();
-                    client.sendByteValue(keyStr, data);
+                    client.sendByteValue(keyStr, SystemUtil.dataCompress(data));
                     client.close();
                 }
             }
@@ -346,19 +351,37 @@ public class OkuyamaFsMap implements IFsMap {
         String realKey = type + "\t" + (String)key;
 
         try {
+long start = System.nanoTime();
             byte[] data = (byte[])dataCache.get(realKey);
             if (data == null) {
                 Object[] ret = client.readByteValue(realKey);
-            
+
+long end = System.nanoTime();
+System.out.println("getBytes=" + ((end - start) / 1000 / 1000));
                 if (ret[0].equals("true")) {
                     // データ有り
-                    byte[] retBytes = (byte[])ret[1];
+                    byte[] retBytes = SystemUtil.dataDecompress((byte[])ret[1]);
                     if (retBytes != null) {
+                        dataCache.put(realKey, retBytes);
                         return retBytes;
                     }
                     return retBytes;
                 }
             } else {
+long end = System.nanoTime();
+System.out.println("Cache hit=" + ((end - start) / 1000) +" micro");
+
+                String[] preFetchCheck = realKey.split("\t");
+
+                if (!preFetchRequestMarker.containsKey(preFetchCheck[0] + "\t" + preFetchCheck[1])) {
+
+                    PreFetchDaemon preFetchDaemon = (PreFetchDaemon)this.preFetchDataDaemonQueue.poll();
+                    if (preFetchDaemon != null) {
+
+                        preFetchDaemon.putRequest(realKey);
+                    }
+                }
+
                 return data;
             }
                
@@ -596,12 +619,15 @@ class ResponseCheckDaemon extends Thread {
                 }
 
                 client = this.factory.getClient();
+long start = System.nanoTime();
                 Object[] responseSet = client.readByteValue(key);
+long end = System.nanoTime();
+System.out.println("RequestDaemon=" + ((end - start) / 1000 / 1000));
 
                 if (responseSet[0].equals("true")) {
                     Object[] retObj = new Object[2];
                     retObj[0] = key;
-                    retObj[1] = responseSet[1];
+                    retObj[1] = SystemUtil.dataDecompress((byte[])responseSet[1]);
 
 
                     this.responseBox.put(retObj);
@@ -709,10 +735,10 @@ class RequestCheckDaemon extends Thread {
                 if (client == null) client = this.factory.getClient();
 
                 clientUseCount++;
-//                long start = System.nanoTime();
-                boolean ret = client.sendByteValue((String)request[0], (byte[])request[1]);
-//                long end = System.nanoTime();
-//                System.out.println("put=" + (end - start) / 1000 / 1000);
+                long start = System.nanoTime();
+                boolean ret = client.sendByteValue((String)request[0], SystemUtil.dataCompress((byte[])request[1]));
+                long end = System.nanoTime();
+                System.out.println("put=" + ((end - start) / 1000 / 1000) + " Len=" + ((byte[])request[1]).length);
                 if (ret) {
                     this.responseBox.put(new Integer(0));
                 } else {
@@ -824,7 +850,7 @@ class PreFetchDaemon extends Thread {
                 this.nowPreFetchMarker.put(dataKey, 1);
 
                 long keyIdx = Long.parseLong(startKeyIndexSplit[2]);
-                for (int idx = 0; idx < 10000; idx=idx+40) {
+                for (int idx = 0; idx < 10; idx=idx+40) {
 
                     String[] getKeys = new String[40];
                     List requestSendGrpIdxList = new ArrayList(40);
