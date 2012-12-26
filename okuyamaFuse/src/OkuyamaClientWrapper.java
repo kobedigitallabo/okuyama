@@ -280,7 +280,7 @@ public class OkuyamaClientWrapper {
 
     public long writeValue(String key, long start, byte[] writeData, int limit, String realKeyNodeNo, long lastBlockIdx) throws Exception {
 
-        long startT = System.nanoTime();
+
 
         long retBlockIdx = 0L;
 
@@ -367,10 +367,9 @@ public class OkuyamaClientWrapper {
             }
 
         }
-        long endT = System.nanoTime();
 
 
-        long startT2 = System.nanoTime();
+
         byte[] replaceAllData = replaceDataBuf;
 
         replaceDataBuf = null;
@@ -430,19 +429,14 @@ public class OkuyamaClientWrapper {
                 lastSetKey = dataReadKeyList[idx];
             }
 
-            long startT3 = System.nanoTime();
-            ((OkuyamaFsMap)dataMap).putMultiBytes(putDataList);
-            long endT3 = System.nanoTime();
-System.out.println("putM=" + ((endT3 - startT3) / 1000) + " put count=" + putDataList.length);
 
+            ((OkuyamaFsMap)dataMap).putMultiBytes(putDataList);
         }
 
         //int tabPoint = lastSetKey.indexOf("\t");
         String retBlockIdxStr = lastSetKey.substring(lastSetKey.indexOf("\t") + 1);
         retBlockIdx = Long.parseLong(retBlockIdxStr);
 
-        long endT2 = System.nanoTime();
-        System.out.println("T1=" + ((endT - startT) / 1000) + " T2=" + ((endT2 - startT2) / 1000));
         return retBlockIdx;
     }
 

@@ -3012,7 +3012,7 @@ public class OkuyamaClient {
             value = new String(this.dataEncoding(values));
 
             // 処理番号連結
-            serverRequestBuf.append("1");
+            serverRequestBuf.append("1001");
             // セパレータ連結
             serverRequestBuf.append(OkuyamaClient.sepStr);
 

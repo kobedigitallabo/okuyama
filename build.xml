@@ -6,9 +6,10 @@
 	<property name="src.dir"		value="src" />
 	<property name="build.dir"		value="classes" />
 	<property name="install.dir"	value="install" />
-	<property name="version"		value="0.9.4" />
+	<property name="version"		value="0.9.5" />
 	<property name="javadoc.dir"	value="javadoc"/>
 	<property name="lib.dir"	    value="lib"/>
+	<property name="custom.dir"	    value="customserializer/release/MessagePackSerializer"/>
 
 	<!-- Use Project Lib  -->
 	<path id="project.class.path">
@@ -21,7 +22,13 @@
 		<pathelement path = "lib/log4j-1.2.14.jar"/>
 		<pathelement path = "lib/memcached.jar"/>
 		<pathelement path = "lib/servlet-api-2.5.jar"/>
+		<pathelement path = "lib/servlet-api-2.5.jar"/>
+		<pathelement path = "${custom.dir}/javassist-3.4.ga.jar"/>
+		<pathelement path = "${custom.dir}/msgpack-0.6.7.jar"/>
+		<pathelement path = "${custom.dir}/msgpackserializer.jar"/>
+		<pathelement path = "${custom.dir}/slf4j-api-1.6.6.jar"/>
 	</path>
+
 
 	<!-- clean Task  -->
 	<target name="clean">
@@ -76,6 +83,8 @@
 		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
 			<arg value="/Main.properties"/>
 			<arg value="/DataNode.properties"/>
+			<arg value="-lsdn true"/>
+			<arg value="-lsdnsdc 400"/>
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>
@@ -95,6 +104,8 @@
 		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
 			<arg value="/Main.properties"/>
 			<arg value="/SlaveDataNode.properties"/>
+			<arg value="-lsdn true"/>
+			<arg value="-lsdnsdc 400"/>
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>
@@ -105,6 +116,8 @@
 		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
 			<arg value="/Main.properties"/>
 			<arg value="/ThirdDataNode.properties"/>
+			<arg value="-lsdn true"/>
+			<arg value="-lsdnsdc 400"/>
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>

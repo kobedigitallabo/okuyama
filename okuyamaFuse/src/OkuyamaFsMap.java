@@ -55,7 +55,7 @@ public class OkuyamaFsMap implements IFsMap {
             this.factory = OkuyamaClientFactory.getFactory(this.masterNodeList, 350);
 
             if (type == 1) {
-                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, 100*1000, this.factory);
+                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, 50*1000, this.factory);
             } else {
                 this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, 5*1000);
             }
@@ -178,7 +178,7 @@ public class OkuyamaFsMap implements IFsMap {
             String keyStr = type + "\t" + (String)key;
             client.sendByteValue(keyStr, value);
             //this.delayStoreDaemon[(((keyStr.hashCode() << 1) >>> 1) % delayStoreDaemonSize)].putBytes(keyStr, putBytes);
-            //dataCache.put(keyStr, putBytes);
+            //dataCache.put(keyStr, value);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -212,9 +212,8 @@ public class OkuyamaFsMap implements IFsMap {
                 Object[] putData = (Object[])dataList[idx];
                 String keyStr = type + "\t" + (String)putData[0];
                 byte[] data = (byte[])putData[1];
-
+                //dataCache.put(keyStr, data);
                 if (daemon != null) {
-
                     daemon.putRequest(keyStr, data);
                     useDaemonList.add(daemon);
                 } else {
@@ -481,6 +480,7 @@ public class OkuyamaFsMap implements IFsMap {
                     Object key = keyList[idx];
 
                     String removeKey = type + "\t" + (String)key;
+                    dataCache.remove(removeKey);
                     client.requestRemoveValue(removeKey);
 
                     Object[] checkSt = new Object[2];
@@ -517,11 +517,13 @@ public class OkuyamaFsMap implements IFsMap {
         try {
 
             synchronized(delSync) {
-                Object[] ret = client.getValue(type + "\t" + (String)key);
+                String cnvKey = type + "\t" + (String)key;
+                Object[] ret = client.getValue(cnvKey);
                 if (!ret[0].equals("true")) {
                     return false;
                 }
-                client.removeValue(type + "\t" + (String)key);
+                dataCache.remove(cnvKey);
+                client.removeValue(cnvKey);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -667,7 +669,7 @@ class RequestCheckDaemon extends Thread {
     private OkuyamaClientFactory factory = null;
     private OkuyamaClient client = null;
     private int clientUseCount = 0;
-    private int maxClientUseCount = 5000;
+    private int maxClientUseCount = 50000;
 
     private boolean endFlg = false;
 
@@ -707,10 +709,10 @@ class RequestCheckDaemon extends Thread {
                 if (client == null) client = this.factory.getClient();
 
                 clientUseCount++;
-                //long start = System.nanoTime();
+//                long start = System.nanoTime();
                 boolean ret = client.sendByteValue((String)request[0], (byte[])request[1]);
-                //long end = System.nanoTime();
-                //System.out.println("put=" + (end - start) / 1000 / 1000);
+//                long end = System.nanoTime();
+//                System.out.println("put=" + (end - start) / 1000 / 1000);
                 if (ret) {
                     this.responseBox.put(new Integer(0));
                 } else {
