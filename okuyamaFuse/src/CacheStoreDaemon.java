@@ -39,7 +39,7 @@ public class CacheStoreDaemon extends Thread {
     }
 
     public void run() {
-            System.out.println("CacheStoreDaemon-start");
+        System.out.println("CacheStoreDaemon-start");
         while (true) {
 
             try {

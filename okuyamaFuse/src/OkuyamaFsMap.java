@@ -28,9 +28,9 @@ public class OkuyamaFsMap implements IFsMap {
     public static int delayStoreDaemonSize = 60;
     public static int allDelaySJobSize = 100000;
 
-    private ArrayBlockingQueue responseCheckDaemonQueue = new ArrayBlockingQueue(130);
+    private ArrayBlockingQueue responseCheckDaemonQueue = null;
 
-    private ArrayBlockingQueue requestCheckDaemonQueue = new ArrayBlockingQueue(130);
+    private ArrayBlockingQueue requestCheckDaemonQueue = null;
 
 
     private static boolean preFetchFlg = true;
@@ -46,6 +46,14 @@ public class OkuyamaFsMap implements IFsMap {
     public OkuyamaClientFactory factory = null;
 
 
+    static {
+        if (OkuyamaFilesystem.blockSize > (1024*127)) {
+            // Fsが扱うデータがBlockサイズが127KBを超える場合はOnとなる
+            OkuyamaFsMapUtil.setLargeDataMode(true);
+        }
+    }
+
+
     /**
      * コンストラクタ
      */
@@ -53,10 +61,14 @@ public class OkuyamaFsMap implements IFsMap {
         this.type = type;
         this.masterNodeList = masterNodeInfos;
         try {
-            this.factory = OkuyamaClientFactory.getFactory(this.masterNodeList, 350);
+
+            this.responseCheckDaemonQueue = new ArrayBlockingQueue(OkuyamaFsMapUtil.multiDataAccessDaemonsQueue);
+            this.requestCheckDaemonQueue = new ArrayBlockingQueue(OkuyamaFsMapUtil.multiDataAccessDaemonsQueue);
+
+            this.factory = OkuyamaClientFactory.getFactory(this.masterNodeList, OkuyamaFsMapUtil.okuyamaClientPoolSize);
 
             if (type == 1) {
-                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, 500, this.factory, false);
+                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, OkuyamaFsMapUtil.okuyamaFsMaxCacheLimit, this.factory, false);
             } else {
                 this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, 5*1000, false);
             }
@@ -66,14 +78,14 @@ public class OkuyamaFsMap implements IFsMap {
                 this.delayStoreDaemon[idx].start();
             }*/
 
-            for (int idx = 0; idx < 40; idx++) {
+            for (int idx = 0; idx < OkuyamaFsMapUtil.multiDataAccessDaemons; idx++) {
 
                 ResponseCheckDaemon responseCheckDaemon = new ResponseCheckDaemon(this.factory);
                 responseCheckDaemon.start();
                 this.responseCheckDaemonQueue.put(responseCheckDaemon);
             }
 
-            for (int idx = 0; idx < 60; idx++) {
+            for (int idx = 0; idx < OkuyamaFsMapUtil.multiDataAccessDaemons; idx++) {
 
                 RequestCheckDaemon requestCheckDaemon = new RequestCheckDaemon(this.factory);
                 requestCheckDaemon.start();
@@ -179,7 +191,7 @@ public class OkuyamaFsMap implements IFsMap {
             String keyStr = type + "\t" + (String)key;
 
             long start = System.nanoTime();
-            client.sendByteValue(keyStr, SystemUtil.dataCompress(value));
+            client.sendByteValue(keyStr, OkuyamaFsMapUtil.dataCompress(value));
             long end = System.nanoTime();
             System.out.println("putBytes=" + ((end - start) / 1000 / 1000) + " Len=" + value.length);
 
@@ -225,7 +237,7 @@ public class OkuyamaFsMap implements IFsMap {
                 } else {
 
                     OkuyamaClient client = createClient();
-                    client.sendByteValue(keyStr, SystemUtil.dataCompress(data));
+                    client.sendByteValue(keyStr, OkuyamaFsMapUtil.dataCompress(data));
                     client.close();
                 }
             }
@@ -361,7 +373,7 @@ long end = System.nanoTime();
 System.out.println("getBytes=" + ((end - start) / 1000 / 1000));
                 if (ret[0].equals("true")) {
                     // データ有り
-                    byte[] retBytes = SystemUtil.dataDecompress((byte[])ret[1]);
+                    byte[] retBytes = OkuyamaFsMapUtil.dataDecompress((byte[])ret[1]);
                     if (retBytes != null) {
                         dataCache.put(realKey, retBytes);
                         return retBytes;
@@ -628,7 +640,7 @@ System.out.println("RequestDaemon=" + ((end - start) / 1000 / 1000));
                 if (responseSet[0].equals("true")) {
                     Object[] retObj = new Object[2];
                     retObj[0] = key;
-                    retObj[1] = SystemUtil.dataDecompress((byte[])responseSet[1]);
+                    retObj[1] = OkuyamaFsMapUtil.dataDecompress((byte[])responseSet[1]);
 
 
                     this.responseBox.put(retObj);
@@ -737,7 +749,7 @@ class RequestCheckDaemon extends Thread {
 
                 clientUseCount++;
                 long start = System.nanoTime();
-                boolean ret = client.sendByteValue((String)request[0], SystemUtil.dataCompress((byte[])request[1]));
+                boolean ret = client.sendByteValue((String)request[0], OkuyamaFsMapUtil.dataCompress((byte[])request[1]));
                 long end = System.nanoTime();
                 System.out.println("put=" + ((end - start) / 1000 / 1000) + " Len=" + ((byte[])request[1]).length);
                 if (ret) {
