@@ -6821,10 +6821,8 @@ public class OkuyamaClient {
             // サーバ送信
             pw.println(serverRequestBuf.toString());
             pw.flush();
-
             // サーバから結果受け取り
             serverRetStr = br.readLine();
-
             serverRet = serverRetStr.split(OkuyamaClient.sepStr);
 
             // 処理の妥当性確認
