@@ -24,7 +24,7 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
     public volatile static int blockSizeAssist = 2024;
 
-    public volatile static int blockSize = 1024*512; // Blockサイズ
+    public volatile static int blockSize = 1024*512; // Blockサイズ(5643程度だと小さなデータへのランダムIOが速い。512KB程度だと通常のHDDのように大きなデータのアクセスが速い)
 
     
     public volatile static int writeBufferSize = 1024 * 1024 * 10 + 1024;
@@ -577,18 +577,14 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                         buf.get(tmpBuf);
                         bBuf.write(tmpBuf);
 
-                        int count = ((Integer)appendData.get("count")).intValue();
-
                         // 既に規定回数のバッファリングを行ったか、規定バイト数を超えた場合に強制的に書き出し
-                        if (count > OkuyamaFilesystem.blockSizeAssist || bBuf.size() >= writeBufferSize) {
+                        if (bBuf.size() >= writeBufferSize) {
 
                             // まとめて書き出す
                             return this.realWrite(bPath, bFh, bIsWritepage, bBuf, bOffset);
                         } else {
 
                             appendData.put("buf", bBuf);
-                            count++;
-                            appendData.put("count", count);
                             this.appendWriteDataBuf.put(fh, appendData);
                             this.writeBufFpMap.addGroupingData(path, fh);
                             return 0;
@@ -616,7 +612,6 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                     baos.write(tmpByte);
                     appendData.put("buf", baos);
                     appendData.put("offset", offset);
-                    appendData.put("count", 1);
                     this.appendWriteDataBuf.put(fh, appendData);
                     this.writeBufFpMap.addGroupingData(path, fh);
                     return 0;
