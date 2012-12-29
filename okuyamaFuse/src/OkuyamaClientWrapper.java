@@ -209,7 +209,7 @@ public class OkuyamaClientWrapper {
             /*for (int i = 0; i < dataReadKeyListSize; i++) {
                 keyList[i] = (String)dataReadKeyList.get(i);
             }*/
-            if (dataReadKeyListSize > 1) {
+            if (dataReadKeyListSize > 0) {
                 //Map multiReadRet = this.getMultiValue(keyList);
                 Map multiReadRet = this.getMultiValue(dataReadKeyList);
 
@@ -222,15 +222,6 @@ public class OkuyamaClientWrapper {
                         System.arraycopy(readData, 0, replaceDataBuf, t, readData.length);
                         t = t + readData.length;
                     }
-                }
-            } else {
-                for (int i = 0; i < dataReadKeyListSize; i++) {
-                    byte[] readData = getValue(dataReadKeyList[i]);
-                    if (readData == null) break;
-
-                    allDataNull = false;
-                    System.arraycopy(readData, 0, replaceDataBuf, t, readData.length);
-                    t = t + readData.length;
                 }
             }
         } else {
@@ -289,8 +280,6 @@ public class OkuyamaClientWrapper {
 
     public long writeValue(String key, long start, byte[] writeData, int limit, String realKeyNodeNo, long lastBlockIdx) throws Exception {
 
-
-
         long retBlockIdx = 0L;
 
         int realStartPoint = new Long(((start % OkuyamaFilesystem.blockSize))).intValue();
@@ -327,6 +316,7 @@ public class OkuyamaClientWrapper {
         }
 
         int dataReadKeyListSize = dataReadKeyList.length;
+        //long startT = System.nanoTime();
 
         byte[] replaceDataBuf = new byte[OkuyamaFilesystem.blockSize * dataReadKeyListSize];
         int copyStart = 0;
@@ -338,27 +328,18 @@ public class OkuyamaClientWrapper {
             }
         } else {
             boolean firstDataExists = false;
-            byte[] lastBlock = null;
             for (int idx = 0; idx < dataReadKeyListSize; idx++) {
                 byte[] replaceData = null;
                 // 最初の1レコード、最後の1レコードのみ取得する。これは途中のデータは新しいデータに絶対に上書きされるため、
                 // 現行データが残る可能性があるデータは最後の1データのみであるためである。
                 if (CoreMapFactory.factoryType == 1 || CoreMapFactory.factoryType == 2) {
                     if (idx == 0) {
-                        Object[] keys = new Object[2];
-                        keys[0] = dataReadKeyList[idx];
-                        keys[1] = dataReadKeyList[dataReadKeyListSize - 1];
-                        Map mRet = getMultiValue(keys);
 
-                        //replaceData = getValue(dataReadKeyList[idx]);
-                        byte[] firstData = (byte[])mRet.get((String)keys[0]);
-                        lastBlock = (byte[])mRet.get((String)keys[1]);
-                        replaceData = firstData;
+                        replaceData = getValue(dataReadKeyList[idx]);
                         if (replaceData != null) firstDataExists = true;
                     } else if ((idx + 1) == dataReadKeyListSize) {
                         if (firstDataExists == true) {
-                            replaceData = lastBlock;
-                            //replaceData = getValue(dataReadKeyList[idx]);
+                            replaceData = getValue(dataReadKeyList[idx]);
                         }
                     }
                 }
@@ -376,8 +357,7 @@ public class OkuyamaClientWrapper {
             }
 
         }
-
-
+        //long endT = System.nanoTime();
 
         byte[] replaceAllData = replaceDataBuf;
 
@@ -390,7 +370,7 @@ public class OkuyamaClientWrapper {
 
         String lastSetKey = null;
 
-
+        //long startT2 = System.nanoTime();
 
         if (CoreMapFactory.factoryType == 1) {
 
@@ -438,14 +418,14 @@ public class OkuyamaClientWrapper {
                 lastSetKey = dataReadKeyList[idx];
             }
 
-
             ((OkuyamaFsMap)dataMap).putMultiBytes(putDataList);
         }
+        //long endT2 = System.nanoTime();
+        //System.out.println("T1=" + (endT - startT) + " T2=" + (endT2 - startT2));
 
         //int tabPoint = lastSetKey.indexOf("\t");
         String retBlockIdxStr = lastSetKey.substring(lastSetKey.indexOf("\t") + 1);
         retBlockIdx = Long.parseLong(retBlockIdxStr);
-
         return retBlockIdx;
     }
 
