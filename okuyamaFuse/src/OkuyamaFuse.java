@@ -10,7 +10,7 @@ import fuse.*;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
-
+import okuyama.imdst.util.*;
 
 /**
  * OkuyamaFuse.<br>
@@ -28,6 +28,7 @@ public class OkuyamaFuse {
         String fuseArgs[] = new String[args.length - 1];
         System.arraycopy(args, 0, fuseArgs, 0, fuseArgs.length);
 
+        ImdstDefine.valueCompresserLevel = 9;
         try {
             String okuyamaStr = args[args.length - 1];
             String[] masterNodeInfos = null;

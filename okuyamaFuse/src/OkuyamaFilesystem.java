@@ -22,12 +22,12 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
     private static final Log log = LogFactory.getLog(OkuyamaFilesystem.class);
 
-    public volatile static int blockSizeAssist = 2024;
+    public volatile static int blockSizeAssist = 2400;
 
-    public volatile static int blockSize = 1024*512; // Blockサイズ(5643程度だと小さなデータへのランダムIOが速い。512KB程度だと通常のHDDのように大きなデータのアクセスが速い)
-
+    public volatile static int blockSize = 1024*512;//5200; // Blockサイズ
+//20480
     
-    public volatile static int writeBufferSize = 1024 * 1024 * 10 + 1024;
+    public volatile static int writeBufferSize = 1024 * 1024 * 20 + 1024;
 
     public static final int maxSingleModeCacheSize = 200000;
 
@@ -51,6 +51,8 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
     public volatile static boolean jvmShutdownStatus = false;
     public static List allChildThreadList = null;
 
+
+    public long startTimeAAA = 0L;
 
     public OkuyamaFilesystem(String okuyamaMasterNode, boolean singleMode) throws IOException {
         log.info("okuyama file system init start...");
@@ -550,24 +552,29 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
         return 0;
    }
 
+    public int write_bk(String path, Object fh, boolean isWritepage, ByteBuffer buf, long offset) throws FuseException {
+        byte[] tmpBuf = new byte[buf.limit()];
+        buf.get(tmpBuf);
+
+        return 0;
+    }
+
    public int write(String path, Object fh, boolean isWritepage, ByteBuffer buf, long offset) throws FuseException {
         //log.info("write  path:" + path + " offset:" + offset + " isWritepage:" + isWritepage + " buf.limit:" + buf.limit());
+        //long startAA = System.nanoTime();
         try {
 
+            if (startTimeAAA == 0L) startTimeAAA = System.nanoTime();
             // メモリモードの場合はバッファリングするだけ無駄なので即時書き出し
             if (OkuyamaFilesystem.storageType == 1) return realWrite(path, fh, isWritepage, buf, offset);
 
             if (fh == null) return Errno.EBADE;
-            //log.info("write point=" + offset);
 
             synchronized (this.parallelDataAccessSync[((path.hashCode() << 1) >>> 1) % 100]) {
 
                 if (appendWriteDataBuf.containsKey(fh)) {
 
-                    Map appendData = (Map)appendWriteDataBuf.remove(fh);
-                    String bPath = (String)appendData.get("path");
-                    Object bFh = (Object)appendData.get("fh");
-                    boolean bIsWritepage = ((Boolean)appendData.get("isWritepage")).booleanValue();
+                    Map appendData = (Map)appendWriteDataBuf.get(fh);
                     ByteArrayOutputStream bBuf = (ByteArrayOutputStream)appendData.get("buf");
                     long bOffset = ((Long)appendData.get("offset")).longValue();
 
@@ -580,22 +587,35 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                         // 既に規定回数のバッファリングを行ったか、規定バイト数を超えた場合に強制的に書き出し
                         if (bBuf.size() >= writeBufferSize) {
 
+
                             // まとめて書き出す
-                            return this.realWrite(bPath, bFh, bIsWritepage, bBuf, bOffset);
+                            appendWriteDataBuf.remove(fh);
+                            String bPath = (String)appendData.get("path");
+                            Object bFh = (Object)appendData.get("fh");
+                            boolean bIsWritepage = ((Boolean)appendData.get("isWritepage")).booleanValue();
+
+                            int ret=  this.realWrite(bPath, bFh, bIsWritepage, bBuf, bOffset);
+
+                            return ret;
                         } else {
 
-                            appendData.put("buf", bBuf);
-                            this.appendWriteDataBuf.put(fh, appendData);
-                            this.writeBufFpMap.addGroupingData(path, fh);
                             return 0;
                         }
                     } else {
 
                         // offsetが違うので、それぞれ個別で書き出す
+                        appendWriteDataBuf.remove(fh);
+                        String bPath = (String)appendData.get("path");
+                        Object bFh = (Object)appendData.get("fh");
+                        boolean bIsWritepage = ((Boolean)appendData.get("isWritepage")).booleanValue();
+
                         int realWriteRet = this.realWrite(bPath, bFh, bIsWritepage, bBuf, bOffset);
+
                         if(realWriteRet == 0) {
 
-                            return this.realWrite(path, fh, isWritepage, buf, offset);
+                            int retI = this.realWrite(path, fh, isWritepage, buf, offset);
+
+                            return retI;
                         } else {
                             return realWriteRet;
                         }
@@ -606,7 +626,7 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                     appendData.put("path", path);
                     appendData.put("fh", fh);
                     appendData.put("isWritepage", isWritepage);
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream(1024*20);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream(1024*1024*10+8192);
                     byte[] tmpByte = new byte[buf.limit()];
                     buf.get(tmpByte);
                     baos.write(tmpByte);
@@ -614,11 +634,14 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                     appendData.put("offset", offset);
                     this.appendWriteDataBuf.put(fh, appendData);
                     this.writeBufFpMap.addGroupingData(path, fh);
+
                     return 0;
                 }
             }
         } catch (Exception e) {
+
             throw new FuseException(e);
+        } finally {
         }
     }
 
@@ -630,7 +653,8 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
 
     public int realWrite(String path, Object fh, boolean isWritepage,  ByteArrayOutputStream buf, long offset) throws FuseException {
-        return realWrite(path, fh, isWritepage, buf.toByteArray(), offset);
+        byte[] data = buf.toByteArray();
+        return realWrite(path, fh, isWritepage, data, offset);
     }
 
     public int realWrite(String path, Object fh, boolean isWritepage,  byte[] writeData, long offset) throws FuseException {
@@ -642,34 +666,25 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
             String pathTrimStr = path.trim();
             String pathInfoStr = (String)client.getPathDetail(pathTrimStr);
-
             if (pathInfoStr == null) return Errno.ENOENT;
-
             String[] pathInfo = pathInfoStr.split("\t");
-
             //long end2 = System.nanoTime();
             //System.out.println("Time2=" + (end2 - start));
 
             long writeLastBlockIdx = -1L;
             if (writeData == null || writeData.length < 1) {
-
                 log.error("write data nothing = realWrite  path:" + path + " offset:" + offset + " isWritepage:" + isWritepage + " buf.limit:" + writeData.length);
             } else {
-
                 int idx = writeData.length;
                 writeLastBlockIdx = client.writeValue(pathTrimStr, offset, writeData, writeData.length, pathInfo[pathInfo.length - 2], new Long(pathInfo[10]).longValue());
             }
             //long end3 = System.nanoTime();
             //System.out.println("Time3=" + (end3 - end2));
-
             if (Long.parseLong(pathInfo[4]) < 1)  {
-
                 pathInfo[4] = new Long(writeData.length).toString();
             } else if (Long.parseLong(pathInfo[4]) < new Long(offset + new Long(writeData.length).longValue()).longValue()) {
-
                 pathInfo[4] = new Long(offset + new Long(writeData.length).longValue()).toString();
             }
-
             pathInfo[5] = new Long(System.currentTimeMillis() / 1000L).toString();
             int assistBlockSize = 0;
             if(((Long.parseLong(pathInfo[4]) + writeData.length) % blockSize) > 0) {

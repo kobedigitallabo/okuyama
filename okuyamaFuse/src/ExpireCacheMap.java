@@ -204,7 +204,7 @@ public class ExpireCacheMap extends LinkedHashMap {
             if (valSt == null) return false;
             Long cacheTime = (Long)valSt[1];
 
-            // 1秒経過していたら無効
+            // 15秒経過していたら無効
             if ((System.currentTimeMillis() - cacheTime.longValue()) < cacheExpireTime) {
                 return true;
             } else {
@@ -232,7 +232,7 @@ public class ExpireCacheMap extends LinkedHashMap {
             if (valSt == null) return null;
             Long cacheTime = (Long)valSt[1];
 
-            // 1秒経過していたら無効
+            // 15秒経過していたら無効
 
             if (valSt.length < 3) {
                 if ((System.currentTimeMillis() - cacheTime.longValue()) < cacheExpireTime) {
@@ -252,7 +252,7 @@ public class ExpireCacheMap extends LinkedHashMap {
             } else {
 
                 Integer realStartPoint = (Integer)valSt[2];
-                OkuyamaClient client = this.factory.getClient();
+                OkuyamaClient client = this.factory.getClient(300*1000);
 
                 Object[] replaceRet = client.readByteValue((String)key);
                 byte[] value = null;
@@ -364,7 +364,7 @@ public class ExpireCacheMap extends LinkedHashMap {
         if (valSt == null) return true;
         Long cacheTime = (Long)valSt[1];
 
-        // 1秒経過していたら無効
+        // 15秒経過していたら無効
         if ((System.currentTimeMillis() - cacheTime.longValue()) < cacheExpireTime) {
             return false;
         } else {

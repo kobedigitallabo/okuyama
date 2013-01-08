@@ -109,7 +109,7 @@ public class OkuyamaFsMap implements IFsMap {
     public OkuyamaClient createClient() {
         OkuyamaClient client = null;
         try {
-            client = factory.getClient();
+            client = factory.getClient(300*1000);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -190,10 +190,10 @@ public class OkuyamaFsMap implements IFsMap {
         try {
             String keyStr = type + "\t" + (String)key;
 
-            long start = System.nanoTime();
+//long start = System.nanoTime();
             client.sendByteValue(keyStr, OkuyamaFsMapUtil.dataCompress(value));
-            long end = System.nanoTime();
-            System.out.println("putBytes=" + ((end - start) / 1000 / 1000) + " Len=" + value.length);
+//long end = System.nanoTime();
+//System.out.println("putBytes=" + ((end - start) / 1000 / 1000) + " Len=" + value.length);
 
             //this.delayStoreDaemon[(((keyStr.hashCode() << 1) >>> 1) % delayStoreDaemonSize)].putBytes(keyStr, putBytes);
             //dataCache.put(keyStr, value);
@@ -364,13 +364,13 @@ public class OkuyamaFsMap implements IFsMap {
         String realKey = type + "\t" + (String)key;
 
         try {
-long start = System.nanoTime();
+//long start = System.nanoTime();
             byte[] data = (byte[])dataCache.get(realKey);
             if (data == null) {
                 Object[] ret = client.readByteValue(realKey);
 
-long end = System.nanoTime();
-System.out.println("getBytes=" + ((end - start) / 1000 / 1000));
+//long end = System.nanoTime();
+//System.out.println("getBytes=" + ((end - start) / 1000 / 1000));
                 if (ret[0].equals("true")) {
                     // データ有り
                     byte[] retBytes = OkuyamaFsMapUtil.dataDecompress((byte[])ret[1]);
@@ -381,8 +381,8 @@ System.out.println("getBytes=" + ((end - start) / 1000 / 1000));
                     return retBytes;
                 }
             } else {
-long end = System.nanoTime();
-System.out.println("Cache hit=" + ((end - start) / 1000) +" micro");
+//long end = System.nanoTime();
+//System.out.println("Cache hit=" + ((end - start) / 1000) +" micro");
 
                 String[] preFetchCheck = realKey.split("\t");
 
@@ -453,9 +453,11 @@ System.out.println("Cache hit=" + ((end - start) / 1000) +" micro");
                 OkuyamaClient client = null;
 
                 Map daemonMap = new HashMap(40);
+
                 for (int idx = 0; idx < keyStrList.length; idx++) {
 
                     String key = (String)keyStrList[idx];
+
                     ResponseCheckDaemon daemon = (ResponseCheckDaemon)this.responseCheckDaemonQueue.poll();
                     if (daemon == null) {
                         daemon = new ResponseCheckDaemon(this.factory);
@@ -464,10 +466,13 @@ System.out.println("Cache hit=" + ((end - start) / 1000) +" micro");
                     daemon.putRequest(key);
                     daemonMap.put(key, daemon);
                 }
+
                 for (int i = 0; i < keyStrList.length; i++) {
 
                     ResponseCheckDaemon daemon = (ResponseCheckDaemon)daemonMap.get(keyStrList[i]);
+
                     Object[] responseObj = daemon.takeResponse();
+
                     if (responseObj.length > 0) {
 
                         //if (!dataCache.containsKey(keyStrList[i])) dataCache.put(keyStrList[i], (byte[])responseObj[1]);
@@ -631,11 +636,11 @@ class ResponseCheckDaemon extends Thread {
                     break;
                 }
 
-                client = this.factory.getClient();
-long start = System.nanoTime();
+                client = this.factory.getClient(300*1000);
+//long start = System.nanoTime();
                 Object[] responseSet = client.readByteValue(key);
-long end = System.nanoTime();
-System.out.println("RequestDaemon=" + ((end - start) / 1000 / 1000));
+//long end = System.nanoTime();
+//System.out.println("RequestDaemon=" + ((end - start) / 1000 / 1000));
 
                 if (responseSet[0].equals("true")) {
                     Object[] retObj = new Object[2];
@@ -745,13 +750,13 @@ class RequestCheckDaemon extends Thread {
                     }
                     clientUseCount = 0;
                 }
-                if (client == null) client = this.factory.getClient();
+                if (client == null) client = this.factory.getClient(300*1000);
 
                 clientUseCount++;
-                long start = System.nanoTime();
+//long start = System.nanoTime();
                 boolean ret = client.sendByteValue((String)request[0], OkuyamaFsMapUtil.dataCompress((byte[])request[1]));
-                long end = System.nanoTime();
-                System.out.println("put=" + ((end - start) / 1000 / 1000) + " Len=" + ((byte[])request[1]).length);
+//long end = System.nanoTime();
+//System.out.println("put=" + ((end - start) / 1000 / 1000) + " Len=" + ((byte[])request[1]).length);
                 if (ret) {
                     this.responseBox.put(new Integer(0));
                 } else {
