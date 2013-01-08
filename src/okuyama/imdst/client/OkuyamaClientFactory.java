@@ -48,7 +48,7 @@ public class OkuyamaClientFactory {
     private String singleMasterNodeAddr = null;
     private int singleMasterNodePort = -1;
     private int maxClients = 100;
-    private int maxUseCount = 10000;
+    private int maxUseCount = 50000;
     boolean shutdownFlg = false;
 
     private ArrayBlockingQueue clientQueue = null;
@@ -173,6 +173,19 @@ public class OkuyamaClientFactory {
         return this.getClient(false);
     }
 
+    /**
+     * OkuyamaClientを取得する.<br>
+     * 内部的に接続状態の確認を行ったのちに返却される<br>
+     * プールに1つもOkuyamaClientが存在しない場合は新規に作成されて返される<br>
+     * 本メソッドから取得したOkuyamaClientのcloseメソッドを呼び出すことでプールに返却される<br>
+     *
+     * @param checkMilliSeconde 最後にプールから取り出てからここで指定した時間(ミリ秒)だけ経過している<br>
+     *                          クライアントは再チェックを行う
+     * @throws OkuyamaClientException 有効なOkuyamaClientの返却に失敗
+     */
+    public OkuyamaClient getClient(int checkMilliSeconde) throws OkuyamaClientException {
+        return this.getClient(false, checkMilliSeconde);
+    }
 
     /**
      * OkuyamaClientを取得する.<br>
@@ -183,10 +196,27 @@ public class OkuyamaClientFactory {
      * @throws OkuyamaClientException 有効なOkuyamaClientの返却に失敗
      */
     public OkuyamaClient getClient(boolean noCheck) throws OkuyamaClientException {
+        return this.getClient(noCheck, -1);
+    }
+
+
+    /**
+     * OkuyamaClientを取得する.<br>
+     * 内部的に接続状態の確認を行ったのちに返却される<br>
+     * プールに1つもOkuyamaClientが存在しない場合は新規に作成されて返される<br>
+     * 本メソッドから取得したOkuyamaClientのcloseメソッドを呼び出すことでプールに返却される<br>
+     *
+     * @param noCheck チェックしない場合はtrue
+     * @param checkMilliSeconde 最後にプールから取り出てからここで指定した時間(ミリ秒)だけ経過している<br>
+     *                          クライアントは再チェックを行う
+     * @throws OkuyamaClientException 有効なOkuyamaClientの返却に失敗
+     */
+    public OkuyamaClient getClient(boolean noCheck, int checkMilliSeconde) throws OkuyamaClientException {
 
         OkuyamaClient client = null;
 
         try {
+            long nowTime = System.currentTimeMillis();
             this.rwLock.readLock().lock();
             if (shutdownFlg) throw new OkuyamaClientException("Since shutdown is already called, it cannot use");
 
@@ -204,7 +234,13 @@ public class OkuyamaClientFactory {
                     if (noCheck == false) {
 
                         try {
-                            client.getOkuyamaVersion();
+                            if (checkMilliSeconde < 0) {
+                                client.getOkuyamaVersion();
+                            } else {
+
+                                if ((((ClientRedirector)client).lastUseTime + checkMilliSeconde) < nowTime);
+                                client.getOkuyamaVersion();
+                            }
                         } catch (Exception innerE) {
                             client = null;
                         }
@@ -215,7 +251,7 @@ public class OkuyamaClientFactory {
             if (client == null) {
 
                 client = new ClientRedirector(this);
-                ((ClientRedirector)client).createTime = System.currentTimeMillis();
+                ((ClientRedirector)client).createTime = nowTime;
 
                 if (this.singleMasterNodeAddr != null) {
                     client.connect(this.singleMasterNodeAddr, this.singleMasterNodePort);
@@ -225,7 +261,7 @@ public class OkuyamaClientFactory {
                 }
             }
             ((ClientRedirector)client).incrUseCount();
-            ((ClientRedirector)client).lastUseTime = System.currentTimeMillis();
+            ((ClientRedirector)client).lastUseTime = nowTime;
             ((ClientRedirector)client).returnFlg = false;
         } catch (Exception e) {
             throw new OkuyamaClientException(e);
