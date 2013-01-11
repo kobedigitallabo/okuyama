@@ -2,6 +2,9 @@ package fuse.okuyamafs;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import okuyama.imdst.client.*;
+import okuyama.imdst.util.*;
+
 /**
  * OkuyamaFuse.<br>
  *
@@ -28,6 +31,13 @@ public class CoreMapFactory {
         } else {
             // OkuyamaFs
             parameterMap.put("okuyamainfo", args);
+
+            try {
+                BufferedOkuyamaClient.initClientMaster(OkuyamaClientFactory.getFactory(args, OkuyamaFsMapUtil.okuyamaClientPoolSize));
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
         }
     }
 

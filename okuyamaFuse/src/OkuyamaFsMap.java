@@ -109,7 +109,7 @@ public class OkuyamaFsMap implements IFsMap {
     public OkuyamaClient createClient() {
         OkuyamaClient client = null;
         try {
-            client = factory.getClient(300*1000);
+            client = new BufferedOkuyamaClient(factory.getClient(300*1000));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -513,6 +513,36 @@ public class OkuyamaFsMap implements IFsMap {
         try {
 
             //List clientList = new ArrayList(20);
+            OkuyamaClient client = createClient();
+            for (int idx = 0; idx < keyList.length; idx++) {
+
+                if (keyList[idx] != null) {
+
+                    Object key = keyList[idx];
+
+                    String removeKey = type + "\t" + (String)key;
+                    dataCache.remove(removeKey);
+                    String[] removeRet = client.removeValue(removeKey);
+                    if(!removeRet[0].equals("true")) {
+                        ret = false;
+                    }
+                }
+            }
+
+            client.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ret;
+    }
+/*
+    public boolean removeMulti(Object[] keyList) {
+
+        boolean ret = true;
+
+        try {
+
+            //List clientList = new ArrayList(20);
             Object[] clientList = new Object[keyList.length];
             for (int idx = 0; idx < keyList.length; idx++) {
 
@@ -552,7 +582,7 @@ public class OkuyamaFsMap implements IFsMap {
         }
         return ret;
     }
-
+*/
     public boolean removeExistObject(Object key) {
         OkuyamaClient client = createClient();
         try {
@@ -636,7 +666,7 @@ class ResponseCheckDaemon extends Thread {
                     break;
                 }
 
-                client = this.factory.getClient(300*1000);
+                client = new BufferedOkuyamaClient(this.factory.getClient(300*1000));
 //long start = System.nanoTime();
                 Object[] responseSet = client.readByteValue(key);
 //long end = System.nanoTime();
@@ -750,7 +780,7 @@ class RequestCheckDaemon extends Thread {
                     }
                     clientUseCount = 0;
                 }
-                if (client == null) client = this.factory.getClient(300*1000);
+                if (client == null) client = new BufferedOkuyamaClient(this.factory.getClient(300*1000));
 
                 clientUseCount++;
 //long start = System.nanoTime();
@@ -831,8 +861,8 @@ class PreFetchDaemon extends Thread {
         this.myPool = myPool;
         this.nowPreFetchMarker = nowPreFetchMarker;
         try {
-            this.dataReadDaemon = new ResponseCheckDaemon[40];
-            for (int idx = 0; idx < 40; idx++) {
+            this.dataReadDaemon = new ResponseCheckDaemon[10];
+            for (int idx = 0; idx < 10; idx++) {
                 this.dataReadDaemon[idx] = new ResponseCheckDaemon(this.factory);
                 this.dataReadDaemon[idx].start();
             }
@@ -868,13 +898,13 @@ class PreFetchDaemon extends Thread {
                 this.nowPreFetchMarker.put(dataKey, 1);
 
                 long keyIdx = Long.parseLong(startKeyIndexSplit[2]);
-                for (int idx = 0; idx < 10; idx=idx+40) {
+                for (int idx = 0; idx < 10; idx=idx+10) {
 
-                    String[] getKeys = new String[40];
-                    List requestSendGrpIdxList = new ArrayList(40);
+                    String[] getKeys = new String[10];
+                    List requestSendGrpIdxList = new ArrayList(10);
                     Map tmp = new HashMap();
 
-                    for (int grpIdx = 0; grpIdx < 40; grpIdx++) {
+                    for (int grpIdx = 0; grpIdx < 10; grpIdx++) {
                         String preFetchRealKey = dataKey + "\t" + (keyIdx + 3 + idx + grpIdx);
                         if (!this.storeCache.containsKey(preFetchRealKey)) {
 
