@@ -339,7 +339,7 @@ public class OkuyamaClient {
                 InetSocketAddress inetAddr = new InetSocketAddress(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
 
                 this.socket.connect(inetAddr, ImdstDefine.clientConnectionOpenTimeout);
-
+                this.socket.setTcpNoDelay(true);
                 this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
                 this.pw = new ClientCustomPrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), OkuyamaClient.connectDefaultEncoding)));
                 this.bos = new BufferedOutputStream(socket.getOutputStream());
@@ -423,6 +423,7 @@ public class OkuyamaClient {
             this.socket = new Socket();
             InetSocketAddress inetAddr = new InetSocketAddress(server, port);
             this.socket.connect(inetAddr, ImdstDefine.clientConnectionOpenTimeout);
+            this.socket.setTcpNoDelay(true);
             this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
 
             this.pw = new ClientCustomPrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encoding)));

@@ -232,6 +232,7 @@ public class KeyManagerHelper extends AbstractHelper {
 
                     // クライアントからのパラメータ分解
 //                    clientParameterList = clientParametersStr.split(ImdstDefine.keyHelperClientParamSep);
+
                     clientParameterList = clientParameterSplit(clientParametersStr, ImdstDefine.keyHelperClientParamSep);
                     // 処理番号を取り出し
                     if(clientParameterList[0] == null ||  clientParameterList[0].equals("")) clientParameterList[0] = "-1";
@@ -277,6 +278,44 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             // メソッド呼び出し
                             this.setDatanode(requestHashCode, requestDataNode, transactionCode);
+                            break;
+                        case 1001 :
+
+                            // Key値とDataNode名を格納する
+
+                            int readDataLen = Integer.parseInt(((String)br.readLine()));
+                            char[] strBufChar = new char[readDataLen];
+                            int readLen = br.read(strBufChar);
+
+                            while (readLen != readDataLen) {
+                                int  nowRead = br.read(strBufChar, readLen, (readDataLen - readLen));
+                                readLen = readLen + nowRead;
+                            }
+
+                            String readStr = new String(strBufChar);
+
+                            clientParameterList = clientParameterSplit(readStr, ImdstDefine.keyHelperClientParamSep);
+                            requestHashCode = clientParameterList[1];
+                            transactionCode = clientParameterList[2];
+                            requestDataNode = clientParameterList[3];
+
+                            // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
+                            if (clientParameterList.length > 4) {
+                                requestDataNode = requestDataNode + 
+                                    ImdstDefine.keyHelperClientParamSep + 
+                                        clientParameterList[4];
+                            }
+
+                            // メソッド呼び出し
+long startAAA = System.nanoTime();
+                            retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
+long endAAA = System.nanoTime();
+System.out.println((endAAA - startAAA));
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[2]);
                             break;
                         case 2 :
 
@@ -2017,7 +2056,10 @@ be.printStackTrace();
 
     public String[] clientParameterSplit(String targetStr, String sep) {
 
-        if (targetStr.indexOf("2,") == 0) {
+        if (targetStr.indexOf("1001,") == 0) {
+
+            return targetStr.split(sep);
+        } else if (targetStr.indexOf("2,") == 0) {
 
             // Get
             String[] retSplit = new String[2];
@@ -2040,6 +2082,5 @@ be.printStackTrace();
             return targetStr.split(sep);
         }
     }
-
 
 }

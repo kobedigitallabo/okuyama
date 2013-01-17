@@ -77,7 +77,8 @@ public class KeyNodeConnector {
             inetAddr = new InetSocketAddress(NodeDnsUtil.getNameToReal(this.nodeName), this.nodePort);
             this.socket = new Socket();
             this.socket.connect(inetAddr, connectOpenTime);
-
+            //this.socket.setTcpNoDelay(ImdstDefine.tcpNoDelay);
+            this.socket.setTcpNoDelay(true);
             this.connectTime = new Long(JavaSystemApi.currentTimeMillis);
 
             // リカバー対象へのコネクションはタイムアウト時間を長くする
@@ -221,8 +222,23 @@ public class KeyNodeConnector {
     public void println(String str) throws Exception {
         try {
 
-            this.pw.println(str);
-            this.retry = false;
+            if (str.length() < 50000) {
+
+                this.pw.println(str);
+                this.retry = false;
+            } else {
+
+                if (str.indexOf("1,") == 0) {
+                    this.pw.println("1001," + str.length());
+                    this.pw.println(str.length());
+                    this.pw.flush();
+                    this.pw.print(str);
+                    this.retry = false;
+                } else {
+                    this.pw.println(str);
+                    this.retry = false;
+                }
+            }
         } catch (Exception e) {
 
             if (this.retryConnectMode == true && this.retry == false) {

@@ -61,6 +61,7 @@ public class KeyManagerConnectHelper extends AbstractHelper {
                 if (param == null || param.length < 1) continue;
 
                 Socket socket = (Socket)param[0];
+                socket.setTcpNoDelay(true);
                 PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ImdstDefine.keyHelperClientParamEncoding)));
                 //PrintWriter pw = new PrintWriter(socket.getOutputStream());
                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream(), ImdstDefine.keyHelperClientParamEncoding));

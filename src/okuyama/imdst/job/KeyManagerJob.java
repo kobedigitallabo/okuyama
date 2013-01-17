@@ -265,6 +265,7 @@ public class KeyManagerJob extends AbstractJob implements IJob {
             }
 
             this.serverSocket = new ServerSocket();
+
             this.serverSocket.bind(bindAddress, this.backLog);
 
             // 共有領域にServerソケットのポインタを格納

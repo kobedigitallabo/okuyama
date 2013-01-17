@@ -5243,11 +5243,9 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 遅延指定確認
                     // Subが指定だれていてdelay指定がtrueの場合
                     if (!delayFlg) {
-
                         // 同期
                         keyNodeConnector.println(sendStr);
                         keyNodeConnector.flush();
-
                         // スレーブノードが存在する場合は送信まで済ませておく
                         if (subKeyNodeName != null) {
 
