@@ -307,10 +307,7 @@ public class KeyManagerHelper extends AbstractHelper {
                             }
 
                             // メソッド呼び出し
-long startAAA = System.nanoTime();
                             retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
-long endAAA = System.nanoTime();
-System.out.println((endAAA - startAAA));
                             retParamBuf.append(retParams[0]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[1]);
