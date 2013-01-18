@@ -5242,11 +5242,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     // 送信
                     // 遅延指定確認
                     // Subが指定だれていてdelay指定がtrueの場合
+                    // 同期
+                    keyNodeConnector.println(sendStr);
+                    keyNodeConnector.flush();
+                    // スレーブノードが存在する場合は送信まで済ませておく
                     if (!delayFlg) {
-                        // 同期
-                        keyNodeConnector.println(sendStr);
-                        keyNodeConnector.flush();
-                        // スレーブノードが存在する場合は送信まで済ませておく
                         if (subKeyNodeName != null) {
 
                             // SubDataNodeに送信
@@ -5258,56 +5258,35 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                                 slaveSendEnd = true;
                             }
                         }
+                    }
+                    // 返却値取得
+                    retParam = keyNodeConnector.readLine(sendStr);
 
-                        // 返却値取得
-                        retParam = keyNodeConnector.readLine(sendStr);
+                    // 処理種別判別
+                    if (type.equals("1")) {
 
-                        // 処理種別判別
-                        if (type.equals("1")) {
+                        // Key値でValueを保存
+                        // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                        if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
 
-                            // Key値でValueを保存
-                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-                            if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeKeyRegistSuccessStr) == 0) {
+                            mainNodeSave = true;
+                        } else {
 
-                                mainNodeSave = true;
-                            } else {
-
-                                // 論理的に登録失敗
-                                super.setDeadNode(nodeName + ":" + nodePort, 3, null);
-                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
-                            }
-                        } else if (type.equals("3")) {
-
-                            // Tag値でキー値を保存
-
-                            // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-                            if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
-                                mainNodeSave = true;
-                            } else {
-                                // 論理的に登録失敗
-                                super.setDeadNode(nodeName + ":" + nodePort, 4, null);
-                                logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
-                            }
+                            // 論理的に登録失敗
+                            super.setDeadNode(nodeName + ":" + nodePort, 3, null);
+                            logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
                         }
-                    } else {
+                    } else if (type.equals("3")) {
 
-                        // 遅延
-                        // スレーブノード接続処理だけ終わらしておく処理
-                        if (subKeyNodeName != null) {
-                            // SubDataNodeに送信
-                            slaveKeyNodeConnector = this.createKeyNodeConnection(subKeyNodeName, subKeyNodePort, subKeyNodeFullName, false);
-                        }
+                        // Tag値でキー値を保存
 
-                        // 遅延の場合は結果が送られてこないのでNetworkから読みださない
-                        keyNodeConnector.print("-");
-                        keyNodeConnector.println(sendStr);
-                        keyNodeConnector.flush();
-                        mainNodeSave = true;
-                        // 結果を作りだす
-                        if (type.equals("1")) {
-                            retParam = "1,true,OK";
-                        } else if (type.equals("3")) {
-                            retParam = "3,true,OK";
+                        // splitは遅いので特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
+                        if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeTagRegistSuccessStr) == 0) {
+                            mainNodeSave = true;
+                        } else {
+                            // 論理的に登録失敗
+                            super.setDeadNode(nodeName + ":" + nodePort, 4, null);
+                            logger.error("setKeyNodeValue Logical Error Node =["  + nodeName + ":" + nodePort + "] retParam=[" + retParam + "]" + " Connectoer=[" + keyNodeConnector.connectorDump() + "]");
                         }
                     }
 

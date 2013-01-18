@@ -18,18 +18,55 @@ public class CustomReader {
 
     private BufferedInputStream bis = null;
 
-    private ByteArrayOutputStream bos = new ByteArrayOutputStream(4096);
+    private ByteArrayOutputStream bos = null;
+
     private byte[] b = new byte[1];
 
 
     public CustomReader(InputStream is) {
 
         this.is = is;
-        this.bis = new BufferedInputStream(this.is);
+        if (ImdstDefine.bigDataTransfer == false) {
+            this.bos = new ByteArrayOutputStream(1024*8);
+            this.bis = new BufferedInputStream(this.is, 1024*8);
+        } else {
+            this.bos = new ByteArrayOutputStream(1024*1024);
+            this.bis = new BufferedInputStream(this.is, 1024*256);
+        }
     }
 
 
-    public String readLine() throws Exception {
+    private String readLine4Big() throws Exception {
+        byte[] b = new byte[1024*256];
+
+        int i = 0;
+        int readLen =0;
+        while ((readLen = bis.read(b, 0, 1024*256)) != -1) {
+
+            if (readLen == 1) {
+                if (b[0] == 10) {
+                    break;
+                } else if (b[0] != 13) {
+                    this.bos.write(b, 0, readLen);
+                }
+            } else if (b[readLen - 2] != 13 && b[readLen - 1] != 10) {
+                this.bos.write(b, 0, readLen);
+            } else if (b[readLen - 1] == 10) {
+                if (b[readLen - 2] == 13) {
+                    this.bos.write(b, 0, (readLen - 2));
+                } else {
+                    this.bos.write(b, 0, (readLen - 1));
+                }
+                break;
+            }
+        }
+
+        String ret = this.bos.toString();
+        this.bos.reset();
+        return ret;
+    }
+
+    private String readLine4Small() throws Exception {
         this.b[0] = (byte)0;
 
         int i = 0;
@@ -47,6 +84,14 @@ public class CustomReader {
         return ret;
     }
 
+
+    public String readLine() throws Exception {
+        if (ImdstDefine.bigDataTransfer) {
+            return readLine4Big();
+        } else {
+            return readLine4Small();
+        }
+    }
 
     public boolean ready() throws Exception {
         if(this.bis.available() > 0) return true;

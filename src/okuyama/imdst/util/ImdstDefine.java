@@ -171,6 +171,17 @@ public class ImdstDefine {
     public static final String imdstConnectAllDataSendDataSep = ";";
 
 
+    // -- Socketでのパラメータ系  --------------------------------------------------
+    // TcpNoDelay設定
+    public volatile static boolean tcpNoDelay = false;
+
+    // Socketの送受信バッファサイズ設定
+    public volatile static int tcpReceiveBufferSize = 0;
+    public volatile static int tcpSendBufferSize = 0;
+
+    public volatile static boolean bigDataTransfer = false;
+
+
     // --  設定ファイルの固定文字列系定数  ---------------------------------------------
 
     public static final String Prop_KeyMapNodesRule = "KeyMapNodesRule";

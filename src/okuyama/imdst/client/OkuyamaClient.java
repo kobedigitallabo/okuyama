@@ -1245,6 +1245,13 @@ public class OkuyamaClient {
             keyBytes = keyStr.getBytes(encode);
             if (keyBytes.length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
 
+            if (expireTime != null) {
+                if (0.880 > this.okuyamaVersionNo) {
+
+                    throw new OkuyamaClientException("The version of the server is old [The expiration date can be used since version 0.8.8]");
+                }
+            }
+
             // valueに対する無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (value == null ||  value.equals("")) {
                 encodeValue = OkuyamaClient.blankStr;
@@ -1299,25 +1306,22 @@ public class OkuyamaClient {
 
             // セパレータ連結
             setValueServerReqBuf.append(OkuyamaClient.sepStr);
+            pw.print(setValueServerReqBuf.toString());
 
             // Value連結
-            setValueServerReqBuf.append(encodeValue);
+            pw.print(encodeValue);
 
             // 有効期限あり
             if (expireTime != null) {
-                if (0.880 > this.okuyamaVersionNo) {
+                // セパレータ連結
+                pw.print(OkuyamaClient.sepStr);
 
-                    throw new OkuyamaClientException("The version of the server is old [The expiration date can be used since version 0.8.8]");
-                } else {
-                    // セパレータ連結
-                    setValueServerReqBuf.append(OkuyamaClient.sepStr);
-                    setValueServerReqBuf.append(expireTime);
-                    // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
-                    setValueServerReqBuf.append(OkuyamaClient.sepStr);
-                } 
+                pw.print(expireTime);
+                // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
+                pw.print(OkuyamaClient.sepStr);
             }
             // サーバ送信
-            pw.println(setValueServerReqBuf.toString());
+            pw.print("\n");
             pw.flush();
 
             // サーバから結果受け取り
@@ -3034,12 +3038,10 @@ public class OkuyamaClient {
 
             // セパレータ連結
             serverRequestBuf.append(OkuyamaClient.sepStr);
+            pw.print(serverRequestBuf.toString());
 
-            // Value連結
-            serverRequestBuf.append(value);
-
-            // サーバ送信
-            pw.println(serverRequestBuf.toString());
+            // Valueサーバ送信
+            pw.println(value);
             pw.flush();
 
             // サーバから結果受け取り

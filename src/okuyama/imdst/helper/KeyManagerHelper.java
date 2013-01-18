@@ -105,6 +105,12 @@ public class KeyManagerHelper extends AbstractHelper {
             String requestHashCode = null;
             String requestDataNode = null;
 
+            int readDataLen = -1;
+            char[] strBufChar = null;
+            int readLen = -1;
+            String readStr = null;
+
+
             String requestTag = null;
             String requestKey = null;
 
@@ -283,16 +289,16 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             // Key値とDataNode名を格納する
 
-                            int readDataLen = Integer.parseInt(((String)br.readLine()));
-                            char[] strBufChar = new char[readDataLen];
-                            int readLen = br.read(strBufChar);
+                            readDataLen = Integer.parseInt(((String)br.readLine()));
+                            strBufChar = new char[readDataLen];
+                            readLen = br.read(strBufChar);
 
                             while (readLen != readDataLen) {
                                 int  nowRead = br.read(strBufChar, readLen, (readDataLen - readLen));
                                 readLen = readLen + nowRead;
                             }
 
-                            String readStr = new String(strBufChar);
+                            readStr = new String(strBufChar);
 
                             clientParameterList = clientParameterSplit(readStr, ImdstDefine.keyHelperClientParamSep);
                             requestHashCode = clientParameterList[1];
@@ -313,6 +319,36 @@ public class KeyManagerHelper extends AbstractHelper {
                             retParamBuf.append(retParams[1]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[2]);
+                            break;
+                        case -1001 :
+
+                            // Key値とDataNode名を格納する
+
+                            readDataLen = Integer.parseInt(((String)br.readLine()));
+                            strBufChar = new char[readDataLen];
+                            readLen = br.read(strBufChar);
+
+                            while (readLen != readDataLen) {
+                                int  nowRead = br.read(strBufChar, readLen, (readDataLen - readLen));
+                                readLen = readLen + nowRead;
+                            }
+
+                            readStr = new String(strBufChar);
+
+                            clientParameterList = clientParameterSplit(readStr, ImdstDefine.keyHelperClientParamSep);
+                            requestHashCode = clientParameterList[1];
+                            transactionCode = clientParameterList[2];
+                            requestDataNode = clientParameterList[3];
+
+                            // 値の中にセパレータ文字列が入っている場合もデータとしてあつかう
+                            if (clientParameterList.length > 4) {
+                                requestDataNode = requestDataNode + 
+                                    ImdstDefine.keyHelperClientParamSep + 
+                                        clientParameterList[4];
+                            }
+
+                            // メソッド呼び出し
+                            retParams = this.setDatanode(requestHashCode, requestDataNode, transactionCode);
                             break;
                         case 2 :
 

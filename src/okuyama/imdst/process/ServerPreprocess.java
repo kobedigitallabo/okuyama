@@ -15,6 +15,7 @@ import okuyama.imdst.util.*;
  * -c  MasterNodeの無操作コネクションタイムアウト時間(秒)<br>
  * -S  DataNodeのValueの保存可能最大サイズ(バイト)<br>
  * -s  DataNodeのValueの共通データファイルへの書き出し中間サイズ(バイト)(DataNode用設定ファイルのdataMemory=trueの場合のみ有効)<br>
+ * -KS Keyの最大サイズ<br>
  * -v  分散モードがConsistentHash時(MasterNode用設定ファイルのDistributionAlgorithm=consistenthashの場合のみ)のVirtualNodeの数<br>
  * -fa ImdstDefine.parallelDiskAccess /ファイルシステムへの同時アクセス係数(整数)<br>
  * -ncot ImdstDefine.nodeConnectionOpenTimeout /DataNodeへのSocketコネクションOpenのタイムアウト閾値(ミリ秒)<br>

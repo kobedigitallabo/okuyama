@@ -298,6 +298,11 @@ public class MasterManagerJob extends AbstractJob implements IJob {
             }
 
             this.serverSocket = new ServerSocket();
+
+            if (ImdstDefine.tcpReceiveBufferSize != 0) {
+                this.serverSocket.setReceiveBufferSize(ImdstDefine.tcpReceiveBufferSize);
+            } 
+
             this.serverSocket.bind(bindAddress, this.backLog);
 
             // 共有領域にServerソケットのポインタを格納
@@ -409,6 +414,11 @@ public class MasterManagerJob extends AbstractJob implements IJob {
 
                     // クライアントからの接続待ち
                     socket = serverSocket.accept();
+
+                    socket.setTcpNoDelay(ImdstDefine.tcpNoDelay);
+                    if (ImdstDefine.tcpSendBufferSize != 0) {
+                        socket.setSendBufferSize(ImdstDefine.tcpSendBufferSize);
+                    }
 
                     // ソケット格納
                     queueParam[0] = socket;

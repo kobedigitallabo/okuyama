@@ -266,6 +266,11 @@ public class KeyManagerJob extends AbstractJob implements IJob {
 
             this.serverSocket = new ServerSocket();
 
+            if (ImdstDefine.tcpReceiveBufferSize != 0) {
+                this.serverSocket.setReceiveBufferSize(ImdstDefine.tcpReceiveBufferSize);
+            } 
+
+
             this.serverSocket.bind(bindAddress, this.backLog);
 
             // 共有領域にServerソケットのポインタを格納
@@ -288,6 +293,11 @@ public class KeyManagerJob extends AbstractJob implements IJob {
                     // クライアントからの接続待ち
                     accessCount++;
                     socket = serverSocket.accept();
+
+                    socket.setTcpNoDelay(ImdstDefine.tcpNoDelay);
+                    if (ImdstDefine.tcpSendBufferSize != 0) {
+                        socket.setSendBufferSize(ImdstDefine.tcpSendBufferSize);
+                    }
 
                     Object[] helperParam = new Object[1];
                     helperParam[0] = socket;
