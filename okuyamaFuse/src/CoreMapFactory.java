@@ -33,7 +33,7 @@ public class CoreMapFactory {
             parameterMap.put("okuyamainfo", args);
 
             try {
-                BufferedOkuyamaClient.initClientMaster(OkuyamaClientFactory.getFactory(args, OkuyamaFsMapUtil.okuyamaClientPoolSize));
+                BufferedOkuyamaClient.initClientMaster(OkuyamaClientFactory.getFactory(args, OkuyamaFsMapUtil.okuyamaClientPoolSize), true);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);

@@ -175,7 +175,7 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                 } else if (pathInfo[0].equals("dir")) {
                     setInfo[1] = new Integer(FuseFtypeConstants.TYPE_DIR | new Integer(pathInfo[7]).intValue()).toString();
                 } else {
-                    throw new FuseException("No such entry").initErrno(FuseException.ENOENT);
+                    throw new FuseException("No such entry entry name =[" + pathInfoStr + "]").initErrno(FuseException.ENOENT);
                 }
             }
         /*
