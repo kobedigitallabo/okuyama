@@ -47,8 +47,8 @@ public class OkuyamaFsMap implements IFsMap {
 
 
     static {
-        if (OkuyamaFilesystem.blockSize > (1024*127)) {
-            // Fsが扱うデータがBlockサイズが127KBを超える場合はOnとなる
+        if (OkuyamaFilesystem.blockSize > (1024*24)) {
+            // Fsが扱うデータがBlockサイズが24KBを超える場合はOnとなる
             OkuyamaFsMapUtil.setLargeDataMode(true);
         }
     }

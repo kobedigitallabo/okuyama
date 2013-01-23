@@ -16,7 +16,7 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
     protected static Map deleteBufferedDataMap = new ConcurrentHashMap(150);
 
 
-    protected static ArrayBlockingQueue okuyamaRequestQueue = new ArrayBlockingQueue(500);
+    protected static ArrayBlockingQueue okuyamaRequestQueue = null;
 
     protected static OkuyamaClientFactory factory = null;
 
@@ -29,7 +29,16 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
     protected OkuyamaClient client = null;
 
-
+    static {
+        if (OkuyamaFilesystem.blockSize > (1024*48)) {
+            okuyamaRequestQueue = new ArrayBlockingQueue(550);
+        } else if (OkuyamaFilesystem.blockSize > (1024*24)) {
+            okuyamaRequestQueue = new ArrayBlockingQueue(1550);
+        } else {
+            okuyamaRequestQueue = new ArrayBlockingQueue(15550);
+            parallel = 30;
+        }
+    }
 
 
     public BufferedOkuyamaClient(OkuyamaClient client) {
