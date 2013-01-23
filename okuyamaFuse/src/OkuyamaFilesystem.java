@@ -250,13 +250,51 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
             Set entrySet = dirChildMap.entrySet();
             Iterator entryIte = entrySet.iterator(); 
             while(entryIte.hasNext()) {
+
                 Map.Entry obj = (Map.Entry)entryIte.next();
     
                 String name = (String)obj.getKey();
-                String[] nameCnv = name.split("/");
 
-                dirFiller.add(nameCnv[nameCnv.length - 1], 0L, ((String)obj.getValue()).equals("dir")? FuseFtype.TYPE_DIR : FuseFtype.TYPE_FILE);
-                i++;
+                Map metaInfo = client.getDataMetaInfo(name);
+                boolean deleteFlg = true;
+                if (metaInfo.size() > 1) {
+    
+                    if (metaInfo.get("pathdetail") != null && metaInfo.get("attribute") != null) {
+
+                        deleteFlg = false;
+                        String[] nameCnv = name.split("/");
+
+                        if (((String)obj.getValue()).equals("dir")) {
+                            dirFiller.add(nameCnv[nameCnv.length - 1], 0L, FuseFtype.TYPE_DIR);
+                        } else {
+                            dirFiller.add(nameCnv[nameCnv.length - 1], 0L, FuseFtype.TYPE_FILE);
+                        }
+
+                        i++;
+                    }
+                }
+
+
+                if (deleteFlg) {
+                    // データのメタ情報が異常な状態
+                    // 不要情報を削除
+                    synchronized (this.parallelDataAccessSync[((name.hashCode() << 1) >>> 1) % 100]) {
+                        try {
+                            client.removePathDetail(name);
+                            client.removeAttribute(name);
+
+
+                            String pathInfoStr = (String)metaInfo.get("pathdetail");
+                            if (pathInfoStr != null) {
+
+                                String[] pathInfo = pathInfoStr.split("\t");
+                                client.deleteValue(name, pathInfo[pathInfo.length - 2]);
+                            }
+                        } catch (Exception innerE) {
+                        }
+                        log.fatal("broken file remove filename=[" + name + "]");
+                    }
+                }
             }
         } catch (FuseException fe) {
             throw fe;

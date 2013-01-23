@@ -646,4 +646,32 @@ public class OkuyamaClientWrapper {
         return true;
     }
 
+
+    public Map getDataMetaInfo(String key) throws Exception {
+        Map meta = new HashMap();
+        meta.put("pathdetail", infoMap.getString(key));
+
+        String attributeName = key;
+        String dirName = "";
+        String[] attributeNameCnv = attributeName.trim().split("/");
+
+        if (attributeNameCnv.length == 1) {
+            dirName = "/";
+        } else {
+            String sep = "/";
+            for (int i = 0; i < (attributeNameCnv.length - 1); i++) {
+                if (attributeNameCnv[i].trim().equals("")) continue;
+                dirName =  dirName + sep + attributeNameCnv[i];
+            }
+            if (attributeName.indexOf("/") == 0) {
+                if (dirName.trim().equals("")) dirName = "/";
+            }
+        }
+        if (dirMap.containsKey(dirName) == false) return meta;
+        Map dirDt = dirMap.getMap(dirName);
+        meta.put("attribute", dirDt.get(attributeName));
+
+        return meta;
+    }
+
 }
