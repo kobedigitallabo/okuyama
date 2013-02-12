@@ -12,8 +12,8 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
     protected static boolean bufferedFlg = false;
 
-    protected static Map putBufferedDataMap = new ConcurrentHashMap(150);
-    protected static Map deleteBufferedDataMap = new ConcurrentHashMap(150);
+    protected static Map putBufferedDataMap = new ConcurrentHashMap(350);
+    protected static Map deleteBufferedDataMap = new ConcurrentHashMap(350);
 
 
     protected static ArrayBlockingQueue okuyamaRequestQueue = null;
@@ -24,15 +24,17 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
     protected static Object[] sendSyncObject = null;
 
-    protected static int parallel = 10;
-    protected static int syncParallel = 100;
+    protected static volatile int parallel = 10;
+    protected static volatile int syncParallel = 100;
 
     protected OkuyamaClient client = null;
 
     static {
         if (OkuyamaFilesystem.blockSize > (1024*48)) {
-            okuyamaRequestQueue = new ArrayBlockingQueue(550);
+            parallel = 4;
+            okuyamaRequestQueue = new ArrayBlockingQueue(40);
         } else if (OkuyamaFilesystem.blockSize > (1024*24)) {
+
             okuyamaRequestQueue = new ArrayBlockingQueue(1550);
         } else {
             okuyamaRequestQueue = new ArrayBlockingQueue(15550);
@@ -93,15 +95,19 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
         try {
 
-            synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
-                putBufferedDataMap.put(key, value);
-                deleteBufferedDataMap.remove(key);
-                Object[] request = new Object[3];
+            while (true) {
+                synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
+                    Object[] request = new Object[3];
+                    request[0] = new Integer(1);
+                    request[1] = key;
+                    request[2] = value;
+                    if (okuyamaRequestQueue.offer(request)) {
 
-                request[0] = new Integer(1);
-                request[1] = key;
-                request[2] = value;
-                okuyamaRequestQueue.put(request);
+                        putBufferedDataMap.put(key, value);
+                        deleteBufferedDataMap.remove(key);
+                        break;
+                    }
+                }
             }
         } catch (Exception ee) {
             throw new OkuyamaClientException(ee);
@@ -117,7 +123,7 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
         try {
             synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
-                String value = (String)putBufferedDataMap.get(key);
+                Object value = (Object)putBufferedDataMap.get(key);
 
                 String[] realClientRet = null;
 
@@ -142,7 +148,7 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
                     ret = new String[2];
                     ret[0] = "true";
-                    ret[1] = value;
+                    ret[1] = value.toString();
                 }
             }
         } catch (Exception ee) {
@@ -196,15 +202,21 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
     public boolean setObjectValue(String key, Object value) throws OkuyamaClientException {
         if (!BufferedOkuyamaClient.bufferedFlg) return this.client.setObjectValue(key, value);
         try {
-            synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
-                putBufferedDataMap.put(key, value);
-                deleteBufferedDataMap.remove(key);
-                Object[] request = new Object[3];
+            while (true) {
 
-                request[0] = new Integer(2);
-                request[1] = key;
-                request[2] = value;
-                okuyamaRequestQueue.put(request);
+                synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
+                    Object[] request = new Object[3];
+
+                    request[0] = new Integer(2);
+                    request[1] = key;
+                    request[2] = value;
+                    if (okuyamaRequestQueue.offer(request)) {
+
+                        putBufferedDataMap.put(key, value);
+                        deleteBufferedDataMap.remove(key);
+                        break;
+                    }
+                }
             }
         } catch (Exception ee) {
             throw new OkuyamaClientException(ee);
@@ -216,15 +228,21 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
         if (!BufferedOkuyamaClient.bufferedFlg) return this.client.sendByteValue(key, value);
 
         try {
-            synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
-                putBufferedDataMap.put(key, value);
-                deleteBufferedDataMap.remove(key);
-                Object[] request = new Object[3];
+            while (true) {
+                synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
 
-                request[0] = new Integer(3);
-                request[1] = key;
-                request[2] = value;
-                okuyamaRequestQueue.put(request);
+                    Object[] request = new Object[3];
+
+                    request[0] = new Integer(3);
+                    request[1] = key;
+                    request[2] = value;
+                    if (okuyamaRequestQueue.offer(request)) {
+
+                        putBufferedDataMap.put(key, value);
+                        deleteBufferedDataMap.remove(key);
+                        break;
+                    }
+                }
             }
         } catch (Exception ee) {
             throw new OkuyamaClientException(ee);
@@ -240,26 +258,31 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
         if (!BufferedOkuyamaClient.bufferedFlg) return this.client.removeValue(key);
         String[] ret = null;
         try {
+            while (true) {
+                synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
 
-            synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
-                Object removeRet = putBufferedDataMap.remove(key);
-                if (removeRet == null) {
-                    String[] realClientRmRet = this.client.getValue(key);
-                    if (realClientRmRet[0].equals("false")) {
-                        ret = new String[1];
-                        ret[0] = "false";
-                        return ret;
+                    Object[] request = new Object[2];
+
+                    request[0] = new Integer(4);
+                    request[1] = key;
+                    if (okuyamaRequestQueue.offer(request)) {
+
+                        ret = new String[2];
+                        ret[0] = "true";
+
+                        Object removeRet = putBufferedDataMap.remove(key);
+                        if (removeRet == null) {
+                            String[] realClientRmRet = this.client.getValue(key);
+                            if (realClientRmRet[0].equals("false")) {
+                                ret = new String[1];
+                                ret[0] = "false";
+                                return ret;
+                            }
+                        }
+                        deleteBufferedDataMap.put(key, new Integer(1));
+                        break;
                     }
                 }
-                deleteBufferedDataMap.put(key, new Integer(1));
-                Object[] request = new Object[2];
-
-                request[0] = new Integer(4);
-                request[1] = key;
-                okuyamaRequestQueue.put(request);
-
-                ret = new String[2];
-                ret[0] = "true";
             }
         } catch (Exception ee) {
             throw new OkuyamaClientException(ee);
@@ -271,14 +294,19 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
     public boolean requestRemoveValue(String key) throws OkuyamaClientException {
         if (!BufferedOkuyamaClient.bufferedFlg) return this.client.requestRemoveValue(key);
         try {
-            synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
-                putBufferedDataMap.remove(key);
-                deleteBufferedDataMap.put(key, new Integer(1));
-                Object[] request = new Object[2];
+            while (true) {
+                synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
+                    Object[] request = new Object[2];
 
-                request[0] = new Integer(4);
-                request[1] = key;
-                okuyamaRequestQueue.put(request);
+                    request[0] = new Integer(4);
+                    request[1] = key;
+                    if (okuyamaRequestQueue.offer(request)) {
+
+                        putBufferedDataMap.remove(key);
+                        deleteBufferedDataMap.put(key, new Integer(1));
+                        break;
+                    }
+                }
             }
         } catch (Exception ee) {
             throw new OkuyamaClientException(ee);

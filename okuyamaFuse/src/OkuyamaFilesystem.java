@@ -22,12 +22,12 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
     private static final Log log = LogFactory.getLog(OkuyamaFilesystem.class);
 
-    public volatile static int blockSizeAssist = 2400;
+    public volatile static int blockSizeAssist = 50;
 
     public volatile static int blockSize = 1024*512;//5200; // Blockサイズ
 //20480
     
-    public volatile static int writeBufferSize = 1024 * 1024 * 20 + 1024;
+    public volatile static int writeBufferSize = 1024 * 1024 * 5 + 1024;
 
     public static final int maxSingleModeCacheSize = 200000;
 
@@ -175,7 +175,11 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                 } else if (pathInfo[0].equals("dir")) {
                     setInfo[1] = new Integer(FuseFtypeConstants.TYPE_DIR | new Integer(pathInfo[7]).intValue()).toString();
                 } else {
-                    throw new FuseException("No such entry entry name =[" + pathInfoStr + "]").initErrno(FuseException.ENOENT);
+
+                    // 不正データ削除
+                    client.removePathDetail(path.trim());
+                    return Errno.ENOENT;
+                    //throw new FuseException("No such entry entry name =[" + pathInfoStr + "]").initErrno(FuseException.ENOENT);
                 }
             }
         /*
@@ -264,13 +268,19 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                         deleteFlg = false;
                         String[] nameCnv = name.split("/");
 
-                        if (((String)obj.getValue()).equals("dir")) {
-                            dirFiller.add(nameCnv[nameCnv.length - 1], 0L, FuseFtype.TYPE_DIR);
-                        } else {
-                            dirFiller.add(nameCnv[nameCnv.length - 1], 0L, FuseFtype.TYPE_FILE);
-                        }
+                        try {
+                            String pathInfoStrCheck = (String)metaInfo.get("pathdetail");
 
-                        i++;
+                            if (((String)obj.getValue()).equals("dir")) {
+                                dirFiller.add(nameCnv[nameCnv.length - 1], 0L, FuseFtype.TYPE_DIR);
+                            } else {
+                                dirFiller.add(nameCnv[nameCnv.length - 1], 0L, FuseFtype.TYPE_FILE);
+                            }
+
+                            i++;
+                        } catch (Exception ee) {
+                            deleteFlg = true;
+                        }
                     }
                 }
 
@@ -290,6 +300,8 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                                 String[] pathInfo = pathInfoStr.split("\t");
                                 client.deleteValue(name, pathInfo[pathInfo.length - 2]);
                             }
+                            client.removeDir(name);
+
                         } catch (Exception innerE) {
                         }
                         log.fatal("broken file remove filename=[" + name + "]");
@@ -565,13 +577,39 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                     }
                 }
 
-                String pathInfoStr = client.getPathDetail(path.trim()); 
-                if (pathInfoStr == null) return Errno.ENOENT;
-                String[] pathInfo = pathInfoStr.split("\t");
+                Map metaInfo = client.getDataMetaInfo(path);
+                boolean deleteFlg = true;
+                if (metaInfo.size() > 1) {
+    
+                    if (metaInfo.get("pathdetail") != null && metaInfo.get("attribute") != null) {
 
-                if(client.removePathDetail(path.trim()) == false) return Errno.EIO;
-                if(client.removeAttribute(path.trim()) == false) return Errno.EIO;
-                client.deleteValue(path.trim(), pathInfo[pathInfo.length - 2]);
+                        deleteFlg = false;
+
+                        String pathInfoStr = client.getPathDetail(path.trim()); 
+                        if (pathInfoStr == null) return Errno.ENOENT;
+                        String[] pathInfo = pathInfoStr.split("\t");
+
+                        if(client.removePathDetail(path.trim()) == false) return Errno.EIO;
+                        if(client.removeAttribute(path.trim()) == false) return Errno.EIO;
+                        client.deleteValue(path.trim(), pathInfo[pathInfo.length - 2]);
+                    }
+                }
+
+                if (deleteFlg) {
+                    try {
+                        client.removePathDetail(path);
+                        client.removeAttribute(path);
+
+                        String pathInfoStr = (String)metaInfo.get("pathdetail");
+                        if (pathInfoStr != null) {
+
+                            String[] pathInfo = pathInfoStr.split("\t");
+                            client.deleteValue(path, pathInfo[pathInfo.length - 2]);
+                        }
+                    } catch (Exception innerE) {
+                    }
+                    log.fatal("broken file remove filename=[" + path + "]");
+                }
             }
         }  catch(Exception e) {
             throw new FuseException(e).initErrno(FuseException.EIO);

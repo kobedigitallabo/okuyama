@@ -11,7 +11,6 @@ public class JVMShutdownSequence extends Thread {
     public void run() {
         OkuyamaFilesystem.jvmShutdownStatus = true;
         System.out.println("shutdown...");
-        System.exit(1);
     }
 }
 

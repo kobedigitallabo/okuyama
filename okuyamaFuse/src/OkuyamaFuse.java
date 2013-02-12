@@ -58,6 +58,7 @@ public class OkuyamaFuse {
                 bufferCheckDaemon.start();
             }
 
+            Runtime.getRuntime().addShutdownHook(new JVMShutdownSequence());
             FuseMount.mount(fuseArgs, new OkuyamaFilesystem(fsystemMode, singleFlg), log);
         } catch (Exception e) {
            e.printStackTrace();
