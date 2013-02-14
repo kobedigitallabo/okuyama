@@ -34,11 +34,11 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
             parallel = 4;
             okuyamaRequestQueue = new ArrayBlockingQueue(40);
         } else if (OkuyamaFilesystem.blockSize > (1024*24)) {
-
-            okuyamaRequestQueue = new ArrayBlockingQueue(1550);
+            parallel = 10;
+            okuyamaRequestQueue = new ArrayBlockingQueue(500);
         } else {
-            okuyamaRequestQueue = new ArrayBlockingQueue(15550);
-            parallel = 30;
+            okuyamaRequestQueue = new ArrayBlockingQueue(2000);
+            parallel = 16;
         }
     }
 
@@ -105,8 +105,10 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
                         putBufferedDataMap.put(key, value);
                         deleteBufferedDataMap.remove(key);
+
                         break;
                     }
+
                 }
             }
         } catch (Exception ee) {
@@ -425,23 +427,37 @@ class OkuyamaSendWorker extends Thread {
                             // いづれそちらが行われるので反映しても無駄となる。
                             // 削除処理がこのJobの後にQueueに入った場合も、バッファが削除されているので、
                             // 反映しても無駄である
-                            if (nowBufferedValueStr == requestValueStr) {
-                                if (client.setValue(key ,requestValueStr)) {
-
-                                    BufferedOkuyamaClient.putBufferedDataMap.remove(key);
-                                } else {
-                                    client = null;
-                                    client = BufferedOkuyamaClient.factory.getClient();
-
+                            try {
+                                if (nowBufferedValueStr == requestValueStr) {
                                     if (client.setValue(key ,requestValueStr)) {
-                                        BufferedOkuyamaClient.putBufferedDataMap.remove(key);
 
+                                        BufferedOkuyamaClient.putBufferedDataMap.remove(key);
                                     } else {
-                                        throw new Exception("setValue - error");
+                                        client = null;
+                                        client = BufferedOkuyamaClient.factory.getClient();
+
+                                        if (client.setValue(key ,requestValueStr)) {
+                                            BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+
+                                        } else {
+                                            throw new Exception("setValue - error");
+                                        }
                                     }
                                 }
+                            } catch (Exception setE) {
+                                try {
+                                    if (client != null )client.close();
+                                } catch (Exception setEVC) {
+                                }
+                                Thread.sleep(500);
+                                client = null;
+                                client = BufferedOkuyamaClient.factory.getClient();
+                                if (client.setValue(key ,requestValueStr)) {
+                                    BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+                                } else {
+                                    throw new Exception("setValue - error");
+                                }
                             }
-
                             break;
                         case 2 :
 
@@ -454,21 +470,36 @@ class OkuyamaSendWorker extends Thread {
                             // いづれそちらが行われるので反映しても無駄となる。
                             // 削除処理がこのJobの後にQueueに入った場合も、バッファが削除されているので、
                             // 反映しても無駄である
-                            if (nowBufferedValueObj == requestValueObj) {
-                                if (client.setObjectValue(key ,requestValueObj)) {
-
-                                    BufferedOkuyamaClient.putBufferedDataMap.remove(key);
-                                } else {
-                                    client = null;
-                                    client = BufferedOkuyamaClient.factory.getClient();
+                            try {
+                                if (nowBufferedValueObj == requestValueObj) {
                                     if (client.setObjectValue(key ,requestValueObj)) {
+
                                         BufferedOkuyamaClient.putBufferedDataMap.remove(key);
                                     } else {
-                                        throw new Exception("setObjectValue - error");
+                                        client = null;
+                                        client = BufferedOkuyamaClient.factory.getClient();
+                                        if (client.setObjectValue(key ,requestValueObj)) {
+                                            BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+                                        } else {
+                                            throw new Exception("setObjectValue - error");
+                                        }
                                     }
                                 }
-                            }
+                            } catch (Exception setOE) {
+                                try {
+                                    if (client != null )client.close();
+                                } catch (Exception setOEC) {
+                                }
 
+                                Thread.sleep(500);
+                                client = null;
+                                client = BufferedOkuyamaClient.factory.getClient();
+                                if (client.setObjectValue(key ,requestValueObj)) {
+                                    BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+                                } else {
+                                    throw new Exception("setObjectValue - error");
+                                }
+                            }
 
                             break;
                         case 3 :
@@ -482,20 +513,35 @@ class OkuyamaSendWorker extends Thread {
                             // いづれそちらが行われるので反映しても無駄となる。
                             // 削除処理がこのJobの後にQueueに入った場合も、バッファが削除されているので、
                             // 反映しても無駄である
-                            if (nowBufferedValueBytes == requestValueBytes) {
+                            try {
+                                if (nowBufferedValueBytes == requestValueBytes) {
 
-                                if (client.sendByteValue(key ,requestValueBytes)) {
-
-                                    BufferedOkuyamaClient.putBufferedDataMap.remove(key);
-                                } else {
-
-                                    client = null;
-                                    client = BufferedOkuyamaClient.factory.getClient();
                                     if (client.sendByteValue(key ,requestValueBytes)) {
+
                                         BufferedOkuyamaClient.putBufferedDataMap.remove(key);
                                     } else {
-                                        throw new Exception("sendByteValue - error");
+
+                                        client = null;
+                                        client = BufferedOkuyamaClient.factory.getClient();
+                                        if (client.sendByteValue(key ,requestValueBytes)) {
+                                            BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+                                        } else {
+                                            throw new Exception("sendByteValue - error");
+                                        }
                                     }
+                                }
+                            } catch (Exception sendBE) {
+                                try {
+                                    if (client != null )client.close();
+                                } catch (Exception sendBEC) {
+                                }
+                                Thread.sleep(500);
+                                client = null;
+                                client = BufferedOkuyamaClient.factory.getClient();
+                                if (client.sendByteValue(key ,requestValueBytes)) {
+                                    BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+                                } else {
+                                    throw new Exception("sendByteValue - error");
                                 }
                             }
 
@@ -506,15 +552,27 @@ class OkuyamaSendWorker extends Thread {
                             // Removeは削除をokuyamaへ実行後、Removeのマーキングバッファから該当Keyを削除
                             if (BufferedOkuyamaClient.deleteBufferedDataMap.containsKey(key)) {
 
-                                String[] removeStr = client.removeValue(key);
-                                BufferedOkuyamaClient.deleteBufferedDataMap.remove(key);
+                                try {
+
+                                    String[] removeStr = client.removeValue(key);
+                                    BufferedOkuyamaClient.deleteBufferedDataMap.remove(key);
+                                } catch (Exception removeE) {
+                                    try {
+                                        if (client != null )client.close();
+                                    } catch (Exception removeEC) {
+                                    }
+                                    Thread.sleep(500);
+                                    client = null;
+                                    client = BufferedOkuyamaClient.factory.getClient();
+                                    String[] removeStr = client.removeValue(key);
+                                    BufferedOkuyamaClient.deleteBufferedDataMap.remove(key);
+                                }
                             }
                             break;
                     }
                 }
             } catch (Exception ee) {
                 ee.printStackTrace();
-                System.exit(1);
             } finally {
                 try {
                     client.close();
