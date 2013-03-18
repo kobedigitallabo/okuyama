@@ -1395,11 +1395,13 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     }
 
 
+
     /**
      * Key-Valueを保存する.<br>
      * ただし保存時にValueをN-gram(ユニグラム)方式にてインデックスを作成する<br>
      * インデックスはTagとして保存される<br>
      * また、転送されうValue値はUTF-8の文字コードとして処理されるので、UTF-8でなない2バイト文字はだたしく処理されない<br>
+     * N-Gramもしくは形態素解による文字列分解を用いる<br>
      * 
      * @param keyStr key値の文字列
      * @param tagStr tag値の文字列
@@ -1412,6 +1414,49 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @throws BatchException
      */
     private String[] setKeyValueAndCreateIndex(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix, int indexLength, int indexMinLength) throws BatchException {
+        return this.setKeyValueAndCreateIndexForNgram(keyStr, tagStr, transactionCode, dataStr, indexPrefix, indexLength, indexMinLength);
+    }
+
+
+    /**
+     * Key-Valueを保存する.<br>
+     * ただし保存時にValueをN-gram(ユニグラム)方式にてインデックスを作成する<br>
+     * インデックスはTagとして保存される<br>
+     * また、転送されるValue値はUTF-8の文字コードとして処理されるので、UTF-8でなない2バイト文字はだたしく処理されない<br>
+     * 形態素解析を用いてインデックスを作成する.<br>
+     *
+     * 
+     * @param keyStr key値の文字列
+     * @param tagStr tag値の文字列
+     * @param transactionCode 
+     * @param dataStr value値の文字列
+     * @param indexPrefix 作成されたIndex(tag値)の先頭に付加する文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyValueAndCreateIndexForMorphologicalAnalysis(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix) throws BatchException {
+        return null;
+    }
+
+
+    /**
+     * Key-Valueを保存する.<br>
+     * ただし保存時にValueをN-gram(ユニグラム)方式にてインデックスを作成する<br>
+     * インデックスはTagとして保存される<br>
+     * また、転送されうValue値はUTF-8の文字コードとして処理されるので、UTF-8でなない2バイト文字はだたしく処理されない<br>
+     * N-Gramによる文字列分解を用いる<br>
+     * 
+     * @param keyStr key値の文字列
+     * @param tagStr tag値の文字列
+     * @param transactionCode 
+     * @param dataStr value値の文字列
+     * @param indexPrefix 作成されたIndex(tag値)の先頭に付加する文字列
+     * @param indexLength 作成するN-GramのNの部分を指定する
+     * @param indexMinLength 作成するN-GramのNの部分の最小値
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    private String[] setKeyValueAndCreateIndexForNgram(String keyStr, String tagStr, String transactionCode, String dataStr, String indexPrefix, int indexLength, int indexMinLength) throws BatchException {
 
         String[] retStrs = new String[3];
         Map removeIndexMap = null;

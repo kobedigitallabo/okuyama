@@ -5,6 +5,8 @@ import java.io.*;
 import java.net.*;
 import java.util.zip.*;
 import java.nio.charset.Charset;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
@@ -310,6 +312,7 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public void autoConnect() throws OkuyamaClientException {
+
         this.useAutoConnect = true;
         ArrayList tmpMasterNodeList = new ArrayList();
         ArrayList workList = (ArrayList)this.masterNodesList.clone();
@@ -336,9 +339,32 @@ public class OkuyamaClient {
                 String nodeStr = (String)tmpMasterNodeList.remove(ran);
                 String[] nodeInfo = nodeStr.split(":");
                 this.socket = new Socket();
-                InetSocketAddress inetAddr = new InetSocketAddress(nodeInfo[0], Integer.parseInt(nodeInfo[1]));
+                int timeOutCheckTime = 5000;
+                if (this.masterNodesList.size() < 5) {
+                    timeOutCheckTime = 500;
+                } else if (this.masterNodesList.size() < 8) {
+                    timeOutCheckTime = 350;
+                } else if (this.masterNodesList.size() < 13) {
+                    timeOutCheckTime = 300;
+                }
+                
+                ConnectCreateProxy connectCreateProxy = new ConnectCreateProxy(this.socket, nodeInfo[0], Integer.parseInt(nodeInfo[1]), timeOutCheckTime);
+                connectCreateProxy.start();
+                this.socket = (Socket)connectCreateProxy.getConnection();
+                if (this.socket == null) {
+                    Exception connectEx = connectCreateProxy.getException();
+                    connectCreateProxy.closeConnection();
+                    try {
+                        this.socket.close();
+                    } catch (Exception closeSokE) {}
 
-                this.socket.connect(inetAddr, ImdstDefine.clientConnectionOpenTimeout);
+                    if (connectEx != null) {
+                        throw connectEx;
+                    } else {
+                        throw new ConnectException("Connection refused: connect");
+                    }
+                }
+
                 this.socket.setTcpNoDelay(true);
                 this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
                 this.pw = new ClientCustomPrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), OkuyamaClient.connectDefaultEncoding)));
@@ -370,7 +396,10 @@ public class OkuyamaClient {
                     // 無視
                     this.socket = null;
                 }
-                if(tmpMasterNodeList.size() < 1) throw new OkuyamaClientException(e);
+                if(tmpMasterNodeList.size() < 1) {
+
+                    throw new OkuyamaClientException(e);
+                }
             }
         }
     }
@@ -427,7 +456,10 @@ public class OkuyamaClient {
             this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
 
             this.pw = new ClientCustomPrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encoding)));
+            this.bos = new BufferedOutputStream(socket.getOutputStream());
+
             this.br = new BufferedReader(new InputStreamReader(socket.getInputStream(), encoding));
+            this.bis = new BufferedInputStream(socket.getInputStream());
 
             this.initClient();
             this.nowConnectServerInfo = server + ":" + new Integer(port).toString();
@@ -633,6 +665,7 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public String[] getOkuyamaVersion() throws OkuyamaClientException {
+
         String[] ret = new String[2];
         String serverRetStr = null;
         String[] serverRet = null;
@@ -8503,6 +8536,63 @@ public class OkuyamaClient {
             throw e;
         }
         return null;
+    }
+
+
+    class ConnectCreateProxy extends Thread {
+
+        private Socket soc = null;
+        private String hostName = null;
+        private int port = 0;
+
+        private boolean close = false;
+
+
+        private int timeout = 0;
+
+        private ArrayBlockingQueue connectQueue = new ArrayBlockingQueue(1);
+        private Exception connectException = null;
+
+
+
+        ConnectCreateProxy(Socket soc, String hostName, int port, int timeout) {
+            this.soc = soc;
+            this.hostName = hostName;
+            this.port = port;
+            this.timeout = timeout;
+        }
+
+        public void run() {
+            try {
+
+                InetSocketAddress inetAddr = new InetSocketAddress(this.hostName, this.port);
+                this.soc.connect(inetAddr, this.timeout);
+
+                if (this.close) {
+                    this.soc.close();
+                } else {
+                    connectQueue.put(this.soc);
+                }
+            } catch (Exception e) {
+                this.connectException = e;
+            }
+        }
+
+        public Object getConnection() {
+            try {
+                return this.connectQueue.poll(this.timeout, TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+
+        public void closeConnection() {
+            this.close = true;
+        }
+
+        public Exception getException() {
+            return this.connectException;
+        }
     }
 }
 

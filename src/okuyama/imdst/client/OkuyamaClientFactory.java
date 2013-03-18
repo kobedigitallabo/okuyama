@@ -264,6 +264,7 @@ public class OkuyamaClientFactory {
             ((ClientRedirector)client).lastUseTime = nowTime;
             ((ClientRedirector)client).returnFlg = false;
         } catch (Exception e) {
+
             throw new OkuyamaClientException(e);
         } finally {
             this.rwLock.readLock().unlock();

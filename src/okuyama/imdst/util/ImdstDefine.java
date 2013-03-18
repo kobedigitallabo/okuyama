@@ -410,7 +410,7 @@ public class ImdstDefine {
 
 
     // MasterConfigurationManagerHelperが設定情報を確認する時間間隔
-    public static final int configurationCheckCycle = 1000 * 60;
+    public static final int configurationCheckCycle = 1000 * 3;
 
 
     // FileでValueを保持する際のValueキャッシの利用指定
