@@ -3,6 +3,8 @@ package fuse.okuyamafs;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
+import java.io.*;
+
 
 import okuyama.imdst.client.*;
 import okuyama.imdst.util.*;
@@ -29,6 +31,12 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
     protected OkuyamaClient client = null;
 
+    static boolean stripingDataBlock = false;
+    static int stripingLevel = 8;
+    static int stripingMinBlockSize = 128;
+
+    private OkuyamaClient[] stripingDataClient = new OkuyamaClient[4];
+
     static {
         if (OkuyamaFilesystem.blockSize > (1024*48)) {
             parallel = 4;
@@ -37,7 +45,7 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
             parallel = 10;
             okuyamaRequestQueue = new ArrayBlockingQueue(500);
         } else {
-            okuyamaRequestQueue = new ArrayBlockingQueue(2000);
+            okuyamaRequestQueue = new ArrayBlockingQueue(4000);
             parallel = 16;
         }
     }
@@ -45,6 +53,14 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
     public BufferedOkuyamaClient(OkuyamaClient client) {
         this.client = client;
+        if (stripingDataBlock == true) {
+            try {
+                stripingDataClient[0] = BufferedOkuyamaClient.factory.getClient(300*1000);
+                stripingDataClient[1] = BufferedOkuyamaClient.factory.getClient(300*1000);
+                stripingDataClient[2] = BufferedOkuyamaClient.factory.getClient(300*1000);
+                stripingDataClient[3] = BufferedOkuyamaClient.factory.getClient(300*1000);
+            } catch (Exception e) {}
+        }
     }
 
 
@@ -62,8 +78,9 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
      * 一度しか呼ばない
      *
      */
-    public static void initClientMaster(OkuyamaClientFactory factory, boolean bufferedFlg) throws Exception {
+    public static void initClientMaster(OkuyamaClientFactory factory, boolean bufferedFlg, boolean stripingDataBlock) throws Exception {
 
+        BufferedOkuyamaClient.stripingDataBlock = stripingDataBlock;
         BufferedOkuyamaClient.factory = factory;
         if (bufferedFlg == false) {
             BufferedOkuyamaClient.bufferedFlg = bufferedFlg;
@@ -87,6 +104,14 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
     public void close() throws OkuyamaClientException {
         this.client.close();
+        if (stripingDataBlock == true) {
+            try {
+                stripingDataClient[0].close();
+                stripingDataClient[1].close();
+                stripingDataClient[2].close();
+                stripingDataClient[3].close();
+            } catch (Exception e) {}
+        }
     }
 
 
@@ -346,12 +371,25 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
             synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
                 byte[] value = (byte[])putBufferedDataMap.get(key);
 
-                Object[] realClientRet = null;
-
                 if (value == null) {
-                    realClientRet = this.client.readByteValue(key);
-                    if (realClientRet != null && realClientRet[0].equals("true")) {
-                        value = (byte[])realClientRet[1];
+
+                    // Stripingの場合で処理がことなる
+                    if (BufferedOkuyamaClient.stripingDataBlock == false) {
+//long start = System.nanoTime();
+                        Object[] realClientRet = this.client.readByteValue(key);
+//long end = System.nanoTime();
+//System.out.println("time1=" + (end - start));
+
+                        if (realClientRet != null && realClientRet[0].equals("true")) {
+                            value = (byte[])realClientRet[1];
+                        }
+                    } else {
+                        // StripingBlock;
+//long start = System.nanoTime();
+                        value = this.readStripingBlock(key);
+//long end = System.nanoTime();
+//System.out.println("time2=" + (end - start));
+                        if (value.length == 0) value =  null;
                     }
                 }
 
@@ -366,7 +404,6 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
                     ret = new Object[1];
                     ret[0] = "false";
                 } else {
-
                     ret = new Object[2];
                     ret[0] = "true";
                     ret[1] = value;
@@ -376,6 +413,71 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
             throw new OkuyamaClientException(ee);
         }
         return ret;
+    }
+
+    private byte[] readStripingBlock(String key) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try {
+
+//long start = System.nanoTime();
+            int strpngIndex = 0;
+            for (int idx = 0; idx < BufferedOkuyamaClient.stripingLevel / 4; idx++) {
+                stripingDataClient[0].requestReadByteValue(key+"\t"+strpngIndex);
+                strpngIndex++;
+                stripingDataClient[1].requestReadByteValue(key+"\t"+strpngIndex);
+                strpngIndex++;
+                stripingDataClient[2].requestReadByteValue(key+"\t"+strpngIndex);
+                strpngIndex++;
+                stripingDataClient[3].requestReadByteValue(key+"\t"+strpngIndex);
+                strpngIndex++;
+
+                boolean endRead = false;
+long start = System.nanoTime();
+
+                Object[] stripingRet1 = stripingDataClient[0].responseReadByteValue(key+"\t"+(strpngIndex - 4));
+                if (endRead == false && stripingRet1[0].equals("true")) {
+System.out.println("1Len=" + ((byte[])stripingRet1[1]).length);
+                    baos.write((byte[])stripingRet1[1]);
+                } else {
+                    endRead = true;
+                }
+
+                Object[] stripingRet2 = stripingDataClient[1].responseReadByteValue(key+"\t"+(strpngIndex - 3));
+                if (endRead == false && stripingRet2[0].equals("true")) {
+System.out.println("2Len=" + ((byte[])stripingRet2[1]).length);
+                    baos.write((byte[])stripingRet2[1]);
+                } else {
+                    endRead = true;
+                }
+
+                Object[] stripingRet3 = stripingDataClient[2].responseReadByteValue(key+"\t"+(strpngIndex - 2));
+                if (endRead == false && stripingRet3[0].equals("true")) {
+System.out.println("3Len=" + ((byte[])stripingRet3[1]).length);
+                    baos.write((byte[])stripingRet3[1]);
+                } else {
+                    endRead = true;
+                }
+
+                Object[] stripingRet4 = stripingDataClient[3].responseReadByteValue(key+"\t"+(strpngIndex - 1));
+                if (endRead == false && stripingRet4[0].equals("true")) {
+System.out.println("4Len=" + ((byte[])stripingRet4[1]).length);
+                    baos.write((byte[])stripingRet4[1]);
+                } else {
+                    endRead = true;
+                }
+long end = System.nanoTime();
+System.out.println("StripingGet=" + (end - start));
+
+                if (endRead == true) break;
+            }
+//long end2 = System.nanoTime();
+//System.out.println("2=" + (end2 - start2));
+
+        } catch (Exception e) {
+            throw e;
+        }
+        return baos.toByteArray();
     }
 }
 
@@ -513,60 +615,209 @@ class OkuyamaSendWorker extends Thread {
                             // いづれそちらが行われるので反映しても無駄となる。
                             // 削除処理がこのJobの後にQueueに入った場合も、バッファが削除されているので、
                             // 反映しても無駄である
-                            try {
-                                if (nowBufferedValueBytes == requestValueBytes) {
 
+                            // StripingModeの場合とそれ以外で処理が異なる
+                            if (BufferedOkuyamaClient.stripingDataBlock == false) {
+                                // Stripingではない
+                                try {
+                                    if (nowBufferedValueBytes == requestValueBytes) {
+
+                                        if (client.sendByteValue(key ,requestValueBytes)) {
+
+                                            BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+                                        } else {
+
+                                            client = null;
+                                            client = BufferedOkuyamaClient.factory.getClient();
+                                            if (client.sendByteValue(key ,requestValueBytes)) {
+                                                BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+                                            } else {
+                                                throw new Exception("sendByteValue - error");
+                                            }
+                                        }
+                                    }
+                                } catch (Exception sendBE) {
+                                    try {
+                                        if (client != null )client.close();
+                                    } catch (Exception sendBEC) {
+                                    }
+                                    Thread.sleep(500);
+                                    client = null;
+                                    client = BufferedOkuyamaClient.factory.getClient();
                                     if (client.sendByteValue(key ,requestValueBytes)) {
-
                                         BufferedOkuyamaClient.putBufferedDataMap.remove(key);
                                     } else {
+                                        throw new Exception("sendByteValue - error");
+                                    }
+                                }
 
+                                break;
+                            } else {
+
+                                // Striping
+                                if (requestValueBytes.length < BufferedOkuyamaClient.stripingMinBlockSize) {
+
+                                    try {
+                                        if (nowBufferedValueBytes == requestValueBytes) {
+
+
+                                            if (client.sendByteValue(key + "\t0",requestValueBytes)) {
+                                                for (int idx = 1; idx < BufferedOkuyamaClient.stripingLevel; idx++) {
+                                                    client.removeValue(key + "\t" + idx);
+                                                }
+                                                BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+                                            } else {
+
+                                                client = null;
+                                                client = BufferedOkuyamaClient.factory.getClient();
+                                                if (client.sendByteValue(key + "\t0" ,requestValueBytes)) {
+                                                    for (int idx = 1; idx < BufferedOkuyamaClient.stripingLevel; idx++) {
+                                                        client.removeValue(key + "\t" + idx);
+                                                    }
+
+                                                    BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+                                                } else {
+                                                    throw new Exception("sendByteValue - error");
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception sendBE) {
+                                        try {
+                                            if (client != null )client.close();
+                                        } catch (Exception sendBEC) {
+                                        }
+                                        Thread.sleep(500);
                                         client = null;
                                         client = BufferedOkuyamaClient.factory.getClient();
-                                        if (client.sendByteValue(key ,requestValueBytes)) {
+                                        if (client.sendByteValue(key + "\t0" ,requestValueBytes)) {
+                                            for (int idx = 1; idx < BufferedOkuyamaClient.stripingLevel; idx++) {
+                                                client.removeValue(key + "\t" + idx);
+                                            }
+
                                             BufferedOkuyamaClient.putBufferedDataMap.remove(key);
                                         } else {
                                             throw new Exception("sendByteValue - error");
                                         }
                                     }
-                                }
-                            } catch (Exception sendBE) {
-                                try {
-                                    if (client != null )client.close();
-                                } catch (Exception sendBEC) {
-                                }
-                                Thread.sleep(500);
-                                client = null;
-                                client = BufferedOkuyamaClient.factory.getClient();
-                                if (client.sendByteValue(key ,requestValueBytes)) {
-                                    BufferedOkuyamaClient.putBufferedDataMap.remove(key);
                                 } else {
-                                    throw new Exception("sendByteValue - error");
-                                }
-                            }
 
-                            break;
+                                    // Stripingにするサイズである
+                                    try {
+                                        if (nowBufferedValueBytes == requestValueBytes) {
+
+                                            OkuyamaClient[] stripingDataClient = new OkuyamaClient[BufferedOkuyamaClient.stripingLevel];
+                                            stripingDataClient[0] = client;
+                                            for (int strpngIndex = 1; strpngIndex < BufferedOkuyamaClient.stripingLevel; strpngIndex++) {
+                                                stripingDataClient[strpngIndex] = BufferedOkuyamaClient.factory.getClient(300*1000);
+                                            }
+
+                                            int oneStripingSize = requestValueBytes.length / BufferedOkuyamaClient.stripingLevel;
+                                            int lastStripingSize = oneStripingSize + (requestValueBytes.length % BufferedOkuyamaClient.stripingLevel);
+
+                                            Object[] stripingBlockList = new Object[BufferedOkuyamaClient.stripingLevel];
+
+                                            for (int idx = 0; idx < BufferedOkuyamaClient.stripingLevel; idx++) {
+                                                byte[] stripingBlock = null;
+
+                                                if (idx == (BufferedOkuyamaClient.stripingLevel - 1)) {
+                                                    stripingBlock = new byte[lastStripingSize];
+                                                } else {
+                                                    stripingBlock = new byte[oneStripingSize];
+                                                }
+
+                                                System.arraycopy(requestValueBytes, (idx*oneStripingSize), stripingBlock, 0, stripingBlock.length);
+                                                stripingDataClient[idx].requestByteValue(key + "\t" + idx, stripingBlock);
+                                                stripingBlockList[idx] = stripingBlock;
+                                            }
+
+                                            boolean allStipingBlockSave = true;
+                                            for (int idx = 0; idx < BufferedOkuyamaClient.stripingLevel; idx++) {
+
+                                                if (!stripingDataClient[idx].responseByteValue(key + "\t" + idx, (byte[])stripingBlockList[idx])) {
+
+                                                    allStipingBlockSave = false;
+                                                    Thread.sleep(300);
+
+                                                    if (idx == 0) {
+                                                        client = null;
+                                                        stripingDataClient[idx] = null;
+                                                        stripingDataClient[idx] = BufferedOkuyamaClient.factory.getClient();
+                                                        client = stripingDataClient[idx];
+                                                    } else {
+
+                                                        stripingDataClient[idx] = null;
+                                                        stripingDataClient[idx] = BufferedOkuyamaClient.factory.getClient();
+                                                    }
+                                                    if (stripingDataClient[idx].sendByteValue(key + "\t" + idx , (byte[])stripingBlockList[idx])) {
+
+                                                        allStipingBlockSave = true;
+                                                    } else {
+                                                        throw new Exception("sendByteValue - error");
+                                                    }
+                                                } else {
+                                                    if (idx != 0) {
+                                                        stripingDataClient[idx].close();
+                                                        stripingDataClient[idx] = null;
+                                                    }
+                                                }
+                                            }
+
+                                            if (allStipingBlockSave) {
+                                                BufferedOkuyamaClient.putBufferedDataMap.remove(key);
+                                            } else {
+                                                throw new Exception("sendByteValue - error");
+                                            }
+                                        }
+                                    } catch (Exception sendBE) {
+                                        throw new Exception("sendByteValue - error");
+                                    }
+                                }
+                                break;
+                            }
                         case 4 :
 
                             // removeValueの処理
                             // Removeは削除をokuyamaへ実行後、Removeのマーキングバッファから該当Keyを削除
                             if (BufferedOkuyamaClient.deleteBufferedDataMap.containsKey(key)) {
-
-                                try {
-
-                                    String[] removeStr = client.removeValue(key);
-                                    BufferedOkuyamaClient.deleteBufferedDataMap.remove(key);
-                                } catch (Exception removeE) {
+                                if (BufferedOkuyamaClient.stripingDataBlock == false) {
                                     try {
-                                        if (client != null )client.close();
-                                    } catch (Exception removeEC) {
+
+                                        String[] removeStr = client.removeValue(key);
+                                        BufferedOkuyamaClient.deleteBufferedDataMap.remove(key);
+                                    } catch (Exception removeE) {
+                                        try {
+                                            if (client != null )client.close();
+                                        } catch (Exception removeEC) {
+                                        }
+                                        Thread.sleep(500);
+                                        client = null;
+                                        client = BufferedOkuyamaClient.factory.getClient();
+                                        String[] removeStr = client.removeValue(key);
+                                        BufferedOkuyamaClient.deleteBufferedDataMap.remove(key);
                                     }
-                                    Thread.sleep(500);
-                                    client = null;
-                                    client = BufferedOkuyamaClient.factory.getClient();
+                                } else {
+
                                     String[] removeStr = client.removeValue(key);
+
+                                    // 以降StripingBlcokの処理
+                                    for (int idx = 0; idx < BufferedOkuyamaClient.stripingLevel; idx++) {
+                                        
+                                        try {
+
+                                            removeStr = client.removeValue(key + "\t" + idx);
+                                        } catch (Exception removeE) {
+                                            try {
+                                                if (client != null )client.close();
+                                            } catch (Exception removeEC) {
+                                            }
+                                            Thread.sleep(500);
+                                            client = null;
+                                            client = BufferedOkuyamaClient.factory.getClient();
+                                            removeStr = client.removeValue(key + "\t" + idx);
+                                        }
+                                    }
                                     BufferedOkuyamaClient.deleteBufferedDataMap.remove(key);
-                                }
+                                } 
                             }
                             break;
                     }

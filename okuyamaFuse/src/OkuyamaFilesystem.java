@@ -24,7 +24,8 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
     public volatile static int blockSizeAssist = 50;
 
-    public volatile static int blockSize = 1024*512;//5200; // Blockサイズ
+    //public volatile static int blockSize = 1024*512;//5200; // Blockサイズ
+    public volatile static int blockSize = 1024*1024;//1024*63; //1024*17; //5200; // Blockサイズ
 //20480
     
     public volatile static int writeBufferSize = 1024 * 1024 * 5 + 1024;
@@ -151,9 +152,7 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
         try {
             String[] setInfo = new String[11];
 
-
             if (path.trim().equals("/")) {
-
 
                 setInfo[1] = new Integer(FuseFtypeConstants.TYPE_DIR | 0777).toString();
                 pathInfo = new String[9];
@@ -167,7 +166,10 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
             } else {
                 String pathInfoStr = client.getPathDetail(path.trim());
 
-                if (pathInfoStr == null || pathInfoStr.trim().equals("")) return Errno.ENOENT;
+                if (pathInfoStr == null || pathInfoStr.trim().equals("")) {
+
+                    return Errno.ENOENT;
+                }
         
                 pathInfo = pathInfoStr.split("\t");
                 if (pathInfo[0].equals("file")) {
@@ -828,8 +830,11 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                         this.fixNoCommitData(bFh);
                     }
                 }
-
+long start2 = System.nanoTime();
                 String pathInfoStr = (String)client.getPathDetail(trimToPath);
+long end2 = System.nanoTime();
+System.out.println("ALL getPath=" + (end2 - start2) / 1000 + " micro");
+
                 //end3 = System.nanoTime();
 
                 //start4 = System.nanoTime();
@@ -838,9 +843,10 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                 //end4 = System.nanoTime();
 
                 //start5 = System.nanoTime();
-
+long start = System.nanoTime();
                 byte[] readData = client.readValue(trimToPath, offset, buf.limit(), pathInfo[pathInfo.length - 2]);
-
+long end = System.nanoTime();
+System.out.println("ALL read=" + (end - start) / 1000 + " micro");
                 //end5 = System.nanoTime();
                 
                 if (readData != null && readData.length > 0) {

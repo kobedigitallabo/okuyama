@@ -364,13 +364,13 @@ public class OkuyamaFsMap implements IFsMap {
         String realKey = type + "\t" + (String)key;
 
         try {
-//long start = System.nanoTime();
+long start = System.nanoTime();
             byte[] data = (byte[])dataCache.get(realKey);
             if (data == null) {
                 Object[] ret = client.readByteValue(realKey);
 
-//long end = System.nanoTime();
-//System.out.println("getBytes=" + ((end - start) / 1000 / 1000));
+long end = System.nanoTime();
+System.out.println("getBytes=" + ((end - start) / 1000 / 1000));
                 if (ret[0].equals("true")) {
                     // データ有り
                     byte[] retBytes = OkuyamaFsMapUtil.dataDecompress((byte[])ret[1]);
@@ -383,18 +383,19 @@ public class OkuyamaFsMap implements IFsMap {
             } else {
 //long end = System.nanoTime();
 //System.out.println("Cache hit=" + ((end - start) / 1000) +" micro");
+                if (preFetchFlg) {
 
-                String[] preFetchCheck = realKey.split("\t");
+                    String[] preFetchCheck = realKey.split("\t");
 
-                if (!preFetchRequestMarker.containsKey(preFetchCheck[0] + "\t" + preFetchCheck[1])) {
+                    if (!preFetchRequestMarker.containsKey(preFetchCheck[0] + "\t" + preFetchCheck[1])) {
 
-                    PreFetchDaemon preFetchDaemon = (PreFetchDaemon)this.preFetchDataDaemonQueue.poll();
-                    if (preFetchDaemon != null) {
+                        PreFetchDaemon preFetchDaemon = (PreFetchDaemon)this.preFetchDataDaemonQueue.poll();
+                        if (preFetchDaemon != null) {
 
-                        preFetchDaemon.putRequest(realKey);
+                            preFetchDaemon.putRequest(realKey);
+                        }
                     }
                 }
-
                 return data;
             }
                
@@ -412,6 +413,7 @@ public class OkuyamaFsMap implements IFsMap {
 
     public Map getMultiBytes(Object[] keyList) {
     //return (byte[])dumm.get(type + "\t" + (String)key);
+long start = System.nanoTime();
         Map retMap = new HashMap();
         Map okuyamaDataMap = new HashMap();
 
@@ -474,9 +476,9 @@ public class OkuyamaFsMap implements IFsMap {
                     Object[] responseObj = daemon.takeResponse();
 
                     if (responseObj.length > 0) {
-
-                        //if (!dataCache.containsKey(keyStrList[i])) dataCache.put(keyStrList[i], (byte[])responseObj[1]);
-                        retMap.put(realTmpKeyList.get(i), (byte[])responseObj[1]);
+                        String objKey = (String)realTmpKeyList.get(i);
+                        //if (!dataCache.containsKey(objKey)) dataCache.put(objKey, (byte[])responseObj[1]);
+                        retMap.put(objKey, (byte[])responseObj[1]);
                     } 
                     if (!this.responseCheckDaemonQueue.offer(daemon)) daemon.endRequest();
                 }
@@ -484,7 +486,9 @@ public class OkuyamaFsMap implements IFsMap {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } 
+        }
+long end = System.nanoTime();
+System.out.println("Key count=" + keyList.length + " Time=" + ((end - start) / 1000));
         return retMap;
     }
 

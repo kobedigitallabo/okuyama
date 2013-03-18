@@ -81,6 +81,7 @@ public class OkuyamaClientWrapper {
         Map dirDt = dirMap.getMap(dirName);
 
         dirDt.put(attributeName, type);
+
         dirMap.putMap(dirName, dirDt);
         return true;
     }
@@ -146,6 +147,7 @@ public class OkuyamaClientWrapper {
     // 指定したパス直下の情報を返す
     public Map getDirChild(String path) throws Exception {
         Map dirDt = dirMap.getMap(path);
+
         return dirDt;
     }
    

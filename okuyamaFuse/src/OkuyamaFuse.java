@@ -23,6 +23,8 @@ public class OkuyamaFuse {
 
     private static final Log log = LogFactory.getLog(OkuyamaFuse.class);
 
+    private static boolean stripingDataBlock = false;
+
     public static void main(String[] args) {
 
         String fuseArgs[] = new String[args.length - 1];
@@ -31,6 +33,13 @@ public class OkuyamaFuse {
         ImdstDefine.valueCompresserLevel = 9;
         try {
             String okuyamaStr = args[args.length - 1];
+
+            // データ領域をRaid0のように扱うかどうか確認
+            if (okuyamaStr.indexOf("#") != -1) {
+                stripingDataBlock = true;
+                okuyamaStr = okuyamaStr.substring(0, (okuyamaStr.length() - 1));
+            }
+
             String[] masterNodeInfos = null;
             if (okuyamaStr.indexOf(",") != -1) {
                 masterNodeInfos = okuyamaStr.split(",");
@@ -49,7 +58,7 @@ public class OkuyamaFuse {
             OkuyamaFilesystem.storageType = new Integer(fsystemMode).intValue();
             if (OkuyamaFilesystem.storageType == 1) OkuyamaFilesystem.blockSize = OkuyamaFilesystem.blockSize;
 
-            CoreMapFactory.init(new Integer(fsystemMode.trim()).intValue(), masterNodeInfos);
+            CoreMapFactory.init(new Integer(fsystemMode.trim()).intValue(), masterNodeInfos, stripingDataBlock);
             FilesystemCheckDaemon loopDaemon = new FilesystemCheckDaemon(1, fuseArgs[fuseArgs.length - 1]);
             loopDaemon.start();
 

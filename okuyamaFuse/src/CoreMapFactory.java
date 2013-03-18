@@ -19,7 +19,7 @@ public class CoreMapFactory {
     private static Map parameterMap = new ConcurrentHashMap();
 
 
-    public static void init(int factoryType, String[] args) {
+    public static void init(int factoryType, String[] args, boolean striping) {
 
         CoreMapFactory.factoryType = factoryType;
 
@@ -33,7 +33,7 @@ public class CoreMapFactory {
             parameterMap.put("okuyamainfo", args);
 
             try {
-                BufferedOkuyamaClient.initClientMaster(OkuyamaClientFactory.getFactory(args, OkuyamaFsMapUtil.okuyamaClientPoolSize), true);
+                BufferedOkuyamaClient.initClientMaster(OkuyamaClientFactory.getFactory(args, OkuyamaFsMapUtil.okuyamaClientPoolSize), true, striping);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
