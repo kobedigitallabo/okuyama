@@ -25,7 +25,7 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
     public volatile static int blockSizeAssist = 50;
 
     //public volatile static int blockSize = 1024*512;//5200; // Blockサイズ
-    public volatile static int blockSize = 1024*1024;//1024*63; //1024*17; //5200; // Blockサイズ
+    public volatile static int blockSize = 1024*14;//1024*63; //1024*17; //5200; // Blockサイズ
 //20480
     
     public volatile static int writeBufferSize = 1024 * 1024 * 5 + 1024;
@@ -813,12 +813,10 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
         //start1 = System.nanoTime();
         //start2 = System.nanoTime();
 
-        //log.info("read:" + path + " offset:" + offset + " buf.limit:" + buf.limit());
+        log.info("read:" + path + " offset:" + offset + " buf.limit:" + buf.limit());
         if (fh == null) return Errno.EBADE;
-        //end2 = System.nanoTime();
         try {
 
-            //start3 = System.nanoTime();
             String trimToPath = path.trim();
             synchronized (this.parallelDataAccessSync[((path.hashCode() << 1) >>> 1) % 100]) {
 
@@ -830,29 +828,15 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                         this.fixNoCommitData(bFh);
                     }
                 }
-long start2 = System.nanoTime();
                 String pathInfoStr = (String)client.getPathDetail(trimToPath);
-long end2 = System.nanoTime();
-System.out.println("ALL getPath=" + (end2 - start2) / 1000 + " micro");
-
-                //end3 = System.nanoTime();
-
-                //start4 = System.nanoTime();
 
                 String[] pathInfo = pathInfoStr.split("\t");
-                //end4 = System.nanoTime();
-
-                //start5 = System.nanoTime();
-long start = System.nanoTime();
-                byte[] readData = client.readValue(trimToPath, offset, buf.limit(), pathInfo[pathInfo.length - 2]);
-long end = System.nanoTime();
-System.out.println("ALL read=" + (end - start) / 1000 + " micro");
-                //end5 = System.nanoTime();
+//long start = System.nanoTime();
+                int readLen = client.readValue(trimToPath, offset, buf.limit(), pathInfo[pathInfo.length - 2], buf);
+//long end = System.nanoTime();
+//System.out.println("ALL read=" + (end - start) / 1000 + " micro Len=" + readLen);
                 
-                if (readData != null && readData.length > 0) {
-
-                    buf.put(readData);
-                } else {
+                if (readLen == -1 || readLen < 1) {
 
                     log.info("read data nothing read=" + "read:" + path + " offset:" + offset + " buf.limit:" + buf.limit());
                 }
@@ -862,9 +846,6 @@ System.out.println("ALL read=" + (end - start) / 1000 + " micro");
         } catch (Exception e) {
             new FuseException(e);
         }
-
-        //long end1 = System.nanoTime();
-        //System.out.println("1=" + (end1 - start1) + " 2=" + (end2 - start2) + " 3=" + (end3 - start3) + " 4=" + (end4 - start4) + " 5=" + (end5 - start5));
         return 0;
     }
 

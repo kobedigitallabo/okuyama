@@ -31,7 +31,7 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
     protected OkuyamaClient client = null;
 
-    static boolean stripingDataBlock = false;
+    static boolean stripingDataBlock = true;
     static int stripingLevel = 8;
     static int stripingMinBlockSize = 128;
 
@@ -378,17 +378,20 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 //long start = System.nanoTime();
                         Object[] realClientRet = this.client.readByteValue(key);
 //long end = System.nanoTime();
-//System.out.println("time1=" + (end - start));
 
                         if (realClientRet != null && realClientRet[0].equals("true")) {
+
                             value = (byte[])realClientRet[1];
+//System.out.println("time1=" + (end - start) + " len=" + value.length + " Key=" + key);
                         }
+
+
                     } else {
                         // StripingBlock;
-//long start = System.nanoTime();
+long start = System.nanoTime();
                         value = this.readStripingBlock(key);
-//long end = System.nanoTime();
-//System.out.println("time2=" + (end - start));
+long end = System.nanoTime();
+System.out.println("time2=" + (end - start));
                         if (value.length == 0) value =  null;
                     }
                 }

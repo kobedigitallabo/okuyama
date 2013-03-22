@@ -166,9 +166,10 @@ public class OkuyamaClientWrapper {
 
 
 
-    public byte[] readValue(String key, long start, int offset, String realKeyNodeNo) throws Exception {
-
+    public int readValue(String key, long start, int offset, String realKeyNodeNo, ByteBuffer buf) throws Exception {
         //List dataReadKeyList = new ArrayList();
+long start1 = System.nanoTime();
+
         String[] dataReadKeyList = null;
         boolean allDataNull = true;
 
@@ -201,9 +202,10 @@ public class OkuyamaClientWrapper {
         int t = 0;
         //int dataReadKeyListSize = dataReadKeyList.size();
         int dataReadKeyListSize = dataReadKeyList.length;
-        replaceDataBuf = new byte[OkuyamaFilesystem.blockSize * dataReadKeyListSize];
 
+        //replaceDataBuf = new byte[OkuyamaFilesystem.blockSize * dataReadKeyListSize];
 
+long start11 = System.nanoTime();
         if (CoreMapFactory.factoryType == 2) {
 
             // okuyamaの場合事前にgetMultiByteでデータを取得しておく
@@ -214,26 +216,40 @@ public class OkuyamaClientWrapper {
             if (dataReadKeyListSize > 1) {
                 //Map multiReadRet = this.getMultiValue(keyList);
                 Map multiReadRet = this.getMultiValue(dataReadKeyList);
-
+long end11 = System.nanoTime();
+System.out.println("S1-1=" + (end11 - start11) / 1000);
+long start2 = System.nanoTime();
+                int totalReadLen = 0;
                 if (multiReadRet != null) {
                     for (int i = 0; i < dataReadKeyListSize; i++) {
+
                         byte[] readData = (byte[])multiReadRet.get(dataReadKeyList[i]);
                         if (readData == null) break;
-
-                        allDataNull = false;
-                        System.arraycopy(readData, 0, replaceDataBuf, t, readData.length);
-                        t = t + readData.length;
+                        if (i == 0) {
+                            buf.put(readData, bufReadPoint, readData.length - bufReadPoint);
+                            totalReadLen = totalReadLen + (readData.length - bufReadPoint);
+                        } else if (i == (dataReadKeyListSize - 1)) {
+                            int endReadSize = offset - totalReadLen;
+                            buf.put(readData, 0, endReadSize);
+                            totalReadLen = totalReadLen + endReadSize;
+                        } else {
+                            buf.put(readData);
+                            totalReadLen = totalReadLen + readData.length;
+                        }
                     }
+long end2 = System.nanoTime();
+System.out.println("S2=" + (end2 - start2) / 1000);
+
+                    return totalReadLen;
+                } else {
+                    return -1;
                 }
             } else {
-                for (int i = 0; i < dataReadKeyListSize; i++) {
-                    byte[] readData = getValue(dataReadKeyList[i]);
-                    if (readData == null) break;
+                byte[] readData = getValue(dataReadKeyList[0]);
+                if (readData == null) return -1;
+                buf.put(readData, bufReadPoint, offset);
 
-                    allDataNull = false;
-                    System.arraycopy(readData, 0, replaceDataBuf, t, readData.length);
-                    t = t + readData.length;
-                }
+                return (readData.length - bufReadPoint);
             }
         } else {
 
@@ -250,9 +266,7 @@ public class OkuyamaClientWrapper {
         // 指定データ内で一件も取れなかった。
         if (allDataNull) {
 
-            for (int i = 0; i < dataReadKeyListSize; i++) {
-            }
-            return null;
+            return -1;
         }
         int readDataSize = replaceDataBuf.length;
         byte[] retData = null;
@@ -273,7 +287,11 @@ public class OkuyamaClientWrapper {
             retData = new byte[realWritePoint];
             System.arraycopy(replaceDataBuf, bufReadPoint, retData, 0, realWritePoint);
         }
-        return retData;
+long end3 = System.nanoTime();
+System.out.println("S3=" + (end3 - start1) / 1000);
+
+        return -1;
+
     }
 
     private byte[] getValue(String key) throws Exception {

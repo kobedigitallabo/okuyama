@@ -364,13 +364,10 @@ public class OkuyamaFsMap implements IFsMap {
         String realKey = type + "\t" + (String)key;
 
         try {
-long start = System.nanoTime();
             byte[] data = (byte[])dataCache.get(realKey);
             if (data == null) {
                 Object[] ret = client.readByteValue(realKey);
 
-long end = System.nanoTime();
-System.out.println("getBytes=" + ((end - start) / 1000 / 1000));
                 if (ret[0].equals("true")) {
                     // データ有り
                     byte[] retBytes = OkuyamaFsMapUtil.dataDecompress((byte[])ret[1]);
@@ -462,6 +459,7 @@ long start = System.nanoTime();
 
                     ResponseCheckDaemon daemon = (ResponseCheckDaemon)this.responseCheckDaemonQueue.poll();
                     if (daemon == null) {
+
                         daemon = new ResponseCheckDaemon(this.factory);
                         daemon.start();
                     }
