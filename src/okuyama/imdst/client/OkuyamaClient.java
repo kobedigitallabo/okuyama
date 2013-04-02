@@ -312,6 +312,19 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public void autoConnect() throws OkuyamaClientException {
+        this.autoConnect(-1);
+    }
+
+    /**
+     * 設定されたMasterNodeの接続情報を元に自動的に接続を行う.<br>
+     * 接続出来ない場合自動的に別ノードへ再接続を行う.<br>
+     *
+     * @param connectionTimeout リクエスト時タイムアウト時間(ミリ秒)
+     * @throws OkuyamaClientException
+     */
+    public void autoConnect(int connectionTimeout) throws OkuyamaClientException {
+
+        this.initParamConnectionTimeout = connectionTimeout;
 
         this.useAutoConnect = true;
         ArrayList tmpMasterNodeList = new ArrayList();
@@ -339,15 +352,20 @@ public class OkuyamaClient {
                 String nodeStr = (String)tmpMasterNodeList.remove(ran);
                 String[] nodeInfo = nodeStr.split(":");
                 this.socket = new Socket();
-                int timeOutCheckTime = 5000;
-                if (this.masterNodesList.size() < 5) {
-                    timeOutCheckTime = 500;
+                int timeOutCheckTime = 0;
+
+                if (this.masterNodesList.size() < 4) {
+                    timeOutCheckTime = 2000;
+                } else if (this.masterNodesList.size() < 6) {
+                    timeOutCheckTime = 1200;
                 } else if (this.masterNodesList.size() < 8) {
-                    timeOutCheckTime = 350;
+                    timeOutCheckTime = 1000;
                 } else if (this.masterNodesList.size() < 13) {
-                    timeOutCheckTime = 300;
+                    timeOutCheckTime = 800;
+                } else {
+                    timeOutCheckTime = 500;
                 }
-                
+
                 ConnectCreateProxy connectCreateProxy = new ConnectCreateProxy(this.socket, nodeInfo[0], Integer.parseInt(nodeInfo[1]), timeOutCheckTime);
                 connectCreateProxy.start();
                 this.socket = (Socket)connectCreateProxy.getConnection();
@@ -366,7 +384,11 @@ public class OkuyamaClient {
                 }
 
                 this.socket.setTcpNoDelay(true);
-                this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
+                if (this.initParamConnectionTimeout > 0) {
+                    this.socket.setSoTimeout(this.initParamConnectionTimeout);
+                } else {
+                    this.socket.setSoTimeout(ImdstDefine.clientConnectionTimeout);
+                }
                 this.pw = new ClientCustomPrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), OkuyamaClient.connectDefaultEncoding)));
                 this.bos = new BufferedOutputStream(socket.getOutputStream());
 

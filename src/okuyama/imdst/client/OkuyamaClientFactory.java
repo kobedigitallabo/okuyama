@@ -6,7 +6,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-
+import okuyama.imdst.util.ImdstDefine;
 
 /**
  * OkuyamaClient用のコネクションプール.<br>
@@ -49,6 +49,7 @@ public class OkuyamaClientFactory {
     private int singleMasterNodePort = -1;
     private int maxClients = 100;
     private int maxUseCount = 50000;
+    private int connectionTimeount = ImdstDefine.clientConnectionTimeout;
     boolean shutdownFlg = false;
 
     private ArrayBlockingQueue clientQueue = null;
@@ -74,7 +75,20 @@ public class OkuyamaClientFactory {
      * @throws OkuyamaClientException MasterNodeの指定間違い
      */
     public static OkuyamaClientFactory getFactory(String[] masterNodeInfos, int maxClients) throws OkuyamaClientException {
+        return getFactory(masterNodeInfos, maxClients, ImdstDefine.clientConnectionTimeout);
+    }
 
+    /**
+     * OkuyamaClientのプールを取得する.<br>
+     * 本メソッドは接続先情報単位で唯一のFactoryのインスタンスが返される.<br>
+     * 本メソッドから取得したOkuyamaClientFactoryのインスタンスからgetClientにてOkuyamaClientを取得して利用する.<br>
+     *
+     * @param masterNodeInfos 接続するMasterNodeの情報<br>1つで複数でも、配列にてMasterNodeの情報を指定する。フォーマットは"アドレス:Port"である<br>例){"192.168.1:1:8888", "192.168.1.2:8888", "192.168.1.3:8888"}
+     * @param maxClients 作成されるコネクションプール上でプーリングされる最大数
+     * @param connectionTimeout OkuyamaClientのリクエスト時のタイムアウト時間をミリ秒で指定
+     * @throws OkuyamaClientException MasterNodeの指定間違い
+     */
+    public static OkuyamaClientFactory getFactory(String[] masterNodeInfos, int maxClients, int connectionTimeout) throws OkuyamaClientException {
         if (masterNodeInfos == null || masterNodeInfos.length < 1) throw new OkuyamaClientException("The connection information on MasterNode is not set up");
         OkuyamaClientFactory me = null;
 
@@ -88,7 +102,7 @@ public class OkuyamaClientFactory {
             if (me != null) return me;
 
             me = new OkuyamaClientFactory();
-
+            me.connectionTimeount = connectionTimeout;
             if (masterNodeInfos.length > 1) {
                 me.masterNodeInfos = masterNodeInfos;
             } else {
@@ -125,9 +139,23 @@ public class OkuyamaClientFactory {
      * @throws OkuyamaClientException MasterNodeの指定間違い
      */
     public static OkuyamaClientFactory getNewFactory(String[] masterNodeInfos, int maxClients) throws OkuyamaClientException {
+        return getNewFactory(masterNodeInfos, maxClients, ImdstDefine.clientConnectionTimeout);
+    }
+
+    /**
+     * OkuyamaClientのプールを取得する.<br>
+     * !!本メソッドは呼び出し毎にコネクションプールが作成される!!.<br>
+     * 本メソッドから取得したOkuyamaClientFactoryのインスタンスからgetClientにてOkuyamaClientを取得して利用する.<br>
+     *
+     * @param masterNodeInfos 接続するMasterNodeの情報<br>1つで複数でも、配列にてMasterNodeの情報を指定する。フォーマットは"アドレス:Port"である<br>例){"192.168.1:1:8888", "192.168.1.2:8888", "192.168.1.3:8888"}
+     * @param maxClients 作成されるコネクションプール上でプーリングされる最大数
+     * @param connectionTimeout OkuyamaClientのリクエスト時のタイムアウト時間をミリ秒で指定
+     * @throws OkuyamaClientException MasterNodeの指定間違い
+     */
+    public static OkuyamaClientFactory getNewFactory(String[] masterNodeInfos, int maxClients, int connectionTimeout) throws OkuyamaClientException {
 
         OkuyamaClientFactory me = new OkuyamaClientFactory();
-
+        me.connectionTimeount = connectionTimeout;
         if (masterNodeInfos.length > 1) {
             me.masterNodeInfos = masterNodeInfos;
         } else {
@@ -260,6 +288,7 @@ public class OkuyamaClientFactory {
                     client.autoConnect();
                 }
             }
+            client.setMethodTimeoutTime(this.connectionTimeount);
             ((ClientRedirector)client).incrUseCount();
             ((ClientRedirector)client).lastUseTime = nowTime;
             ((ClientRedirector)client).returnFlg = false;
