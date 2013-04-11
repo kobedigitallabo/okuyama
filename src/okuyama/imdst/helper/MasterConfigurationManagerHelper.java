@@ -610,8 +610,14 @@ public class MasterConfigurationManagerHelper extends AbstractMasterManagerHelpe
             }
 
 
-            // 全てのマスターノードの接続情報
-            imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_DistributionAlgorithm, dispatchMode);
+            // 分散アルゴリズム情報
+            nodeRet = imdstKeyValueClient.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_DistributionAlgorithm);
+            if (nodeRet[0].equals("false") && StatusUtil.isMainMasterNode()) {
+                // 設定情報の枠がない場合は自身の情報を登録
+                imdstKeyValueClient.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_DistributionAlgorithm, dispatchMode);
+            } else if (nodeRet[0].equals("error")) {
+                // 何もしない
+            }
 
 
             // ConsistentHashModeの場合はノードの追加要望がないかを調べる

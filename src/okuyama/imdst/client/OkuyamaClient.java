@@ -238,7 +238,8 @@ public class OkuyamaClient {
     // Defaultエンコーディング
     private static String platformDefaultEncoding = Charset.defaultCharset().name();
 
-
+    // okuyamaをマルチクラスター化した場合のスレーブのクラスターのMasterNodeのアドレス:port名
+    private String slaveOkuyamaClusterNode = null;
 
     /**
      * コンストラクタ
@@ -296,12 +297,27 @@ public class OkuyamaClient {
      * @param masterNodes 接続情報の配列 "IP:PORT"の形式
      */
     public void setConnectionInfos(String[] masterNodes) {
+        this.setConnectionInfos(masterNodes, null);
+    }
+
+    /**
+     * MasterNodeの接続情報を設定する.<br>
+     * 本メソッドでセットし、autoConnect()メソッドを<br>
+     * 呼び出すと、自動的にその時稼動しているMasterNodeにバランシングして<br>
+     * 接続される。接続出来ない場合は、別のMasterNodeに再接続される.<br>
+     *
+     * @param masterNodes 接続情報の配列 "IP:PORT"の形式
+     * @param slaveOkuyamaClusterNode スレーブのokuyamaのMasterNodeのアドレスとポート番号(フォーマットは"アドレス:ポート番号")
+     */
+    public void setConnectionInfos(String[] masterNodes, String slaveOkuyamaClusterNode) {
         this.initParamMasterNodes = masterNodes;
 
         this.masterNodesList = new ArrayList(masterNodes.length);
         for (int i = 0; i < masterNodes.length; i++) {
             this.masterNodesList.add(masterNodes[i]);
         } 
+
+        this.slaveOkuyamaClusterNode = slaveOkuyamaClusterNode;
     }
 
     /**
@@ -420,7 +436,21 @@ public class OkuyamaClient {
                 }
                 if(tmpMasterNodeList.size() < 1) {
 
-                    throw new OkuyamaClientException(e);
+                    if (this.slaveOkuyamaClusterNode == null) {
+                        throw new OkuyamaClientException(e);
+                    } else {
+                        // スレーブのokuyamaクラスターが存在する場合はこちらの処理
+                        while (true) {
+                            // スレーブに接続を試みる
+                            try {
+                                // スレーブのポートを起動するのは手動なので、繋がるまでリトライ
+                                String[] slaveOkuyamaClusterNodeInfo = slaveOkuyamaClusterNode.split(":");
+                                this.connect(slaveOkuyamaClusterNodeInfo[0], Integer.parseInt(slaveOkuyamaClusterNodeInfo[1]));
+                                return;
+                            } catch (Exception slaveConnectEx){
+                            }
+                        }
+                    }
                 }
             }
         }
