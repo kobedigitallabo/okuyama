@@ -2398,6 +2398,38 @@ public class KeyMapManager extends Thread {
     }
 
 
+    // 引数で渡されてストリームに対し全Keyを書き出す
+    public void outputKeyData2Stream(PrintWriter pw) throws BatchException {
+        if (!blocking) {
+            try {
+
+                synchronized(poolKeyLock) {
+
+                    Set entrySet = this.keyMapObj.entrySet();
+
+                    Iterator entryIte = entrySet.iterator(); 
+
+                    long counter = 0;
+                    int sendCounter = 0;
+
+                    while(entryIte.hasNext()) {
+                        Map.Entry obj = (Map.Entry)entryIte.next();
+                        if (obj == null) continue;
+                        String key = null;
+                        key = (String)obj.getKey();
+                        pw.println(key);
+                        pw.flush();
+                    }
+
+                    pw.println("-1");
+                    pw.flush();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
     // 引数で渡されてストリームに対しkeyMapObjを書き出す
     public void outputKeyMapObj2Stream(PrintWriter pw) throws BatchException {
         if (!blocking) {

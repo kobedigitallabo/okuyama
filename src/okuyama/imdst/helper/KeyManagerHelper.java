@@ -978,6 +978,9 @@ public class KeyManagerHelper extends AbstractHelper {
                             }
                             retParamBuf.append(this.keyMapManager.keyObjectExport(memoryObjBkupFilePath));
                             break;
+                        case 103 :
+                            this.keyMapManager.outputKeyData2Stream(pw);
+                            break;
                         case 887 :
 
                             // データ復旧を強制終了

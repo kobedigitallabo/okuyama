@@ -28,6 +28,8 @@ public class UtilClient {
             System.out.println("Command2. TruncateData args1=truncatedata args2=MainMasterNode-IPAdress args3=MainMasterNode-Port args4=IsolationName or 'all'");
             System.out.println("Command3. MasterNodeConfigCheck args1=masterconfig args2=MainMasterNode-IPAdress args3=MainMasterNode-Port");
             System.out.println("Command4. DataNode is added args1=adddatanode args2=MasterNode-IPAdress:PortNo args3=DataNodeIPAddress:PortNo args4=Slave1-DataNodeIpAddress:PortNo args5=Slave2-DataNodeIpAddress:PortNo");
+            System.out.println("Command5. DataNode save key list output args1=keylist args2=DataNode-IPAdress:PortNo");
+
             System.exit(1);
         }
 
@@ -108,6 +110,16 @@ public class UtilClient {
             }
 
             addMasterNode(args[1], args[2]);
+        }
+
+
+        if (args[0].equals("keylist")) {
+            if (args.length < 2) {
+                System.out.println("Argument Error! args[0]=Command, args[1]=DataNodeIp:Port");
+                System.exit(1);
+            }
+
+            keylist(args[1]);
         }
 
     }
@@ -331,6 +343,47 @@ public class UtilClient {
             try {
                 if (client != null) client.close();
             } catch (Exception e2) {
+            }
+        }
+    }
+
+
+    public static void keylist(String dataNodeIpPort) {
+        OkuyamaClient client = null;
+
+        Socket socket = null;
+        PrintWriter pw = null;
+        BufferedReader br = null;
+
+        try {
+            client = new OkuyamaClient();
+            String[] datanodeAddr = dataNodeIpPort.split(":");
+            
+
+            socket = new Socket();
+            InetSocketAddress inetAddr = new InetSocketAddress(datanodeAddr[0], Integer.parseInt(datanodeAddr[1]));
+            socket.connect(inetAddr, 10000);
+            socket.setSoTimeout(10000);
+            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8")));
+            br = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+
+            pw.println("103");
+            pw.flush();
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                if (line.equals("-1")) break;
+                System.out.println(new String(client.dataDecoding(line.getBytes())));
+            }
+            pw.println("");
+            pw.close();
+            br.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (socket != null) socket.close();
+            } catch (Exception e2) {
+                e2.printStackTrace();
             }
         }
     }
