@@ -24,7 +24,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.9.5 - (2013/04/XX)]]
 ■リカバリ機能を強化
- 従来リカバリ中にMainMasterNodeが停止するとDataNodeのリカバリ処理が中途半端に終了してしまう問題があった。
+ 従来リカバリ中にMainMasterNodeが停止するとDataNodeのリカバリ処理が中途半端に終了してしまう問題が報告されました。
  その問題への対処として、リカバリ途中のDataNodeを判断し再度切り離す機能を追加。また、リカバリが必要なDataNodeを起動する際に
  起動引数として"-rr true"として起動することで、起動前が障害で停止したことに関係なくリカバリが行わるようになった。
  例えばMasterNodeを起動する前にDataNodeを起動してしまうと、そのDataNodeはデータリカバリ対象にならなかった。
@@ -37,6 +37,16 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
       省略時:false
       設定例： -rr true
 
+■各DataNodeが保存しているKeyの一覧を取得する機能を追加
+ DataNodeが持つ全てのKeyとTagの一覧を取得する機能をUtilClientに追加しました。
+ 各DataNodeに接続し、当該機能を実行することでKeyの一覧が開業区切りで標準出力に出力される。
+ 利用方法は以下
+     使い方)
+     $ java -classpath ./:./lib/javamail-1.4.1.jar:./okuyama-0.9.5.jar okuyama.imdst.client.UtilClient keylist datanodeip:5553
+     引数説明
+      1)keylist : 命令
+      2)datanodeip:5553 : Keyを確認したい、DataNodeのIPアドレスとポート番号を"IP:Port番号"のフォーマットで指定
+ 
 
  
 ========================================================================================================

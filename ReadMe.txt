@@ -38,6 +38,16 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
       設定例： -rr true
 
 
+■各DataNodeが保存しているKeyの一覧を取得する機能を追加
+ DataNodeが持つ全てのKeyとTagの一覧を取得する機能をUtilClientに追加しました。
+ 各DataNodeに接続し、当該機能を実行することでKeyの一覧が開業区切りで標準出力に出力される。
+ 利用方法は以下
+     使い方)
+     $ java -classpath ./:./lib/javamail-1.4.1.jar:./okuyama-0.9.5.jar okuyama.imdst.client.UtilClient keylist datanodeip:5553
+     引数説明
+      1)keylist : 命令
+      2)datanodeip:5553 : Keyを確認したい、DataNodeのIPアドレスとポート番号を"IP:Port番号"のフォーマットで指定
+ 
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.9.4 - (2012/12/05)]]
