@@ -40,7 +40,10 @@ import okuyama.imdst.util.*;
  * -efsmo ImdstDefine.executeFileStoreMapObject / バックアップ用のスナップショットObjectを出力するかの有無(デフォルト出力)
  * -lsdn ImdstDefine.lowSpecDataNode / DataNodeがLowSpecのサーバで稼働しているもしくはディスクが遅い、リカバリorノード追加時の負荷を下げたい場合にtrueとする
  * -lsdnsdc ImdstDefine.lowSpecDataNodeSendDataCount / DataNodeがリカバリ時、ノード追加時にデータを一度に転送する上限数を制御する
- *
+ * -scmn ImdstDefine.slaveClusterMasterNode / okuyamaをMasterNodeをマルチクラスターで起動する場合に当該ノードをスレーブノードとして起動する場合に、trueとする
+ * -rocm ImdstDefine.rebuildOkuyamaClusterMode / okuyamaをMasterNodeをマルチクラスターで起動した場合にメインとなるクラスターがダウンし、Slaveからリビルドする場合にtrueとして起動
+ * -npmmns ImdstDefine.notPromotionMainMasterNodeStatus / MainMasterNodeに昇格しないMasterNodeを作成する場合にtrueとする
+ * -rr ImdstDefine.recoverRequired / DataNodeがリカバリが必要な場合にtrueとして起動する
  *
  * <br>
  * @author T.Okuyama
@@ -402,6 +405,44 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
+
+                    // -scmn
+                    if (startOptions[i].trim().equals("-scmn")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
+                                ImdstDefine.slaveClusterMasterNode = true;
+                            }
+                        }
+                    }
+
+                    // -rocm
+                    if (startOptions[i].trim().equals("-rocm")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
+                                ImdstDefine.rebuildOkuyamaClusterMode = true;
+                            }
+                        }
+                    }
+
+                    // -npmmns
+                    if (startOptions[i].trim().equals("-npmmns")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
+                                ImdstDefine.notPromotionMainMasterNodeStatus = true;
+                            }
+                        }
+                    }
+
+                    // -rr
+                    if (startOptions[i].trim().equals("-rr")) {
+                        if (startOptions.length > (i+1)) {
+                            if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
+                                ImdstDefine.recoverRequired = true;
+                            }
+                        }
+                    }
+
+
                 }
             }
         } catch (Exception e) {

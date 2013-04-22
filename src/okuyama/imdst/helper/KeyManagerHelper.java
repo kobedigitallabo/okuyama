@@ -6,6 +6,7 @@ import java.net.*;
 import javax.script.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import okuyama.base.JavaMain;
 import okuyama.base.lang.BatchException;
 import okuyama.base.job.AbstractHelper;
 import okuyama.base.job.IJob;
@@ -773,6 +774,22 @@ public class KeyManagerHelper extends AbstractHelper {
                             pw.flush();
                             //retParamBuf = null;
                             break;
+
+                        case 32 :
+
+                            // KeyMapManagerが現在どのようなステータスで稼働しているかを返す
+                            // 通常稼働 or 復旧対象 or 復旧データ取得先
+                            // 差分データ取得機能On、差分データ取得機能Off
+                            int keyMapManagerOperationStatus = this.keyMapManager.myOperationStatus;
+                            int keyMapManagerDiffModeStatus = this.keyMapManager.myDiffModeOperationStatus;
+                            retParamBuf.append("32");
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append("true");
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(keyMapManagerOperationStatus);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(keyMapManagerDiffModeStatus);
+                            break;
                         case 40 :
 
                             // Key値に紐づいている指定のTagを消す
@@ -961,6 +978,24 @@ public class KeyManagerHelper extends AbstractHelper {
                             }
                             retParamBuf.append(this.keyMapManager.keyObjectExport(memoryObjBkupFilePath));
                             break;
+                        case 887 :
+
+                            // データ復旧を強制終了
+                            this.keyMapManager.outputDataStopSignal = true;
+                            System.out.println("Stop Output Data Start");
+                            Thread.sleep(5000);
+
+                            this.keyMapManager.outputDataStopSignal = false;
+                            System.out.println("Stop Output Data End");
+                            
+                            this.keyMapManager.diffDataModeOff();
+                            retParamBuf.append("Stop Diffmode");
+                            break;
+                        case 888 :
+
+                            // 強制終了
+                            JavaMain.shutdownMainProcess();
+                            break;
                         default :
 
                             logger.debug("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");
@@ -1119,7 +1154,6 @@ public class KeyManagerHelper extends AbstractHelper {
                 retStrs[2] = "NG:Max Data Size Over";
             }
         } catch (BatchException be) {
-be.printStackTrace();
             logger.debug("KeyManagerHelper - setDatanode - Error = [" + key + "]", be);
             //logger.debug("KeyManagerHelper - setDatanode - Error", be);
             retStrs[0] = "1";

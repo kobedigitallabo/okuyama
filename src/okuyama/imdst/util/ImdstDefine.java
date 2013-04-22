@@ -11,7 +11,16 @@ import java.util.zip.Deflater;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.9.4";
+    public static final String okuyamaVersion = "VERSION okuyama-0.9.5";
+
+    // -- MasterNodeをマルチクラスターのスレーブで起動する場合にtrueになる
+    public volatile static boolean slaveClusterMasterNode = false;
+    // -- MasterNodeをマルチクラスターで動かしている場合にリカバリを行う指定
+    public volatile static boolean rebuildOkuyamaClusterMode =false;
+
+    // -- MainMasterNodeに昇格しないMasterNodeを作る際にtrueとする。
+    public volatile static boolean notPromotionMainMasterNodeStatus = false;
+
 
     // -- KeyMapファイルに関係する定数 -------------------------------------------------
     // KeyNodeのWorkファイルでのセパレータ
@@ -553,6 +562,9 @@ public class ImdstDefine {
 
     // DataNodeがリカバリ時、ノード追加時にデータを一度に転送する上限数を制御する
     public volatile static int lowSpecDataNodeSendDataCount = 2000;
+
+    // DataNodeがリカバリが必要な状態であることを明示して起動する場合にtrueとする。
+    public volatile static boolean recoverRequired = false;
 
 
     public volatile static boolean fileBaseMapTimeDebug = false;

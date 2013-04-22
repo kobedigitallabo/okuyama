@@ -114,7 +114,8 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                         logger.info("************************************************************");
                         logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Start");
-
+                        boolean nodeRecoverExec = false;
+                        
                         pingRet = this.execNodePing(nodeDt[0], new Integer(nodeDt[1]).intValue(), logger);
                         if (pingRet[1] != null) {
                             this.nodeStatusStr = pingRet[1];
@@ -127,7 +128,58 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                             StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "Node Check Dead");
                         } else if (!super.isNodeArrival(nodeInfo)) {
 
-                            // ノードが復旧
+                            // Node復旧を依頼
+                            nodeRecoverExec = true;
+                        } else {
+                            String[] nodeArrivalStatus = super.getNodeArrivalStatus(nodeDt[0], new Integer(nodeDt[1]).intValue(), logger);
+
+                            if (nodeArrivalStatus != null && nodeArrivalStatus[0].equals("true") && nodeArrivalStatus[1].equals("1") && nodeArrivalStatus[2].equals("1")) {
+                                // 正常に稼働中
+                                logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
+                                logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
+                                StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "[" + this.nodeStatusStr + "]");
+    
+                                // データサイズが転送されていれば格納
+                                if (i < nodeCount) {
+                                    if(this.nodeStatusStr != null) {
+                                        String[] sizeWork = this.nodeStatusStr.split("Save Data Size=");
+                                        if(sizeWork.length > 1) {
+    
+                                            StatusUtil.setNodeDataSize(new Integer(i), sizeWork[1].trim().substring(1,sizeWork[1].length()-1).trim().split(":"));
+                                        }
+                                    }
+                                }
+                                // SlaveMasterNodeにも伝搬する
+                                super.setArriveNode(nodeDt[0] + ":" +  nodeDt[1]);
+                            } else {
+                                if (nodeArrivalStatus != null && nodeArrivalStatus[0].equals("true") && (nodeArrivalStatus[1].equals("2") && (nodeArrivalStatus[2].equals("1") || nodeArrivalStatus[2].equals("2")))) {
+                                    // 復旧中のDataNodeが復旧を終えずにノードに加わろうとしている。
+                                    // 強制終了
+                                    super.execForceShutdownNode(nodeDt[0], new Integer(nodeDt[1]).intValue(), logger);
+                                    Thread.sleep(3000);
+
+                                    // ノードダウン
+                                    logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Restoration abnormal state killed processing.");
+                                    super.setDeadNode(nodeInfo, 1, null, true);
+                                    StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "Node Check Dead");
+                                } else if (nodeArrivalStatus != null && nodeArrivalStatus[0].equals("true") && (nodeArrivalStatus[1].equals("3") || nodeArrivalStatus[2].equals("2"))) {
+                                    // 復旧データの取得元のDataNodeが復旧を終えずに放置されている
+                                    // 復旧及び、差分モードを強制off
+                                    super.stopRecoverDataOutputOperation(nodeDt[0], new Integer(nodeDt[1]).intValue(), logger);
+                                    logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
+                                    logger.info(nodeDt[0] + ":" +  nodeDt[1] + " This Datanode is recover data output processing now. killed the operation.");
+                                    // SlaveMasterNodeにも伝搬する
+                                    super.setArriveNode(nodeDt[0] + ":" +  nodeDt[1]);
+                                } else if (nodeArrivalStatus != null && nodeArrivalStatus[0].equals("true") && nodeArrivalStatus[1].equals("4")) {
+                                    // ノード復旧が必要
+                                    nodeRecoverExec = true;
+                                }
+                            }
+                        }
+
+
+                        if (nodeRecoverExec) {
+                            // ノード復旧が必要
                             logger.info("Node Name [" + nodeInfo +"] Reboot");
 
                             // ノード復旧処理を記録
@@ -155,23 +207,26 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 StatusUtil.setNodeStatusDt(nodeInfo, "Recover Start");
 
                                 // 復旧開始
-                                if(nodeDataRecover(nodeInfo, (String)subNodeList.get(i), logger)) {
-
-                                    // リカバー成功
-                                    // 該当ノードの復帰を登録
-                                    logger.info(nodeInfo + " - Recover Success");
-
-                                    // 復旧処理ノードから記録を消す
-                                    rebootNodeMap.remove(nodeInfo);
-                                    StatusUtil.setNodeStatusDt(nodeInfo, "Recover Success");
+                                if (ImdstDefine.notPromotionMainMasterNodeStatus == true) {
+                                    logger.info(nodeInfo + " - Recover pass");
                                 } else {
-                                    // リカバー失敗
-                                    logger.info(nodeInfo + " - Recover Miss");
-                                    // リカバー終了を伝える
-                                    super.setRecoverNode(false, "");
-                                    StatusUtil.setNodeStatusDt(nodeInfo, "Recover Miss");
+                                    if(nodeDataRecover(nodeInfo, (String)subNodeList.get(i), logger)) {
+        
+                                        // リカバー成功
+                                        // 該当ノードの復帰を登録
+                                        logger.info(nodeInfo + " - Recover Success");
+        
+                                        // 復旧処理ノードから記録を消す
+                                        rebootNodeMap.remove(nodeInfo);
+                                        StatusUtil.setNodeStatusDt(nodeInfo, "Recover Success");
+                                    } else {
+                                        // リカバー失敗
+                                        logger.info(nodeInfo + " - Recover Miss");
+                                        // リカバー終了を伝える
+                                        super.setRecoverNode(false, "");
+                                        StatusUtil.setNodeStatusDt(nodeInfo, "Recover Miss");
+                                    }
                                 }
-
                                 logger.info(nodeInfo + " - Recover End");
                             } else {
                                 // ノードの復旧を記録
@@ -179,29 +234,13 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 rebootNodeMap.remove(nodeInfo);
                                 super.setArriveNode(nodeInfo);
                             }
-                        } else {
-                            logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check Arrival");
-                            logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
-                            StatusUtil.setNodeStatusDt(nodeDt[0] + ":" +  nodeDt[1], "[" + this.nodeStatusStr + "]");
-
-                            // データサイズが転送されていれば格納
-                            if (i < nodeCount) {
-                                if(this.nodeStatusStr != null) {
-                                    String[] sizeWork = this.nodeStatusStr.split("Save Data Size=");
-                                    if(sizeWork.length > 1) {
-
-                                        StatusUtil.setNodeDataSize(new Integer(i), sizeWork[1].trim().substring(1,sizeWork[1].length()-1).trim().split(":"));
-                                    }
-                                }
-                            }
-                            // SlaveMasterNodeにも伝搬する
-                            super.setArriveNode(nodeDt[0] + ":" +  nodeDt[1]);
                         }
                         logger.info(nodeDt[0] + ":" +  nodeDt[1] + " Node Check End");
-
-
                         logger.info("------------------------------------------------------------");
+
+
                         // ノードチェック(Sub)
+                        boolean subNodeRecoverExec = false;
                         if (subNodeList != null && i < subNodeList.size()) {
                             String subNodeInfo = (String)subNodeList.get(i);
                             String[] subNodeDt = subNodeInfo.split(":");
@@ -217,7 +256,59 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 super.setDeadNode(subNodeInfo, 2,null, true);
                                 StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "SubNode Check Dead");
                             } else if (!super.isNodeArrival(subNodeInfo)) {
+                                // SubNodeのリカバリが必要
+                                subNodeRecoverExec = true;
+                            } else {
+                                String[] nodeArrivalStatus = super.getNodeArrivalStatus(subNodeDt[0], new Integer(subNodeDt[1]).intValue(), logger);
+    
+                                if (nodeArrivalStatus != null && nodeArrivalStatus[0].equals("true") && nodeArrivalStatus[1].equals("1") && nodeArrivalStatus[2].equals("1")) {
 
+                                    logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Arrival");
+                                    logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
+                                    StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "[" + this.nodeStatusStr + "]");
+    
+                                    // データサイズが転送されていれば格納
+                                    if (i < nodeCount) {
+                                        if(this.nodeStatusStr != null) {
+                                            String[] sizeWork = this.nodeStatusStr.split("Save Data Size=");
+                                            if(sizeWork.length > 1) {
+    
+                                                StatusUtil.setNodeDataSize(new Integer(i), sizeWork[1].trim().substring(1,sizeWork[1].length()-1).trim().split(":"));
+                                            }
+                                        }
+                                    }
+                                    
+                                    // SlaveMasterNodeにも伝搬する
+                                    super.setArriveNode(subNodeDt[0] + ":" +  subNodeDt[1]);
+                                } else {
+
+                                    if (nodeArrivalStatus != null && nodeArrivalStatus[0].equals("true") && (nodeArrivalStatus[1].equals("2") && (nodeArrivalStatus[2].equals("2") || nodeArrivalStatus[2].equals("1")))) {
+                                        // 復旧中のDataNodeが復旧を終えずにノードに加わろうとしている。
+                                        // 強制終了
+                                        super.execForceShutdownNode(subNodeDt[0], new Integer(subNodeDt[1]).intValue(), logger);
+                                        Thread.sleep(3000);
+                                        // ノードダウン
+                                        logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " SubNode Check Restoration abnormal state killed processing.");
+                                        super.setDeadNode(subNodeInfo, 2,null, true);
+                                        StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "SubNode Check Dead");
+                                    } else if (nodeArrivalStatus != null && nodeArrivalStatus[0].equals("true") && (nodeArrivalStatus[1].equals("3") || nodeArrivalStatus[2].equals("2"))) {
+                                        // 復旧データの取得元のDataNodeが復旧を終えずに放置されている
+                                        // 復旧及び、差分モードを強制off
+                                        super.stopRecoverDataOutputOperation(subNodeDt[0], new Integer(subNodeDt[1]).intValue(), logger);
+                                        
+                                        logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Node Check Arrival");
+                                        logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " This Datanode is recover data output processing now. killed the operation.");
+                                        // SlaveMasterNodeにも伝搬する
+                                        super.setArriveNode(subNodeDt[0] + ":" +  subNodeDt[1]);
+                                    } else if (nodeArrivalStatus != null && nodeArrivalStatus[0].equals("true") && nodeArrivalStatus[1].equals("4")) {
+                                        // SubNodeのリカバリが必要
+                                        subNodeRecoverExec = true;
+                                    }
+                                }
+                            }
+
+                            if (subNodeRecoverExec) {
+                            
                                 // 停止していたノードが復帰した場合
                                 // 停止中に登録予定であったデータを登録する
                                 logger.info("Node Name [" + subNodeInfo +"] Reboot");
@@ -239,43 +330,29 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 logger.info(subNodeInfo + " - Recover Start");
                                 StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Start");
                                 // 復旧開始
-                                if(nodeDataRecover(subNodeInfo, nodeInfo, logger)) {
-
-                                    // リカバー成功
-                                    // 該当ノードの復帰を登録
-                                    logger.info(subNodeInfo + " - Recover Success");
-
-                                    // 復旧処理ノードから記録を消す
-                                    rebootNodeMap.remove(subNodeInfo);
-                                    StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Success");
+                                if (ImdstDefine.notPromotionMainMasterNodeStatus == true) {
+                                    logger.info(subNodeInfo + " - Recover pass");
                                 } else {
-
-                                    // リカバー失敗
-                                    logger.info(subNodeInfo + " - Recover Miss");
-                                    // リカバー終了を伝える
-                                    super.setRecoverNode(false, "");
-                                    StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Miss");
-                                }
-
-                                logger.info(subNodeInfo + " - Recover End");
-                            } else {
-                                logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check Arrival");
-                                logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Server Status [" + this.nodeStatusStr + "]");
-                                StatusUtil.setNodeStatusDt(subNodeDt[0] + ":" +  subNodeDt[1], "[" + this.nodeStatusStr + "]");
-
-                                // データサイズが転送されていれば格納
-                                if (i < nodeCount) {
-                                    if(this.nodeStatusStr != null) {
-                                        String[] sizeWork = this.nodeStatusStr.split("Save Data Size=");
-                                        if(sizeWork.length > 1) {
-
-                                            StatusUtil.setNodeDataSize(new Integer(i), sizeWork[1].trim().substring(1,sizeWork[1].length()-1).trim().split(":"));
-                                        }
+    
+                                    if(nodeDataRecover(subNodeInfo, nodeInfo, logger)) {
+    
+                                        // リカバー成功
+                                        // 該当ノードの復帰を登録
+                                        logger.info(subNodeInfo + " - Recover Success");
+    
+                                        // 復旧処理ノードから記録を消す
+                                        rebootNodeMap.remove(subNodeInfo);
+                                        StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Success");
+                                    } else {
+    
+                                        // リカバー失敗
+                                        logger.info(subNodeInfo + " - Recover Miss");
+                                        // リカバー終了を伝える
+                                        super.setRecoverNode(false, "");
+                                        StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Miss");
                                     }
                                 }
-                                
-                                // SlaveMasterNodeにも伝搬する
-                                super.setArriveNode(subNodeDt[0] + ":" +  subNodeDt[1]);
+                                logger.info(subNodeInfo + " - Recover End");
                             }
                             logger.info(subNodeDt[0] + ":" +  subNodeDt[1] + " Sub Node Check End");
                             logger.info("************************************************************");

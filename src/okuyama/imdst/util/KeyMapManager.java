@@ -156,6 +156,11 @@ public class KeyMapManager extends Thread {
     private Object diffSync = new Object();
     private List diffDataPoolingListForFileBase = null;
 
+    // 現在のKeyMapManagerの状態を"通常(1)" or "復旧中(2)" or "復旧データ取得元(3)"の3種類で管理する
+    public int myOperationStatus = 1;
+    
+    // 現在のKeyMapManagerのdiffデータモード状態を"通常(1)" or "diffモード(2)"の2種類で管理する
+    public int myDiffModeOperationStatus = 1;
 
     // ノード間でのデータ移動時に削除として蓄積するMap
     private ConcurrentHashMap moveAdjustmentDataMap = null;
@@ -183,6 +188,9 @@ public class KeyMapManager extends Thread {
     // 初期化メソッド
     // Transactionを管理する場合に呼び出す
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, boolean dataManage, String diskCacheFile) throws BatchException {
+        if (ImdstDefine.recoverRequired == true) {
+            myOperationStatus = 4;
+        }
         this.keyObjBkupMode = true;
         this.diskCacheFile = diskCacheFile;
         this.bkupObjCheck(keyMapFilePath);
@@ -194,6 +202,9 @@ public class KeyMapManager extends Thread {
     // 初期化メソッド
     // Key値はメモリを使用する場合に使用
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, String diskCacheFile) throws BatchException {
+        if (ImdstDefine.recoverRequired == true) {
+            myOperationStatus = 4;
+        }
         this.keyObjBkupMode = true;
         this.diskCacheFile = diskCacheFile;
         this.bkupObjCheck(keyMapFilePath);
@@ -203,6 +214,10 @@ public class KeyMapManager extends Thread {
     // 初期化メソッド
     // Key値はメモリを使用する場合に使用
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, int memoryLimitSize, String[] virtualStorageDirs, String diskCacheFile) throws BatchException {
+        if (ImdstDefine.recoverRequired == true) {
+            myOperationStatus = 4;
+        }
+
         this.keyObjBkupMode = true;
         this.diskCacheFile = diskCacheFile;
         this.bkupObjCheck(keyMapFilePath);
@@ -215,6 +230,10 @@ public class KeyMapManager extends Thread {
     // 初期化メソッド
     // Keyもファイルの場合
     public KeyMapManager(String keyMapFilePath, String workKeyMapFilePath, boolean workFileMemory, int keySize, boolean dataMemory, String[] dirs, String diskCacheFile) throws BatchException {
+        if (ImdstDefine.recoverRequired == true) {
+            myOperationStatus = 4;
+        }
+
         boolean renewFlg = false;
         this.diskCacheFile = diskCacheFile;
         for (int idx = 0; idx < dirs.length; idx++) {
@@ -2326,7 +2345,7 @@ public class KeyMapManager extends Thread {
         synchronized (diffSync) {
 
             if (flg) {
-
+                this.myDiffModeOperationStatus = 2;
                 this.diffDataPoolingListForFileBase = new FileBaseDataList(this.nodeKeyMapFilePath + ".difftmplist");
             } else {
 
@@ -2334,6 +2353,7 @@ public class KeyMapManager extends Thread {
                     this.diffDataPoolingListForFileBase.clear();
                     this.diffDataPoolingListForFileBase = null;
                 }
+                this.myDiffModeOperationStatus = 1;
             }
             this.diffDataPoolingFlg = flg;
             try {
@@ -2349,7 +2369,7 @@ public class KeyMapManager extends Thread {
         synchronized (diffSync) {
 
             if (flg) {
-
+                this.myDiffModeOperationStatus = 2;
                 this.diffDataPoolingListForFileBase = new FileBaseDataList(this.nodeKeyMapFilePath + ".difftmplist");
             } else {
 
@@ -2357,6 +2377,7 @@ public class KeyMapManager extends Thread {
                     this.diffDataPoolingListForFileBase.clear();
                     this.diffDataPoolingListForFileBase = null;
                 }
+                this.myDiffModeOperationStatus = 1;
             }
             this.diffDataPoolingFlg = flg;
         }
@@ -2370,6 +2391,7 @@ public class KeyMapManager extends Thread {
                 this.diffDataPoolingListForFileBase.clear();
                 this.diffDataPoolingListForFileBase = null;
             }
+            this.myDiffModeOperationStatus = 1;
 
             this.diffDataPoolingFlg = false;
         }
@@ -2382,7 +2404,7 @@ public class KeyMapManager extends Thread {
             try {
 
                 synchronized(poolKeyLock) {
-
+                    this.myOperationStatus = 3;
                     logger.info("outputKeyMapObj2Stream - synchronized - start");
                     String allDataSep = "";
                     StringBuilder allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
@@ -2556,6 +2578,8 @@ public class KeyMapManager extends Thread {
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("outputKeyMapObj2Stream - Error =[" + e.getMessage() + "]");
+            } finally {
+                this.myOperationStatus = 1;
             }
         }
     }
@@ -2569,7 +2593,7 @@ public class KeyMapManager extends Thread {
 
                 synchronized(poolKeyLock) {
                     String nextWrite = null;
-
+                    this.myOperationStatus = 3;
                     logger.info("outputDiffKeyMapObj2Stream - synchronized - start");
                     String allDataSep = "";
                     StringBuilder allDataBuf = new StringBuilder(ImdstDefine.stringBufferLarge_3Size);
@@ -2671,6 +2695,8 @@ public class KeyMapManager extends Thread {
                 //blocking = true;
                 //StatusUtil.setStatusAndMessage(1, "outputDiffKeyMapObj2Stream - Error [" + e.getMessage() + "]");
                 //throw new BatchException(e);
+            } finally {
+                this.myOperationStatus = 1;
             }
         }
     }
@@ -2680,6 +2706,7 @@ public class KeyMapManager extends Thread {
     public void inputKeyMapObj2Stream(BufferedReader br, PrintWriter pw, int dataLineCount) throws BatchException {
         if (!blocking) {
             try {
+                this.myOperationStatus = 2;
                 int i = 0;
                 String[] oneDatas = null;
                 boolean setDataExec = false;
@@ -2799,6 +2826,7 @@ public class KeyMapManager extends Thread {
                     }
                 }
                 logger.info("inputKeyMapObj2Stream - synchronized - end");
+
             } catch (Exception e) {
                 try {
                     pw.println("-1");
@@ -2932,7 +2960,12 @@ public class KeyMapManager extends Thread {
                     }
                 }
                 logger.info("inputDiffKeyMapObj2Stream - synchronized - end");
+                this.myOperationStatus = 1;
+                
+                // 起動時にリカバリが必要な指定が入っている場合もそれをoffとする
+                if (ImdstDefine.recoverRequired == true) ImdstDefine.recoverRequired = false;
             } catch (Exception e) {
+                this.myOperationStatus = 2;
                 logger.error("inputDiffKeyMapObj2Stream - Error");
                 blocking = true;
                 StatusUtil.setStatusAndMessage(1, "inputDiffKeyMapObj2Stream - Error [" + e.getMessage() + "]");

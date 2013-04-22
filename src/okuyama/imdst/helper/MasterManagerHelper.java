@@ -703,6 +703,11 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
                             if (retParams != null && retParams[0].equals("2")) retParams[0] = "23-f";
                             break;
+                        case 24 :
+
+                             // Key値にTagを紐付ける
+                            retParams = this.insertKeyPairTag(clientParameterList[1], clientParameterList[2], clientParameterList[3]);
+                            break;
                         case 30 :
 
                             // 各キーノードへデータロック依頼
@@ -1216,7 +1221,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] setKeyValue(String keyStr, String tagStr, String transactionCode, String dataStr) throws BatchException {
+    public String[] setKeyValue(String keyStr, String tagStr, String transactionCode, String dataStr) throws BatchException {
         return setKeyValue(keyStr, tagStr, transactionCode, dataStr, false);
     }
 
@@ -1235,7 +1240,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * @return String[] 結果
      * @throws BatchException
      */
-    private String[] setKeyValue(String keyStr, String tagStr, String transactionCode, String dataStr, boolean fixPrefix) throws BatchException {
+    public String[] setKeyValue(String keyStr, String tagStr, String transactionCode, String dataStr, boolean fixPrefix) throws BatchException {
         //logger.debug("MasterManagerHelper - setKeyValue - start");
         String[] retStrs = new String[3];
 
@@ -1262,15 +1267,16 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 return retStrs;
             }
 
-            // Value値チェック
-            if (!this.checkValueLength(dataStr)) {
-                // 保存失敗
-                retStrs[0] = "1";
-                retStrs[1] = "false";
-                retStrs[2] = "Value Length Error";
-                return retStrs;
+            if (dataStr != null || (tagStr == null && dataStr == null)) {
+                // Value値チェック
+                if (!this.checkValueLength(dataStr)) {
+                    // 保存失敗
+                    retStrs[0] = "1";
+                    retStrs[1] = "false";
+                    retStrs[2] = "Value Length Error";
+                    return retStrs;
+                }
             }
-
 
             // Tag値を保存
             if (tagStr != null && !tagStr.equals("")) {
@@ -1342,6 +1348,14 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 }
             }
 
+            // Tagのみ登録の場合はここで終了
+            if (dataStr == null && tagStr != null) {
+                retStrs[0] = "1";
+                retStrs[1] = "true";
+                retStrs[2] = "OK";
+                return retStrs;
+            }
+
             // キー値とデータを保存
             // 保存先問い合わせ
             String[] keyNodeInfo = DataDispatcher.dispatchKeyNode(keyStr, false);
@@ -1394,6 +1408,39 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         return retStrs;
     }
 
+    /**
+     * KeyへTagの紐付けのみ行う.<br>
+     * 処理フロー.<br>
+     *
+     * @param keyStr key値の文字列
+     * @param tagStr tag値の文字列
+     * @return String[] 結果
+     * @throws BatchException
+     */
+    public String[] insertKeyPairTag(String keyStr, String tagStr, String transactionCode) throws BatchException {
+        // Tag値チェック
+        if (tagStr != null && !tagStr.equals("")) {
+            // Tag値が存在しない
+            String[] retStrs = new String[3];
+            retStrs[0] = "24";
+            retStrs[1] = "error";
+            retStrs[2] = "Tag parameter Indispensable Error";
+            return retStrs;
+        }
+
+        String[] tagInsertRet = setKeyValue(keyStr, tagStr, transactionCode, null, false);
+        if (tagInsertRet != null && tagInsertRet[1].equals("true")) {
+            tagInsertRet[0] = "24";
+            tagInsertRet[1] = "true";
+            tagInsertRet[2] = "OK";
+        } else {
+            tagInsertRet = new String[3];
+            tagInsertRet[0] = "24";
+            tagInsertRet[1] = "false";
+            tagInsertRet[2] = "Tag insert fail";
+        }
+        return tagInsertRet;
+    }
 
 
     /**

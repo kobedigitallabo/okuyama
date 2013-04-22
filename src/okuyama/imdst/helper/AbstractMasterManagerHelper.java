@@ -1191,6 +1191,246 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
 
     /**
+     * ノードに現在の生存状態を確認する.<br>
+     *
+     * @param nodeName ノード名
+     * @param port ポート番号
+     * @param logger ロガー
+     * @return String[] 結果 配列の1番目:"true" or "false", 配列の2番目:1番目が"true"の場合ステータス文字列
+     */
+    protected String[] getNodeArrivalStatus(String nodeName, int port, ILogger logger) {
+        String[] retStrs = new String[2];
+        retStrs[0] = "true";
+        String connectionFullName = nodeName + ":" + port;
+
+        KeyNodeConnector keyNodeConnector = null;
+
+        String[] retParams = null;
+        boolean cacheConnectUse = false;
+
+        retStrs = null;
+
+        keyNodeConnector = null;
+        retParams = null;
+
+        try {
+
+            // キャッシュが存在する場合はそこから取得
+            if (keyNodeConnectPool.containsKey(connectionFullName)) {
+                if((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).poll()) != null) {
+                    if (!checkConnectionEffective(connectionFullName, keyNodeConnector.getConnetTime())) {
+                        keyNodeConnector = null;
+                    }
+                }
+            } 
+
+            // コネクションがなければ自身で接続
+            if (keyNodeConnector == null) {
+
+                // 接続
+                keyNodeConnector = new KeyNodeConnector(nodeName, port, connectionFullName);
+                keyNodeConnector.connect(ImdstDefine.nodeConnectionOpenPingTimeout * 5);
+            }
+
+            // タイムアウト設定
+            keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionPingTimeout * 5);
+
+            // Key値でデータノード名を保存
+            StringBuilder buf = new StringBuilder(25);
+            // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+            buf.append("32");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+
+            // 送信
+            keyNodeConnector.println(buf.toString());
+            keyNodeConnector.flush();
+
+            // 返却値取得
+            String retParam = keyNodeConnector.readLineWithReady(buf.toString());
+
+            retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+
+            if (!retParams[1].equals("true")) {
+
+                retStrs = new String[1];
+                retStrs[0] = "false";
+            } else {
+
+
+                retStrs = new String[3];
+                retStrs[0] = "true";
+                retStrs[1] = retParams[2];
+                retStrs[2] = retParams[3];
+            }
+
+            if (retStrs[0].equals("true")) {
+                try {
+
+                    // 正しく終了した場合のみコネクションをキャッシュに戻す
+                    if (keyNodeConnector != null) {
+                        keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionTimeout);
+                        addKeyNodeCacheConnectionPool(keyNodeConnector);
+                        keyNodeConnector = null;
+                    }
+                } catch(Exception e1) {
+                    // 無視
+                    logger.error("", e1);
+                }
+            }
+        } catch(Exception e) {
+            retStrs = new String[1];
+            retStrs[0] = "false";
+            logger.info("Node Status Check Error Node Name = [" + nodeName + "] Port [" + port + "]");
+            logger.info(e);
+            //e.printStackTrace();
+        } finally {
+            try {
+
+                if (keyNodeConnector != null) keyNodeConnector.close();
+
+            } catch(Exception e2) {
+                // 無視
+                logger.error("", e2);
+            }
+        }
+        return retStrs;
+    }
+
+
+    /**
+     * 指定されたノードを強制的に終了する.<br>
+     *
+     * @param nodeName ノード名
+     * @param port ポート番号
+     * @param logger ロガー
+     */
+    protected void execForceShutdownNode(String nodeName, int port, ILogger logger) {
+        String connectionFullName = nodeName + ":" + port;
+
+        KeyNodeConnector keyNodeConnector = null;
+
+        String[] retParams = null;
+        boolean cacheConnectUse = false;
+
+        keyNodeConnector = null;
+        retParams = null;
+
+        try {
+
+            // 一回目のPingはCacheのコネクションを積極的に使う
+            // キャッシュが存在する場合はそこから取得
+            if (keyNodeConnectPool.containsKey(connectionFullName)) {
+                if((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).poll()) != null) {
+                    if (!checkConnectionEffective(connectionFullName, keyNodeConnector.getConnetTime())) {
+                        keyNodeConnector = null;
+                    }
+                }
+            } 
+
+            // コネクションがなければ自身で接続
+            if (keyNodeConnector == null) {
+
+                // 接続
+                keyNodeConnector = new KeyNodeConnector(nodeName, port, connectionFullName);
+                keyNodeConnector.connect(ImdstDefine.nodeConnectionOpenPingTimeout * 5);
+            }
+
+            // タイムアウト設定
+            keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionPingTimeout * 5);
+
+            // Key値でデータノード名を保存
+            StringBuilder buf = new StringBuilder(25);
+            // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+            buf.append("888");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+
+            // 送信
+            keyNodeConnector.println(buf.toString());
+            keyNodeConnector.flush();
+        } catch(Exception e) {
+            logger.info("Node force shutdown Error Node Name = [" + nodeName + "] Port [" + port + "]");
+            logger.info(e);
+            //e.printStackTrace();
+        } finally {
+            try {
+
+                if (keyNodeConnector != null) keyNodeConnector.close();
+
+            } catch(Exception e2) {
+                // 無視
+                logger.error("", e2);
+            }
+        }
+    }
+
+
+    /**
+     * 指定されたノードが行なっているリカバリ処理を停止する.<br>
+     *
+     * @param nodeName ノード名
+     * @param port ポート番号
+     * @param logger ロガー
+     */
+    protected void stopRecoverDataOutputOperation(String nodeName, int port, ILogger logger) {
+        String connectionFullName = nodeName + ":" + port;
+
+        KeyNodeConnector keyNodeConnector = null;
+
+        String[] retParams = null;
+        boolean cacheConnectUse = false;
+
+        keyNodeConnector = null;
+        retParams = null;
+
+        try {
+
+            // キャッシュが存在する場合はそこから取得
+            if (keyNodeConnectPool.containsKey(connectionFullName)) {
+                if((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).poll()) != null) {
+                    if (!checkConnectionEffective(connectionFullName, keyNodeConnector.getConnetTime())) {
+                        keyNodeConnector = null;
+                    }
+                }
+            } 
+
+            // コネクションがなければ自身で接続
+            if (keyNodeConnector == null) {
+
+                // 接続
+                keyNodeConnector = new KeyNodeConnector(nodeName, port, connectionFullName);
+                keyNodeConnector.connect(ImdstDefine.nodeConnectionOpenPingTimeout * 5);
+            }
+
+            // タイムアウト設定
+            keyNodeConnector.setSoTimeout(1000 * 20);
+
+            // Key値でデータノード名を保存
+            StringBuilder buf = new StringBuilder(25);
+            // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+            buf.append("887");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+
+            // 送信
+            keyNodeConnector.println(buf.toString());
+            keyNodeConnector.flush();
+        } catch(Exception e) {
+            logger.info("Node stop recover operation stop Error Node Name = [" + nodeName + "] Port [" + port + "]");
+            logger.info(e);
+            //e.printStackTrace();
+        } finally {
+            try {
+
+                if (keyNodeConnector != null) keyNodeConnector.close();
+
+            } catch(Exception e2) {
+                // 無視
+                logger.error("", e2);
+            }
+        }
+    }
+
+
+    /**
      * 実行依頼のパラメータと結果パラータをQueueに書き込む.<br>
      * 正し、書き込む命令は限定可能とし、書き込むパラメータは成功したものだけとする.<br>
      *

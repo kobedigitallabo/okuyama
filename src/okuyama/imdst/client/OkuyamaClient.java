@@ -240,6 +240,7 @@ public class OkuyamaClient {
 
     // okuyamaをマルチクラスター化した場合のスレーブのクラスターのMasterNodeのアドレス:port名
     private String slaveOkuyamaClusterNode = null;
+    private boolean slaveClusterUse = false;
 
     /**
      * コンストラクタ
