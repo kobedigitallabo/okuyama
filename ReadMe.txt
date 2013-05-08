@@ -45,9 +45,34 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
      使い方)
      $ java -classpath ./:./lib/javamail-1.4.1.jar:./okuyama-0.9.5.jar okuyama.imdst.client.UtilClient keylist datanodeip:5553
      引数説明
-      1)keylist : 命令
+      1)keylist : 命令(固定)
       2)datanodeip:5553 : Keyを確認したい、DataNodeのIPアドレスとポート番号を"IP:Port番号"のフォーマットで指定
+
+ ※注意：Tagに関しては内部では1つのTagが複数個に分割されて保持されているため、複数個のTagが出力されることになるので注意が必要である。
  
+
+■MasterNodeがデータ復旧を行わないオプションを追加
+ MasterNodeはMainMasterNodeに昇格した場合、停止中のDataNodeが復旧すると必ずリカバリを行なっていた。
+ 本オプションを指定するとMainMasterNodeに昇格した場合もリカバリを行わなくなる。
+ NWが断絶し、スプリットブレインが発生した際に、一時的にMainMasterNodeが2台になりNW復旧時にリカバリを双方のMasterNodeが
+ 実行するのを防ぐのに有効である。
+ そのためにはokuyama環境作成時に決めたMainMasterNodeとそのMasterNodeと強いNWで結ばれている、MasterNode以外はこの
+ オプションを指定して起動することで実現できる。
+ MasterNode起動引数に以下を追加
+ 
+    引数名 -npmmns
+      記述：true/false
+      意味：true=リカバリを行わないMasterNode / false=リカバリを行うMasterNode
+      省略時:false
+      設定例： -npmmns true
+
+
+■起動時に指定されて起動オプションを起動ログに出力する機能を追加
+ 以下のフォーマットで出力される。
+ ----------------
+ Boot arguments
+  {パラメータ}
+ ----------------
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.9.4 - (2012/12/05)]]
