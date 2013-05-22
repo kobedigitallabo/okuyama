@@ -348,6 +348,11 @@ public class UtilClient {
     }
 
 
+    /**
+     * 全Keyの一覧を出力.<br>
+     *
+     * @param dataNodeIpPort 取得対象のDataNodeのIP:Portの文字列
+     */
     public static void keylist(String dataNodeIpPort) {
         OkuyamaClient client = null;
 
@@ -372,7 +377,18 @@ public class UtilClient {
             String line = null;
             while ((line = br.readLine()) != null) {
                 if (line.equals("-1")) break;
-                System.out.println(new String(client.dataDecoding(line.getBytes())));
+                if (line.indexOf(ImdstDefine.imdstTagStartStr) == 0) {
+
+                    // Tag
+                    String tagCnv = line.substring(ImdstDefine.imdstTagStartStr.length());
+                    tagCnv = tagCnv.substring(0, (tagCnv.length() - ImdstDefine.imdstTagEndStr.length()));
+                    String[] realTagStrCnv = tagCnv.split("_");
+                    System.out.println(new String(client.dataDecoding(realTagStrCnv[0].getBytes())) + "_" + realTagStrCnv[1]);
+                } else {
+
+                    // 通常
+                    System.out.println(new String(client.dataDecoding(line.getBytes())));
+                }
             }
             pw.println("");
             pw.close();

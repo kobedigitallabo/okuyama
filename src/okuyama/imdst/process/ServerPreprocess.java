@@ -1,5 +1,7 @@
 package okuyama.imdst.process;
 
+import java.util.*;
+
 import okuyama.base.lang.BatchDefine;
 import okuyama.base.lang.BatchException;
 import okuyama.base.process.IProcess;
@@ -42,8 +44,9 @@ import okuyama.imdst.util.*;
  * -lsdnsdc ImdstDefine.lowSpecDataNodeSendDataCount / DataNodeがリカバリ時、ノード追加時にデータを一度に転送する上限数を制御する
  * -scmn ImdstDefine.slaveClusterMasterNode / okuyamaをMasterNodeをマルチクラスターで起動する場合に当該ノードをスレーブノードとして起動する場合に、trueとする
  * -rocm ImdstDefine.rebuildOkuyamaClusterMode / okuyamaをMasterNodeをマルチクラスターで起動した場合にメインとなるクラスターがダウンし、Slaveからリビルドする場合にtrueとして起動
- * -npmmns ImdstDefine.notPromotionMainMasterNodeStatus / MainMasterNodeに昇格しないMasterNodeを作成する場合にtrueとする
+ * -npmmns ImdstDefine.notPromotionMainMasterNodeStatus / MainMasterNodeに昇格しないMasterNodeを作成する場合にtrueとする / このオプションはMasterNodeの中でもデータ復旧を行うMasterNodeを限定したい場合に使う。例えばスプリットブレインなどの現象でMasterNode同士が通信出来なくなった際に、それぞれのMasterNodeが勝手に復旧をしないためなどである。
  * -rr ImdstDefine.recoverRequired / DataNodeがリカバリが必要な場合にtrueとして起動する
+ * -smnca ImdstDefine.solitaryMasterNodeCheckAddress / MasterNodeの孤立チェック用の到達確認先のアドレス文字列。icmpでの確認のため、確認先のアドレスのみをカンマ区切りで設定する。全てのアドレスに届かない場合に自動的にMasterNodeがshutdownする
  *
  * <br>
  * @author T.Okuyama
@@ -54,19 +57,24 @@ public class ServerPreprocess implements IProcess {
     public String process(String option) throws BatchException {
 
         try {
+            Map settingStartParameterMap = new LinkedHashMap();
             if (BatchDefine.USER_OPTION_STR != null) {
                 String[] startOptions = BatchDefine.USER_OPTION_STR.split(" ");
 
                 for (int i = 0; i < startOptions.length; i++) {
 
                     // -debug
-                    if (startOptions[i].trim().toLowerCase().equals("-debug")) StatusUtil.setDebugOption(true);
-
+                    if (startOptions[i].trim().toLowerCase().equals("-debug")) {
+                        StatusUtil.setDebugOption(true);
+                        settingStartParameterMap.put("-debug", "true");
+                    }
+                    
                     // -cto MasterNodeコネクション無操作タイムアウト時間(単位は秒)
                     if (startOptions[i].trim().toLowerCase().equals("-c")) {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.masterNodeMaxConnectTime = Integer.parseInt(startOptions[i+1]) * 1000;
+                                settingStartParameterMap.put("-c", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -77,6 +85,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.saveDataMaxSize = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-S", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -87,6 +96,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.dataFileWriteMaxSize = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-s", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -99,6 +109,7 @@ public class ServerPreprocess implements IProcess {
                                 
                                 ImdstDefine.saveKeyMaxSize = Integer.parseInt(startOptions[i+1]);
                                 if (ImdstDefine.saveKeyMaxSize < 200) ImdstDefine.saveKeyMaxSize = 200;
+                                settingStartParameterMap.put("-KS", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -109,6 +120,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.tagValueAppendMaxSize = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-ts", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -120,6 +132,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.consistentHashVirtualNode = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-v", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -130,6 +143,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.parallelDiskAccess = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-fa", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -140,6 +154,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.nodeConnectionOpenTimeout = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-ncot", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -150,6 +165,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.nodeConnectionTimeout = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-nct", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -160,6 +176,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.maxMultiGetRequestSize = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-mmgrs", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -170,6 +187,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.searchIndexDistributedCount = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-sidc", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -181,6 +199,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
                                 ImdstDefine.getAndExpireTimeUpdate = true;
+                                settingStartParameterMap.put("-gaetu", "true");
                             }
                         }
                     }
@@ -191,6 +210,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.fileBaseMapNumberOfOneFileKey = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-fbmnk", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -202,6 +222,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.transactionLogFsyncType = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-tlft", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -213,8 +234,10 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
                                 ImdstDefine.vacuumInvalidDataFlg = false;
+                                settingStartParameterMap.put("-vidf", "false");
                             } else if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")){
                                 ImdstDefine.vacuumInvalidDataCompulsion = true;
+                                settingStartParameterMap.put("-vidf", "true");
                             }
                         }
                     }
@@ -225,6 +248,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.startVaccumInvalidCount = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-svic", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -236,8 +260,10 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
                                 ImdstDefine.calcSizeFlg = false;
+                                settingStartParameterMap.put("-csf", "false");
                             } else if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")){
                                 ImdstDefine.calcSizeFlg = true;
+                                settingStartParameterMap.put("-csf", "true");
                             }
                         }
                     }
@@ -248,8 +274,10 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
                                 ImdstDefine.reuseDataFileValuePositionFlg = false;
+                                settingStartParameterMap.put("-rdvp", "false");
                             } else if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")){
                                 ImdstDefine.reuseDataFileValuePositionFlg = true;
+                                settingStartParameterMap.put("-rdvp", "true");
                             }
                         }
                     }
@@ -260,6 +288,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.delayWriteMaxQueueingSize = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-dwmqs", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -271,6 +300,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
                                 ImdstDefine.compulsionRetryConnectMode = true;
+                                settingStartParameterMap.put("-crcm", "true");
                             }
                         }
                     }
@@ -281,6 +311,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.datanodeConnectorMaxUseCount = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-dcmuc", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -291,6 +322,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.serializeMapBucketSizeMemoryFactor = Long.parseLong(startOptions[i+1]);
+                                settingStartParameterMap.put("-smbsmf", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -302,6 +334,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
                                 ImdstDefine.pageCacheMappendFlg = true;
+                                settingStartParameterMap.put("-pcmf", "true");
                             }
                         }
                     }
@@ -311,6 +344,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.pageCacheMappendSize = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-pcms", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -322,6 +356,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
                                 ImdstDefine.recycleExsistData = false;
+                                settingStartParameterMap.put("-red", "false");
                             }
                         }
                     }
@@ -332,6 +367,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
                                 ImdstDefine.workFileStartingReadFlg = false;
+                                settingStartParameterMap.put("-wfsrf", "false");
                             }
                         }
                     }
@@ -342,6 +378,7 @@ public class ServerPreprocess implements IProcess {
                             try {
                                 int type = Integer.parseInt(startOptions[i+1]);
                                 if (type == 2) ImdstDefine.useDiskType = 2;
+                                settingStartParameterMap.put("-udt", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -352,6 +389,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
                                 ImdstDefine.pageCacheMappendFlg = true;
+                                settingStartParameterMap.put("-pcmf", "true");
                             }
                         }
                     }
@@ -362,6 +400,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
                                 ImdstDefine.dataFileSequentialSchedulingFlg = true;
+                                settingStartParameterMap.put("-dfssf", "true");
                             }
                         }
                     }
@@ -372,6 +411,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             try {
                                 ImdstDefine.maxDiskCacheSize = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-mdcs", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -382,6 +422,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("false")) {
                                 ImdstDefine.executeFileStoreMapObject = false;
+                                settingStartParameterMap.put("-efsmo", "false");
                             }
                         }
                     }
@@ -391,6 +432,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
                                 ImdstDefine.lowSpecDataNode = true;
+                                settingStartParameterMap.put("-lsdn", "true");
                             }
                         }
                     }
@@ -401,6 +443,7 @@ public class ServerPreprocess implements IProcess {
                             try {
                                 ImdstDefine.lowSpecDataNodeSendDataCount = Integer.parseInt(startOptions[i+1]);
                                 if (ImdstDefine.lowSpecDataNodeSendDataCount < 0) ImdstDefine.lowSpecDataNodeSendDataCount = 2000;
+                                settingStartParameterMap.put("-lsdnsdc", startOptions[i+1]);
                             } catch(NumberFormatException nfe) {
                             }
                         }
@@ -411,6 +454,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
                                 ImdstDefine.slaveClusterMasterNode = true;
+                                settingStartParameterMap.put("-scmn", "true");
                             }
                         }
                     }
@@ -420,6 +464,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
                                 ImdstDefine.rebuildOkuyamaClusterMode = true;
+                                settingStartParameterMap.put("-rocm", "true");
                             }
                         }
                     }
@@ -429,6 +474,7 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
                                 ImdstDefine.notPromotionMainMasterNodeStatus = true;
+                                settingStartParameterMap.put("-npmmns", "true");
                             }
                         }
                     }
@@ -438,12 +484,26 @@ public class ServerPreprocess implements IProcess {
                         if (startOptions.length > (i+1)) {
                             if (startOptions[i+1] != null && startOptions[i+1].trim().equals("true")) {
                                 ImdstDefine.recoverRequired = true;
+                                settingStartParameterMap.put("-rr", "true");
                             }
                         }
                     }
 
-
+                    // -smnca
+                    if (startOptions[i].trim().equals("-smnca")) {
+                        if (startOptions.length > (i+1)) {
+                            ImdstDefine.solitaryMasterNodeCheckAddress = startOptions[i+1].trim();
+                            settingStartParameterMap.put("-smnca", startOptions[i+1].trim());
+                        }
+                    }
                 }
+            }
+
+            System.out.println("Boot arguments");
+            if (settingStartParameterMap.size() > 0) {
+                System.out.println(" " +settingStartParameterMap);
+            } else {
+                System.out.println(" {}");
             }
         } catch (Exception e) {
             throw new BatchException(e);

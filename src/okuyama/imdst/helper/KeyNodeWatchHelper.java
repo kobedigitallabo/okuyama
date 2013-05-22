@@ -208,7 +208,18 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
 
                                 // 復旧開始
                                 if (ImdstDefine.notPromotionMainMasterNodeStatus == true) {
+
+                                    // リカバーパス
+                                    // MasterNodeを"-npmmns true"で起動した場合に必要になる。
+                                    // このオプションはMasterNodeの中でもデータ復旧を行うMasterNodeを限定したい場合に使う
+                                    // 例えばスプリットブレインなどの現象でMasterNode同士が通信出来なくなった際に、それぞれの
+                                    // MasterNodeが勝手に復旧をしないためなどである。
                                     logger.info(nodeInfo + " - Recover pass");
+                                    // Recoverをパスしたことを対象DataNode自身に伝える。
+                                    super.sendRecoverPassStatus(nodeDt[0], new Integer(nodeDt[1]).intValue(), logger);
+                                    // リカバー終了を伝える
+                                    super.setRecoverNode(false, "");
+                                    StatusUtil.setNodeStatusDt(nodeInfo, "Recover Pass");
                                 } else {
                                     if(nodeDataRecover(nodeInfo, (String)subNodeList.get(i), logger)) {
         
@@ -331,7 +342,15 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
                                 StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Start");
                                 // 復旧開始
                                 if (ImdstDefine.notPromotionMainMasterNodeStatus == true) {
+
+                                    // リカバーパス
                                     logger.info(subNodeInfo + " - Recover pass");
+                                    // Recoverをパスしたことを対象DataNode自身に伝える。
+                                    super.sendRecoverPassStatus(subNodeDt[0], new Integer(subNodeDt[1]).intValue(), logger);
+
+                                    // リカバー終了を伝える
+                                    super.setRecoverNode(false, "");
+                                    StatusUtil.setNodeStatusDt(subNodeInfo, "Recover Pass");
                                 } else {
     
                                     if(nodeDataRecover(subNodeInfo, nodeInfo, logger)) {

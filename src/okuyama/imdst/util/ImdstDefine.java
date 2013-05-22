@@ -21,6 +21,9 @@ public class ImdstDefine {
     // -- MainMasterNodeに昇格しないMasterNodeを作る際にtrueとする。
     public volatile static boolean notPromotionMainMasterNodeStatus = false;
 
+    // -- MasterNodeの孤立チェック(nullの場合はチェックなし。 文字列が入っている場合はチェック)
+    public volatile static String solitaryMasterNodeCheckAddress = null;
+
 
     // -- KeyMapファイルに関係する定数 -------------------------------------------------
     // KeyNodeのWorkファイルでのセパレータ

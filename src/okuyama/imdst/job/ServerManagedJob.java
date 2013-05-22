@@ -109,6 +109,13 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                 if (gcOff == false)
                     JavaSystemApi.autoGc();
 
+                // 外部への孤立チェックが有効な場合行う
+                if (this.isSolitary() == true) {
+                    // 孤立しているため、自身をshutdown
+                    System.out.println("Stop because you can not communicate with the server isolated check for the specified.");
+                    JavaMain.shutdownMainProcess();
+                }
+
                 Thread.sleep(checkCycle);
             }
 
@@ -144,4 +151,31 @@ public class ServerManagedJob extends AbstractJob implements IJob {
         return ret;
     }
 
+    // 孤立チェック
+    // trueを返した場合孤立
+    private boolean isSolitary() {
+        // 有効
+        if (ImdstDefine.solitaryMasterNodeCheckAddress != null) {
+            // アドレスはカンマ区切りで複数個存在する可能性がある
+            // 全てにpingが飛ばない場合のみ孤立とする
+            String[] addressList = null;
+            if (ImdstDefine.solitaryMasterNodeCheckAddress.indexOf(",") == -1) {
+                addressList = new String[1];
+                addressList[0] = ImdstDefine.solitaryMasterNodeCheckAddress;
+            } else {
+                addressList = ImdstDefine.solitaryMasterNodeCheckAddress.split(",");
+            }
+            boolean ret = true;
+
+            try {
+                for (int i = 0; i < addressList.length; i++) {
+                    InetAddress address = InetAddress.getByName(addressList[i]);
+                    boolean isReachable = address.isReachable(5000);
+                    if (isReachable == true) ret = false;
+                }
+            } catch (Exception e) {}
+            return ret;
+        }
+        return false;
+    }
 }

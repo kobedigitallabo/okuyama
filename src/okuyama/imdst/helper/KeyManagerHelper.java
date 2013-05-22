@@ -981,6 +981,11 @@ public class KeyManagerHelper extends AbstractHelper {
                         case 103 :
                             this.keyMapManager.outputKeyData2Stream(pw);
                             break;
+                        case 886 :
+
+                            // リカバリが必要ことを外部からマーク
+                            this.keyMapManager.myOperationStatus = 4;
+                            break;
                         case 887 :
 
                             // データ復旧を強制終了
@@ -999,6 +1004,14 @@ public class KeyManagerHelper extends AbstractHelper {
                             // 強制終了
                             JavaMain.shutdownMainProcess();
                             break;
+                        case 987 :
+                            
+                            
+                            // 全データをトランザクションログ形式でネットワークに書き出す
+                            /*long start111 = System.nanoTime();
+                            this.keyMapManager.testSearch("aaa");
+                            long end111 = System.nanoTime();
+                            System.out.println("time=" + (end111 - start111));*/
                         default :
 
                             logger.debug("KeyManagerHelper No Method =[" + clientParameterList[0] + "]");

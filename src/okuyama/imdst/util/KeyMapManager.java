@@ -151,12 +151,18 @@ public class KeyMapManager extends Thread {
     // Lockの開始時間の連結文字列
     private String lockKeyTimeSep = "_";
 
+    // リスト構造体の先頭のValueを取得する際にKey値のList名に連結する文字列
+    private static String listDataLeftAppendStr = new String(BASE64EncoderStream.encode("+okuyama_list_LEFT".getBytes()));
+
+    // リスト構造体の後端のValueを取得する際にKey値のList名に連結する文字列
+    private static String listDataRightAppendStr = new String(BASE64EncoderStream.encode("+okuyama_list_RIGHT".getBytes()));
+ 
     // ノード復旧中のデータを一時的に蓄積する設定
     private boolean diffDataPoolingFlg = false;
     private Object diffSync = new Object();
     private List diffDataPoolingListForFileBase = null;
 
-    // 現在のKeyMapManagerの状態を"通常(1)" or "復旧中(2)" or "復旧データ取得元(3)"の3種類で管理する
+    // 現在のKeyMapManagerの状態を"通常(1)" or "復旧中(2)" or "復旧データ取得元(3)" or "強制リカバリが必要(4)"の3種類で管理する
     public int myOperationStatus = 1;
     
     // 現在のKeyMapManagerのdiffデータモード状態を"通常(1)" or "diffモード(2)"の2種類で管理する
@@ -1069,6 +1075,110 @@ public class KeyMapManager extends Thread {
 
         return ret;
     }
+
+
+    // List構造の先頭にデータの登録をおこなう
+    /**
+     * List構造の先頭にデータの登録をおこなう.<br>
+     * 現在の全てのデータの位置は一つ後ろにづれる<br>
+     *
+     * @param listName List名
+     * @param keyNode Value値
+     * @param transactionCode 
+     */
+/*    public boolean listLeftPush(String listName, String keyNode, String transactionCode) throws BatchException {
+        boolean ret = false;
+
+        if (!blocking) {
+            try {
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
+                    String listLeftKey = null;
+                    // Listの現状の先頭の値は必ずList名 + base64.encode("+okuyama_list_LEFT")で取得できる。
+                    if(this.containsKeyPair(listName + listDataLeftAppendStr)) {
+
+                        listLeftKey = keyMapObjGet(listName + listDataLeftAppendStr);
+                    }
+
+                    if (this.moveAdjustmentDataMap != null) {
+                        synchronized (this.moveAdjustmentSync) {
+                            if (this.moveAdjustmentDataMap != null && this.moveAdjustmentDataMap.containsKey(listName + listDataLeftAppendStr))
+                                this.moveAdjustmentDataMap.remove(listName + listDataLeftAppendStr);
+                        }
+                    }
+
+                    // ここから実装
+                    String listStructStr = null;
+                    if (listLeftKey == null) {
+                        // 現在はListの値は存在しない
+                        // 先頭値を入れる
+                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+                        data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
+
+                        keyMapObjPut(listName + listDataLeftAppendStr, data);
+                        listStructStr = " : "; 
+                    } else {
+                        // 既にリストは存在する
+                    }
+                    String data = null;
+                    if (keyNode.indexOf("-1") == -1) {
+
+                        data = keyNode;
+                    } else {
+
+                        String[] keyNoddes = keyNode.split(ImdstDefine.setTimeParamSep);
+                        data = keyNoddes[0] + ImdstDefine.setTimeParamSep + "0";
+                    }
+
+                    keyMapObjPut(key, data);
+                    ret = true;
+
+                    // データ操作履歴ファイルに追記
+                    if (this.workFileMemory == false) {
+                        synchronized(this.lockWorkFileSync) {
+                            if (this.workFileFlushTiming) {
+
+                                this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                                SystemUtil.diskAccessSync(this.bw);
+                                this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
+                            } else {
+
+                                this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(key).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                            }
+                        }
+                    }
+
+                    if (this.diffDataPoolingFlg) {
+                        synchronized (diffSync) {
+                            if (this.diffDataPoolingFlg) {
+
+                                this.diffDataPoolingListForFileBase.add("+" + KeyMapManager.workFileSeq + key + KeyMapManager.workFileSeq +  data);
+                            }
+                        }
+                    }
+                }
+
+                // データの書き込みを指示
+                this.writeMapFileFlg = true;
+            } catch (BatchException be) {
+                throw be;
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("setKeyPairOnlyOnce - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "setKeyPairOnlyOnce - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+        return ret;
+    }
+    */
+    
+    // Listの後端にデータの登録を行う。
+   
+    // List指定位置からデータを取り出す
+    
+    // Listの指定位置のデータを消す
 
 
     // キーを指定することでノードを削除する
@@ -3759,6 +3869,42 @@ public class KeyMapManager extends Thread {
             } catch (Exception e2) {
                 e2.printStackTrace();
             }
+        }
+    }
+
+    public void testSearch(String val){
+        try {
+            Set entrySet = this.keyMapObj.entrySet();
+
+            // KeyMapObject内のデータを1件づつ対象になるか確認
+            Iterator entryIte = entrySet.iterator(); 
+
+            // キー値を1件づつレンジに含まれているか確認
+            List retList = new ArrayList();
+
+            while(entryIte.hasNext()) {
+
+                Map.Entry obj = (Map.Entry)entryIte.next();
+                if (obj == null) continue;
+
+                // キー値を取り出し
+                String key = (String)obj.getKey();
+                if (key != null && key.indexOf("imdst_tag#9641") == -1) {
+
+                    String value = this.keyMapObjGet(key);
+                    if (value != null) {
+                        String[] valwork = value.split("!");
+                        String decodeVal = new String(BASE64DecoderStream.decode(valwork[0].getBytes()));
+//                        String decodeVal = valwork[0];
+
+                        if (decodeVal.indexOf(val) != -1) {
+                            retList.add(key);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

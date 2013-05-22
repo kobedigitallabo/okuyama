@@ -349,6 +349,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                     StatusUtil.incrExecuteMethodNo(executeMethodNo);
 
                     newKeyNodeConnectionUse = false;
+
                     switch (StatusUtil.isExecuteMethod(executeMethodNo)) {
 
                         case 0 :

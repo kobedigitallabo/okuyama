@@ -1365,6 +1365,73 @@ abstract public class AbstractMasterManagerHelper extends AbstractHelper {
 
 
     /**
+     * リカバリがパスされたため、強制リカバリが必要であることをDataNodeにマークする.<br>
+     *
+     * @param nodeName ノード名
+     * @param port ポート番号
+     * @param logger ロガー
+     */
+    protected void sendRecoverPassStatus(String nodeName, int port, ILogger logger) {
+        String connectionFullName = nodeName + ":" + port;
+
+        KeyNodeConnector keyNodeConnector = null;
+
+        String[] retParams = null;
+        boolean cacheConnectUse = false;
+
+        keyNodeConnector = null;
+        retParams = null;
+
+        try {
+
+            // 一回目のPingはCacheのコネクションを積極的に使う
+            // キャッシュが存在する場合はそこから取得
+            if (keyNodeConnectPool.containsKey(connectionFullName)) {
+                if((keyNodeConnector = (KeyNodeConnector)((ArrayBlockingQueue)keyNodeConnectPool.get(connectionFullName)).poll()) != null) {
+                    if (!checkConnectionEffective(connectionFullName, keyNodeConnector.getConnetTime())) {
+                        keyNodeConnector = null;
+                    }
+                }
+            } 
+
+            // コネクションがなければ自身で接続
+            if (keyNodeConnector == null) {
+
+                // 接続
+                keyNodeConnector = new KeyNodeConnector(nodeName, port, connectionFullName);
+                keyNodeConnector.connect(ImdstDefine.nodeConnectionOpenPingTimeout * 2);
+            }
+
+            // タイムアウト設定
+            keyNodeConnector.setSoTimeout(ImdstDefine.nodeConnectionPingTimeout * 2);
+
+            // Key値でデータノード名を保存
+            StringBuilder buf = new StringBuilder(25);
+            // パラメータ作成 処理タイプ[セパレータ]キー値のハッシュ値文字列[セパレータ]データノード名
+            buf.append("886");
+            buf.append(ImdstDefine.keyHelperClientParamSep);
+
+            // 送信
+            keyNodeConnector.println(buf.toString());
+            keyNodeConnector.flush();
+        } catch(Exception e) {
+            logger.info("Node recover pass status update - Error Node Name = [" + nodeName + "] Port [" + port + "]");
+            logger.info(e);
+            //e.printStackTrace();
+        } finally {
+            try {
+
+                if (keyNodeConnector != null) keyNodeConnector.close();
+
+            } catch(Exception e2) {
+                // 無視
+                logger.error("", e2);
+            }
+        }
+    }
+    
+    
+    /**
      * 指定されたノードが行なっているリカバリ処理を停止する.<br>
      *
      * @param nodeName ノード名
