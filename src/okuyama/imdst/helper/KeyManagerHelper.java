@@ -1976,115 +1976,113 @@ public class KeyManagerHelper extends AbstractHelper {
                     }
                 }
 
+
                 for (int idx = 0; idx < targetKeys.length; idx++) {
 
                     String key = targetKeys[idx];
 
-                    if (this.keyMapManager.containsKeyPair(key)) {
 
-                        String workValueStr = this.keyMapManager.getKeyPair(key);
-                        String[] workValues = null;
-                        String[] setTimeValues = null;
-                        String tmpValue = null;
-                        boolean matchFlg = false;
+                    String workValueStr = this.keyMapManager.getKeyPair(key);
+                    String[] workValues = null;
+                    String[] setTimeValues = null;
+                    String tmpValue = null;
+                    boolean matchFlg = false;
 
-                        // 取得した値からScriptを実行する部分だけ取り出し
-                        if (workValueStr != null) {
+                    // 取得した値からScriptを実行する部分だけ取り出し
+                    if (workValueStr != null) {
 
-                            // memcachedのプロトコルにより、フラグデータが格納されている可能性があるので左辺のみ取り出し
-                            workValues = workValueStr.split(ImdstDefine.keyHelperClientParamSep);
+                        // memcachedのプロトコルにより、フラグデータが格納されている可能性があるので左辺のみ取り出し
+                        workValues = workValueStr.split(ImdstDefine.keyHelperClientParamSep);
 
-                            // データ保存日時が記録されている場合があるので左辺のみ取り出し
-                            setTimeValues = workValues[0].split(ImdstDefine.setTimeParamSep);
-                            tmpValue = setTimeValues[0];
-                            String value = null;
+                        // データ保存日時が記録されている場合があるので左辺のみ取り出し
+                        setTimeValues = workValues[0].split(ImdstDefine.setTimeParamSep);
+                        tmpValue = setTimeValues[0];
+                        String value = null;
 
-                            // Value値を設定
-                            if (tmpValue == null || tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
-                                value = "";
-                            } else {
-                                value = new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.characterDecodeSetBySearch);
-                            }
+                        // Value値を設定
+                        if (tmpValue == null || tmpValue.equals(ImdstDefine.imdstBlankStrData)) {
+                            value = "";
+                        } else {
+                            value = new String(BASE64DecoderStream.decode(tmpValue.getBytes()), ImdstDefine.characterDecodeSetBySearch);
+                        }
 
 
-                            if (matchType.equals("1")) {
+                        if (matchType.equals("1")) {
 
-                                // AND
-                                matchFlg = true;
-                                for (int i = 0; i < matchCharacterList.length; i++) {
+                            // AND
+                            matchFlg = true;
+                            for (int i = 0; i < matchCharacterList.length; i++) {
 
-                                    if (checkType[i].equals("1")) {
-                                        // 完全一致
-                                        if(!value.equals(matchCharacterList[i])) {
+                                if (checkType[i].equals("1")) {
+                                    // 完全一致
+                                    if(!value.equals(matchCharacterList[i])) {
+                                        matchFlg = false;
+                                        break;
+                                    }
+                                } else {
+
+                                    // 完全一致以外
+                                    int checkIdx = value.indexOf(matchCharacterList[i]);
+                                    if (checkType[i].equals("2")) {
+                                        // 前方一致
+                                        if (checkIdx != 0) {
                                             matchFlg = false;
                                             break;
                                         }
                                     } else {
+                                        // 部分一致
+                                        if (checkIdx == -1) {
 
-                                        // 完全一致以外
-                                        int checkIdx = value.indexOf(matchCharacterList[i]);
-                                        if (checkType[i].equals("2")) {
-                                            // 前方一致
-                                            if (checkIdx != 0) {
-                                                matchFlg = false;
-                                                break;
-                                            }
-                                        } else {
-                                            // 部分一致
-                                            if (checkIdx == -1) {
-
-                                                matchFlg = false;
-                                                break;
-                                            }
+                                            matchFlg = false;
+                                            break;
                                         }
                                     }
                                 }
-                            } else {
+                            }
+                        } else {
 
-                                // OR
-                                matchFlg = false;
-                                for (int i = 0; i < matchCharacterList.length; i++) {
-                                    if (checkType[i].equals("1")) {
-                                        // 完全一致
-                                        if(value.equals(matchCharacterList[i])) {
+                            // OR
+                            matchFlg = false;
+                            for (int i = 0; i < matchCharacterList.length; i++) {
+                                if (checkType[i].equals("1")) {
+                                    // 完全一致
+                                    if(value.equals(matchCharacterList[i])) {
+                                        matchFlg = true;
+                                        break;
+                                    }
+                                } else {
+
+                                    // 完全一致以外
+                                    int checkIdx = value.indexOf(matchCharacterList[i]);
+                                    if (checkType[i].equals("2")) {
+                                        // 前方一致
+                                        if (checkIdx == 0) {
                                             matchFlg = true;
                                             break;
                                         }
                                     } else {
-
-                                        // 完全一致以外
-                                        int checkIdx = value.indexOf(matchCharacterList[i]);
-                                        if (checkType[i].equals("2")) {
-                                            // 前方一致
-                                            if (checkIdx == 0) {
-                                                matchFlg = true;
-                                                break;
-                                            }
-                                        } else {
-                                            // 部分一致
-                                            if (checkIdx != -1) {
-                                                matchFlg = true;
-                                                break;
-                                            }
+                                        // 部分一致
+                                        if (checkIdx != -1) {
+                                            matchFlg = true;
+                                            break;
                                         }
                                     }
-
-                                    /*if (value.indexOf(matchCharacterList[i]) != -1) {
-                                        matchFlg = true;
-                                        break;
-                                    }*/
                                 }
+
+                                /*if (value.indexOf(matchCharacterList[i]) != -1) {
+                                    matchFlg = true;
+                                    break;
+                                }*/
                             }
                         }
+                    }
 
-                        if (matchFlg) {
-                            matchKeyList.append(retSep);
-                            matchKeyList.append(key);
-                            retSep = ":";
-                        }
+                    if (matchFlg) {
+                        matchKeyList.append(retSep);
+                        matchKeyList.append(key);
+                        retSep = ":";
                     }
                 }
-
                 if (matchKeyList.length() > 0) {
                     retStrs = new String[3];
                     retStrs[0] = "50";

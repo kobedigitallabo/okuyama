@@ -65,6 +65,18 @@ public class ImdstDefine {
     // Tag値の文字列の後方カッコ
     public static final String imdstMultiRequestByteDataSep = ":#:";
 
+    // List構造体のFirst要素を表すPrefix
+    public static final String imdstListStructStartStr = "{imdst_list#1234";
+
+    // List構造体のLast要素を表すPrefix
+    public static final String imdstListStructEndStr = "{imdst_list#9876";
+
+    // List構造体の現時点での最終ポインターデータを表すPrefix
+    public static final String imdstListStructPointerPrefixStr = "{imdst_list_pointer#878685";
+
+    // List構造体の内部データを表すPrefix
+    public static final String imdstListDataPrefixStr = "{imdst_list_data#567";
+
 
     // データノードに対するKeyデータ登録時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeKeyRegistSuccessStr = "1,true";

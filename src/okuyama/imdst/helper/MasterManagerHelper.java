@@ -90,8 +90,10 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
     // MultiGetで一度に取得するデータ量
     private volatile static int maxGetSize = ImdstDefine.maxMultiGetRequestSize;
 
-    private boolean longReadTimeout = false;
+    // 全文検索時に完全一致を行う際に1度にDataNodeに依頼する件数
+    private volatile static int sendFullMatchDataSize = 5000;
 
+    private boolean longReadTimeout = false;
 
     // クライアントからのinitメソッド用返却パラメータ
     private static String[] initReturnParam = {"0", "true", new Integer(ImdstDefine.saveDataMaxSize).toString()};
@@ -2313,6 +2315,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      */
     private String[] searchValueIndex(String indexStrs, String searchType, String indexPrefix, int searchIndexLength) throws BatchException {
         //logger.debug("MasterManagerHelper - searchValueIndex - start");
+long start = System.nanoTime();
+
         String[] retStrs = new String[3];
         StringBuilder retKeysBuf = new StringBuilder();
         String retKeysSep = "";
@@ -2423,9 +2427,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 boolean fullMatchFlg = ((Boolean)fullMatchList.get(0)).booleanValue();
 
                 for (int i = 0; i < singleWordList.length; i++) {
-
                     String[] ret = this.getTagKeys(singleWordList[i], true);
-
                     if (ret[0].equals("4") && ret[1].equals("true")) {
                         // 該当あり
                         String targetKeysStr = ret[2];
@@ -2499,7 +2501,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 int cnt = 0;
                 while(entryIte.hasNext()) {
                     cnt++;
-                    if ((cnt % 5000) == 0) nodeNamePrefix++;
+                    if ((cnt % sendFullMatchDataSize) == 0) nodeNamePrefix++;
                     Map.Entry obj = (Map.Entry)entryIte.next();
                     String key = (String)obj.getKey();
 
@@ -2596,7 +2598,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                         throw inEx1;
                     }
                 }
-
 
                 // 結果を回収
                 nodeEntrySet = targetSumKeysMap.entrySet();
@@ -2728,6 +2729,8 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
             retStrs[1] = "error";
             retStrs[2] = "MasterNode - Exception";
         }
+long end = System.nanoTime();
+System.out.println("searchValue=" + ((end - start) / 1000));
 
         //logger.debug("MasterManagerHelper - searchValueIndex - end");
         return retStrs;
@@ -6359,9 +6362,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
         IOException ie = null;
 
         try {
-
             while (true) {
-
                 // 戻り値がnullの場合は何だかの理由で接続に失敗しているのでスレーブの設定がある場合は接続する
                 // スレーブの設定がない場合は、エラーとしてExceptionをthrowする
                 if (keyNodeConnector == null) {
