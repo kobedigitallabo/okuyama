@@ -871,6 +871,105 @@ public class KeyManagerHelper extends AbstractHelper {
                                 retParamBuf.append(retParams[2]);
                             }
                             break;
+                        case 51 : 
+
+                            // リスト構造を作成する
+                            String createListName = clientParameterList[1]; // List名
+                            transactionCode = clientParameterList[2]; // TransactionCode
+
+                            // メソッド呼び出し
+                            retParams = this.createListStruct(createListName, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            break;
+                        case 52 : 
+
+                            // Listの先頭に値を登録する
+                            String lPushListName = clientParameterList[1]; // List名
+                            String lPushValue =  clientParameterList[2]; // 登録する値
+                            transactionCode = clientParameterList[3]; // TransactionCode
+
+                            // メソッド呼び出し
+                            retParams = this.listLPush(lPushListName, lPushValue, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
+                        case 53 :
+
+                            // Listの後端に値を登録する
+                            String rPushListName = clientParameterList[1]; // List名
+                            String rPushValue =  clientParameterList[2]; // 登録する値
+                            transactionCode = clientParameterList[3]; // TransactionCode
+
+                            // メソッド呼び出し
+                            retParams = this.listRPush(rPushListName, rPushValue, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+
+                            break;
+                        case 54 :
+
+                            // Listの指定位置から値を取り出す
+                            String getListName = clientParameterList[1]; // List名
+                            String getIndex =  clientParameterList[2]; // index
+                            transactionCode = clientParameterList[3]; // TransactionCode
+
+                            // メソッド呼び出し
+                            retParams = this.listGetData(getListName, getIndex, null, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
+                        case 55 :
+
+                            // Listの先頭から値を取り出して削除する
+                            String lPopListName = clientParameterList[1]; // List名
+                            transactionCode = clientParameterList[2]; // TransactionCode
+
+                            // メソッド呼び出し
+                            retParams = this.listLPop(lPopListName, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
+                        case 56 :
+
+                            // Listの後端から値を取り出して削除する
+                            String rPopListName = clientParameterList[1]; // List名
+                            transactionCode = clientParameterList[2]; // TransactionCode
+
+                            // メソッド呼び出し
+                            retParams = this.listRPop(rPopListName, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
                         case 60 :
 
                             // KeyMapManagerのデータサイズを返す
@@ -2107,6 +2206,224 @@ public class KeyManagerHelper extends AbstractHelper {
         //logger.debug("KeyManagerHelper - matchTargetKeyPairValueCharacter - end");
         return retStrs;
     }
+
+
+    // リスト構造体を作成する
+    private String[] createListStruct(String listName, String transactionCode) {
+        String[] retStrs = new String[3];
+
+        try {
+            if(!this.keyMapManager.checkError()) {
+
+                this.keyMapManager.createListStruct(listName, transactionCode);
+
+                retStrs[0] = "51";
+                retStrs[1] = "true";
+                retStrs[2] = "OK";
+            } else {
+
+                retStrs[0] = "51";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:KeyMapManager - createListStruct - CheckError - NG";
+            }
+        } catch (BatchException be) {
+            logger.debug("KeyManagerHelper - createListStruct - Error = [" + listName + "]", be);
+            retStrs[0] = "51";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - createListStruct - Exception - " + be.toString();
+        }
+
+        return retStrs;
+    }
+
+    // リスト構造体の先頭に値を登録する
+    private String[] listLPush(String listName, String key, String transactionCode) {
+        String[] retStrs = new String[3];
+
+        try {
+            if(!this.keyMapManager.checkError()) {
+
+                int ret = this.keyMapManager.listLPush(listName, key, transactionCode);
+                if (ret == 0) {
+                    retStrs = new String[2]; 
+                    retStrs[0] = "52";
+                    retStrs[1] = "true";
+                } else if (ret == 1) {
+                    retStrs[0] = "52";
+                    retStrs[1] = "false";
+                    retStrs[2] = "Missing List Struct";
+                } else {
+                    retStrs[0] = "52";
+                    retStrs[1] = "false";
+                    retStrs[2] = "listLPush - Error";
+                }
+            } else {
+
+                retStrs[0] = "52";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:KeyMapManager - listLPush - CheckError - NG";
+            }
+        } catch (BatchException be) {
+            logger.debug("KeyManagerHelper - listLPush - Error = [" + listName + "]", be);
+            retStrs[0] = "52";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - listLPush - Exception - " + be.toString();
+        }
+
+        return retStrs;
+    }
+
+    // リスト構造体の後端に値を登録する
+    private String[] listRPush(String listName, String key, String transactionCode) {
+        String[] retStrs = new String[3];
+
+        try {
+            if(!this.keyMapManager.checkError()) {
+
+                int ret = this.keyMapManager.listRPush(listName, key, transactionCode);
+
+                if (ret == 0) {
+                    retStrs = new String[2];
+                    retStrs[0] = "53";
+                    retStrs[1] = "true";
+                } else if (ret == 1) {
+                    retStrs[0] = "53";
+                    retStrs[1] = "false";
+                    retStrs[2] = "Missing list struct";
+                } else if (ret == 2) {
+                    retStrs[0] = "53";
+                    retStrs[1] = "false";
+                    retStrs[2] = "listRPush - Error";
+                }
+            } else {
+
+                retStrs[0] = "53";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:KeyMapManager - listRPush - CheckError - NG";
+            }
+        } catch (BatchException be) {
+            logger.debug("KeyManagerHelper - listRPush - Error = [" + listName + "]", be);
+            retStrs[0] = "53";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - listRPush - Exception - " + be.toString();
+        }
+
+        return retStrs;
+    }
+
+
+
+    // リスト構造体の指定位置から値を取得する
+    private String[] listGetData(String listName, String index, String leftPointer, String transactionCode) {
+        String[] retStrs = new String[3];
+
+        try {
+            if(!this.keyMapManager.checkError()) {
+                String ret = null;
+                try {
+                    ret = this.keyMapManager.listGetData(listName, new Long(index), leftPointer, transactionCode);
+                } catch (NumberFormatException nfe) {
+                    logger.debug("KeyManagerHelper - listGetData - Error = [" + listName + "]", nfe);
+                    retStrs[0] = "54";
+                    retStrs[1] = "false";
+                    retStrs[2] = "NG:KeyManagerHelper - listGetData - Exception - " + nfe.toString();
+                    return retStrs;
+                }
+                if (ret != null) {
+
+                    retStrs[0] = "54";
+                    retStrs[1] = "true";
+                    retStrs[2] = ret;
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "54";
+                    retStrs[1] = "false";
+                }
+            } else {
+
+                retStrs[0] = "54";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:KeyMapManager - listGetData - CheckError - NG";
+            }
+        } catch (BatchException be) {
+            logger.debug("KeyManagerHelper - listGetData - Error = [" + listName + "]", be);
+            retStrs[0] = "54";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - listGetData - Exception - " + be.toString();
+        }
+
+        return retStrs;
+    }
+
+
+    // リスト構造体の先頭から値を取得し削除する
+    private String[] listLPop(String listName, String transactionCode) {
+        String[] retStrs = new String[3];
+
+        try {
+            if(!this.keyMapManager.checkError()) {
+
+                String ret = this.keyMapManager.listLPop(listName, transactionCode);
+                if (ret != null) {
+
+                    retStrs[0] = "55";
+                    retStrs[1] = "true";
+                    retStrs[2] = ret;
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "55";
+                    retStrs[1] = "false";
+                }
+            } else {
+
+                retStrs[0] = "55";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:KeyMapManager - listLPop - CheckError - NG";
+            }
+        } catch (BatchException be) {
+            logger.debug("KeyManagerHelper - listLPop - Error = [" + listName + "]", be);
+            retStrs[0] = "55";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - listGetData - Exception - " + be.toString();
+        }
+
+        return retStrs;
+    }
+
+    // リスト構造体の後端から値を取得し削除する
+    private String[] listRPop(String listName, String transactionCode) {
+        String[] retStrs = new String[3];
+
+        try {
+            if(!this.keyMapManager.checkError()) {
+
+                String ret = this.keyMapManager.listRPop(listName, transactionCode);
+                if (ret != null) {
+
+                    retStrs[0] = "56";
+                    retStrs[1] = "true";
+                    retStrs[2] = ret;
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "56";
+                    retStrs[1] = "false";
+                }
+            } else {
+
+                retStrs[0] = "56";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:KeyMapManager - listRPop - CheckError - NG";
+            }
+        } catch (BatchException be) {
+            logger.debug("KeyManagerHelper - listRPop - Error = [" + listName + "]", be);
+            retStrs[0] = "56";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - listRPop - Exception - " + be.toString();
+        }
+
+        return retStrs;
+    }
+
 
 
     /**

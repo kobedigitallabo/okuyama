@@ -2780,6 +2780,199 @@ public class OkuyamaClient {
     }
 
 
+
+    /**
+     * MasterNodeへバージョンチェック付きObject値登録要求をする.<br>
+     * バージョン値を使用して更新前チェックを行う.<br>
+     * 失敗した場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     * memcachedのcasに相当.<br>
+     * 
+     * @param keyStr Key値
+     * @param value Value値
+     * @param versionNo getValueVersionCheckメソッドで取得したバージョンNo
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws OkuyamaClientException
+     */
+    public String[] setObjectValueVersionCheck(String keyStr, Object value, String versionNo) throws OkuyamaClientException {
+        return setObjectValueVersionCheck(keyStr, null, value, versionNo);
+    }
+
+
+
+    /**
+     * MasterNodeへバージョンチェック付きObject値登録要求をする.<br>
+     * Tag有り.<br>
+     * バージョン値を使用して更新前チェックを行う.<br>
+     * 失敗した場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     * memcachedのcasに相当.<br>
+     * 
+     * @param keyStr Key値
+     * @param tagStrs Tag値
+     * @param value Value値
+     * @param versionNo getValueVersionCheckメソッドで取得したバージョンNo
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws OkuyamaClientException
+     */
+    public String[] setObjectValueVersionCheck(String keyStr, String[] tagStrs, Object value, String versionNo) throws OkuyamaClientException {
+        String[] ret = null; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        String encodeValue = null;
+        // 文字列バッファ初期化
+        setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        String encode = platformDefaultEncoding;
+        try {
+            // エラーチェック
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // Byte Lenghtチェック
+            if (tagStrs != null) {
+                for (int i = 0; i < tagStrs.length; i++) {
+                    if (tagStrs[i].getBytes(encode).length > maxValueSize) throw new OkuyamaClientException("Tag Max Size " + maxValueSize + " Byte");
+                }
+            }
+
+            // valueに対するサイズ、無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
+            byte[] valueBytes = null;
+            if (value != null) {
+                valueBytes = SystemUtil.normalObjectSerialize(value);
+                if (valueBytes.length > maxValueSize) 
+                    throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
+            } else {
+                
+                throw new OkuyamaClientException("The null is not admitted on a Value");
+            }
+
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.trim().equals(""))
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+
+            if (keyStr.getBytes(encode).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + maxKeySize + " Byte");
+
+
+            // ValueをBase64でエンコード
+            encodeValue = new String(this.dataEncoding(valueBytes));
+
+
+
+            // 処理番号連結
+            setValueServerReqBuf.append("16");
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            setValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes(encode))));
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+
+            // Tag連結
+            // Tag指定の有無を調べる
+            if (tagStrs == null || tagStrs.length < 1) {
+
+                // ブランク規定文字列を連結
+                setValueServerReqBuf.append(OkuyamaClient.blankStr);
+            } else {
+
+                // Tag数分連結
+                setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[0].getBytes(encode))));
+                for (int i = 1; i < tagStrs.length; i++) {
+                    setValueServerReqBuf.append(tagKeySep);
+                    setValueServerReqBuf.append(new String(this.dataEncoding(tagStrs[i].getBytes(encode))));
+                }
+            }
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            setValueServerReqBuf.append(this.transactionCode);
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // Value連結
+            setValueServerReqBuf.append(encodeValue);
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // バージョン値連結
+            setValueServerReqBuf.append(versionNo);
+
+            // サーバ送信
+            pw.println(setValueServerReqBuf.toString());
+            pw.flush();
+
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet != null && serverRet[0].equals("16")) {
+                if (serverRet[1].equals("true")) {
+
+                    // 処理成功
+                    ret = new String[1];
+                    ret[0] = "true";
+                } else{
+
+                    // 処理失敗(メッセージ格納)
+                    ret = new String[2];
+                    ret[0] = "false";
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRetStr + "]");
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setObjectValueVersionCheck(keyStr, tagStrs, value, versionNo);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setObjectValueVersionCheck(keyStr, tagStrs, value, versionNo);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.setObjectValueVersionCheck(keyStr, tagStrs, value, versionNo);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+
     /**
      * MasterNodeへデータを登録要求する(バイナリデータ).<br>
      * Tagなし.<br>
@@ -5406,6 +5599,138 @@ public class OkuyamaClient {
         }
         return ret;
     }
+
+
+    /**
+     * MasterNodeからKeyでObjectValueを取得する.<br>
+     * バージョン情報(memcachedでのcasユニーク値)を返す.<br>
+     * memcachedのgetsに相当.<br>
+     *
+     * @param keyStr Key値
+     * @return Object[] 要素1(データ有無):"true" or "false",要素2(データ):Object,要素3(VersionNo):"0始まりの数値文字列"
+     * @throws OkuyamaClientException
+     */
+    public Object[] getObjectValueVersionCheck(String keyStr) throws OkuyamaClientException {
+        Object[] ret = new Object[3];
+        String serverRetStr = null;
+        String[] serverRet = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        String encoding = platformDefaultEncoding;
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (keyStr == null ||  keyStr.trim().equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a key");
+            }
+
+            // Keyに対するLengthチェック
+            if (keyStr.getBytes(encoding).length > maxKeySize) throw new OkuyamaClientException("Save Key Max Size " + keyStr + " Byte");
+
+
+            // 処理番号連結
+            getValueServerReqBuf.append("15");
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            getValueServerReqBuf.append(new String(this.dataEncoding(keyStr.getBytes(encoding))));
+
+
+            // サーバ送信
+            pw.println(getValueServerReqBuf.toString());
+
+
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("15")) {
+                if (serverRet[1].equals("true")) {
+
+                    // データ有り
+                    ret[0] = serverRet[1];
+
+                    // Valueがブランク文字か調べる
+                    if (serverRet[2].equals(OkuyamaClient.blankStr)) {
+                        ret[1] = null;
+                    } else {
+
+                        // Value文字列をBase64でデコード
+                        ret[1] = SystemUtil.normalObjectDeserialize(this.dataDecoding(serverRet[2].getBytes()));
+                    }
+
+                    if (serverRet.length > 2)
+                        ret[2] = serverRet[3];
+
+                } else if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                    ret[2] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+
+                    if (serverRet.length > 3)
+                        ret[2] = serverRet[3];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity");
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getObjectValueVersionCheck(keyStr);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getObjectValueVersionCheck(keyStr);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.getObjectValueVersionCheck(keyStr);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+    
+    
 
     /**
      * MasterNodeへデータの加算を要求する.<br>

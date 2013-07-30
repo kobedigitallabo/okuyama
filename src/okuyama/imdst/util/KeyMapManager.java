@@ -152,7 +152,7 @@ public class KeyMapManager extends Thread {
     private String lockKeyTimeSep = "_";
 
     // リスト構造体の最初の要素を表す値を取得する場合のList名に付加する値
-    private static String listStructStarPrefix = new String(BASE64EncoderStream.encode(ImdstDefine.imdstListStructStartStr.getBytes()));
+    private static String listStructStartPrefix = new String(BASE64EncoderStream.encode(ImdstDefine.imdstListStructStartStr.getBytes()));
 
     // リスト構造体の最後の要素を表す値を取得する場合のList名に付加する値
     private static String listStructEndPrefix = new String(BASE64EncoderStream.encode(ImdstDefine.imdstListStructEndStr.getBytes()));
@@ -1102,7 +1102,7 @@ public class KeyMapManager extends Thread {
                 synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                 
                     String pointerKey = listStructPointerPrefix + listName;
-                    String key = listStructStarPrefix + listName;
+                    String key = listStructStartPrefix + listName;
                     String[] keyList = new String[2];
                     keyList[0] = key;
                     keyList[1] = listStructEndPrefix + listName;;
@@ -1156,6 +1156,7 @@ public class KeyMapManager extends Thread {
 
                     // 最後に最終位置のポインター情報を格納
                     data = "0" + ImdstDefine.setTimeParamSep + "0";
+
                     keyMapObjPut(pointerKey, data);
 
                     // データ操作履歴ファイルに追記
@@ -1217,23 +1218,35 @@ public class KeyMapManager extends Thread {
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     String pointerKey = listStructPointerPrefix + listName;
-                    String key = listStructStarPrefix + listName;
+                    String key = listStructStartPrefix + listName;
                     String[] keyList = new String[3];
-                    
+                    boolean allDataDeleted = false;
+
                     keyList[0] = key;
                     keyList[1] = listStructEndPrefix + listName;;
                     keyList[2] = listStructDataKeyPrefix + listName;
-                    
+
                     // List構造体が存在しない場合はエラー
-                    if(this.containsKeyPair(pointerKey)) {
+                    if(!this.containsKeyPair(pointerKey)) {
                         ret = 1;
                         return ret;
                     }
 
-                    // 1度もデータ入れらたことがないか確認
+
+                    // Start構造体のデータを取得/最初の要素のPointerを取得
+                    // ブランクの場合過去にデータは入れられたことはあるが、全て削除済みとなる
+                    String chkListStartStruct = this.getKeyPair(keyList[0]);
+                    if (chkListStartStruct.indexOf(ImdstDefine.imdstBlankStrData) == 0) {
+                        // 全てのデータが削除済み
+                        // 初期化状態と同じ
+                        allDataDeleted = true;
+                    }
+
+
+                    // 1度もデータ入れらたことがないか、全てのデータ削除後の初投入か確認
                     List saveDataList = new ArrayList();
                     String listPointerStruct = this.getKeyPair(pointerKey);
-                    if (listPointerStruct != null && listPointerStruct.indexOf("0") == 0) {
+                    if ((listPointerStruct != null && listPointerStruct.indexOf("0") == 0) || allDataDeleted == true) {
 
                         // 一度も入れたことがない
                         String pointerLongStr = "1";
@@ -1304,6 +1317,7 @@ public class KeyMapManager extends Thread {
                         // 登録されたデータの右隣のデータをPointerを格納
                         String rightPointerKey = newStartDataKey+"_R";
                         String rightPointerValue = nowStartDataPointer + ImdstDefine.setTimeParamSep + "0";
+
                         keyMapObjPut(rightPointerKey, rightPointerValue);
                         saveDataTmp = new String[]{rightPointerKey, rightPointerValue};
                         saveDataList.add(saveDataTmp);
@@ -1398,23 +1412,33 @@ public class KeyMapManager extends Thread {
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     String pointerKey = listStructPointerPrefix + listName;
-                    String key = listStructStarPrefix + listName;
+                    String key = listStructStartPrefix + listName;
                     String[] keyList = new String[3];
-                    
+                    boolean allDataDeleted = false;
+
                     keyList[0] = key;
                     keyList[1] = listStructEndPrefix + listName;;
                     keyList[2] = listStructDataKeyPrefix + listName;
                     
                     // List構造体が存在しない場合はエラー
-                    if(this.containsKeyPair(pointerKey)) {
+                    if(!this.containsKeyPair(pointerKey)) {
                         ret = 1;
                         return ret;
                     }
 
-                    // 1度もデータ入れらたことがないか確認
+                    // Start構造体のデータを取得/最初の要素のPointerを取得
+                    // ブランクの場合過去にデータは入れられたことはあるが、全て削除済みとなる
+                    String chkListStartStruct = this.getKeyPair(keyList[0]);
+                    if (chkListStartStruct.indexOf(ImdstDefine.imdstBlankStrData) == 0) {
+                        // 全てのデータが削除済み
+                        // 初期化状態と同じ
+                        allDataDeleted = true;
+                    }
+
+                    // 1度もデータ入れらたことがないか、全て削除の初投入か確認
                     List saveDataList = new ArrayList();
                     String listPointerStruct = this.getKeyPair(pointerKey);
-                    if (listPointerStruct != null && listPointerStruct.indexOf("0") == 0) {
+                    if ((listPointerStruct != null && listPointerStruct.indexOf("0") == 0) || allDataDeleted == true) {
 
                         // 一度も入れたことがない
                         String pointerLongStr = "1";
@@ -1491,20 +1515,21 @@ public class KeyMapManager extends Thread {
 
                         // 最後尾データの構造体を更新
                         String endDataNewStructValue = pointerLong + ImdstDefine.setTimeParamSep + "0";
-                        keyMapObjPut(keyList[0], endDataNewStructValue);
-                        saveDataTmp = new String[]{keyList[0], endDataNewStructValue};
+
+                        keyMapObjPut(keyList[1], endDataNewStructValue);
+                        saveDataTmp = new String[]{keyList[1], endDataNewStructValue};
                         saveDataList.add(saveDataTmp);
 
                         // 今までの最後尾データの右隣情報を更新する
-                        String beforEndDataLeftStructKey = nowEndDataKey+"_R";
-                        String beforEndDataLeftStructValue = pointerLong + ImdstDefine.setTimeParamSep + "0";
-                        keyMapObjPut(beforEndDataLeftStructKey, beforEndDataLeftStructValue);
-                        saveDataTmp = new String[]{beforEndDataLeftStructKey, beforEndDataLeftStructValue};
+                        String beforEndDataRightStructKey = nowEndDataKey+"_R";
+                        String beforEndDataRightStructValue = pointerLong + ImdstDefine.setTimeParamSep + "0";
+                        keyMapObjPut(beforEndDataRightStructKey, beforEndDataRightStructValue);
+                        saveDataTmp = new String[]{beforEndDataRightStructKey, beforEndDataRightStructValue};
                         saveDataList.add(saveDataTmp);
 
                         // 進めたpointerを格納
-                        keyMapObjPut(pointerKey, beforEndDataLeftStructValue);
-                        saveDataTmp = new String[]{pointerKey, beforEndDataLeftStructValue};
+                        keyMapObjPut(pointerKey, beforEndDataRightStructValue);
+                        saveDataTmp = new String[]{pointerKey, beforEndDataRightStructValue};
                         saveDataList.add(saveDataTmp);
                     }
 
@@ -1580,7 +1605,7 @@ public class KeyMapManager extends Thread {
 
                 String pointerKey = listStructPointerPrefix + listName;
                 // List構造体が存在しない場合はエラー
-                if(this.containsKeyPair(pointerKey)) {
+                if(!this.containsKeyPair(pointerKey)) {
                     return ret;
                 }
 
@@ -1588,7 +1613,7 @@ public class KeyMapManager extends Thread {
                 if (leftPointer == null) {
 
                     // 取得データの左辺のPointerが指定されていない場合はループして取得データのKeyを求める
-                    String listStartStruct = this.getKeyPair(listStructStarPrefix + listName);
+                    String listStartStruct = this.getKeyPair(listStructStartPrefix + listName);
                     String keyPrefix = listStructDataKeyPrefix + listName;
 
                     listDataKey = keyPrefix + ((String[])(listStartStruct.split(ImdstDefine.setTimeParamSep)))[0];
@@ -1607,7 +1632,7 @@ public class KeyMapManager extends Thread {
 
                         // 指定されて左辺のデータが取得できない
                         // 先頭からループ処理し指定位置まで進める
-                        String listStartStruct = this.getKeyPair(listStructStarPrefix + listName);
+                        String listStartStruct = this.getKeyPair(listStructStartPrefix + listName);
                         listDataKey = keyPrefix + ((String[])(listStartStruct.split(ImdstDefine.setTimeParamSep)))[0];
 
                         for (int createKeyIdx = 1; createKeyIdx <= index; createKeyIdx++) {
@@ -1651,7 +1676,7 @@ public class KeyMapManager extends Thread {
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     String pointerKey = listStructPointerPrefix + listName;
-                    String key = listStructStarPrefix + listName;
+                    String key = listStructStartPrefix + listName;
                     String[] keyList = new String[3];
                     
                     keyList[0] = key; // Start構造体のKey
@@ -1659,7 +1684,7 @@ public class KeyMapManager extends Thread {
                     keyList[2] = listStructDataKeyPrefix + listName; // Data構造体のKeyのベース部分
 
                     // List構造体が存在しない場合はエラー
-                    if(this.containsKeyPair(pointerKey)) {
+                    if(!this.containsKeyPair(pointerKey)) {
                         ret = null;
                         return ret;
                     }
@@ -1772,7 +1797,145 @@ public class KeyMapManager extends Thread {
     }
 
 
+    /**
+     * List構造の後端にデータの取得後、削除をおこなう.<br>
+     * List構造体が登録されていない場合はエラー<br>
+     *
+     * @param listName List名
+     * @param transactionCode 
+     * @return 指定要素<br>存在しない場合はnull
+     * @throw BatchException
+     */
+    public String listRPop(String listName, String transactionCode) throws BatchException {
+        String ret = null;
 
+        if (!blocking) {
+            try {
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
+                    String pointerKey = listStructPointerPrefix + listName;
+                    String[] keyList = new String[3];
+                    
+                    String key = listStructStartPrefix + listName;
+                    keyList[0] = key; // Start構造体のKey
+                    keyList[1] = listStructEndPrefix + listName; // End構造体のKey
+                    keyList[2] = listStructDataKeyPrefix + listName; // Data構造体のKeyのベース部分
+
+                    // List構造体が存在しない場合はエラー
+                    if(!this.containsKeyPair(pointerKey)) {
+                        ret = null;
+                        return ret;
+                    }
+
+                    // Start構造体のデータを取得/最初の要素のPointerを取得
+                    String listStartStruct = this.getKeyPair(keyList[0]);
+                    if (listStartStruct.indexOf(ImdstDefine.imdstBlankStrData) == 0) {
+                        // 先頭要素なし
+                        // リスト初期化直後など
+                        return null;
+                    }
+
+                    // 一旦現在の最後尾データ構造体データを取得
+                    String listEndStruct = this.getKeyPair(keyList[1]);
+
+                    // 現在の最後尾データのPointerを使って最後尾データのKeyを作成
+                    String nowEndDataPointer = ((String[])listEndStruct.split(ImdstDefine.setTimeParamSep))[0];
+                    String nowEndDataKey = keyList[2] + nowEndDataPointer;
+                    ret = this.getKeyPair(nowEndDataKey);
+                    if (ret == null) {
+                        return null;
+                    }
+
+                    // 最後の要素の左辺のポインターを取得
+                    String nowEndDataLeftPointerKey = nowEndDataKey + "_L";
+                    String nowEndDataLeftPointer = this.getKeyPair(nowEndDataLeftPointerKey);
+
+                    String[] saveDataTmp = null;
+                    List saveDataList = new ArrayList();
+                    // 左辺があるか確認
+                    if (nowEndDataLeftPointer != null && nowEndDataLeftPointer.indexOf(ImdstDefine.imdstBlankStrData) != 0) {
+                        // 左辺がある
+                        // End構造体のデータに最後のデータの左辺のポインターを入れて更新
+                        keyMapObjPut(keyList[1], nowEndDataLeftPointer);
+                        saveDataTmp = new String[]{keyList[1], nowEndDataLeftPointer};
+                        saveDataList.add(saveDataTmp);
+
+                        // 最後のデータの左辺のデータが持つ右辺のポインターを(B)に更新
+                        String[] newEndDataPointer = nowEndDataLeftPointer.split(ImdstDefine.setTimeParamSep);
+                        String newEndDataRightPointerKey = keyList[2] + newEndDataPointer[0] + "_R";
+                        String newEndDataRightPointerValue = ImdstDefine.imdstBlankStrData + ImdstDefine.setTimeParamSep + "0";
+                        keyMapObjPut(newEndDataRightPointerKey, newEndDataRightPointerValue);
+                        saveDataTmp = new String[]{newEndDataRightPointerKey, newEndDataRightPointerValue};
+                        saveDataList.add(saveDataTmp);
+                    } else {
+                    
+                        // 左辺がない
+                        // Start構造体のデータに最初のデータを(B)へ更新
+                        String newStartStructValue = ImdstDefine.imdstBlankStrData + ImdstDefine.setTimeParamSep + "0";
+                        keyMapObjPut(keyList[0], newStartStructValue);
+                        saveDataTmp = new String[]{keyList[0], newStartStructValue};
+                        saveDataList.add(saveDataTmp);
+
+                        // End構造体のデータに最初のデータを(B)へ更新
+                        String newEndStructValue = ImdstDefine.imdstBlankStrData + ImdstDefine.setTimeParamSep + "0";
+                        keyMapObjPut(keyList[1], newEndStructValue);
+                        saveDataTmp = new String[]{keyList[1], newEndStructValue};
+                        saveDataList.add(saveDataTmp);
+                    }
+
+                    // ここまでの登録、削除を記録
+                    for (int idx = 0; idx < saveDataList.size(); idx++) {
+
+                        String[] saveData = (String[])saveDataList.get(idx);
+                        if (this.moveAdjustmentDataMap != null) {
+                            synchronized (this.moveAdjustmentSync) {
+                                if (this.moveAdjustmentDataMap != null && this.moveAdjustmentDataMap.containsKey(saveData[0]))
+                                    this.moveAdjustmentDataMap.remove(saveData[0]);
+                            }
+                        }
+    
+                        // データ操作履歴ファイルに追記
+                        if (this.workFileMemory == false) {
+                            synchronized(this.lockWorkFileSync) {
+                                if (this.workFileFlushTiming) {
+                                    this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(saveData[0]).append(KeyMapManager.workFileSeq).append(saveData[1]).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                                    SystemUtil.diskAccessSync(this.bw);
+                                    this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
+                                } else {
+                                    this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(saveData[0]).append(KeyMapManager.workFileSeq).append(saveData[1]).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                                }
+                            }
+                        }
+    
+                        if (this.diffDataPoolingFlg) {
+                            synchronized (diffSync) {
+                                if (this.diffDataPoolingFlg) {
+                                    this.diffDataPoolingListForFileBase.add("+" + KeyMapManager.workFileSeq + saveData[0] + KeyMapManager.workFileSeq +  saveData[1]);
+                                }
+                            }
+                        }
+                    }
+
+                    // 最初のデータのValueと左辺、右辺を削除
+                    this.removeKeyPair(nowEndDataKey, transactionCode);
+                    this.removeKeyPair(nowEndDataLeftPointerKey, transactionCode);
+                    this.removeKeyPair(nowEndDataKey + "_R", transactionCode);
+                }
+
+                // データの書き込みを指示
+                this.writeMapFileFlg = true;
+            } catch (BatchException be) {
+                throw be;
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("listRPop - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "listRPop - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+        return ret;
+    }
     // Listの指定位置のデータを消す
 
 
