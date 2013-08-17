@@ -160,6 +160,9 @@ public class KeyMapManager extends Thread {
     // リスト構造体の現在の最大Pointerの表す値を取得する場合のList名に付加する値
     private static String listStructPointerPrefix = new String(BASE64EncoderStream.encode(ImdstDefine.imdstListStructPointerPrefixStr.getBytes()));
 
+    // リスト構造体の現在のサイズの表す値を取得する場合のList名に付加する値
+    private static String listStructSizePrefix = new String(BASE64EncoderStream.encode(ImdstDefine.imdstListStructSizePrefixStr.getBytes()));
+
     // リスト構造体のList内の値を格納するKeyのPrefix
     private static String listStructDataKeyPrefix = new String(BASE64EncoderStream.encode(ImdstDefine.imdstListDataPrefixStr.getBytes()));
 
@@ -1090,24 +1093,28 @@ public class KeyMapManager extends Thread {
      * 既に作成済みの場合は失敗となる<br>
      *
      * @param listName List名
+     * @param compulsiveFlg 強制作成フラグ
      * @param transactionCode 
-     * @return 成否
+     * @return 処理ステータス 0=成功 1=失敗 2=既に存在する
      * @throw BatchException
      */
-    public boolean createListStruct(String listName, String transactionCode) throws BatchException {
-        boolean ret = false;
+    public int createListStruct(String listName, boolean compulsiveFlg, String transactionCode) throws BatchException {
+        int ret = 1;
         if (!blocking) {
             try {
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                 
                     String pointerKey = listStructPointerPrefix + listName;
+                    String sizeKey = listStructSizePrefix + listName;
                     String key = listStructStartPrefix + listName;
                     String[] keyList = new String[2];
                     keyList[0] = key;
                     keyList[1] = listStructEndPrefix + listName;;
 
-                    if(this.containsKeyPair(pointerKey)) {
+                    if(compulsiveFlg == false && this.containsKeyPair(pointerKey)) {
+                        // 既に作成済み
+                        ret = 2;
                         return ret;
                     }
 
@@ -1121,6 +1128,9 @@ public class KeyMapManager extends Thread {
 
                             if (this.moveAdjustmentDataMap != null && this.moveAdjustmentDataMap.containsKey(pointerKey))
                                 this.moveAdjustmentDataMap.remove(pointerKey);
+
+                            if (this.moveAdjustmentDataMap != null && this.moveAdjustmentDataMap.containsKey(sizeKey))
+                                this.moveAdjustmentDataMap.remove(sizeKey);
                         }
                     }
 
@@ -1154,7 +1164,7 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-                    // 最後に最終位置のポインター情報を格納
+                    // 最終位置のポインター情報を格納
                     data = "0" + ImdstDefine.setTimeParamSep + "0";
 
                     keyMapObjPut(pointerKey, data);
@@ -1182,7 +1192,36 @@ public class KeyMapManager extends Thread {
                         }
                     }
 
-                    ret = true;
+
+                    // リストサイズ情報を格納
+                    data = "0" + ImdstDefine.setTimeParamSep + "0";
+
+                    keyMapObjPut(sizeKey, data);
+
+                    // データ操作履歴ファイルに追記
+                    if (this.workFileMemory == false) {
+                        synchronized(this.lockWorkFileSync) {
+                            if (this.workFileFlushTiming) {
+
+                                this.bw.write(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(sizeKey).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                                SystemUtil.diskAccessSync(this.bw);
+                                this.checkTransactionLogWriterLimit(this.tLogWriteCount.incrementAndGet());
+                            } else {
+
+                                this.dataTransactionFileFlushDaemon.addDataTransaction(new StringBuilder(ImdstDefine.stringBufferSmall_2Size).append("+").append(KeyMapManager.workFileSeq).append(sizeKey).append(KeyMapManager.workFileSeq).append(data).append(KeyMapManager.workFileSeq).append(JavaSystemApi.currentTimeMillis).append(KeyMapManager.workFileSeq).append(KeyMapManager.workFileEndPoint).append("\n").toString());
+                            }
+                        }
+                    }
+
+                    if (this.diffDataPoolingFlg) {
+                        synchronized (diffSync) {
+                            if (this.diffDataPoolingFlg) {
+                                this.diffDataPoolingListForFileBase.add("+" + KeyMapManager.workFileSeq + sizeKey + KeyMapManager.workFileSeq +  data);
+                            }
+                        }
+                    }
+
+                    ret = 0;
                 }
                 // データの書き込みを指示
                 this.writeMapFileFlg = true;
@@ -1218,6 +1257,8 @@ public class KeyMapManager extends Thread {
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     String pointerKey = listStructPointerPrefix + listName;
+                    String sizeKey = listStructSizePrefix + listName;
+
                     String key = listStructStartPrefix + listName;
                     String[] keyList = new String[3];
                     boolean allDataDeleted = false;
@@ -1341,6 +1382,19 @@ public class KeyMapManager extends Thread {
                         saveDataList.add(saveDataTmp);
                     }
 
+                    // Listサイズをインクリメント
+                    String nowSizeRet = keyMapObjGet(sizeKey);
+                    if (nowSizeRet == null) throw new BatchException("List size not found error");
+                    String[] nowSizeRetSplit = nowSizeRet.split(ImdstDefine.setTimeParamSep); 
+                    long listSizeLong = new Long(nowSizeRetSplit[0]).longValue();
+                    listSizeLong++;
+                    String nextSize = listSizeLong + ImdstDefine.setTimeParamSep + "0";
+                    keyMapObjPut(sizeKey, nextSize);
+                    String[] saveSizeDataTmp = new String[]{sizeKey, nextSize};
+                    saveDataList.add(saveSizeDataTmp);
+
+
+                    // 以降操作記録ログへの書き込み処理
                     for (int idx = 0; idx < saveDataList.size(); idx++) {
 
                         String[] saveData = (String[])saveDataList.get(idx);
@@ -1412,6 +1466,7 @@ public class KeyMapManager extends Thread {
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     String pointerKey = listStructPointerPrefix + listName;
+                    String sizeKey = listStructSizePrefix + listName;
                     String key = listStructStartPrefix + listName;
                     String[] keyList = new String[3];
                     boolean allDataDeleted = false;
@@ -1533,6 +1588,20 @@ public class KeyMapManager extends Thread {
                         saveDataList.add(saveDataTmp);
                     }
 
+                    // Listサイズをインクリメント
+                    String nowSizeRet = keyMapObjGet(sizeKey);
+                    if (nowSizeRet == null) throw new BatchException("List size not found error");
+                    String[] nowSizeRetSplit = nowSizeRet.split(ImdstDefine.setTimeParamSep); 
+                    long listSizeLong = new Long(nowSizeRetSplit[0]).longValue();
+                    listSizeLong++;
+                    String nextSize = listSizeLong + ImdstDefine.setTimeParamSep + "0";
+
+                    keyMapObjPut(sizeKey, nextSize);
+                    String[] saveSizeDataTmp = new String[]{sizeKey, nextSize};
+                    saveDataList.add(saveSizeDataTmp);
+
+
+                    // 以降操作記録ログへの書き込み処理
                     for (int idx = 0; idx < saveDataList.size(); idx++) {
 
                         String[] saveData = (String[])saveDataList.get(idx);
@@ -1676,6 +1745,7 @@ public class KeyMapManager extends Thread {
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     String pointerKey = listStructPointerPrefix + listName;
+                    String sizeKey = listStructSizePrefix + listName;
                     String key = listStructStartPrefix + listName;
                     String[] keyList = new String[3];
                     
@@ -1741,6 +1811,18 @@ public class KeyMapManager extends Thread {
                         saveDataTmp = new String[]{keyList[1], newEndStructValue};
                         saveDataList.add(saveDataTmp);
                     }
+
+                    // Listサイズをデクリメント
+                    String nowSizeRet = keyMapObjGet(sizeKey);
+                    if (nowSizeRet == null) throw new BatchException("List size not found error");
+                    String[] nowSizeRetSplit = nowSizeRet.split(ImdstDefine.setTimeParamSep); 
+                    long listSizeLong = new Long(nowSizeRetSplit[0]).longValue();
+                    listSizeLong--;
+                    String nextSize = listSizeLong + ImdstDefine.setTimeParamSep + "0";
+                    keyMapObjPut(sizeKey, nextSize);
+                    saveDataTmp = new String[]{sizeKey, nextSize};
+                    saveDataList.add(saveDataTmp);
+
 
                     // ここまでの登録、削除を記録
                     for (int idx = 0; idx < saveDataList.size(); idx++) {
@@ -1814,6 +1896,7 @@ public class KeyMapManager extends Thread {
                 // このsynchroの方法は正しくないきがするが。。。
                 synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
                     String pointerKey = listStructPointerPrefix + listName;
+                    String sizeKey = listStructSizePrefix + listName;
                     String[] keyList = new String[3];
                     
                     String key = listStructStartPrefix + listName;
@@ -1883,6 +1966,17 @@ public class KeyMapManager extends Thread {
                         saveDataList.add(saveDataTmp);
                     }
 
+                    // Listサイズをデクリメント
+                    String nowSizeRet = keyMapObjGet(sizeKey);
+                    if (nowSizeRet == null) throw new BatchException("List size not found error");
+                    String[] nowSizeRetSplit = nowSizeRet.split(ImdstDefine.setTimeParamSep); 
+                    long listSizeLong = new Long(nowSizeRetSplit[0]).longValue();
+                    listSizeLong--;
+                    String nextSize = listSizeLong + ImdstDefine.setTimeParamSep + "0";
+                    keyMapObjPut(sizeKey, nextSize);
+                    saveDataTmp = new String[]{sizeKey, nextSize};
+                    saveDataList.add(saveDataTmp);
+
                     // ここまでの登録、削除を記録
                     for (int idx = 0; idx < saveDataList.size(); idx++) {
 
@@ -1936,6 +2030,52 @@ public class KeyMapManager extends Thread {
         }
         return ret;
     }
+
+
+    /**
+     * 現在のList構造体のサイズを返す.<br>
+     *
+     * @param listName リスト名
+     * @param transactionCode
+     * @return サイズ
+     * @throws BatchException Size構造体が存在しない場合
+     */
+    public String listLen(String listName, String transactionCode) throws BatchException {
+        String ret = null;
+
+        if (!blocking) {
+            try {
+                // このsynchroの方法は正しくないきがするが。。。
+                synchronized(this.parallelSyncObjs[((listName.hashCode() << 1) >>> 1) % KeyMapManager.parallelSize]) {
+                    String pointerKey = listStructPointerPrefix + listName;
+                    String sizeKey = listStructSizePrefix + listName;
+
+                    // List構造体が存在しない場合はエラー
+                    if(!this.containsKeyPair(pointerKey)) {
+                        ret = null;
+                        return ret;
+                    }
+
+
+                    // Listサイズをデクリメント
+                    String nowSizeRet = keyMapObjGet(sizeKey);
+                    if (nowSizeRet == null) throw new BatchException("List size not found error");
+                    String[] nowSizeRetSplit = nowSizeRet.split(ImdstDefine.setTimeParamSep); 
+                    ret = nowSizeRetSplit[0];
+                }
+            } catch (BatchException be) {
+                throw be;
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("listLen - Error");
+                blocking = true;
+                StatusUtil.setStatusAndMessage(1, "listLen - Error [" + e.getMessage() + "]");
+                throw new BatchException(e);
+            }
+        }
+        return ret;
+    }
+
     // Listの指定位置のデータを消す
 
 
@@ -3285,8 +3425,13 @@ public class KeyMapManager extends Thread {
                         if (obj == null) continue;
                         String key = null;
                         key = (String)obj.getKey();
-                        pw.println(key);
-                        pw.flush();
+                        try {
+                            String decodeKey = new String(BASE64DecoderStream.decode(key.getBytes()));
+                            if (decodeKey.indexOf("{imdst_") != 0) {
+                                pw.println(decodeKey);
+                                pw.flush();
+                            }
+                        } catch(Exception ee){}
                     }
 
                     pw.println("-1");

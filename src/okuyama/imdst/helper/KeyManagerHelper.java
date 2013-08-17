@@ -874,14 +874,23 @@ public class KeyManagerHelper extends AbstractHelper {
                         case 51 : 
 
                             // リスト構造を作成する
+                            boolean compulsiveFlg = false;
                             String createListName = clientParameterList[1]; // List名
                             transactionCode = clientParameterList[2]; // TransactionCode
+                            if (clientParameterList.length > 3 && clientParameterList[3].equals("1")) {
+                                compulsiveFlg = true;    // 強制作成
+                            }
 
                             // メソッド呼び出し
-                            retParams = this.createListStruct(createListName, transactionCode);
+                            retParams = this.createListStruct(createListName, compulsiveFlg, transactionCode);
                             retParamBuf.append(retParams[0]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[1]);
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+
                             break;
                         case 52 : 
 
@@ -901,7 +910,6 @@ public class KeyManagerHelper extends AbstractHelper {
                             }
                             break;
                         case 53 :
-
                             // Listの後端に値を登録する
                             String rPushListName = clientParameterList[1]; // List名
                             String rPushValue =  clientParameterList[2]; // 登録する値
@@ -916,7 +924,6 @@ public class KeyManagerHelper extends AbstractHelper {
                                 retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                                 retParamBuf.append(retParams[2]);
                             }
-
                             break;
                         case 54 :
 
@@ -935,6 +942,7 @@ public class KeyManagerHelper extends AbstractHelper {
                                 retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                                 retParamBuf.append(retParams[2]);
                             }
+
                             break;
                         case 55 :
 
@@ -961,6 +969,24 @@ public class KeyManagerHelper extends AbstractHelper {
 
                             // メソッド呼び出し
                             retParams = this.listRPop(rPopListName, transactionCode);
+                            retParamBuf.append(retParams[0]);
+                            retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                            retParamBuf.append(retParams[1]);
+
+                            if (retParams.length > 2) {
+                                retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
+                                retParamBuf.append(retParams[2]);
+                            }
+                            break;
+
+                        case 57 :
+
+                            // Listサイズを取得する
+                            String lenListName = clientParameterList[1]; // List名
+                            transactionCode = clientParameterList[2]; // TransactionCode
+
+                            // メソッド呼び出し
+                            retParams = this.listLen(lenListName, transactionCode);
                             retParamBuf.append(retParams[0]);
                             retParamBuf.append(ImdstDefine.keyHelperClientParamSep);
                             retParamBuf.append(retParams[1]);
@@ -1186,6 +1212,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     closeFlg = true;
                     reloopSameClient = false;
                 } catch (ArrayIndexOutOfBoundsException aie) {
+aie.printStackTrace();
                     logger.error("KeyManagerHelper No Method_1 =[" + clientParameterList[0] + "]");
                     reloopSameClient = false;
                 } catch (NumberFormatException nfe) {
@@ -2209,27 +2236,45 @@ public class KeyManagerHelper extends AbstractHelper {
 
 
     // リスト構造体を作成する
-    private String[] createListStruct(String listName, String transactionCode) {
+    private String[] createListStruct(String listName, boolean compulsiveFlg, String transactionCode) {
         String[] retStrs = new String[3];
 
         try {
-            if(!this.keyMapManager.checkError()) {
+            if (listName.length() < ImdstDefine.saveKeyMaxSize) {
 
-                this.keyMapManager.createListStruct(listName, transactionCode);
-
-                retStrs[0] = "51";
-                retStrs[1] = "true";
-                retStrs[2] = "OK";
+                if(!this.keyMapManager.checkError()) {
+                    int retSts = this.keyMapManager.createListStruct(listName, compulsiveFlg, transactionCode);
+    
+                    if (retSts == 0) {
+    
+                        retStrs[0] = "51";
+                        retStrs[1] = "true";
+                        retStrs[2] = "OK";
+                    } else if (retSts == 2) {
+                        // 既に存在する
+                        retStrs[0] = "51";
+                        retStrs[1] = "false";
+                        retStrs[2] = "ListName=[" + listName + "] already exists";
+                    } else if (retSts == 1) {
+                        retStrs[0] = "51";
+                        retStrs[1] = "false";
+                        retStrs[2] = "ListName=[" + listName + "] create error";
+                    }
+                } else {
+    
+                    retStrs[0] = "51";
+                    retStrs[1] = "error";
+                    retStrs[2] = "NG:KeyMapManager - createListStruct - CheckError - NG";
+                }
             } else {
-
                 retStrs[0] = "51";
                 retStrs[1] = "false";
-                retStrs[2] = "NG:KeyMapManager - createListStruct - CheckError - NG";
+                retStrs[2] = "List name max length error";
             }
         } catch (BatchException be) {
             logger.debug("KeyManagerHelper - createListStruct - Error = [" + listName + "]", be);
             retStrs[0] = "51";
-            retStrs[1] = "false";
+            retStrs[1] = "error";
             retStrs[2] = "NG:KeyManagerHelper - createListStruct - Exception - " + be.toString();
         }
 
@@ -2260,13 +2305,13 @@ public class KeyManagerHelper extends AbstractHelper {
             } else {
 
                 retStrs[0] = "52";
-                retStrs[1] = "false";
+                retStrs[1] = "error";
                 retStrs[2] = "NG:KeyMapManager - listLPush - CheckError - NG";
             }
         } catch (BatchException be) {
             logger.debug("KeyManagerHelper - listLPush - Error = [" + listName + "]", be);
             retStrs[0] = "52";
-            retStrs[1] = "false";
+            retStrs[1] = "error";
             retStrs[2] = "NG:KeyManagerHelper - listLPush - Exception - " + be.toString();
         }
 
@@ -2298,13 +2343,13 @@ public class KeyManagerHelper extends AbstractHelper {
             } else {
 
                 retStrs[0] = "53";
-                retStrs[1] = "false";
+                retStrs[1] = "error";
                 retStrs[2] = "NG:KeyMapManager - listRPush - CheckError - NG";
             }
         } catch (BatchException be) {
             logger.debug("KeyManagerHelper - listRPush - Error = [" + listName + "]", be);
             retStrs[0] = "53";
-            retStrs[1] = "false";
+            retStrs[1] = "error";
             retStrs[2] = "NG:KeyManagerHelper - listRPush - Exception - " + be.toString();
         }
 
@@ -2342,13 +2387,13 @@ public class KeyManagerHelper extends AbstractHelper {
             } else {
 
                 retStrs[0] = "54";
-                retStrs[1] = "false";
+                retStrs[1] = "error";
                 retStrs[2] = "NG:KeyMapManager - listGetData - CheckError - NG";
             }
         } catch (BatchException be) {
             logger.debug("KeyManagerHelper - listGetData - Error = [" + listName + "]", be);
             retStrs[0] = "54";
-            retStrs[1] = "false";
+            retStrs[1] = "error";
             retStrs[2] = "NG:KeyManagerHelper - listGetData - Exception - " + be.toString();
         }
 
@@ -2377,13 +2422,13 @@ public class KeyManagerHelper extends AbstractHelper {
             } else {
 
                 retStrs[0] = "55";
-                retStrs[1] = "false";
+                retStrs[1] = "error";
                 retStrs[2] = "NG:KeyMapManager - listLPop - CheckError - NG";
             }
         } catch (BatchException be) {
             logger.debug("KeyManagerHelper - listLPop - Error = [" + listName + "]", be);
             retStrs[0] = "55";
-            retStrs[1] = "false";
+            retStrs[1] = "error";
             retStrs[2] = "NG:KeyManagerHelper - listGetData - Exception - " + be.toString();
         }
 
@@ -2411,19 +2456,53 @@ public class KeyManagerHelper extends AbstractHelper {
             } else {
 
                 retStrs[0] = "56";
-                retStrs[1] = "false";
+                retStrs[1] = "error";
                 retStrs[2] = "NG:KeyMapManager - listRPop - CheckError - NG";
             }
         } catch (BatchException be) {
             logger.debug("KeyManagerHelper - listRPop - Error = [" + listName + "]", be);
             retStrs[0] = "56";
-            retStrs[1] = "false";
+            retStrs[1] = "error";
             retStrs[2] = "NG:KeyManagerHelper - listRPop - Exception - " + be.toString();
         }
 
         return retStrs;
     }
 
+
+    // リスト構造体のサイズを取得する
+    private String[] listLen(String listName, String transactionCode) {
+        String[] retStrs = new String[3];
+
+        try {
+            if(!this.keyMapManager.checkError()) {
+
+                String ret = this.keyMapManager.listLen(listName, transactionCode);
+                if (ret != null) {
+
+                    retStrs[0] = "57";
+                    retStrs[1] = "true";
+                    retStrs[2] = ret;
+                } else {
+                    retStrs = new String[2];
+                    retStrs[0] = "57";
+                    retStrs[1] = "false";
+                }
+            } else {
+
+                retStrs[0] = "57";
+                retStrs[1] = "false";
+                retStrs[2] = "NG:KeyMapManager - listLen - CheckError - NG";
+            }
+        } catch (BatchException be) {
+            logger.debug("KeyManagerHelper - listLen - Error = [" + listName + "]", be);
+            retStrs[0] = "57";
+            retStrs[1] = "false";
+            retStrs[2] = "NG:KeyManagerHelper - listLen - Exception - " + be.toString();
+        }
+
+        return retStrs;
+    }
 
 
     /**

@@ -74,6 +74,9 @@ public class ImdstDefine {
     // List構造体の現時点での最終ポインターデータを表すPrefix
     public static final String imdstListStructPointerPrefixStr = "{imdst_list_pointer#878685";
 
+    // List構造体の現時点でのリストサイズを表すPrefix
+    public static final String imdstListStructSizePrefixStr = "{imdst_list_size#848382";
+
     // List構造体の内部データを表すPrefix
     public static final String imdstListDataPrefixStr = "{imdst_list_data#567";
 
@@ -95,6 +98,9 @@ public class ImdstDefine {
 
     // データノードに対するKeyデータ登録時にバージョン値が変わっている場合のエラーメッセージ
     public static final String keyNodeKeyUpdatedErrMsg = "NG:Data has already been updated";
+
+    // 既にリスト構造体が存在する場合のエラーメッセージ
+    public static final String keyNodeListCreateErrMsg = "NG:List already exists";
 
     // データノードに対するKeyデータ削除時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeKeyRemoveSuccessStr = "5,true";
@@ -120,6 +126,20 @@ public class ImdstDefine {
     // データノードに対するKeyに紐付くTagデータ削除時に失敗した場合の返却文字列の先頭部分
     public static final String keyNodeTgaInKeyRemoveNotFoundStr = "40,false";
 
+    // データノードに対するList構造体作成時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeListStructCreateSuccessStr = "51,true";
+
+    // データノードに対するList構造体へにLPUSH時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeLPushSuccessStr = "52,true";
+
+    // データノードに対するList構造体へにRPUSH時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeRPushSuccessStr = "53,true";
+
+    // データノードに対するList構造体へにLPOP時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeLPopSuccessStr = "55,true";
+
+    // データノードに対するList構造体へにLPOP時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeLPopNullStr = "55,false";
 
     // MasterNodeのgetMultiValueを呼び出した際のClientへの戻り値
     public static final String getMultiEndOfDataStr = "END";
