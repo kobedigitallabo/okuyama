@@ -33,7 +33,6 @@ public class TestSock {
                 System.exit(0);
             }
 
-
             if (args[0].equals("1")) {
 
                 int port = Integer.parseInt(args[2]);
@@ -542,22 +541,6 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
-            } else if (args[0].equals("3.1")) {
-                int port = Integer.parseInt(args[2]);
-                // OkuyamaClientを使用してデータを保存(Tagあり)
-                OkuyamaClient okuyamaClient = new OkuyamaClient();
-                okuyamaClient.connect(args[1], port);
-                String[] setTag = args[4].split(" ");
-
-                int counter = 0;
-                String keyStr = null;
-
-                long start = new Date().getTime();
-                okuyamaClient.setValue(args[3], setTag, args[5]);
-                long end = new Date().getTime();
-                System.out.println((end - start) + "milli second");
-
-                okuyamaClient.close();
             } else if (args[0].equals("3.2")) {
                 int port = Integer.parseInt(args[2]);
                 // OkuyamaClientを使用してデータを保存(Tagあり)
@@ -572,6 +555,22 @@ public class TestSock {
                 for (int idx = 0; idx < Integer.parseInt(args[4]); idx++)  {
                     okuyamaClient.setValue(new Integer(idx).toString(), setTag, new Integer(idx).toString());
                 }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
+            } else if (args[0].equals("3.3")) {
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを保存(Tagあり)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] setTag = args[4].split(" ");
+
+                int counter = 0;
+                String keyStr = null;
+
+                long start = new Date().getTime();
+                okuyamaClient.setValue(args[3], setTag, args[5]);
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
@@ -616,7 +615,39 @@ public class TestSock {
                     }
                 }
                 okuyamaClient.close();
+            } else if (args[0].equals("4.1")) {
 
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータを取得(Tagでの取得)
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+
+                String[] keys = null;
+                boolean noExistsData = true;
+                if (args.length > 5) noExistsData = new Boolean(args[5]).booleanValue();
+
+                long start = new Date().getTime();
+                for (int i = 0; i < Integer.parseInt(args[3]); i++) {
+
+                    Object[] ret = okuyamaClient.getTagKeys(args[4], noExistsData, false);
+                    long end = new Date().getTime();
+                    System.out.println((end - start));
+
+                    if (ret[0].equals("true")) {
+                        // データ有り
+                        keys = (String[])ret[1];
+                        System.out.println("ResultCount=" + keys.length);
+                        /*for (int idx = 0; idx < keys.length; idx++) {
+                            System.out.println(keys[idx]);
+                        }*/
+                    } else if (ret[0].equals("false")) {
+                        System.out.println("データなし");
+                    } else if (ret[0].equals("error")) {
+                        System.out.println(ret[1]);
+                    }
+                }
+
+                okuyamaClient.close();
             } else if (args[0].equals("5")) {
                 int port = Integer.parseInt(args[2]);
                 // OkuyamaClientでファイルをキー値で保存する
@@ -1404,13 +1435,13 @@ public class TestSock {
                     // データ登録
                     
                     //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_" + args[4] + "_" + new Integer(i).toString())) {
-                    if (!okuyamaClient.setValueAndCreateIndex("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321qazxswedcvfrtgbnhyujm,kiol<MKIUJNBGTRFBVFREDCXSWQAZXSWEDCVFRTGBNHY678745_savedatavaluestr09876543" + args[4] + "_" + new Integer(i).toString())) {
+                    if (!okuyamaClient.setValueAndCreateIndex("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_swedcvfrtgbnhyujm_09876543" + args[4] + "_" + new Integer(i).toString())) {
                     //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321" + strBuf.toString() + "_" + args[4] + "_" + new Integer(i).toString())) {
                         System.out.println("OkuyamaClient - error");
                     } else {
                         //System.out.println("Store[" + "datasavekey_" + args[4] + "_" + new Integer(i).toString() + "]");
                     }
-                    //if ((i % 1000) == 0) System.out.println(i);
+                    if ((i % 100) == 0) System.out.println(i);
                 }
                 long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
@@ -1509,6 +1540,29 @@ public class TestSock {
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
+            } if (args[0].equals("27.5")) {
+                
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してデータをIndexを作りながら保存(Prefixあり)
+
+                // クライアントインスタンスを作成
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                
+                // マスタサーバに接続
+                okuyamaClient.connect(args[1], port);
+
+
+                long start = new Date().getTime();
+                // Key, Tag, Value, Prefix
+                String[] tags = {args[4]};
+                if (!okuyamaClient.setValueAndCreateIndex(args[3], tags, args[5], args[6], 2)) {
+                //if (!okuyamaClient.setValue("datasavekey_" + new Integer(i).toString(), "savedatavaluestr_" + new Integer(i).toString())) {
+                    System.out.println("OkuyamaClient - error");
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();
 
             } else if (args[0].equals("28")) {
 
@@ -1520,7 +1574,7 @@ public class TestSock {
                 String[] searchCharList = args[3].split(":");
                 long start = new Date().getTime();
 
-                Object[] ret = okuyamaClient.searchValue(searchCharList, args[4], 1);
+                Object[] ret = okuyamaClient.searchValue(searchCharList, args[4], 2);
                 long end = new Date().getTime();
 
                 if (ret[0].equals("true")) {
@@ -1560,6 +1614,45 @@ public class TestSock {
                 long start = new Date().getTime();
 
                 Object[] ret = okuyamaClient.searchValue(searchCharList, args[4], args[5]);
+                long end = new Date().getTime();
+
+                if (ret[0].equals("true")) {
+                    // データ有り
+                    System.out.println((end - start) + " mille");
+                    keys = (String[])ret[1];
+                    System.out.println("Result Count[" + keys.length + "]");
+                    for (int idx = 0; idx < keys.length; idx++) {
+                        System.out.println(keys[idx]);
+                    }
+                } else if (ret[0].equals("false")) {
+                    System.out.println("データなし");
+                } else if (ret[0].equals("error")) {
+                    System.out.println(ret[1]);
+                }
+
+/*
+                if (keys != null) {
+                    for (int ii = 0; ii < keys.length; ii++) {
+                        System.out.println("Key=[" + keys[ii] + "]");
+                        ret = okuyamaClient.getValue(keys[ii]);
+                        System.out.println("Value=[" + ret[1] + "]");
+                    }
+                }
+                */
+                end = new Date().getTime();
+                System.out.println((end - start));
+                okuyamaClient.close();
+            } else if (args[0].equals("28.3")) {
+
+                int port = Integer.parseInt(args[2]);
+                // OkuyamaClientを使用してValueを検索
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                String[] keys = null;
+                String[] searchCharList = args[3].split(":");
+                long start = new Date().getTime();
+
+                Object[] ret = okuyamaClient.searchValue(searchCharList, args[4], args[5], Integer.parseInt(args[6]));
                 long end = new Date().getTime();
 
                 if (ret[0].equals("true")) {
@@ -1930,6 +2023,239 @@ public class TestSock {
                 } else {
                     System.out.println(retMap);
                     System.out.println("ResultSize = [" + retMap.size() + "]");
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("41")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                String[] ret = okuyamaClient.createListStruct(args[3]);
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println("success");
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("42")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                for (int idx = 0; idx < Integer.parseInt(args[4]); idx++) {
+                    String[] ret = okuyamaClient.listLPush(args[3], "listLPush."+idx);
+
+                    if (!ret[0].equals("true")) {
+                    
+                        System.out.println(ret[0]);
+                        System.out.println(ret[1]);
+                    }
+                }
+                long end = new Date().getTime();
+
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("42.1")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                String[] ret = okuyamaClient.listLPush(args[3], args[4]);
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println("success");
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+
+            } else if (args[0].equals("43")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                for (int idx = 0; idx < Integer.parseInt(args[4]); idx++) {
+
+                    String[] ret = okuyamaClient.listRPush(args[3], "listRPush."+idx);
+                    if (!ret[0].equals("true")) {
+                        System.out.println(ret[0]);
+                        System.out.println(ret[1]);
+                    }
+                }
+                long end = new Date().getTime();
+
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("43.1")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                String[] ret = okuyamaClient.listRPush(args[3], args[4]);
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println("success");
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("44")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                for (long idx = 0; idx < Long.parseLong(args[4]); idx++) {
+
+                    String[] ret = okuyamaClient.listIndex(args[3], idx);
+                    if (!ret[0].equals("true")) {
+                        System.out.println(ret[0]);
+                        System.out.println(ret[1]);
+                    }
+                    if ((idx % 1000) == 0L) {
+                        System.out.println(idx);
+                    }
+                }
+                long end = new Date().getTime();
+
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("44.1")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                String[] ret = okuyamaClient.listIndex(args[3], new Long(args[4]).longValue());
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println("List["+args[4]+"]=" + ret[1]);
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("45")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                for (long idx = 0; idx < Long.parseLong(args[4]); idx++) {
+
+                    String[] ret = okuyamaClient.listLPop(args[3]);
+                    if (!ret[0].equals("true")) {
+                        System.out.println(ret[0]);
+                        System.out.println(ret[1]);
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+
+            } else if (args[0].equals("45.1")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                String[] ret = okuyamaClient.listLPop(args[3]);
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println(ret[1]);
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+            } else if (args[0].equals("46")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                for (long idx = 0; idx < Long.parseLong(args[4]); idx++) {
+
+                    String[] ret = okuyamaClient.listRPop(args[3]);
+                    if (!ret[0].equals("true")) {
+                        System.out.println(ret[0]);
+                        System.out.println(ret[1]);
+                    }
+                }
+                long end = new Date().getTime();
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+
+            } else if (args[0].equals("46.1")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                String[] ret = okuyamaClient.listRPop(args[3]);
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println(ret[1]);
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
+                }
+                System.out.println((end - start) + "milli second");
+
+                okuyamaClient.close();  
+
+
+            } else if (args[0].equals("47")) {
+                
+                int port = Integer.parseInt(args[2]);
+                OkuyamaClient okuyamaClient = new OkuyamaClient();
+                okuyamaClient.connect(args[1], port);
+                
+                long start = new Date().getTime();
+                Object[] ret = okuyamaClient.listLen(args[3]);
+                long end = new Date().getTime();
+                if (ret[0].equals("true")) {
+                    System.out.println("List length=" + ret[1]);
+                } else {
+                    System.out.println(ret[0]);
+                    System.out.println(ret[1]);
                 }
                 System.out.println((end - start) + "milli second");
 
