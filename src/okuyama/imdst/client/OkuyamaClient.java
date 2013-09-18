@@ -8718,6 +8718,1013 @@ public class OkuyamaClient {
     }
 
 
+    /**
+     * List構造体を作成.<br>
+     * 既に同名のリストがある場合は失敗する<br>
+     *
+     * @param listName 作成するリスト名
+     * @return 要素1(作成成否):"true" or "false",要素2(作成失敗時は失敗原因メッセージ):"データ文字列"
+     * @throw OkuyamaClientException 
+     */
+    public String[] createListStruct(String listName) throws OkuyamaClientException {
+        String[] ret = new String[1]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        String valueStr = null;
+
+        // 文字列バッファ初期化
+
+        StringBuilder createListServerReqBuf = new StringBuilder();
+
+        try {
+            // Byte Lenghtチェック
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // Keyに対する無指定チェック
+            if (listName == null ||  listName.trim().equals(""))
+                throw new OkuyamaClientException("The blank is not admitted on a listName");
+
+            if (listName.getBytes().length > maxKeySize) throw new OkuyamaClientException("Save listName Max Size " + maxKeySize + " Byte");
+
+
+            // 処理番号連結
+            createListServerReqBuf.append("51");
+            // セパレータ連結
+            createListServerReqBuf.append(OkuyamaClient.sepStr);
+
+
+            // Key連結(Keyはデータ送信時には必ず文字列が必要)
+            createListServerReqBuf.append(new String(this.dataEncoding(listName.getBytes())));
+            // セパレータ連結
+            createListServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            createListServerReqBuf.append(this.transactionCode);
+
+            // サーバ送信
+            pw.println(createListServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet[0].equals("51")) {
+                if (serverRet[1].equals("true")) {
+
+                    // 処理成功
+                    ret[0] = "true";
+                } else if (serverRet[1].equals("false")) {
+
+                    // 失敗
+                    if (serverRet.length > 2) {
+                        ret = new String[2];
+                        ret[0] = serverRet[1];
+                        ret[1] = serverRet[2];
+                    } else {
+                        ret[0] = serverRet[1];
+                    }
+                } else if (serverRet[1].equals("error")) {
+
+                    // 処理失敗(メッセージ格納)
+                    throw new OkuyamaClientException(serverRet[2]);
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRetStr + "]");
+            }
+
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.createListStruct(listName);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.createListStruct(listName);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.createListStruct(listName);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * List構造体の先頭に値を追加する.<br>
+     * リストが存在しない場合は結果がerrorとなる<br>
+     *
+     * @param listName リスト名
+     * @param pushData 登録するデータ
+     * @return 要素1(登録成否):"true" or "false" or "error",要素2(登録失敗時は失敗原因メッセージ):"データ文字列"
+     * @throw OkuyamaClientException 
+     */
+    public String[] listLPush(String listName, String pushData) throws OkuyamaClientException {
+        return listLPush(listName, pushData, null);
+    }
+    
+    
+    /**
+     * List構造体の先頭に値を追加する.<br>
+     * リストが存在しない場合は結果がerrorとなる<br>
+     *
+     * @param listName リスト名
+     * @param pushData 登録するデータ
+     * @param encode Dataの文字エンコード
+     * @return 要素1(登録成否):"true" or "false" or "error",要素2(登録失敗時は失敗原因メッセージ):"データ文字列"
+     * @throw OkuyamaClientException 
+     */
+    public String[] listLPush(String listName, String pushData, String encode) throws OkuyamaClientException {
+        String[] ret = null; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        String encodeValue = null;
+
+        // 文字列バッファ初期化
+        setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        if (encode == null) encode = platformDefaultEncoding;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // Byte Lenghtチェック
+            if (pushData != null) {
+                if (pushData.getBytes(encode).length > maxValueSize) {
+                    throw new OkuyamaClientException("Save List Value Max Size " + maxValueSize + " Byte");
+                }
+            }
+            
+            // エラーチェック
+            // listNameに対する無指定チェック
+            if (listName == null ||  listName.trim().equals(""))
+                throw new OkuyamaClientException("The blank is not admitted on a listName");
+
+            if (listName.getBytes(encode).length > maxKeySize) throw new OkuyamaClientException("Save listName Max Size " + maxKeySize + " Byte");
+
+            // pushDataに対する無指定チェック(pushDataはnullやブランクの場合は代行文字列に置き換える)
+            if (pushData == null ||  pushData.equals("")) {
+                encodeValue = OkuyamaClient.blankStr;
+            } else {
+
+                // ValueをBase64でエンコード
+                encodeValue = new String(this.dataEncoding(pushData.getBytes(encode)));
+            }
+
+
+            // 処理番号連結
+            setValueServerReqBuf.append("52");
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // listName連結(listNameはデータ送信時には必ず文字列が必要)
+            setValueServerReqBuf.append(new String(this.dataEncoding(listName.getBytes(encode))));
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // pushData連結
+            setValueServerReqBuf.append(encodeValue);
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            setValueServerReqBuf.append(this.transactionCode);
+
+
+            // サーバ送信
+            pw.println(setValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet != null && serverRet[0].equals("52")) {
+                if (serverRet[1].equals("true")) {
+
+                    // 処理成功
+                    ret = new String[1];
+                    ret[0] = "true";
+                } else{
+
+                    // 処理失敗(メッセージ格納)
+                    ret = new String[2];
+                    ret[0] = "false";
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRetStr + "]");
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listLPush(listName, pushData, encode);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listLPush(listName, pushData, encode);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listLPush(listName, pushData, encode);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * List構造体の末尾に値を追加する.<br>
+     * リストが存在しない場合は結果がerrorとなる<br>
+     *
+     * @param listName リスト名
+     * @param pushData 登録するデータ
+     * @return 要素1(登録成否):"true" or "false" or "error",要素2(登録失敗時は失敗原因メッセージ):"データ文字列"
+     * @throw OkuyamaClientException 
+     */
+    public String[] listRPush(String listName, String pushData) throws OkuyamaClientException {
+        return listRPush(listName, pushData, null);
+    }
+
+    /**
+     * List構造体の末尾に値を追加する.<br>
+     * リストが存在しない場合は結果がerrorとなる<br>
+     *
+     * @param listName リスト名
+     * @param pushData 登録するデータ
+     * @param encode Dataの文字エンコード
+     * @return 要素1(登録成否):"true" or "false" or "error",要素2(登録失敗時は失敗原因メッセージ):"データ文字列"
+     * @throw OkuyamaClientException 
+     */
+    public String[] listRPush(String listName, String pushData, String encode) throws OkuyamaClientException {
+        String[] ret = null; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        String encodeValue = null;
+
+
+        // 文字列バッファ初期化
+        setValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        if (encode == null) encode = platformDefaultEncoding;
+
+        try {
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // Byte Lenghtチェック
+            if (pushData != null) {
+                if (pushData.getBytes(encode).length > maxValueSize) {
+                    throw new OkuyamaClientException("Save List Value Max Size " + maxValueSize + " Byte");
+                }
+            }
+            
+            // エラーチェック
+            // listNameに対する無指定チェック
+            if (listName == null ||  listName.trim().equals(""))
+                throw new OkuyamaClientException("The blank is not admitted on a listName");
+
+            if (listName.getBytes(encode).length > maxKeySize) throw new OkuyamaClientException("Save listName Max Size " + maxKeySize + " Byte");
+
+            // pushDataに対する無指定チェック(pushDataはnullやブランクの場合は代行文字列に置き換える)
+            if (pushData == null ||  pushData.equals("")) {
+                encodeValue = OkuyamaClient.blankStr;
+            } else {
+
+                // ValueをBase64でエンコード
+                encodeValue = new String(this.dataEncoding(pushData.getBytes(encode)));
+            }
+
+
+            // 処理番号連結
+            setValueServerReqBuf.append("53");
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // listName連結(listNameはデータ送信時には必ず文字列が必要)
+            setValueServerReqBuf.append(new String(this.dataEncoding(listName.getBytes(encode))));
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // pushData連結
+            setValueServerReqBuf.append(encodeValue);
+
+            // セパレータ連結
+            setValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            setValueServerReqBuf.append(this.transactionCode);
+
+
+            // サーバ送信
+            pw.println(setValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+            serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+
+            // 処理の妥当性確認
+            if (serverRet != null && serverRet[0].equals("53")) {
+                if (serverRet[1].equals("true")) {
+
+                    // 処理成功
+                    ret = new String[1];
+                    ret[0] = "true";
+                } else{
+
+                    // 処理失敗(メッセージ格納)
+                    ret = new String[2];
+                    ret[0] = "false";
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity [" + serverRetStr + "]");
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listRPush(listName, pushData, encode);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listRPush(listName, pushData, encode);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listRPush(listName, pushData, encode);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * List構造の指定Indexの値を取得する.<br>
+     * 構造体を事前に作成していない場合は失敗する<br>
+     * 指定位置が存在しない場合は結果はなしとなる<br>
+     *
+     * @param listName リスト名
+     * @param index 取得位置
+     * @return 要素1(取得成否):"true"=値有り or "false"=指定位置に値なし or "error"=リスト無し等エラー, 要素2(値有りの場合は結果、それ以外の場合はエラー等のメッセージ)
+     * @throw OkuyamaClientException 
+     */
+    public String[] listIndex(String listName, long index) throws OkuyamaClientException {
+        return listIndex(listName, index, null);
+    }
+    /**
+     * List構造の指定Indexの値を取得する.<br>
+     * 構造体を事前に作成していない場合は失敗する<br>
+     * 指定位置が存在しない場合は結果はなしとなる<br>
+     *
+     * @param listName リスト名
+     * @param index 取得位置
+     * @param encode Dataの文字エンコード
+     * @return 要素1(取得成否):"true"=値有り or "false"=指定位置に値なし 要素2(値有りの場合は結果、それ以外の場合はエラー等のメッセージ)
+     * @throw OkuyamaClientException 
+     */
+    public String[] listIndex(String listName, long index, String encode) throws OkuyamaClientException {
+        String[] ret = new String[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        byte[] listNameBytes = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        if (encode == null) encode = platformDefaultEncoding;
+        try {
+
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // listNameに対する無指定チェック
+            if (listName == null ||  listName.trim().equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a listName");
+            }
+
+            // Keyに対するLengthチェック
+            listNameBytes = listName.getBytes(encode);
+            if (listNameBytes.length > maxKeySize) throw new OkuyamaClientException("Save listName Max Size " + maxKeySize + " Byte");
+
+
+            // 処理番号連結
+            getValueServerReqBuf.append("54");
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // listName連結(listNameはデータ送信時には必ず文字列が必要)
+            getValueServerReqBuf.append(new String(this.dataEncoding(listNameBytes)));
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            getValueServerReqBuf.append(index);
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            getValueServerReqBuf.append(this.transactionCode);
+
+
+            // サーバ送信
+            pw.println(getValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+
+            
+            boolean responseSuccess = false;
+            if (serverRetStr.indexOf("54,true") == 0) {
+
+                responseSuccess = true;
+            } else {
+
+                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+            }
+            // 処理の妥当性確認
+            if (responseSuccess) {
+
+                // データ有り
+                ret[0] = "true";
+                String retValueStr = serverRetStr.substring(8);
+                // Valueがブランク文字か調べる
+                if (retValueStr.equals(OkuyamaClient.blankStr)) {
+                    ret[1] = "";
+                } else {
+
+
+                    // Value文字列をBase64でデコード
+                    ret[1] = new String(this.dataDecoding(retValueStr.getBytes(encode)), encode);
+                }
+            } else if (serverRet[0].equals("54")) {
+                if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity " + serverRetStr);
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listIndex(listName, index, encode);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listIndex(listName, index, encode);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listIndex(listName, index, encode);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+    
+
+    
+
+    /**
+     * 指定したList構造体の先頭から要素を取得する。取得された要素は削除されListは先頭から1つ詰められる.<br>
+     * リストが存在しない場合はエラーとなる<br>
+     *
+     * @param listName リスト名
+     * @return 要素1(取得成否):"true"=値有り or "false"=値なし or "error"=リスト無し等エラー, 要素2(値有りの場合は結果、それ以外の場合はエラー等のメッセージ)
+     * @throw OkuyamaClientException 
+     */
+    public String[] listLPop(String listName) throws OkuyamaClientException {
+        return listLPop(listName, null);
+    }
+    
+    /**
+     * 指定したList構造体の先頭から要素を取得する。取得された要素は削除されListは先頭から1つ詰められる.<br>
+     * リストが存在しない場合はエラーとなる<br>
+     *
+     * @param listName リスト名
+     * @param encode Dataの文字エンコード
+     * @return 要素1(取得成否):"true"=値有り or "false"=値なし or "error"=リスト無し等エラー, 要素2(値有りの場合は結果、それ以外の場合はエラー等のメッセージ)
+     * @throw OkuyamaClientException 
+     */
+    public String[] listLPop(String listName, String encode) throws OkuyamaClientException {
+        String[] ret = new String[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        byte[] listNameBytes = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        if (encode == null) encode = platformDefaultEncoding;
+        try {
+
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // listNameに対する無指定チェック
+            if (listName == null ||  listName.trim().equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a listName");
+            }
+
+            // Keyに対するLengthチェック
+            listNameBytes = listName.getBytes(encode);
+            if (listNameBytes.length > maxKeySize) throw new OkuyamaClientException("Save listName Max Size " + maxKeySize + " Byte");
+
+
+            // 処理番号連結
+            getValueServerReqBuf.append("55");
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // listName連結(listNameはデータ送信時には必ず文字列が必要)
+            getValueServerReqBuf.append(new String(this.dataEncoding(listNameBytes)));
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            getValueServerReqBuf.append(this.transactionCode);
+
+
+            // サーバ送信
+            pw.println(getValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+
+            
+            boolean responseSuccess = false;
+            if (serverRetStr.indexOf("55,true") == 0) {
+
+                responseSuccess = true;
+            } else {
+
+                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+            }
+            // 処理の妥当性確認
+            if (responseSuccess) {
+
+                // データ有り
+                ret[0] = "true";
+                String retValueStr = serverRetStr.substring(8);
+                // Valueがブランク文字か調べる
+                if (retValueStr.equals(OkuyamaClient.blankStr)) {
+                    ret[1] = "";
+                } else {
+
+
+                    // Value文字列をBase64でデコード
+                    ret[1] = new String(this.dataDecoding(retValueStr.getBytes(encode)), encode);
+                }
+            } else if (serverRet[0].equals("55")) {
+                if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity " + serverRet);
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listLPop(listName, encode);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listLPop(listName, encode);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listLPop(listName, encode);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * 指定したList構造体の先頭から要素を取得する。取得された要素は削除されListは先頭から1つ詰められる.<br>
+     * 要素が存在しない場合はnullが返る。リストが存在しない場合はエラーとなる<br>
+     *
+     * @param listName リスト名
+     * @return 要素1(取得成否):"true"=値有り or "false"=値なし or "error"=リスト無し等エラー, 要素2(値有りの場合は結果、それ以外の場合はエラー等のメッセージ)
+     * @throw OkuyamaClientException 
+     */
+    public String[] listRPop(String listName) throws OkuyamaClientException {
+        return listRPop(listName, null);
+    }
+
+    /**
+     * 指定したList構造体の先頭から要素を取得する。取得された要素は削除されListは先頭から1つ詰められる.<br>
+     * 要素が存在しない場合はnullが返る。リストが存在しない場合はエラーとなる<br>
+     *
+     * @param listName リスト名
+     * @param encode Dataの文字エンコード
+     * @return 要素1(取得成否):"true"=値有り or "false"=値なし or "error"=リスト無し等エラー, 要素2(値有りの場合は結果、それ以外の場合はエラー等のメッセージ)
+     * @throw OkuyamaClientException 
+     */
+    public String[] listRPop(String listName, String encode) throws OkuyamaClientException {
+        String[] ret = new String[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        byte[] listNameBytes = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        if (encode == null) encode = platformDefaultEncoding;
+        try {
+
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // listNameに対する無指定チェック
+            if (listName == null ||  listName.trim().equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a listName");
+            }
+
+            // Keyに対するLengthチェック
+            listNameBytes = listName.getBytes(encode);
+            if (listNameBytes.length > maxKeySize) throw new OkuyamaClientException("Save listName Max Size " + maxKeySize + " Byte");
+
+
+            // 処理番号連結
+            getValueServerReqBuf.append("56");
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // listName連結(listNameはデータ送信時には必ず文字列が必要)
+            getValueServerReqBuf.append(new String(this.dataEncoding(listNameBytes)));
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            getValueServerReqBuf.append(this.transactionCode);
+
+
+            // サーバ送信
+            pw.println(getValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+
+            boolean responseSuccess = false;
+            if (serverRetStr.indexOf("56,true") == 0) {
+
+                responseSuccess = true;
+            } else {
+
+                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+            }
+            // 処理の妥当性確認
+            if (responseSuccess) {
+
+                // データ有り
+                ret[0] = "true";
+                String retValueStr = serverRetStr.substring(8);
+                // Valueがブランク文字か調べる
+                if (retValueStr.equals(OkuyamaClient.blankStr)) {
+                    ret[1] = "";
+                } else {
+
+
+                    // Value文字列をBase64でデコード
+                    ret[1] = new String(this.dataDecoding(retValueStr.getBytes(encode)), encode);
+                }
+            } else if (serverRet[0].equals("56")) {
+                if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity " + serverRet);
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listRPop(listName, encode);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listRPop(listName, encode);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listRPop(listName, encode);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * List構造のサイズを取得する.<br>
+     * Listを事前に作成していない場合はerrorとなる<br>
+     *
+     * @param listNameStr List名
+     * @return Object[] 要素1(取得成否):"true"=成功 or "false"=リスト無し or "error"=エラー, 要素2(成功の場合は結果(Long値)、falseの場合はnull、errorの場合はエラー等のメッセージ(String値))
+     * @throws OkuyamaClientException
+     */
+    public Object[] listLen(String listName) throws OkuyamaClientException {
+        Object[] ret = new Object[2]; 
+        String serverRetStr = null;
+        String[] serverRet = null;
+        byte[] listNameBytes = null;
+
+        // 文字列バッファ初期化
+        getValueServerReqBuf.delete(0, Integer.MAX_VALUE);
+
+        try {
+
+            if (this.socket == null) throw new OkuyamaClientException("No ServerConnect!!");
+
+            // エラーチェック
+            // listNameに対する無指定チェック
+            if (listName == null ||  listName.trim().equals("")) {
+                throw new OkuyamaClientException("The blank is not admitted on a listName");
+            }
+
+            // Keyに対するLengthチェック
+            listNameBytes = listName.getBytes();
+            if (listNameBytes.length > maxKeySize) throw new OkuyamaClientException("Save listName Max Size " + maxKeySize + " Byte");
+
+
+            // 処理番号連結
+            getValueServerReqBuf.append("57");
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // listName連結(listNameはデータ送信時には必ず文字列が必要)
+            getValueServerReqBuf.append(new String(this.dataEncoding(listNameBytes)));
+            // セパレータ連結
+            getValueServerReqBuf.append(OkuyamaClient.sepStr);
+
+            // TransactionCode連結
+            getValueServerReqBuf.append(this.transactionCode);
+
+
+            // サーバ送信
+            pw.println(getValueServerReqBuf.toString());
+            pw.flush();
+
+            // サーバから結果受け取り
+            serverRetStr = br.readLine();
+
+
+            
+            boolean responseSuccess = false;
+            if (serverRetStr.indexOf("57,true") == 0) {
+
+                responseSuccess = true;
+            } else {
+
+                serverRet = serverRetStr.split(OkuyamaClient.sepStr);
+            }
+            // 処理の妥当性確認
+            if (responseSuccess) {
+
+                // データ有り
+                ret[0] = "true";
+                String retValueStr = serverRetStr.substring(8);
+                // Valueがブランク文字か調べる
+                if (retValueStr.equals(OkuyamaClient.blankStr)) {
+                    ret[1] = "";
+                } else {
+
+                    // Value文字列をBase64でデコード
+                    ret[1] = new Long(retValueStr);
+                }
+            } else if (serverRet[0].equals("57")) {
+                if(serverRet[1].equals("false")) {
+
+                    // データなし
+                    ret[0] = serverRet[1];
+                    ret[1] = null;
+                } else if(serverRet[1].equals("error")) {
+
+                    // エラー発生
+                    ret[0] = serverRet[1];
+                    ret[1] = serverRet[2];
+                }
+            } else {
+
+                // 妥当性違反
+                throw new OkuyamaClientException("Execute Violation of validity " + serverRet);
+            }
+        } catch (OkuyamaClientException ice) {
+            throw ice;
+        } catch (ConnectException ce) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listLen(listName);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(ce);
+                }
+            } else {
+                throw new OkuyamaClientException(ce);
+            }
+        } catch (SocketException se) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listLen(listName);
+                } catch (Exception e) {
+                    throw new OkuyamaClientException(se);
+                }
+            } else {
+                throw new OkuyamaClientException(se);
+            }
+        } catch (Throwable e) {
+            if (this.masterNodesList != null && masterNodesList.size() > 1) {
+                try {
+                    this.autoConnect();
+                    ret = this.listLen(listName);
+                } catch (Exception ee) {
+                    throw new OkuyamaClientException(e);
+                }
+            } else {
+                throw new OkuyamaClientException(e);
+            }
+        }
+        return ret;
+    }
+
+
     // Base64でエンコード
     protected byte[] dataEncoding(byte[] datas) {
         return BASE64EncoderStream.encode(datas);

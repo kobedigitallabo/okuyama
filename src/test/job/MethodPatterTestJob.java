@@ -62,6 +62,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             OkuyamaClient okuyamaClient = null;
 
             String startStr = super.getPropertiesValue(super.getJobName() + "start");
+            String listNamePrefix = super.getPropertiesValue(super.getJobName() + "list");
             int start = Integer.parseInt(startStr);
             count = count + start;
             for (int cy = 0; cy < 1; cy++) {
@@ -130,6 +131,9 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
                         if (execMethods[i].equals("getmultitagkeysresult")) 
                             retMap.put("getmultitagkeysresult", execMultiGetTagKeysResult(okuyamaClient, start, count));
+                            
+                        if (execMethods[i].equals("list"))
+                            retMap.put("list", execList(okuyamaClient, start, listNamePrefix));
 
                     }
 
@@ -2090,5 +2094,130 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
     }
 
 
+    private boolean execList(OkuyamaClient client, int start, String listNamePrefix) throws Exception {
+        OkuyamaClient okuyamaClient = null;
+        boolean errorFlg = false;
+        try {
+            System.out.println("execList - Start");
+            if (client != null) {
+                okuyamaClient = client;
+            } else {
+                int port = masterNodePort;
 
+                // クライアントインスタンスを作成
+                okuyamaClient = new OkuyamaClient();
+
+                // マスタサーバに接続
+                okuyamaClient.connect(masterNodeName, port);
+            }
+
+            long startTime = new Date().getTime();
+            Random rnd = new  Random();
+            String listName = listNamePrefix+"list"+System.nanoTime();
+            // リスト構造作成
+            String[] ret = okuyamaClient.createListStruct(listName);
+            if (!ret[0].equals("true")) {
+                System.out.println("List create error1 =" + listName);
+                errorFlg = true;
+            }
+            ret = okuyamaClient.createListStruct(listName);
+            if (!ret[0].equals("false")) {
+                System.out.println("List create error2 =" + listName);
+                errorFlg = true;
+            }
+
+            // LPUSH
+            for (int idx = 0; idx < 5000; idx++) {
+                String[] retTmp = okuyamaClient.listLPush(listName, "Llistdata."+idx);
+
+                if (!retTmp[0].equals("true")) {
+                
+                    System.out.println("List create error3 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                }
+            }
+Object[] test = okuyamaClient.listLen(listName);
+System.out.println(listName+" size=" + test[1]);
+            // Indexテスト
+            for (long idx = 0; idx < 5000L; idx++) {
+
+                String[] retTmp = okuyamaClient.listIndex(listName, idx);
+                if (!retTmp[0].equals("true")) {
+                    System.out.println("List create error4 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                } else {
+                    if (!retTmp[1].equals("Llistdata."+(4999-idx))) {
+                        System.out.println("List create error4-1 =" + listName);
+                        System.out.println(retTmp[1]);
+                        errorFlg = true;
+                    }
+                }
+            }
+
+            // RPUSH
+            for (int idx = 0; idx < 5000; idx++) {
+                String[] retTmp = okuyamaClient.listRPush(listName, "Rlistdata."+idx);
+
+                if (!retTmp[0].equals("true")) {
+                
+                    System.out.println("List create error5 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                }
+            }
+test = okuyamaClient.listLen(listName);
+System.out.println(listName+" size=" + test[1]);
+
+            // Indexテスト
+            for (long idx = 0; idx < 5000L; idx++) {
+
+                String[] retTmp = okuyamaClient.listIndex(listName, idx);
+                if (!retTmp[0].equals("true")) {
+                    System.out.println("List create error6 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                } else {
+                    if (!retTmp[1].equals("Llistdata."+(4999-idx))) {
+                        System.out.println("List create error6-1 =" + listName);
+                        System.out.println(retTmp[1]);
+                        errorFlg = true;
+                    }
+                }
+            }
+            // Indexテスト
+            int idxTest2 = 0;
+            for (long idx = 5000L; idx < 10000L; idx++) {
+                
+                String[] retTmp = okuyamaClient.listIndex(listName, idx);
+                if (!retTmp[0].equals("true")) {
+                    System.out.println("List create error7 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                } else {
+                    if (!retTmp[1].equals("Rlistdata."+idxTest2)) {
+                        System.out.println("List create error7-1 =" + listName);
+                        System.out.println(retTmp[1]);
+                        errorFlg = true;
+                    }
+                }
+                idxTest2++;
+            }
+
+
+
+            long endTime = new Date().getTime();
+            System.out.println("List Method= " + (endTime - startTime) + " milli second");
+
+            if (client == null) {
+                okuyamaClient.close();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        System.out.println("execList - End");
+
+        return errorFlg;
+    }
 }

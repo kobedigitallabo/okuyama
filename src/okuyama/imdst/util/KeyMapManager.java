@@ -4353,11 +4353,15 @@ public class KeyMapManager extends Thread {
 
                             if (!dataLines[i].trim().equals("")) {
 
+                                // TODO:ここで移行データから有効期限よりも後ろを削除してしまっている。
                                 oneDatas = dataLines[i].split(KeyMapManager.workFileSeq);
 
                                 // データの種類に合わせて処理分岐
                                 if (oneDatas[0].equals("1")) {
 
+                                    // TODO:有効期限データはValueの後に、カンマ区切りで情報が結合されているため、
+                                    // ここでoneDatasはレングスが4以上になる可能性がある
+                                    
                                     // 通常データ
                                     // 成功、失敗関係なく全て登録処理
                                     this.setKeyPairOnlyOnce(oneDatas[1], oneDatas[2], "0", true);

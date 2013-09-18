@@ -2226,12 +2226,12 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
 
 
             // 保存結果確認
-            if (keyNodeSaveRet[1].equals("false") || keyNodeSaveRet[1].equals("false")) {
+            if (keyNodeSaveRet[1].equals("false") || keyNodeSaveRet[1].equals("error")) {
                 // 保存失敗
                 if (keyNodeSaveRet.length > 2) {
 
                     retStrs[0] = "52";
-                    retStrs[1] = "false";
+                    retStrs[1] = keyNodeSaveRet[1];
                     retStrs[2] = keyNodeSaveRet[2];
                 } else {
                     retStrs = new String[2];
@@ -2714,7 +2714,6 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      * 構造体を事前に作成していない場合は失敗する<br>
      *
      * @param listNameStr List名文字列
-     * @param listData Listへ追加するデータ
      * @return String[] 結果
      * @throws BatchException
      */
@@ -3076,7 +3075,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
      */
     private String[] searchValueIndex(String indexStrs, String searchType, String indexPrefix, int searchIndexLength) throws BatchException {
         //logger.debug("MasterManagerHelper - searchValueIndex - start");
-long start = System.nanoTime();
+        //long start = System.nanoTime();
 
         String[] retStrs = new String[3];
         StringBuilder retKeysBuf = new StringBuilder();
@@ -3490,8 +3489,8 @@ long start = System.nanoTime();
             retStrs[1] = "error";
             retStrs[2] = "MasterNode - Exception";
         }
-long end = System.nanoTime();
-System.out.println("searchValue=" + ((end - start) / 1000));
+        //long end = System.nanoTime();
+        //System.out.println("searchValue=" + ((end - start) / 1000));
 
         //logger.debug("MasterManagerHelper - searchValueIndex - end");
         return retStrs;
@@ -7899,6 +7898,7 @@ System.out.println("searchValue=" + ((end - start) / 1000));
 
         StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
         String sendStr = null;
+        boolean listLPopExecutionRet = false;
 
         try {
 
@@ -7955,6 +7955,7 @@ System.out.println("searchValue=" + ((end - start) / 1000));
 
                         // 結果有りで成功
                         mainNodeSave = true;
+                        listLPopExecutionRet = true;
                     } else if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeLPopNullStr) == 0) {
                         // 結果なし
                         mainNodeSave = true;
@@ -8016,7 +8017,14 @@ System.out.println("searchValue=" + ((end - start) / 1000));
 
             // 返却地値をパースする
             if (retParam != null) {
+
                 retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+
+                if (listLPopExecutionRet) {
+                    // 更新時間(バージョンNo)を取り外す
+                    String[] realRetValue = dataConvert4Consistency(retParams[2]);
+                    retParams[2] = realRetValue[0];
+                }
             } 
         }
 
@@ -8055,6 +8063,8 @@ System.out.println("searchValue=" + ((end - start) / 1000));
 
         StringBuilder buf = new StringBuilder(ImdstDefine.stringBufferSmallSize);
         String sendStr = null;
+
+        boolean listRPopExecutionRet = false;
 
         try {
 
@@ -8107,11 +8117,12 @@ System.out.println("searchValue=" + ((end - start) / 1000));
 
                     // Key値でValueを保存
                     // 特定文字列で返却値が始まるかをチェックし始まる場合は登録成功
-                    if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeLPopSuccessStr) == 0) {
+                    if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeRPopSuccessStr) == 0) {
 
                         // 結果有りで成功
                         mainNodeSave = true;
-                    } else if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeLPopNullStr) == 0) {
+                        listRPopExecutionRet = true;
+                    } else if (retParam != null && retParam.indexOf(ImdstDefine.keyNodeRPopNullStr) == 0) {
                         // 結果なし
                         mainNodeSave = true;
                     } else {
@@ -8173,6 +8184,12 @@ System.out.println("searchValue=" + ((end - start) / 1000));
             // 返却地値をパースする
             if (retParam != null) {
                 retParams = retParam.split(ImdstDefine.keyHelperClientParamSep);
+                if (listRPopExecutionRet) {
+                    // 更新時間(バージョンNo)を取り外す
+                    String[] realRetValue = dataConvert4Consistency(retParams[2]);
+                    retParams[2] = realRetValue[0];
+                }
+
             } 
         }
 
@@ -8304,7 +8321,6 @@ System.out.println("searchValue=" + ((end - start) / 1000));
                         retParams[2] = cnvConsistencyRet[0];
                         break;
                     } else if (retParams != null && retParams.length > 1 && retParams[1].equals("false")) {
-                        retParams[2] = "";
                         break;
                     } else if (retParams != null && retParams.length > 1 && retParams[1].equals("error")) {
                         break;

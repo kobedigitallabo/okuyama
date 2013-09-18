@@ -141,6 +141,12 @@ public class ImdstDefine {
     // データノードに対するList構造体へにLPOP時に成功した場合の返却文字列の先頭部分
     public static final String keyNodeLPopNullStr = "55,false";
 
+    // データノードに対するList構造体へにRPOP時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeRPopSuccessStr = "56,true";
+
+    // データノードに対するList構造体へにRPOP時に成功した場合の返却文字列の先頭部分
+    public static final String keyNodeRPopNullStr = "56,false";
+
     // MasterNodeのgetMultiValueを呼び出した際のClientへの戻り値
     public static final String getMultiEndOfDataStr = "END";
 

@@ -1212,7 +1212,7 @@ public class KeyManagerHelper extends AbstractHelper {
                     closeFlg = true;
                     reloopSameClient = false;
                 } catch (ArrayIndexOutOfBoundsException aie) {
-aie.printStackTrace();
+
                     logger.error("KeyManagerHelper No Method_1 =[" + clientParameterList[0] + "]");
                     reloopSameClient = false;
                 } catch (NumberFormatException nfe) {
@@ -2254,11 +2254,11 @@ aie.printStackTrace();
                         // 既に存在する
                         retStrs[0] = "51";
                         retStrs[1] = "false";
-                        retStrs[2] = "ListName=[" + listName + "] already exists";
+                        retStrs[2] = "list already exists";
                     } else if (retSts == 1) {
                         retStrs[0] = "51";
                         retStrs[1] = "false";
-                        retStrs[2] = "ListName=[" + listName + "] create error";
+                        retStrs[2] = "list create error";
                     }
                 } else {
     
