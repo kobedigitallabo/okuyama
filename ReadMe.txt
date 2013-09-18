@@ -23,6 +23,11 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.9.5 - (2013/04/XX)]]
+■データ構造としてリスト構造を追加
+ Key-Value+Tag以外に新たにリスト構造を追加しました。
+
+
+
 ■リカバリ機能を強化
  従来リカバリ中にMainMasterNodeが停止するとDataNodeのリカバリ処理が中途半端に終了してしまう問題があった。
  その問題への対処として、リカバリ途中のDataNodeを判断し再度切り離す機能を追加。また、リカバリが必要なDataNodeを起動する際に
@@ -40,7 +45,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 
 ■各DataNodeが保存しているKeyの一覧を取得する機能を追加
  DataNodeが持つ全てのKeyとTagの一覧を取得する機能をUtilClientに追加しました。
- 各DataNodeに接続し、当該機能を実行することでKeyの一覧が開業区切りで標準出力に出力される。
+ 各DataNodeに接続し、当該機能を実行することでKeyの一覧が改行区切りで標準出力に出力される。
  利用方法は以下
      使い方)
      $ java -classpath ./:./lib/javamail-1.4.1.jar:./okuyama-0.9.5.jar okuyama.imdst.client.UtilClient keylist datanodeip:5553
