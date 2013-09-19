@@ -9593,7 +9593,7 @@ public class OkuyamaClient {
 
     /**
      * List構造のサイズを取得する.<br>
-     * Listを事前に作成していない場合はerrorとなる<br>
+     * Listを事前に作成していない場合はfalseとなる<br>
      *
      * @param listNameStr List名
      * @return Object[] 要素1(取得成否):"true"=成功 or "false"=リスト無し or "error"=エラー, 要素2(成功の場合は結果(Long値)、falseの場合はnull、errorの場合はエラー等のメッセージ(String値))

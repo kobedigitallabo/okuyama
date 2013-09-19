@@ -22,7 +22,67 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
-[[リリース Ver 0.9.5 - (2013/04/XX)]]
+[[リリース Ver 0.9.5 - (2013/09/20)]]
+
+■各DataNodeが保存しているKeyの一覧を取得する機能を追加
+ DataNodeが持つ全てのKeyとTagの一覧を取得する機能をUtilClientに追加しました。
+ 各DataNodeに接続し、当該機能を実行することでKeyの一覧が改行区切りで標準出力に出力される。
+ 利用方法は以下
+     使い方)
+     $ java -classpath ./:./lib/javamail-1.4.1.jar:./okuyama-0.9.5.jar okuyama.imdst.client.UtilClient keylist datanodeip:5553
+     引数説明
+      1)keylist : 命令(固定)
+      2)datanodeip:5553 : Keyを確認したい、DataNodeのIPアドレスとポート番号を"IP:Port番号"のフォーマットで指定
+ ※注意：Tag名及び、List内のデータは出力されない。
+
+■List型を追加
+ 文字型を要素とする双方向型リストの機能を追加。先頭(左側)及び、末尾(右側)への値の追加が常に一定時間となり、先頭及び、末尾から値を削除しながら取り出すことが出来る
+ この操作もList内の要素数に関係なく常に同じ処理時間=O(1)となる。
+ また、List内の要素番号(Index)指定での任意の位置からの値の取り出しが可能である。この命令の処理時間はリストの要素数に対して線形的に時間コスト=O(n)がかかる。
+ Listの現在の要素数を取得することも可能でありこの命令の時間は要素数に関係なく常に一定=O(1)である。
+ Listの要素数の最大は(2の63乗-1)である
+ 以下はOkuyamaClient上のそれぞれのメソッドのインターフェースである。
+
+  ・String[] createListStruct(String listName)
+    ->リスト作成メソッド。ここで指定したList名にて以降のメソッドはListへアクセスする
+ 
+  ・String[] listLPush(String listName, String pushData)
+    ->指定したリストの先頭(左端)へ値を追加する。
+      listNameへはcreateListStructメソッドにて作成したリスト名を指定
+      pushDataのサイズ上限はokuyamaのValueのMaxサイズである
+ 
+  ・String[] listRPush(String listName, String pushData)
+    ->指定したリストの末尾(右端)へ値を追加する。
+      listNameへはcreateListStructメソッドにて作成したリスト名を指定
+      pushDataのサイズ上限はokuyamaのValueのMaxサイズである
+ 
+  ・String[] listIndex(String listName, long index)
+    ->指定したリストの指定した位置から要素を取得する。
+      listNameへはcreateListStructメソッドにて作成したリスト名を指定
+      indexへは取得したい位置を指定。indexは0起算である。要素数<index、リスト作成前の場合結果無しが返る。
+ 
+  ・String[] listLPop(String listName)
+    ->指定したリストの先頭(左端)から値を取得後、削除を行う。
+      リストは左に1つ詰めらる。
+      本メソッドはokuyama中でアトミックに実行されるため、
+      同一要素が複数のクライアントへ返ることはない。
+      listNameへはcreateListStructメソッドにて作成したリスト名を指定
+      要素がない場合、リスト作成前の場合結果無しが返る。
+ 
+  ・String[] listRPop(String listName)
+    ->指定したリストの末尾(右端)から値を取得後、削除を行う。
+      リストは右に1つ詰めらる。
+      本メソッドはokuyama中でアトミックに実行されるため、
+      同一要素が複数のクライアントへ返ることはない。
+      listNameへはcreateListStructメソッドにて作成したリスト名を指定
+      要素がない場合、リスト作成前の場合結果無しが返る。
+ 
+  ・Object[] listLen(String listName)
+    ->指定したリストの要素数を返す。
+	  listNameへはcreateListStructメソッドにて作成したリスト名を指定
+      リスト作成前の場合結果無しが返る。
+
+
 ■リカバリ機能を強化
  従来リカバリ中にMainMasterNodeが停止するとDataNodeのリカバリ処理が中途半端に終了してしまう問題が報告されました。
  その問題への対処として、リカバリ途中のDataNodeを判断し再度切り離す機能を追加。また、リカバリが必要なDataNodeを起動する際に
@@ -36,17 +96,6 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
       意味：true=かならずリカバリ対象となる/ false=リカバリを自動判断する
       省略時:false
       設定例： -rr true
-
-■各DataNodeが保存しているKeyの一覧を取得する機能を追加
- DataNodeが持つ全てのKeyとTagの一覧を取得する機能をUtilClientに追加しました。
- 各DataNodeに接続し、当該機能を実行することでKeyの一覧が開業区切りで標準出力に出力される。
- 利用方法は以下
-     使い方)
-     $ java -classpath ./:./lib/javamail-1.4.1.jar:./okuyama-0.9.5.jar okuyama.imdst.client.UtilClient keylist datanodeip:5553
-     引数説明
-      1)keylist : 命令(固定)
-      2)datanodeip:5553 : Keyを確認したい、DataNodeのIPアドレスとポート番号を"IP:Port番号"のフォーマットで指定
- ※注意：Tagに関しては内部では1つのTagが複数個に分割されて保持されているため、複数個のTagが出力されることになるので注意が必要である。 
 
 
 ■MasterNodeがデータ復旧を行わないオプションを追加
@@ -78,6 +127,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
       省略時:チェックを行わない(デフォルト)
       設定例： -smnca 192.168.1.100,192.168.2.101
 
+
 ■起動時に指定されて起動オプションを起動ログに出力する機能を追加
  以下のフォーマットで出力される。
  ----------------
@@ -85,7 +135,9 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
   {パラメータ}
  ----------------
 
- 
+■性能向上及び、バグ修正
+
+
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.9.4 - (2012/12/05)]]

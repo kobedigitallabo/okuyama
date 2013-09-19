@@ -645,7 +645,12 @@ public class KeyNodeWatchHelper extends AbstractMasterManagerHelper {
             } else {
 
                 logger.info("Recover Step - 17");
+                super.setDeadNode(nodeInfo, 1, null, true);
+                String[] diffMissNodeDt = nodeInfo.split(":");
+                StatusUtil.setNodeStatusDt(diffMissNodeDt[0] + ":" +  diffMissNodeDt[1], "Node Check Dead");
+
                 throw new Exception("Diff Mode Off Error Ret=[" + diffModeOffRet + "]");
+
             }
 
             logger.info("Recover Step - 18");

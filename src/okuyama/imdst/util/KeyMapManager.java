@@ -3427,8 +3427,8 @@ public class KeyMapManager extends Thread {
                         key = (String)obj.getKey();
                         try {
                             String decodeKey = new String(BASE64DecoderStream.decode(key.getBytes()));
-                            if (decodeKey.indexOf("{imdst_") != 0) {
-                                pw.println(decodeKey);
+                            if (decodeKey.indexOf("{imdst_") != 0) { // TagとListは除外
+                                pw.println(key);
                                 pw.flush();
                             }
                         } catch(Exception ee){}

@@ -2137,8 +2137,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     errorFlg = true;
                 }
             }
-Object[] test = okuyamaClient.listLen(listName);
-System.out.println(listName+" size=" + test[1]);
+
             // Indexテスト
             for (long idx = 0; idx < 5000L; idx++) {
 
@@ -2167,8 +2166,6 @@ System.out.println(listName+" size=" + test[1]);
                     errorFlg = true;
                 }
             }
-test = okuyamaClient.listLen(listName);
-System.out.println(listName+" size=" + test[1]);
 
             // Indexテスト
             for (long idx = 0; idx < 5000L; idx++) {
@@ -2205,7 +2202,107 @@ System.out.println(listName+" size=" + test[1]);
                 idxTest2++;
             }
 
+            // LPOPテスト
+            for (long idx = 0; idx < 5000L; idx++) {
 
+                String[] retTmp = okuyamaClient.listLPop(listName);
+                if (!retTmp[0].equals("true")) {
+                    System.out.println("List error8 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                } else {
+                    if (!retTmp[1].equals("Llistdata."+(4999-idx))) {
+                        System.out.println("List  error8-1 =" + listName);
+                        System.out.println(retTmp[1]);
+                        errorFlg = true;
+                    }
+                }
+            }
+            // LPOPテスト
+            idxTest2 = 0;
+            for (long idx = 5000L; idx < 10000L; idx++) {
+                
+                String[] retTmp = okuyamaClient.listLPop(listName);
+                if (!retTmp[0].equals("true")) {
+                    System.out.println("List create error9 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                } else {
+                    if (!retTmp[1].equals("Rlistdata."+idxTest2)) {
+                        System.out.println("List create error9-1 =" + listName);
+                        System.out.println(retTmp[1]);
+                        errorFlg = true;
+                    }
+                }
+                idxTest2++;
+            }
+
+            String[] nullRetTmp = okuyamaClient.listLPop(listName);
+            if (!nullRetTmp[0].equals("false")) {
+                System.out.println("List create error10 =" + listName);
+                System.out.println(nullRetTmp[1]);
+                errorFlg = true;
+            }
+
+
+            // LPUSH
+            for (int idx = 0; idx < 5000; idx++) {
+                String[] retTmp = okuyamaClient.listLPush(listName, "Llistdata."+idx);
+
+                if (!retTmp[0].equals("true")) {
+                
+                    System.out.println("List create error3 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                }
+            }
+
+            // RPUSH
+            for (int idx = 0; idx < 5000; idx++) {
+                String[] retTmp = okuyamaClient.listRPush(listName, "Rlistdata."+idx);
+
+                if (!retTmp[0].equals("true")) {
+                
+                    System.out.println("List create error5 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                }
+            }
+
+            // RPOPテスト
+            idxTest2 = 9999;
+            for (long idx = 5000L; idx < 10000L; idx++) {
+                
+                String[] retTmp = okuyamaClient.listRPop(listName);
+                if (!retTmp[0].equals("true")) {
+                    System.out.println("List create error11 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                } else {
+                    if (!retTmp[1].equals("Rlistdata."+(idxTest2-idx))) {
+                        System.out.println("List create error11-1 =" + listName);
+                        System.out.println(retTmp[1]);
+                        errorFlg = true;
+                    }
+                }
+            }
+
+            // RPOPテスト
+            for (long idx = 4999; idx > -1L; idx--) {
+
+                String[] retTmp = okuyamaClient.listRPop(listName);
+                if (!retTmp[0].equals("true")) {
+                    System.out.println("List error12 =" + listName);
+                    System.out.println(retTmp[1]);
+                    errorFlg = true;
+                } else {
+                    if (!retTmp[1].equals("Llistdata."+(4999L-idx))) {
+                        System.out.println("List  error12-1 =" + listName);
+                        System.out.println("RealData=[" + retTmp[1] + "]!=" + " TestPattern[Llistdata."+(4999L-idx)+"]");
+                        errorFlg = true;
+                    }
+                }
+            }
 
             long endTime = new Date().getTime();
             System.out.println("List Method= " + (endTime - startTime) + " milli second");
