@@ -375,23 +375,15 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
                     // Stripingの場合で処理がことなる
                     if (BufferedOkuyamaClient.stripingDataBlock == false) {
-//long start = System.nanoTime();
                         Object[] realClientRet = this.client.readByteValue(key);
-//long end = System.nanoTime();
 
                         if (realClientRet != null && realClientRet[0].equals("true")) {
 
                             value = (byte[])realClientRet[1];
-//System.out.println("time1=" + (end - start) + " len=" + value.length + " Key=" + key);
                         }
-
-
                     } else {
                         // StripingBlock;
-long start = System.nanoTime();
                         value = this.readStripingBlock(key);
-long end = System.nanoTime();
-System.out.println("time2=" + (end - start));
                         if (value.length == 0) value =  null;
                     }
                 }
@@ -423,7 +415,6 @@ System.out.println("time2=" + (end - start));
 
         try {
 
-//long start = System.nanoTime();
             int strpngIndex = 0;
             for (int idx = 0; idx < BufferedOkuyamaClient.stripingLevel / 4; idx++) {
                 stripingDataClient[0].requestReadByteValue(key+"\t"+strpngIndex);
@@ -436,11 +427,9 @@ System.out.println("time2=" + (end - start));
                 strpngIndex++;
 
                 boolean endRead = false;
-long start = System.nanoTime();
-
+                
                 Object[] stripingRet1 = stripingDataClient[0].responseReadByteValue(key+"\t"+(strpngIndex - 4));
                 if (endRead == false && stripingRet1[0].equals("true")) {
-System.out.println("1Len=" + ((byte[])stripingRet1[1]).length);
                     baos.write((byte[])stripingRet1[1]);
                 } else {
                     endRead = true;
@@ -448,7 +437,6 @@ System.out.println("1Len=" + ((byte[])stripingRet1[1]).length);
 
                 Object[] stripingRet2 = stripingDataClient[1].responseReadByteValue(key+"\t"+(strpngIndex - 3));
                 if (endRead == false && stripingRet2[0].equals("true")) {
-System.out.println("2Len=" + ((byte[])stripingRet2[1]).length);
                     baos.write((byte[])stripingRet2[1]);
                 } else {
                     endRead = true;
@@ -456,7 +444,6 @@ System.out.println("2Len=" + ((byte[])stripingRet2[1]).length);
 
                 Object[] stripingRet3 = stripingDataClient[2].responseReadByteValue(key+"\t"+(strpngIndex - 2));
                 if (endRead == false && stripingRet3[0].equals("true")) {
-System.out.println("3Len=" + ((byte[])stripingRet3[1]).length);
                     baos.write((byte[])stripingRet3[1]);
                 } else {
                     endRead = true;
@@ -464,18 +451,13 @@ System.out.println("3Len=" + ((byte[])stripingRet3[1]).length);
 
                 Object[] stripingRet4 = stripingDataClient[3].responseReadByteValue(key+"\t"+(strpngIndex - 1));
                 if (endRead == false && stripingRet4[0].equals("true")) {
-System.out.println("4Len=" + ((byte[])stripingRet4[1]).length);
                     baos.write((byte[])stripingRet4[1]);
                 } else {
                     endRead = true;
                 }
-long end = System.nanoTime();
-System.out.println("StripingGet=" + (end - start));
 
                 if (endRead == true) break;
             }
-//long end2 = System.nanoTime();
-//System.out.println("2=" + (end2 - start2));
 
         } catch (Exception e) {
             throw e;

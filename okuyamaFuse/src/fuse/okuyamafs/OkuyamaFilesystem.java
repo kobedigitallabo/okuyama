@@ -25,8 +25,8 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
     public volatile static int blockSizeAssist = 50;
 
     //public volatile static int blockSize = 1024*512;//5200; // Blockサイズ
-    public volatile static int blockSize = 1024*14;//1024*63; //1024*17; //5200; // Blockサイズ
-//20480
+    public volatile static int blockSize = 5632; // Blockサイズ
+
     
     public volatile static int writeBufferSize = 1024 * 1024 * 5 + 1024;
 
@@ -831,10 +831,7 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                 String pathInfoStr = (String)client.getPathDetail(trimToPath);
 
                 String[] pathInfo = pathInfoStr.split("\t");
-//long start = System.nanoTime();
                 int readLen = client.readValue(trimToPath, offset, buf.limit(), pathInfo[pathInfo.length - 2], buf);
-//long end = System.nanoTime();
-//System.out.println("ALL read=" + (end - start) / 1000 + " micro Len=" + readLen);
                 
                 if (readLen == -1 || readLen < 1) {
 

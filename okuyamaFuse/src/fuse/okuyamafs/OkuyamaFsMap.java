@@ -410,7 +410,7 @@ public class OkuyamaFsMap implements IFsMap {
 
     public Map getMultiBytes(Object[] keyList) {
     //return (byte[])dumm.get(type + "\t" + (String)key);
-long start = System.nanoTime();
+        //long start = System.nanoTime();
         Map retMap = new HashMap();
         Map okuyamaDataMap = new HashMap();
 
@@ -485,8 +485,8 @@ long start = System.nanoTime();
         } catch (Exception e) {
             e.printStackTrace();
         }
-long end = System.nanoTime();
-System.out.println("Key count=" + keyList.length + " Time=" + ((end - start) / 1000));
+        //long end = System.nanoTime();
+        //System.out.println("Key count=" + keyList.length + " Time=" + ((end - start) / 1000));
         return retMap;
     }
 
@@ -785,10 +785,7 @@ class RequestCheckDaemon extends Thread {
                 if (client == null) client = new BufferedOkuyamaClient(this.factory.getClient(300*1000));
 
                 clientUseCount++;
-//long start = System.nanoTime();
                 boolean ret = client.sendByteValue((String)request[0], OkuyamaFsMapUtil.dataCompress((byte[])request[1]));
-//long end = System.nanoTime();
-//System.out.println("put=" + ((end - start) / 1000 / 1000) + " Len=" + ((byte[])request[1]).length);
                 if (ret) {
                     this.responseBox.put(new Integer(0));
                 } else {

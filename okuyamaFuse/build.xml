@@ -4,7 +4,7 @@
 	<property name="project.title"  value="okuyamaFuse" />
 	<property name="src.dir"		value="src" />
 	<property name="build.dir"		value="classes" />
-	<property name="version"		value="0.0.1" />
+	<property name="version"		value="0.0.2" />
 	<property name="lib.dir"	    value="lib"/>
 
 	<!-- Use Project Lib  -->

@@ -168,7 +168,6 @@ public class OkuyamaClientWrapper {
 
     public int readValue(String key, long start, int offset, String realKeyNodeNo, ByteBuffer buf) throws Exception {
         //List dataReadKeyList = new ArrayList();
-long start1 = System.nanoTime();
 
         String[] dataReadKeyList = null;
         boolean allDataNull = true;
@@ -205,7 +204,6 @@ long start1 = System.nanoTime();
 
         //replaceDataBuf = new byte[OkuyamaFilesystem.blockSize * dataReadKeyListSize];
 
-long start11 = System.nanoTime();
         if (CoreMapFactory.factoryType == 2) {
 
             // okuyamaの場合事前にgetMultiByteでデータを取得しておく
@@ -216,9 +214,6 @@ long start11 = System.nanoTime();
             if (dataReadKeyListSize > 1) {
                 //Map multiReadRet = this.getMultiValue(keyList);
                 Map multiReadRet = this.getMultiValue(dataReadKeyList);
-long end11 = System.nanoTime();
-System.out.println("S1-1=" + (end11 - start11) / 1000);
-long start2 = System.nanoTime();
                 int totalReadLen = 0;
                 if (multiReadRet != null) {
                     for (int i = 0; i < dataReadKeyListSize; i++) {
@@ -237,8 +232,6 @@ long start2 = System.nanoTime();
                             totalReadLen = totalReadLen + readData.length;
                         }
                     }
-long end2 = System.nanoTime();
-System.out.println("S2=" + (end2 - start2) / 1000);
 
                     return totalReadLen;
                 } else {
@@ -287,8 +280,6 @@ System.out.println("S2=" + (end2 - start2) / 1000);
             retData = new byte[realWritePoint];
             System.arraycopy(replaceDataBuf, bufReadPoint, retData, 0, realWritePoint);
         }
-long end3 = System.nanoTime();
-System.out.println("S3=" + (end3 - start1) / 1000);
 
         return -1;
 
@@ -469,7 +460,6 @@ System.out.println("S3=" + (end3 - start1) / 1000);
 
                 lastSetKey = dataReadKeyList[idx];
             }
-
             ((OkuyamaFsMap)dataMap).putMultiBytes(putDataList);
         }
 
