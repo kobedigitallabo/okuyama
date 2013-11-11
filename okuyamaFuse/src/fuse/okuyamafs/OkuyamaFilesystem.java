@@ -24,8 +24,8 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
     public volatile static int blockSizeAssist = 50;
 
-    //public volatile static int blockSize = 1024*512;//5200; // Blockサイズ
-    public volatile static int blockSize = 5632; // Blockサイズ
+    public volatile static int blockSize = 1024*128;//5200; // Blockサイズ
+    //public volatile static int blockSize = 5632; // Blockサイズ
 
     
     public volatile static int writeBufferSize = 1024 * 1024 * 5 + 1024;
@@ -151,6 +151,18 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
         try {
             String[] setInfo = new String[11];
+
+            synchronized (this.parallelDataAccessSync[((path.hashCode() << 1) >>> 1) % 100]) {
+
+                // 読み込むファイルがバッファリング書き込み中の場合一旦全てのバッファをflushする
+                List bufferedDataFhList = writeBufFpMap.removeGroupingData(path);
+                if (bufferedDataFhList != null) {
+                    for (int idx = 0; idx < bufferedDataFhList.size(); idx++) {
+                        Object bFh = bufferedDataFhList.get(idx);
+                        this.fixNoCommitData(bFh);
+                    }
+                }
+            }
 
             if (path.trim().equals("/")) {
 
@@ -564,7 +576,11 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
         return 0;
     }
 
-    public int unlink(String path) throws FuseException {
+/*    public int unlink(String path) throws FuseException {
+        return 0;
+    }
+*/
+   public int unlink(String path) throws FuseException {
         log.info("unlink " + path);
 
         try {
@@ -741,7 +757,11 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
         if (fh == null) return Errno.EBADE;
         //long start = System.nanoTime();
         try {
-
+/*System.out.println("--------------- start --------------- ");
+            for (int i = 0; i < writeData.length; i++) {
+                System.out.println("path=" + path + " offet=" + offset +" writeData[" + i + "]=" + writeData[i]);
+            }
+System.out.println("--------------- end --------------- ");*/
             String pathTrimStr = path.trim();
             String pathInfoStr = (String)client.getPathDetail(pathTrimStr);
             if (pathInfoStr == null) return Errno.ENOENT;
@@ -799,6 +819,8 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
     }
 
     public int read(String path, Object fh, ByteBuffer buf, long offset) throws FuseException {
+
+    
         /*long start1 = 0L;
         long start2 = 0L;
         long start3 = 0L;
@@ -831,8 +853,9 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
                 String pathInfoStr = (String)client.getPathDetail(trimToPath);
 
                 String[] pathInfo = pathInfoStr.split("\t");
+                long nowSize = Long.parseLong(pathInfo[4]);
                 int readLen = client.readValue(trimToPath, offset, buf.limit(), pathInfo[pathInfo.length - 2], buf);
-                
+
                 if (readLen == -1 || readLen < 1) {
 
                     log.info("read data nothing read=" + "read:" + path + " offset:" + offset + " buf.limit:" + buf.limit());

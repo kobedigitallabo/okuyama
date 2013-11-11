@@ -192,6 +192,7 @@ public class OkuyamaFsMap implements IFsMap {
 
 //long start = System.nanoTime();
             client.sendByteValue(keyStr, OkuyamaFsMapUtil.dataCompress(value));
+            dataCache.put(keyStr, value);
 //long end = System.nanoTime();
 //System.out.println("putBytes=" + ((end - start) / 1000 / 1000) + " Len=" + value.length);
 
@@ -232,12 +233,14 @@ public class OkuyamaFsMap implements IFsMap {
                 byte[] data = (byte[])putData[1];
                 //dataCache.put(keyStr, data);
                 if (daemon != null) {
+                    dataCache.put(keyStr, data);
                     daemon.putRequest(keyStr, data);
                     useDaemonList.add(daemon);
                 } else {
 
                     OkuyamaClient client = createClient();
                     client.sendByteValue(keyStr, OkuyamaFsMapUtil.dataCompress(data));
+                    dataCache.put(keyStr, data);
                     client.close();
                 }
             }
@@ -270,6 +273,7 @@ public class OkuyamaFsMap implements IFsMap {
         try {
 
             client.setObjectValue(type + "\t" + (String)key, value);
+             dataCache.remove(type + "\t" + (String)key);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
