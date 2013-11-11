@@ -57,6 +57,9 @@ public class OkuyamaFsMap implements IFsMap {
     /**
      * コンストラクタ
      */
+    public OkuyamaFsMap() {
+    }
+    
     public OkuyamaFsMap(int type, String[] masterNodeInfos) {
         this.type = type;
         this.masterNodeList = masterNodeInfos;
@@ -206,8 +209,6 @@ public class OkuyamaFsMap implements IFsMap {
     }
 
     public Object putMultiBytes(Object[] dataList) {
-
-
         try {
             List useDaemonList = new ArrayList();
             //long start = System.nanoTime();
