@@ -29,7 +29,7 @@ public class UtilClient {
             System.out.println("Command3. MasterNodeConfigCheck args1=masterconfig args2=MainMasterNode-IPAdress args3=MainMasterNode-Port");
             System.out.println("Command4. DataNode is added args1=adddatanode args2=MasterNode-IPAdress:PortNo args3=DataNodeIPAddress:PortNo args4=Slave1-DataNodeIpAddress:PortNo args5=Slave2-DataNodeIpAddress:PortNo");
             System.out.println("Command5. DataNode save key list output args1=keylist args2=DataNode-IPAdress:PortNo");
-
+            System.out.println("Command6. Replace AllMasterNodeInfos args1=replacemasternode args2=MasterNode-IPAdress:PortNo args3=Replace AllMasterNodeInfos config");
             System.exit(1);
         }
 
@@ -112,6 +112,15 @@ public class UtilClient {
             addMasterNode(args[1], args[2]);
         }
 
+
+        if (args[0].equals("replacemasternode")) {
+            if (args.length < 3) {
+                System.out.println("Argument Error! args[0]=Command, args[1]=MasterNodeIp:Port, args[2]=ReplaceMasterNodeInfos");
+                System.exit(1);
+            }
+
+            replaceMasterNode(args[1], args[2]);
+        }
 
         if (args[0].equals("keylist")) {
             if (args.length < 2) {
@@ -347,6 +356,43 @@ public class UtilClient {
         }
     }
 
+
+
+
+    public static void replaceMasterNode(String masterNodeIpPort, String masternodeinfos) {
+        OkuyamaClient client = null;
+
+        try {
+            client = new OkuyamaClient();
+            client.setConnectionInfos(masterNodeIpPort.split(","));
+            client.autoConnect();
+
+
+            String[] masterNodeRet = client.getValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo);
+
+            if (masterNodeRet[0].equals("true")) {
+                System.out.println("Repalce - befor =" + masterNodeRet[1]);
+                String updateMasterNodeInfo = masternodeinfos;
+                if(client.setValue(ImdstDefine.ConfigSaveNodePrefix + ImdstDefine.Prop_AllMasterNodeInfo, updateMasterNodeInfo)) {
+                    System.out.println("Repalce - after =" + updateMasterNodeInfo);
+                    System.out.println("MasterNode add success");
+
+                } else {
+                    System.out.println("MasterNode add error");
+                }
+            } else {
+                System.out.println("MasterNode add error");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (client != null) client.close();
+            } catch (Exception e2) {
+            }
+        }
+    }
 
     /**
      * 全Keyの一覧を出力.<br>

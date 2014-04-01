@@ -53,6 +53,9 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
 
                     // Value圧縮あり
                     System.out.println(" PartialConcurrentHashMap Use");
+                    if (ImdstDefine.bigValueFileStoreUse == true && virtualStoreDirs != null) {
+                        ImdstDefine.dataFullMemory = false;
+                    }
                     if (renewFlg) {
                         mainMap = new PartialConcurrentHashMap(size, upper, multi, virtualStoreDirs);
                     } else {
@@ -106,6 +109,10 @@ public class CoreValueMap extends AbstractMap implements Cloneable, Serializable
                 long bucketSize = jvmMaxMemory * SerializeMap.bucketJvm1MBMemoryFactor;
 
                 System.out.println(" PartialSerializeMap Use");
+                if (ImdstDefine.bigValueFileStoreUse == true && virtualStoreDirs != null) {
+                    ImdstDefine.dataFullMemory = false;
+                }
+
                 MemoryModeCoreValueCnv.compressUnderLimitSize = 1024 * 1024 * 1024;
 
                 if (renewFlg) {

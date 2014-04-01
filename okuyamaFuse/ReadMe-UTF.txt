@@ -68,13 +68,15 @@ Linux用のファイルシステムとして実装されており、CentOS5.8上で開発しました。
     -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseParNewGC \
     fuse.okuyamafs.OkuyamaFuse \
     -f -o allow_other \
-    /var/tmp/okuyamafuse \
-    192.168.1.1:8888,192.168.1.2:8888
+    192.168.1.1:8888,192.168.1.2:8888 \
+    /var/tmp/okuyamafuse 
 
    ■アンマウント
    $fusermount -u /var/tmp/okufs
    $kill -9 実行プロセス
 
+
+slave2:8888,slave3:8888
 
 
 

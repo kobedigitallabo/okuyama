@@ -3187,6 +3187,7 @@ public class MasterManagerHelper extends AbstractMasterManagerHelper {
                 boolean fullMatchFlg = ((Boolean)fullMatchList.get(0)).booleanValue();
 
                 for (int i = 0; i < singleWordList.length; i++) {
+
                     String[] ret = this.getTagKeys(singleWordList[i], true);
                     if (ret[0].equals("4") && ret[1].equals("true")) {
                         // 該当あり

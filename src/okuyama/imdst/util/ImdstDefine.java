@@ -11,7 +11,7 @@ import java.util.zip.Deflater;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.9.5";
+    public static final String okuyamaVersion = "VERSION okuyama-0.9.6";
 
     // -- MasterNodeをマルチクラスターのスレーブで起動する場合にtrueになる
     public volatile static boolean slaveClusterMasterNode = false;
@@ -64,6 +64,9 @@ public class ImdstDefine {
 
     // Tag値の文字列の後方カッコ
     public static final String imdstMultiRequestByteDataSep = ":#:";
+
+    // List構造体の共通Prefix
+    public static final String imdstListStructCommonPrefixStr = "{imdst_list";
 
     // List構造体のFirst要素を表すPrefix
     public static final String imdstListStructStartStr = "{imdst_list#1234";
@@ -388,6 +391,8 @@ public class ImdstDefine {
     // メモリモードで起動時にこのサイズを超えるValueはファイルに書き出され、メモリを使用しない
     public volatile static boolean bigValueFileStoreUse = false;
     public volatile static int memoryStoreLimitSize = 1024 * 128;
+
+    public volatile static boolean dataFullMemory = true;
 
     public static final int stringBufferSmallSize = 128;
 

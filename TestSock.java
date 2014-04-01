@@ -48,7 +48,7 @@ public class TestSock {
                 StringBuilder strBuf =null; 
                 if (args.length > 4) {
                     strBuf = new StringBuilder(120*10);
-                    for (int i = 0; i < 3000; i++) {
+                    for (int i = 0; i < 50000; i++) {
                         strBuf.append(rnd.nextInt(1999999999));
                     }
                 }
@@ -270,6 +270,7 @@ public class TestSock {
                 } else {
                     ret = okuyamaClient.getValue(args[3]);
                 }
+                long end = new Date().getTime();
                 if (ret[0].equals("true")) {
                     // データ有り
                     System.out.println("Value=[" + ret[1] + "]");
@@ -278,7 +279,6 @@ public class TestSock {
                 } else if (ret[0].equals("error")) {
                     System.out.println(ret[1]);
                 }
-                long end = new Date().getTime();
                 System.out.println((end - start) + "milli second");
 
                 okuyamaClient.close();
@@ -1435,7 +1435,7 @@ public class TestSock {
                     // データ登録
                     
                     //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_" + args[4] + "_" + new Integer(i).toString())) {
-                    if (!okuyamaClient.setValueAndCreateIndex("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr_swedcvfrtgbnhyujm_09876543" + args[4] + "_" + new Integer(i).toString())) {
+                    if (!okuyamaClient.setValueAndCreateIndex("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "sav"+ i +"edatavaluestr_swedcvfrtgbnhyujm_09876543" + args[4] + "_" + new Integer(i).toString(), "aa", 6, 3)) {
                     //if (!okuyamaClient.setValue("datasavekey_" + args[4] + "_" + new Integer(i).toString(), "savedatavaluestr0987654321" + strBuf.toString() + "_" + args[4] + "_" + new Integer(i).toString())) {
                         System.out.println("OkuyamaClient - error");
                     } else {
@@ -1622,7 +1622,7 @@ public class TestSock {
                     keys = (String[])ret[1];
                     System.out.println("Result Count[" + keys.length + "]");
                     for (int idx = 0; idx < keys.length; idx++) {
-                        System.out.println(keys[idx]);
+//                        System.out.println(keys[idx]);
                     }
                 } else if (ret[0].equals("false")) {
                     System.out.println("データなし");
@@ -1661,7 +1661,7 @@ public class TestSock {
                     keys = (String[])ret[1];
                     System.out.println("Result Count[" + keys.length + "]");
                     for (int idx = 0; idx < keys.length; idx++) {
-                        System.out.println(keys[idx]);
+//                        System.out.println(keys[idx]);
                     }
                 } else if (ret[0].equals("false")) {
                     System.out.println("データなし");

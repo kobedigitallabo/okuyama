@@ -29,7 +29,6 @@ public class OkuyamaFsMap implements IFsMap {
     public static int allDelaySJobSize = 100000;
 
     private ArrayBlockingQueue responseCheckDaemonQueue = null;
-
     private ArrayBlockingQueue requestCheckDaemonQueue = null;
 
 
@@ -45,6 +44,7 @@ public class OkuyamaFsMap implements IFsMap {
 
     public OkuyamaClientFactory factory = null;
 
+    public boolean singleIOMode = true;
 
     static {
         if (OkuyamaFilesystem.blockSize > (1024*24)) {
@@ -71,21 +71,22 @@ public class OkuyamaFsMap implements IFsMap {
             this.factory = OkuyamaClientFactory.getFactory(this.masterNodeList, OkuyamaFsMapUtil.okuyamaClientPoolSize);
 
             if (type == 1) {
-                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, OkuyamaFsMapUtil.okuyamaFsMaxCacheLimit, this.factory, false);
+                this.dataCache = new ExpireCacheMap(OkuyamaFsMapUtil.okuyamaFsMaxCacheLimit, OkuyamaFsMapUtil.okuyamaFsMaxCacheTime, this.factory, false);
             } else {
-                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, 5*1000, false);
+                this.dataCache = new ExpireCacheMap(OkuyamaFsMap.allDelaySJobSize, OkuyamaFsMapUtil.okuyamaFsMaxCacheTime, false);
             }
             /*this.delayStoreDaemon = new DelayStoreDaemon[delayStoreDaemonSize];
             for (int idx = 0; idx < delayStoreDaemonSize; idx++) {
                 this.delayStoreDaemon[idx] = new DelayStoreDaemon(masterNodeInfos, (allDelaySJobSize / delayStoreDaemonSize), dataCache, this.factory);
                 this.delayStoreDaemon[idx].start();
             }*/
-
-            for (int idx = 0; idx < OkuyamaFsMapUtil.multiDataAccessDaemons; idx++) {
-
-                ResponseCheckDaemon responseCheckDaemon = new ResponseCheckDaemon(this.factory);
-                responseCheckDaemon.start();
-                this.responseCheckDaemonQueue.put(responseCheckDaemon);
+            if (!singleIOMode) {
+                for (int idx = 0; idx < OkuyamaFsMapUtil.multiDataAccessDaemons; idx++) {
+    
+                    ResponseCheckDaemon responseCheckDaemon = new ResponseCheckDaemon(this.factory);
+                    responseCheckDaemon.start();
+                    this.responseCheckDaemonQueue.put(responseCheckDaemon);
+                }
             }
 
             for (int idx = 0; idx < OkuyamaFsMapUtil.multiDataAccessDaemons; idx++) {
@@ -415,7 +416,9 @@ public class OkuyamaFsMap implements IFsMap {
 
     public Map getMultiBytes(Object[] keyList) {
     //return (byte[])dumm.get(type + "\t" + (String)key);
-        //long start = System.nanoTime();
+        System.out.println("getMulti:siez=" + keyList.length);
+        long start = System.nanoTime();
+ 
         Map retMap = new HashMap();
         Map okuyamaDataMap = new HashMap();
 
@@ -435,6 +438,27 @@ public class OkuyamaFsMap implements IFsMap {
                     retMap.put((String)keyList[idx], data);
                 }
             }
+
+            if (singleIOMode) {
+                int tmpKeyListSize = tmpKeyList.size();
+                if (tmpKeyListSize > 0) {
+                    BufferedOkuyamaClient client = new BufferedOkuyamaClient(this.factory.getClient(300*1000));
+                    for (int i = 0; i < tmpKeyListSize; i++) {
+                        String key = (String)tmpKeyList.get(i);
+                        Object[] responseSet = client.readByteValue(key);
+        
+                        if (responseSet[0].equals("true")) {
+                            Object[] retObj = new Object[2];
+                            byte[] decompBytes = OkuyamaFsMapUtil.dataDecompress((byte[])responseSet[1]);
+                            retMap.put((String)realTmpKeyList.get(i), decompBytes);
+                            dataCache.put(key, decompBytes);
+                        }
+                    }
+                    client.close();
+                }
+                return retMap;
+            }
+
             if (tmpKeyList.size() > 0) {
                 keyStrList = (String[])tmpKeyList.toArray(new String[0]);
 
@@ -480,7 +504,9 @@ public class OkuyamaFsMap implements IFsMap {
 
                     if (responseObj.length > 0) {
                         String objKey = (String)realTmpKeyList.get(i);
-                        //if (!dataCache.containsKey(objKey)) dataCache.put(objKey, (byte[])responseObj[1]);
+                        if (!dataCache.containsKey(objKey)) {
+                            dataCache.put(keyStrList[i], (byte[])responseObj[1]);
+                        }
                         retMap.put(objKey, (byte[])responseObj[1]);
                     } 
                     if (!this.responseCheckDaemonQueue.offer(daemon)) daemon.endRequest();
@@ -490,8 +516,8 @@ public class OkuyamaFsMap implements IFsMap {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        //long end = System.nanoTime();
-        //System.out.println("Key count=" + keyList.length + " Time=" + ((end - start) / 1000));
+        long end = System.nanoTime();
+        System.out.println("Key count=" + keyList.length + " Time=" + ((end - start) / 1000));
         return retMap;
     }
 
@@ -652,7 +678,7 @@ class ResponseCheckDaemon extends Thread {
     }
 
     public void run() {
-
+        long clientCreateTime = 0L;
         while (true) {
             try {
                 String key = null;
@@ -672,8 +698,24 @@ class ResponseCheckDaemon extends Thread {
                     }
                     break;
                 }
-
-                client = new BufferedOkuyamaClient(this.factory.getClient(300*1000));
+                
+                if (client == null) {
+                    client = new BufferedOkuyamaClient(this.factory.getClient(300*1000));
+                    clientCreateTime = System.currentTimeMillis();
+                } else {
+                    // 既に作成してから1分経過しているか確認
+                    if ((clientCreateTime + 60000) < System.currentTimeMillis()) {
+                        // 経過している
+                        // 作り直し
+                        client.close();
+                        client = null;
+                        client = new BufferedOkuyamaClient(this.factory.getClient(300*1000));
+                        clientCreateTime = System.currentTimeMillis();
+                    } else {
+                        // 経過していない
+                        
+                    }
+                }
 //long start = System.nanoTime();
                 Object[] responseSet = client.readByteValue(key);
 //long end = System.nanoTime();
@@ -706,8 +748,12 @@ class ResponseCheckDaemon extends Thread {
             } finally {
                 try {
                     if (client != null ) {
-                        client.close();
-                        client = null;
+                        if ((clientCreateTime + 60000) < System.currentTimeMillis()) {
+                            // 経過している
+                            // 作り直し
+                            client.close();
+                            client = null;
+                        }
                     }
                 } catch (Exception ee) {}
             }
@@ -759,7 +805,7 @@ class RequestCheckDaemon extends Thread {
     }
 
     public void run() {
-
+        long clientCreateTime = 0L;
         while (true) {
             try {
                 Object[] request = null;
@@ -780,14 +826,23 @@ class RequestCheckDaemon extends Thread {
                     break;
                 }
 
-                if (clientUseCount > maxClientUseCount) {
-                    if (client != null ) {
+                if (client == null) {
+                    client = new BufferedOkuyamaClient(this.factory.getClient(300*1000));
+                    clientCreateTime = System.currentTimeMillis();
+                } else {
+                    // 既に作成してから1分経過しているか確認
+                    if ((clientCreateTime + 60000) < System.currentTimeMillis()) {
+                        // 経過している
+                        // 作り直し
                         client.close();
                         client = null;
+                        client = new BufferedOkuyamaClient(this.factory.getClient(300*1000));
+                        clientCreateTime = System.currentTimeMillis();
+                    } else {
+                        // 経過していない
+                        
                     }
-                    clientUseCount = 0;
                 }
-                if (client == null) client = new BufferedOkuyamaClient(this.factory.getClient(300*1000));
 
                 clientUseCount++;
                 boolean ret = client.sendByteValue((String)request[0], OkuyamaFsMapUtil.dataCompress((byte[])request[1]));
@@ -808,6 +863,17 @@ class RequestCheckDaemon extends Thread {
                 if (this.endFlg) return;
                 try {
                     responseBox.put(new Object[0]);
+                } catch (Exception ee) {}
+            } finally {
+                try {
+                    if (client != null ) {
+                        if ((clientCreateTime + 60000) < System.currentTimeMillis()) {
+                            // 経過している
+                            // 作り直し
+                            client.close();
+                            client = null;
+                        }
+                    }
                 } catch (Exception ee) {}
             }
         }

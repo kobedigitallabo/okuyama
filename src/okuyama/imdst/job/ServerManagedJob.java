@@ -95,6 +95,7 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                         gcExecuteTime = System.currentTimeMillis();
                         //Thread.sleep(2000);
                     } else {
+
                         // 限界値を超えている
                         if (memoryLimitOverCount >= maxMemoryLimitOverCount) {
                             System.out.println(new Date().toString() + " JVM Limit MemorySize Over");
@@ -102,7 +103,9 @@ public class ServerManagedJob extends AbstractJob implements IJob {
                             gcOff = true;
                         }
                     }
+
                 } else {
+
                     memoryLimitOverCount = 0;
                 }
                 // GC発行

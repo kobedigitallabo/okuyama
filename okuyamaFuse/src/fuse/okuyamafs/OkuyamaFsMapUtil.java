@@ -20,9 +20,9 @@ public class OkuyamaFsMapUtil  {
     public static int multiDataAccessDaemons = 50;
     public static int multiDataAccessDaemonsQueue = 130;
 
-    public static int okuyamaClientPoolSize = 350;
-
-    public static int okuyamaFsMaxCacheLimit = 100000;
+    public static int okuyamaClientPoolSize = 15000;
+    public static int okuyamaFsMaxCacheTime = 100000; // ミリ秒 
+    public static int okuyamaFsMaxCacheLimit = 100000; // キャッシュ数
 
 
 

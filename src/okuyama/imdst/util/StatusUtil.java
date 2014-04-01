@@ -234,8 +234,10 @@ public class StatusUtil {
      */
     public static void setMemoryLimitMinSize(int limitSize) {
         synchronized(memoryLimitMinSize) {
-            if (memoryLimitMinSize.intValue() > limitSize)
-            memoryLimitMinSize = new Integer(limitSize);
+            if (memoryLimitMinSize.intValue() > limitSize) {
+
+                memoryLimitMinSize = new Integer(limitSize);
+            }
         }
     }
 

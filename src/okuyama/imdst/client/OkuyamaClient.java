@@ -371,14 +371,14 @@ public class OkuyamaClient {
                 this.socket = new Socket();
                 int timeOutCheckTime = 0;
 
-                if (this.masterNodesList.size() < 4) {
-                    timeOutCheckTime = 2000;
-                } else if (this.masterNodesList.size() < 6) {
-                    timeOutCheckTime = 1200;
-                } else if (this.masterNodesList.size() < 8) {
+                if (this.masterNodesList.size() < 2) {
                     timeOutCheckTime = 1000;
+                } else if (this.masterNodesList.size() < 3) {
+                    timeOutCheckTime = 700;
+                } else if (this.masterNodesList.size() < 5) {
+                    timeOutCheckTime = 600;
                 } else if (this.masterNodesList.size() < 13) {
-                    timeOutCheckTime = 800;
+                    timeOutCheckTime = 500;
                 } else {
                     timeOutCheckTime = 500;
                 }
@@ -2585,7 +2585,7 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public String[] setValueVersionCheck(String keyStr, String value, String versionNo) throws OkuyamaClientException {
-        return this.setValueVersionCheck(keyStr, null, value, versionNo, null);
+        return this.setValueVersionCheck(keyStr, null, value, versionNo, null, null);
     }
 
 
@@ -2605,7 +2605,7 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, String versionNo) throws OkuyamaClientException {
-        return this.setValueVersionCheck(keyStr, tagStrs, value, versionNo, null);
+        return this.setValueVersionCheck(keyStr, tagStrs, value, versionNo, null, null);
     }
 
     /**
@@ -2625,6 +2625,48 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, String versionNo, String encode) throws OkuyamaClientException {
+        return this.setValueVersionCheck(keyStr, tagStrs, value, versionNo, null, encode);
+    }
+
+    /**
+     * MasterNodeへバージョンチェック付き値登録要求をする.<br>
+     * Tag有り.<br>
+     * バージョン値を使用して更新前チェックを行う.<br>
+     * 失敗した場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     * memcachedのcasに相当.<br>
+     * 
+     * @param keyStr Key値
+     * @param tagStrs Tag値
+     * @param value Value値
+     * @param versionNo getValueVersionCheckメソッドで取得したバージョンNo
+     * @param expireTime 有効期限(秒)
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws OkuyamaClientException
+     */
+    public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, String versionNo, Integer expireTime) throws OkuyamaClientException {
+        return this.setValueVersionCheck(keyStr, tagStrs, value, versionNo, expireTime, null);
+    }
+
+    /**
+     * MasterNodeへバージョンチェック付き値登録要求をする.<br>
+     * Tag有り.<br>
+     * バージョン値を使用して更新前チェックを行う.<br>
+     * 失敗した場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     * memcachedのcasに相当.<br>
+     * 
+     * @param keyStr Key値
+     * @param tagStrs Tag値
+     * @param value Value値
+     * @param versionNo getValueVersionCheckメソッドで取得したバージョンNo
+     * @param expireTime 有効期限(秒)
+     * @param encode エンコード
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws OkuyamaClientException
+     */
+    public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, String versionNo, Integer expireTime, String encode) throws OkuyamaClientException {
+
         String[] ret = null; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -2711,6 +2753,20 @@ public class OkuyamaClient {
             // バージョン値連結
             setValueServerReqBuf.append(versionNo);
 
+            // 有効期限あり
+            if (expireTime != null) {
+                if (0.880 > this.okuyamaVersionNo) {
+
+                    throw new OkuyamaClientException("The version of the server is old [The expiration date can be used since version 0.8.8]");
+                } else {
+                    // セパレータ連結
+                    setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                    setValueServerReqBuf.append(expireTime);
+                    // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
+                    setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                } 
+            }
+
             // サーバ送信
             pw.println(setValueServerReqBuf.toString());
             pw.flush();
@@ -2746,7 +2802,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValueVersionCheck(keyStr, tagStrs, value, versionNo);
+                    ret = this.setValueVersionCheck(keyStr, tagStrs, value, versionNo, expireTime, encode);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -2757,7 +2813,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValueVersionCheck(keyStr, tagStrs, value, versionNo);
+                    ret = this.setValueVersionCheck(keyStr, tagStrs, value, versionNo, expireTime, encode);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -2768,7 +2824,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setValueVersionCheck(keyStr, tagStrs, value, versionNo);
+                    ret = this.setValueVersionCheck(keyStr, tagStrs, value, versionNo, expireTime, encode);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }
@@ -2795,9 +2851,27 @@ public class OkuyamaClient {
      * @throws OkuyamaClientException
      */
     public String[] setObjectValueVersionCheck(String keyStr, Object value, String versionNo) throws OkuyamaClientException {
-        return setObjectValueVersionCheck(keyStr, null, value, versionNo);
+        return setObjectValueVersionCheck(keyStr, null, value, versionNo, null);
     }
 
+
+    /**
+     * MasterNodeへバージョンチェック付きObject値登録要求をする.<br>
+     * バージョン値を使用して更新前チェックを行う.<br>
+     * 失敗した場合は、falseが返る<br>
+     * 成功の場合は配列の長さは1である。失敗時は2である<br>
+     * memcachedのcasに相当.<br>
+     * 
+     * @param keyStr Key値
+     * @param value Value値
+     * @param versionNo getValueVersionCheckメソッドで取得したバージョンNo
+     * @param expireTime 有効期限(秒)
+     * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
+     * @throws OkuyamaClientException
+     */
+    public String[] setObjectValueVersionCheck(String keyStr, Object value, String versionNo, Integer expireTime) throws OkuyamaClientException {
+        return setObjectValueVersionCheck(keyStr, null, value, versionNo, expireTime);
+    }
 
 
     /**
@@ -2815,7 +2889,7 @@ public class OkuyamaClient {
      * @return String[] 要素1(データ有無):"true" or "false",要素2(失敗時はメッセージ):"メッセージ"
      * @throws OkuyamaClientException
      */
-    public String[] setObjectValueVersionCheck(String keyStr, String[] tagStrs, Object value, String versionNo) throws OkuyamaClientException {
+    public String[] setObjectValueVersionCheck(String keyStr, String[] tagStrs, Object value, String versionNo, Integer expireTime) throws OkuyamaClientException {
         String[] ret = null; 
         String serverRetStr = null;
         String[] serverRet = null;
@@ -2903,6 +2977,20 @@ public class OkuyamaClient {
             // バージョン値連結
             setValueServerReqBuf.append(versionNo);
 
+            // 有効期限あり
+            if (expireTime != null) {
+                if (0.880 > this.okuyamaVersionNo) {
+
+                    throw new OkuyamaClientException("The version of the server is old [The expiration date can be used since version 0.8.8]");
+                } else {
+                    // セパレータ連結
+                    setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                    setValueServerReqBuf.append(expireTime);
+                    // セパレータ連結　最後に区切りを入れて送信データ終わりを知らせる
+                    setValueServerReqBuf.append(OkuyamaClient.sepStr);
+                } 
+            }
+
             // サーバ送信
             pw.println(setValueServerReqBuf.toString());
             pw.flush();
@@ -2938,7 +3026,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setObjectValueVersionCheck(keyStr, tagStrs, value, versionNo);
+                    ret = this.setObjectValueVersionCheck(keyStr, tagStrs, value, versionNo, expireTime);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(ce);
                 }
@@ -2949,7 +3037,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setObjectValueVersionCheck(keyStr, tagStrs, value, versionNo);
+                    ret = this.setObjectValueVersionCheck(keyStr, tagStrs, value, versionNo, expireTime);
                 } catch (Exception e) {
                     throw new OkuyamaClientException(se);
                 }
@@ -2960,7 +3048,7 @@ public class OkuyamaClient {
             if (this.masterNodesList != null && masterNodesList.size() > 1) {
                 try {
                     this.autoConnect();
-                    ret = this.setObjectValueVersionCheck(keyStr, tagStrs, value, versionNo);
+                    ret = this.setObjectValueVersionCheck(keyStr, tagStrs, value, versionNo, expireTime);
                 } catch (Exception ee) {
                     throw new OkuyamaClientException(e);
                 }

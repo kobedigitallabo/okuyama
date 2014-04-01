@@ -47,6 +47,8 @@ import okuyama.imdst.util.*;
  * -npmmns ImdstDefine.notPromotionMainMasterNodeStatus / MainMasterNodeに昇格しないMasterNodeを作成する場合にtrueとする / このオプションはMasterNodeの中でもデータ復旧を行うMasterNodeを限定したい場合に使う。例えばスプリットブレインなどの現象でMasterNode同士が通信出来なくなった際に、それぞれのMasterNodeが勝手に復旧をしないためなどである。
  * -rr ImdstDefine.recoverRequired / DataNodeがリカバリが必要な場合にtrueとして起動する
  * -smnca ImdstDefine.solitaryMasterNodeCheckAddress / MasterNodeの孤立チェック用の到達確認先のアドレス文字列。icmpでの確認のため、確認先のアドレスのみをカンマ区切りで設定する。全てのアドレスに届かない場合に自動的にMasterNodeがshutdownする
+ * -ncopt ImdstDefine.nodeConnectionOpenPingTimeout / MainMasterNodeがDataNodeの生存監視を行う際にコネクションオープン時のタイムアウト閾値時間 数値にて指定(単位はミリ秒)
+ * -ncpt ImdstDefine.nodeConnectionPingTimeout / MainMasterNodeがDataNodeの生存監視を行う際に接続後Pingの応答を待機する閾値時間 数値にて指定(単位はミリ秒)
  *
  * <br>
  * @author T.Okuyama
@@ -496,6 +498,29 @@ public class ServerPreprocess implements IProcess {
                             settingStartParameterMap.put("-smnca", startOptions[i+1].trim());
                         }
                     }
+                    
+
+                    // -ncopt
+/*                    if (startOptions[i].trim().equals("-ncopt")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.nodeConnectionOpenPingTimeout = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-ncopt", startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }
+
+                    // -ncpt
+                    if (startOptions[i].trim().equals("-ncpt")) {
+                        if (startOptions.length > (i+1)) {
+                            try {
+                                ImdstDefine.nodeConnectionPingTimeout = Integer.parseInt(startOptions[i+1]);
+                                settingStartParameterMap.put("-ncpt", startOptions[i+1]);
+                            } catch(NumberFormatException nfe) {
+                            }
+                        }
+                    }*/
                 }
             }
 

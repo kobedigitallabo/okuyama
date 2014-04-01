@@ -45,8 +45,8 @@ public class CoreMapFactory {
         if (CoreMapFactory.factoryType == 1) {
             return new NativeFsMap(1, (String[])parameterMap.get("okuyamainfo"));
         } else if(CoreMapFactory.factoryType == 2) {
-            //return new OkuyamaFsMap(1, (String[])parameterMap.get("okuyamainfo")); // 
-            return new MemoryBufferedFsMap(1, (String[])parameterMap.get("okuyamainfo"));
+            return new OkuyamaFsMap(1, (String[])parameterMap.get("okuyamainfo")); // 
+            //return new MemoryBufferedFsMap(1, (String[])parameterMap.get("okuyamainfo"));
         } else if (CoreMapFactory.factoryType == 3) {
             return new LocalCacheOkuyamaFsMap(1, (String[])parameterMap.get("okuyamainfo"));
         }
@@ -58,8 +58,8 @@ public class CoreMapFactory {
         if (CoreMapFactory.factoryType == 1) {
             return new NativeFsMap(2, (String[])parameterMap.get("okuyamainfo"));
         } else if(CoreMapFactory.factoryType == 2) {
-            //return new OkuyamaFsMap(2, (String[])parameterMap.get("okuyamainfo"));
-            return new MemoryBufferedFsMap(2, (String[])parameterMap.get("okuyamainfo"));
+            return new OkuyamaFsMap(2, (String[])parameterMap.get("okuyamainfo"));
+            //return new MemoryBufferedFsMap(2, (String[])parameterMap.get("okuyamainfo"));
             
         } else if (CoreMapFactory.factoryType == 3) {
             return new LocalCacheOkuyamaFsMap(2, (String[])parameterMap.get("okuyamainfo"));
@@ -72,8 +72,8 @@ public class CoreMapFactory {
         if (CoreMapFactory.factoryType == 1) {
             return new NativeFsMap(3, (String[])parameterMap.get("okuyamainfo"));
         } else if(CoreMapFactory.factoryType == 2) {
-            //return new OkuyamaFsMap(3, (String[])parameterMap.get("okuyamainfo"));
-            return new MemoryBufferedFsMap(3, (String[])parameterMap.get("okuyamainfo"));
+            return new OkuyamaFsMap(3, (String[])parameterMap.get("okuyamainfo"));
+            //return new MemoryBufferedFsMap(3, (String[])parameterMap.get("okuyamainfo"));
         } else if (CoreMapFactory.factoryType == 3) {
             return new LocalCacheOkuyamaFsMap(3, (String[])parameterMap.get("okuyamainfo"));
         }

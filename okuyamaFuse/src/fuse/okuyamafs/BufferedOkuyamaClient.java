@@ -46,7 +46,8 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
             okuyamaRequestQueue = new ArrayBlockingQueue(500);
         } else {
             okuyamaRequestQueue = new ArrayBlockingQueue(4000);
-            parallel = 16;
+//            parallel = 16;
+            parallel = 30;
         }
     }
 
@@ -65,10 +66,12 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
 
     public String[] setNewValue(String key, String value) throws OkuyamaClientException {
+        System.out.println("setNewValue");
         return this.client.setNewValue(key, value);
     }
 
     public String[] setNewObjectValue(String key, Object value) throws OkuyamaClientException {
+        System.out.println("setNewObjectValue");
         return this.client.setNewObjectValue(key, value);
     }
 
@@ -79,7 +82,7 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
      *
      */
     public static void initClientMaster(OkuyamaClientFactory factory, boolean bufferedFlg, boolean stripingDataBlock) throws Exception {
-
+        System.out.println("initClientMaster");
         BufferedOkuyamaClient.stripingDataBlock = stripingDataBlock;
         BufferedOkuyamaClient.factory = factory;
         if (bufferedFlg == false) {
@@ -103,6 +106,8 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
 
     public void close() throws OkuyamaClientException {
+        System.out.println("close");
+
         this.client.close();
         if (stripingDataBlock == true) {
             try {
@@ -116,7 +121,10 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
 
     public boolean setValue(String key, String value) throws OkuyamaClientException {
-        if (!BufferedOkuyamaClient.bufferedFlg) return this.client.setValue(key, value);
+        if (!BufferedOkuyamaClient.bufferedFlg) {
+            System.out.println("setValue-1");
+            return this.client.setValue(key, value);
+        }
 
         try {
 
@@ -144,7 +152,10 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
     }
 
     public String[] getValue(String key) throws OkuyamaClientException {
-        if (!BufferedOkuyamaClient.bufferedFlg) return this.client.getValue(key);
+        if (!BufferedOkuyamaClient.bufferedFlg) {
+            System.out.println("getValue-1");
+            return this.client.getValue(key);
+        }
 
         String[] ret = null;
 
@@ -156,6 +167,8 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
                 if (value == null) {
                     realClientRet = this.client.getValue(key);
+                    System.out.println("this.client.getValue("+key+")");
+
                     if (realClientRet != null && realClientRet[0].equals("true")) {
                         value = realClientRet[1];
                     }
@@ -186,7 +199,10 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
 
     public Object[] getObjectValue(String key) throws OkuyamaClientException {
-        if (!BufferedOkuyamaClient.bufferedFlg) return this.client.getObjectValue(key);
+        if (!BufferedOkuyamaClient.bufferedFlg) {
+            System.out.println("getObjectValue-1");
+            return this.client.getObjectValue(key);
+        }
         Object[] ret = null;
 
         try {
@@ -197,6 +213,7 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
                 if (value == null) {
                     realClientRet = this.client.getObjectValue(key);
+                    System.out.println("this.client.getObjectValue("+key+")");
                     if (realClientRet != null && realClientRet[0].equals("true")) {
                         value = realClientRet[1];
                     }
@@ -227,7 +244,10 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
 
     public boolean setObjectValue(String key, Object value) throws OkuyamaClientException {
-        if (!BufferedOkuyamaClient.bufferedFlg) return this.client.setObjectValue(key, value);
+        if (!BufferedOkuyamaClient.bufferedFlg) {
+            System.out.println("setObjectValue-1");
+            return this.client.setObjectValue(key, value);
+        }
         try {
             while (true) {
 
@@ -252,7 +272,11 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
     }
 
     public boolean sendByteValue(String key, byte[] value) throws OkuyamaClientException {
-        if (!BufferedOkuyamaClient.bufferedFlg) return this.client.sendByteValue(key, value);
+        if (!BufferedOkuyamaClient.bufferedFlg) {
+            System.out.println("sendByteValue-1");
+
+            return this.client.sendByteValue(key, value);
+        }
 
         try {
             while (true) {
@@ -282,7 +306,10 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
 
     public String[] removeValue(String key) throws OkuyamaClientException {
-        if (!BufferedOkuyamaClient.bufferedFlg) return this.client.removeValue(key);
+        if (!BufferedOkuyamaClient.bufferedFlg) {
+            System.out.println("removeValue-1");
+            return this.client.removeValue(key);
+        }
         String[] ret = null;
         try {
             while (true) {
@@ -300,6 +327,7 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
                         Object removeRet = putBufferedDataMap.remove(key);
                         if (removeRet == null) {
                             String[] realClientRmRet = this.client.getValue(key);
+                            System.out.println("removeValue-this.client.getValue("+key+")");
                             if (realClientRmRet[0].equals("false")) {
                                 ret = new String[1];
                                 ret[0] = "false";
@@ -319,7 +347,10 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
 
     public boolean requestRemoveValue(String key) throws OkuyamaClientException {
-        if (!BufferedOkuyamaClient.bufferedFlg) return this.client.requestRemoveValue(key);
+        if (!BufferedOkuyamaClient.bufferedFlg) {
+            System.out.println("requestRemoveValue-1");
+            return this.client.requestRemoveValue(key);
+        }
         try {
             while (true) {
                 synchronized(sendSyncObject[((key.hashCode() << 1) >>> 1) % syncParallel]) {
@@ -342,7 +373,10 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
     }
 
     public String[] responseRemoveValue(String key) throws OkuyamaClientException {
-        if (!BufferedOkuyamaClient.bufferedFlg) return this.client.responseRemoveValue(key);
+        if (!BufferedOkuyamaClient.bufferedFlg) {
+            System.out.println("responseRemoveValue-1");
+            return this.client.responseRemoveValue(key);
+        }
         String[] ret = null;
 
         try {
@@ -364,7 +398,10 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
 
 
     public Object[] readByteValue(String key) throws OkuyamaClientException {
-        if (!BufferedOkuyamaClient.bufferedFlg) return this.client.readByteValue(key);
+        if (!BufferedOkuyamaClient.bufferedFlg) {
+            System.out.println("readByteValue-1");
+            return this.client.readByteValue(key);
+        }
         Object[] ret = null;
 
         try {
@@ -376,7 +413,7 @@ public class BufferedOkuyamaClient extends OkuyamaClient {
                     // Stripingの場合で処理がことなる
                     if (BufferedOkuyamaClient.stripingDataBlock == false) {
                         Object[] realClientRet = this.client.readByteValue(key);
-
+                        System.out.println("readByteValue(" + key+");");
                         if (realClientRet != null && realClientRet[0].equals("true")) {
 
                             value = (byte[])realClientRet[1];

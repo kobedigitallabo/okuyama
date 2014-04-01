@@ -32,6 +32,8 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
 
     private static String checkSetMethodCodeAdd = "6";
 
+    private static String checkSetMethodCodeSetVerChk = "16";
+
 
     /**
      * 初期化
@@ -156,7 +158,6 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
 
     private String[] okuyamaMethodCnv(String executeMethodStr) {
         int methodLen = executeMethodStr.length();
-
         String[] splitMethodSet = null;
         if (executeMethodStr.indexOf("2,") == 0) {
 
@@ -170,9 +171,9 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
             splitMethodSet = executeMethodStr.split(ImdstDefine.keyHelperClientParamSep);
         }
 
-        if (splitMethodSet[0].equals(checkSetMethodCodeSet) || splitMethodSet[0].equals(checkSetMethodCodeAdd)) {
+        if (splitMethodSet[0].equals(checkSetMethodCodeSet) || splitMethodSet[0].equals(checkSetMethodCodeAdd) || splitMethodSet[0].equals(checkSetMethodCodeSetVerChk)) {
             
-            if (executeMethodStr.charAt(methodLen - 1) == ',') {
+            if (executeMethodStr.charAt(methodLen - 1) == ',' && !splitMethodSet[0].equals(checkSetMethodCodeSetVerChk)) {
 
                 // 有効期限付き
                 String[] retMethod = new String[5] ;
@@ -193,6 +194,30 @@ public class OkuyamaProtocolTaker extends AbstractProtocolTaker implements IProt
                               append(AbstractProtocolTaker.calcExpireTime(splitMethodSet[5])).
                               append(AbstractProtocolTaker.metaColumnSep).
                               append(splitMethodSet[5]);
+                retMethod[4] = requestStrBuf.toString();
+                return retMethod;
+            } else if (executeMethodStr.charAt(methodLen - 1) == ',' && splitMethodSet[0].equals(checkSetMethodCodeSetVerChk)) {
+
+                // 有効期限付き
+                String[] retMethod = new String[6] ;
+
+                StringBuilder requestStrBuf = new StringBuilder(methodLen + 20);
+                
+                executeMethodStr = null;
+
+                retMethod[0] = splitMethodSet[0]; // 処理番号
+                retMethod[1] = splitMethodSet[1]; // Key
+                retMethod[2] = splitMethodSet[2]; // Tag
+                retMethod[3] = splitMethodSet[3]; // TransactionCode
+                retMethod[5] = splitMethodSet[5]; // VersionNo
+
+                requestStrBuf.append(splitMethodSet[4]);
+                requestStrBuf.append(ImdstDefine.keyHelperClientParamSep);
+                requestStrBuf.append("0");
+                requestStrBuf.append(AbstractProtocolTaker.metaColumnSep).
+                              append(AbstractProtocolTaker.calcExpireTime(splitMethodSet[6])).
+                              append(AbstractProtocolTaker.metaColumnSep).
+                              append(splitMethodSet[6]);
                 retMethod[4] = requestStrBuf.toString();
                 return retMethod;
             } else {

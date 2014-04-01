@@ -29,9 +29,9 @@ public class DelayStoreDaemon extends Thread {
 
     private OkuyamaClientFactory factory = null;
 
-    private Map nowPutStringRequestKey = new HashMap(50000);
-    private Map nowPutByteRequestKey = new HashMap(50000);
-    private Map nowPutMapRequestKey = new HashMap(50000);
+    private Map nowPutStringRequestKey = new HashMap(150000);
+    private Map nowPutByteRequestKey = new HashMap(150000);
+    private Map nowPutMapRequestKey = new HashMap(150000);
 
 
     public DelayStoreDaemon(String[] masterNodeInfos, int queueSize, ExpireCacheMap cacheMap, OkuyamaClientFactory factory) {
@@ -148,7 +148,6 @@ public class DelayStoreDaemon extends Thread {
                                     }
 
                                     this.client.sendByteValue(key, replaceBytes);
-                                    this.cacheMap.removeStoreTmpCache(key, requestSetTime);
                                     if (this.nowPutByteRequestKey.containsKey(key)) this.nowPutByteRequestKey.remove(key);
                                 }
                             }

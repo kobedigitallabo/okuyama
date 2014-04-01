@@ -197,7 +197,7 @@ public class KeyMapManager extends Thread {
 
     private Object keyObjectExportSync = new Object();
 
-    private int keyObjectStoreTiming = 25; // 25分に一度バックアップが作成される
+    private int keyObjectStoreTiming = 1; // 25分に一度バックアップが作成される
 
     private String diskCacheFile = null;
 
@@ -937,6 +937,7 @@ public class KeyMapManager extends Thread {
 
 
                     String data = null;
+
                     if (keyNode.indexOf("-1") == -1) {
 
                         data = keyNode;
@@ -4241,6 +4242,8 @@ public class KeyMapManager extends Thread {
                         // 対象データ判定
                         // タグの対象データ判定はタグ値に連結されているインデックス文字列や、左右のプレフィックス文字列をはずして判定する
                         sendFlg = DataDispatcher.isRangeData(checkKey.substring(0, lastIdx), rangs);
+                    } else if (key.indexOf(ImdstDefine.imdstListStructCommonPrefixStr) == 0) {
+                        sendFlg = false;
                     } else {
                         // 対象データ判定
                         sendFlg = DataDispatcher.isRangeData(key, rangs);
@@ -4354,6 +4357,7 @@ public class KeyMapManager extends Thread {
                             if (!dataLines[i].trim().equals("")) {
 
                                 // TODO:ここで移行データから有効期限よりも後ろを削除してしまっている。
+
                                 oneDatas = dataLines[i].split(KeyMapManager.workFileSeq);
 
                                 // データの種類に合わせて処理分岐
@@ -4364,6 +4368,9 @@ public class KeyMapManager extends Thread {
                                     
                                     // 通常データ
                                     // 成功、失敗関係なく全て登録処理
+                                    if (oneDatas.length > 3) {
+                                        oneDatas[2] = oneDatas[2] + "," + oneDatas[3];
+                                    }
                                     this.setKeyPairOnlyOnce(oneDatas[1], oneDatas[2], "0", true);
                                 } else if (oneDatas[0].equals("2")) {
 

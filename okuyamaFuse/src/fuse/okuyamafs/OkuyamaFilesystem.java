@@ -24,7 +24,7 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
 
     public volatile static int blockSizeAssist = 50;
 
-    public volatile static int blockSize = 1024*16;//5200; // Blockサイズ
+    public volatile static int blockSize = 1024*16+5;//5200; // Blockサイズ
     //public volatile static int blockSize = 5632; // Blockサイズ
 
     
@@ -654,7 +654,7 @@ public class OkuyamaFilesystem implements Filesystem3, XattrSupport {
     }
 
    public int write(String path, Object fh, boolean isWritepage, ByteBuffer buf, long offset) throws FuseException {
-        //log.info("write  path:" + path + " offset:" + offset + " isWritepage:" + isWritepage + " buf.limit:" + buf.limit());
+        log.info("write  path:" + path + " offset:" + offset + " isWritepage:" + isWritepage + " buf.limit:" + buf.limit());
         //long startAA = System.nanoTime();
         try {
 
@@ -930,14 +930,16 @@ System.out.println("--------------- end --------------- ");*/
 
         if (appendWriteDataBuf.containsKey(fh)) {
             Map appendData = (Map)appendWriteDataBuf.remove(fh);
-            String bPath = (String)appendData.get("path");
-            Object bFh = (Object)appendData.get("fh");
-            boolean bIsWritepage = ((Boolean)appendData.get("isWritepage")).booleanValue();
-            ByteArrayOutputStream bBuf = (ByteArrayOutputStream)appendData.get("buf");
-            long bOffset = ((Long)appendData.get("offset")).longValue();
-
-            int realWriteRet = this.realWrite(bPath, bFh, bIsWritepage, bBuf, bOffset);
-            return realWriteRet;
+            if (appendData != null) {
+                String bPath = (String)appendData.get("path");
+                Object bFh = (Object)appendData.get("fh");
+                boolean bIsWritepage = ((Boolean)appendData.get("isWritepage")).booleanValue();
+                ByteArrayOutputStream bBuf = (ByteArrayOutputStream)appendData.get("buf");
+                long bOffset = ((Long)appendData.get("offset")).longValue();
+    
+                int realWriteRet = this.realWrite(bPath, bFh, bIsWritepage, bBuf, bOffset);
+                return realWriteRet;
+            }
         }
         return 0;
     }

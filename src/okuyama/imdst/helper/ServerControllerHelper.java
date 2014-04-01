@@ -238,6 +238,55 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         pw.close();
                         Thread.sleep(500);
                         soc.close();
+                    } else if (command.equals("datanodelist")) {
+                        HashMap allNodeInfo = DataDispatcher.getAllDataNodeInfo();
+        
+                        List mainNodeList = (ArrayList)allNodeInfo.get("main");
+                        List subNodeList = (ArrayList)allNodeInfo.get("sub");
+                        List thirdNodeList = (ArrayList)allNodeInfo.get("third");
+                        List resulList = new ArrayList();
+                        
+                        for (int i = 0; i < mainNodeList.size(); i++) {
+                            StringBuilder strBuf = new StringBuilder(30);
+                            strBuf.append("{");
+                            String mainNode = (String)mainNodeList.get(i);
+                            strBuf.append("DataNode=");
+                            strBuf.append(mainNode);
+                            strBuf.append(",Arrival=");
+                            boolean arRet = StatusUtil.isNodeArrival(mainNode);
+                            strBuf.append(arRet);
+                            strBuf.append("; ");
+
+                            if (subNodeList != null && subNodeList.size() > i) {
+                                String subNode = (String)subNodeList.get(i);
+                                strBuf.append("SubNode=");
+                                strBuf.append(subNode);
+                                strBuf.append(",Arrival=");
+                                boolean subArRet = StatusUtil.isNodeArrival(subNode);
+                                strBuf.append(subArRet);
+                                strBuf.append("; ");
+                            }
+
+                            if (thirdNodeList != null && thirdNodeList.size() > i) {
+                                String thNode = (String)thirdNodeList.get(i);
+                                strBuf.append("ThirdNode=");
+                                strBuf.append(thNode);
+                                strBuf.append(",Arrival=");
+                                boolean thArRet = StatusUtil.isNodeArrival(thNode);
+                                strBuf.append(thArRet);
+                                strBuf.append("; ");
+                            }
+                            strBuf.append("}");
+                            resulList.add(strBuf.toString());
+                        }
+
+                        pw.println(command + " Success");
+                        pw.println(resulList.toString());
+                        pw.flush();
+                        br.close();
+                        pw.close();
+                        Thread.sleep(500);
+                        soc.close();
                     } else if (command.equals("-help")) {
                         pw.println(command + " Success");
                         pw.println("");
@@ -252,6 +301,7 @@ public class ServerControllerHelper extends AbstractMasterManagerHelper {
                         pw.println("fullgc");
                         pw.println("netdebug");
                         pw.println("jobstatus");
+                        pw.println("datanodelist");
                         pw.println("");
 
                         pw.flush();
