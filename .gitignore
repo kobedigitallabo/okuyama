@@ -1,0 +1,17 @@
+build
+parts
+.DS_Store
+.swp
+*~
+*.so
+.checkstyle
+target/
+.project
+.classpath
+.settings
+*.class
+.gradle
+classes/
+keymapfile/
+logs/
+
