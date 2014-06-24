@@ -1,79 +1,79 @@
-okuyamaFuse‚Íokuyama‚ÍƒXƒgƒŒ[ƒW‚Æ‚µ‚Ä—˜—p‚·‚éƒtƒ@ƒCƒ‹ƒVƒXƒeƒ€‚Å‚·B
-Linux—p‚Ìƒtƒ@ƒCƒ‹ƒVƒXƒeƒ€‚Æ‚µ‚ÄÀ‘•‚³‚ê‚Ä‚¨‚èACentOS5.8ã‚ÅŠJ”­‚µ‚Ü‚µ‚½B
-ƒx[ƒ^”Å‚È‚Ì‚ÅAƒeƒXƒg—p‚Æ‚Å‚²g—p‚­‚¾‚³‚¢B
-Œ»ó‚Å‚Íƒ}ƒEƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚Í11TB‚ÉŒ©‚¦‚Ü‚·BƒfƒBƒŒƒNƒgƒŠ‘S‘Ì‚Ì—e—Ê‚Í‘Œ¸‚µ‚Ü‚¹‚ñB
+okuyamaFuseã¯okuyamaã¯ã‚¹ãƒˆãƒ¬ãƒ¼ã‚¸ã¨ã—ã¦åˆ©ç”¨ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã‚·ã‚¹ãƒ†ãƒ ã§ã™ã€‚
+Linuxç”¨ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚·ã‚¹ãƒ†ãƒ ã¨ã—ã¦å®Ÿè£…ã•ã‚Œã¦ãŠã‚Šã€CentOS5.8ä¸Šã§é–‹ç™ºã—ã¾ã—ãŸã€‚
+ãƒ™ãƒ¼ã‚¿ç‰ˆãªã®ã§ã€ãƒ†ã‚¹ãƒˆç”¨ã¨ã§ã”ä½¿ç”¨ãã ã•ã„ã€‚
+ç¾çŠ¶ã§ã¯ãƒã‚¦ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã¯11TBã«è¦‹ãˆã¾ã™ã€‚ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå…¨ä½“ã®å®¹é‡ã¯å¢—æ¸›ã—ã¾ã›ã‚“ã€‚
 
 
-[d‘g‚İ]
- Fuseƒx[ƒX‚Åƒtƒ@ƒCƒ‹ƒVƒXƒeƒ€‚ğÀ‘•‚µ‚Ä‚¢‚Ü‚·B
- ‚»‚Ì‚½‚ßAFuse‚É‘Î‰‚·‚éOS‚Å‚Ì‚İ‰Ò“­‰Â”\‚Å‚·B
- “®ìŠm”F‚ÍCentOS5.8A6.0‚Å‚Ì‚İÀ{‚µ‚Ä‚¢‚Ü‚·B
+[ä»•çµ„ã¿]
+ Fuseãƒ™ãƒ¼ã‚¹ã§ãƒ•ã‚¡ã‚¤ãƒ«ã‚·ã‚¹ãƒ†ãƒ ã‚’å®Ÿè£…ã—ã¦ã„ã¾ã™ã€‚
+ ãã®ãŸã‚ã€Fuseã«å¯¾å¿œã™ã‚‹OSã§ã®ã¿ç¨¼åƒå¯èƒ½ã§ã™ã€‚
+ å‹•ä½œç¢ºèªã¯CentOS5.8ã€6.0ã§ã®ã¿å®Ÿæ–½ã—ã¦ã„ã¾ã™ã€‚
 
 
-[ˆË‘¶]
- LinuxƒJ[ƒlƒ‹ƒ‚ƒWƒ…[ƒ‹‚Å‚ ‚éFuse‚ÉˆË‘¶‚µ‚Ü‚·B
- ‚Ü‚½AFuse‚ÌJavaƒoƒCƒ“ƒfƒBƒ“ƒO‚Å‚ ‚éFUSE-J‚ğ—˜—p‚µ‚Ä‚¢‚Ü‚·B
+[ä¾å­˜]
+ Linuxã‚«ãƒ¼ãƒãƒ«ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã§ã‚ã‚‹Fuseã«ä¾å­˜ã—ã¾ã™ã€‚
+ ã¾ãŸã€Fuseã®Javaãƒã‚¤ãƒ³ãƒ‡ã‚£ãƒ³ã‚°ã§ã‚ã‚‹FUSE-Jã‚’åˆ©ç”¨ã—ã¦ã„ã¾ã™ã€‚
  
    FUSE-J
     http://sourceforge.net/projects/fuse-j/
    Version
     2.4
 
- okuyama‚ğ—˜—p‚µ‚Ä‚¢‚é‚½‚ßAokuyama‚ÌÀsŠÂ‹«‚ª•K—v‚Å‚·B
-   Version-0.9.4ˆÈã
-   ¦DataNode‚Í‚Ç‚ÌƒXƒgƒŒ[ƒWƒ‚[ƒh‚Å‚à“®‚«‚Ü‚·B
-     uDataSaveMapType=serializev‚Æ‚µ‚Äˆ³kƒƒ‚ƒŠ‚ğ—˜—p‚·‚éê‡‚ÍA
-     uSerializerClassName=v‚Éuokuyama.imdst.util.serializemap.ByteDataMemoryStoreSerializerv‚ğ
-      İ’è‚·‚é‚±‚Æ‚ğ„§‚µ‚Ü‚·Bˆ³k—¦A«”\‹¤‚ÉuObjectStreamSerializerv‚æ‚è‚à—D‚ê‚Ä‚¢‚Ü‚·B
+ okuyamaã‚’åˆ©ç”¨ã—ã¦ã„ã‚‹ãŸã‚ã€okuyamaã®å®Ÿè¡Œç’°å¢ƒãŒå¿…è¦ã§ã™ã€‚
+   Version-0.9.4ä»¥ä¸Š
+   â€»DataNodeã¯ã©ã®ã‚¹ãƒˆãƒ¬ãƒ¼ã‚¸ãƒ¢ãƒ¼ãƒ‰ã§ã‚‚å‹•ãã¾ã™ã€‚
+     ã€ŒDataSaveMapType=serializeã€ã¨ã—ã¦åœ§ç¸®ãƒ¡ãƒ¢ãƒªã‚’åˆ©ç”¨ã™ã‚‹å ´åˆã¯ã€
+     ã€ŒSerializerClassName=ã€ã«ã€Œokuyama.imdst.util.serializemap.ByteDataMemoryStoreSerializerã€ã‚’
+      è¨­å®šã™ã‚‹ã“ã¨ã‚’æ¨å¥¨ã—ã¾ã™ã€‚åœ§ç¸®ç‡ã€æ€§èƒ½å…±ã«ã€ŒObjectStreamSerializerã€ã‚ˆã‚Šã‚‚å„ªã‚Œã¦ã„ã¾ã™ã€‚
 
 
-[—˜—p•û–@](Java‚âAnt‚Í‘S‚ÄƒZƒbƒgƒAƒbƒvÏ‚İ‚Æ‚µ‚Ü‚·Bokuyama‚Í192.168.1.1‚Æ192.168.1.2ƒT[ƒo‚Å8888”Ô‚Ìƒ|[ƒg‚Å‹N“®‚µ‚Ä‚¢‚é‚à‚Ì‚Æ‚µ‚Ü‚·)
- 1.FUSE‚ğƒZƒbƒgƒAƒbƒv‚µ‚Ü‚·B
+[åˆ©ç”¨æ–¹æ³•](Javaã‚„Antã¯å…¨ã¦ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—æ¸ˆã¿ã¨ã—ã¾ã™ã€‚okuyamaã¯192.168.1.1ã¨192.168.1.2ã‚µãƒ¼ãƒã§8888ç•ªã®ãƒãƒ¼ãƒˆã§èµ·å‹•ã—ã¦ã„ã‚‹ã‚‚ã®ã¨ã—ã¾ã™)
+ 1.FUSEã‚’ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—ã—ã¾ã™ã€‚
    $yum install fuse* 
-   (devel“™‚à‘S‚ÄƒCƒ“ƒXƒg[ƒ‹‚µ‚Ä‚­‚¾‚³‚¢)
-   ¦u$modprobe fusev‚ğs‚¢ƒGƒ‰[‚ªo‚È‚¢‚±‚Æ‚ğŠm”F
+   (develç­‰ã‚‚å…¨ã¦ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã—ã¦ãã ã•ã„)
+   â€»ã€Œ$modprobe fuseã€ã‚’è¡Œã„ã‚¨ãƒ©ãƒ¼ãŒå‡ºãªã„ã“ã¨ã‚’ç¢ºèª
 
- 2.FUSE-J‚ğƒZƒbƒgƒAƒbƒv
-   ¡ƒ_ƒEƒ“ƒ[ƒh‹y‚Ñ”z’u
+ 2.FUSE-Jã‚’ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—
+   â– ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰åŠã³é…ç½®
    $wget http://jaist.dl.sourceforge.net/project/fuse-j/fuse-j/FUSE-J%202.4%20prerelease1/fuse-j-2.4-prerelease1.tar.gz
    $tar -zxvf fuse-j-2.4-prerelease1.tar.gz
 
 
-   ¡JNI‚ğƒZƒbƒgƒAƒbƒv
-    ¦ƒRƒ“ƒpƒCƒ‹‘O‚Ébuild.conf‚ÌuJDK_HOME=/opt/jdk1.5.0v‚ª³‚µ‚¢‚©ƒ`ƒFƒbƒN
+   â– JNIã‚’ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—
+    â€»ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«å‰ã«build.confã®ã€ŒJDK_HOME=/opt/jdk1.5.0ã€ãŒæ­£ã—ã„ã‹ãƒã‚§ãƒƒã‚¯
    $cd fuse-j-2.4-prerelease1
    $mkdir build
    $make
-    ¦jniƒfƒBƒŒƒNƒgƒŠ‚Ì”z‰º‚Élibjavafs.so‚ªì¬‚³‚ê‚Ä‚¢‚ê‚Î¬Œ÷‚Å‚·B
+    â€»jniãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®é…ä¸‹ã«libjavafs.soãŒä½œæˆã•ã‚Œã¦ã„ã‚Œã°æˆåŠŸã§ã™ã€‚
 
-   ¡FUSE-J‚ğƒZƒbƒgƒAƒbƒv
+   â– FUSE-Jã‚’ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—
    $ant compile
    $ant dist
-    ¦distƒfƒBƒŒƒNƒgƒŠ‚Ì”z‰º‚Éfuse-j.jar‚ªì¬‚³‚ê‚Ä‚¢‚ê‚Î¬Œ÷‚Å‚·B
+    â€»distãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®é…ä¸‹ã«fuse-j.jarãŒä½œæˆã•ã‚Œã¦ã„ã‚Œã°æˆåŠŸã§ã™ã€‚
 
-   ¡ÀsŠÂ‹«‚ğ—pˆÓ
-    libjavafs.soAfuse-j.jarAokuyama-{version}.jarAokuyamaFuse-{version}.jarAokuyama/lib/javamail-1.4.1.jarAokuyama/etc_client/okuyamaFuse/lib/fuse-j-2.4/lib/commons-logging-1.0.4.jar‚ğ
-    ã‹L‚Ìƒtƒ@ƒCƒ‹‚ğ‘S‚Ä“K“–‚È1ƒfƒBƒŒƒNƒgƒŠ‚É”z’u
+   â– å®Ÿè¡Œç’°å¢ƒã‚’ç”¨æ„
+    libjavafs.soã€fuse-j.jarã€okuyama-{version}.jarã€okuyamaFuse-{version}.jarã€okuyama/lib/javamail-1.4.1.jarã€okuyama/etc_client/okuyamaFuse/lib/fuse-j-2.4/lib/commons-logging-1.0.4.jarã‚’
+    ä¸Šè¨˜ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’å…¨ã¦é©å½“ãª1ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«é…ç½®
 
-   ¡ƒ}ƒEƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚ğì¬
+   â– ãƒã‚¦ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ
    $mkdir /var/tmp/okuyamafuse
 
-   ¡ƒ}ƒEƒ“ƒg
-     ¦ˆÈ‰º‚ÅMountÀs(ÅIs‚ÍMasterNode‚ÌIP‚Æƒ|[ƒg”Ô†‚ğ":"‚Å˜AŒ‹‚µA","‚ÅŒq‚¢‚Å—ñ‹“‚·‚é(ˆê‘ä‚Ìê‡1‚Â‚¾‚¯‹Lq)
-      ¦/usr/local/lib”z‰º‚ÉFUSE‚Ìƒ‰ƒCƒuƒ‰ƒŠ‚ª”z’u‚³‚ê‚Ä‚¢‚é‘z’è
-   LD_LIBRARY_PATH=./:/usr/local/lib java -classpath \
-    ./okuyamaFuse-0.0.1.jar:./fuse-j.jar:./commons-logging-1.0.4.jar:./okuyama-0.9.4.jar:./javamail-1.4.1.jar \
-    -Dorg.apache.commons.logging.Log=fuse.logging.FuseLog \
-    -Dfuse.logging.level=ERROR -Xmx1024m -Xms1024m -server \
-    -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseParNewGC \
-    fuse.okuyamafs.OkuyamaFuse \
-    -f -o allow_other \
-    192.168.1.1:8888,192.168.1.2:8888 \
+   â– ãƒã‚¦ãƒ³ãƒˆ
+     â€»ä»¥ä¸‹ã§Mountå®Ÿè¡Œ(æœ€çµ‚è¡Œã¯MasterNodeã®IPã¨ãƒãƒ¼ãƒˆç•ªå·ã‚’":"ã§é€£çµã—ã€","ã§ç¹‹ã„ã§åˆ—æŒ™ã™ã‚‹(ä¸€å°ã®å ´åˆ1ã¤ã ã‘è¨˜è¿°)
+      â€»/usr/local/libé…ä¸‹ã«FUSEã®ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãŒé…ç½®ã•ã‚Œã¦ã„ã‚‹æƒ³å®š
+   LD_LIBRARY_PATH=./:/usr/local/lib java -classpath Â¥
+    ./okuyamaFuse-0.0.1.jar:./fuse-j.jar:./commons-logging-1.0.4.jar:./okuyama-0.9.4.jar:./javamail-1.4.1.jar Â¥
+    -Dorg.apache.commons.logging.Log=fuse.logging.FuseLog Â¥
+    -Dfuse.logging.level=ERROR -Xmx1024m -Xms1024m -server Â¥
+    -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseParNewGC Â¥
+    fuse.okuyamafs.OkuyamaFuse Â¥
+    -f -o allow_other Â¥
+    192.168.1.1:8888,192.168.1.2:8888 Â¥
     /var/tmp/okuyamafuse 
 
-   ¡ƒAƒ“ƒ}ƒEƒ“ƒg
+   â– ã‚¢ãƒ³ãƒã‚¦ãƒ³ãƒˆ
    $fusermount -u /var/tmp/okufs
-   $kill -9 ÀsƒvƒƒZƒX
+   $kill -9 å®Ÿè¡Œãƒ—ãƒ­ã‚»ã‚¹
 
 
 slave2:8888,slave3:8888
