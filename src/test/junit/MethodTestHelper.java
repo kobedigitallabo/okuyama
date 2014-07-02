@@ -19,7 +19,7 @@ import okuyama.imdst.client.OkuyamaClientException;
  */
 public class MethodTestHelper {
 
-	private String masterNodeName;
+	private String masterNodeHost;
 
 	private int masterNodePort;
 
@@ -34,7 +34,6 @@ public class MethodTestHelper {
 	 */
 	public void init() throws Exception {
 		Reader reader = null;
-		Exception exception = null;
 		Properties prop = null;
 		try {
 			prop = new Properties();
@@ -42,23 +41,31 @@ public class MethodTestHelper {
 			reader = new InputStreamReader(new FileInputStream(new File(url.toURI())), "UTF-8");
 			prop.load(reader);
 		} catch (IOException e) {
-			exception = e;
+			throw e;
+		} finally {
+			if (reader != null) {
+				reader.close();
+			}
 		}
-		reader.close();
-		if (exception != null) {
-			throw exception;
-		}
-		String str = prop.getProperty("MasterNode");
-		String[] strList = str.split(":");
-		this.masterNodeName = strList[0];
-		this.masterNodePort = Integer.valueOf(strList[1]);
-		this.start = Integer.valueOf(prop.getProperty("start"));
-		StringBuilder strBuf = new StringBuilder(6000*10);
+		String masterNode = prop.getProperty("MasterNode");
+		String[] masterNodeAddress = masterNode.split(":");
+		this.masterNodeHost = masterNodeAddress[0];
+		this.masterNodePort = Integer.valueOf(masterNodeAddress[1]);
+		this.start = Integer.valueOf(prop.getProperty("start", "0"));
+
+	}
+
+	/**
+	 * 大きいデータ作成のための初期化をする。<br>
+	 * createTestDataValueメソッド、createTestDataKeyメソッドを呼び出す前にこのメソッドを呼び出す必要がある。
+	 */
+	public void initBigData() {
+		StringBuilder sb = new StringBuilder(6000*10);
 		Random rnd = new Random();
 		for (int i = 0; i < 300; i++) {
-			strBuf.append(rnd.nextInt(1999999999));
+			sb.append(rnd.nextInt(1999999999));
 		}
-		this.bigCharacter = strBuf.toString();
+		this.bigCharacter = sb.toString();
 	}
 
 	/**
@@ -68,7 +75,7 @@ public class MethodTestHelper {
 	 */
 	public OkuyamaClient getConnectedOkuyamaClient() throws OkuyamaClientException {
 		OkuyamaClient client = new OkuyamaClient();
-		client.connect(this.masterNodeName, this.masterNodePort);
+		client.connect(this.masterNodeHost, this.masterNodePort);
 		return client;
 	}
 
@@ -80,34 +87,36 @@ public class MethodTestHelper {
 	}
 
 	/**
-	 * テストデータを作成する。
-	 * @param index - テストデータに付けられる添字。
-	 * @param isBigData - 大きいデータを作る場合はtrue。
-	 * @return [0]:キー、[1]:値。
+	 * テストデータのキーを作成する。<br>
+	 * 大きいデータを作るときは、事前にinitBigDataメソッドaを呼び出す必要があります。
+	 * @param isBigData - 大きいデータ用のキーを作る場合はtrue。
+	 * @return テストデータのキー。
 	 */
-	public String[] getTestData(int index, boolean isBigData) {
-		String[] result = new String[2];
-		// Key作成
+	public String createTestDataKey(boolean isBigData) {
 		StringBuilder builder = new StringBuilder();
 		builder = builder.append(this.testCount);
 		builder = builder.append(isBigData ? "datasavekey_bigdata_" : "datasavekey_");
-		builder = builder.append(index);
-		result[0] = builder.toString();
+		return builder.toString();
+	}
+
+	/**
+	 * テストデータのキーを作成する。<br>
+	 * 大きいデータを作るときは、事前にinitBigDataメソッドaを呼び出す必要があります。
+	 * @param isBigData - 大きいデータ用のキーを作る場合はtrue。
+	 * @return テストデータの値。
+	 */
+	public String createTestDataValue(boolean isBigData) {
 		// 値作成
-		builder = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
 		builder = builder.append(this.testCount);
 		if (isBigData) {
 			builder = builder.append("savetestbigdata_");
-			builder = builder.append(index);
-			builder = builder.append("_");
 			builder = builder.append(this.bigCharacter);
 			builder = builder.append("_");
 		} else {
 			builder = builder.append("testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_");
 		}
-		builder = builder.append(index);
-		result[1] = builder.toString();
-		return result;
+		return builder.toString();
 	}
 
 	public int getStart() {
