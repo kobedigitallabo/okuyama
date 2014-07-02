@@ -22,6 +22,27 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
+[[リリース Ver 0.9.6 - (2014/XX/XX)]]
+
+■OkuyamaClientにメソッドを追加
+ (1).setValueVersionCheckメソッドに有効期限を引数として指定可能なパターンを追加
+ メソッド詳細
+  public String[] setValueVersionCheck(String keyStr, String[] tagStrs, String value, String versionNo, Integer expireTime, String encode)
+  ※有効期限は秒数で指定。更新が成功した際に有効期限付きでデータが保存される。
+
+
+ (2).setObjectValueVersionCheckメソッドに有効期限を引数として指定可能なパターンを追加
+ メソッド詳細
+  public String[] setObjectValueVersionCheck(String keyStr, Object value, String versionNo, Integer expireTime)
+  ※有効期限は秒数で指定。更新が成功した際に有効期限付きでデータが保存される。
+
+
+■OkuyamaClientでの複数MasterNode指定時のフェイルオーバーの速度を向上
+ MasterNodeを複数指定しOkuyamaClientを利用している場合接続中のMasterNodeに障害が発生した場合
+ 自動的に再接続が行われ処理が続行されるが、この再接続処理の高速化を実施。
+ 内部処理の変更のため利用方法に変更はない
+========================================================================================================
+[New - 新機能追加、不具合対応]
 [[リリース Ver 0.9.5 - (2013/09/20)]]
 
 ■各DataNodeが保存しているKeyの一覧を取得する機能を追加
