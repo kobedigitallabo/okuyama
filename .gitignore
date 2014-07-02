@@ -14,3 +14,4 @@ target/
 classes/
 logs/
 keymapfile/*.key
+keymapfile/*.key.obj
