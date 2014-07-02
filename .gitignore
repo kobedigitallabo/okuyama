@@ -12,6 +12,5 @@ target/
 *.class
 .gradle
 classes/
-keymapfile/
 logs/
-
+keymapfile/*.key
