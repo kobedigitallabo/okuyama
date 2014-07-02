@@ -25,11 +25,9 @@ public class MethodTestHelper {
 
 	private int testCount;
 
-	private String bigCharacter;
-
-	private int count;
-
 	private int start;
+
+	private String bigCharacter;
 
 	/**
 	 * 初期化する。
@@ -55,15 +53,12 @@ public class MethodTestHelper {
 		this.masterNodeName = strList[0];
 		this.masterNodePort = Integer.valueOf(strList[1]);
 		this.start = Integer.valueOf(prop.getProperty("start"));
-
-		this.count = 5000;
-
 		StringBuilder strBuf = new StringBuilder(6000*10);
 		Random rnd = new Random();
 		for (int i = 0; i < 300; i++) {
 			strBuf.append(rnd.nextInt(1999999999));
 		}
-        this.bigCharacter = strBuf.toString();
+		this.bigCharacter = strBuf.toString();
 	}
 
 	/**
@@ -78,29 +73,44 @@ public class MethodTestHelper {
 	}
 
 	/**
-	 * 現在のテスト回数を取得する。
-	 */
-	public int getTestCount() {
-		return this.testCount;
-	}
-
-	/**
 	 * 全テストの終了を通知する。
 	 */
 	public void notifyTestEnd() {
 		this.testCount++;
 	}
 
-	public String getBigCharacter() {
-		return this.bigCharacter;
-	}
-
-	public int getCount() {
-		return this.count;
+	/**
+	 * テストデータを作成する。
+	 * @param index - テストデータに付けられる添字。
+	 * @param isBigData - 大きいデータを作る場合はtrue。
+	 * @return [0]:キー、[1]:値。
+	 */
+	public String[] getTestData(int index, boolean isBigData) {
+		String[] result = new String[2];
+		// Key作成
+		StringBuilder builder = new StringBuilder();
+		builder = builder.append(this.testCount);
+		builder = builder.append(isBigData ? "datasavekey_bigdata_" : "datasavekey_");
+		builder = builder.append(index);
+		result[0] = builder.toString();
+		// 値作成
+		builder = new StringBuilder();
+		builder = builder.append(this.testCount);
+		if (isBigData) {
+			builder = builder.append("savetestbigdata_");
+			builder = builder.append(index);
+			builder = builder.append("_");
+			builder = builder.append(this.bigCharacter);
+			builder = builder.append("_");
+		} else {
+			builder = builder.append("testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_");
+		}
+		builder = builder.append(index);
+		result[1] = builder.toString();
+		return result;
 	}
 
 	public int getStart() {
 		return this.start;
 	}
-
 }
