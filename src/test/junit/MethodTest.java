@@ -1,17 +1,11 @@
 package test.junit;
 
-import static org.junit.Assert.*;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import okuyama.imdst.client.OkuyamaClient;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 /**
  * okuyamaのメソッドを1回テストするためのクラス。
@@ -52,7 +46,7 @@ public class MethodTest {
 		// okuyamaとの通信を切断
 		this.okuyamaClient.close();
 	}
-
+/*
 	@Test
 	public void testSet() throws Exception {
 		String[] testData;
@@ -130,5 +124,6 @@ public class MethodTest {
 		Map<?, ?> multiGetRet = okuyamaClient.getMultiValue(keys);
 		assertEquals("データなし MultiGet=[" + multiGetRet + "]", checkResultMap, multiGetRet);
 	}
+	*/
 
 }
