@@ -59,16 +59,16 @@ public class SetMethodSimpleTest {
 	}
 
 	@Test
-	public void setするキーがnullのため例外発生() throws Exception {
+	public void nullのキーをsetして例外を発生させる() throws Exception {
 		thrown.expect(OkuyamaClientException.class);
 		thrown.expectMessage("The blank is not admitted on a key");
 		this.okuyamaClient.setValue(null, "foo");
 	}
 
 	@Test
-	public void setするキーが328B以上のため例外発生() throws Exception {
-		// サイズは3MBのキーを作成
-		final int keySize = 329;
+	public void 文字数が328以上のキーをsetして例外を発生させる() throws Exception {
+		// 文字数が328のキーを作成
+		final int keySize = 328;
 		Random rnd = new Random();
 		StringBuilder bigKeyBuilder = new StringBuilder(keySize);
 		for (int i = 0;i < keySize;i++) {
@@ -81,7 +81,7 @@ public class SetMethodSimpleTest {
 	}
 
 	@Test
-	public void サーバとのセッションがないため例外発生() throws Exception {
+	public void サーバとのセッションが無い状態でsetして例外を発生させる() throws Exception {
 		thrown.expect(OkuyamaClientException.class);
 		thrown.expectMessage("No ServerConnect!!");
 		this.okuyamaClient.close();

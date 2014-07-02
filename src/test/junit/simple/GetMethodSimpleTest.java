@@ -64,7 +64,7 @@ public class GetMethodSimpleTest {
 	}
 
 	@Test
-	public void getでキーに対応した値が取得できる() throws Exception {
+	public void キーに対応した値が取得する() throws Exception {
 		String[] result = this.okuyamaClient.getValue(this.testDataKey);
 		if (result[0].equals("true")) {
 			assertEquals(result[1], this.testDataValue);
@@ -74,20 +74,20 @@ public class GetMethodSimpleTest {
 	}
 
 	@Test
-	public void キーに対応する値がない場合falseを返す() throws Exception {
+	public void 存在しないキーを取得しようとすることでfalseを返させる() throws Exception {
 		String[] result = this.okuyamaClient.getValue(this.testDataKey + "_foo");
 		assertEquals(result[0], "false");
 	}
 
 	@Test
-	public void キーがnullのため例外発生() throws Exception {
+	public void nullのキーを指定して例外を発生させる() throws Exception {
 		thrown.expect(OkuyamaClientException.class);
 		thrown.expectMessage("The blank is not admitted on a key");
 		this.okuyamaClient.getValue(null);
 	}
 
 	@Test
-	public void サーバとのセッションがないため例外発生() throws Exception {
+	public void サーバとのセッションが無い状態でgetすることで例外を発生させる() throws Exception {
 		thrown.expect(OkuyamaClientException.class);
 		thrown.expectMessage("No ServerConnect!!");
 		this.okuyamaClient.removeValue(this.testDataKey);
