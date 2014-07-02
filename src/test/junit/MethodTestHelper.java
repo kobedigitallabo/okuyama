@@ -27,7 +27,9 @@ public class MethodTestHelper {
 
 	private int start;
 
-	private String bigCharacter;
+	private String bigTestDataSeed;
+
+	private String testDataSeed;
 
 	/**
 	 * 初期化する。
@@ -59,13 +61,24 @@ public class MethodTestHelper {
 	 * 大きいデータ作成のための初期化をする。<br>
 	 * createTestDataValueメソッド、createTestDataKeyメソッドを呼び出す前にこのメソッドを呼び出す必要がある。
 	 */
-	public void initBigData() {
+	public void initBigTestData() {
 		StringBuilder sb = new StringBuilder(6000*10);
 		Random rnd = new Random();
 		for (int i = 0; i < 300; i++) {
 			sb.append(rnd.nextInt(1999999999));
 		}
-		this.bigCharacter = sb.toString();
+		this.bigTestDataSeed = sb.toString();
+	}
+
+	/**
+	 * テストデータのための初期化をする。<br>
+	 * createTestDataValueメソッド、createTestDataKeyメソッドを呼び出す前にこのメソッドを呼び出す必要がある。
+	 */
+	public void initTestData() {
+		StringBuilder sb = new StringBuilder();
+		Random rnd = new Random();
+		sb.append(rnd.nextInt(10000));
+		this.testDataSeed = sb.toString();
 	}
 
 	/**
@@ -96,6 +109,7 @@ public class MethodTestHelper {
 		StringBuilder builder = new StringBuilder();
 		builder = builder.append(this.testCount);
 		builder = builder.append(isBigData ? "datasavekey_bigdata_" : "datasavekey_");
+		builder = builder.append(this.testDataSeed);
 		return builder.toString();
 	}
 
@@ -111,10 +125,10 @@ public class MethodTestHelper {
 		builder = builder.append(this.testCount);
 		if (isBigData) {
 			builder = builder.append("savetestbigdata_");
-			builder = builder.append(this.bigCharacter);
-			builder = builder.append("_");
+			builder = builder.append(this.bigTestDataSeed);
 		} else {
-			builder = builder.append("testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_");
+			builder = builder.append("testdata_");
+			builder = builder.append(this.testDataSeed);
 		}
 		return builder.toString();
 	}

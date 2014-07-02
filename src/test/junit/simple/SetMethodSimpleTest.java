@@ -42,6 +42,7 @@ public class SetMethodSimpleTest {
 	@Before
 	public void setUp() throws Exception {
 		SetMethodSimpleTest.helper.init();
+		SetMethodSimpleTest.helper.initTestData();
 		// okuyamaに接続
 		this.okuyamaClient =  SetMethodSimpleTest.helper.getConnectedOkuyamaClient();
 	}
