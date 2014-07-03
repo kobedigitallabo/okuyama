@@ -64,7 +64,7 @@ public class GetMethodSimpleTest {
 	}
 
 	@Test
-	public void キーに対応した値が取得する() throws Exception {
+	public void キーに対応した値を取得する() throws Exception {
 		String[] result = this.okuyamaClient.getValue(this.testDataKey);
 		if (result[0].equals("true")) {
 			assertEquals(result[1], this.testDataValue);

@@ -12,6 +12,11 @@ import org.junit.Test;
 
 import test.junit.MethodTestHelper;
 
+/**
+ * 巨大データに対するgetメソッドテスト。
+ * @author s-ito
+ *
+ */
 public class GetMethodHugeTest {
 
 	private static MethodTestHelper helper = new MethodTestHelper();
