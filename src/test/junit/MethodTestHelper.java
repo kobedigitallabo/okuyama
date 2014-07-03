@@ -23,8 +23,6 @@ public class MethodTestHelper {
 
 	private int masterNodePort;
 
-	private int testCount;
-
 	private int start;
 
 	private String bigTestDataSeed;
@@ -54,7 +52,6 @@ public class MethodTestHelper {
 		this.masterNodeHost = masterNodeAddress[0];
 		this.masterNodePort = Integer.valueOf(masterNodeAddress[1]);
 		this.start = Integer.valueOf(prop.getProperty("start", "0"));
-
 	}
 
 	/**
@@ -93,13 +90,6 @@ public class MethodTestHelper {
 	}
 
 	/**
-	 * 全テストの終了を通知する。
-	 */
-	public void notifyTestEnd() {
-		this.testCount++;
-	}
-
-	/**
 	 * テストデータのキーを作成する。<br>
 	 * 大きいデータを作るときは、事前にinitBigDataメソッドaを呼び出す必要があります。
 	 * @param isBigData - 大きいデータ用のキーを作る場合はtrue。
@@ -107,7 +97,6 @@ public class MethodTestHelper {
 	 */
 	public String createTestDataKey(boolean isBigData) {
 		StringBuilder builder = new StringBuilder();
-		builder = builder.append(this.testCount);
 		builder = builder.append(isBigData ? "datasavekey_bigdata_" : "datasavekey_");
 		builder = builder.append(this.testDataSeed);
 		return builder.toString();
@@ -117,12 +106,23 @@ public class MethodTestHelper {
 	 * テストデータのキーを作成する。<br>
 	 * 大きいデータを作るときは、事前にinitBigDataメソッドaを呼び出す必要があります。
 	 * @param isBigData - 大きいデータ用のキーを作る場合はtrue。
+	 * @paran index - 作成したキーの添え字。
+	 * @return テストデータのキー。
+	 */
+	public String createTestDataKey(boolean isBigData, int index) {
+		index += this.start;
+		return this.createTestDataKey(isBigData) + "_" + index;
+	}
+
+	/**
+	 * テストデータの値を作成する。<br>
+	 * 大きいデータを作るときは、事前にinitBigDataメソッドaを呼び出す必要があります。
+	 * @param isBigData - 大きいデータ用のキーを作る場合はtrue。
 	 * @return テストデータの値。
 	 */
 	public String createTestDataValue(boolean isBigData) {
 		// 値作成
 		StringBuilder builder = new StringBuilder();
-		builder = builder.append(this.testCount);
 		if (isBigData) {
 			builder = builder.append("savetestbigdata_");
 			builder = builder.append(this.bigTestDataSeed);
@@ -133,7 +133,15 @@ public class MethodTestHelper {
 		return builder.toString();
 	}
 
-	public int getStart() {
-		return this.start;
+	/**
+	 * テストデータの値を作成する。<br>
+	 * 大きいデータを作るときは、事前にinitBigDataメソッドaを呼び出す必要があります。
+	 * @param isBigData - 大きいデータ用のキーを作る場合はtrue。
+	 * @paran index - 作成した値の添え字。
+	 * @return テストデータの値。
+	 */
+	public String createTestDataValue(boolean isBigData, int index) {
+		index += this.start;
+		return this.createTestDataValue(isBigData) + "_" + index;
 	}
 }
