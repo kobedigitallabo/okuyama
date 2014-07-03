@@ -38,7 +38,7 @@ public class GetMethodHugeTest {
 	@Before
 	public void setUp() throws Exception {
 		GetMethodHugeTest.helper.init();
-		GetMethodHugeTest.helper.initTestData();
+		GetMethodHugeTest.helper.initBigTestData();
 		// okuyamaに接続
 		this.okuyamaClient =  GetMethodHugeTest.helper.getConnectedOkuyamaClient();
 		// テストデータを設定

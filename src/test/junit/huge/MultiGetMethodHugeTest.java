@@ -46,7 +46,7 @@ public class MultiGetMethodHugeTest {
 	@Before
 	public void setUp() throws Exception {
 		MultiGetMethodHugeTest.helper.init();
-		MultiGetMethodHugeTest.helper.initTestData();
+		MultiGetMethodHugeTest.helper.initBigTestData();
 		// okuyamaに接続
 		this.okuyamaClient =  MultiGetMethodHugeTest.helper.getConnectedOkuyamaClient();
 		// テストデータを設定
