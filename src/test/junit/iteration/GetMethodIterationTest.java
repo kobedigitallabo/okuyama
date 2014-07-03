@@ -60,7 +60,7 @@ public class GetMethodIterationTest {
 	}
 
 	@Test
-	public void キーに対応した値を取得する() throws Exception {
+	public void キーに対応した値を5000回取得する() throws Exception {
 		for (int i = 0;i < 5000;i++) {
 			String testDataKey = GetMethodIterationTest.helper.createTestDataKey(false, i);
 			String testDataValue = GetMethodIterationTest.helper.createTestDataValue(false, i);

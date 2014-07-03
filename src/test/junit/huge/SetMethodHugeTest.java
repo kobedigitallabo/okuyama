@@ -44,7 +44,7 @@ public class SetMethodHugeTest {
 	}
 
 	@Test
-	public void setに成功してtrueを返す() throws Exception {
+	public void 巨大なデータのsetに成功してtrueを返す() throws Exception {
 		assertTrue(this.okuyamaClient.setValue(SetMethodHugeTest.helper.createTestDataKey(true),
 												SetMethodHugeTest.helper.createTestDataValue(true)));
 	}

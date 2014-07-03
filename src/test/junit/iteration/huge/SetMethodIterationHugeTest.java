@@ -43,7 +43,7 @@ public class SetMethodIterationHugeTest {
 	}
 
 	@Test
-	public void setに成功してtrueを返す() throws Exception {
+	public void 巨大なデータのsetに500回成功して全てtrueを返す() throws Exception {
 		for (int i = 0;i < 500;i++) {
 			assertTrue(this.okuyamaClient.setValue(SetMethodIterationHugeTest.helper.createTestDataKey(true, i),
 												SetMethodIterationHugeTest.helper.createTestDataValue(true, i)));

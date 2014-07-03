@@ -76,7 +76,7 @@ public class MultiGetMethodHugeTest {
 	}
 
 	@Test
-	public void キーに対応した値を取得する() throws Exception {
+	public void キーに対応した巨大な値を複数同時に取得する() throws Exception {
 		Map<?, ?> result = this.okuyamaClient.getMultiValue(this.testDataKey);
 		assertEquals(result.get(this.testDataKey[0]), this.testDataValue[0]);
 		assertEquals(result.get(this.testDataKey[1]), this.testDataValue[1]);

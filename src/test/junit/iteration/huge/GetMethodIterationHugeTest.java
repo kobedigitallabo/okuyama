@@ -59,8 +59,8 @@ public class GetMethodIterationHugeTest {
 	}
 
 	@Test
-	public void キーに対応した値を取得する() throws Exception {
-		for (int i = 0;i < 5000;i++) {
+	public void キーに対応した巨大な値を500回取得する() throws Exception {
+		for (int i = 0;i < 500;i++) {
 			String testDataKey = GetMethodIterationHugeTest.helper.createTestDataKey(true, i);
 			String testDataValue = GetMethodIterationHugeTest.helper.createTestDataValue(true, i);
 			String[] result = this.okuyamaClient.getValue(testDataKey);
