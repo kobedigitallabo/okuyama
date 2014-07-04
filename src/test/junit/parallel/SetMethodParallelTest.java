@@ -29,11 +29,15 @@ public class SetMethodParallelTest {
 	public static void setUpBeforeClass() throws Exception {
 		SetMethodParallelTest.helper.init();
 		SetMethodParallelTest.helper.initTestData();
-		// okuyamaに接続
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
+		OkuyamaClient client = SetMethodParallelTest.helper.getConnectedOkuyamaClient();
+		for (int i = 0;i < 50;i++) {
+			client.removeValue(SetMethodParallelTest.helper.createTestDataKey(false, i));
+		}
+		client.close();
 	}
 
 	@Before
@@ -42,6 +46,12 @@ public class SetMethodParallelTest {
 
 	@After
 	public void tearDown() throws Exception {
+		long id = Thread.currentThread().getId();
+		OkuyamaClient client = SetMethodParallelTest.helper.getConnectedOkuyamaClient();
+		for (int i = 0;i < 50;i++) {
+			client.removeValue(SetMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id);
+		}
+		client.close();
 	}
 
 	@Test
