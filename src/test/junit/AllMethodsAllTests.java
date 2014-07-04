@@ -8,7 +8,8 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({test.junit.simple.AllMethodsSimpleTest.class,
 				test.junit.huge.AllMethodsHugeTest.class,
 				test.junit.iteration.AllMethodsIterationTest.class,
-				test.junit.iteration.huge.AllMethodsIterationHugeTest.class})
+				test.junit.iteration.huge.AllMethodsIterationHugeTest.class,
+				test.junit.parallel.AllMethodsParallelTest.class})
 public class AllMethodsAllTests {
 
 }
