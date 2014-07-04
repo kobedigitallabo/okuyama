@@ -7,7 +7,8 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({SetMethodSimpleTest.class,
 				GetMethodSimpleTest.class,
-				MultiGetMethodSimpleTest.class})
+				MultiGetMethodSimpleTest.class,
+				RemoveMethodSimpleTest.class})
 public class AllMethodsSimpleTest {
 
 }

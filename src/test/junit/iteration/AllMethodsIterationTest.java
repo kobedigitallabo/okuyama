@@ -6,7 +6,8 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({SetMethodIterationTest.class,
-				GetMethodIterationTest.class})
+				GetMethodIterationTest.class,
+				RemoveMethodIterationTest.class})
 public class AllMethodsIterationTest {
 
 }
