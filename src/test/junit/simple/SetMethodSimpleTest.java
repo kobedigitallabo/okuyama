@@ -49,12 +49,23 @@ public class SetMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
+		try {
+			this.okuyamaClient.removeValue(SetMethodSimpleTest.helper.createTestDataKey(false));
+			this.okuyamaClient.removeValue(SetMethodSimpleTest.helper.createTestDataKey(false) + "日本語");
+		} catch (OkuyamaClientException e) {
+		}
 		this.okuyamaClient.close();
 	}
 
 	@Test
 	public void setに成功してtrueを返す() throws Exception {
 		assertTrue(this.okuyamaClient.setValue(SetMethodSimpleTest.helper.createTestDataKey(false),
+												SetMethodSimpleTest.helper.createTestDataValue(false)));
+	}
+
+	@Test
+	public void マルチバイト文字列が含まれたキーのsetに成功してtrueを返す() throws Exception {
+		assertTrue(this.okuyamaClient.setValue(SetMethodSimpleTest.helper.createTestDataKey(false) + "日本語",
 												SetMethodSimpleTest.helper.createTestDataValue(false)));
 	}
 

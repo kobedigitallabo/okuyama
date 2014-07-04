@@ -50,6 +50,7 @@ public class GetMethodSimpleTest {
 		this.testDataKey = GetMethodSimpleTest.helper.createTestDataKey(false);
 		this.testDataValue = GetMethodSimpleTest.helper.createTestDataValue(false);
 		this.okuyamaClient.setValue(this.testDataKey, this.testDataValue);
+		this.okuyamaClient.setValue(this.testDataKey + "日本語", this.testDataValue + "日本語");
 	}
 
 	@After
@@ -68,6 +69,16 @@ public class GetMethodSimpleTest {
 		String[] result = this.okuyamaClient.getValue(this.testDataKey);
 		if (result[0].equals("true")) {
 			assertEquals(result[1], this.testDataValue);
+		} else {
+			fail("getメソッドエラー");
+		}
+	}
+
+	@Test
+	public void マルチバイト文字列を含むキーに対応した値を取得する() throws Exception {
+		String[] result = this.okuyamaClient.getValue(this.testDataKey + "日本語");
+		if (result[0].equals("true")) {
+			assertEquals(result[1], this.testDataValue + "日本語");
 		} else {
 			fail("getメソッドエラー");
 		}
