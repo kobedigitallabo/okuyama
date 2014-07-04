@@ -60,7 +60,7 @@ public class RemoveMethodIterationTest {
 	}
 
 	@Test
-	public void キーに対応した値を5000回取得する() throws Exception {
+	public void キーに対応した値を5000回削除する() throws Exception {
 		for (int i = 0;i < 5000;i++) {
 			String testDataKey = RemoveMethodIterationTest.helper.createTestDataKey(false, i);
 			String testDataValue = RemoveMethodIterationTest.helper.createTestDataValue(false, i);

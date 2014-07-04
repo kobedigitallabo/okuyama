@@ -6,7 +6,9 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({SetMethodParallelTest.class,
-				GetMethodParallelTest.class })
+				GetMethodParallelTest.class,
+				RemoveMethodParallelTest.class,
+				SeparateMethodsParallelTest.class})
 public class AllMethodsParallelTest {
 
 }
