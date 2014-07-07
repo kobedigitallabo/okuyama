@@ -90,8 +90,31 @@ public class MethodTestHelper {
 	}
 
 	/**
+	 * テストデータのタグを作成する。<br>
+	 * 事前にinitTestDataメソッドを呼び出す必要があります。
+	 * @return テストデータのタグ。
+	 */
+	public String createTestDataTag() {
+		StringBuilder builder = new StringBuilder();
+		builder = builder.append("datasavetag_");
+		builder = builder.append(this.testDataSeed);
+		return builder.toString();
+	}
+
+	/**
+	 * テストデータのタグを作成する。<br>
+	 * 事前にinitTestDataメソッドを呼び出す必要があります。
+	 * @paran index - 作成したキーの添え字。
+	 * @return テストデータのタグ。
+	 */
+	public String createTestDataTag(int index) {
+		index += this.start;
+		return this.createTestDataTag() + "_" + index;
+	}
+
+	/**
 	 * テストデータのキーを作成する。<br>
-	 * 大きいデータを作るときは、事前にinitBigDataメソッドaを呼び出す必要があります。
+	 * 通常データを作るときはinitTestData、大きいデータを作るときはinitBigTestDataを事前に呼び出す必要があります。
 	 * @param isBigData - 大きいデータ用のキーを作る場合はtrue。
 	 * @return テストデータのキー。
 	 */
@@ -104,7 +127,7 @@ public class MethodTestHelper {
 
 	/**
 	 * テストデータのキーを作成する。<br>
-	 * 大きいデータを作るときは、事前にinitBigDataメソッドaを呼び出す必要があります。
+	 * 通常データを作るときはinitTestData、大きいデータを作るときはinitBigTestDataを事前に呼び出す必要があります。
 	 * @param isBigData - 大きいデータ用のキーを作る場合はtrue。
 	 * @paran index - 作成したキーの添え字。
 	 * @return テストデータのキー。
@@ -116,8 +139,8 @@ public class MethodTestHelper {
 
 	/**
 	 * テストデータの値を作成する。<br>
-	 * 大きいデータを作るときは、事前にinitBigDataメソッドaを呼び出す必要があります。
-	 * @param isBigData - 大きいデータ用のキーを作る場合はtrue。
+	 * 通常データを作るときはinitTestData、大きいデータを作るときはinitBigTestDataを事前に呼び出す必要があります。
+	 * @param isBigData - 大きいデータを作る場合はtrue。
 	 * @return テストデータの値。
 	 */
 	public String createTestDataValue(boolean isBigData) {
@@ -135,8 +158,8 @@ public class MethodTestHelper {
 
 	/**
 	 * テストデータの値を作成する。<br>
-	 * 大きいデータを作るときは、事前にinitBigDataメソッドaを呼び出す必要があります。
-	 * @param isBigData - 大きいデータ用のキーを作る場合はtrue。
+	 * 通常データを作るときはinitTestData、大きいデータを作るときはinitBigTestDataを事前に呼び出す必要があります。
+	 * @param isBigData - 大きいデータを作る場合はtrue。
 	 * @paran index - 作成した値の添え字。
 	 * @return テストデータの値。
 	 */

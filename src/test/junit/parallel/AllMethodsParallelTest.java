@@ -8,6 +8,8 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({SetMethodParallelTest.class,
 				GetMethodParallelTest.class,
 				RemoveMethodParallelTest.class,
+				SetTagMethodParallelTest.class,
+				GetTagMethodParallelTest.class,
 				SeparateMethodsParallelTest.class})
 public class AllMethodsParallelTest {
 
