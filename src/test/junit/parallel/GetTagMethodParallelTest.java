@@ -74,7 +74,7 @@ public class GetTagMethodParallelTest {
 	}
 
 	@Test
-	public void スレッドごとに違うキーに対応した値を50回取得する() throws Exception {
+	public void スレッドごとに違うタグに対応したキーを50回取得する() throws Exception {
 		long id = Thread.currentThread().getId();
 		OkuyamaClient client = GetTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
@@ -92,7 +92,7 @@ public class GetTagMethodParallelTest {
 	}
 
 	@Test
-	public void スレッドごとに同じキーに対応した値を50回取得する() throws Exception {
+	public void スレッドごとに同じタグに対応したキーを50回取得する() throws Exception {
 		OkuyamaClient client = GetTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
 			String testDataKey = GetTagMethodParallelTest.helper.createTestDataKey(false, i);

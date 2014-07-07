@@ -1,6 +1,10 @@
 package test.junit.simple;
 
 import static org.junit.Assert.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
@@ -15,11 +19,11 @@ import org.junit.rules.ExpectedException;
 import test.junit.MethodTestHelper;
 
 /**
- * getTagの簡単なテスト。
+ * removeTagの簡単なテスト。
  * @author s-ito
  *
  */
-public class GetTagMethodSimpleTest {
+public class RemoveTagMethodSimpleTest {
 
 	@Rule
 	public ExpectedException thrown = ExpectedException.none();
@@ -29,8 +33,6 @@ public class GetTagMethodSimpleTest {
 	private OkuyamaClient okuyamaClient;
 
 	private String[] testTags = new String[2];
-
-	private String nothingTag;
 
 	private String[] testKeys = new String[4];
 
@@ -44,26 +46,25 @@ public class GetTagMethodSimpleTest {
 
 	@Before
 	public void setUp() throws Exception {
-		GetTagMethodSimpleTest.helper.init();
-		GetTagMethodSimpleTest.helper.initTestData();
+		RemoveTagMethodSimpleTest.helper.init();
+		RemoveTagMethodSimpleTest.helper.initTestData();
 		// okuyamaに接続
-		this.okuyamaClient =  GetTagMethodSimpleTest.helper.getConnectedOkuyamaClient();
+		this.okuyamaClient =  RemoveTagMethodSimpleTest.helper.getConnectedOkuyamaClient();
 		// テストデータを設定
-		testTags[0] = GetTagMethodSimpleTest.helper.createTestDataTag(0);
-		testTags[1] = GetTagMethodSimpleTest.helper.createTestDataTag(1);
-		nothingTag = GetTagMethodSimpleTest.helper.createTestDataTag(2);
-		testKeys[0] = GetTagMethodSimpleTest.helper.createTestDataKey(false, 0);
-		testKeys[1] = GetTagMethodSimpleTest.helper.createTestDataKey(false, 1);
-		testKeys[2] = GetTagMethodSimpleTest.helper.createTestDataKey(false, 2);
-		testKeys[3] = GetTagMethodSimpleTest.helper.createTestDataKey(false, 3);
+		testTags[0] = RemoveTagMethodSimpleTest.helper.createTestDataTag(0);
+		testTags[1] = RemoveTagMethodSimpleTest.helper.createTestDataTag(1);
+		testKeys[0] = RemoveTagMethodSimpleTest.helper.createTestDataKey(false, 0);
+		testKeys[1] = RemoveTagMethodSimpleTest.helper.createTestDataKey(false, 1);
+		testKeys[2] = RemoveTagMethodSimpleTest.helper.createTestDataKey(false, 2);
+		testKeys[3] = RemoveTagMethodSimpleTest.helper.createTestDataKey(false, 3);
 		this.okuyamaClient.setValue(testKeys[0], new String[]{testTags[0]},
-									GetTagMethodSimpleTest.helper.createTestDataValue(false, 0));
+									RemoveTagMethodSimpleTest.helper.createTestDataValue(false, 0));
 		this.okuyamaClient.setValue(testKeys[1], new String[]{testTags[1]},
-									GetTagMethodSimpleTest.helper.createTestDataValue(false, 1));
+									RemoveTagMethodSimpleTest.helper.createTestDataValue(false, 1));
 		this.okuyamaClient.setValue(testKeys[2], new String[]{testTags[1]},
-									GetTagMethodSimpleTest.helper.createTestDataValue(false, 2));
+									RemoveTagMethodSimpleTest.helper.createTestDataValue(false, 2));
 		this.okuyamaClient.setValue(testKeys[3], new String[]{testTags[1]},
-									GetTagMethodSimpleTest.helper.createTestDataValue(false, 3));
+									RemoveTagMethodSimpleTest.helper.createTestDataValue(false, 3));
 	}
 
 	@After
@@ -85,40 +86,36 @@ public class GetTagMethodSimpleTest {
 	}
 
 	@Test
-	public void タグからキーを1つ取得する() throws Exception {
+	public void キーからタグを削除する() throws Exception {
+		assertTrue(this.okuyamaClient.removeTagFromKey(testKeys[0], testTags[0]));
 		Object[] result = this.okuyamaClient.getTagKeys(testTags[0]);
-		if (result[0].equals("true")) {
-			String[] keys = (String[]) result[1];
-			assertEquals(keys[0], GetTagMethodSimpleTest.helper.createTestDataKey(false, 0));
-		} else {
-			fail("getメソッドエラー");
-		}
+		assertEquals(result[0], "false");
+		// タグを削除してもキーが生き残っていることを確認する
+		String[] result2 = this.okuyamaClient.getValue(testKeys[0]);
+		assertEquals(result2[0], "true");
 	}
 
 	@Test
-	public void タグからキーを複数取得する() throws Exception {
+	public void キーから複数のキーに紐付けられたタグを削除する() throws Exception {
+		assertTrue(this.okuyamaClient.removeTagFromKey(testKeys[1], testTags[1]));
 		Object[] result = this.okuyamaClient.getTagKeys(testTags[1]);
 		if (result[0].equals("true")) {
 			String[] keys = (String[]) result[1];
-			int count = 0;
+			Map<String, String> tagKey = new HashMap<String, String>();
 			for (int i = 0;i < keys.length;i++) {
-				for (int j = 1;j <= 3;j++) {
-					if (keys[i].equals(testKeys[j])) {
-						testKeys[j] = new String();
-						count++;
-					}
-				}
+				tagKey.put(keys[i], testTags[1]);
 			}
-			assertEquals(count, 3);
+			assertNull(tagKey.get(testKeys[1]));
+			assertNotNull(tagKey.get(testKeys[2]));
+			assertNotNull(tagKey.get(testKeys[3]));
 		} else {
 			fail("getメソッドエラー");
 		}
 	}
 
 	@Test
-	public void 存在しないタグからキーを取得しようとして失敗する() throws Exception {
-		Object[] result = this.okuyamaClient.getTagKeys(nothingTag);
-		assertEquals(result[0], "false");
+	public void 存在しないタグとキーの紐付けを削除しようとして失敗する() throws Exception {
+		assertFalse(this.okuyamaClient.removeTagFromKey(testKeys[0], testTags[1]));
 	}
 
 	@Test
@@ -134,7 +131,7 @@ public class GetTagMethodSimpleTest {
 		this.okuyamaClient.removeValue(testKeys[3]);
 		this.okuyamaClient.removeTagFromKey(testKeys[2], testTags[1]);
 		this.okuyamaClient.close();
-		this.okuyamaClient.getTagKeys(testTags[0]);
+		this.okuyamaClient.removeTagFromKey(testKeys[0], testTags[0]);
 	}
 
 }

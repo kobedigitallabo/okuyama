@@ -9,7 +9,8 @@ import org.junit.runners.Suite.SuiteClasses;
 				GetMethodIterationTest.class,
 				RemoveMethodIterationTest.class,
 				SetTagMethodIterationTest.class,
-				GetTagMethodIterationTest.class})
+				GetTagMethodIterationTest.class,
+				RemoveTagMethodIterationTest.class})
 public class AllMethodsIterationTest {
 
 }
