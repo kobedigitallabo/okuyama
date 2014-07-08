@@ -11,7 +11,8 @@ import org.junit.runners.Suite.SuiteClasses;
 				RemoveMethodSimpleTest.class,
 				SetTagMethodSimpleTest.class,
 				GetTagMethodSimpleTest.class,
-				RemoveTagMethodSimpleTest.class})
+				RemoveTagMethodSimpleTest.class,
+				MultiGetTagMethodSimpleTest.class})
 public class AllMethodsSimpleTest {
 
 }
