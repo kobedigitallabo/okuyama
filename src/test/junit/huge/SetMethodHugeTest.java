@@ -2,11 +2,10 @@ package test.junit.huge;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
+import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import test.junit.MethodTestHelper;
@@ -22,13 +21,6 @@ public class SetMethodHugeTest {
 
 	private OkuyamaClient okuyamaClient;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -40,11 +32,16 @@ public class SetMethodHugeTest {
 
 	@After
 	public void tearDown() throws Exception {
+		// テストデータを破棄
+		try {
+			this.okuyamaClient.removeValue(SetMethodHugeTest.helper.createTestDataKey(true));
+		} catch (OkuyamaClientException e) {
+		}
 		this.okuyamaClient.close();
 	}
 
 	@Test
-	public void 巨大なデータのsetに成功してtrueを返す() throws Exception {
+	public void 値のサイズが巨大なデータをsetする() throws Exception {
 		assertTrue(this.okuyamaClient.setValue(SetMethodHugeTest.helper.createTestDataKey(true),
 												SetMethodHugeTest.helper.createTestDataValue(true)));
 	}

@@ -2,10 +2,10 @@ package test.junit.parallel;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
+import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,13 +35,12 @@ public class SetMethodParallelTest {
 	public static void tearDownAfterClass() throws Exception {
 		OkuyamaClient client = SetMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
-			client.removeValue(SetMethodParallelTest.helper.createTestDataKey(false, i));
+			try {
+				client.removeValue(SetMethodParallelTest.helper.createTestDataKey(false, i));
+			} catch (OkuyamaClientException e) {
+			}
 		}
 		client.close();
-	}
-
-	@Before
-	public void setUp() throws Exception {
 	}
 
 	@After

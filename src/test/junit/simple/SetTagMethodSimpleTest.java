@@ -9,9 +9,7 @@ import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -32,14 +30,6 @@ public class SetTagMethodSimpleTest {
 
 	private OkuyamaClient okuyamaClient;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		SetTagMethodSimpleTest.helper.init();
@@ -51,21 +41,30 @@ public class SetTagMethodSimpleTest {
 	@After
 	public void tearDown() throws Exception {
 		try {
-			this.okuyamaClient.removeValue(SetTagMethodSimpleTest.helper.createTestDataKey(false));
+			this.okuyamaClient.getOkuyamaVersion();
+		} catch (OkuyamaClientException e) {
+			this.okuyamaClient = SetTagMethodSimpleTest.helper.getConnectedOkuyamaClient();
+		}
+		try {
+			String key = SetTagMethodSimpleTest.helper.createTestDataKey(false);
+			String tag = SetTagMethodSimpleTest.helper.createTestDataTag();
+			this.okuyamaClient.removeTagFromKey(key, tag);
+			this.okuyamaClient.removeTagFromKey(key, tag + "日本語");
+			this.okuyamaClient.removeValue(key);
 		} catch (OkuyamaClientException e) {
 		}
 		this.okuyamaClient.close();
 	}
 
 	@Test
-	public void データにタグを1つ付けてsetに成功する() throws Exception {
+	public void データにタグを1つ付けてsetする() throws Exception {
 		assertTrue(this.okuyamaClient.setValue(SetTagMethodSimpleTest.helper.createTestDataKey(false),
 												new String[]{SetTagMethodSimpleTest.helper.createTestDataTag()},
 												SetTagMethodSimpleTest.helper.createTestDataValue(false)));
 	}
 
 	@Test
-	public void マルチバイト文字列が含まれたタグを1つ付けるsetに成功する() throws Exception {
+	public void データにマルチバイト文字列が含まれたタグを1つ付けてsetする() throws Exception {
 		assertTrue(this.okuyamaClient.setValue(SetTagMethodSimpleTest.helper.createTestDataKey(false),
 											new String[]{SetTagMethodSimpleTest.helper.createTestDataTag() + "日本語"},
 											SetTagMethodSimpleTest.helper.createTestDataValue(false)));

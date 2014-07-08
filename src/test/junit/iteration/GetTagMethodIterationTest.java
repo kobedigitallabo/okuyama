@@ -5,9 +5,7 @@ import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import test.junit.MethodTestHelper;
@@ -23,14 +21,6 @@ public class GetTagMethodIterationTest {
 
 	private OkuyamaClient okuyamaClient;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		GetTagMethodIterationTest.helper.init();
@@ -39,31 +29,28 @@ public class GetTagMethodIterationTest {
 		this.okuyamaClient =  GetTagMethodIterationTest.helper.getConnectedOkuyamaClient();
 		// テストデータを設定
 		for (int i = 0;i < 5000;i++) {
-			String testDataKey = GetTagMethodIterationTest.helper.createTestDataKey(false, i);
-			String[] testDataTag = new String[]{GetTagMethodIterationTest.helper.createTestDataTag(i)};
-			String testDataValue = GetTagMethodIterationTest.helper.createTestDataValue(false, i);
-			this.okuyamaClient.setValue(testDataKey, testDataTag, testDataValue);
+			this.okuyamaClient.setValue(GetTagMethodIterationTest.helper.createTestDataKey(false, i),
+										new String[]{GetTagMethodIterationTest.helper.createTestDataTag(i)},
+										GetTagMethodIterationTest.helper.createTestDataValue(false, i));
 		}
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		// テストデータを破棄
-		try {
-			for (int i = 0;i < 5000;i++) {
+		for (int i = 0;i < 5000;i++) {
+			try {
 				String testDataKey = GetTagMethodIterationTest.helper.createTestDataKey(false, i);
 				String testDataTag = GetTagMethodIterationTest.helper.createTestDataTag(i);
 				this.okuyamaClient.removeTagFromKey(testDataKey, testDataTag);
 				this.okuyamaClient.removeValue(testDataKey);
+			} catch (OkuyamaClientException e) {
 			}
-		} catch (OkuyamaClientException e) {
 		}
-
 		this.okuyamaClient.close();
 	}
 
 	@Test
-	public void タグに対応したキーを5000回取得する() throws Exception {
+	public void タグに対応したキーを5000個取得する() throws Exception {
 		for (int i = 0;i < 5000;i++) {
 			String testDataKey = GetTagMethodIterationTest.helper.createTestDataKey(false, i);
 			String testDataTag = GetTagMethodIterationTest.helper.createTestDataTag(i);

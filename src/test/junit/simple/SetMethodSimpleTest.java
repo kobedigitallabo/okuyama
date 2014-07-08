@@ -8,9 +8,7 @@ import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -31,14 +29,6 @@ public class SetMethodSimpleTest {
 
 	private OkuyamaClient okuyamaClient;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		SetMethodSimpleTest.helper.init();
@@ -58,13 +48,13 @@ public class SetMethodSimpleTest {
 	}
 
 	@Test
-	public void setに成功してtrueを返す() throws Exception {
+	public void キーと値をsetする() throws Exception {
 		assertTrue(this.okuyamaClient.setValue(SetMethodSimpleTest.helper.createTestDataKey(false),
 												SetMethodSimpleTest.helper.createTestDataValue(false)));
 	}
 
 	@Test
-	public void マルチバイト文字列が含まれたキーのsetに成功してtrueを返す() throws Exception {
+	public void マルチバイト文字列が含まれたキーと値をsetする() throws Exception {
 		assertTrue(this.okuyamaClient.setValue(SetMethodSimpleTest.helper.createTestDataKey(false) + "日本語",
 												SetMethodSimpleTest.helper.createTestDataValue(false)));
 	}

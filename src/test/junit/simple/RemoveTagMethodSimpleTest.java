@@ -9,9 +9,7 @@ import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -35,14 +33,6 @@ public class RemoveTagMethodSimpleTest {
 	private String[] testTags = new String[2];
 
 	private String[] testKeys = new String[4];
-
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -69,6 +59,11 @@ public class RemoveTagMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
+		try {
+			this.okuyamaClient.getOkuyamaVersion();
+		} catch (OkuyamaClientException e) {
+			this.okuyamaClient = RemoveTagMethodSimpleTest.helper.getConnectedOkuyamaClient();
+		}
 		// テストデータを破棄
 		try {
 			this.okuyamaClient.removeValue(testKeys[0]);
@@ -122,14 +117,6 @@ public class RemoveTagMethodSimpleTest {
 	public void サーバとのセッションが無い状態でgetすることで例外を発生させる() throws Exception {
 		thrown.expect(OkuyamaClientException.class);
 		thrown.expectMessage("No ServerConnect!!");
-		this.okuyamaClient.removeValue(testKeys[0]);
-		this.okuyamaClient.removeTagFromKey(testKeys[0], testTags[0]);
-		this.okuyamaClient.removeValue(testKeys[1]);
-		this.okuyamaClient.removeTagFromKey(testKeys[1], testTags[1]);
-		this.okuyamaClient.removeValue(testKeys[2]);
-		this.okuyamaClient.removeTagFromKey(testKeys[2], testTags[1]);
-		this.okuyamaClient.removeValue(testKeys[3]);
-		this.okuyamaClient.removeTagFromKey(testKeys[2], testTags[1]);
 		this.okuyamaClient.close();
 		this.okuyamaClient.removeTagFromKey(testKeys[0], testTags[0]);
 	}

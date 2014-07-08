@@ -2,9 +2,9 @@ package test.junit.parallel;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
+import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -24,21 +24,6 @@ public class SeparateMethodsParallelTest {
 	public static void setUpBeforeClass() throws Exception {
 		SeparateMethodsParallelTest.helper.init();
 		SeparateMethodsParallelTest.helper.initTestData();
-		OkuyamaClient client = SeparateMethodsParallelTest.helper.getConnectedOkuyamaClient();
-		for (int i = 0;i < 50;i++) {
-			client.setValue(SeparateMethodsParallelTest.helper.createTestDataKey(false, i),
-							SeparateMethodsParallelTest.helper.createTestDataValue(false, i));
-		}
-		client.close();
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-		OkuyamaClient client = SeparateMethodsParallelTest.helper.getConnectedOkuyamaClient();
-		for (int i = 0;i < 50;i++) {
-			client.removeValue(SeparateMethodsParallelTest.helper.createTestDataKey(false, i));
-		}
-		client.close();
 	}
 
 	@Before
@@ -62,7 +47,10 @@ public class SeparateMethodsParallelTest {
 		long id = Thread.currentThread().getId();
 		OkuyamaClient client = SeparateMethodsParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
-			client.removeValue(SeparateMethodsParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id);
+			try {
+				client.removeValue(SeparateMethodsParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id);
+			} catch (OkuyamaClientException e) {
+			}
 		}
 		client.close();
 	}
@@ -88,6 +76,7 @@ public class SeparateMethodsParallelTest {
 				}
 			}
 		}
+		client.close();
 	}
 
 }

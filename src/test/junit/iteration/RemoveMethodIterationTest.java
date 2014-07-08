@@ -5,9 +5,7 @@ import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import test.junit.MethodTestHelper;
@@ -23,14 +21,6 @@ public class RemoveMethodIterationTest {
 
 	private OkuyamaClient okuyamaClient;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		RemoveMethodIterationTest.helper.init();
@@ -39,28 +29,24 @@ public class RemoveMethodIterationTest {
 		this.okuyamaClient =  RemoveMethodIterationTest.helper.getConnectedOkuyamaClient();
 		// テストデータを設定
 		for (int i = 0;i < 5000;i++) {
-			String testDataKey = RemoveMethodIterationTest.helper.createTestDataKey(false, i);
-			String testDataValue = RemoveMethodIterationTest.helper.createTestDataValue(false, i);
-			this.okuyamaClient.setValue(testDataKey, testDataValue);
+			this.okuyamaClient.setValue(RemoveMethodIterationTest.helper.createTestDataKey(false, i),
+										RemoveMethodIterationTest.helper.createTestDataValue(false, i));
 		}
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		// テストデータを破棄
-		try {
-			for (int i = 0;i < 5000;i++) {
-				String testDataKey = RemoveMethodIterationTest.helper.createTestDataKey(false, i);
-				this.okuyamaClient.removeValue(testDataKey);
+		for (int i = 0;i < 5000;i++) {
+			try {
+				this.okuyamaClient.removeValue(RemoveMethodIterationTest.helper.createTestDataKey(false, i));
+			} catch (OkuyamaClientException e) {
 			}
-		} catch (OkuyamaClientException e) {
 		}
-
 		this.okuyamaClient.close();
 	}
 
 	@Test
-	public void キーに対応した値を5000回削除する() throws Exception {
+	public void キーに対応した値を5000個削除する() throws Exception {
 		for (int i = 0;i < 5000;i++) {
 			String testDataKey = RemoveMethodIterationTest.helper.createTestDataKey(false, i);
 			String testDataValue = RemoveMethodIterationTest.helper.createTestDataValue(false, i);
@@ -72,5 +58,4 @@ public class RemoveMethodIterationTest {
 			}
 		}
 	}
-
 }

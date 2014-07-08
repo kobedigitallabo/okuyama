@@ -2,11 +2,10 @@ package test.junit.iteration;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
+import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import test.junit.MethodTestHelper;
@@ -22,14 +21,6 @@ public class SetMethodIterationTest {
 
 	private OkuyamaClient okuyamaClient;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		SetMethodIterationTest.helper.init();
@@ -40,10 +31,17 @@ public class SetMethodIterationTest {
 
 	@After
 	public void tearDown() throws Exception {
+		try {
+			for (int i = 0;i < 5000;i++) {
+				this.okuyamaClient.removeValue(SetMethodIterationTest.helper.createTestDataKey(false, i));
+			}
+		} catch (OkuyamaClientException e) {
+		}
+		this.okuyamaClient.close();
 	}
 
 	@Test
-	public void setに5000回成功して全てtrueを返す() throws Exception {
+	public void データ5000個をsetする() throws Exception {
 		for (int i = 0;i < 5000;i++) {
 			assertTrue(this.okuyamaClient.setValue(SetMethodIterationTest.helper.createTestDataKey(false, i),
 												SetMethodIterationTest.helper.createTestDataValue(false, i)));

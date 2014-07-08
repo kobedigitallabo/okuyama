@@ -5,9 +5,7 @@ import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import test.junit.MethodTestHelper;
@@ -26,14 +24,6 @@ public class GetMethodHugeTest {
 	private String testDataKey;
 
 	private String testDataValue;
-
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -54,7 +44,6 @@ public class GetMethodHugeTest {
 			this.okuyamaClient.removeValue(this.testDataKey);
 		} catch (OkuyamaClientException e) {
 		}
-
 		this.okuyamaClient.close();
 	}
 
@@ -67,6 +56,4 @@ public class GetMethodHugeTest {
 			fail("getメソッドエラー");
 		}
 	}
-
-
 }

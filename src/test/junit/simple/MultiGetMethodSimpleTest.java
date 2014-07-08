@@ -8,9 +8,7 @@ import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -35,14 +33,6 @@ public class MultiGetMethodSimpleTest {
 
 	private String[] testDataValue;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		MultiGetMethodSimpleTest.helper.init();
@@ -52,12 +42,8 @@ public class MultiGetMethodSimpleTest {
 		// テストデータを設定
 		String testKey = MultiGetMethodSimpleTest.helper.createTestDataKey(false);
 		String testValue = MultiGetMethodSimpleTest.helper.createTestDataValue(false);
-		this.testDataKey = new String[] {
-				testKey + 1, testKey + 2, testKey + 3
-		};
-		this.testDataValue = new String[] {
-				testValue + 1, testValue + 2, testValue + 3
-		};
+		this.testDataKey = new String[] {testKey + 1, testKey + 2, testKey + 3};
+		this.testDataValue = new String[] {testValue + 1, testValue + 2, testValue + 3};
 		this.okuyamaClient.setValue(this.testDataKey[0], this.testDataValue[0]);
 		this.okuyamaClient.setValue(this.testDataKey[1], this.testDataValue[1]);
 		this.okuyamaClient.setValue(this.testDataKey[2], this.testDataValue[2]);
@@ -65,6 +51,11 @@ public class MultiGetMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
+		try {
+			this.okuyamaClient.getOkuyamaVersion();
+		} catch (OkuyamaClientException e) {
+			this.okuyamaClient = MultiGetMethodSimpleTest.helper.getConnectedOkuyamaClient();
+		}
 		// テストデータを破棄
 		try {
 			this.okuyamaClient.removeValue(this.testDataKey[0]);
@@ -76,7 +67,7 @@ public class MultiGetMethodSimpleTest {
 	}
 
 	@Test
-	public void キーに対応した値を取得する() throws Exception {
+	public void キー値リストから複数の値を取得する() throws Exception {
 		Map<?, ?> result = this.okuyamaClient.getMultiValue(this.testDataKey);
 		assertEquals(result.get(this.testDataKey[0]), this.testDataValue[0]);
 		assertEquals(result.get(this.testDataKey[1]), this.testDataValue[1]);
@@ -84,25 +75,27 @@ public class MultiGetMethodSimpleTest {
 	}
 
 	@Test
-	public void 存在しないキーを含んだ() throws Exception {
-		String[] result = this.okuyamaClient.getValue(this.testDataKey[0] + "_foo");
-		assertEquals(result[0], "false");
+	public void 存在しないキーを含んだキー値リストから複数の値を取得する() throws Exception {
+		this.testDataKey[0] += "_foo";
+		Map<?, ?> result = this.okuyamaClient.getMultiValue(this.testDataKey);
+		assertNull(result.get(this.testDataKey[0]));
+		assertEquals(result.get(this.testDataKey[1]), this.testDataValue[1]);
+		assertEquals(result.get(this.testDataKey[2]), this.testDataValue[2]);
 	}
 
 	@Test
 	public void nullのキーを指定して例外を発生させる() throws Exception {
-		thrown.expect(OkuyamaClientException.class);
-		thrown.expectMessage("The blank is not admitted on a key");
-		this.okuyamaClient.getValue(null);
+		this.testDataKey[0] = null;
+		Map<?, ?> result = this.okuyamaClient.getMultiValue(this.testDataKey);
+		assertNull(result.get(this.testDataKey[0]));
+		assertEquals(result.get(this.testDataKey[1]), this.testDataValue[1]);
+		assertEquals(result.get(this.testDataKey[2]), this.testDataValue[2]);
 	}
 
 	@Test
 	public void サーバとのセッションが無い状態でgetすることで例外を発生させる() throws Exception {
 		thrown.expect(OkuyamaClientException.class);
 		thrown.expectMessage("No ServerConnect!!");
-		this.okuyamaClient.removeValue(this.testDataKey[0]);
-		this.okuyamaClient.removeValue(this.testDataKey[1]);
-		this.okuyamaClient.removeValue(this.testDataKey[2]);
 		this.okuyamaClient.close();
 		this.okuyamaClient.getValue(this.testDataKey[0]);
 		this.okuyamaClient.getValue(this.testDataKey[0]);

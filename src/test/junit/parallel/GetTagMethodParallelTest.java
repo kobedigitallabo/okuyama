@@ -2,6 +2,7 @@ package test.junit.parallel;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
+import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -42,9 +43,12 @@ public class GetTagMethodParallelTest {
 	public static void tearDownAfterClass() throws Exception {
 		OkuyamaClient client = GetTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
-			String key = GetTagMethodParallelTest.helper.createTestDataKey(false, i);
-			client.removeTagFromKey(key, GetTagMethodParallelTest.helper.createTestDataTag(i));
-			client.removeValue(key);
+			try {
+				String key = GetTagMethodParallelTest.helper.createTestDataKey(false, i);
+				client.removeTagFromKey(key, GetTagMethodParallelTest.helper.createTestDataTag(i));
+				client.removeValue(key);
+			} catch (OkuyamaClientException e) {
+			}
 		}
 		client.close();
 	}
@@ -66,9 +70,12 @@ public class GetTagMethodParallelTest {
 		long id = Thread.currentThread().getId();
 		OkuyamaClient client = GetTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
-			String key = GetTagMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id;
-			client.removeTagFromKey(key, GetTagMethodParallelTest.helper.createTestDataTag(i));
-			client.removeValue(GetTagMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id);
+			try {
+				String key = GetTagMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id;
+				client.removeTagFromKey(key, GetTagMethodParallelTest.helper.createTestDataTag(i) + "_thread_" + id);
+				client.removeValue(key);
+			} catch (OkuyamaClientException e) {
+			}
 		}
 		client.close();
 	}

@@ -2,6 +2,7 @@ package test.junit.parallel;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
+import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -42,9 +43,12 @@ public class RemoveTagMethodParallelTest {
 	public static void tearDownAfterClass() throws Exception {
 		OkuyamaClient client = RemoveTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
-			String key = RemoveTagMethodParallelTest.helper.createTestDataKey(false, i);
-			client.removeTagFromKey(key, RemoveTagMethodParallelTest.helper.createTestDataTag(i));
-			client.removeValue(key);
+			try {
+				String key = RemoveTagMethodParallelTest.helper.createTestDataKey(false, i);
+				client.removeTagFromKey(key, RemoveTagMethodParallelTest.helper.createTestDataTag(i));
+				client.removeValue(key);
+			} catch (OkuyamaClientException e) {
+			}
 		}
 		client.close();
 	}
@@ -66,15 +70,18 @@ public class RemoveTagMethodParallelTest {
 		long id = Thread.currentThread().getId();
 		OkuyamaClient client = RemoveTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
-			String key = RemoveTagMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id;
-			client.removeTagFromKey(key, RemoveTagMethodParallelTest.helper.createTestDataTag(i));
-			client.removeValue(RemoveTagMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id);
+			try {
+				String key = RemoveTagMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id;
+				client.removeTagFromKey(key, RemoveTagMethodParallelTest.helper.createTestDataTag(i));
+				client.removeValue(RemoveTagMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id);
+			} catch (OkuyamaClientException e) {
+			}
 		}
 		client.close();
 	}
 
 	@Test
-	public void スレッドごとに違うタグに対応したキーを50回取得する() throws Exception {
+	public void スレッドごとに違うタグに対応したキーを50回削除する() throws Exception {
 		long id = Thread.currentThread().getId();
 		OkuyamaClient client = RemoveTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {

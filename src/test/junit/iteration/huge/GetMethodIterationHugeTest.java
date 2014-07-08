@@ -5,9 +5,7 @@ import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import test.junit.MethodTestHelper;
@@ -23,14 +21,6 @@ public class GetMethodIterationHugeTest {
 
 	private OkuyamaClient okuyamaClient;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		GetMethodIterationHugeTest.helper.init();
@@ -38,10 +28,9 @@ public class GetMethodIterationHugeTest {
 		// okuyamaに接続
 		this.okuyamaClient =  GetMethodIterationHugeTest.helper.getConnectedOkuyamaClient();
 		// テストデータを設定
-		for (int i = 0;i < 5000;i++) {
-			String testDataKey = GetMethodIterationHugeTest.helper.createTestDataKey(true, i);
-			String testDataValue = GetMethodIterationHugeTest.helper.createTestDataValue(true, i);
-			this.okuyamaClient.setValue(testDataKey, testDataValue);
+		for (int i = 0;i < 500;i++) {
+			this.okuyamaClient.setValue(GetMethodIterationHugeTest.helper.createTestDataKey(true, i),
+										GetMethodIterationHugeTest.helper.createTestDataValue(true, i));
 		}
 	}
 
@@ -49,9 +38,8 @@ public class GetMethodIterationHugeTest {
 	public void tearDown() throws Exception {
 		// テストデータを破棄
 		try {
-			for (int i = 0;i < 5000;i++) {
-				String testDataKey = GetMethodIterationHugeTest.helper.createTestDataKey(true, i);
-				this.okuyamaClient.removeValue(testDataKey);
+			for (int i = 0;i < 500;i++) {
+				this.okuyamaClient.removeValue(GetMethodIterationHugeTest.helper.createTestDataKey(true, i));
 			}
 		} catch (OkuyamaClientException e) {
 		}
@@ -59,7 +47,7 @@ public class GetMethodIterationHugeTest {
 	}
 
 	@Test
-	public void キーに対応した巨大な値を500回取得する() throws Exception {
+	public void キーに対応した巨大な値を500個取得する() throws Exception {
 		for (int i = 0;i < 500;i++) {
 			String testDataKey = GetMethodIterationHugeTest.helper.createTestDataKey(true, i);
 			String testDataValue = GetMethodIterationHugeTest.helper.createTestDataValue(true, i);

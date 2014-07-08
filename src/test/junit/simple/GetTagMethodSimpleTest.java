@@ -68,6 +68,11 @@ public class GetTagMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
+		try {
+			this.okuyamaClient.getOkuyamaVersion();
+		} catch (OkuyamaClientException e) {
+			this.okuyamaClient = GetTagMethodSimpleTest.helper.getConnectedOkuyamaClient();
+		}
 		// テストデータを破棄
 		try {
 			this.okuyamaClient.removeValue(testKeys[0]);
@@ -100,16 +105,15 @@ public class GetTagMethodSimpleTest {
 		Object[] result = this.okuyamaClient.getTagKeys(testTags[1]);
 		if (result[0].equals("true")) {
 			String[] keys = (String[]) result[1];
-			int count = 0;
-			for (int i = 0;i < keys.length;i++) {
-				for (int j = 1;j <= 3;j++) {
-					if (keys[i].equals(testKeys[j])) {
-						testKeys[j] = new String();
-						count++;
+			for (String key : keys) {
+				boolean assertFlag = false;
+				for (String answerKey : this.testKeys) {
+					if (answerKey.equals(key)) {
+						assertFlag = true;
 					}
 				}
+				assertTrue(assertFlag);
 			}
-			assertEquals(count, 3);
 		} else {
 			fail("getメソッドエラー");
 		}
@@ -125,14 +129,6 @@ public class GetTagMethodSimpleTest {
 	public void サーバとのセッションが無い状態でgetすることで例外を発生させる() throws Exception {
 		thrown.expect(OkuyamaClientException.class);
 		thrown.expectMessage("No ServerConnect!!");
-		this.okuyamaClient.removeValue(testKeys[0]);
-		this.okuyamaClient.removeTagFromKey(testKeys[0], testTags[0]);
-		this.okuyamaClient.removeValue(testKeys[1]);
-		this.okuyamaClient.removeTagFromKey(testKeys[1], testTags[1]);
-		this.okuyamaClient.removeValue(testKeys[2]);
-		this.okuyamaClient.removeTagFromKey(testKeys[2], testTags[1]);
-		this.okuyamaClient.removeValue(testKeys[3]);
-		this.okuyamaClient.removeTagFromKey(testKeys[2], testTags[1]);
 		this.okuyamaClient.close();
 		this.okuyamaClient.getTagKeys(testTags[0]);
 	}

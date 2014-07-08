@@ -5,9 +5,7 @@ import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -32,14 +30,6 @@ public class GetMethodSimpleTest {
 
 	private String testDataValue;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		GetMethodSimpleTest.helper.init();
@@ -55,9 +45,15 @@ public class GetMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
+		try {
+			this.okuyamaClient.getOkuyamaVersion();
+		} catch (OkuyamaClientException e) {
+			this.okuyamaClient = GetMethodSimpleTest.helper.getConnectedOkuyamaClient();
+		}
 		// テストデータを破棄
 		try {
 			this.okuyamaClient.removeValue(this.testDataKey);
+			this.okuyamaClient.removeValue(this.testDataKey + "日本語");
 		} catch (OkuyamaClientException e) {
 		}
 
@@ -85,7 +81,7 @@ public class GetMethodSimpleTest {
 	}
 
 	@Test
-	public void 存在しないキーを取得しようとすることでfalseを返させる() throws Exception {
+	public void 存在しないキーを取得しようとして失敗する() throws Exception {
 		String[] result = this.okuyamaClient.getValue(this.testDataKey + "_foo");
 		assertEquals(result[0], "false");
 	}
@@ -101,7 +97,6 @@ public class GetMethodSimpleTest {
 	public void サーバとのセッションが無い状態でgetすることで例外を発生させる() throws Exception {
 		thrown.expect(OkuyamaClientException.class);
 		thrown.expectMessage("No ServerConnect!!");
-		this.okuyamaClient.removeValue(this.testDataKey);
 		this.okuyamaClient.close();
 		this.okuyamaClient.getValue(this.testDataKey);
 	}

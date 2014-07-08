@@ -2,10 +2,10 @@ package test.junit.parallel;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
+import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,13 +35,11 @@ public class SetTagMethodParallelTest {
 	public static void tearDownAfterClass() throws Exception {
 		OkuyamaClient client = SetTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
-			client.removeValue(SetTagMethodParallelTest.helper.createTestDataKey(false, i));
+			String key = SetTagMethodParallelTest.helper.createTestDataKey(false, i);
+			client.removeTagFromKey(key, SetTagMethodParallelTest.helper.createTestDataTag(i));
+			client.removeValue(key);
 		}
 		client.close();
-	}
-
-	@Before
-	public void setUp() throws Exception {
 	}
 
 	@After
@@ -49,25 +47,30 @@ public class SetTagMethodParallelTest {
 		long id = Thread.currentThread().getId();
 		OkuyamaClient client = SetTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
-			client.removeValue(SetTagMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id);
+			try {
+				String key = SetTagMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id;
+				client.removeTagFromKey(key, SetTagMethodParallelTest.helper.createTestDataTag(i) + "_thread_" + id);
+				client.removeValue(key);
+			} catch (OkuyamaClientException e) {
+			}
 		}
 		client.close();
 	}
 
 	@Test
-	public void スレッドで違うタグのsetを50回成功して全てtrueを返す() throws Exception {
+	public void スレッドで違うタグのsetをスレッドごとに50回行う() throws Exception {
 		long id = Thread.currentThread().getId();
 		OkuyamaClient client = SetTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
 			assertTrue(client.setValue(SetTagMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id,
-										new String[]{SetTagMethodParallelTest.helper.createTestDataTag(i) + "_thread_" + id},
-										SetTagMethodParallelTest.helper.createTestDataValue(false, i) + "_thread_" + id));
+									new String[]{SetTagMethodParallelTest.helper.createTestDataTag(i) + "_thread_" + id},
+									SetTagMethodParallelTest.helper.createTestDataValue(false, i) + "_thread_" + id));
 		}
 		client.close();
 	}
 
 	@Test
-	public void スレッドで同じタグのsetを50回成功して全てtrueを返す() throws Exception {
+	public void スレッドで同じタグのsetをスレッドごとに50回行う() throws Exception {
 		OkuyamaClient client = SetTagMethodParallelTest.helper.getConnectedOkuyamaClient();
 		long id = Thread.currentThread().getId();
 		for (int i = 0;i < 50;i++) {
