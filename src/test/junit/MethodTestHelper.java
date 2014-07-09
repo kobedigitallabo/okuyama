@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 
@@ -166,5 +167,57 @@ public class MethodTestHelper {
 	public String createTestDataValue(boolean isBigData, int index) {
 		index += this.start;
 		return this.createTestDataValue(isBigData) + "_" + index;
+	}
+
+
+	/**
+	 * 指定されたキーに指定されたタグが全て紐付けられているか確認する。
+	 * @param answer - 答え。Keyがキー値、Valueがキー値に紐付けられたタグ値のリスト。
+	 * @param key - 確認対象のキー。
+	 * @param tags - 確認対象のタグ値リスト。このリストは値の重複が無いものとする。
+	 * @return 全て紐付けられていればtrueを返す。
+	 */
+	public static boolean checkTagAnd(Map<String, String[]> answer, String key, String[] tags) {
+		String[] answerTags = answer.get(key);
+		if (answerTags == null || answerTags.length < tags.length) {
+			return false;
+		}
+		for (String tag : tags) {
+			boolean result = false;
+			for (String answerTag : answerTags) {
+				if (answerTag.equals(tag)) {
+					result = true;
+					break;
+				}
+			}
+			if (!result) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * 指定されたキーに指定されたタグのどれかが紐付けられているか確認する。
+	 * @param answer - 答え。Keyがキー値、Valueがキー値に紐付けられたタグ値のリスト。
+	 * @param key - 確認対象のキー。
+	 * @param tags - 確認対象のタグ値リスト。このリストは値の重複が無いものとする。
+	 * @return タグのどれかが紐付けられていればtrueを返す。
+	 */
+	public static boolean checkTagOr(Map<String, String[]> answer, String key, String[] tags) {
+		String[] answerTags = answer.get(key);
+		if (answerTags == null || answerTags.length <= 0) {
+			return false;
+		}
+		boolean result = false;
+		for (String tag : tags) {
+			for (String answerTag : answerTags) {
+				if (answerTag.equals(tag)) {
+					result = true;
+					break;
+				}
+			}
+		}
+		return result;
 	}
 }

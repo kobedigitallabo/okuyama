@@ -65,31 +65,22 @@ public class GetMethodSimpleTest {
 	@Test
 	public void キーに対応した値を取得する() throws Exception {
 		String[] result = this.okuyamaClient.getValue(this.testDataKey);
-		if (result[0].equals("true")) {
-			assertEquals(result[1], this.testDataValue);
-		} else {
-			fail("getメソッドエラー");
-		}
+		assertEquals(result[0], "true");
+		assertEquals(result[1], this.testDataValue);
 	}
 
 	@Test
 	public void マルチバイト文字列を含むキーに対応した値を取得する() throws Exception {
 		String[] result = this.okuyamaClient.getValue(this.testDataKey + "日本語");
-		if (result[0].equals("true")) {
-			assertEquals(result[1], this.testDataValue + "日本語");
-		} else {
-			fail("getメソッドエラー");
-		}
+		assertEquals(result[0], "true");
+		assertEquals(result[1], this.testDataValue + "日本語");
 	}
 
 	@Test
 	public void 値をObjectとして取得する() throws Exception {
 		Object[] result = this.okuyamaClient.getObjectValue(this.testDataKey + "_Object");
-		if (result[0].equals("true")) {
-			assertEquals(result[1], this.testDataValue);
-		} else {
-			fail("getメソッドエラー");
-		}
+		assertEquals(result[0], "true");
+		assertEquals(result[1], this.testDataValue);
 	}
 
 	@Test

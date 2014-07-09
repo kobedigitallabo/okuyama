@@ -2,19 +2,14 @@ package test.junit.simple;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -39,15 +34,7 @@ public class MultiGetTagMethodSimpleTest {
 
 	private Map<Object, String> answerValueList = new HashMap<Object, String>();
 
-	private Map<String, List<String>> answerKeyList = new HashMap<String, List<String>>();
-
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
+	private Map<String, String[]> keyTags = new HashMap<String, String[]>();
 
 	@Before
 	public void setUp() throws Exception {
@@ -59,7 +46,6 @@ public class MultiGetTagMethodSimpleTest {
 		String[] tags = new String[4];
 		for (int i = 0;i < 4;i++) {
 			tags[i] = MultiGetTagMethodSimpleTest.helper.createTestDataTag(i);
-			this.answerKeyList.put(tags[i], new ArrayList<String>());
 		}
 		this.testTags[0] = new String[]{tags[0]};
 		this.testTags[1] = new String[]{tags[0], tags[1]};
@@ -73,13 +59,8 @@ public class MultiGetTagMethodSimpleTest {
 			String value = MultiGetTagMethodSimpleTest.helper.createTestDataValue(false, i);
 			this.answerValueList.put(key, value);
 			this.okuyamaClient.setValue(key, this.testTags[i % 4], value);
-			for (String tag : testTags) {
-				this.answerKeyList.get(tag).add(key);
-			}
+			this.keyTags.put(key, testTags);
         }
-		for (String tag : tags) {
-			Collections.sort(this.answerKeyList.get(tag));
-		}
 	}
 
 	@After
@@ -140,56 +121,38 @@ public class MultiGetTagMethodSimpleTest {
 		String[] tags = this.testTags[0];
 		String[] result = this.okuyamaClient.getMultiTagKeys(tags);
 		assertEquals(result.length, 75);
-		for (String tag : tags) {
-			for (String key : result) {
-				assertTrue(this.existKeyInTag(tag, key));
-			}
+		for (String key : result) {
+			assertTrue(MethodTestHelper.checkTagAnd(this.keyTags, key, tags));
 		}
 	}
 	@Test
 	public void タグ値のリストのタグ全てに紐付いている指定したタグ以外のタグを持つものを含む複数のキーを取得する()
 																									throws Exception {
-		String[] tags = this.testTags[0];
+		String[] tags = this.testTags[1];
 		String[] result = this.okuyamaClient.getMultiTagKeys(tags);
-		assertEquals(result.length, 75);
-		for (String tag : tags) {
-			for (String key : result) {
-				assertTrue(this.existKeyInTag(tag, key));
-			}
+		assertEquals(result.length, 50);
+		for (String key : result) {
+			assertTrue(MethodTestHelper.checkTagAnd(this.keyTags, key, tags));
 		}
 	}
 
 	@Test
 	public void タグ値のリストのタグ全てに紐付いている複数のキーを取得する() throws Exception {
-		String[] tags = this.testTags[0];
+		String[] tags = this.testTags[2];
 		String[] result = this.okuyamaClient.getMultiTagKeys(tags);
-		assertEquals(result.length, 75);
-		for (String tag : tags) {
-			for (String key : result) {
-				assertTrue(this.existKeyInTag(tag, key));
-			}
+		assertEquals(result.length, 25);
+		for (String key : result) {
+			assertTrue(MethodTestHelper.checkTagAnd(this.keyTags, key, tags));
 		}
 	}
 
 	@Test
 	public void タグ値のリストのタグのどれかに紐付いている複数のキーを取得する() throws Exception {
-		String[] tags = this.testTags[0];
-		String[] result = this.okuyamaClient.getMultiTagKeys(tags);
-		assertEquals(result.length, 75);
-		for (String tag : tags) {
-			for (String key : result) {
-				assertTrue(this.existKeyInTag(tag, key));
-			}
+		String[] tags = this.testTags[4];
+		String[] result = this.okuyamaClient.getMultiTagKeys(tags, false);
+		assertEquals(result.length, 100);
+		for (String key : result) {
+			assertTrue(MethodTestHelper.checkTagOr(this.keyTags, key, tags));
 		}
-	}
-
-	private boolean existKeyInTag(String tag, String key) {
-		List<String> keys = this.answerKeyList.get(tag);
-		for (String k : keys) {
-			if (k.equals(key)) {
-				return true;
-			}
-		}
-		return false;
 	}
 }
