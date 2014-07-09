@@ -31,11 +31,11 @@ public class SetMethodIterationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		try {
-			for (int i = 0;i < 5000;i++) {
+		for (int i = 0;i < 5000;i++) {
+			try {
 				this.okuyamaClient.removeValue(SetMethodIterationTest.helper.createTestDataKey(false, i));
+			} catch (OkuyamaClientException e) {
 			}
-		} catch (OkuyamaClientException e) {
 		}
 		this.okuyamaClient.close();
 	}
@@ -45,6 +45,14 @@ public class SetMethodIterationTest {
 		for (int i = 0;i < 5000;i++) {
 			assertTrue(this.okuyamaClient.setValue(SetMethodIterationTest.helper.createTestDataKey(false, i),
 												SetMethodIterationTest.helper.createTestDataValue(false, i)));
+		}
+	}
+
+	@Test
+	public void 値をObjectとしたデータ5000個をsetする() throws Exception {
+		for (int i = 0;i < 5000;i++) {
+			assertTrue(this.okuyamaClient.setObjectValue(SetMethodIterationTest.helper.createTestDataKey(false, i),
+														SetMethodIterationTest.helper.createTestDataValue(false, i)));
 		}
 	}
 }

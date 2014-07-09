@@ -54,7 +54,7 @@ public class SetMethodParallelTest {
 	}
 
 	@Test
-	public void スレッドで違うキーのsetを50回成功して全てtrueを返す() throws Exception {
+	public void スレッドで違うキーのsetを50回行う() throws Exception {
 		long id = Thread.currentThread().getId();
 		OkuyamaClient client = SetMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
@@ -65,11 +65,22 @@ public class SetMethodParallelTest {
 	}
 
 	@Test
-	public void スレッドで同じキーのsetを50回成功して全てtrueを返す() throws Exception {
+	public void スレッドで同じキーのsetを50回行う() throws Exception {
 		OkuyamaClient client = SetMethodParallelTest.helper.getConnectedOkuyamaClient();
 		long id = Thread.currentThread().getId();
 		for (int i = 0;i < 50;i++) {
 			assertTrue(client.setValue(SetMethodParallelTest.helper.createTestDataKey(false, i),
+										SetMethodParallelTest.helper.createTestDataValue(false, i) + "_thread_" + id));
+		}
+		client.close();
+	}
+
+	@Test
+	public void スレッドで違うキーのsetを値をObjectとして50回行う() throws Exception {
+		long id = Thread.currentThread().getId();
+		OkuyamaClient client = SetMethodParallelTest.helper.getConnectedOkuyamaClient();
+		for (int i = 0;i < 50;i++) {
+			assertTrue(client.setObjectValue(SetMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id,
 										SetMethodParallelTest.helper.createTestDataValue(false, i) + "_thread_" + id));
 		}
 		client.close();

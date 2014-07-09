@@ -29,8 +29,10 @@ public class GetMethodIterationTest {
 		this.okuyamaClient =  GetMethodIterationTest.helper.getConnectedOkuyamaClient();
 		// テストデータを設定
 		for (int i = 0;i < 5000;i++) {
-			this.okuyamaClient.setValue(GetMethodIterationTest.helper.createTestDataKey(false, i),
-										GetMethodIterationTest.helper.createTestDataValue(false, i));
+			String key = GetMethodIterationTest.helper.createTestDataKey(false, i);
+			String value = GetMethodIterationTest.helper.createTestDataValue(false, i);
+			this.okuyamaClient.setValue(key, value);
+			this.okuyamaClient.setObjectValue(key + "_Object", value);
 		}
 	}
 
@@ -38,7 +40,9 @@ public class GetMethodIterationTest {
 	public void tearDown() throws Exception {
 		for (int i = 0;i < 5000;i++) {
 			try {
-				this.okuyamaClient.removeValue(GetMethodIterationTest.helper.createTestDataKey(false, i));
+				String key = GetMethodIterationTest.helper.createTestDataKey(false, i);
+				this.okuyamaClient.removeValue(key);
+				this.okuyamaClient.removeValue(key + "_Object");
 			} catch (OkuyamaClientException e) {
 			}
 		}
@@ -51,6 +55,20 @@ public class GetMethodIterationTest {
 			String testDataKey = GetMethodIterationTest.helper.createTestDataKey(false, i);
 			String testDataValue = GetMethodIterationTest.helper.createTestDataValue(false, i);
 			String[] result = this.okuyamaClient.getValue(testDataKey);
+			if (result[0].equals("true")) {
+				assertEquals(result[1], testDataValue);
+			} else {
+				fail("getメソッドエラー");
+			}
+		}
+	}
+
+	@Test
+	public void 値をObjectとして5000個取得する() throws Exception {
+		for (int i = 0;i < 5000;i++) {
+			String testDataKey = GetMethodIterationTest.helper.createTestDataKey(false, i);
+			String testDataValue = GetMethodIterationTest.helper.createTestDataValue(false, i);
+			Object[] result = this.okuyamaClient.getObjectValue(testDataKey + "_Object");
 			if (result[0].equals("true")) {
 				assertEquals(result[1], testDataValue);
 			} else {

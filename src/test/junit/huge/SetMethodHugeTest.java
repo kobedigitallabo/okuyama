@@ -45,4 +45,10 @@ public class SetMethodHugeTest {
 		assertTrue(this.okuyamaClient.setValue(SetMethodHugeTest.helper.createTestDataKey(true),
 												SetMethodHugeTest.helper.createTestDataValue(true)));
 	}
+
+	@Test
+	public void サイズが大きい値をObjectとしてsetする() throws Exception {
+		assertTrue(this.okuyamaClient.setObjectValue(SetMethodHugeTest.helper.createTestDataKey(true),
+														SetMethodHugeTest.helper.createTestDataValue(true)));
+	}
 }

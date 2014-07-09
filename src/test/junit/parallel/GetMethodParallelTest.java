@@ -55,7 +55,9 @@ public class GetMethodParallelTest {
 		long id = Thread.currentThread().getId();
 		OkuyamaClient client = GetMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
-			client.setValue(GetMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id,
+			String key = GetMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id;
+			client.setValue(key, GetMethodParallelTest.helper.createTestDataValue(false, i) + "_thread_" + id);
+			client.setObjectValue(key + "_Object",
 							GetMethodParallelTest.helper.createTestDataValue(false, i) + "_thread_" + id);
 		}
 		client.close();
@@ -67,7 +69,9 @@ public class GetMethodParallelTest {
 		OkuyamaClient client = GetMethodParallelTest.helper.getConnectedOkuyamaClient();
 		for (int i = 0;i < 50;i++) {
 			try {
-				client.removeValue(GetMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id);
+				String key = GetMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id;
+				client.removeValue(key);
+				client.removeValue(key + "_Object");
 			} catch (OkuyamaClientException e) {
 			}
 		}
@@ -106,4 +110,23 @@ public class GetMethodParallelTest {
 		}
 		client.close();
 	}
+
+	@Test
+	public void スレッドごとに違うキーに対応した値をObjectとして50回取得する() throws Exception {
+		long id = Thread.currentThread().getId();
+		OkuyamaClient client = GetMethodParallelTest.helper.getConnectedOkuyamaClient();
+		for (int i = 0;i < 50;i++) {
+			String testDataKey = GetMethodParallelTest.helper.createTestDataKey(false, i) + "_thread_" + id + "_Object";
+			String testDataValue = GetMethodParallelTest.helper.createTestDataValue(false, i) + "_thread_" + id;
+			Object[] result = client.getObjectValue(testDataKey);
+			if (result[0].equals("true")) {
+				assertEquals(result[1], testDataValue);
+			} else {
+				fail("getメソッドエラー");
+			}
+		}
+		client.close();
+	}
+
+
 }

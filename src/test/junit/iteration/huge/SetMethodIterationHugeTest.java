@@ -31,19 +31,27 @@ public class SetMethodIterationHugeTest {
 
 	@After
 	public void tearDown() throws Exception {
-		try {
-			for (int i = 0;i < 5000;i++) {
-				this.okuyamaClient.removeValue(SetMethodIterationHugeTest.helper.createTestDataKey(false, i));
+		for (int i = 0;i < 5000;i++) {
+			try {
+				this.okuyamaClient.removeValue(SetMethodIterationHugeTest.helper.createTestDataKey(true, i));
+			} catch (OkuyamaClientException e) {
 			}
-		} catch (OkuyamaClientException e) {
 		}
 		this.okuyamaClient.close();
 	}
 
 	@Test
-	public void 巨大なデータのsetに500回成功して全てtrueを返す() throws Exception {
+	public void 巨大なデータを500個setする() throws Exception {
 		for (int i = 0;i < 500;i++) {
 			assertTrue(this.okuyamaClient.setValue(SetMethodIterationHugeTest.helper.createTestDataKey(true, i),
+												SetMethodIterationHugeTest.helper.createTestDataValue(true, i)));
+		}
+	}
+
+	@Test
+	public void 値をObjectとした巨大なデータを500個setする() throws Exception {
+		for (int i = 0;i < 500;i++) {
+			assertTrue(this.okuyamaClient.setObjectValue(SetMethodIterationHugeTest.helper.createTestDataKey(true, i),
 												SetMethodIterationHugeTest.helper.createTestDataValue(true, i)));
 		}
 	}

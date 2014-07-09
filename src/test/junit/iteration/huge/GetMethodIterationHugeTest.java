@@ -29,19 +29,22 @@ public class GetMethodIterationHugeTest {
 		this.okuyamaClient =  GetMethodIterationHugeTest.helper.getConnectedOkuyamaClient();
 		// テストデータを設定
 		for (int i = 0;i < 500;i++) {
-			this.okuyamaClient.setValue(GetMethodIterationHugeTest.helper.createTestDataKey(true, i),
-										GetMethodIterationHugeTest.helper.createTestDataValue(true, i));
+			String key = GetMethodIterationHugeTest.helper.createTestDataKey(true, i);
+			this.okuyamaClient.setValue(key, GetMethodIterationHugeTest.helper.createTestDataValue(true, i));
+			this.okuyamaClient.setObjectValue(key + "_Object",
+											GetMethodIterationHugeTest.helper.createTestDataValue(true, i));
 		}
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		// テストデータを破棄
-		try {
-			for (int i = 0;i < 500;i++) {
-				this.okuyamaClient.removeValue(GetMethodIterationHugeTest.helper.createTestDataKey(true, i));
+		for (int i = 0;i < 500;i++) {
+			try {
+				String key = GetMethodIterationHugeTest.helper.createTestDataKey(true, i);
+				this.okuyamaClient.removeValue(key);
+				this.okuyamaClient.removeValue(key + "_Object");
+			} catch (OkuyamaClientException e) {
 			}
-		} catch (OkuyamaClientException e) {
 		}
 		this.okuyamaClient.close();
 	}
@@ -60,4 +63,17 @@ public class GetMethodIterationHugeTest {
 		}
 	}
 
+	@Test
+	public void キーに対応した巨大な値をObjectとして500個取得する() throws Exception {
+		for (int i = 0;i < 500;i++) {
+			String testDataKey = GetMethodIterationHugeTest.helper.createTestDataKey(true, i);
+			String testDataValue = GetMethodIterationHugeTest.helper.createTestDataValue(true, i);
+			Object[] result = this.okuyamaClient.getObjectValue(testDataKey + "_Object");
+			if (result[0].equals("true")) {
+				assertEquals(result[1], testDataValue);
+			} else {
+				fail("getメソッドエラー");
+			}
+		}
+	}
 }

@@ -40,6 +40,7 @@ public class GetMethodSimpleTest {
 		this.testDataKey = GetMethodSimpleTest.helper.createTestDataKey(false);
 		this.testDataValue = GetMethodSimpleTest.helper.createTestDataValue(false);
 		this.okuyamaClient.setValue(this.testDataKey, this.testDataValue);
+		this.okuyamaClient.setObjectValue(this.testDataKey + "_Object", this.testDataValue);
 		this.okuyamaClient.setValue(this.testDataKey + "日本語", this.testDataValue + "日本語");
 	}
 
@@ -53,6 +54,7 @@ public class GetMethodSimpleTest {
 		// テストデータを破棄
 		try {
 			this.okuyamaClient.removeValue(this.testDataKey);
+			this.okuyamaClient.removeValue(this.testDataKey + "_Object");
 			this.okuyamaClient.removeValue(this.testDataKey + "日本語");
 		} catch (OkuyamaClientException e) {
 		}
@@ -75,6 +77,16 @@ public class GetMethodSimpleTest {
 		String[] result = this.okuyamaClient.getValue(this.testDataKey + "日本語");
 		if (result[0].equals("true")) {
 			assertEquals(result[1], this.testDataValue + "日本語");
+		} else {
+			fail("getメソッドエラー");
+		}
+	}
+
+	@Test
+	public void 値をObjectとして取得する() throws Exception {
+		Object[] result = this.okuyamaClient.getObjectValue(this.testDataKey + "_Object");
+		if (result[0].equals("true")) {
+			assertEquals(result[1], this.testDataValue);
 		} else {
 			fail("getメソッドエラー");
 		}

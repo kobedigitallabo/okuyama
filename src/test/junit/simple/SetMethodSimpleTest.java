@@ -40,8 +40,9 @@ public class SetMethodSimpleTest {
 	@After
 	public void tearDown() throws Exception {
 		try {
-			this.okuyamaClient.removeValue(SetMethodSimpleTest.helper.createTestDataKey(false));
-			this.okuyamaClient.removeValue(SetMethodSimpleTest.helper.createTestDataKey(false) + "日本語");
+			String key = SetMethodSimpleTest.helper.createTestDataKey(false);
+			this.okuyamaClient.removeValue(key);
+			this.okuyamaClient.removeValue(key + "日本語");
 		} catch (OkuyamaClientException e) {
 		}
 		this.okuyamaClient.close();
@@ -57,6 +58,12 @@ public class SetMethodSimpleTest {
 	public void マルチバイト文字列が含まれたキーと値をsetする() throws Exception {
 		assertTrue(this.okuyamaClient.setValue(SetMethodSimpleTest.helper.createTestDataKey(false) + "日本語",
 												SetMethodSimpleTest.helper.createTestDataValue(false)));
+	}
+
+	@Test
+	public void 値をObjectとしてsetする() throws Exception {
+		assertTrue(this.okuyamaClient.setObjectValue(SetMethodSimpleTest.helper.createTestDataKey(false),
+														SetMethodSimpleTest.helper.createTestDataValue(false)));
 	}
 
 	@Test

@@ -35,6 +35,7 @@ public class GetMethodHugeTest {
 		this.testDataKey = GetMethodHugeTest.helper.createTestDataKey(false);
 		this.testDataValue = GetMethodHugeTest.helper.createTestDataValue(false);
 		this.okuyamaClient.setValue(this.testDataKey, this.testDataValue);
+		this.okuyamaClient.setObjectValue(this.testDataKey + "_Object", this.testDataValue);
 	}
 
 	@After
@@ -42,6 +43,7 @@ public class GetMethodHugeTest {
 		// テストデータを破棄
 		try {
 			this.okuyamaClient.removeValue(this.testDataKey);
+			this.okuyamaClient.removeValue(this.testDataKey + "_Object");
 		} catch (OkuyamaClientException e) {
 		}
 		this.okuyamaClient.close();
@@ -50,6 +52,16 @@ public class GetMethodHugeTest {
 	@Test
 	public void キーに対応した巨大な値を取得する() throws Exception {
 		String[] result = this.okuyamaClient.getValue(this.testDataKey);
+		if (result[0].equals("true")) {
+			assertEquals(result[1], this.testDataValue);
+		} else {
+			fail("getメソッドエラー");
+		}
+	}
+
+	@Test
+	public void キーに対応した巨大な値をObjectとして取得する() throws Exception {
+		Object[] result = this.okuyamaClient.getObjectValue(this.testDataKey + "_Object");
 		if (result[0].equals("true")) {
 			assertEquals(result[1], this.testDataValue);
 		} else {
