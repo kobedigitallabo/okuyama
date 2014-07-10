@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
@@ -219,5 +220,52 @@ public class MethodTestHelper {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * 指定されたタグリストが取得すべきキーを全て取得しているか確認する。
+	 * @param answer - 答え。Keyがキー値、Valueがキー値に紐付けられたタグ値のリスト。
+	 * @param tags - 確認対象のタグリスト。
+	 * @param results - tagsを指定して取得した結果。
+	 * @param isAnd - trueならANDでキーを取得したものとする。
+	 * @return 指定されたタグリストが取得すべきキーを全て取得している場合はtrueを返す。
+	 */
+	public static boolean checkTagResult(Map<String, String[]> answer, String[] tags, String[] results, boolean isAnd) {
+		ArrayList<String> targetKeys = new ArrayList<String>();
+		for (String key : answer.keySet()) {
+			// keyがtagsで取得されるべきか確認
+			boolean isTarget = false;
+			if (isAnd) {
+				isTarget = MethodTestHelper.checkTagAnd(answer, key, tags);
+			} else {
+				isTarget = MethodTestHelper.checkTagOr(answer, key, tags);
+			}
+			if (isTarget) {
+				// keyが取得されるべきであればkeyがresultの中に存在しているか確認
+				boolean exist = false;
+				for (String result : results) {
+					if ((exist |= result.equals(key))) {
+						break;
+					}
+				}
+				if (!exist) {
+					return false;
+				}
+				targetKeys.add(key);
+			}
+		}
+		// 結果の中に余計なものが無いか確認
+		for (String result : results) {
+			boolean exist = false;
+			for (String key : targetKeys) {
+				if ((exist |= result.equals(key))) {
+					break;
+				}
+			}
+			if (!exist) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

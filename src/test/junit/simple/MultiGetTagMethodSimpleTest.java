@@ -2,11 +2,13 @@ package test.junit.simple;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
+import okuyama.imdst.client.OkuyamaResultSet;
 
 import org.junit.After;
 import org.junit.Before;
@@ -83,9 +85,13 @@ public class MultiGetTagMethodSimpleTest {
 	public void タグ1つに紐付いている複数の値を取得する() throws Exception {
 		Map<?, ?> result = this.okuyamaClient.getMultiTagValues(this.testTags[0]);
 		assertEquals(result.size(), 75);
+		ArrayList<String> keys = new ArrayList<String>();
 		for (Object key : result.keySet()) {
+			keys.add((String) key);
 			assertEquals(result.get(key), this.answerValueList.get(key));
 		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, this.testTags[0],
+													keys.toArray(new String[keys.size()]), true));
 	}
 
 	@Test
@@ -93,27 +99,39 @@ public class MultiGetTagMethodSimpleTest {
 																									throws Exception {
 		Map<?, ?> result = this.okuyamaClient.getMultiTagValues(this.testTags[1], true);
 		assertEquals(result.size(), 50);
+		ArrayList<String> keys = new ArrayList<String>();
 		for (Object key : result.keySet()) {
+			keys.add((String) key);
 			assertEquals(result.get(key), this.answerValueList.get(key));
 		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, this.testTags[1],
+													keys.toArray(new String[keys.size()]), true));
 	}
 
 	@Test
 	public void タグ値のリストのタグ全てに紐付いている複数の値を取得する() throws Exception {
 		Map<?, ?> result = this.okuyamaClient.getMultiTagValues(this.testTags[2], true);
 		assertEquals(result.size(), 25);
+		ArrayList<String> keys = new ArrayList<String>();
 		for (Object key : result.keySet()) {
+			keys.add((String) key);
 			assertEquals(result.get(key), this.answerValueList.get(key));
 		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, this.testTags[2],
+													keys.toArray(new String[keys.size()]), true));
 	}
 
 	@Test
 	public void タグ値のリストのタグのどれかに紐付いている複数の値を取得する() throws Exception {
 		Map<?, ?> result = this.okuyamaClient.getMultiTagValues(this.testTags[4], false);
 		assertEquals(result.size(), 100);
+		ArrayList<String> keys = new ArrayList<String>();
 		for (Object key : result.keySet()) {
+			keys.add((String) key);
 			assertEquals(result.get(key), this.answerValueList.get(key));
 		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, this.testTags[4],
+													keys.toArray(new String[keys.size()]), false));
 	}
 
 	@Test
@@ -121,9 +139,7 @@ public class MultiGetTagMethodSimpleTest {
 		String[] tags = this.testTags[0];
 		String[] result = this.okuyamaClient.getMultiTagKeys(tags);
 		assertEquals(result.length, 75);
-		for (String key : result) {
-			assertTrue(MethodTestHelper.checkTagAnd(this.keyTags, key, tags));
-		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, this.testTags[0], result, true));
 	}
 	@Test
 	public void タグ値のリストのタグ全てに紐付いている指定したタグ以外のタグを持つものを含む複数のキーを取得する()
@@ -131,9 +147,7 @@ public class MultiGetTagMethodSimpleTest {
 		String[] tags = this.testTags[1];
 		String[] result = this.okuyamaClient.getMultiTagKeys(tags);
 		assertEquals(result.length, 50);
-		for (String key : result) {
-			assertTrue(MethodTestHelper.checkTagAnd(this.keyTags, key, tags));
-		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, this.testTags[1], result, true));
 	}
 
 	@Test
@@ -141,9 +155,7 @@ public class MultiGetTagMethodSimpleTest {
 		String[] tags = this.testTags[2];
 		String[] result = this.okuyamaClient.getMultiTagKeys(tags);
 		assertEquals(result.length, 25);
-		for (String key : result) {
-			assertTrue(MethodTestHelper.checkTagAnd(this.keyTags, key, tags));
-		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, this.testTags[2], result, true));
 	}
 
 	@Test
@@ -151,8 +163,58 @@ public class MultiGetTagMethodSimpleTest {
 		String[] tags = this.testTags[4];
 		String[] result = this.okuyamaClient.getMultiTagKeys(tags, false);
 		assertEquals(result.length, 100);
-		for (String key : result) {
-			assertTrue(MethodTestHelper.checkTagOr(this.keyTags, key, tags));
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, this.testTags[4], result, false));
+	}
+
+	@Test
+	public void OkuyamaResultSetでタグ1つに紐付いている複数のキーを取得する() throws Exception {
+		String[] tags = this.testTags[0];
+		OkuyamaResultSet resultSet = this.okuyamaClient.getMultiTagKeysResult(tags);
+		ArrayList<String> keys = new ArrayList<String>();
+		while (resultSet.next()) {
+			String key = (String) resultSet.getKey();
+			keys.add(key);
+			assertEquals(resultSet.getValue(), this.answerValueList.get(key));
 		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, tags, keys.toArray(new String[keys.size()]), true));
+	}
+	@Test
+	public void OkuyamaResultSetでタグ値のリストのタグ全てに紐付いている指定したタグ以外のタグを持つものを含む複数のキーを取得する()
+																									throws Exception {
+		String[] tags = this.testTags[1];
+		OkuyamaResultSet resultSet = this.okuyamaClient.getMultiTagKeysResult(tags, true);
+		ArrayList<String> keys = new ArrayList<String>();
+		while (resultSet.next()) {
+			String key = (String) resultSet.getKey();
+			keys.add(key);
+			assertEquals(resultSet.getValue(), this.answerValueList.get(key));
+		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, tags, keys.toArray(new String[keys.size()]), true));
+	}
+
+	@Test
+	public void OkuyamaResultSetでタグ値のリストのタグ全てに紐付いている複数のキーを取得する() throws Exception {
+		String[] tags = this.testTags[2];
+		OkuyamaResultSet resultSet = this.okuyamaClient.getMultiTagKeysResult(tags, true);
+		ArrayList<String> keys = new ArrayList<String>();
+		while (resultSet.next()) {
+			String key = (String) resultSet.getKey();
+			keys.add(key);
+			assertEquals(resultSet.getValue(), this.answerValueList.get(key));
+		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, tags, keys.toArray(new String[keys.size()]), true));
+	}
+
+	@Test
+	public void OkuyamaResultSetでタグ値のリストのタグのどれかに紐付いている複数のキーを取得する() throws Exception {
+		String[] tags = this.testTags[4];
+		OkuyamaResultSet resultSet = this.okuyamaClient.getMultiTagKeysResult(tags, false);
+		ArrayList<String> keys = new ArrayList<String>();
+		while (resultSet.next()) {
+			String key = (String) resultSet.getKey();
+			keys.add(key);
+			assertEquals(resultSet.getValue(), this.answerValueList.get(key));
+		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, tags, keys.toArray(new String[keys.size()]), false));
 	}
 }

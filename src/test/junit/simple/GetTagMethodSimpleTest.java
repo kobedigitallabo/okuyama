@@ -2,11 +2,13 @@ package test.junit.simple;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
+import okuyama.imdst.client.OkuyamaResultSet;
 
 import org.junit.After;
 import org.junit.Before;
@@ -34,6 +36,8 @@ public class GetTagMethodSimpleTest {
 
 	private Map<String, String[]> keyTags = new HashMap<String, String[]>();
 
+	private Map<String, String> keyValue = new HashMap<String, String>();
+
 	private String[] testTags = new String[2];
 
 	@Before
@@ -48,21 +52,29 @@ public class GetTagMethodSimpleTest {
 
 		String key = GetTagMethodSimpleTest.helper.createTestDataKey(false, 0);
 		String[] tags = new String[]{this.testTags[0]};
-		this.okuyamaClient.setValue(key, tags, GetTagMethodSimpleTest.helper.createTestDataValue(false, 0));
+		String value = GetTagMethodSimpleTest.helper.createTestDataValue(false, 0);
+		this.okuyamaClient.setValue(key, tags, value);
 		this.keyTags.put(key, tags);
+		this.keyValue.put(key, value);
 
 		key = GetTagMethodSimpleTest.helper.createTestDataKey(false, 1);
 		tags = new String[]{this.testTags[1]};
-		this.okuyamaClient.setValue(key, tags, GetTagMethodSimpleTest.helper.createTestDataValue(false, 1));
+		value = GetTagMethodSimpleTest.helper.createTestDataValue(false, 1);
+		this.okuyamaClient.setValue(key, tags, value);
 		this.keyTags.put(key, tags);
+		this.keyValue.put(key, value);
 
 		key = GetTagMethodSimpleTest.helper.createTestDataKey(false, 2);
-		this.okuyamaClient.setValue(key, tags, GetTagMethodSimpleTest.helper.createTestDataValue(false, 2));
+		value = GetTagMethodSimpleTest.helper.createTestDataValue(false, 2);
+		this.okuyamaClient.setValue(key, tags, value);
 		this.keyTags.put(key, tags);
+		this.keyValue.put(key, value);
 
 		key = GetTagMethodSimpleTest.helper.createTestDataKey(false, 3);
-		this.okuyamaClient.setValue(key, tags, GetTagMethodSimpleTest.helper.createTestDataValue(false, 2));
+		value = GetTagMethodSimpleTest.helper.createTestDataValue(false, 3);
+		this.okuyamaClient.setValue(key, tags, value);
 		this.keyTags.put(key, tags);
+		this.keyValue.put(key, value);
 
 		nothingTag = GetTagMethodSimpleTest.helper.createTestDataTag(2);
 	}
@@ -90,7 +102,7 @@ public class GetTagMethodSimpleTest {
 		Object[] result = this.okuyamaClient.getTagKeys(testTags[0]);
 		assertEquals(result[0], "true");
 		String[] keys = (String[]) result[1];
-		assertEquals(keys[0], GetTagMethodSimpleTest.helper.createTestDataKey(false, 0));
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, new String[]{this.testTags[0]}, keys, true));
 	}
 
 	@Test
@@ -98,9 +110,21 @@ public class GetTagMethodSimpleTest {
 		Object[] result = this.okuyamaClient.getTagKeys(testTags[1]);
 		assertEquals(result[0], "true");
 		String[] keys = (String[]) result[1];
-		for (String key : keys) {
-			assertTrue(MethodTestHelper.checkTagAnd(this.keyTags, key, new String[]{testTags[1]}));
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, new String[]{this.testTags[1]}, keys, true));
+	}
+
+	@Test
+	public void OkuyamaResultSetを使ってタグからデータを複数取得する() throws Exception {
+		OkuyamaResultSet resultSet = this.okuyamaClient.getTagKeysResult(this.testTags[1]);
+		assertNotNull(resultSet);
+		ArrayList<String> keys = new ArrayList<String>();
+		while (resultSet.next()) {
+			String key = (String) resultSet.getKey();
+			keys.add(key);
+			assertEquals(resultSet.getValue(), this.keyValue.get(key));
 		}
+		assertTrue(MethodTestHelper.checkTagResult(this.keyTags, new String[]{this.testTags[1]},
+														keys.toArray(new String[keys.size()]), true));
 	}
 
 	@Test
@@ -108,6 +132,8 @@ public class GetTagMethodSimpleTest {
 		Object[] result = this.okuyamaClient.getTagKeys(nothingTag);
 		assertEquals(result[0], "false");
 	}
+
+
 
 	@Test
 	public void サーバとのセッションが無い状態でgetすることで例外を発生させる() throws Exception {
