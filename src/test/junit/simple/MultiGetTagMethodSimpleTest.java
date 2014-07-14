@@ -169,7 +169,7 @@ public class MultiGetTagMethodSimpleTest {
 	@Test
 	public void OkuyamaResultSetでタグ1つに紐付いている複数のキーを取得する() throws Exception {
 		String[] tags = this.testTags[0];
-		OkuyamaResultSet resultSet = this.okuyamaClient.getMultiTagKeysResult(tags);
+		OkuyamaResultSet resultSet = this.okuyamaClient.getTagKeysResult(tags[0]);
 		ArrayList<String> keys = new ArrayList<String>();
 		while (resultSet.next()) {
 			String key = (String) resultSet.getKey();
