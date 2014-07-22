@@ -13,7 +13,8 @@ import org.junit.runners.Suite.SuiteClasses;
 				GetTagMethodSimpleTest.class,
 				RemoveTagMethodSimpleTest.class,
 				MultiGetTagMethodSimpleTest.class,
-				SetExpireTest.class})
+				SetExpireTest.class,
+				IncrAndDecrMethodSimpleTest.class})
 public class AllMethodsSimpleTest {
 
 }

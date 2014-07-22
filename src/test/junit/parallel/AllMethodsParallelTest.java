@@ -11,7 +11,8 @@ import org.junit.runners.Suite.SuiteClasses;
 				SetTagMethodParallelTest.class,
 				GetTagMethodParallelTest.class,
 				RemoveTagMethodParallelTest.class,
-				SeparateMethodsParallelTest.class})
+				SeparateMethodsParallelTest.class,
+				IncrAndDecrMethodParallelTest.class})
 public class AllMethodsParallelTest {
 
 }
