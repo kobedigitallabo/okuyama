@@ -26,6 +26,10 @@ public class IncrAndDecrMethodParallelTest {
 		IncrAndDecrMethodParallelTest.helper.init();
 		IncrAndDecrMethodParallelTest.helper.initTestData();
 	}
+	
+	public static void tearDownAfterClass() throws Exception {
+		IncrAndDecrMethodParallelTest.helper.deleteAllData();
+	}
 
 	@Before
 	public void setUp() throws Exception {

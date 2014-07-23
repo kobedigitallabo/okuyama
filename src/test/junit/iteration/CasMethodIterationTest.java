@@ -2,7 +2,6 @@ package test.junit.iteration;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,12 +31,7 @@ public class CasMethodIterationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		for (int i = 0;i < 5000;i++) {
-			try {
-				this.okuyamaClient.removeValue(CasMethodIterationTest.helper.createTestDataKey(false, i));
-			} catch (OkuyamaClientException e) {
-			}
-		}
+		CasMethodIterationTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 	

@@ -33,13 +33,7 @@ public class SetTagMethodParallelTest {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		OkuyamaClient client = SetTagMethodParallelTest.helper.getConnectedOkuyamaClient();
-		for (int i = 0;i < 50;i++) {
-			String key = SetTagMethodParallelTest.helper.createTestDataKey(false, i);
-			client.removeTagFromKey(key, SetTagMethodParallelTest.helper.createTestDataTag(i));
-			client.removeValue(key);
-		}
-		client.close();
+		SetTagMethodParallelTest.helper.deleteAllData();
 	}
 
 	@After

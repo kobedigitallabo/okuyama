@@ -40,19 +40,7 @@ public class SetTagMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
-		try {
-			this.okuyamaClient.getOkuyamaVersion();
-		} catch (OkuyamaClientException e) {
-			this.okuyamaClient = SetTagMethodSimpleTest.helper.getConnectedOkuyamaClient();
-		}
-		try {
-			String key = SetTagMethodSimpleTest.helper.createTestDataKey(false);
-			String tag = SetTagMethodSimpleTest.helper.createTestDataTag();
-			this.okuyamaClient.removeTagFromKey(key, tag);
-			this.okuyamaClient.removeTagFromKey(key, tag + "日本語");
-			this.okuyamaClient.removeValue(key);
-		} catch (OkuyamaClientException e) {
-		}
+		SetTagMethodSimpleTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

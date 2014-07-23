@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 import okuyama.imdst.client.OkuyamaResultSet;
 
 import org.junit.After;
@@ -67,17 +66,7 @@ public class MultiGetTagMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
-		for (int i = 0;i < 100;i++) {
-			String key = MultiGetTagMethodSimpleTest.helper.createTestDataKey(false, i);
-			String[] tags = this.testTags[i % 4];
-			try {
-				for (int j = 0;j < tags.length;j++) {
-					this.okuyamaClient.removeTagFromKey(key, tags[j]);
-				}
-				this.okuyamaClient.removeValue(key);
-			} catch (OkuyamaClientException e) {
-			}
-		}
+		MultiGetTagMethodSimpleTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

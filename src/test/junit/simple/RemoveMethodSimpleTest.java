@@ -45,16 +45,7 @@ public class RemoveMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
-		try {
-			this.okuyamaClient.getOkuyamaVersion();
-		} catch (OkuyamaClientException e) {
-			this.okuyamaClient = RemoveMethodSimpleTest.helper.getConnectedOkuyamaClient();
-		}
-		try {
-			this.okuyamaClient.removeValue(RemoveMethodSimpleTest.helper.createTestDataKey(false));
-			this.okuyamaClient.removeValue(RemoveMethodSimpleTest.helper.createTestDataKey(false) + "日本語");
-		} catch (OkuyamaClientException e) {
-		}
+		RemoveMethodSimpleTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

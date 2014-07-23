@@ -2,7 +2,6 @@ package test.junit.iteration.huge;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -38,14 +37,7 @@ public class GetMethodIterationHugeTest {
 
 	@After
 	public void tearDown() throws Exception {
-		for (int i = 0;i < 500;i++) {
-			try {
-				String key = GetMethodIterationHugeTest.helper.createTestDataKey(true, i);
-				this.okuyamaClient.removeValue(key);
-				this.okuyamaClient.removeValue(key + "_Object");
-			} catch (OkuyamaClientException e) {
-			}
-		}
+		GetMethodIterationHugeTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

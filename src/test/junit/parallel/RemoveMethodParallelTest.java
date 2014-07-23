@@ -40,14 +40,7 @@ public class RemoveMethodParallelTest {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		OkuyamaClient client = RemoveMethodParallelTest.helper.getConnectedOkuyamaClient();
-		for (int i = 0;i < 50;i++) {
-			try {
-				client.removeValue(RemoveMethodParallelTest.helper.createTestDataKey(false, i));
-			} catch (OkuyamaClientException e) {
-			}
-		}
-		client.close();
+		RemoveMethodParallelTest.helper.deleteAllData();
 	}
 
 	@Before

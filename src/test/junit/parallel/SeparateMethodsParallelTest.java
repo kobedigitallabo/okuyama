@@ -5,6 +5,7 @@ import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -24,6 +25,11 @@ public class SeparateMethodsParallelTest {
 	public static void setUpBeforeClass() throws Exception {
 		SeparateMethodsParallelTest.helper.init();
 		SeparateMethodsParallelTest.helper.initTestData();
+	}
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		SeparateMethodsParallelTest.helper.deleteAllData();
 	}
 
 	@Before

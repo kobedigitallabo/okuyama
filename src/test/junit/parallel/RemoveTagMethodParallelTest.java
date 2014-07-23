@@ -41,16 +41,7 @@ public class RemoveTagMethodParallelTest {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		OkuyamaClient client = RemoveTagMethodParallelTest.helper.getConnectedOkuyamaClient();
-		for (int i = 0;i < 50;i++) {
-			try {
-				String key = RemoveTagMethodParallelTest.helper.createTestDataKey(false, i);
-				client.removeTagFromKey(key, RemoveTagMethodParallelTest.helper.createTestDataTag(i));
-				client.removeValue(key);
-			} catch (OkuyamaClientException e) {
-			}
-		}
-		client.close();
+		RemoveTagMethodParallelTest.helper.deleteAllData();
 	}
 
 	@Before

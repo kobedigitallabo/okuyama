@@ -2,7 +2,6 @@ package test.junit.simple;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -43,12 +42,7 @@ public class SetExpireTest {
 
 	@After
 	public void tearDown() throws Exception {
-		// テストデータを破棄
-		try {
-			this.okuyamaClient.removeValue(this.testDataKey);
-		} catch (OkuyamaClientException e) {
-		}
-
+		SetExpireTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

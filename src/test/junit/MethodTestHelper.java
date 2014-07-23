@@ -13,6 +13,7 @@ import java.util.Random;
 
 import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
+import okuyama.imdst.client.UtilClient;
 
 /**
  * MethodTest用Helperクラス。
@@ -168,6 +169,13 @@ public class MethodTestHelper {
 	public String createTestDataValue(boolean isBigData, int index) {
 		index += this.start;
 		return this.createTestDataValue(isBigData) + "_" + index;
+	}
+	
+	/**
+	 * データを全て削除する。
+	 */
+	public void deleteAllData() {
+		UtilClient.truncateData("127.0.0.1", 8888, "all");
 	}
 
 

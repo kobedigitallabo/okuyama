@@ -5,12 +5,9 @@ import static org.junit.Assert.*;
 import java.util.Map;
 
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -35,14 +32,6 @@ public class MultiGetMethodHugeTest {
 
 	private String[] testDataValue;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		MultiGetMethodHugeTest.helper.init();
@@ -65,13 +54,7 @@ public class MultiGetMethodHugeTest {
 
 	@After
 	public void tearDown() throws Exception {
-		// テストデータを破棄
-		try {
-			this.okuyamaClient.removeValue(this.testDataKey[0]);
-			this.okuyamaClient.removeValue(this.testDataKey[1]);
-			this.okuyamaClient.removeValue(this.testDataKey[2]);
-		} catch (OkuyamaClientException e) {
-		}
+		MultiGetMethodHugeTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

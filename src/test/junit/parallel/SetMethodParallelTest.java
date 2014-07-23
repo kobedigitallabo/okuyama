@@ -2,7 +2,6 @@ package test.junit.parallel;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -33,14 +32,7 @@ public class SetMethodParallelTest {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		OkuyamaClient client = SetMethodParallelTest.helper.getConnectedOkuyamaClient();
-		for (int i = 0;i < 50;i++) {
-			try {
-				client.removeValue(SetMethodParallelTest.helper.createTestDataKey(false, i));
-			} catch (OkuyamaClientException e) {
-			}
-		}
-		client.close();
+		SetMethodParallelTest.helper.deleteAllData();
 	}
 
 	@After

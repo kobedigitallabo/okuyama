@@ -81,19 +81,7 @@ public class GetTagMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
-		try {
-			this.okuyamaClient.getOkuyamaVersion();
-		} catch (OkuyamaClientException e) {
-			this.okuyamaClient = GetTagMethodSimpleTest.helper.getConnectedOkuyamaClient();
-		}
-		for (String key : this.keyTags.keySet()) {
-			try {
-				this.okuyamaClient.removeValue(key);
-				String[] tags = this.keyTags.get(key);
-				this.okuyamaClient.removeTagFromKey(key, tags[0]);
-			} catch (OkuyamaClientException e) {
-			}
-		}
+		GetTagMethodSimpleTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

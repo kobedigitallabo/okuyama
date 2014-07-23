@@ -2,7 +2,6 @@ package test.junit.iteration;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -31,14 +30,7 @@ public class SetTagMethodIterationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		try {
-			for (int i = 0;i < 5000;i++) {
-				String key = SetTagMethodIterationTest.helper.createTestDataKey(false, i);
-				this.okuyamaClient.removeTagFromKey(key, SetTagMethodIterationTest.helper.createTestDataTag(i));
-				this.okuyamaClient.removeValue(key);
-			}
-		} catch (OkuyamaClientException e) {
-		}
+		SetTagMethodIterationTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

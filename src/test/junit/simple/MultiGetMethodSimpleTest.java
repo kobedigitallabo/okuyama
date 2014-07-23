@@ -51,18 +51,7 @@ public class MultiGetMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
-		try {
-			this.okuyamaClient.getOkuyamaVersion();
-		} catch (OkuyamaClientException e) {
-			this.okuyamaClient = MultiGetMethodSimpleTest.helper.getConnectedOkuyamaClient();
-		}
-		// テストデータを破棄
-		try {
-			this.okuyamaClient.removeValue(this.testDataKey[0]);
-			this.okuyamaClient.removeValue(this.testDataKey[1]);
-			this.okuyamaClient.removeValue(this.testDataKey[2]);
-		} catch (OkuyamaClientException e) {
-		}
+		MultiGetMethodSimpleTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

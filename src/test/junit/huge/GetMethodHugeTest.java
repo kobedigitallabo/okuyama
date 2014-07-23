@@ -2,7 +2,6 @@ package test.junit.huge;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -40,12 +39,7 @@ public class GetMethodHugeTest {
 
 	@After
 	public void tearDown() throws Exception {
-		// テストデータを破棄
-		try {
-			this.okuyamaClient.removeValue(this.testDataKey);
-			this.okuyamaClient.removeValue(this.testDataKey + "_Object");
-		} catch (OkuyamaClientException e) {
-		}
+		GetMethodHugeTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

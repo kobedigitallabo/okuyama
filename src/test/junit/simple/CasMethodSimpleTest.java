@@ -2,7 +2,6 @@ package test.junit.simple;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -44,16 +43,7 @@ public class CasMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
-		try {
-			this.okuyamaClient.getOkuyamaVersion();
-		} catch (OkuyamaClientException e) {
-			this.okuyamaClient = CasMethodSimpleTest.helper.getConnectedOkuyamaClient();
-		}
-		// テストデータを破棄
-		try {
-			this.okuyamaClient.removeValue(this.testDataKey);
-		} catch (OkuyamaClientException e) {
-		}
+		CasMethodSimpleTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 	

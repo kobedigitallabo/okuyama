@@ -2,7 +2,6 @@ package test.junit.simple;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -47,14 +46,7 @@ public class IncrAndDecrMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
-		// テストデータを破棄
-		try {
-			this.okuyamaClient.removeValue(this.testDataKey);
-			this.okuyamaClient.removeValue(this.testDataKey + "_0未満");
-			this.okuyamaClient.removeValue(this.testDataKey + "_Object");
-			this.okuyamaClient.removeValue(this.testDataKey + "_Nothing");
-		} catch (OkuyamaClientException e) {
-		}
+		IncrAndDecrMethodSimpleTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

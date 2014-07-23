@@ -39,12 +39,7 @@ public class SetMethodSimpleTest {
 
 	@After
 	public void tearDown() throws Exception {
-		try {
-			String key = SetMethodSimpleTest.helper.createTestDataKey(false);
-			this.okuyamaClient.removeValue(key);
-			this.okuyamaClient.removeValue(key + "日本語");
-		} catch (OkuyamaClientException e) {
-		}
+		SetMethodSimpleTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 

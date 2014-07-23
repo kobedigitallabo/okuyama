@@ -2,7 +2,6 @@ package test.junit.iteration;
 
 import static org.junit.Assert.*;
 import okuyama.imdst.client.OkuyamaClient;
-import okuyama.imdst.client.OkuyamaClientException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,15 +31,7 @@ public class RemoveTagMethodIterationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		for (int i = 0;i < 5000;i++) {
-			try {
-				String testDataKey = RemoveTagMethodIterationTest.helper.createTestDataKey(false, i);
-				String testDataTag = RemoveTagMethodIterationTest.helper.createTestDataTag(i);
-				this.okuyamaClient.removeTagFromKey(testDataKey, testDataTag);
-				this.okuyamaClient.removeValue(testDataKey);
-			} catch (OkuyamaClientException e) {
-			}
-		}
+		RemoveTagMethodIterationTest.helper.deleteAllData();
 		this.okuyamaClient.close();
 	}
 
