@@ -12,7 +12,9 @@ import org.junit.runners.Suite.SuiteClasses;
 				GetTagMethodIterationTest.class,
 				RemoveTagMethodIterationTest.class,
 				IncrAndDecrMethodIterationTest.class,
-				CasMethodIterationTest.class})
+				CasMethodIterationTest.class,
+				SetNewValueMethodIterationTest.class,
+				ScriptMethodIterationTest.class})
 public class AllMethodsIterationTest {
 
 }
