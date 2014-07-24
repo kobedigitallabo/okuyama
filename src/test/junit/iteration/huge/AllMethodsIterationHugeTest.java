@@ -6,7 +6,8 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({SetMethodIterationHugeTest.class,
-				GetMethodIterationHugeTest.class})
+				GetMethodIterationHugeTest.class,
+				SetNewValueMethodIterationHugeTest.class})
 public class AllMethodsIterationHugeTest {
 
 }

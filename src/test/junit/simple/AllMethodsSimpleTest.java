@@ -16,7 +16,8 @@ import org.junit.runners.Suite.SuiteClasses;
 				SetExpireTest.class,
 				IncrAndDecrMethodSimpleTest.class,
 				CasMethodSimpleTest.class,
-				SearchMethodSimpleTest.class})
+				SearchMethodSimpleTest.class,
+				SetNewValueMethodSimpleTest.class})
 public class AllMethodsSimpleTest {
 
 }
