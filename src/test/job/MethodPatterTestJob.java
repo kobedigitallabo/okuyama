@@ -78,60 +78,60 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                     System.out.println("Test Count =[" + t + "]");
                     for (int i = 1; i < execMethods.length; i++) {
 
-                        if (execMethods[i].equals("set")) 
+                        if (execMethods[i].equals("set"))
                             retMap.put("set", execSet(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("get")) 
+                        if (execMethods[i].equals("get"))
                             retMap.put("get", execGet(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("settag")) 
+                        if (execMethods[i].equals("settag"))
                             retMap.put("settag", execTagSet(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("gettag")) 
+                        if (execMethods[i].equals("gettag"))
                             retMap.put("gettag", execTagGet(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("remove")) 
+                        if (execMethods[i].equals("remove"))
                             retMap.put("remove", execRemove(okuyamaClient, start, 500));
 
-                        if (execMethods[i].equals("script")) 
+                        if (execMethods[i].equals("script"))
                             retMap.put("script", execScript(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("add")) 
+                        if (execMethods[i].equals("add"))
                             retMap.put("add", execAdd(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("gets-cas")) 
+                        if (execMethods[i].equals("gets-cas"))
                             retMap.put("cas", execGetsCas(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("incr")) 
+                        if (execMethods[i].equals("incr"))
                             retMap.put("incr", execIncr(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("decr")) 
+                        if (execMethods[i].equals("decr"))
                             retMap.put("decr", execDecr(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("tagremove")) 
+                        if (execMethods[i].equals("tagremove"))
                             retMap.put("tagremove", execTagRemove(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("index")) 
+                        if (execMethods[i].equals("index"))
                             retMap.put("createindex", execIndex(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("setexpireandget")) 
+                        if (execMethods[i].equals("setexpireandget"))
                             retMap.put("setexpireandget", execSetExpireAndGet(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("getmultitagvalues")) 
+                        if (execMethods[i].equals("getmultitagvalues"))
                             retMap.put("getmultitagvalues", execGetMultiTagValues(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("objectsetget")) 
+                        if (execMethods[i].equals("objectsetget"))
                             retMap.put("objectsetget", execObjectSetGet(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("getmultitagkeys")) 
+                        if (execMethods[i].equals("getmultitagkeys"))
                             retMap.put("getmultitagkeys", execGetMultiTagKeys(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("gettagkeysresult")) 
+                        if (execMethods[i].equals("gettagkeysresult"))
                             retMap.put("gettagkeysresult", execGetTagKeysResult(okuyamaClient, start, count));
 
-                        if (execMethods[i].equals("getmultitagkeysresult")) 
+                        if (execMethods[i].equals("getmultitagkeysresult"))
                             retMap.put("getmultitagkeysresult", execMultiGetTagKeysResult(okuyamaClient, start, count));
-                            
+
                         if (execMethods[i].equals("list"))
                             retMap.put("list", execList(okuyamaClient, start, listNamePrefix));
 
@@ -800,7 +800,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             if (ret[0].equals("true")) {
                 System.out.println("execIncr - error - 1");
                 errorFlg = true;
-            } 
+            }
             ret = okuyamaClient.incrValue("calcKeyIncr_" + this.nowCount, 20, true);
             if (ret[0].equals("false")) {
                 System.out.println("execIncr - error - 2");
@@ -856,7 +856,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             if (ret[0].equals("true")) {
                 System.out.println("execDecr - error - 1");
                 errorFlg = true;
-            } 
+            }
             ret = okuyamaClient.decrValue("calcKeyDecr_" + this.nowCount, 20, true);
             if (ret[0].equals("false")) {
                 System.out.println("execDecr - error - 2");
@@ -1098,9 +1098,9 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             if(!((String)dByteRet[0]).equals("false"))  {
                 System.out.println("Double Byte Search Teßst 5 - Error");
                 errorFlg = true;
-            }            
+            }
 
-            
+
             int normalSetCount = 0;
             for (int i = start; i < count; i++) {
                 // データ登録
@@ -1229,7 +1229,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 if (!okuyamaClient.removeSearchIndex(this.nowCount + "createindexKey_" + new Integer(i).toString())) {
                     System.out.println("removeValue- 3-1 - Error=[" + this.nowCount + "createindexKey_" + new Integer(i).toString() + "]");
                     errorFlg = true;
-                } 
+                }
                 if ((i - start) > 100) break;
             }
 
@@ -1249,7 +1249,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 if (!okuyamaClient.removeSearchIndex(this.nowCount + "createindexPrefixKey_" + new Integer(i).toString(), prefix)) {
                     System.out.println("removeValue(Prefix)- 3-1 - Error=[" + this.nowCount + "createindexPrefixKey_" + new Integer(i).toString() + "]");
                     errorFlg = true;
-                } 
+                }
                 if ((i - start) > 100) break;
             }
 
@@ -1313,7 +1313,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             }
 
             Thread.sleep(5000);
-            
+
             String[] ret = okuyamaClient.getValue(this.nowCount + "expiredatasavekey_" + new Integer(start).toString());
 
             if (ret[0].equals("true")) {
@@ -1626,13 +1626,13 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             }
 
             Thread.sleep(5000);
-            
+
             Object[] ret = okuyamaClient.getObjectValue(this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString());
 
             if (ret[0].equals("true")) {
                 if(!((String)ret[1]).equals(this.nowCount + "setexpiretestdata123456789_" + new Integer(start).toString())) {
                     logger.error("データ間違い - 1 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString() + "]");
-                    errorFlg = true;                    
+                    errorFlg = true;
                 }
             } else if (ret[0].equals("false")) {
                 logger.error("データなし - 1 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start).toString() + "]");
@@ -1661,7 +1661,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             if (ret[0].equals("true")) {
                 if(!((String)ret[1]).equals(this.nowCount + "setexpiretestdata123456789_" + new Integer(start+2).toString())) {
                     logger.error("データ間違い - 3 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString() + "]");
-                    errorFlg = true;                    
+                    errorFlg = true;
                 }
             } else if (ret[0].equals("false")) {
                 logger.error("データなし - 3 Key=[" + this.nowCount + "expireobjectdatasavekey_" + new Integer(start+2).toString() + "]");
@@ -2131,7 +2131,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 String[] retTmp = okuyamaClient.listLPush(listName, "Llistdata."+idx);
 
                 if (!retTmp[0].equals("true")) {
-                
+
                     System.out.println("List create error3 =" + listName);
                     System.out.println(retTmp[1]);
                     errorFlg = true;
@@ -2160,7 +2160,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 String[] retTmp = okuyamaClient.listRPush(listName, "Rlistdata."+idx);
 
                 if (!retTmp[0].equals("true")) {
-                
+
                     System.out.println("List create error5 =" + listName);
                     System.out.println(retTmp[1]);
                     errorFlg = true;
@@ -2186,7 +2186,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             // Indexテスト
             int idxTest2 = 0;
             for (long idx = 5000L; idx < 10000L; idx++) {
-                
+
                 String[] retTmp = okuyamaClient.listIndex(listName, idx);
                 if (!retTmp[0].equals("true")) {
                     System.out.println("List create error7 =" + listName);
@@ -2221,7 +2221,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             // LPOPテスト
             idxTest2 = 0;
             for (long idx = 5000L; idx < 10000L; idx++) {
-                
+
                 String[] retTmp = okuyamaClient.listLPop(listName);
                 if (!retTmp[0].equals("true")) {
                     System.out.println("List create error9 =" + listName);
@@ -2250,7 +2250,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 String[] retTmp = okuyamaClient.listLPush(listName, "Llistdata."+idx);
 
                 if (!retTmp[0].equals("true")) {
-                
+
                     System.out.println("List create error3 =" + listName);
                     System.out.println(retTmp[1]);
                     errorFlg = true;
@@ -2262,7 +2262,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
                 String[] retTmp = okuyamaClient.listRPush(listName, "Rlistdata."+idx);
 
                 if (!retTmp[0].equals("true")) {
-                
+
                     System.out.println("List create error5 =" + listName);
                     System.out.println(retTmp[1]);
                     errorFlg = true;
@@ -2272,7 +2272,7 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             // RPOPテスト
             idxTest2 = 9999;
             for (long idx = 5000L; idx < 10000L; idx++) {
-                
+
                 String[] retTmp = okuyamaClient.listRPop(listName);
                 if (!retTmp[0].equals("true")) {
                     System.out.println("List create error11 =" + listName);
