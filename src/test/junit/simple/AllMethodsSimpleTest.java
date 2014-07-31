@@ -18,7 +18,13 @@ import org.junit.runners.Suite.SuiteClasses;
 				CasMethodSimpleTest.class,
 				SearchMethodSimpleTest.class,
 				SetNewValueMethodSimpleTest.class,
-				ScriptMethodSimpleTest.class})
+				ScriptMethodSimpleTest.class,
+				ListCreateMethodSimpleTest.class,
+				LPushMethodSimpleTest.class,
+				RPushMethodSimpleTest.class,
+				IndexMethodSimpleTest.class,
+				LPopMethodSimpleTest.class,
+				RPopMethodSimpleTest.class})
 public class AllMethodsSimpleTest {
 
 }

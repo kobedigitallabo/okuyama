@@ -14,7 +14,12 @@ import org.junit.runners.Suite.SuiteClasses;
 				SeparateMethodsParallelTest.class,
 				IncrAndDecrMethodParallelTest.class,
 				SetNewValueMethodParallelTest.class,
-				ScriptMethodParallelTest.class})
+				ScriptMethodParallelTest.class,
+				ListCreateMethodParallelTest.class,
+				LPushMethodParallelTest.class,
+				RPushMethodParallelTest.class,
+				LPopMethodParallelTest.class,
+				RPopMethodParallelTest.class})
 public class AllMethodsParallelTest {
 
 }

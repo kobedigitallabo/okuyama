@@ -14,7 +14,11 @@ import org.junit.runners.Suite.SuiteClasses;
 				IncrAndDecrMethodIterationTest.class,
 				CasMethodIterationTest.class,
 				SetNewValueMethodIterationTest.class,
-				ScriptMethodIterationTest.class})
+				ScriptMethodIterationTest.class,
+				LPushMethodIterationTest.class,
+				RPushMethodIterationTest.class,
+				LPopMethodIterationTest.class,
+				RPopMethodIterationTest.class})
 public class AllMethodsIterationTest {
 
 }

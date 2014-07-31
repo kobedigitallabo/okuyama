@@ -7,7 +7,12 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({SetMethodHugeTest.class,
 				GetMethodHugeTest.class,
-				MultiGetMethodHugeTest.class})
+				MultiGetMethodHugeTest.class,
+				SetNewValueMethodHugeTest.class,
+				LPushMethodHugeTest.class,
+				RPushMethodHugeTest.class,
+				LPopMethodHugeTest.class,
+				RPopMethodHugeTest.class})
 public class AllMethodsHugeTest {
 
 }

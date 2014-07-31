@@ -14,7 +14,7 @@ import org.junit.runners.model.Statement;
  *
  */
 public class MultiThreadRule implements MethodRule {
-
+	
 	/**
 	 * 起動するスレッドの数。
 	 */
@@ -42,7 +42,7 @@ public class MultiThreadRule implements MethodRule {
 		return new Statement() {
 			@Override
 			public void evaluate() throws Throwable {
-				ExecutorService es = Executors.newCachedThreadPool();
+				ExecutorService es = Executors.newFixedThreadPool(threadNum);
 				Future<?>[] fa = new Future<?>[threadNum];
 				// 別スレッドでテストを実行する
 				for (int i = 0;i < threadNum;i++) {
@@ -52,6 +52,7 @@ public class MultiThreadRule implements MethodRule {
 				for (Future<?> f : fa) {
 					f.get();
 				}
+				es.shutdown();
 			}
 		};
 	}
