@@ -22,7 +22,7 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
 ・改修履歴
 ========================================================================================================
 [New - 新機能追加、不具合対応]
-[[リリース Ver 0.9.6 - (2014/XX/XX)]]
+[[リリース Ver 0.9.6 - (2014/08/22)]]
 
 ■OkuyamaClientにメソッドを追加
  (1).setValueVersionCheckメソッドに有効期限を引数として指定可能なパターンを追加
@@ -41,6 +41,57 @@ Javaで実装された、永続化型分散Key-Valueストア「okuyama」を
  MasterNodeを複数指定しOkuyamaClientを利用している場合接続中のMasterNodeに障害が発生した場合
  自動的に再接続が行われ処理が続行されるが、この再接続処理の高速化を実施。
  内部処理の変更のため利用方法に変更はない
+
+■build.xmlを修正
+　(1) タスク「testrun」を作成
+　　　testrunはokuyamaのテストを行うためのタスク。
+　　　execTest.batまたはexecTest.shで実行していたテストを行う。
+　　　標準出力と標準エラー出力の内容は全てtest_result.txtに保存される。
+　(2) タスク「fulltestrun」を作成
+　　　fulltestrunはfullserverrunを実行後、testrunを実行する。
+　　　fullserverrunの標準出力・標準エラー出力の情報はserverrun_result.txtに保存される。
+　(3) タスク「datanode」「slavedatanode」「thirddatanode」を以下のように修正
+　　　javaタスクのmaxmemory属性を"1280m"に変更
+　　　GCのチューニングのため以下の要素を追加
+　　　　<jvmarg value="-XX:+UseConcMarkSweepGC" />
+　　　　<jvmarg value="-XX:+CMSParallelRemarkEnabled" />
+　　　　<jvmarg value="-XX:+UseParNewGC" />
+　　　　<jvmarg value="-XX:CMSInitiatingOccupancyFraction=70" />
+　　　<arg value="/Main.properties"/>をそれぞれ以下のように変更
+　　　　target「datanode」     ：<arg value="/Main.maindatanode.properties"/>
+　　　　target「slavedatanode」：<arg value="/Main.slavedatanode.properties"/>
+　　　　target「thirddatanode」：<arg value="/Main.thirddatanode.properties"/>
+　(4) タスク「masternode」を以下のように変更。
+　　　　<arg value="/Main.properties"/>を<arg value="/Main.mainmasternode.properties"/>に変更
+　　　　javaタスクのmaxmemory属性を"512m"に変更。
+　(5) タスク「compile」のjavacタスクに「fork="true"」を追加。 
+
+■testディレクトリ配下のスクリプトを変更
+　　以下のスクリプトをantと同じようにDataNodeが起動するように変更。
+　　　execTestDataNode.bat
+　　　execTestDataNode.sh
+　　　execTestSlaveDataNode.bat
+　　　execTestSlaveDataNode.sh
+　　　execTestThirdDataNode.bat
+　　　execTestThirdDataNode.sh
+
+■srcディレクトリ配下に以下のpropertiesファイルを追加
+　　Main.maindatanode.properties
+　　Main.slavedatanode.properties
+　　Main.thirddatanode.properties
+　　Main.mainmasternode.properties
+　　lo4j.maindatanode.properties
+　　lo4j.slavedatanode.properties
+　　lo4j.thirddatanode.properties
+　　lo4j.mainmasternode.properties
+
+■ant fulltestrunを実行するときの注意
+　(1) classes内のMain.～.propertiesファイルのloggerproperties=を対応するlog4j.～.propertiesの絶対パスにする。
+　(2) build.xmlのタスク「datanode」「slavedatanode」「thirddatanode」のmaxmemory属性の値を使用するマシンに合わせて調節する。
+　(3) テストの終了確認は以下のようにする。
+　　　　1.「jps -m」コマンドを実行する。
+　　　　2. 引数に/Test.propertiesが指定されているJavaMainが無ければテスト終了。
+ 
 ========================================================================================================
 [New - 新機能追加、不具合対応]
 [[リリース Ver 0.9.5 - (2013/09/20)]]

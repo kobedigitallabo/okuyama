@@ -43,7 +43,7 @@
 
 	<!-- compile task  -->
 	<target name="compile" depends="clean, setup">
-		<javac debug="yes" srcdir="${src.dir}" destdir="${build.dir}" encoding="UTF-8" deprecation="true">
+		<javac fork="true" debug="yes" srcdir="${src.dir}" destdir="${build.dir}" encoding="UTF-8" deprecation="true">
 			<classpath refid="project.class.path"/>
 		</javac>
 		<copy todir="${build.dir}">
@@ -80,11 +80,15 @@
 
 	<!-- DataNodeServer Execute task -->
 	<target name="datanode">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
-			<arg value="/Main.properties"/>
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="1280m">
+			<arg value="/Main.maindatanode.properties"/>
 			<arg value="/DataNode.properties"/>
 			<arg value="-lsdn true"/>
 			<arg value="-lsdnsdc 400"/>
+			<jvmarg value="-XX:+UseConcMarkSweepGC" />
+			<jvmarg value="-XX:+CMSParallelRemarkEnabled" />
+			<jvmarg value="-XX:+UseParNewGC" />
+			<jvmarg value="-XX:CMSInitiatingOccupancyFraction=70" />
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>
@@ -101,11 +105,15 @@
 
 	<!-- SlaveDataNodeServer Execute task -->
 	<target name="slavedatanode">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
-			<arg value="/Main.properties"/>
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="1280m">
+			<arg value="/Main.slavedatanode.properties"/>
 			<arg value="/SlaveDataNode.properties"/>
 			<arg value="-lsdn true"/>
 			<arg value="-lsdnsdc 400"/>
+			<jvmarg value="-XX:+UseConcMarkSweepGC" />
+			<jvmarg value="-XX:+CMSParallelRemarkEnabled" />
+			<jvmarg value="-XX:+UseParNewGC" />
+			<jvmarg value="-XX:CMSInitiatingOccupancyFraction=70" />
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>
@@ -113,11 +121,15 @@
 
 	<!-- ThirdDataNodeServer Execute task -->
 	<target name="thirddatanode">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
-			<arg value="/Main.properties"/>
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="1280m">
+			<arg value="/Main.thirddatanode.properties"/>
 			<arg value="/ThirdDataNode.properties"/>
 			<arg value="-lsdn true"/>
 			<arg value="-lsdnsdc 400"/>
+			<jvmarg value="-XX:+UseConcMarkSweepGC" />
+			<jvmarg value="-XX:+CMSParallelRemarkEnabled" />
+			<jvmarg value="-XX:+UseParNewGC" />
+			<jvmarg value="-XX:CMSInitiatingOccupancyFraction=70" />
 			<classpath refid="project.class.path"/>
 		</java>
 	</target>
@@ -125,8 +137,8 @@
 
 	<!-- MasterNodeServer Execute task -->
 	<target name="masternode">
-		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="368m">
-			<arg value="/Main.properties"/>
+		<java classname="okuyama.base.JavaMain" fork="true" maxmemory="512m">
+			<arg value="/Main.mainmasternode.properties"/>
 			<arg value="/MasterNode.properties"/>
 			<classpath refid="project.class.path"/>
 		</java>
@@ -367,6 +379,25 @@
 		</parallel>
 	</target>
 
+	<!-- Test Run -->
+	<target name="testrun">
+		<java classname="okuyama.base.JavaMain" fork="true">
+			<arg value="/Main.properties"/>
+			<arg value="/Test.properties"/>
+			<classpath refid="project.class.path"/>
+		</java>
+	</target>
+
+	<!-- Full Test -->
+	<target name="fulltestrun">
+		<parallel>
+			<ant target="fullserverrun" output="serverrun_result.txt"/>
+			<sequential>
+				<sleep seconds="30" />
+				<ant target='testrun' output="test_result.txt "/>
+			</sequential>
+		</parallel>
+	</target>
 
 	<!-- DataNode,SlaveDataNode,ThirdDataNode Execute task -->
 	<target name="datanodesrun" depends="compile">
