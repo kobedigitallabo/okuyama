@@ -4,6 +4,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+/**
+ * 全メソッドの単純なテストを行うためのクラス。
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ *
+ */
 @RunWith(Suite.class)
 @SuiteClasses({SetMethodSimpleTest.class,
 				GetMethodSimpleTest.class,

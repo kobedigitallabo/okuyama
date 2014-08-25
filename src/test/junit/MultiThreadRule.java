@@ -10,7 +10,9 @@ import org.junit.runners.model.Statement;
 
 /**
  * テストをマルチスレッドで行うためのクラス。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class MultiThreadRule implements MethodRule {

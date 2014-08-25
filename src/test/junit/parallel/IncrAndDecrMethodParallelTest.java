@@ -13,6 +13,13 @@ import org.junit.Test;
 import test.junit.MethodTestHelper;
 import test.junit.MultiThreadRule;
 
+/**
+ * IncrメソッドとDecrメソッドの並列処理テスト。
+ *
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ *
+ */
 public class IncrAndDecrMethodParallelTest {
 
 

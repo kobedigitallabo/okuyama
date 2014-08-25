@@ -13,8 +13,10 @@ import test.junit.MethodTestHelper;
 
 
 /**
- * 巨大データに
- * @author s-ito
+ * 巨大データに対するlistRPopメソッドの簡単なテスト。
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class RPopMethodHugeTest {

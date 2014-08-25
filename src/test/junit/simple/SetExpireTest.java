@@ -13,7 +13,9 @@ import test.junit.MethodTestHelper;
 
 /**
  * 有効期限付きデータの操作テスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class SetExpireTest {

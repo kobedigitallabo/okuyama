@@ -16,7 +16,9 @@ import test.junit.MultiThreadRule;
 
 /**
  * 並列でのgetテスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class GetMethodParallelTest {

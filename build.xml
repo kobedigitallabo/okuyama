@@ -27,6 +27,8 @@
 		<pathelement path = "${custom.dir}/msgpack-0.6.7.jar"/>
 		<pathelement path = "${custom.dir}/msgpackserializer.jar"/>
 		<pathelement path = "${custom.dir}/slf4j-api-1.6.6.jar"/>
+		<pathelement path = "lib/hamcrest-core-1.3.jar" />
+		<pathelement path = "lib/junit-4.11.jar" />
 	</path>
 
 

@@ -13,7 +13,7 @@
 		<pathelement path = "classes"/>
 		<pathelement path = "lib/fuse-j-2.4/fuse-j.jar"/>
 		<pathelement path = "lib/fuse-j-2.4/lib/commons-logging-1.0.4.jar"/>
-		<pathelement path = "../okuyama-0.9.5.jar"/>
+		<pathelement path = "../okuyama-0.9.6.jar"/>
 	</path>
 
 	<!-- clean Task  -->

@@ -9,6 +9,13 @@ import org.junit.Test;
 
 import test.junit.MethodTestHelper;
 
+/**
+ * 巨大データに対するsetNewValueメソッドの簡単なテスト。
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ *
+ */
 public class SetNewValueMethodHugeTest {
 
 	private static MethodTestHelper helper = new MethodTestHelper();

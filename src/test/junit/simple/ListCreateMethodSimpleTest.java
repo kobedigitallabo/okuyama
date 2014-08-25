@@ -13,7 +13,9 @@ import test.junit.MethodTestHelper;
 
 /**
  * List構造作成テストです。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class ListCreateMethodSimpleTest {

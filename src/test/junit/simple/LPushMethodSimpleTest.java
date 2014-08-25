@@ -13,7 +13,9 @@ import test.junit.MethodTestHelper;
 
 /**
  * listLPushメソッドの簡単なテスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class LPushMethodSimpleTest {

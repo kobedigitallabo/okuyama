@@ -9,6 +9,13 @@ import org.junit.Test;
 
 import test.junit.MethodTestHelper;
 
+/**
+ * CAS操作の繰り返しテスト。
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ *
+ */
 public class CasMethodIterationTest {
 
 	private static MethodTestHelper helper = new MethodTestHelper();

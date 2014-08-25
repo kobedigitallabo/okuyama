@@ -17,7 +17,9 @@ import test.junit.MethodTestHelper;
 
 /**
  * setメソッドの簡単なテスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class SetMethodSimpleTest {

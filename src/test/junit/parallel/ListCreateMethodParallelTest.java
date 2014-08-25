@@ -13,7 +13,9 @@ import test.junit.MultiThreadRule;
 
 /**
  * List構造作成メソッドの並列処理テスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class ListCreateMethodParallelTest {

@@ -14,7 +14,9 @@ import test.junit.MultiThreadRule;
 
 /**
  * 並列でのsetテスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class SetMethodParallelTest {

@@ -14,6 +14,13 @@ import org.junit.Test;
 import test.junit.MethodTestHelper;
 import test.junit.MultiThreadRule;
 
+/**
+ * JavaScript実行の並列処理テスト。
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ *
+ */
 public class ScriptMethodParallelTest {
 
 	@Rule

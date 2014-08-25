@@ -16,7 +16,9 @@ import test.junit.MultiThreadRule;
 
 /**
  * removeメソッドの並列処理テスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class RemoveMethodParallelTest {

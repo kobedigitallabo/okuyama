@@ -15,7 +15,9 @@ import test.junit.MultiThreadRule;
 
 /**
  * 並列でのsetTagテスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class SetTagMethodParallelTest {

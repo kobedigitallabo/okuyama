@@ -17,7 +17,9 @@ import okuyama.imdst.client.UtilClient;
 
 /**
  * MethodTest用Helperクラス。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class MethodTestHelper {

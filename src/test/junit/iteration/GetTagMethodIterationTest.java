@@ -11,7 +11,9 @@ import test.junit.MethodTestHelper;
 
 /**
  * getTagの繰り返しテスト
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class GetTagMethodIterationTest {

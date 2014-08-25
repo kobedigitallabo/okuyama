@@ -16,7 +16,9 @@ import test.junit.MethodTestHelper;
 
 /**
  * 巨大データに対するgetメソッドによる複数同時取得の簡単なテスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class MultiGetMethodHugeTest {

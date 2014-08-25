@@ -11,7 +11,9 @@ import test.junit.MethodTestHelper;
 
 /**
  * 巨大データに対する新規登録の繰り返しテスト
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class SetNewValueMethodIterationHugeTest {

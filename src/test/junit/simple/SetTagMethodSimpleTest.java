@@ -18,7 +18,9 @@ import test.junit.MethodTestHelper;
 
 /**
  * setTagメソッドの簡単なテスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class SetTagMethodSimpleTest {

@@ -16,7 +16,9 @@ import test.junit.MultiThreadRule;
 
 /**
  * getTagメソッドの並列テスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class GetTagMethodParallelTest {

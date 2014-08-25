@@ -9,6 +9,13 @@ import org.junit.Test;
 
 import test.junit.MethodTestHelper;
 
+/**
+ * removeTagの繰り返しテスト。
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ *
+ */
 public class RemoveTagMethodIterationTest {
 
 	private static MethodTestHelper helper = new MethodTestHelper();

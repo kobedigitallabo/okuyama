@@ -13,7 +13,9 @@ import test.junit.MethodTestHelper;
 
 /**
  * 巨大データに対するlistLPopメソッドの繰り返しテスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class LPopMethodIterationHugeTest {

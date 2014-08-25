@@ -4,6 +4,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+/**
+ * メソッドの並列処理テストを全て行うためのクラス。
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ *
+ */
 @RunWith(Suite.class)
 @SuiteClasses({SetMethodParallelTest.class,
 				GetMethodParallelTest.class,

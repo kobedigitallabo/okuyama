@@ -14,6 +14,13 @@ import org.junit.Test;
 import test.junit.MethodTestHelper;
 import test.junit.MultiThreadRule;
 
+/**
+ * 別々のメソッド同時実行テスト。
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
+ *
+ */
 public class SeparateMethodsParallelTest {
 
 	@Rule

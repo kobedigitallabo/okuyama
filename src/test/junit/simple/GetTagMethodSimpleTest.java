@@ -20,7 +20,9 @@ import test.junit.MethodTestHelper;
 
 /**
  * getTagの簡単なテスト。
- * @author s-ito
+ * 
+ * @author T.Okuyama
+ * @license GPL(Lv3)
  *
  */
 public class GetTagMethodSimpleTest {
