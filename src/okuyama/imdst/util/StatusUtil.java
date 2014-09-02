@@ -1,14 +1,11 @@
 package okuyama.imdst.util;
 
-import java.util.*;
-import java.io.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import okuyama.base.util.ILogger;
-import okuyama.base.util.LoggerFactory;
-import okuyama.base.lang.BatchException;
 
 import com.sun.mail.util.BASE64EncoderStream;
 
@@ -363,10 +360,19 @@ public class StatusUtil {
     public static void setNodeDataSize(Integer nodeNo, String[] sizeList) {
         StatusUtil.nodeDataSizeDtMap.put(nodeNo, sizeList);
     }
-
+    
+    /**
+     * DataNodeの格納しているデータサイズを全て削除する
+     */
+    public static void clearNodeDataSize() {
+    	StatusUtil.nodeDataSizeDtMap.clear();
+    }
 
     /**
      * DataNodeの格納して格納しているデータサイズを返す
+     * 
+     * @return 全DataNodeが格納しているデータサイズを返す(冗長分は除く)。ただし、監視対象のDataNodeに1つでも起動引数に
+     *-csf false (保存データの合計サイズを計算しない)を指定していた場合all=-1を返す。
      */
     public static Map getNodeDataSize() {
         Map allDataMap = new HashMap();
@@ -376,6 +382,13 @@ public class StatusUtil {
                 for (int t = 0; t < sizeList.length; t++) {
 
                     String[] sizeDt = sizeList[t].split("=");
+                    
+                    if (sizeDt.length < 2) {
+                        allDataMap.clear();
+                        allDataMap.put("all", Long.valueOf(-1));
+                        return allDataMap;
+                    }
+                    
                     Long size = (Long)allDataMap.get(sizeDt[0]);
 
                     if(size == null) {
