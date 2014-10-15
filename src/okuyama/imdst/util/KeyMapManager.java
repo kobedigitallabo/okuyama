@@ -1,17 +1,34 @@
 package okuyama.imdst.util;
 
-import java.util.*;
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import okuyama.base.lang.BatchException;
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
-import okuyama.base.lang.BatchException;
-import okuyama.imdst.util.StatusUtil;
-import okuyama.imdst.util.io.*;
-import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.io.CustomBufferedWriter;
 
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
@@ -677,7 +694,7 @@ public class KeyMapManager extends Thread {
                             if (checkValueSplit.length > 1) {
 
                                 String[] metaColumns = checkValueSplit[1].split(ImdstDefine.valueMetaColumnSep);
-                                if (!SystemUtil.expireCheck(metaColumns[1], ImdstDefine.invalidDataDeleteTime)) {
+                                if (1 <metaColumns.length && !SystemUtil.expireCheck(metaColumns[1], ImdstDefine.invalidDataDeleteTime)) {
 
                                     // 無効データは削除
                                     this.removeKeyPair((String)key, "0");
