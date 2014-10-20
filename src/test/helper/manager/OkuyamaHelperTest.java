@@ -7,6 +7,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import test.helper.manager.DataNode.CompressionMode;
+import test.helper.manager.DataNode.StorageMode;
+
 /**
  * OkuyamaHelperのテスト。
  * @author s-ito
@@ -47,13 +50,42 @@ public class OkuyamaHelperTest {
 				assertEquals(dataNodes[i].getNodeHostName(), "127.0.0.1");
 				assertEquals(dataNodes[i].getManagementPort(), 15553);
 				assertTrue(dataNodes[i] instanceof DataNode);
+				DataNode node = (DataNode) dataNodes[i];
 				String jobName = dataNodes[i].getNodeJobName();
 				switch (jobName) {
 				case "KeyManagerJob1":
 					assertEquals(dataNodes[i].getNodePort(), 5553);
+					assertEquals(node.getAnticipatedSize(), 100000);
+					assertNull(node.getCache());
+					assertEquals(node.getCompresstionMode(), CompressionMode.LOW);
+					assertEquals(node.getJournalFile(), "./keymapfile/1.work.key");
+					assertNull(node.getKeyDirectory());
+					assertEquals(node.getMemoryLimit(), 80);
+					assertNull(node.getSerializeClassName());
+					assertEquals(node.getShareDataFileMaxDelayCount(), 0);
+					assertEquals(node.getSnapshotFile(), "./keymapfile/1.key.obj");
+					assertEquals(node.getStorageMode(), StorageMode.MEMORY);
+					assertEquals(node.getValueLimitSize(), -1);
+					assertArrayEquals(node.getVirtualMemory(), new String[]{"./keymapfile/virtualdata1/"});
+					assertFalse(node.isSerialize());
+					assertTrue(node.isDataSaveTransactionFileEveryCommit());
 					break;
 				case "KeyManagerJob2":
 					assertEquals(dataNodes[i].getNodePort(), 5554);
+					assertEquals(node.getAnticipatedSize(), 100000);
+					assertNull(node.getCache());
+					assertEquals(node.getCompresstionMode(), CompressionMode.LOW);
+					assertEquals(node.getJournalFile(), "./keymapfile/2.work.key");
+					assertNull(node.getKeyDirectory());
+					assertEquals(node.getMemoryLimit(), 80);
+					assertNull(node.getSerializeClassName());
+					assertEquals(node.getShareDataFileMaxDelayCount(), 0);
+					assertEquals(node.getSnapshotFile(), "./keymapfile/2.key.obj");
+					assertEquals(node.getStorageMode(), StorageMode.MEMORY);
+					assertEquals(node.getValueLimitSize(), -1);
+					assertArrayEquals(node.getVirtualMemory(), new String[]{"./keymapfile/virtualdata2/"});
+					assertFalse(node.isSerialize());
+					assertTrue(node.isDataSaveTransactionFileEveryCommit());
 					break;
 				default:
 					fail();

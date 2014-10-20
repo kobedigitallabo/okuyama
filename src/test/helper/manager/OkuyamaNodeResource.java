@@ -45,6 +45,14 @@ public class OkuyamaNodeResource {
 	}
 	
 	/**
+	 * 操作用端末を取得する。
+	 * @return リソース操作に使っている端末オブジェクト。
+	 */
+	public OkuyamaTerminal getTerminal() {
+		return this.terminal;
+	}
+	
+	/**
 	 * リソースを削除する。
 	 * @param path - 削除対象リソースのパス。
 	 * @return 成功すればtrueを返す。

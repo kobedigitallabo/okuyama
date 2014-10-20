@@ -60,7 +60,7 @@ public class OkuyamaHelper {
 				OkuyamaProcess process = machine.getNodeProcess(processName);
 				for (OkuyamaNode node : process.getNodes()) {
 					if (node instanceof DataNode) {
-						((DataNode)node).deleteKeymapfile(process.getOkuyamaNodeResource());
+						((DataNode)node).deleteKeymapfile();
 					}
 				}
 				OkuyamaLog log = process.getLog();

@@ -19,10 +19,14 @@ public class OkuyamaTerminalFactory {
 	public OkuyamaTerminal build(Properties info, String machineName) throws Exception {
 		String prefix = "OkuyamaMachine." + machineName + ".terminal";
 		String terminalName = info.getProperty(prefix + ".name");
+		String javaPath = null;
 		switch (terminalName) {
 		case "Windows":
-			String javaPath = info.getProperty(prefix + ".java");
+			 javaPath = info.getProperty(prefix + ".java");
 			return new WindowsTerminal(javaPath);
+		case "Linux":
+			 javaPath = info.getProperty(prefix + ".java");
+			return new LinuxTerminal(javaPath);
 		default:
 			throw new Exception("Not support terminal " + terminalName);
 		}

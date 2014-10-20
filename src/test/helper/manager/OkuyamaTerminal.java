@@ -71,5 +71,13 @@ public interface OkuyamaTerminal {
 	 * @return 実行プロセス。
 	 */
 	TerminalProcess executeNode(String currentDir, String[] classpath, String mainProperties,
-								String nodeProperties, String[] jvmOptionm, String[] okuyamaOption) throws IOException;
+								String nodeProperties, String[] jvmOption, String[] okuyamaOption) throws IOException;
+	/**
+	 * telnetでNodeに接続する。
+	 * @param host - 接続先ホスト。
+	 * @param port - 接続先ポート。
+	 * @param command - 実行コマンド。
+	 * @return コマンドの実行結果。
+	 */
+	String connectNodeByTelnet(String host, int port, String command) throws Exception;
 }

@@ -203,9 +203,9 @@ public class OkuyamaProcess {
 		for (String job : jobList) {
 			String jobClass = node.getProperty(job + ".JobClass");
 			if ("okuyama.imdst.job.KeyManagerJob".equals(jobClass)) {
-				nodes.add(new DataNode(job, this.nodeHostName, node, main, log));
+				nodes.add(new DataNode(job, this.nodeHostName, node, main, log, this.nodeResource));
 			} else if ("okuyama.imdst.job.MasterManagerJob".equals(jobClass)) {
-				nodes.add(new MasterNode(job, this.nodeHostName, node, main, log));
+				nodes.add(new MasterNode(job, this.nodeHostName, node, main, log, this.nodeResource));
 			}
 		}
 		return nodes.toArray(new OkuyamaNode[nodes.size()]);

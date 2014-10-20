@@ -32,6 +32,10 @@ public abstract class OkuyamaNode {
 	 * Nodeのホスト名。
 	 */
 	private String nodeHostName;
+	/**
+	 * リソース操作用オブジェクト。
+	 */
+	protected OkuyamaNodeResource resource;
 	
 	/**
 	 * コンストラクタ。
@@ -40,9 +44,10 @@ public abstract class OkuyamaNode {
 	 * @param nodeProperties - NodeのProperties。
 	 * @param mainProperties - Main.properties。
 	 * @param logProperties - log4j.properties。
+	 * @param resource - リソース操作用オブジェクト。
 	 */
-	public OkuyamaNode(String nodeJobName, String nodeHostName,
-						Properties nodeProperties, Properties mainProperties, Properties logProperties) {
+	public OkuyamaNode(String nodeJobName, String nodeHostName, Properties nodeProperties,
+						Properties mainProperties, Properties logProperties, OkuyamaNodeResource resource) {
 		this.logger.config("OkuyamaNode JobName  = " + nodeJobName);
 		this.logger.config("OkuyamaNode HostName = " + nodeHostName);
 		this.nodeJobName = nodeJobName;
@@ -50,6 +55,7 @@ public abstract class OkuyamaNode {
 		this.nodeProperties = nodeProperties;
 		this.mainProperties = mainProperties;
 		this.logProperties = logProperties;
+		this.resource = resource;
 	}
 	
 	/**

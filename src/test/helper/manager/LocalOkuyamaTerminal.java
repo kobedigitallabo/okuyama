@@ -60,5 +60,11 @@ public abstract class LocalOkuyamaTerminal implements OkuyamaTerminal {
 		this.logger.fine("write \"" + path + "\"");
 		return new FileOutputStream(path);
 	}
+	
+	
+	@Override
+	public String connectNodeByTelnet(String host, int port, String command) throws Exception {
+		return OkuyamaUtil.connectByTelnet(host, port, command);
+	}
 
 }
