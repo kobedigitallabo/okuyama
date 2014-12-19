@@ -138,6 +138,19 @@ public class OkuyamaUtil {
 	}
 	
 	/**
+	 * propertiesのカンマ区切りのリストを分解する。
+	 * @param value - propertiesのカンマ区切りのリストの値。
+	 * @return 分解後の配列。
+	 */
+	public static String[] splitList(String value) {
+		String[] result = value.split(",");
+		for (int i = 0;i < result.length;i++) {
+			result[i] = result[i].trim();
+		}
+		return result;
+	}
+	
+	/**
 	 * プロセスの出力監視用スレッドクラス。
 	 * @author s-ito
 	 *

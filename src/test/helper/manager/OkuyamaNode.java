@@ -79,6 +79,12 @@ public abstract class OkuyamaNode {
 	}
 	
 	/**
+	 * Nodeの設定情報を取得する。
+	 * @return Nodeの設定情報。
+	 */
+	public abstract NodeConfig getNodeConfig();
+	
+	/**
 	 * Nodeの管理ポート番号を取得する。
 	 * @return Nodeの管理ポート番号。
 	 */

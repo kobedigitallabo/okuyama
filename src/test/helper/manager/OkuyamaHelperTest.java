@@ -7,8 +7,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import test.helper.manager.DataNode.CompressionMode;
-import test.helper.manager.DataNode.StorageMode;
+import test.helper.manager.DataNodeConfig.CompressionMode;
+import test.helper.manager.DataNodeConfig.StorageMode;
 
 /**
  * OkuyamaHelperのテスト。
@@ -50,7 +50,8 @@ public class OkuyamaHelperTest {
 				assertEquals(dataNodes[i].getNodeHostName(), "127.0.0.1");
 				assertEquals(dataNodes[i].getManagementPort(), 15553);
 				assertTrue(dataNodes[i] instanceof DataNode);
-				DataNode node = (DataNode) dataNodes[i];
+				DataNode dataNode = (DataNode) dataNodes[i];
+				DataNodeConfig node = (DataNodeConfig) dataNode.getNodeConfig();
 				String jobName = dataNodes[i].getNodeJobName();
 				switch (jobName) {
 				case "KeyManagerJob1":
