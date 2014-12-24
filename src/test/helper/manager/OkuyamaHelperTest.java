@@ -16,9 +16,9 @@ import test.helper.manager.DataNodeConfig.StorageMode;
  *
  */
 public class OkuyamaHelperTest {
-	
+
 	private OkuyamaHelper helper = new OkuyamaHelper();
-	
+
 	@Before
 	public void setUp() throws Exception {
 	}
@@ -53,8 +53,7 @@ public class OkuyamaHelperTest {
 				DataNode dataNode = (DataNode) dataNodes[i];
 				DataNodeConfig node = (DataNodeConfig) dataNode.getNodeConfig();
 				String jobName = dataNodes[i].getNodeJobName();
-				switch (jobName) {
-				case "KeyManagerJob1":
+				if ("KeyManagerJob1".equals(jobName)) {
 					assertEquals(dataNodes[i].getNodePort(), 5553);
 					assertEquals(node.getAnticipatedSize(), 100000);
 					assertNull(node.getCache());
@@ -70,8 +69,7 @@ public class OkuyamaHelperTest {
 					assertArrayEquals(node.getVirtualMemory(), new String[]{"./keymapfile/virtualdata1/"});
 					assertFalse(node.isSerialize());
 					assertTrue(node.isDataSaveTransactionFileEveryCommit());
-					break;
-				case "KeyManagerJob2":
+				} else if ("KeyManagerJob2".equals(jobName)) {
 					assertEquals(dataNodes[i].getNodePort(), 5554);
 					assertEquals(node.getAnticipatedSize(), 100000);
 					assertNull(node.getCache());
@@ -87,8 +85,7 @@ public class OkuyamaHelperTest {
 					assertArrayEquals(node.getVirtualMemory(), new String[]{"./keymapfile/virtualdata2/"});
 					assertFalse(node.isSerialize());
 					assertTrue(node.isDataSaveTransactionFileEveryCommit());
-					break;
-				default:
+				}else {
 					fail();
 				}
 			}

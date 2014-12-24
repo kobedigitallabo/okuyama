@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.SocketException;
 import java.util.logging.Logger;
 
 /**
@@ -16,7 +17,7 @@ import java.util.logging.Logger;
 public abstract class LocalOkuyamaTerminal implements OkuyamaTerminal {
 
 	private Logger logger = Logger.getLogger(LocalOkuyamaTerminal.class.getName());
-	
+
 	@Override
 	public boolean mkdir(String path) {
 		this.logger.fine("mkdir \"" + path + "\"");
@@ -34,17 +35,17 @@ public abstract class LocalOkuyamaTerminal implements OkuyamaTerminal {
 		this.logger.fine("ls \"" + path + "\"");
 		return new File(path).list();
 	}
-	
+
 	@Override
 	public boolean exist(String path) {
 		return new File(path).exists();
 	}
-	
+
 	@Override
 	public String getParentPath(String path) {
 		return new File(path).getParent();
 	}
-	
+
 	public String concatPath(String parent, String child) {
 		return new File(parent, child).getPath();
 	}
@@ -60,10 +61,10 @@ public abstract class LocalOkuyamaTerminal implements OkuyamaTerminal {
 		this.logger.fine("write \"" + path + "\"");
 		return new FileOutputStream(path);
 	}
-	
-	
+
+
 	@Override
-	public String connectNodeByTelnet(String host, int port, String command) throws Exception {
+	public String connectNodeByTelnet(String host, int port, String command) throws SocketException, IOException {
 		return OkuyamaUtil.connectByTelnet(host, port, command);
 	}
 

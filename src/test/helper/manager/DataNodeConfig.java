@@ -39,7 +39,7 @@ public class DataNodeConfig extends NodeConfig {
 		 */
 		ERROR
 	}
-	
+
 	/**
 	 * 圧縮モード。
 	 * @author s-ito
@@ -59,7 +59,7 @@ public class DataNodeConfig extends NodeConfig {
 		 */
 		HIGHLY
 	}
-	
+
 	/**
 	 * コンストラクタ。
 	 * @param prop - Nodeのproperties本体。
@@ -68,7 +68,7 @@ public class DataNodeConfig extends NodeConfig {
 	public DataNodeConfig(Properties prop, String jobName) {
 		super(prop, jobName);
 	}
-	
+
 	@Override
 	public void validate() throws NodeConfigValidationException {
 		String key = null;
@@ -109,7 +109,7 @@ public class DataNodeConfig extends NodeConfig {
 			}
 		}
 	}
-	
+
 	/**
 	 * ジャーナルファイルを取得する。
 	 * @see <p>NodeのpropertiesファイルのNodeジョブ名.Option</p>
@@ -128,7 +128,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return option[1];
 	}
-	
+
 	/**
 	 * スナップショットファイルを取得する。
 	 * @see <p>NodeのpropertiesファイルのNodeジョブ名.Option</p>
@@ -143,7 +143,7 @@ public class DataNodeConfig extends NodeConfig {
 		String[] option = optionStr.split(",");
 		return option[0] + ".obj";
 	}
-	
+
 	/**
 	 * ストレージモードを取得する。
 	 * @see <p>NodeのpropertiesファイルのNodeジョブ名.memoryMode、Nodeジョブ名.dataMemory、Nodeジョブ名.keyMemory</p>
@@ -173,7 +173,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return StorageMode.ERROR;
 	}
-	
+
 	/**
 	 * DataNodeに保存される予想データサイズを取得する。
 	 * @see <p>NodeのpropertiesファイルのNodeジョブ名.keySize</p>
@@ -191,7 +191,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return 0;
 	}
-	
+
 	/**
 	 * 仮想メモリを利用するタイミングを取得する。
 	 * @see <p>NodeのpropertiesファイルのNodeジョブ名.memoryLimitSize</p>
@@ -216,7 +216,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * 仮想メモリとして使うディレクトリのパスを取得する。
 	 * @see <p>NodeのpropertiesファイルのNodeジョブ名.virtualStoreDirs</p>
@@ -232,7 +232,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return dirsStr.split(",");
 	}
-	
+
 	/**
 	 * 完全ファイルモード時にKeyが保存されるディレクトリのパスを取得する。
 	 * @see <p>NodeのpropertiesファイルのNodeジョブ名.keyStoreDirs</p>
@@ -248,7 +248,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return dirsStr.split(",");
 	}
-	
+
 	/**
 	 * Valueをファイルに保存する場合に使うキャッシュのパスを取得する。
 	 * @see <p>NodeのpropertiesファイルのNodeジョブ名.cacheFilePath</p>
@@ -265,7 +265,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return cacheStr.split(",");
 	}
-	
+
 	/**
 	 * データ保存時にシリアライズするか確認する。
 	 * @see <p>NodeのpropertiesファイルのDataSaveMapType</p>
@@ -278,7 +278,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * データの(デ)シリアライズに使用するクラスの名前を取得する。
 	 * @see <p>NodeのpropertiesファイルのSerializerClassName</p>
@@ -294,7 +294,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return str;
 	}
-	
+
 	/**
 	 * Value1つの制限サイズを取得する。
 	 * @see <p>NodeのpropertiesファイルのSaveDataMemoryStoreLimitSize</p>
@@ -314,7 +314,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * ログを毎回出力するか確認する。
 	 * @see <p>NodeのpropertiesファイルのDataSaveTransactionFileEveryCommit</p>
@@ -332,7 +332,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * 共有データファイルへの変更の最大書き込みプール数(データ数)を取得する。
 	 * @see <p>NodeのpropertiesファイルのShareDataFileWriteDelayFlg、ShareDataFileMaxDelayCount</p>
@@ -355,7 +355,7 @@ public class DataNodeConfig extends NodeConfig {
 		}
 		return 0;
 	}
-	
+
 	/**
 	 * 圧縮モードを取得する。
 	 * @see <p>NodeのpropertiesファイルのSaveDataCompress、SaveDataCompressType</p>

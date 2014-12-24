@@ -3,25 +3,46 @@ package test.helper.manager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Properties;
+import java.util.logging.LogManager;
 
 /**
  * テストでokuyamaを操作するためのクラス。
- * 
+ *
  * @author s-ito
  *
  */
 public class OkuyamaHelper {
 
+	static {
+		LogManager manager = LogManager.getLogManager();
+		InputStream stream = null;
+		try {
+			stream = OkuyamaHelper.class.getResourceAsStream("/test/test_logging.properties");
+			manager.reset();
+			manager.readConfiguration(stream);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (stream != null) {
+				try {
+					stream.close();
+				} catch (IOException e) {
+				}
+			}
+		}
+	}
+
 	/**
 	 * ant serverrunと同じ構成のOkuyamaManagerを取得する。
 	 * @return ant serverrunと同じ構成のOkuyamaManagerオブジェクト。
-	 * @throws IOException 
-	 * @throws URISyntaxException 
+	 * @throws IOException
+	 * @throws URISyntaxException
 	 */
 	public OkuyamaManager getServerrun() throws Exception {
 		Reader reader = null;
@@ -48,7 +69,7 @@ public class OkuyamaHelper {
 		new File("./keymapfile").mkdir();
 		return new OkuyamaManager(prop);
 	}
-	
+
 	/**
 	 * okuyamaのkeymapfileとlogsを掃除する。
 	 * @param okuyama - 掃除対象のokuyama。
@@ -68,12 +89,12 @@ public class OkuyamaHelper {
 			}
 		}
 	}
-	
+
 	/**
 	 * okuyama全体のpingを行う。
 	 * @param okuyama - チェック対象。
 	 * @return 1つでも停止したNodeがあればfalseを返す。
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public boolean pingOkuyama(OkuyamaManager okuyama) throws Exception {
 		for (String machineName : okuyama.getAllMachineName()) {

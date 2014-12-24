@@ -1,7 +1,6 @@
 package test.helper.manager;
 
 import java.util.Properties;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -12,7 +11,7 @@ import java.util.logging.Logger;
 public class MasterNode extends OkuyamaNode {
 
 	private Logger logger = Logger.getLogger(MasterNode.class.getName());
-	
+
 	/**
 	 * コンストラクタ。
 	 * @param nodeJobName - NodeのJob名。
@@ -30,19 +29,19 @@ public class MasterNode extends OkuyamaNode {
 
 	@Override
 	public boolean ping() {
+		String resultStr = null;
 		try {
-			String resultStr = this.resource.getTerminal().connectNodeByTelnet(this.getNodeHostName(), this.getNodePort(), "999");
-			if (resultStr == null) {
-				return false;
-			}
-			this.logger.info("Ping Result : " + resultStr);
-			return true;
+			resultStr = this.resource.getTerminal().connectNodeByTelnet(this.getNodeHostName(),
+																		this.getNodePort(), "999");
 		} catch (Exception e) {
-			this.logger.log(Level.WARNING, this.getNodeHostName() + ":" + this.getNodePort() +  "へのPing失敗", e);
+		}
+		if (resultStr == null) {
 			return false;
 		}
+		this.logger.info("Ping Result : " + resultStr);
+		return true;
 	}
-	
+
 	/**
 	 * MainMasterNodeであるか確認する。
 	 * @return MainMasterNodeであればtrueを返す。

@@ -1,6 +1,5 @@
 package test.helper.manager;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -48,7 +47,7 @@ public class OkuyamaProcess {
 	 * Nodeのリソース管理用クラス。
 	 */
 	private OkuyamaNodeResource nodeResource;
-	
+
 	/**
 	 * コンストラクタ。
 	 * @param processName - プロセス名。
@@ -76,7 +75,7 @@ public class OkuyamaProcess {
 		this.currentDir = currentDir;
 		this.nodeResource = new OkuyamaNodeResource(this.terminal, this.currentDir, this.classpath);
 	}
-	
+
 	/**
 	 * Nodeを起動する。<br>
 	 * このメソッドではNodeを別プロセスとして起動します。
@@ -93,7 +92,7 @@ public class OkuyamaProcess {
 		this.logger.info("boot \"" + this.processName + "\" process.");
 		return process;
 	}
-	
+
 	/**
 	 * Nodeを起動する。<br>
 	 * このメソッドではNodeを同じプロセスとして起動します。
@@ -102,7 +101,7 @@ public class OkuyamaProcess {
 		JavaMain.main(new String[]{this.mainProperties, this.nodeProperties});
 		this.logger.info("boot \"" + this.processName + "\" JavaMain class.");
 	}
-	
+
 	/**
 	 * Nodeのプロセスを停止させる。
 	 * @return 停止コマンドの発行に成功すればtrueを返す。
@@ -125,7 +124,7 @@ public class OkuyamaProcess {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * プロセス名を取得する。
 	 * @return プロセス名。
@@ -133,7 +132,7 @@ public class OkuyamaProcess {
 	public String getPorcessName() {
 		return this.processName;
 	}
-	
+
 	/**
 	 * このプロセスのNodeのリソース操作用オブジェクトを取得する。
 	 * @return このプロセスのNodeのリソース操作用オブジェクト。
@@ -141,13 +140,13 @@ public class OkuyamaProcess {
 	public OkuyamaNodeResource getOkuyamaNodeResource() {
 		return this.nodeResource;
 	}
-	
+
 	/**
 	 * このプロセスのログを取得する。
 	 * @return プロセスのログ。
-	 * @throws IOException 
+	 * @throws Exception
 	 */
-	public OkuyamaLog getLog() throws IOException {
+	public OkuyamaLog getLog() throws Exception {
 		// 使用するpropertiesを読み込む
 		Properties main = this.nodeResource.loadProperties(this.mainProperties);
 		// logのpropertiesを読み込む
@@ -163,7 +162,7 @@ public class OkuyamaProcess {
 		}
 		return new OkuyamaLog(log, this.nodeResource);
 	}
-	
+
 	/**
 	 * プロセス内のNodeを全て取得する。
 	 * @return プロセス内のNode。
@@ -186,7 +185,7 @@ public class OkuyamaProcess {
 		// OkuyamaNodeを作成する
 		return this.createOkuyamaNode(main, node, log);
 	}
-	
+
 	/**
 	 * OkuyamaNodeオブジェクトを作成する。
 	 * @param main - Main.properties。
@@ -199,7 +198,7 @@ public class OkuyamaProcess {
 		String jobListStr = node.getProperty("joblist");
 		String[] jobList = jobListStr.split(",");
 		// Jobの中からNodeのJobを取得する
-		ArrayList<OkuyamaNode> nodes = new ArrayList<>();
+		ArrayList<OkuyamaNode> nodes = new ArrayList<OkuyamaNode>();
 		for (String job : jobList) {
 			String jobClass = node.getProperty(job + ".JobClass");
 			if ("okuyama.imdst.job.KeyManagerJob".equals(jobClass)) {

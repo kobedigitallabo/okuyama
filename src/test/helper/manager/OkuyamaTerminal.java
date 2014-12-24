@@ -3,6 +3,7 @@ package test.helper.manager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.SocketException;
 
 /**
  * Okuyamaの操作を行うための端末インタフェース。
@@ -73,11 +74,13 @@ public interface OkuyamaTerminal {
 	TerminalProcess executeNode(String currentDir, String[] classpath, String mainProperties,
 								String nodeProperties, String[] jvmOption, String[] okuyamaOption) throws IOException;
 	/**
-	 * telnetでNodeに接続する。
-	 * @param host - 接続先ホスト。
+	 * telnetでNodeと通信する。
+	 * @param host - 接続先ホスト名。
 	 * @param port - 接続先ポート。
-	 * @param command - 実行コマンド。
-	 * @return コマンドの実行結果。
+	 * @param command - 入力コマンド。
+	 * @return コマンドの結果。
+	 * @throws SocketException - ソケットのタイムアウト。
+	 * @throws IOException - ソケットのopen失敗、またはコマンド入力、結果取得失敗。
 	 */
-	String connectNodeByTelnet(String host, int port, String command) throws Exception;
+	String connectNodeByTelnet(String host, int port, String command) throws SocketException, IOException;
 }

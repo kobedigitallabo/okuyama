@@ -21,7 +21,7 @@ public class LinuxTerminal extends LocalOkuyamaTerminal {
 	public LinuxTerminal(String javaPath) {
 		this.javaPath = javaPath;
 	}
-	
+
 	@Override
 	public TerminalProcess executeNode(String currentDir, String[] classpath, String mainProperties,
 								String nodeProperties, String[] jvmOption, String[] okuyamaOption) throws IOException {
@@ -32,7 +32,7 @@ public class LinuxTerminal extends LocalOkuyamaTerminal {
 			classpathBuilder = classpathBuilder.append(":");
 		}
 		// プロセス実行準備
-		ArrayList<String> command = new ArrayList<>();
+		ArrayList<String> command = new ArrayList<String>();
 		command.add(this.javaPath);
 		command.add("-cp");
 		command.add(classpathBuilder.toString());

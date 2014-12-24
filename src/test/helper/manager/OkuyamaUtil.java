@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,7 +22,7 @@ import org.apache.commons.net.telnet.TelnetClient;
 public class OkuyamaUtil {
 
 	private OkuyamaUtil() {}
-	
+
 	/**
 	 * Node名を比較する。
 	 * @param nodeName1 - 比較対象1。
@@ -56,15 +57,17 @@ public class OkuyamaUtil {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * telnetでNodeと通信する。
 	 * @param host - 接続先ホスト名。
 	 * @param port - 接続先ポート。
 	 * @param command - 入力コマンド。
-	 * @return コマンドの結果。接続に失敗した場合はnull。
+	 * @return コマンドの結果。
+	 * @throws SocketException - ソケットのタイムアウト。
+	 * @throws IOException - ソケットのopen失敗、またはコマンド入力、結果取得失敗。
 	 */
-	public static String connectByTelnet(String host, int port, String command) {
+	public static String connectByTelnet(String host, int port, String command) throws SocketException, IOException {
 		Logger logger = Logger.getLogger(OkuyamaUtil.class.getName());
 		TelnetClient client = null;
 		BufferedWriter output = null;
@@ -75,8 +78,7 @@ public class OkuyamaUtil {
 			client.connect(host, port);
 			// 接続できたか確認
 			if (!(client.isConnected())) {
-				logger.warning("telnet接続失敗");
-				return null;
+				throw new IOException("telnet接続失敗");
 			}
 			logger.fine("telnet接続完了");
 			// バージョン情報確認コマンドにて疎通確認
@@ -94,9 +96,10 @@ public class OkuyamaUtil {
 				}
 			}
 			return builder.toString();
-		} catch (Exception e) {
-			logger.log(Level.WARNING, host + ":" + port +  "へのコマンド実行失敗", e);
-			return null;
+		} catch (SocketException e) {
+			throw e;
+		} catch (IOException e) {
+			throw e;
 		} finally {
 			if (output != null) {
 				try {
@@ -122,7 +125,7 @@ public class OkuyamaUtil {
 			}
 		}
 	}
-	
+
 	/**
 	 * プロセスの出力をリダイレクトする。
 	 * @param process - リダイレクト対象のプロセス。
@@ -136,7 +139,7 @@ public class OkuyamaUtil {
 		Runnable run = new OkuyamaUtil.ObserverThread(dest, process, src);
 		new Thread(run, "ProcessRedirect").start();
 	}
-	
+
 	/**
 	 * propertiesのカンマ区切りのリストを分解する。
 	 * @param value - propertiesのカンマ区切りのリストの値。
@@ -149,20 +152,20 @@ public class OkuyamaUtil {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * プロセスの出力監視用スレッドクラス。
 	 * @author s-ito
 	 *
 	 */
 	private static class ObserverThread implements Runnable {
-		
+
 		private OutputStream stream;
-		
+
 		private TerminalProcess target;
-		
+
 		private InputStream input;
-		
+
 		public ObserverThread(OutputStream stream , TerminalProcess target, InputStream input) {
 			this.stream = stream;
 			this.target = target;

@@ -31,7 +31,7 @@ public class OkuyamaNodeResource {
 	 * Nodeのクラスパス。
 	 */
 	private String[] classpath;
-	
+
 	/**
 	 * コンストラクタ。
 	 * @param terminal - 操作用端末。
@@ -43,7 +43,7 @@ public class OkuyamaNodeResource {
 		this.current = current;
 		this.classpath = classpath;
 	}
-	
+
 	/**
 	 * 操作用端末を取得する。
 	 * @return リソース操作に使っている端末オブジェクト。
@@ -51,7 +51,7 @@ public class OkuyamaNodeResource {
 	public OkuyamaTerminal getTerminal() {
 		return this.terminal;
 	}
-	
+
 	/**
 	 * リソースを削除する。
 	 * @param path - 削除対象リソースのパス。
@@ -61,7 +61,7 @@ public class OkuyamaNodeResource {
 		path = this.resolvePath(path);
 		return this.terminal.delete(path);
 	}
-	
+
 	/**
 	 * ファイルを読み込む。
 	 * @param path - 読み込み対象のパス。
@@ -71,13 +71,14 @@ public class OkuyamaNodeResource {
 		path = this.resolvePath(path);
 		return this.terminal.load(path);
 	}
-	
+
 	/**
 	 * propertiesを読み込む。
 	 * @param path - 読み込み対象properties。
 	 * @return 読み込み結果。
+	 * @throws Exception
 	 */
-	public Properties loadProperties(String path) throws IOException {
+	public Properties loadProperties(String path) throws Exception {
 		path = this.resolvePath(path);
 		BufferedReader stream = null;
 		Properties prop = new Properties();
@@ -99,7 +100,7 @@ public class OkuyamaNodeResource {
 		}
 		return prop;
 	}
-	
+
 	/**
 	 * 指定ディレクトリ内の一覧を取得する。
 	 * @param path - 一覧取得対象ディレクトリのパス。
@@ -109,7 +110,7 @@ public class OkuyamaNodeResource {
 		path = this.resolvePath(path);
 		return this.terminal.ls(path);
 	}
-	
+
 	/**
 	 * ファイルの存在を確認する。
 	 * @param path - 確認対象のパス。
@@ -137,7 +138,7 @@ public class OkuyamaNodeResource {
 	public String concatPath(String parent, String child) {
 		return this.terminal.concatPath(parent, child);
 	}
-	
+
 	/**
 	 * パス解決。
 	 * @param path - 解決対象パス。

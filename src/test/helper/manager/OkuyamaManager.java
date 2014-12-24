@@ -22,7 +22,7 @@ public class OkuyamaManager {
 	 * 管理情報。
 	 */
 	private Properties managementInfo;
-	
+
 	/**
 	 * 管理情報を読み込む。
 	 * @param path - 管理情報のパス。
@@ -42,7 +42,7 @@ public class OkuyamaManager {
 			}
 		}
 	}
-	
+
 	/**
 	 * 管理情報を設定する。
 	 * @param info - 管理情報。
@@ -50,7 +50,7 @@ public class OkuyamaManager {
 	public OkuyamaManager(Properties info) {
 		this.managementInfo = info;
 	}
-	
+
 	/**
 	 * 管理情報を取得する。
 	 * @return 管理情報。
@@ -58,7 +58,7 @@ public class OkuyamaManager {
 	public Properties getManagementInfo() {
 		return this.managementInfo;
 	}
-	
+
 	/**
 	 * 全OkuyamaMachineの名前を取得する。
 	 * @return 全マシンの名前。
@@ -74,28 +74,28 @@ public class OkuyamaManager {
 		}
 		return machines;
 	}
-	
+
 	/**
 	 * okuyamaのマシン管理用オブジェクトを取得する。
 	 * @param name - 取得対象のマシン名。
 	 * @return okuyamaのマシン管理用オブジェクト。
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public OkuyamaMachine getOkuyamaMachine(String name) throws Exception {
 		OkuyamaTerminalFactory factory = new OkuyamaTerminalFactory();
 		return new OkuyamaMachine(factory.build(this.managementInfo, name), name, this.managementInfo);
 	}
-	
+
 	/**
 	 * okuyamaを停止させる。<br>
 	 * MasterNode、MainMasterNode、DataNodeの順で停止させます。
 	 * @return 全Nodeを停止できればtrueを返す。
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public boolean shutdownOkuyama() throws Exception {
 		// DataNode、MainMasterNode、MasterNodeに分ける
-		ArrayList<OkuyamaProcess> dataNodes = new ArrayList<>();
-		ArrayList<OkuyamaProcess> masterNodes = new ArrayList<>();
+		ArrayList<OkuyamaProcess> dataNodes = new ArrayList<OkuyamaProcess>();
+		ArrayList<OkuyamaProcess> masterNodes = new ArrayList<OkuyamaProcess>();
 		OkuyamaProcess mainMaster = this.coordinateNodes(masterNodes, dataNodes);
 		// MasterNodeを停止
 		boolean judge = true;
@@ -110,18 +110,18 @@ public class OkuyamaManager {
 		}
 		return judge;
 	}
-	
+
 	/**
 	 * okuyamaを起動する。<br>
 	 * 管理対象の全Nodeを別スレッドで起動します。
 	 * @param output - 起動プロセスの標準出力の接続先。
 	 * @param error - 起動プロセスの標準エラー出力の接続先。
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public void bootOkuyama(OutputStream output, OutputStream error) throws Exception {
 		// DataNode、MainMasterNode、MasterNodeに分ける
-		ArrayList<OkuyamaProcess> dataNodes = new ArrayList<>();
-		ArrayList<OkuyamaProcess> masterNodes = new ArrayList<>();
+		ArrayList<OkuyamaProcess> dataNodes = new ArrayList<OkuyamaProcess>();
+		ArrayList<OkuyamaProcess> masterNodes = new ArrayList<OkuyamaProcess>();
 		OkuyamaProcess mainMaster = this.coordinateNodes(masterNodes, dataNodes);
 		// DataNodeを起動
 		for (OkuyamaProcess process : dataNodes) {
@@ -134,20 +134,20 @@ public class OkuyamaManager {
 			this.bootOkuyamaProcess(process, output, error);
 		}
 	}
-	
+
 	/**
 	 * Nodeのプロセスを整理する。
 	 * @param masterNodes - MasterNodeのプロセスの保存先。
 	 * @param dataNodes - DataNodeのプロセスの保存先。
 	 * @return MainMasterNodeのプロセスを返す。
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	private OkuyamaProcess coordinateNodes(ArrayList<OkuyamaProcess> masterNodes,
 															ArrayList<OkuyamaProcess> dataNodes) throws Exception {
 		OkuyamaProcess mainMaster = null;
 		// 全プロセスを取得
 		String[] machineNames = this.getAllMachineName();
-		ArrayList<OkuyamaProcess> processList = new ArrayList<>();
+		ArrayList<OkuyamaProcess> processList = new ArrayList<OkuyamaProcess>();
 		for (String machineName : machineNames) {
 			OkuyamaMachine machine = this.getOkuyamaMachine(machineName);
 			String[] processNames = machine.getAllProcessName();
@@ -174,14 +174,14 @@ public class OkuyamaManager {
 		}
 		return mainMaster;
 	}
-	
+
 	/**
 	 * okuyamaのプロセスを起動する。
 	 * @param process - 起動対象プロセス。
 	 * @param output - 起動プロセスの標準出力の接続先。
 	 * @param error - 起動プロセスの標準エラー出力の接続先。
 	 * @return 起動プロセス。
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	private TerminalProcess bootOkuyamaProcess(OkuyamaProcess process, OutputStream output, OutputStream error) throws Exception {
 		String prefix = "OkuyamaProcess." + process.getPorcessName();
@@ -219,11 +219,11 @@ public class OkuyamaManager {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * okuyamaのプロセスを停止する。
 	 * @param process - 停止対象プロセス。
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	private boolean shutdownOkuyamaProcess(OkuyamaProcess process) throws Exception {
 		boolean judge = process.shutdown();
@@ -249,6 +249,6 @@ public class OkuyamaManager {
 		}
 		return judge;
 	}
-	
+
 
 }

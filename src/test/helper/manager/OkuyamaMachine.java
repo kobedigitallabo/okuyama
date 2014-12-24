@@ -12,7 +12,7 @@ import java.util.logging.Logger;
  *
  */
 public class OkuyamaMachine {
-	
+
 	private Logger logger = Logger.getLogger(OkuyamaMachine.class.getName());
 	/**
 	 * okuyama操作用端末。
@@ -26,23 +26,23 @@ public class OkuyamaMachine {
 	 * Nodeプロパティリスト。<br>
 	 * Key=プロセス名、Value=Nodeのpropertiesファイルのパス。
 	 */
-	private Map<String, String> nodeProperties = new HashMap<>();
+	private Map<String, String> nodeProperties = new HashMap<String, String>();
 	/**
 	 * Main.propertiesリスト。<br>
 	 * Key=プロセス名、Value=Main.propertiesファイルのパス。
 	 */
-	private Map<String, String> mainProperties = new HashMap<>();
+	private Map<String, String> mainProperties = new HashMap<String, String>();
 	/**
 	 * クラスパスリスト。<br>
 	 * Key=プロセス名、Value=クラスパス。
 	 */
-	private Map<String, String[]> classpaths = new HashMap<>();
+	private Map<String, String[]> classpaths = new HashMap<String, String[]>();
 	/**
 	 * カレントディレクトリリスト。
 	 * Key=プロセス名、Value=カレントディレクトリパス。
 	 */
-	private Map<String, String> currentDirs = new HashMap<>();
-	
+	private Map<String, String> currentDirs = new HashMap<String, String>();
+
 	/**
 	 * コンストラクタ。
 	 * @param terminal - okuyama操作用端末。
@@ -71,7 +71,7 @@ public class OkuyamaMachine {
 			this.currentDirs.put(processName, currentDir);
 		}
 	}
-	
+
 	/**
 	 * Nodeのプロパティを追加する。
 	 * @param name - プロセス名。
@@ -81,7 +81,7 @@ public class OkuyamaMachine {
 		this.nodeProperties.put(name, path);
 		this.logger.fine("Add \"" + path + "\" NodeProperties for \"" + name + "\".");
 	}
-	
+
 	/**
 	 * Nodeのプロパティを削除する。
 	 * @param name - 削除対象のプロセス名。
@@ -90,7 +90,7 @@ public class OkuyamaMachine {
 		String path = this.nodeProperties.remove(name);
 		this.logger.fine("Delete \"" + path + "\" NodeProperties for \"" + name + "\".");
 	}
-	
+
 	/**
 	 * Nodeのプロセスを取得する。
 	 * @param name - 取得対象のプロセス名。
@@ -106,7 +106,7 @@ public class OkuyamaMachine {
 		String currentDir = this.currentDirs.get(name);
 		return new OkuyamaProcess(name, currentDir, node, main, classpath, this.terminal, this.hostName);
 	}
-	
+
 	/**
 	 * 指定NodeのプロセスにMain.propertiesを設定する。
 	 * @param name - 設定対象のプロセス名。
@@ -116,7 +116,7 @@ public class OkuyamaMachine {
 		this.mainProperties.put(name, path);
 		this.logger.fine("Add \"" + path + "\" MainProperties for \"" + name + "\".");
 	}
-	
+
 	/**
 	 * マシン内の全NodeプロセスにMain.propertiesを設定する。
 	 * @param path - 設定するMain.propertiesのパス。
@@ -126,7 +126,7 @@ public class OkuyamaMachine {
 			this.setMainProperties(name, path);
 		}
 	}
-	
+
 	/**
 	 * 指定Nodeのプロセスにクラスパスを設定する。
 	 * @param name - 設定対象のプロセス名。
@@ -136,7 +136,7 @@ public class OkuyamaMachine {
 		this.classpaths.put(name, classpath);
 		this.logger.fine("Add \"" + classpath + "\" classpath for \"" + name + "\".");
 	}
-	
+
 	/**
 	 * マシン内の全NodeプロセスにMain.propertiesを設定する。
 	 * @param classpath - 設定するクラスパス。
@@ -146,7 +146,7 @@ public class OkuyamaMachine {
 			this.setClasspath(name, classpath);
 		}
 	}
-	
+
 	/**
 	 * 指定Nodeのプロセスにカレントディレクトリを設定する。
 	 * @param name - 設定対象のプロセス名。
@@ -156,7 +156,7 @@ public class OkuyamaMachine {
 		this.currentDirs.put(name, currentDir);
 		this.logger.fine("Add \"" + currentDir + "\" current directory for \"" + name + "\".");
 	}
-	
+
 	/**
 	 * マシン内の全NodeプロセスにMain.propertiesを設定する。
 	 * @param classpath - 設定するクラスパス。
@@ -166,7 +166,7 @@ public class OkuyamaMachine {
 			this.setCurrentDir(name, currentDir);
 		}
 	}
-	
+
 	/**
 	 * 全プロセスの名前を取得する。
 	 * @return マシン内の全プロセスの名前。
@@ -175,7 +175,7 @@ public class OkuyamaMachine {
 		Set<String> keys = this.nodeProperties.keySet();
 		return keys.toArray(new String[keys.size()]);
 	}
-	
+
 	/**
 	 * このマシンが使用するOkuyamaTerminalを取得する。
 	 * @return マシンが使用するOkuyamaTerminal。

@@ -19,7 +19,7 @@ public class OkuyamaLog {
 	 * Okuyamaリソース操作用。
 	 */
 	private OkuyamaNodeResource resource;
-	
+
 	/**
 	 * コンストラクタ。
 	 * @param log4j - ログの設定情報のパス。
@@ -29,14 +29,14 @@ public class OkuyamaLog {
 		this.log4j = log4j;
 		this.resource = resource;
 	}
-	
+
 	/**
 	 * ログを削除する。
 	 */
 	public void deleteLog() {
 		// log4j内のファイル関連設定を全て取得
 		Set<Object> keySet = this.log4j.keySet();
-		ArrayList<String> files = new ArrayList<>();
+		ArrayList<String> files = new ArrayList<String>();
 		for (Object key : keySet) {
 			files.add(this.log4j.getProperty((String) key));
 		}

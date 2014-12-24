@@ -14,20 +14,19 @@ public class OkuyamaTerminalFactory {
 	 * @param info - 作成情報。
 	 * @param machineName - マシン名。
 	 * @return 指定マシンで使うOkuyamaTerminal。
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public OkuyamaTerminal build(Properties info, String machineName) throws Exception {
 		String prefix = "OkuyamaMachine." + machineName + ".terminal";
 		String terminalName = info.getProperty(prefix + ".name");
 		String javaPath = null;
-		switch (terminalName) {
-		case "Windows":
+		if ("Windows".equals(terminalName)) {
 			 javaPath = info.getProperty(prefix + ".java");
 			return new WindowsTerminal(javaPath);
-		case "Linux":
+		} else if ("Linux".equals(terminalName)) {
 			 javaPath = info.getProperty(prefix + ".java");
 			return new LinuxTerminal(javaPath);
-		default:
+		} else {
 			throw new Exception("Not support terminal " + terminalName);
 		}
 	}

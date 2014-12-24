@@ -10,7 +10,7 @@ import java.util.logging.Logger;
  *
  */
 public abstract class OkuyamaNode {
-	
+
 	private Logger logger = Logger.getLogger(OkuyamaNode.class.getName());
 	/**
 	 * NodeのProperties。
@@ -36,7 +36,7 @@ public abstract class OkuyamaNode {
 	 * リソース操作用オブジェクト。
 	 */
 	protected OkuyamaNodeResource resource;
-	
+
 	/**
 	 * コンストラクタ。
 	 * @param nodeJobName - NodeのJob名。
@@ -57,13 +57,13 @@ public abstract class OkuyamaNode {
 		this.logProperties = logProperties;
 		this.resource = resource;
 	}
-	
+
 	/**
 	 * Nodeの疎通確認を行う。
 	 * @return Nodeに正常にアクセスできればtrueを返す。
 	 */
 	public abstract boolean ping();
-	
+
 	/**
 	 * Nodeのポート番号を取得する。
 	 * @return Nodeのポート番号。
@@ -77,13 +77,13 @@ public abstract class OkuyamaNode {
 			return -1;
 		}
 	}
-	
+
 	/**
 	 * Nodeの設定情報を取得する。
 	 * @return Nodeの設定情報。
 	 */
 	public abstract NodeConfig getNodeConfig();
-	
+
 	/**
 	 * Nodeの管理ポート番号を取得する。
 	 * @return Nodeの管理ポート番号。
@@ -108,7 +108,7 @@ public abstract class OkuyamaNode {
 			return -1;
 		}
 	}
-	
+
 	/**
 	 * Nodeのpropertiesを取得する。
 	 * @return Nodeのproperties。
@@ -116,7 +116,7 @@ public abstract class OkuyamaNode {
 	public Properties getNodeProperties() {
 		return this.nodeProperties;
 	}
-	
+
 	/**
 	 * Nodeが使用するMain.proeprtiesを取得する。
 	 * @return Nodeが使用するMain.properties。
@@ -124,7 +124,7 @@ public abstract class OkuyamaNode {
 	public Properties getMainProeprties() {
 		return this.mainProperties;
 	}
-	
+
 	/**
 	 * Nodeのホスト名を取得する。
 	 * @return Nodeのホスト名。
@@ -132,7 +132,7 @@ public abstract class OkuyamaNode {
 	public String getNodeHostName() {
 		return this.nodeHostName;
 	}
-	
+
 	/**
 	 * NodeのJob名を取得する。
 	 * @return NodeのJob名。
@@ -140,7 +140,7 @@ public abstract class OkuyamaNode {
 	public String getNodeJobName() {
 		return this.nodeJobName;
 	}
-	
+
 	/**
 	 * Nodeが使用するlog4j.propertiesを取得する。
 	 * @return Nodeが使用するlog4j.properties。
