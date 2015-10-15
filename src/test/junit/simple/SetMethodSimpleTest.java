@@ -6,6 +6,7 @@ import java.util.Random;
 
 import okuyama.imdst.client.OkuyamaClient;
 import okuyama.imdst.client.OkuyamaClientException;
+import okuyama.imdst.util.ImdstDefine;
 
 import org.junit.After;
 import org.junit.Before;
@@ -91,6 +92,41 @@ public class SetMethodSimpleTest {
 		thrown.expectMessage("No ServerConnect!!");
 		this.okuyamaClient.close();
 		this.okuyamaClient.setValue("foo", "bar");
+	}
+	
+	@Test
+	public void ObjectをValueとして保存するときにBase64エンコード後のサイズが最大サイズを越えて例外が発生する() throws Exception {
+		// BIGデータ作成
+		byte[] bigData = new byte[ImdstDefine.saveDataMaxSize - 100];
+		for (int i = 0;i < bigData.length;i++) {
+			bigData[i] = (byte) (i + 1);
+		}
+		try {
+			// BIGデータ保存
+			this.okuyamaClient.setObjectValue("test", bigData);
+			fail();
+		} catch (Exception e) {
+			assertTrue(0 <= e.getMessage().indexOf("Save Value(Base64 encoded) Max Size "));
+		}
+	}
+	
+	@Test
+	public void ObjectをValueとして保存するときにBase64エンコード後のサイズが最大サイズを超えないので保存できる() throws Exception {
+		// BIGデータ作成
+		byte[] bigData = new byte[(int) (ImdstDefine.saveDataMaxSize / 2)];
+		for (int i = 0;i < bigData.length;i++) {
+			bigData[i] = (byte) (i + 1);
+		}
+		try {
+			// BIGデータ保存
+			this.okuyamaClient.setObjectValue("test", bigData);
+			Object[] result = this.okuyamaClient.getObjectValue("test");
+			assertEquals(result[0], "true");
+			byte[] savedBigData = (byte[]) result[1];
+			assertArrayEquals(bigData, savedBigData);
+		} catch (Exception e) {
+			fail();
+		}
 	}
 
 }
