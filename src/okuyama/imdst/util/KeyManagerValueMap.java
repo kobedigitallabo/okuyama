@@ -1,21 +1,29 @@
 package okuyama.imdst.util;
 
 
-import java.util.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
-import okuyama.base.util.ILogger;
-import okuyama.base.util.LoggerFactory;
-import okuyama.base.lang.BatchException;
-import okuyama.imdst.util.StatusUtil;
-import okuyama.imdst.util.io.*;
-
-
-import org.apache.commons.codec.digest.DigestUtils;
+import okuyama.imdst.util.io.AbstractDataRandomAccess;
+import okuyama.imdst.util.io.CustomRandomAccess;
+import okuyama.imdst.util.io.HighSpeedDiskCacheRandomAccess;
 
 
 /**
@@ -847,7 +855,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                             if (workKey != null) {
 
                                 if (mapValueInSize) {
-                                    super.put(key, (String)vacuumWorkMap.get(workKey));
+                                    super.put(workKey, (String)vacuumWorkMap.get(workKey));
                                 } else {
                                     super.put(workKey, new Integer((String)vacuumWorkMap.get(workKey)));
                                 }
