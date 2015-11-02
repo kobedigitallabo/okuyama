@@ -11,7 +11,7 @@ import java.util.zip.Deflater;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.9.6.1";
+    public static final String okuyamaVersion = "VERSION okuyama-0.9.6.3";
 
     // -- MasterNodeをマルチクラスターのスレーブで起動する場合にtrueになる
     public volatile static boolean slaveClusterMasterNode = false;
