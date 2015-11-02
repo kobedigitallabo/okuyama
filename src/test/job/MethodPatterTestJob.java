@@ -1,19 +1,18 @@
 package test.job;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
-import okuyama.base.lang.BatchException;
 import okuyama.base.job.AbstractJob;
-import okuyama.base.job.AbstractHelper;
 import okuyama.base.job.IJob;
+import okuyama.base.lang.BatchException;
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
-import okuyama.imdst.util.KeyMapManager;
-import okuyama.imdst.util.StatusUtil;
-import okuyama.imdst.util.JavaSystemApi;
-import okuyama.imdst.client.*;
+import okuyama.imdst.client.OkuyamaClient;
+import okuyama.imdst.client.OkuyamaResultSet;
 
 /**
  * テストを実行.<be>
@@ -738,10 +737,12 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
 
             long startTime = new Date().getTime();
             int casCount = 0;
+            String[] keyList = new String[count - start];
+            Random rndKey = new Random(System.currentTimeMillis());
             for (int i = start; i < count; i++) {
                 // データ登録
-
-                if (!okuyamaClient.setValue(casCount + "_castest_datasavekey", "castest_testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + casCount + "_" + new Integer(i).toString())) {
+            	keyList[casCount] = casCount + "_castest_datasavekey_" + rndKey.nextInt(Integer.MAX_VALUE);
+                if (!okuyamaClient.setValue(keyList[casCount], "castest_testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + casCount + "_" + new Integer(i).toString())) {
                     System.out.println("Set - Error=[" + casCount + "_castest_datasavekey] Value[" + this.nowCount + "castest_testdata1234567891011121314151617181920212223242526272829_savedatavaluestr_" + casCount + "_" + new Integer(i).toString() + "]");
                     errorFlg = true;
                 }
@@ -753,10 +754,10 @@ public class MethodPatterTestJob extends AbstractJob implements IJob {
             int casErrorCount = 0;
             for (int casIdx = 0; casIdx < 6000; casIdx++) {
                 int rndSet = rndIdx.nextInt(casCount);
-                Object[] getsRet = okuyamaClient.getValueVersionCheck(rndSet + "_castest_datasavekey");
+                Object[] getsRet = okuyamaClient.getValueVersionCheck(keyList[rndSet]);
 
 
-                String[] retParam = okuyamaClient.setValueVersionCheck(rndSet + "_castest_datasavekey", "updated-" + rndSet, (String)getsRet[2]);
+                String[] retParam = okuyamaClient.setValueVersionCheck(keyList[rndSet], "updated-" + rndSet, (String)getsRet[2]);
                 if(retParam[0].equals("true")) {
                     casSuccessCount++;
                 } else {
