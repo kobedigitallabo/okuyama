@@ -508,6 +508,7 @@ public class ServerPreprocess implements IProcess {
                     if (startOptions[i].trim().equals("-vacsl")) {
                         if (startOptions.length > (i+1)) {
                             ImdstDefine.vacuumStartLimit = Integer.parseInt(startOptions[i+1]);
+                            settingStartParameterMap.put("-vacsl", startOptions[i+1].trim());
                         }
                     }
                     
@@ -515,6 +516,7 @@ public class ServerPreprocess implements IProcess {
                     if (startOptions[i].trim().equals("-vacscl")) {
                         if (startOptions.length > (i+1)) {
                             ImdstDefine.vacuumStartCompulsionLimit = Integer.parseInt(startOptions[i+1]);
+                            settingStartParameterMap.put("-vacscl", startOptions[i+1].trim());
                         }
                     }
                     
@@ -522,6 +524,7 @@ public class ServerPreprocess implements IProcess {
                     if (startOptions[i].trim().equals("-vacat")) {
                         if (startOptions.length > (i+1)) {
                             ImdstDefine.vacuumExecAfterAccessTime = Integer.parseInt(startOptions[i+1]);
+                            settingStartParameterMap.put("-vacat", startOptions[i+1].trim());
                         }
                     }
 
@@ -529,6 +532,7 @@ public class ServerPreprocess implements IProcess {
                     if (startOptions[i].trim().equals("-vac")) {
                         if (startOptions.length > (i+1)) {
                             ImdstDefine.vacuumExec = Boolean.parseBoolean(startOptions[i+1]);
+                            settingStartParameterMap.put("-vac", startOptions[i+1].trim());
                         }
                     }
                     
