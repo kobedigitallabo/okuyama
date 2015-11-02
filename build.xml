@@ -6,7 +6,7 @@
 	<property name="src.dir"		value="src" />
 	<property name="build.dir"		value="classes" />
 	<property name="install.dir"	value="install" />
-	<property name="version"		value="0.9.6.1" />
+	<property name="version"		value="0.9.6.3" />
 	<property name="javadoc.dir"	value="javadoc"/>
 	<property name="lib.dir"	    value="lib"/>
 	<property name="custom.dir"	    value="customserializer/release/MessagePackSerializer"/>

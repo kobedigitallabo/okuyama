@@ -1,20 +1,36 @@
 package okuyama.imdst.client;
 
-import java.util.*;
-import java.io.*;
-import java.net.*;
-import java.util.zip.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.Charset;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
+
+import okuyama.imdst.client.io.ClientCustomPrintWriter;
+import okuyama.imdst.client.result.OkuyamaMultiTagKeysResultSet;
+import okuyama.imdst.client.result.OkuyamaTagKeysResultSet;
+import okuyama.imdst.util.ImdstDefine;
+import okuyama.imdst.util.SystemUtil;
 
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
-
-import okuyama.imdst.util.ImdstDefine;
-import okuyama.imdst.util.SystemUtil;
-import okuyama.imdst.client.io.*;
-import okuyama.imdst.client.result.*;
 
 /**
  * MasterNodeと通信を行うクライアント<br>
@@ -3875,8 +3891,11 @@ public class OkuyamaClient {
             // valueに対するサイズ、無指定チェック(Valueはnullやブランクの場合は代行文字列に置き換える)
             if (objValue != null) {
                 valueBytes = SystemUtil.normalObjectSerialize(objValue);
-                if (valueBytes.length > maxValueSize) 
+                if (valueBytes.length > maxValueSize) {
                     throw new OkuyamaClientException("Save Value Max Size " + maxValueSize + " Byte");
+                } else if ((valueBytes.length * 1.33) > maxValueSize) { // 1.33 = Base64エンコード後のサイズ増加量
+                	throw new OkuyamaClientException("Save Value(Base64 encoded) Max Size " + maxValueSize + " Byte");
+                }
             } else {
                 
                 throw new OkuyamaClientException("The null is not admitted on a Value");

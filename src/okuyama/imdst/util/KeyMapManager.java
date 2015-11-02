@@ -1,17 +1,34 @@
 package okuyama.imdst.util;
 
-import java.util.*;
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import okuyama.base.lang.BatchException;
 import okuyama.base.util.ILogger;
 import okuyama.base.util.LoggerFactory;
-import okuyama.base.lang.BatchException;
-import okuyama.imdst.util.StatusUtil;
-import okuyama.imdst.util.io.*;
-import okuyama.imdst.util.JavaSystemApi;
+import okuyama.imdst.util.io.CustomBufferedWriter;
 
 import com.sun.mail.util.BASE64DecoderStream;
 import com.sun.mail.util.BASE64EncoderStream;
@@ -197,7 +214,7 @@ public class KeyMapManager extends Thread {
 
     private Object keyObjectExportSync = new Object();
 
-    private int keyObjectStoreTiming = 1; // 25分に一度バックアップが作成される
+    private int keyObjectStoreTiming = 25; // 25分に一度バックアップが作成される
 
     private String diskCacheFile = null;
 
@@ -282,6 +299,7 @@ public class KeyMapManager extends Thread {
         logger.debug("init - start");
 
         if (!initFlg) {
+        	this.vacuumExec = ImdstDefine.vacuumExec;
             initFlg = true;
             this.nodeKeyMapFilePath = keyMapFilePath;
             this.workFileMemory = workFileMemory;

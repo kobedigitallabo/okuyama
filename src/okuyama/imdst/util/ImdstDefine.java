@@ -11,7 +11,7 @@ import java.util.zip.Deflater;
  */
 public class ImdstDefine {
 
-    public static final String okuyamaVersion = "VERSION okuyama-0.9.6.1";
+    public static final String okuyamaVersion = "VERSION okuyama-0.9.6.3";
 
     // -- MasterNodeをマルチクラスターのスレーブで起動する場合にtrueになる
     public volatile static boolean slaveClusterMasterNode = false;
@@ -529,15 +529,18 @@ public class ImdstDefine {
     // ---- KeyMapManager系 ------------------------------------------------------
     // Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う候補となる
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
-    public static final int vacuumStartLimit = 100000;
+    public static int vacuumStartLimit = 100000;
 
     // Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
     // 行数と1行のデータサイズをかけると不要なデータサイズとなる
     // vacuumStartLimit × (ImdstDefine.dataFileWriteMaxSize * 1.38) = 不要サイズ
-    public static final int vacuumStartCompulsionLimit = 1000000;
+    public static int vacuumStartCompulsionLimit = 1000000;
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
-    public static final int vacuumExecAfterAccessTime = 200;
+    public static int vacuumExecAfterAccessTime = 200;
+    
+    // Vacuumを行わない場合はfasle
+    public static boolean vacuumExec = false;
 
     // WALログをローテーションする際のサイズ(1.8GB)
     public static final long workFileChangeNewFileSize = 1610612736;

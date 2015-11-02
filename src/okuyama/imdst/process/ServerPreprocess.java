@@ -1,12 +1,13 @@
 package okuyama.imdst.process;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import okuyama.base.lang.BatchDefine;
 import okuyama.base.lang.BatchException;
 import okuyama.base.process.IProcess;
-
-import okuyama.imdst.util.*;
+import okuyama.imdst.util.ImdstDefine;
+import okuyama.imdst.util.StatusUtil;
 
 /**
  * okuyama用のPreProcess.<br>
@@ -49,6 +50,10 @@ import okuyama.imdst.util.*;
  * -smnca ImdstDefine.solitaryMasterNodeCheckAddress / MasterNodeの孤立チェック用の到達確認先のアドレス文字列。icmpでの確認のため、確認先のアドレスのみをカンマ区切りで設定する。全てのアドレスに届かない場合に自動的にMasterNodeがshutdownする
  * -ncopt ImdstDefine.nodeConnectionOpenPingTimeout / MainMasterNodeがDataNodeの生存監視を行う際にコネクションオープン時のタイムアウト閾値時間 数値にて指定(単位はミリ秒)
  * -ncpt ImdstDefine.nodeConnectionPingTimeout / MainMasterNodeがDataNodeの生存監視を行う際に接続後Pingの応答を待機する閾値時間 数値にて指定(単位はミリ秒)
+ * -vacsl  Key値の数とファイルの行数の差がこの数値を超えるとvacuumを行う候補となる
+ * -vacscl Key値の数とファイルの行数の差がこの数値を超えると強制的にvacuumを行う
+ * -vacat  Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
+ * -vac  Vacuumを行わない場合はfasle
  *
  * <br>
  * @author T.Okuyama
@@ -499,7 +504,38 @@ public class ServerPreprocess implements IProcess {
                         }
                     }
                     
+                    // -vacsl
+                    if (startOptions[i].trim().equals("-vacsl")) {
+                        if (startOptions.length > (i+1)) {
+                            ImdstDefine.vacuumStartLimit = Integer.parseInt(startOptions[i+1]);
+                            settingStartParameterMap.put("-vacsl", startOptions[i+1].trim());
+                        }
+                    }
+                    
+                    // -vacscl
+                    if (startOptions[i].trim().equals("-vacscl")) {
+                        if (startOptions.length > (i+1)) {
+                            ImdstDefine.vacuumStartCompulsionLimit = Integer.parseInt(startOptions[i+1]);
+                            settingStartParameterMap.put("-vacscl", startOptions[i+1].trim());
+                        }
+                    }
+                    
+                    // -vacat
+                    if (startOptions[i].trim().equals("-vacat")) {
+                        if (startOptions.length > (i+1)) {
+                            ImdstDefine.vacuumExecAfterAccessTime = Integer.parseInt(startOptions[i+1]);
+                            settingStartParameterMap.put("-vacat", startOptions[i+1].trim());
+                        }
+                    }
 
+                    // -vac
+                    if (startOptions[i].trim().equals("-vac")) {
+                        if (startOptions.length > (i+1)) {
+                            ImdstDefine.vacuumExec = Boolean.parseBoolean(startOptions[i+1]);
+                            settingStartParameterMap.put("-vac", startOptions[i+1].trim());
+                        }
+                    }
+                    
                     // -ncopt
 /*                    if (startOptions[i].trim().equals("-ncopt")) {
                         if (startOptions.length > (i+1)) {
