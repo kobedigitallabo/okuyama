@@ -695,7 +695,7 @@ public class KeyMapManager extends Thread {
                             if (checkValueSplit.length > 1) {
 
                                 String[] metaColumns = checkValueSplit[1].split(ImdstDefine.valueMetaColumnSep);
-                                if (!SystemUtil.expireCheck(metaColumns[1], ImdstDefine.invalidDataDeleteTime)) {
+                                if (metaColumns.length > 1 && !SystemUtil.expireCheck(metaColumns[1], ImdstDefine.invalidDataDeleteTime)) {
 
                                     // 無効データは削除
                                     this.removeKeyPair((String)key, "0");
