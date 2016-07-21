@@ -359,7 +359,7 @@ public class ImdstDefine {
 
 
     // ---- プログラム規定数値 -------------------------------------------------------------
-    // メモリ保存に利用するMapの種類指定 (true=SerializeMap(遅いが大量のデータ), false=通常のMap(速いが少量のデータ)) 
+    // メモリ保存に利用するMapの種類指定 (true=SerializeMap(遅いが大量のデータ), false=通常のMap(速いが少量のデータ))
     public volatile static boolean useSerializeMap = false;
     public volatile static String serializerClassName = null;
 
@@ -455,7 +455,7 @@ public class ImdstDefine {
     // MasterNodeとの無操作コネクションタイムアウト時間(ミリ秒)
     public volatile static int masterNodeMaxConnectTime = 60000 * 60 * 12;
 
- 
+
     // MasterNode -> DataNode間の通信が失敗した際に強制的に再接続を行う設定
     public volatile static boolean compulsionRetryConnectMode = false;
 
@@ -479,7 +479,7 @@ public class ImdstDefine {
 
     // Valueをメモリに保存する際に圧縮に利用するコンプレッサーをいくつプールしておくかの設定
     public volatile static int valueCompresserPoolSize = 40;
-    
+
     // Valueをメモリに保存する際に圧縮する個別単位サイズ
     public volatile static int valueCompresserCompressSize = 2048;
 
@@ -488,7 +488,7 @@ public class ImdstDefine {
     public volatile static int valueCompresserLevel = Deflater.BEST_SPEED;
     //public volatile static int valueCompresserLevel = Deflater.FILTERED;
     //public volatile static int valueCompresserLevel = Deflater.DEFAULT_COMPRESSION;
-    
+
 
     // データ永続化WALログへの書き込みタイミング(true:都度, false:一定間隔)
     public volatile static boolean dataTransactionFileFlushTiming = true;
@@ -538,7 +538,7 @@ public class ImdstDefine {
 
     // Vacuum実行時に事前に以下のミリ秒の間アクセスがないと実行許可となる
     public static int vacuumExecAfterAccessTime = 200;
-    
+
     // Vacuumを行わない場合はfasle
     public static boolean vacuumExec = false;
 
@@ -583,6 +583,8 @@ public class ImdstDefine {
     public volatile static boolean vacuumInvalidDataFlg = true;
     // 有効期限切れデータバキューム実行強制指定
     public volatile static boolean vacuumInvalidDataCompulsion = false;
+    // BigDataをVacuum対象にする場合はtrue。
+    public volatile static boolean bigDataVacuum = false;
 
 
     // 有効期限切れデータ削除チェックサイクル(単位:分)
@@ -617,4 +619,5 @@ public class ImdstDefine {
 
 
     public volatile static boolean fileBaseMapTimeDebug = false;
+
 }

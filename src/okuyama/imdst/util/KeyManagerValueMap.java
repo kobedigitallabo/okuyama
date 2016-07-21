@@ -112,7 +112,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      */
     public void initNoMemoryModeSetting(String lineFile, boolean renewFlg) {
         try {
-            if (sync == null) 
+            if (sync == null)
                 sync = new Object();
 
 
@@ -164,7 +164,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             }
             // 自身のインスタンスをファイルアクセッサに渡す
             this.raf.setDataPointMap(this);
-            
+
             // 削除済みデータ位置保持領域構築
             this.deletedDataPointList = new ArrayBlockingQueue(ImdstDefine.numberOfDeletedDataPoint);
 
@@ -186,7 +186,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     int shiftByteSize = 0;
                     if (readDataLine.length() < "(B)!0".length()) {
                         int shift = "(B)!0".length() - readDataLine.length();
-                        shiftByteSize = shift; 
+                        shiftByteSize = shift;
                     }
                     readDataLine = "(B)!0";
                     StringBuilder updateBuf = new StringBuilder(readDataLine);
@@ -264,7 +264,62 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                 e.printStackTrace();
                 // 致命的
                 StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - get - Error [" + e.getMessage() + "]");
-                
+
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * データを無加工で取り出す.<br>
+     * 無加工とは、valueをファイルで保持する場合はpadding文字列をが付加されているが、それを削除せずに返す.<br>
+     * BigDataとなっていた場合は分割されたデータも取得する。<br>
+     *
+     * BigDataのVacuum用。
+     *
+     * @param key
+     * @return Object[0] 通常データ。Object[1] BigData。
+     * @throw
+     */
+    public Object[] getNoCnvBigData(Object key) {
+        Object[] ret = new Object[2];
+
+        if (this.memoryMode) {
+            ret[0] = super.get(key);
+        } else {
+            try {
+
+                long seekPoint = 0L;
+                byte[] buf = new byte[this.oneDataLength];
+
+                // seek値取得
+                if ((seekPoint = this.calcSeekDataPoint(key)) == -1) return null;
+
+                synchronized (sync) {
+                    // Vacuum中の場合はデータの格納先が変更されている可能性があるので、
+                    // ここでチェック
+                    if (vacuumExecFlg) {
+                        if(seekPoint != this.calcSeekDataPoint(key)) {
+                            // 再起呼び出し
+                            return new Object[]{get(key), null};
+                        }
+                    }
+
+                    int readRet = this.readDataFile(buf, seekPoint, this.oneDataLength, key);
+
+                    if (buf[this.oneDataLength -1] != 38 || readRet > this.oneDataLength) {
+                    	if (overSizeDataStore.containsKey(key)) {
+                    		ret[1] = this.overSizeDataStore.get(key);
+                    	}
+                    }
+                }
+
+                ret[0] = new String(buf, ImdstDefine.keyWorkFileEncoding);
+            } catch (Exception e) {
+                e.printStackTrace();
+                // 致命的
+                StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - get - Error [" + e.getMessage() + "]");
+
             }
         }
         return ret;
@@ -408,7 +463,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             e.printStackTrace();
             // 致命的
             StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - syncGet - Error [" + e.getMessage() + "]");
-            
+
         }
         return ret;
     }
@@ -426,7 +481,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             e.printStackTrace();
             // 致命的
             StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - dataPointGet - Error [" + e.getMessage() + "]");
-            
+
         }
         return ret;
     }
@@ -602,7 +657,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
             ret = super.remove(key);
             if(this.overSizeDataStore != null && this.overSizeDataStore.containsKey(key)) {
                 this.overSizeDataStore.remove(key);
-            } 
+            }
 
             this.nowKeySize = super.size();
 
@@ -720,7 +775,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
 
         String[] sizeList = new String[dataSizeMap.size()];
         Set entrySet = dataSizeMap.entrySet();
-        Iterator entryIte = entrySet.iterator(); 
+        Iterator entryIte = entrySet.iterator();
         int idx = 0;
         while(entryIte.hasNext()) {
 
@@ -750,6 +805,18 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
      * リネームすれば、Vacuum完了.<br>
      */
     public boolean vacuumData() {
+        if (ImdstDefine.bigDataVacuum) {
+        	return this.vacuumBigData();
+        } else {
+        	return this.vacuumNormalData();
+        }
+    }
+
+    /**
+     * BigDataをVacuum対象としないVacuum。
+     * @return 成功の場合はtrue。
+     */
+    public boolean vacuumNormalData() {
         boolean ret = false;
 
 
@@ -799,7 +866,7 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
                     tmpBw.write(dataStr);
                     tmpBw.write("\n");
                     putCounter++;
-                    
+
                     if (mapValueInSize) {
                         vacuumWorkMap.put(key, new Integer(putCounter).toString() + ":" +  dataStr.length());
                     } else {
@@ -917,6 +984,215 @@ public class KeyManagerValueMap extends CoreValueMap implements Cloneable, Seria
         }
 
         return ret;
+    }
+
+    /**
+     * BigDataをVacuum対象とするVacuum。
+     * @return 成功の場合はtrue。
+     */
+    public boolean vacuumBigData() {
+        boolean ret = false;
+
+
+        BufferedWriter tmpBw = null;
+        RandomAccessFile raf = null;
+        Map vacuumWorkMap = null;
+        boolean userMap = false;
+        String dataStr = null;
+        Set entrySet = null;
+        Iterator entryIte = null;
+        String key = null;
+        int putCounter = 0;
+
+
+        synchronized (sync) {
+
+            if (this.vacuumDiffDataList != null) {
+                this.vacuumDiffDataList.clear();
+                this.vacuumDiffDataList = null;
+            }
+
+            this.vacuumDiffDataList = new FileBaseDataList(this.tmpVacuumeLineFile);
+            vacuumExecFlg = true;
+        }
+
+        //vacuumWorkMap = new ConcurrentHashMap(super.size());
+        if (JavaSystemApi.getUseMemoryPercent() > 40) {
+            userMap = true;
+            vacuumWorkMap = new FileBaseDataMap(this.tmpVacuumeCopyMapDirs, super.size(), 0.20);
+        } else {
+            vacuumWorkMap = new HashMap(super.size());
+        }
+
+        try {
+
+        	// 一時ファイル作成
+            tmpBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.lineFile + ".tmp"), true), ImdstDefine.keyWorkFileEncoding), 1024*256);
+            raf = new RandomAccessFile(new File(this.lineFile) , "r");
+            // BigData用一時ファイル作成
+            FileBaseDataMap tmpBigData = new FileBaseDataMap(new String[]{this.lineFile + "_0.tmp"}, 100000, 0.01, ImdstDefine.saveDataMaxSize, ImdstDefine.dataFileWriteMaxSize*5, ImdstDefine.dataFileWriteMaxSize*15);
+
+            entrySet = super.entrySet();
+            entryIte = entrySet.iterator();
+
+            while(entryIte.hasNext()) {
+
+                Map.Entry obj = (Map.Entry)entryIte.next();
+                key = (String)obj.getKey();
+                Object[] dataArr = null;
+                if (key != null && (dataArr = getNoCnvBigData(key)) != null) {
+                	dataStr = (String)(dataArr[0]);
+                    tmpBw.write(dataStr);
+                    tmpBw.write("\n");
+                    putCounter++;
+
+                    if (dataArr[1] == null) {
+                    	tmpBigData.put(key, dataArr[1]);
+                    }
+
+                    if (mapValueInSize) {
+                        vacuumWorkMap.put(key, new Integer(putCounter).toString() + ":" +  dataStr.length());
+                    } else {
+                        vacuumWorkMap.put(key, new Integer(putCounter).toString());
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            // 致命的
+            StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e.getMessage() + "]");
+        } finally {
+            try {
+                // 正常終了の場合のみ、ファイルを変更
+                if (StatusUtil.getStatus() == 0)  {
+
+                    // 新ファイルflush
+                    SystemUtil.diskAccessSync(tmpBw);
+                    // 新ファイルclose
+                    tmpBw.close();
+
+                    // 新ファイルに置き換え
+                    synchronized (sync) {
+
+                        raf.close();
+
+                        if(this.raf != null) this.raf.close();
+                        if(this.bw != null) this.bw.close();
+
+                        File dataFile = new File(this.lineFile);
+                        if (dataFile.exists()) {
+                            dataFile.delete();
+                        }
+                        dataFile = null;
+                        // 一時KeyMapファイルをKeyMapファイル名に変更
+                        File tmpFile = new File(this.lineFile + ".tmp");
+                        tmpFile.renameTo(new File(this.lineFile));
+
+                        // 旧BigData用ディレクトリをリネーム
+                        File oldBigDataDir = new File(this.lineFile + "_0");
+                        File deletedBigDataDir = new File(this.lineFile + "_0.delete");
+                        oldBigDataDir.renameTo(deletedBigDataDir);
+                        // 一時BigData用ディレクトリをリネーム
+                        new File(this.lineFile + "_0.tmp").renameTo(new File(this.lineFile + "_0"));
+
+                        // superのMapを初期化
+                        super.clear();
+
+                        // workMapからデータコピー
+                        Integer workMapData = null;
+                        Set workEntrySet = vacuumWorkMap.entrySet();
+                        Iterator workEntryIte = workEntrySet.iterator();
+                        String workKey = null;
+
+                        while(workEntryIte.hasNext()) {
+
+                            Map.Entry obj = (Map.Entry)workEntryIte.next();
+                            workKey = (String)obj.getKey();
+                            if (workKey != null) {
+
+                                if (mapValueInSize) {
+                                    super.put(workKey, (String)vacuumWorkMap.get(workKey));
+                                } else {
+                                    super.put(workKey, new Integer((String)vacuumWorkMap.get(workKey)));
+                                }
+                            }
+                        }
+
+                        // サイズ格納
+                        this.nowKeySize = super.size();
+                        // ファイルポインタ初期化
+                        this.initNoMemoryModeSetting(this.lineFile);
+
+
+                        // Vacuum中でかつ、synchronized前に登録、削除されたデータを追加登録
+                        int vacuumDiffDataSize = this.vacuumDiffDataList.size();
+
+                        if (vacuumDiffDataSize > 0) {
+
+                            Object[] diffObj = null;
+                            for (int i = 0; i < vacuumDiffDataSize; i++) {
+
+                                // 差分リストからデータを作成
+                                diffObj = (Object[])this.vacuumDiffDataList.get(i);
+                                if (diffObj[0].equals("1")) {
+                                    // put
+                                    put(diffObj[1], diffObj[2]);
+                                } else if (diffObj[0].equals("2")) {
+                                    // remove
+                                    remove(diffObj[1]);
+                                }
+                            }
+                        }
+
+                        this.vacuumDiffDataList.clear();
+                        this.vacuumDiffDataList = null;
+
+                        if (userMap) {
+                            ((FileBaseDataMap)vacuumWorkMap).finishClear();
+                        }
+                        vacuumWorkMap = null;
+
+                        // 旧BigDataディレクトリを削除
+                        this.deleteBigDataDir(deletedBigDataDir);
+
+                        // Vacuum終了をマーク
+                        vacuumExecFlg = false;
+                        ret = true;
+                    }
+                }
+            } catch(Exception e2) {
+                e2.printStackTrace();
+                try {
+                    File tmpFile = new File(this.lineFile + ".tmp");
+                    if (tmpFile.exists()) {
+                        tmpFile.delete();
+                    }
+                } catch(Exception e3) {
+                    e3.printStackTrace();
+                    // 致命的
+                    StatusUtil.setStatusAndMessage(1, "KeyManagerValueMap - vacuumData - Error [" + e3.getMessage() + e3.getMessage() + "]");
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    /**
+     * BigData用のディレクトリ削除する。
+     * @param dir 削除対象。
+     */
+    private void deleteBigDataDir(File dir) {
+    	if (dir.isDirectory()) {
+    		File[] list = dir.listFiles();
+    		if (list != null) {
+    			for (File f : list) {
+    				this.deleteBigDataDir(f);
+    			}
+    		}
+    	}
+    	dir.delete();
     }
 
 

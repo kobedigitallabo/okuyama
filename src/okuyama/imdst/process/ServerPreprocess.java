@@ -75,7 +75,7 @@ public class ServerPreprocess implements IProcess {
                         StatusUtil.setDebugOption(true);
                         settingStartParameterMap.put("-debug", "true");
                     }
-                    
+
                     // -cto MasterNodeコネクション無操作タイムアウト時間(単位は秒)
                     if (startOptions[i].trim().toLowerCase().equals("-c")) {
                         if (startOptions.length > (i+1)) {
@@ -113,7 +113,7 @@ public class ServerPreprocess implements IProcess {
                     if (startOptions[i].trim().equals("-KS")) {
                         if (startOptions.length > (i+1)) {
                             try {
-                                
+
                                 ImdstDefine.saveKeyMaxSize = Integer.parseInt(startOptions[i+1]);
                                 if (ImdstDefine.saveKeyMaxSize < 200) ImdstDefine.saveKeyMaxSize = 200;
                                 settingStartParameterMap.put("-KS", startOptions[i+1]);
@@ -323,7 +323,7 @@ public class ServerPreprocess implements IProcess {
                             }
                         }
                     }
-                    
+
                     // -smbsmf
                     if (startOptions[i].trim().equals("-smbsmf")) {
                         if (startOptions.length > (i+1)) {
@@ -503,7 +503,7 @@ public class ServerPreprocess implements IProcess {
                             settingStartParameterMap.put("-smnca", startOptions[i+1].trim());
                         }
                     }
-                    
+
                     // -vacsl
                     if (startOptions[i].trim().equals("-vacsl")) {
                         if (startOptions.length > (i+1)) {
@@ -511,7 +511,7 @@ public class ServerPreprocess implements IProcess {
                             settingStartParameterMap.put("-vacsl", startOptions[i+1].trim());
                         }
                     }
-                    
+
                     // -vacscl
                     if (startOptions[i].trim().equals("-vacscl")) {
                         if (startOptions.length > (i+1)) {
@@ -519,7 +519,7 @@ public class ServerPreprocess implements IProcess {
                             settingStartParameterMap.put("-vacscl", startOptions[i+1].trim());
                         }
                     }
-                    
+
                     // -vacat
                     if (startOptions[i].trim().equals("-vacat")) {
                         if (startOptions.length > (i+1)) {
@@ -535,7 +535,15 @@ public class ServerPreprocess implements IProcess {
                             settingStartParameterMap.put("-vac", startOptions[i+1].trim());
                         }
                     }
-                    
+
+                    // -vacbig
+                    if (startOptions[i].trim().equals("-vacbig")) {
+                        if (startOptions.length > (i+1)) {
+                            ImdstDefine.bigDataVacuum = Boolean.parseBoolean(startOptions[i+1]);
+                            settingStartParameterMap.put("-vacbig", startOptions[i+1].trim());
+                        }
+                    }
+
                     // -ncopt
 /*                    if (startOptions[i].trim().equals("-ncopt")) {
                         if (startOptions.length > (i+1)) {
